@@ -1,0 +1,44 @@
+{
+  "name": "shine",
+  "module": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "db:generate": "bunx drizzle-kit generate",
+    "db:push": "bunx drizzle-kit push",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "lint:report": "eslint . --ext .ts --output-file eslint-report.json --format json",
+    "format": "prettier --write \"src/**/*.{ts,tsx,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,json}\"",
+    "api:dev": "cd api && wrangler dev",
+    "api:deploy": "cd api && wrangler deploy --minify",
+    "start": "bun scrapers/index.ts"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250214.0",
+    "@eslint/js": "^9.23.0",
+    "@types/domhandler": "^3.1.0",
+    "@types/node": "^22.13.13",
+    "@typescript-eslint/eslint-plugin": "^8.28.0",
+    "bun-types": "latest",
+    "drizzle-kit": "latest",
+    "eslint": "^9.23.0",
+    "eslint-plugin-unicorn": "^58.0.0",
+    "globals": "^16.0.0",
+    "pg": "^8.14.1",
+    "prettier": "^3.5.3",
+    "prettier-plugin-organize-imports": "^4.1.0",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.28.0",
+    "wrangler": "^4.4.0"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "drizzle-orm": "^0.41.0",
+    "hono": "^4.7.5",
+    "postgres": "^3.4.5"
+  },
+  "workspaces": [
+    "api"
+  ]
+}
