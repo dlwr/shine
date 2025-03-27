@@ -21,6 +21,14 @@
 
     "types": ["bun-types"],
     "esModuleInterop": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@shine/db": ["packages/db"],
+      "@shine/db/*": ["packages/db/*"],
+      "@shine/scrapers": ["packages/scrapers"],
+      "@shine/scrapers/*": ["packages/scrapers/*"],
+      "@shine/api": ["packages/api"],
+      "@shine/api/*": ["packages/api/*"]
+    }
   }
 }

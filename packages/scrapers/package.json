@@ -1,0 +1,10 @@
+{
+  "name": "@shine/scrapers",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "index.ts",
+  "dependencies": {
+    "@shine/db": "workspace:*",
+    "cheerio": "^1.0.0"
+  }
+}
