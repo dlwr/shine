@@ -8,11 +8,11 @@
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "lint:report": "eslint . --ext .ts --output-file eslint-report.json --format json",
-    "format": "prettier --write \"src/**/*.{ts,tsx,json}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,json}\"",
-    "api:dev": "cd api && wrangler dev",
-    "api:deploy": "cd api && wrangler deploy --minify",
-    "start": "bun scrapers/index.ts"
+    "format": "prettier --write \"packages/**/*.{ts,tsx,json}\"",
+    "format:check": "prettier --check \"packages/**/*.{ts,tsx,json}\"",
+    "api:dev": "cd packages/api && wrangler dev",
+    "api:deploy": "cd packages/api && wrangler deploy --minify",
+    "start": "bun packages/scrapers/index.ts"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250214.0",
@@ -39,6 +39,6 @@
     "postgres": "^3.4.5"
   },
   "workspaces": [
-    "api"
+    "packages/*"
   ]
 }

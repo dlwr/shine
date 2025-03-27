@@ -1,8 +1,8 @@
+import { movies } from "@shine/db/schema/movies";
+import { translations } from "@shine/db/schema/translations";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { movies } from "../../db/schema/movies";
-import { translations } from "../../db/schema/translations";
 import { getDatabase, sql } from "./database";
 
 const app = new Hono();
