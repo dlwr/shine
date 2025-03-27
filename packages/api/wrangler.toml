@@ -1,0 +1,10 @@
+name = "shine"
+main = "src/index.ts"
+compatibility_date = "2025-03-26"
+nodejs_compat = true
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "shine-dev"
+database_id = "c020574a-5623-407b-be0c-cd192bab9545"
