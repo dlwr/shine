@@ -4,3 +4,4 @@ export * from "./award-organizations";
 export * from "./movies";
 export * from "./nominations";
 export * from "./reference-urls";
+export * from "./translations";

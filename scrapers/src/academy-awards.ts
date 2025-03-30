@@ -1,14 +1,15 @@
-import { database, type NewNomination } from "@shine/db";
-import { awardCategories } from "@shine/db/schema/award-categories";
-import { awardCeremonies } from "@shine/db/schema/award-ceremonies";
-import { awardOrganizations } from "@shine/db/schema/award-organizations";
-import { movies } from "@shine/db/schema/movies";
-import { nominations } from "@shine/db/schema/nominations";
-import { referenceUrls } from "@shine/db/schema/reference-urls";
-import { translations } from "@shine/db/schema/translations";
+import { seedAcademyAwards } from "@shine/db/seeds/academy-awards";
 import * as cheerio from "cheerio";
+import { getDatabase, type Environment, type NewNomination } from "db";
+import { awardCategories } from "db/schema/award-categories";
+import { awardCeremonies } from "db/schema/award-ceremonies";
+import { awardOrganizations } from "db/schema/award-organizations";
+import { movies } from "db/schema/movies";
+import { nominations } from "db/schema/nominations";
+import { referenceUrls } from "db/schema/reference-urls";
+import { translations } from "db/schema/translations";
 import { Element } from "domhandler";
-import { and, eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 
 const WIKIPEDIA_BASE_URL = "https://en.wikipedia.org";
 const ACADEMY_AWARDS_URL = `${WIKIPEDIA_BASE_URL}/wiki/Academy_Award_for_Best_Picture`;
@@ -34,11 +35,35 @@ interface MasterData {
 }
 
 let masterData: MasterData | undefined;
+let environment_: Environment;
+
+export default {
+  async fetch(request: Request, environment: Environment): Promise<Response> {
+    environment_ = environment;
+
+    const url = new URL(request.url);
+    if (url.pathname === "/seed") {
+      console.log("seeding academy awards");
+      await seedAcademyAwards(environment_);
+      return new Response("Seed completed successfully", { status: 200 });
+    }
+
+    try {
+      await scrapeAcademyAwards();
+      return new Response("Scraping completed successfully", { status: 200 });
+    } catch (error) {
+      return new Response(
+        `Error: ${error instanceof Error ? error.message : String(error)}`,
+        { status: 500 }
+      );
+    }
+  },
+};
 
 async function fetchMasterData(): Promise<MasterData> {
   if (masterData) return masterData;
 
-  const [organization] = await database
+  const [organization] = await getDatabase(environment_)
     .select()
     .from(awardOrganizations)
     .where(eq(awardOrganizations.name, "Academy Awards"));
@@ -47,7 +72,7 @@ async function fetchMasterData(): Promise<MasterData> {
     throw new Error("Academy Awards organization not found");
   }
 
-  const [category] = await database
+  const [category] = await getDatabase(environment_)
     .select()
     .from(awardCategories)
     .where(eq(awardCategories.shortName, "Best Picture"));
@@ -56,7 +81,7 @@ async function fetchMasterData(): Promise<MasterData> {
     throw new Error("Best Picture category not found");
   }
 
-  const ceremoniesData = await database
+  const ceremoniesData = await getDatabase(environment_)
     .select()
     .from(awardCeremonies)
     .where(eq(awardCeremonies.organizationUid, organization.uid));
@@ -78,6 +103,7 @@ async function getOrCreateCeremony(
   year: number,
   organizationUid: string
 ): Promise<string> {
+  const database = getDatabase(environment_);
   const [ceremony] = await database
     .insert(awardCeremonies)
     .values({
@@ -89,7 +115,7 @@ async function getOrCreateCeremony(
       target: [awardCeremonies.organizationUid, awardCeremonies.year],
       set: {
         ceremonyNumber: year - 1928 + 1,
-        updatedAt: new Date(),
+        updatedAt: Math.floor(Date.now() / 1000),
       },
     })
     .returning();
@@ -227,7 +253,6 @@ function processTableRows(
     console.log(`\nProcessing row ${index}:`);
     console.log(`Headers: ${headers.length}, Cells: ${cells.length}`);
 
-    // 空の行をスキップ
     if (cells.length === 0 && headers.length === 0) {
       console.log("Skipping empty row");
       continue;
@@ -376,6 +401,37 @@ function cleanupTitle(title: string): string {
     .trim();
 }
 
+async function checkDuplicateTitle(
+  database: ReturnType<typeof getDatabase>,
+  title: string,
+  languageCode: string,
+  excludeMovieUid?: string
+): Promise<boolean> {
+  const existingMovies = await database
+    .select({
+      movies: movies,
+      translations: translations,
+    })
+    .from(movies)
+    .innerJoin(
+      translations,
+      and(
+        eq(translations.resourceUid, movies.uid),
+        eq(translations.resourceType, "movie_title"),
+        eq(translations.languageCode, languageCode),
+        eq(translations.isDefault, 1)
+      )
+    )
+    .where(
+      and(
+        eq(translations.content, title),
+        excludeMovieUid ? ne(movies.uid, excludeMovieUid) : undefined
+      )
+    );
+
+  return existingMovies.length > 0;
+}
+
 async function processMovie(
   title: string,
   year: number,
@@ -384,64 +440,49 @@ async function processMovie(
 ) {
   try {
     const master = await fetchMasterData();
+    const database = getDatabase(environment_);
 
-    const existingMovies = await database
-      .select({
-        movies: movies,
-        translations: translations,
-      })
-      .from(movies)
-      .innerJoin(
-        translations,
-        and(
-          eq(translations.resourceUid, movies.uid),
-          eq(translations.resourceType, "movie_title"),
-          eq(translations.languageCode, movies.originalLanguage),
-          eq(translations.isDefault, true)
-        )
-      )
-      .where(eq(translations.content, title));
-
-    let movieUid: string;
-    if (existingMovies.length > 0) {
-      movieUid = existingMovies[0].movies.uid;
-      console.log(`Found existing movie: ${title} (${year})`);
-    } else {
-      const [newMovie] = await database
-        .insert(movies)
-        .values({
-          originalLanguage: "en",
-          year,
-        })
-        .returning();
-
-      if (!newMovie) {
-        throw new Error(`Failed to create movie: ${title}`);
-      }
-
-      movieUid = newMovie.uid;
-
-      await database
-        .insert(translations)
-        .values({
-          resourceType: "movie_title",
-          resourceUid: movieUid,
-          languageCode: "en",
-          content: title,
-          isDefault: true,
-        })
-        .onConflictDoUpdate({
-          target: [
-            translations.resourceType,
-            translations.resourceUid,
-            translations.languageCode,
-          ],
-          set: {
-            content: title,
-            updatedAt: new Date(),
-          },
-        });
+    // Check for duplicate title before proceeding
+    const isDuplicate = await checkDuplicateTitle(database, title, "en");
+    if (isDuplicate) {
+      console.log(`Skipping duplicate movie title: ${title} (${year})`);
+      return;
     }
+
+    const [newMovie] = await database
+      .insert(movies)
+      .values({
+        originalLanguage: "en",
+        year,
+      })
+      .returning();
+
+    if (!newMovie) {
+      throw new Error(`Failed to create movie: ${title}`);
+    }
+
+    const movieUid = newMovie.uid;
+
+    await database
+      .insert(translations)
+      .values({
+        resourceType: "movie_title",
+        resourceUid: movieUid,
+        languageCode: "en",
+        content: title,
+        isDefault: 1,
+      })
+      .onConflictDoUpdate({
+        target: [
+          translations.resourceType,
+          translations.resourceUid,
+          translations.languageCode,
+        ],
+        set: {
+          content: title,
+          updatedAt: Math.floor(Date.now() / 1000),
+        },
+      });
 
     if (referenceUrl) {
       await database
@@ -451,7 +492,7 @@ async function processMovie(
           url: referenceUrl,
           sourceType: "wikipedia",
           languageCode: "en",
-          isPrimary: true,
+          isPrimary: 1,
         })
         .onConflictDoUpdate({
           target: [
@@ -461,7 +502,7 @@ async function processMovie(
           ],
           set: {
             url: referenceUrl,
-            updatedAt: new Date(),
+            updatedAt: Math.floor(Date.now() / 1000),
           },
         });
     }
@@ -488,7 +529,7 @@ async function processMovie(
       movieUid: movieUid,
       ceremonyUid,
       categoryUid: master.categoryUid,
-      isWinner,
+      isWinner: isWinner ? 1 : 0,
     };
 
     await database.insert(nominations).values(newNomination);
