@@ -3,16 +3,19 @@
   "module": "src/index.ts",
   "type": "module",
   "scripts": {
-    "db:generate": "bunx drizzle-kit generate",
-    "db:push": "bunx drizzle-kit push",
-    "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix",
-    "lint:report": "eslint . --ext .ts --output-file eslint-report.json --format json",
-    "format": "prettier --write \"packages/**/*.{ts,tsx,json}\"",
-    "format:check": "prettier --check \"packages/**/*.{ts,tsx,json}\"",
-    "api:dev": "cd packages/api && wrangler dev",
-    "api:deploy": "cd packages/api && wrangler deploy --minify",
-    "start": "bun packages/scrapers/index.ts"
+    "api:dev": "cd api && wrangler dev --persist-to=../db/dev",
+    "api:deploy": "cd api && wrangler deploy --minify",
+    "scrapers:dev": "cd scrapers && wrangler dev --persist-to=../db/dev",
+    "scrapers:deploy": "cd scrapers && wrangler deploy --minify",
+    "with-local-db": "LOCAL_DB_PATH=$(find db/dev/v3/d1/miniflare-D1DatabaseObject -type f -name '*.sqlite' -print -quit)",
+    "db:studio": "npm run with-local-db -- drizzle-kit studio",
+    "db:studio:prod": "drizzle-kit studio",
+    "db:generate:dev": "npm run with-local-db -- drizzle-kit generate",
+    "db:migrate:dev": "npm run with-local-db -- drizzle-kit migrate",
+    "db:migrate:prod": "drizzle-kit migrate",
+    "db:generate:prod": "drizzle-kit generate",
+    "db:push:dev": "npm run with-local-db -- drizzle-kit push",
+    "db:push:prod": "drizzle-kit push"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250214.0",
@@ -30,10 +33,11 @@
     "prettier-plugin-organize-imports": "^4.1.0",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.28.0",
-    "wrangler": "^4.5.0"
+    "wrangler": "^4.6.0"
   },
   "dependencies": {
     "cheerio": "^1.0.0",
+    "dotenv": "^16.4.7",
     "drizzle-orm": "^0.41.0",
     "hono": "^4.7.5",
     "postgres": "^3.4.5"

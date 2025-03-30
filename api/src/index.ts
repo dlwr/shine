@@ -1,9 +1,9 @@
-import { movies } from "@shine/db/schema/movies";
-import { translations } from "@shine/db/schema/translations";
-import { and, eq } from "drizzle-orm";
+import { getDatabase, type Environment } from "db";
+import { movies } from "db/schema/movies";
+import { translations } from "db/schema/translations";
+import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { getDatabase, sql } from "./database";
 
 const app = new Hono();
 
@@ -11,9 +11,9 @@ app.use("*", cors());
 
 app.get("/", async (c) => {
   try {
-    const { db, client } = getDatabase();
+    const database = getDatabase(c.env as Environment);
 
-    const results = await db
+    const results = await database
       .select()
       .from(movies)
       .leftJoin(translations, eq(movies.uid, translations.resourceUid))
@@ -25,8 +25,6 @@ app.get("/", async (c) => {
       )
       .orderBy(sql`RANDOM()`)
       .limit(1);
-
-    await client.end();
 
     if (results.length === 0) {
       return c.json({ error: "No movies found" }, 404);
