@@ -1,0 +1,10 @@
+name = "shine-api"
+main = "src/index.ts"
+compatibility_date = "2025-03-26"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "shine"
+database_id = "2fb1a032-1317-45a4-af2f-082bc4667f47"
+migrations_dir = "drizzle"
