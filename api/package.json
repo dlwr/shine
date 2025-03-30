@@ -1,0 +1,16 @@
+{
+  "name": "@shine/api",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify"
+  },
+  "dependencies": {
+    "@shine/db": "workspace:*",
+    "drizzle-orm": "^0.41.0",
+    "hono": "^4.7.5",
+    "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250214.0"
+  }
+}
