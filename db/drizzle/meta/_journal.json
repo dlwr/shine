@@ -15,6 +15,13 @@
       "when": 1743400079270,
       "tag": "0001_safe_talkback",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1743413518615,
+      "tag": "0002_naive_toxin",
+      "breakpoints": true
     }
   ]
 }
