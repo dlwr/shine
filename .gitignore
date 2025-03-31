@@ -169,3 +169,4 @@ Thumbs.db
 **/.wrangler/
 db/dev
 worker-configuration.d.ts
+.dev.vars
