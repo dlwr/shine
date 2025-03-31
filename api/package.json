@@ -6,10 +6,6 @@
     "deploy": "wrangler deploy --minify"
   },
   "dependencies": {
-    "@shine/db": "workspace:*",
-    "hono": "^4.7.5"
-  },
-  "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250214.0"
+    "@shine/db": "workspace:*"
   }
 }

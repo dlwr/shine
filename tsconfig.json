@@ -19,7 +19,7 @@
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
 
-    "types": ["bun-types"],
+    "types": ["node"],
     "esModuleInterop": true,
     "baseUrl": ".",
     "paths": {

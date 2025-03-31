@@ -9,22 +9,22 @@
     "api:deploy": "cd api && wrangler deploy --minify",
     "scrapers:dev": "cd scrapers && wrangler dev --persist-to=../db/dev",
     "scrapers:deploy": "cd scrapers && wrangler deploy --minify",
-    "with-local-db": "LOCAL_DB_PATH=$(find db/dev/v3/d1/miniflare-D1DatabaseObject -type f -name '*.sqlite' -print -quit)",
+    "with-local-db": "./with-local-db.sh",
     "db:studio:dev": "pnpm with-local-db -- drizzle-kit studio",
     "db:studio:prod": "drizzle-kit studio",
-    "db:generate:dev": "pnpm run with-local-db -- drizzle-kit generate",
+    "db:generate:dev": "pnpm with-local-db -- drizzle-kit generate",
     "db:generate:prod": "drizzle-kit generate",
-    "db:migrate:dev": "pnpm run with-local-db -- drizzle-kit migrate",
+    "db:migrate:dev": "pnpm with-local-db -- drizzle-kit migrate",
     "db:migrate:prod": "drizzle-kit migrate",
-    "db:push:dev": "pnpm run with-local-db -- drizzle-kit push",
+    "db:push:dev": "pnpm with-local-db -- drizzle-kit push",
     "db:push:prod": "drizzle-kit push"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250214.0",
     "@eslint/js": "^9.23.0",
-    "@types/domhandler": "^3.1.0",
     "@types/node": "^22.13.13",
     "@typescript-eslint/eslint-plugin": "^8.28.0",
+    "better-sqlite3": "^11.9.1",
     "drizzle-kit": "^0.30.6",
     "eslint": "^9.23.0",
     "eslint-plugin-unicorn": "^58.0.0",
@@ -40,10 +40,11 @@
     "cheerio": "^1.0.0",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.41.0",
-    "hono": "^4.7.5",
-    "postgres": "^3.4.5"
+    "hono": "^4.7.5"
   },
   "workspaces": [
-    "packages/*"
+    "api",
+    "scrapers",
+    "db"
   ]
 }
