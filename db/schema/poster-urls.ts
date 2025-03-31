@@ -32,18 +32,15 @@ export const posterUrls = sqliteTable(
       .notNull()
       .default(sql`(unixepoch())`),
   },
-  (table) => ({
-    movieIdx: index("poster_urls_movie_idx").on(table.movieUid),
-    primaryPosterIdx: index("poster_urls_primary_idx").on(
-      table.movieUid,
-      table.isPrimary
-    ),
-    uniqueConstraint: uniqueIndex("poster_urls_unique_idx").on(
+  (table) => [
+    index("poster_urls_movie_idx").on(table.movieUid),
+    index("poster_urls_primary_idx").on(table.movieUid, table.isPrimary),
+    uniqueIndex("poster_urls_unique_idx").on(
       table.movieUid,
       table.width,
       table.height,
       table.languageCode,
       table.countryCode
     ),
-  })
+  ]
 );
