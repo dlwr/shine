@@ -1,0 +1,125 @@
+---
+interface Props {
+  movie: {
+    uid: string;
+    title: string;
+    year: number;
+    posterUrl?: string;
+    imdbUrl?: string;
+  };
+}
+
+const { movie } = Astro.props;
+---
+
+{
+  movie.imdbUrl ? (
+    <a
+      href={movie.imdbUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="movie-card"
+    >
+      <div class="poster">
+        {movie.posterUrl ? (
+          <img src={movie.posterUrl} alt={`${movie.title} poster`} />
+        ) : (
+          <div class="no-poster">No Poster</div>
+        )}
+      </div>
+      <div class="movie-info">
+        <h3 class="title">{movie.title}</h3>
+        <p class="year">{movie.year}</p>
+      </div>
+    </a>
+  ) : (
+    <div class="movie-card">
+      <div class="poster">
+        {movie.posterUrl ? (
+          <img src={movie.posterUrl} alt={`${movie.title} poster`} />
+        ) : (
+          <div class="no-poster">No Poster</div>
+        )}
+      </div>
+      <div class="movie-info">
+        <h3 class="title">{movie.title}</h3>
+        <p class="year">{movie.year}</p>
+      </div>
+    </div>
+  )
+}
+
+<style>
+  .movie-card {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    transition:
+      transform 0.3s ease,
+      box-shadow 0.3s ease;
+    background: white;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    width: 100%;
+  }
+
+  .movie-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+  }
+
+  .poster {
+    height: 450px;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .no-poster {
+    color: #999;
+    font-size: 1.25rem;
+  }
+
+  .movie-info {
+    padding: 24px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .title {
+    margin: 0 0 12px 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  .year {
+    margin: 0;
+    color: #666;
+    font-size: 1.1rem;
+  }
+
+  @media (max-width: 768px) {
+    .poster {
+      height: 400px;
+    }
+
+    .movie-info {
+      padding: 20px;
+    }
+
+    .title {
+      font-size: 1.3rem;
+    }
+  }
+</style>

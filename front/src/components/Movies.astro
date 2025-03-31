@@ -1,0 +1,146 @@
+---
+import MovieCard from "./MovieCard.astro";
+
+type Movie = {
+  uid: string;
+  title: string;
+  year: number;
+  posterUrl?: string;
+  imdbUrl?: string;
+};
+
+async function fetchMovie() {
+  try {
+    const apiUrl = import.meta.env.API_URL || "http://localhost:8787";
+    const response = await fetch(`${apiUrl}`);
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+
+    const movies = (await response.json()) as {
+      daily: Movie;
+      weekly: Movie;
+      monthly: Movie;
+    };
+
+    return movies;
+  } catch (error) {
+    console.error("Error fetching movies:", error);
+    return {
+      daily: { uid: "1", title: "The Shawshank Redemption", year: 1994 },
+      weekly: { uid: "1", title: "The Shawshank Redemption", year: 1994 },
+      monthly: { uid: "1", title: "The Shawshank Redemption", year: 1994 },
+    };
+  }
+}
+
+const movies = await fetchMovie();
+---
+
+<section class="movies-section">
+  <h2>Random Movie</h2>
+
+  <div id="movie-container" class="movie-container">
+    <div class="movie-item">
+      <div class="movie-label">Daily</div>
+      {movies.daily && <MovieCard movie={movies.daily} />}
+    </div>
+    <div class="movie-item">
+      <div class="movie-label">Weekly</div>
+      {movies.weekly && <MovieCard movie={movies.weekly} />}
+    </div>
+    <div class="movie-item">
+      <div class="movie-label">Monthly</div>
+      {movies.monthly && <MovieCard movie={movies.monthly} />}
+    </div>
+  </div>
+</section>
+
+<style>
+  .movies-section {
+    padding: 2rem 0;
+  }
+
+  h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 2rem;
+    color: #333;
+  }
+
+  .movie-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 2rem;
+    max-width: 90%;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  .movie-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .movie-label {
+    background-color: #3273dc;
+    color: white;
+    padding: 0.3rem 1rem;
+    border-radius: 4px 4px 0 0;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+
+  .movie-container :global(.movie-card) {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .no-movies {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.2rem;
+    color: #666;
+  }
+
+  .button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+  }
+
+  .next-movie-btn {
+    padding: 0.75rem 1.5rem;
+    background-color: #3273dc;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .next-movie-btn:hover {
+    background-color: #2366c1;
+  }
+
+  .next-movie-btn:disabled {
+    background-color: #a0a0a0;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 768px) {
+    .movie-container {
+      max-width: 95%;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .movie-container :global(.movie-card) {
+      max-width: 400px;
+    }
+  }
+</style>
