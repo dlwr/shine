@@ -1,0 +1,9 @@
+packages:
+  - packages/*
+  - api
+  - scrapers
+  - db
+ignoredBuiltDependencies:
+  - esbuild
+  - sharp
+  - workerd

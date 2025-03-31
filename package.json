@@ -1,20 +1,22 @@
 {
   "name": "shine",
-  "module": "src/index.ts",
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "api:dev": "cd api && wrangler dev --persist-to=../db/dev",
     "api:deploy": "cd api && wrangler deploy --minify",
     "scrapers:dev": "cd scrapers && wrangler dev --persist-to=../db/dev",
     "scrapers:deploy": "cd scrapers && wrangler deploy --minify",
-    "with-local-db": "LOCAL_DB_PATH=$(find db/dev/v3/d1/miniflare-D1DatabaseObject -type f -name '*.sqlite' -print -quit)",
-    "db:studio": "npm run with-local-db -- drizzle-kit studio",
+    "with-local-db": "LOCAL_DB_PATH=$(find db/dev/v3/d1/miniflare-D1DatabaseObject -type f -name '*.sqlite' -print -quit) && ",
+    "db:studio": "pnpm with-local-db drizzle-kit studio",
     "db:studio:prod": "drizzle-kit studio",
-    "db:generate:dev": "npm run with-local-db -- drizzle-kit generate",
-    "db:migrate:dev": "npm run with-local-db -- drizzle-kit migrate",
+    "db:generate:dev": "pnpm with-local-db drizzle-kit generate",
+    "db:migrate:dev": "pnpm with-local-db drizzle-kit migrate",
     "db:migrate:prod": "drizzle-kit migrate",
     "db:generate:prod": "drizzle-kit generate",
-    "db:push:dev": "npm run with-local-db -- drizzle-kit push",
+    "db:push:dev": "pnpm with-local-db drizzle-kit push",
     "db:push:prod": "drizzle-kit push"
   },
   "devDependencies": {
@@ -23,8 +25,7 @@
     "@types/domhandler": "^3.1.0",
     "@types/node": "^22.13.13",
     "@typescript-eslint/eslint-plugin": "^8.28.0",
-    "bun-types": "latest",
-    "drizzle-kit": "latest",
+    "drizzle-kit": "^0.30.6",
     "eslint": "^9.23.0",
     "eslint-plugin-unicorn": "^58.0.0",
     "globals": "^16.0.0",
