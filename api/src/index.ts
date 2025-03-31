@@ -1,5 +1,6 @@
 import { getDatabase, type Environment } from "db";
 import { movies } from "db/schema/movies";
+import { posterUrls } from "db/schema/poster-urls";
 import { translations } from "db/schema/translations";
 import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
@@ -17,10 +18,13 @@ app.get("/", async (c) => {
       .select()
       .from(movies)
       .leftJoin(translations, eq(movies.uid, translations.resourceUid))
+      .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
       .where(
         and(
           eq(movies.originalLanguage, translations.languageCode),
-          eq(translations.resourceType, "movie_title")
+          eq(translations.resourceType, "movie_title"),
+          eq(posterUrls.isPrimary, 1),
+          eq(posterUrls.languageCode, translations.languageCode)
         )
       )
       .orderBy(sql`RANDOM()`)
@@ -30,7 +34,15 @@ app.get("/", async (c) => {
       return c.json({ error: "No movies found" }, 404);
     }
 
-    const { movies: movie, translations: translation } = results[0];
+    const {
+      movies: movie,
+      translations: translation,
+      poster_urls: poster,
+    } = results[0];
+
+    const imdbUrl = movie.imdbId
+      ? `https://www.imdb.com/title/${movie.imdbId}/`
+      : undefined;
 
     return c.json({
       movie: {
@@ -38,6 +50,8 @@ app.get("/", async (c) => {
         year: movie.year,
         originalLanguage: movie.originalLanguage,
         title: translation?.content,
+        poster_url: poster?.url,
+        imdb_url: imdbUrl,
       },
     });
   } catch (error) {
