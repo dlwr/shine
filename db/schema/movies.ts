@@ -8,6 +8,7 @@ export const movies = sqliteTable("movies", {
     .$defaultFn(() => generateUUID()),
   originalLanguage: text().notNull().default("en"),
   year: integer(),
+  imdbId: text().unique(),
   createdAt: integer()
     .notNull()
     .default(sql`(unixepoch())`),

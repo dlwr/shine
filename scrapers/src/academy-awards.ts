@@ -1,6 +1,6 @@
 import { seedAcademyAwards } from "@shine/db/seeds/academy-awards";
 import * as cheerio from "cheerio";
-import { getDatabase, type Environment, type NewNomination } from "db";
+import { getDatabase, type Environment } from "db";
 import { awardCategories } from "db/schema/award-categories";
 import { awardCeremonies } from "db/schema/award-ceremonies";
 import { awardOrganizations } from "db/schema/award-organizations";
@@ -9,10 +9,11 @@ import { nominations } from "db/schema/nominations";
 import { referenceUrls } from "db/schema/reference-urls";
 import { translations } from "db/schema/translations";
 import { Element } from "domhandler";
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 const WIKIPEDIA_BASE_URL = "https://en.wikipedia.org";
 const ACADEMY_AWARDS_URL = `${WIKIPEDIA_BASE_URL}/wiki/Academy_Award_for_Best_Picture`;
+const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
 
 interface TableColumns {
   filmIndex: number;
@@ -26,6 +27,7 @@ interface MovieInfo {
   year: number;
   isWinner: boolean;
   referenceUrl?: string;
+  imdbId?: string;
 }
 
 interface MasterData {
@@ -36,10 +38,12 @@ interface MasterData {
 
 let masterData: MasterData | undefined;
 let environment_: Environment;
+let TMDB_API_KEY: string | undefined;
 
 export default {
   async fetch(request: Request, environment: Environment): Promise<Response> {
     environment_ = environment;
+    TMDB_API_KEY = environment.TMDB_API_KEY;
 
     const url = new URL(request.url);
     if (url.pathname === "/seed") {
@@ -274,7 +278,7 @@ function processTableRows(
       continue;
     }
 
-    const { title, referenceUrl } = extractMovieTitle($, $row);
+    const { title, referenceUrl, imdbId } = extractMovieTitle($, $row);
     if (!title) {
       console.log("No title found, skipping row");
       continue;
@@ -287,12 +291,20 @@ function processTableRows(
     } else {
       processedTitles.add(dedupeKey);
       const isWinner = determineIfWinner($, $row);
+
       console.log(
         `Adding movie: ${title} (${currentYear}) - ${
           isWinner ? "Winner" : "Nominee"
-        }`
+        } ${imdbId ? `IMDb: ${imdbId}` : ""}`
       );
-      result.push({ title, year: currentYear, isWinner, referenceUrl });
+
+      result.push({
+        title,
+        year: currentYear,
+        isWinner,
+        referenceUrl,
+        imdbId,
+      });
     }
   }
 
@@ -361,15 +373,24 @@ function determineIfWinner(
 function extractMovieTitle(
   $: cheerio.CheerioAPI,
   $row: cheerio.Cheerio<Element>
-): { title: string; referenceUrl?: string } {
+): { title: string; referenceUrl?: string; imdbId?: string } {
   const filmCell = $row.find("td").first();
   if (!filmCell || filmCell.length === 0) return { title: "" };
 
   let title = "";
   let referenceUrl: string | undefined;
+  let imdbId: string | undefined;
 
   const italicElements = filmCell.find("i");
   const linkElement = filmCell.find("a").first();
+
+  // IMDBリンクを探す
+  filmCell.find("a").each((_: number, element: Element) => {
+    const href = $(element).attr("href");
+    if (href && href.includes("imdb.com")) {
+      imdbId = href.match(/\/title\/(tt\d+)/)?.[1];
+    }
+  });
 
   if (linkElement.length > 0) {
     const href = linkElement.attr("href");
@@ -390,7 +411,7 @@ function extractMovieTitle(
     }
   }
 
-  return { title: cleanupTitle(title), referenceUrl };
+  return { title: cleanupTitle(title), referenceUrl, imdbId };
 }
 
 function cleanupTitle(title: string): string {
@@ -401,35 +422,115 @@ function cleanupTitle(title: string): string {
     .trim();
 }
 
-async function checkDuplicateTitle(
-  database: ReturnType<typeof getDatabase>,
-  title: string,
-  languageCode: string,
-  excludeMovieUid?: string
-): Promise<boolean> {
-  const existingMovies = await database
-    .select({
-      movies: movies,
-      translations: translations,
-    })
-    .from(movies)
-    .innerJoin(
-      translations,
-      and(
-        eq(translations.resourceUid, movies.uid),
-        eq(translations.resourceType, "movie_title"),
-        eq(translations.languageCode, languageCode),
-        eq(translations.isDefault, 1)
-      )
-    )
-    .where(
-      and(
-        eq(translations.content, title),
-        excludeMovieUid ? ne(movies.uid, excludeMovieUid) : undefined
-      )
-    );
+// TMDb APIのレスポンス型
+interface TMDatabaseSearchResponse {
+  results: {
+    id: number;
+    title: string;
+    release_date: string;
+  }[];
+}
 
-  return existingMovies.length > 0;
+interface TMDatabaseMovieDetails {
+  imdb_id: string;
+  title: string;
+  release_date: string;
+}
+
+// TMDb APIを使って映画を検索
+async function searchTMDatabaseMovie(
+  title: string,
+  year: number
+): Promise<number | undefined> {
+  if (!TMDB_API_KEY) {
+    console.error("TMDb API key is not set");
+    return undefined;
+  }
+
+  try {
+    const searchUrl = new URL(`${TMDB_API_BASE_URL}/search/movie`);
+    searchUrl.searchParams.append("api_key", TMDB_API_KEY);
+    searchUrl.searchParams.append("query", title);
+    searchUrl.searchParams.append("year", year.toString());
+    searchUrl.searchParams.append("language", "en-US");
+
+    const response = await fetch(searchUrl.toString());
+    if (!response.ok) {
+      throw new Error(`TMDb API error: ${response.statusText}`);
+    }
+
+    const data = (await response.json()) as TMDatabaseSearchResponse;
+
+    // 結果をフィルタリング
+    const matches = data.results.filter((movie) => {
+      const movieYear = new Date(movie.release_date).getFullYear();
+      return Math.abs(movieYear - year) <= 1; // 1年の誤差を許容
+    });
+
+    // 最も関連性の高い結果を返す
+    return matches.length > 0 ? matches[0].id : undefined;
+  } catch (error) {
+    console.error(`Error searching TMDb for ${title} (${year}):`, error);
+    return undefined;
+  }
+}
+
+// TMDb APIから映画の詳細情報を取得
+async function fetchTMDatabaseMovieDetails(
+  movieId: number
+): Promise<string | undefined> {
+  if (!TMDB_API_KEY) {
+    console.error("TMDb API key is not set");
+    return undefined;
+  }
+
+  try {
+    const detailsUrl = new URL(`${TMDB_API_BASE_URL}/movie/${movieId}`);
+    detailsUrl.searchParams.append("api_key", TMDB_API_KEY);
+    detailsUrl.searchParams.append("language", "en-US");
+
+    const response = await fetch(detailsUrl.toString());
+    if (!response.ok) {
+      throw new Error(`TMDb API error: ${response.statusText}`);
+    }
+
+    const data = (await response.json()) as TMDatabaseMovieDetails;
+    return data.imdb_id || undefined;
+  } catch (error) {
+    console.error(
+      `Error fetching TMDb movie details for ID ${movieId}:`,
+      error
+    );
+    return undefined;
+  }
+}
+
+// IMDb IDを取得する関数
+async function fetchImdbId(
+  title: string,
+  year: number
+): Promise<string | undefined> {
+  try {
+    // TMDbで映画を検索
+    const movieId = await searchTMDatabaseMovie(title, year);
+    if (!movieId) {
+      console.log(`No TMDb match found for ${title} (${year})`);
+      return undefined;
+    }
+
+    // 映画の詳細情報を取得
+    const imdbId = await fetchTMDatabaseMovieDetails(movieId);
+    if (imdbId) {
+      console.log(`Found IMDb ID for ${title} (${year}): ${imdbId}`);
+    } else {
+      console.log(`No IMDb ID found for ${title} (${year})`);
+    }
+
+    return imdbId;
+  } catch (error) {
+    console.error(`Error fetching IMDb ID for ${title} (${year}):`, error);
+    return undefined;
+  }
 }
 
 async function processMovie(
@@ -442,48 +543,71 @@ async function processMovie(
     const master = await fetchMasterData();
     const database = getDatabase(environment_);
 
-    // Check for duplicate title before proceeding
-    const isDuplicate = await checkDuplicateTitle(database, title, "en");
-    if (isDuplicate) {
-      console.log(`Skipping duplicate movie title: ${title} (${year})`);
-      return;
-    }
+    // IMDb IDを取得
+    const imdbId = await fetchImdbId(title, year);
 
-    const [newMovie] = await database
-      .insert(movies)
-      .values({
-        originalLanguage: "en",
-        year,
+    // 既存の映画を検索
+    const existingMovies = await database
+      .select({
+        movies: movies,
+        translations: translations,
       })
-      .returning();
+      .from(movies)
+      .innerJoin(
+        translations,
+        and(
+          eq(translations.resourceUid, movies.uid),
+          eq(translations.resourceType, "movie_title"),
+          eq(translations.languageCode, "en"),
+          eq(translations.isDefault, 1)
+        )
+      )
+      .where(eq(translations.content, title));
 
-    if (!newMovie) {
-      throw new Error(`Failed to create movie: ${title}`);
-    }
+    let movieUid: string;
 
-    const movieUid = newMovie.uid;
+    if (existingMovies.length > 0) {
+      // 既存の映画が見つかった場合は更新
+      const existingMovie = existingMovies[0].movies;
+      movieUid = existingMovie.uid;
 
-    await database
-      .insert(translations)
-      .values({
+      // IMDb IDが新しく取得できた場合は更新
+      if (imdbId && !existingMovie.imdbId) {
+        await database
+          .update(movies)
+          .set({
+            imdbId,
+            updatedAt: Math.floor(Date.now() / 1000),
+          })
+          .where(eq(movies.uid, movieUid));
+        console.log(`Updated IMDb ID for ${title}: ${imdbId}`);
+      }
+    } else {
+      // 新規映画の作成
+      const [newMovie] = await database
+        .insert(movies)
+        .values({
+          originalLanguage: "en",
+          year,
+          imdbId: imdbId || undefined,
+        })
+        .returning();
+
+      if (!newMovie) {
+        throw new Error(`Failed to create movie: ${title}`);
+      }
+      movieUid = newMovie.uid;
+
+      await database.insert(translations).values({
         resourceType: "movie_title",
         resourceUid: movieUid,
         languageCode: "en",
         content: title,
         isDefault: 1,
-      })
-      .onConflictDoUpdate({
-        target: [
-          translations.resourceType,
-          translations.resourceUid,
-          translations.languageCode,
-        ],
-        set: {
-          content: title,
-          updatedAt: Math.floor(Date.now() / 1000),
-        },
       });
+    }
 
+    // 参照URLの更新または追加
     if (referenceUrl) {
       await database
         .insert(referenceUrls)
@@ -509,43 +633,34 @@ async function processMovie(
 
     const ceremonyUid = await getOrCreateCeremony(year, master.organizationUid);
 
-    const [existingNomination] = await database
-      .select()
-      .from(nominations)
-      .where(
-        and(
-          eq(nominations.movieUid, movieUid),
-          eq(nominations.ceremonyUid, ceremonyUid),
-          eq(nominations.categoryUid, master.categoryUid)
-        )
-      );
+    // ノミネーション情報の更新または追加
+    await database
+      .insert(nominations)
+      .values({
+        movieUid: movieUid,
+        ceremonyUid,
+        categoryUid: master.categoryUid,
+        isWinner: isWinner ? 1 : 0,
+      })
+      .onConflictDoUpdate({
+        target: [
+          nominations.movieUid,
+          nominations.ceremonyUid,
+          nominations.categoryUid,
+        ],
+        set: {
+          isWinner: isWinner ? 1 : 0,
+          updatedAt: Math.floor(Date.now() / 1000),
+        },
+      });
 
-    if (existingNomination) {
-      console.log(`Skipping duplicate nomination: ${title} (${year})`);
-      return;
-    }
-
-    const newNomination: NewNomination = {
-      movieUid: movieUid,
-      ceremonyUid,
-      categoryUid: master.categoryUid,
-      isWinner: isWinner ? 1 : 0,
-    };
-
-    await database.insert(nominations).values(newNomination);
     console.log(
-      `Processed nomination: ${title} (${year}) - ${
+      `Processed ${existingMovies.length > 0 ? "updated" : "new"} movie: ${title} (${year}) - ${
         isWinner ? "Winner" : "Nominee"
-      }`
+      } ${imdbId ? `IMDb: ${imdbId}` : ""}`
     );
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.includes("Duplicate movie title")
-    ) {
-      console.log(`Skipping duplicate movie: ${title} (${year})`);
-      return;
-    }
     console.error(`Error processing movie ${title}:`, error);
+    throw error;
   }
 }

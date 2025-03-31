@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./schema";
 
 export interface Environment {
+  TMDB_API_KEY: string | undefined;
   DB: D1Database;
 }
 
