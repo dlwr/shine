@@ -4,7 +4,7 @@
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "front",
+  "name": "shine-front",
   "compatibility_date": "2025-03-27",
   "compatibility_flags": ["nodejs_compat"],
   "pages_build_output_dir": "./dist",
@@ -29,7 +29,7 @@
    * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
    */
   "vars": {
-    "API_URL": "https://localhost:8787",
+    "API_URL": "https://shine-api.yuta25.workers.dev/",
   },
   /**
    * Note: Use secrets to store sensitive data.
