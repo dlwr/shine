@@ -9,12 +9,29 @@ type Movie = {
   imdbUrl?: string;
 };
 
+function getCacheKey() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+
+  const adjustedDay = now.getHours() < 6 ? day - 1 : day;
+
+  return `${year}-${month}-${adjustedDay}`;
+}
+
 async function fetchMovie() {
   try {
     const apiUrl =
       import.meta.env.API_URL || "https://shine-api.yuta25.workers.dev/";
     console.log("Using API URL:", apiUrl);
-    const response = await fetch(`${apiUrl}`);
+
+    const cacheKey = getCacheKey();
+    const response = await fetch(`${apiUrl}?cache=${cacheKey}`, {
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    });
 
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status}`);
