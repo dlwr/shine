@@ -12,25 +12,37 @@ app.use("*", cors());
 
 function getDateSeed(date: Date, type: "daily" | "weekly" | "monthly"): number {
   const year = date.getFullYear();
-  const month = date.getMonth();
+  const month = date.getMonth() + 1;
   const day = date.getDate();
+
+  const DAILY_PRIME = 73_939_133;
+  const WEEKLY_PRIME = 47_158_511;
+  const MONTHLY_PRIME = 28_657;
 
   switch (type) {
     case "daily": {
-      return year * 10_000 + month * 100 + day;
+      const base = year * 10_000 + month * 100 + day;
+      return (
+        (((base ^ 10_870_693) * DAILY_PRIME) % 1_000_000_000) + 1_000_000_000
+      );
     }
     case "weekly": {
       const daysSinceFriday = (date.getDay() - 5 + 7) % 7;
       const fridayDate = new Date(date);
       fridayDate.setDate(day - daysSinceFriday);
-      return (
+      const base =
         fridayDate.getFullYear() * 10_000 +
-        fridayDate.getMonth() * 100 +
-        fridayDate.getDate()
+        (fridayDate.getMonth() + 1) * 100 +
+        fridayDate.getDate();
+      return (
+        (((base ^ 15_790_320) * WEEKLY_PRIME) % 1_000_000_000) + 2_000_000_000
       );
     }
     case "monthly": {
-      return year * 100 + month;
+      const base = year * 100 + month;
+      return (
+        (((base ^ 3_947_580) * MONTHLY_PRIME) % 1_000_000_000) + 3_000_000_000
+      );
     }
   }
 }
