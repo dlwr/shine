@@ -1,5 +1,6 @@
 import type { Environment } from "db";
 import academyAwardsHandler from "./academy-awards";
+import japaneseTranslationsHandler from "./japanese-translations";
 import moviePostersHandler from "./movie-posters";
 
 export default {
@@ -15,6 +16,10 @@ export default {
       return academyAwardsHandler.fetch(request, environment);
     }
 
+    if (path.startsWith("/japanese-translations")) {
+      return japaneseTranslationsHandler.fetch(request, environment);
+    }
+
     if (path === "/" || path === "") {
       return new Response(
         `
@@ -22,6 +27,7 @@ export default {
         - /movie-posters - Scrape and store movie poster URLs
         - /academy-awards - Scrape Academy Awards data
         - /academy-awards/seed - Seed Academy Awards master data
+        - /japanese-translations - Scrape Japanese translations for movies
       `,
         {
           status: 200,
