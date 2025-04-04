@@ -101,7 +101,7 @@ export default {
           if (japaneseTitle) {
             // 日本語翻訳をデータベースに保存
             await saveJapaneseTranslation(environment.DB, {
-              resourceType: "movie",
+              resourceType: "movie_title",
               resourceUid: movie.uid,
               languageCode: "ja",
               content: japaneseTitle,

@@ -37,7 +37,9 @@ export async function getMoviesWithoutJapaneseTranslation(
   database: D1Database,
   limit = 20
 ): Promise<Movie[]> {
-  const drizzleDatabase = drizzle(database);
+  const drizzleDatabase = drizzle(database, {
+    casing: "snake_case",
+  });
 
   // 英語タイトルを取得するために、まず英語の翻訳データを含む映画を取得
   const moviesWithEnglishTitles = await drizzleDatabase
@@ -50,7 +52,7 @@ export async function getMoviesWithoutJapaneseTranslation(
     .innerJoin(
       translations,
       and(
-        eq(translations.resourceType, "movie"),
+        eq(translations.resourceType, "movie_title"),
         eq(translations.resourceUid, movies.uid),
         eq(translations.languageCode, "en")
       )
@@ -75,7 +77,7 @@ export async function getMoviesWithoutJapaneseTranslation(
     .from(translations)
     .where(
       and(
-        eq(translations.resourceType, "movie"),
+        eq(translations.resourceType, "movie_title"),
         eq(translations.languageCode, "ja")
       )
     );
@@ -124,7 +126,7 @@ async function getMovieTitle(
     .from(translations)
     .where(
       and(
-        eq(translations.resourceType, "movie"),
+        eq(translations.resourceType, "movie_title"),
         eq(translations.resourceUid, movieUid),
         eq(translations.languageCode, languageCode)
       )
