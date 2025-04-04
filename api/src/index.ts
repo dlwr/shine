@@ -20,14 +20,13 @@ function getDateSeed(date: Date, type: "daily" | "weekly" | "monthly"): number {
       return year * 10_000 + month * 100 + day;
     }
     case "weekly": {
-      const dayOfWeek = date.getDay();
-      const daysSinceStartOfWeek = dayOfWeek;
-      const startOfWeekDate = new Date(date);
-      startOfWeekDate.setDate(day - daysSinceStartOfWeek);
+      const daysSinceFriday = (date.getDay() - 5 + 7) % 7;
+      const fridayDate = new Date(date);
+      fridayDate.setDate(day - daysSinceFriday);
       return (
-        startOfWeekDate.getFullYear() * 10_000 +
-        startOfWeekDate.getMonth() * 100 +
-        startOfWeekDate.getDate()
+        fridayDate.getFullYear() * 10_000 +
+        fridayDate.getMonth() * 100 +
+        fridayDate.getDate()
       );
     }
     case "monthly": {
