@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SHINE is a comprehensive movie database project designed to be the world's most organized movie database. It collects and organizes movie information, awards, nominations, and multilingual translations. The project is built on Cloudflare Workers with D1 database and uses a modular architecture with separate packages for API, scrapers, database, and frontend.
+SHINE is a comprehensive movie database project designed to be the world's most organized movie database. It collects and organizes movie information, awards, nominations, and multilingual translations. The project is built on Cloudflare Workers with Turso database and uses a modular architecture with separate packages for API, scrapers, database, and frontend.
 
 ## Architecture
 
@@ -20,6 +20,7 @@ Key design patterns:
 - Multilingual support through a flexible translations table
 - Comprehensive awards and nominations tracking system
 - UUID-based primary keys with snake_case database naming
+- Database: Turso (libSQL) - a SQLite-compatible edge database
 
 ## Common Commands
 
@@ -37,20 +38,17 @@ pnpm run scrapers:dev
 
 ### Database Operations
 ```bash
-# Open database studio (development)
-pnpm run db:studio:dev
+# Open database studio
+pnpm run db:studio
 
-# Open database studio (production)
-pnpm run db:studio:prod
+# Generate migrations
+pnpm run db:generate
 
-# Generate migrations (development)
-pnpm run db:generate:dev
+# Apply migrations
+pnpm run db:migrate
 
-# Apply migrations (development)
-pnpm run db:migrate:dev
-
-# Push schema changes (development)
-pnpm run db:push:dev
+# Push schema changes
+pnpm run db:push
 ```
 
 ### Deployment
@@ -67,9 +65,6 @@ pnpm run scrapers:deploy
 
 ### Utilities
 ```bash
-# Run commands with local database path
-pnpm run with-local-db -- <command>
-
 # Lint code
 npx eslint .
 
@@ -95,11 +90,17 @@ Important schema details:
 - Database uses snake_case naming convention (configured in drizzle.config.ts)
 - Date-seeded movie selection uses deterministic algorithms with prime numbers
 
-## Local Development Database
+## Database Configuration
 
-The project uses a local SQLite database for development located in `db/dev/v3/d1/miniflare-D1DatabaseObject/`. The `with-local-db.sh` script automatically finds and sets the `LOCAL_DB_PATH` environment variable.
+The project uses Turso (libSQL) as the database. Configuration requires:
+- `TURSO_DATABASE_URL`: Your Turso database URL (e.g., `libsql://your-database.turso.io`)
+- `TURSO_AUTH_TOKEN`: Your Turso authentication token
 
-For production, it connects to Cloudflare D1 using account credentials.
+For local development with Cloudflare Workers:
+1. Copy `.dev.vars.example` to `.dev.vars` in the root directory
+2. Add your Turso credentials to the `.dev.vars` file
+
+Note: Both `api/` and `scrapers/` directories contain symlinks to the root `.dev.vars` file for consistency.
 
 ## Data Collection Strategy
 
@@ -132,6 +133,7 @@ Each selection uses mathematical seeding to ensure deterministic but varied resu
 
 - `db/schema/index.ts` - Database schema definitions
 - `api/src/index.ts` - Main API implementation with date-seeding logic
-- `drizzle.config.ts` - Database configuration (local vs production)
-- `with-local-db.sh` - Local development database helper
+- `drizzle.config.ts` - Database configuration for Turso
 - `.cursor/rules/shine.mdc` - Comprehensive project documentation and requirements
+- `.env.example` / `.dev.vars.example` - Environment variable templates
+- `.dev.vars` - Local development variables (symlinked to `api/` and `scrapers/`)

@@ -5,21 +5,16 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "api:dev": "cd api && wrangler dev --persist-to=../db/dev",
+    "api:dev": "cd api && wrangler dev",
     "api:deploy": "cd api && wrangler deploy --minify",
     "front:dev": "cd front && pnpm run dev",
     "front:deploy": "cd front && pnpm run deploy",
-    "scrapers:dev": "cd scrapers && wrangler dev --persist-to=../db/dev",
+    "scrapers:dev": "cd scrapers && wrangler dev",
     "scrapers:deploy": "cd scrapers && wrangler deploy --minify",
-    "with-local-db": "./with-local-db.sh",
-    "db:studio:dev": "pnpm run with-local-db -- drizzle-kit studio",
-    "db:studio:prod": "drizzle-kit studio",
-    "db:generate:dev": "pnpm run with-local-db -- drizzle-kit generate",
-    "db:generate:prod": "drizzle-kit generate",
-    "db:migrate:dev": "pnpm run with-local-db -- drizzle-kit migrate",
-    "db:migrate:prod": "drizzle-kit migrate",
-    "db:push:dev": "pnpm run with-local-db -- drizzle-kit push",
-    "db:push:prod": "drizzle-kit push"
+    "db:studio": "drizzle-kit studio",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250404.0",

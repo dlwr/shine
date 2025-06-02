@@ -1,13 +1,20 @@
-import { drizzle } from "drizzle-orm/d1";
+import { createClient } from "@libsql/client";
+import { drizzle } from "drizzle-orm/libsql";
 import * as schema from "./schema";
 
 export interface Environment {
   TMDB_API_KEY: string | undefined;
-  DB: D1Database;
+  TURSO_DATABASE_URL: string;
+  TURSO_AUTH_TOKEN: string;
 }
 
 export const getDatabase = (environment: Environment) => {
-  return drizzle(environment.DB, {
+  const client = createClient({
+    url: environment.TURSO_DATABASE_URL,
+    authToken: environment.TURSO_AUTH_TOKEN,
+  });
+  
+  return drizzle(client, {
     schema: {
       ...schema,
     },
