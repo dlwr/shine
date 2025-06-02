@@ -6,7 +6,6 @@
     "deploy": "wrangler deploy --minify"
   },
   "dependencies": {
-    "@shine/db": "workspace:*",
-    "drizzle-orm": "^0.44.1"
+    "@shine/db": "workspace:*"
   }
 }

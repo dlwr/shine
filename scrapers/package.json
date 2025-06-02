@@ -6,7 +6,6 @@
   "dependencies": {
     "@shine/db": "workspace:*",
     "cheerio": "^1.0.0",
-    "domhandler": "^5.0.3",
-    "drizzle-orm": "^0.44.1"
+    "domhandler": "^5.0.3"
   }
 }

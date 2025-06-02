@@ -1,23 +1,7 @@
 {
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "strict": true,
-    "skipLibCheck": true,
-    "lib": ["ESNext"],
-    "types": ["@cloudflare/workers-types/2023-07-01", "node"],
-    "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx",
-    // Bundler mode
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
-    "noEmit": true,
-    "noFallthroughCasesInSwitch": true,
-    "esModuleInterop": true,
-    "baseUrl": "../",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+    "types": ["@cloudflare/workers-types", "node"],
+    "jsxImportSource": "hono/jsx"
   }
 }
