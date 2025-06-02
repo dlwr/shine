@@ -27,25 +27,34 @@ const client = createClient({
   authToken: environment.TURSO_AUTH_TOKEN,
 });
 
-async function getMoviesWithImdbId(limit = 10) {
-  const result = await client.execute({
-    sql: `SELECT m.uid, m.imdb_id as imdbId 
-          FROM movies m 
-          LEFT JOIN poster_urls p ON m.uid = p.movie_uid 
-          WHERE m.imdb_id IS NOT NULL AND p.uid IS NULL 
-          LIMIT ?`,
-    args: [limit]
-  });
+async function getMoviesWithImdbId(limit = null) {
+  // ポスターがない映画を優先して取得
+  let sql = `SELECT m.uid, m.imdb_id as imdbId 
+             FROM movies m 
+             LEFT JOIN poster_urls p ON m.uid = p.movie_uid 
+             WHERE m.imdb_id IS NOT NULL AND p.uid IS NULL`;
+  
+  let args = [];
+  if (limit) {
+    sql += ` LIMIT ?`;
+    args = [limit];
+  }
+  
+  const result = await client.execute({ sql, args });
   
   if (result.rows.length > 0) {
     return result.rows.map(row => ({ uid: row.uid, imdbId: row.imdbId }));
   }
   
-  const allResult = await client.execute({
-    sql: `SELECT uid, imdb_id as imdbId FROM movies WHERE imdb_id IS NOT NULL LIMIT ?`,
-    args: [limit]
-  });
+  // ポスターがない映画がない場合は、すべての映画を取得（重複を避けるため実際には実行されない）
+  let allSql = `SELECT uid, imdb_id as imdbId FROM movies WHERE imdb_id IS NOT NULL`;
+  let allArgs = [];
+  if (limit) {
+    allSql += ` LIMIT ?`;
+    allArgs = [limit];
+  }
   
+  const allResult = await client.execute({ sql: allSql, args: allArgs });
   return allResult.rows.map(row => ({ uid: row.uid, imdbId: row.imdbId }));
 }
 
@@ -132,11 +141,27 @@ async function main() {
     
     const args = process.argv.slice(2);
     const countArg = args.find(arg => arg.startsWith('--count='));
-    const count = countArg ? parseInt(countArg.split('=')[1], 10) : 10;
+    const allArg = args.includes('--all');
+    
+    let count;
+    let message;
+    
+    if (allArg) {
+      count = null; // 制限なし
+      message = "ポスターURL取得を開始します (全件処理)";
+    } else {
+      count = countArg ? parseInt(countArg.split('=')[1], 10) : 10;
+      message = `ポスターURL取得を開始します (処理件数: ${count}件)`;
+    }
 
-    console.log(`ポスターURL取得を開始します (処理件数: ${count}件)`);
+    console.log(message);
     
     const moviesWithImdbId = await getMoviesWithImdbId(count);
+    if (moviesWithImdbId.length === 0) {
+      console.log("ポスターが必要な映画が見つかりませんでした。すべての映画にポスターが設定済みです。");
+      return;
+    }
+    
     console.log(`処理対象の映画: ${moviesWithImdbId.length}件`);
 
     let processed = 0;
@@ -176,7 +201,14 @@ async function main() {
 
       console.log(`[${processed}/${moviesWithImdbId.length}] 処理完了`);
       console.log(`進捗状況: 成功=${success}, 失敗=${failed}, 合計=${processed}/${moviesWithImdbId.length}`);
+      
+      // 進捗率の表示
+      const progressPercent = ((processed / moviesWithImdbId.length) * 100).toFixed(1);
+      console.log(`進捗: ${progressPercent}% (残り: ${moviesWithImdbId.length - processed}件)`);
       console.log(`------------------------------`);
+      
+      // APIレート制限を考慮して少し待機（TMDBは40リクエスト/10秒の制限）
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
 
     console.log('\n=== 最終結果 ===');
