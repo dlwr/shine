@@ -12,8 +12,8 @@ app.use("*", cors());
 
 function simpleHash(input: string): number {
   let hash = 0;
-  for (let i = 0; i < input.length; i++) {
-    const char = input.charCodeAt(i);
+  for (let index = 0; index < input.length; index++) {
+    const char = input.codePointAt(index) || 0;
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
