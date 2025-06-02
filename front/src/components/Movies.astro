@@ -1,6 +1,12 @@
 ---
 import MovieCard from "./MovieCard.astro";
 
+export interface Props {
+  locale?: string;
+}
+
+const { locale = 'en' } = Astro.props;
+
 type Movie = {
   uid: string;
   title: string;
@@ -20,16 +26,17 @@ function getCacheKey() {
   return `${year}-${month}-${adjustedDay}`;
 }
 
-async function fetchMovie() {
+async function fetchMovie(locale: string) {
   try {
     const apiUrl =
       import.meta.env.API_URL || "https://shine-api.yuta25.workers.dev/";
     console.log("Using API URL:", apiUrl);
 
     const cacheKey = getCacheKey();
-    const response = await fetch(`${apiUrl}?cache=${cacheKey}`, {
+    const response = await fetch(`${apiUrl}?cache=${cacheKey}&locale=${locale}`, {
       headers: {
         "Cache-Control": "no-store",
+        "Accept-Language": locale === 'ja' ? 'ja,en;q=0.5' : 'en',
       },
     });
 
@@ -54,24 +61,41 @@ async function fetchMovie() {
   }
 }
 
-const movies = await fetchMovie();
+const movies = await fetchMovie(locale);
+
+const labels = {
+  en: {
+    randomMovie: "Random Movie",
+    daily: "Daily",
+    weekly: "Weekly", 
+    monthly: "Monthly"
+  },
+  ja: {
+    randomMovie: "ランダム映画",
+    daily: "日替わり",
+    weekly: "週替わり",
+    monthly: "月替わり"
+  }
+};
+
+const t = labels[locale as keyof typeof labels] || labels.en;
 ---
 
 <section class="movies-section">
-  <h2>Random Movie</h2>
+  <h2>{t.randomMovie}</h2>
 
   <div id="movie-container" class="movie-container">
     <div class="movie-item">
-      <div class="movie-label">Daily</div>
-      {movies.daily && <MovieCard movie={movies.daily} />}
+      <div class="movie-label">{t.daily}</div>
+      {movies.daily && <MovieCard movie={movies.daily} locale={locale} />}
     </div>
     <div class="movie-item">
-      <div class="movie-label">Weekly</div>
-      {movies.weekly && <MovieCard movie={movies.weekly} />}
+      <div class="movie-label">{t.weekly}</div>
+      {movies.weekly && <MovieCard movie={movies.weekly} locale={locale} />}
     </div>
     <div class="movie-item">
-      <div class="movie-label">Monthly</div>
-      {movies.monthly && <MovieCard movie={movies.monthly} />}
+      <div class="movie-label">{t.monthly}</div>
+      {movies.monthly && <MovieCard movie={movies.monthly} locale={locale} />}
     </div>
   </div>
 </section>

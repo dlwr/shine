@@ -7,9 +7,17 @@ interface Props {
     posterUrl?: string;
     imdbUrl?: string;
   };
+  locale?: string;
 }
 
-const { movie } = Astro.props;
+const { movie, locale = 'en' } = Astro.props;
+
+const labels = {
+  en: { noPoster: "No Poster" },
+  ja: { noPoster: "ポスターなし" }
+};
+
+const t = labels[locale as keyof typeof labels] || labels.en;
 ---
 
 {
@@ -24,7 +32,7 @@ const { movie } = Astro.props;
         {movie.posterUrl ? (
           <img src={movie.posterUrl} alt={`${movie.title} poster`} />
         ) : (
-          <div class="no-poster">No Poster</div>
+          <div class="no-poster">{t.noPoster}</div>
         )}
       </div>
       <div class="movie-info">
@@ -38,7 +46,7 @@ const { movie } = Astro.props;
         {movie.posterUrl ? (
           <img src={movie.posterUrl} alt={`${movie.title} poster`} />
         ) : (
-          <div class="no-poster">No Poster</div>
+          <div class="no-poster">{t.noPoster}</div>
         )}
       </div>
       <div class="movie-info">

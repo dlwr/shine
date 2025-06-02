@@ -46,23 +46,44 @@ function getDateSeed(date: Date, type: "daily" | "weekly" | "monthly"): number {
 
 async function getMovieByDateSeed(
   database: ReturnType<typeof getDatabase>,
-  seed: number
+  seed: number,
+  locale?: string
 ) {
+  const preferredLanguage = locale || "en";
+  
   const results = await database
     .select()
     .from(movies)
-    .leftJoin(translations, eq(movies.uid, translations.resourceUid))
+    .leftJoin(translations, and(
+      eq(movies.uid, translations.resourceUid),
+      eq(translations.resourceType, "movie_title"),
+      eq(translations.languageCode, preferredLanguage)
+    ))
     .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
-    .where(
-      and(
-        eq(movies.originalLanguage, translations.languageCode),
-        eq(translations.resourceType, "movie_title")
-      )
-    )
     .orderBy(
       sql`(ABS(${seed} % (SELECT COUNT(*) FROM movies)) + movies.rowid) % (SELECT COUNT(*) FROM movies)`
     )
     .limit(1);
+
+  if (results.length === 0 || !results[0].translations?.content) {
+    const fallbackResults = await database
+      .select()
+      .from(movies)
+      .leftJoin(translations, and(
+        eq(movies.uid, translations.resourceUid),
+        eq(translations.resourceType, "movie_title"),
+        eq(translations.isDefault, 1)
+      ))
+      .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
+      .orderBy(
+        sql`(ABS(${seed} % (SELECT COUNT(*) FROM movies)) + movies.rowid) % (SELECT COUNT(*) FROM movies)`
+      )
+      .limit(1);
+    
+    if (fallbackResults.length > 0) {
+      return fallbackResults;
+    }
+  }
 
   if (results.length === 0) {
     return;
@@ -88,19 +109,37 @@ async function getMovieByDateSeed(
   };
 }
 
+function parseAcceptLanguage(acceptLanguage?: string): string[] {
+  if (!acceptLanguage) return [];
+  
+  return acceptLanguage
+    .split(',')
+    .map(lang => {
+      const [code, q] = lang.trim().split(';q=');
+      return { code: code.split('-')[0], quality: q ? parseFloat(q) : 1.0 };
+    })
+    .sort((a, b) => b.quality - a.quality)
+    .map(lang => lang.code);
+}
+
 app.get("/", async (c) => {
   try {
     const database = getDatabase(c.env as Environment);
     const now = new Date();
+
+    const localeParam = c.req.query('locale');
+    const acceptLanguage = c.req.header('accept-language');
+    const preferredLanguages = localeParam ? [localeParam] : parseAcceptLanguage(acceptLanguage);
+    const locale = preferredLanguages.find(lang => ['en', 'ja'].includes(lang)) || 'en';
 
     const dailySeed = getDateSeed(now, "daily");
     const weeklySeed = getDateSeed(now, "weekly");
     const monthlySeed = getDateSeed(now, "monthly");
 
     const [dailyMovie, weeklyMovie, monthlyMovie] = await Promise.all([
-      getMovieByDateSeed(database, dailySeed),
-      getMovieByDateSeed(database, weeklySeed),
-      getMovieByDateSeed(database, monthlySeed),
+      getMovieByDateSeed(database, dailySeed, locale),
+      getMovieByDateSeed(database, weeklySeed, locale),
+      getMovieByDateSeed(database, monthlySeed, locale),
     ]);
 
     return c.json({

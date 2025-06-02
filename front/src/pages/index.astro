@@ -1,12 +1,38 @@
 ---
 import Movies from "../components/Movies.astro";
 import Layout from "../layouts/Layout.astro";
+import LanguageSelector from "../components/LanguageSelector.astro";
+
+function getLocaleFromRequest(request: Request): string {
+  const url = new URL(request.url);
+  const localeParam = url.searchParams.get('locale');
+  if (localeParam && ['en', 'ja'].includes(localeParam)) {
+    return localeParam;
+  }
+
+  const acceptLanguage = request.headers.get('accept-language');
+  if (acceptLanguage) {
+    const languages = acceptLanguage
+      .split(',')
+      .map(lang => lang.trim().split(';')[0].split('-')[0])
+      .filter(lang => ['en', 'ja'].includes(lang));
+    
+    if (languages.length > 0) {
+      return languages[0];
+    }
+  }
+
+  return 'en';
+}
+
+const locale = getLocaleFromRequest(Astro.request);
 ---
 
 <Layout>
   <main>
     <h1>SHINE</h1>
-    <Movies />
+    <LanguageSelector locale={locale} />
+    <Movies locale={locale} />
   </main>
 </Layout>
 
