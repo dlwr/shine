@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     // Enable latest features
-    "lib": ["ESNext"],
-    "target": "ESNext",
+    "lib": ["ES2022", "WebWorker"],
+    "target": "ES2022",
     "module": "ESNext",
     "moduleDetection": "force",
     "jsx": "react-jsx",
@@ -19,10 +19,12 @@
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
 
-    "types": ["node"],
+    "types": ["node", "@cloudflare/workers-types"],
     "esModuleInterop": true,
     "baseUrl": ".",
     "paths": {
+      "db": ["./db"],
+      "db/*": ["./db/*"],
       "@shine/db": ["db"],
       "@shine/db/*": ["db/*"],
       "@shine/scrapers": ["scrapers"],

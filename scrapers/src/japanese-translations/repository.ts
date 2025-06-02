@@ -1,10 +1,9 @@
 /**
  * 日本語翻訳データの取得と保存を行うリポジトリモジュール
  */
-import { D1Database } from "@cloudflare/workers-types";
 import { movies, translations } from "db/schema";
 import { and, eq } from "drizzle-orm";
-import { drizzle, DrizzleD1Database } from "drizzle-orm/d1";
+import { type getDatabase } from "db";
 
 /**
  * 日本語翻訳用の型定義
@@ -34,15 +33,12 @@ export interface Translation {
  * @returns 日本語翻訳が未登録の映画データ
  */
 export async function getMoviesWithoutJapaneseTranslation(
-  database: D1Database,
+  database: ReturnType<typeof getDatabase>,
   limit = 20
 ): Promise<Movie[]> {
-  const drizzleDatabase = drizzle(database, {
-    casing: "snake_case",
-  });
 
   // 英語タイトルを取得するために、まず英語の翻訳データを含む映画を取得
-  const moviesWithEnglishTitles = await drizzleDatabase
+  const moviesWithEnglishTitles = await database
     .select({
       movieUid: movies.uid,
       imdbId: movies.imdbId,
@@ -70,7 +66,7 @@ export async function getMoviesWithoutJapaneseTranslation(
   }
 
   // 日本語翻訳が既に存在する映画を取得
-  const moviesWithJapaneseTitles = await drizzleDatabase
+  const moviesWithJapaneseTitles = await database
     .select({
       movieUid: translations.resourceUid,
     })
@@ -95,7 +91,7 @@ export async function getMoviesWithoutJapaneseTranslation(
   // 英語タイトルを取得
   const result = [];
   for (const movie of moviesWithoutJapanese.slice(0, limit)) {
-    const englishTitle = await getMovieTitle(drizzleDatabase, movie.uid, "en");
+    const englishTitle = await getMovieTitle(database, movie.uid, "en");
     if (englishTitle) {
       result.push({
         ...movie,
@@ -115,11 +111,11 @@ export async function getMoviesWithoutJapaneseTranslation(
  * @returns 映画タイトル
  */
 async function getMovieTitle(
-  drizzleDatabase: DrizzleD1Database,
+  database: ReturnType<typeof getDatabase>,
   movieUid: string,
   languageCode: string
 ): Promise<string | undefined> {
-  const result = await drizzleDatabase
+  const result = await database
     .select({
       content: translations.content,
     })
@@ -143,13 +139,11 @@ async function getMovieTitle(
  * @returns 挿入結果
  */
 export async function saveJapaneseTranslation(
-  database: D1Database,
+  database: ReturnType<typeof getDatabase>,
   translation: Translation
 ): Promise<unknown> {
-  const drizzleDatabase = drizzle(database);
-
   // 既存の翻訳を確認
-  const existingTranslation = await drizzleDatabase
+  const existingTranslation = await database
     .select()
     .from(translations)
     .where(
@@ -167,7 +161,7 @@ export async function saveJapaneseTranslation(
 
   // 翻訳が存在しない場合は新規挿入、存在する場合は更新
   return existingTranslation.length === 0
-    ? drizzleDatabase.insert(translations).values({
+    ? database.insert(translations).values({
         uid,
         resourceType: translation.resourceType,
         resourceUid: translation.resourceUid,
@@ -177,7 +171,7 @@ export async function saveJapaneseTranslation(
         createdAt: now,
         updatedAt: now,
       })
-    : drizzleDatabase
+    : database
         .update(translations)
         .set({
           content: translation.content,

@@ -1,12 +1,11 @@
 /**
  * 既存の映画データに対する日本語翻訳データをスクレイピングするモジュール
  */
-import type { Environment } from "db";
+import { getDatabase, type Environment } from "db";
 import {
   getMoviesWithoutJapaneseTranslation,
   saveJapaneseTranslation,
 } from "./repository";
-import { scrapeJapaneseTitleFromEigaDotCom } from "./scrapers/eigadotcom-scraper";
 import { scrapeJapaneseTitleFromWikipedia } from "./scrapers/wikipedia-scraper";
 
 // 処理するバッチサイズ
@@ -65,8 +64,9 @@ export default {
   async handleBatchScraping(environment: Environment): Promise<Response> {
     try {
       // 日本語翻訳が未登録の映画データを取得
+      const database = getDatabase(environment);
       const movies = await getMoviesWithoutJapaneseTranslation(
-        environment.DB,
+        database,
         BATCH_SIZE
       );
 
@@ -85,22 +85,18 @@ export default {
       for (const movie of movies) {
         try {
           // IMDb IDからWikipediaで日本語タイトルを検索
-          let japaneseTitle = await scrapeJapaneseTitleFromWikipedia(
+          const japaneseTitle = await scrapeJapaneseTitleFromWikipedia(
             movie.imdbId
           );
 
-          // Wikipediaで見つからなかった場合は映画.comで検索
-          if (!japaneseTitle && movie.year) {
-            japaneseTitle = await scrapeJapaneseTitleFromEigaDotCom(
-              movie.imdbId,
-              movie.englishTitle,
-              movie.year
-            );
-          }
+          // TODO: Wikipediaで見つからなかった場合は他のソースで検索を実装
+          // if (!japaneseTitle && movie.year) {
+          //   japaneseTitle = await scrapeFromOtherSource(movie.imdbId, movie.englishTitle, movie.year);
+          // }
 
           if (japaneseTitle) {
             // 日本語翻訳をデータベースに保存
-            await saveJapaneseTranslation(environment.DB, {
+            await saveJapaneseTranslation(database, {
               resourceType: "movie_title",
               resourceUid: movie.uid,
               languageCode: "ja",
