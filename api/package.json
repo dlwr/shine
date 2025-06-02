@@ -7,6 +7,6 @@
   },
   "dependencies": {
     "@shine/db": "workspace:*",
-    "drizzle-orm": "0.44.1"
+    "drizzle-orm": "^0.44.1"
   }
 }

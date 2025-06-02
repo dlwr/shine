@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
     // Enable latest features
-    "lib": ["ES2022", "WebWorker"],
+    "lib": ["ES2022", "WebWorker", "ES2021"],
     "target": "ES2022",
+    "downlevelIteration": true,
     "module": "ESNext",
     "moduleDetection": "force",
     "jsx": "react-jsx",

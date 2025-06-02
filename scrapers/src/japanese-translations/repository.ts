@@ -1,9 +1,9 @@
 /**
  * 日本語翻訳データの取得と保存を行うリポジトリモジュール
  */
-import { movies, translations } from "db/schema";
+import { movies, translations } from "../../../db/schema";
 import { and, eq } from "drizzle-orm";
-import { type getDatabase } from "db";
+import { type getDatabase } from "../../../db";
 
 /**
  * 日本語翻訳用の型定義

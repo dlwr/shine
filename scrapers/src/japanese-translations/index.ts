@@ -1,7 +1,7 @@
 /**
  * 既存の映画データに対する日本語翻訳データをスクレイピングするモジュール
  */
-import { getDatabase, type Environment } from "db";
+import { getDatabase, type Environment } from "../../../db";
 import {
   getMoviesWithoutJapaneseTranslation,
   saveJapaneseTranslation,

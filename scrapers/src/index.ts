@@ -1,4 +1,4 @@
-import type { Environment } from "db";
+import type { Environment } from "../../db";
 import academyAwardsHandler from "./academy-awards";
 import japaneseTranslationsHandler from "./japanese-translations";
 import moviePostersHandler from "./movie-posters";

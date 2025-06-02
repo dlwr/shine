@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "dotenv": "^16.4.7",
-    "drizzle-orm": "^0.41.0",
+    "drizzle-orm": "^0.44.1",
     "hono": "^4.7.5"
   },
   "workspaces": [

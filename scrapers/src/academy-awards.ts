@@ -1,13 +1,13 @@
 import { seedAcademyAwards } from "@shine/db/seeds/academy-awards";
 import * as cheerio from "cheerio";
-import { getDatabase, type Environment } from "db";
-import { awardCategories } from "db/schema/award-categories";
-import { awardCeremonies } from "db/schema/award-ceremonies";
-import { awardOrganizations } from "db/schema/award-organizations";
-import { movies } from "db/schema/movies";
-import { nominations } from "db/schema/nominations";
-import { referenceUrls } from "db/schema/reference-urls";
-import { translations } from "db/schema/translations";
+import { getDatabase, type Environment } from "../../db";
+import { awardCategories } from "../../db/schema/award-categories";
+import { awardCeremonies } from "../../db/schema/award-ceremonies";
+import { awardOrganizations } from "../../db/schema/award-organizations";
+import { movies } from "../../db/schema/movies";
+import { nominations } from "../../db/schema/nominations";
+import { referenceUrls } from "../../db/schema/reference-urls";
+import { translations } from "../../db/schema/translations";
 import { Element } from "domhandler";
 import { and, eq } from "drizzle-orm";
 
@@ -90,8 +90,8 @@ async function fetchMasterData(): Promise<MasterData> {
     .from(awardCeremonies)
     .where(eq(awardCeremonies.organizationUid, organization.uid));
 
-  const ceremonies = new Map(
-    ceremoniesData.map((ceremony) => [ceremony.year, ceremony.uid])
+  const ceremonies = new Map<number, string>(
+    ceremoniesData.map((ceremony) => [ceremony.year as number, ceremony.uid])
   );
 
   masterData = {
@@ -418,7 +418,7 @@ function cleanupTitle(title: string): string {
   return title
     .replaceAll(/\s*\([^)]*\)/g, "")
     .replaceAll(/\s*\[[^\]]*\]/g, "")
-    .replaceAll("*", "")
+    .replaceAll('*', "")
     .trim();
 }
 
