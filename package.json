@@ -11,6 +11,7 @@
     "front:dev": "cd front && pnpm run dev",
     "front:deploy": "cd front && pnpm run deploy",
     "scrapers:academy-awards": "cd scrapers && pnpm run scrape:academy-awards",
+    "scrapers:movie-posters": "cd scrapers && node src/movie-posters-simple.js",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

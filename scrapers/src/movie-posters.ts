@@ -1,6 +1,6 @@
-import { getDatabase, type Environment } from "../../db";
-import { movies } from "../../db/schema/movies";
-import { posterUrls } from "../../db/schema/poster-urls";
+import { getDatabase, type Environment } from "../../src";
+import { movies } from "../../src/schema/movies";
+import { posterUrls } from "../../src/schema/poster-urls";
 import { eq, isNotNull, sql } from "drizzle-orm";
 
 const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";

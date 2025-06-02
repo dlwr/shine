@@ -1,9 +1,9 @@
 /**
  * 日本語翻訳データの取得と保存を行うリポジトリモジュール
  */
-import { movies, translations } from "../../../db/schema";
+import { movies, translations } from "../../../src/schema";
 import { and, eq } from "drizzle-orm";
-import { type getDatabase } from "../../../db";
+import { type getDatabase } from "../../../src";
 
 /**
  * 日本語翻訳用の型定義
@@ -85,7 +85,7 @@ export async function getMoviesWithoutJapaneseTranslation(
 
   // 日本語翻訳が存在しない映画のみをフィルタリング
   const moviesWithoutJapanese = [...movieData.values()].filter(
-    (movie) => !japaneseMovieUids.has(movie.uid)
+    (movie: Movie) => !japaneseMovieUids.has(movie.uid)
   );
 
   // 英語タイトルを取得
