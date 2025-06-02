@@ -10,39 +10,36 @@ const app = new Hono();
 
 app.use("*", cors());
 
+function simpleHash(input: string): number {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    const char = input.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash);
+}
+
 function getDateSeed(date: Date, type: "daily" | "weekly" | "monthly"): number {
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
 
-  const DAILY_PRIME = 73_939_133;
-  const WEEKLY_PRIME = 47_158_511;
-  const MONTHLY_PRIME = 28_657;
-
   switch (type) {
     case "daily": {
-      const base = year * 10_000 + month * 100 + day;
-      return (
-        (((base ^ 10_870_693) * DAILY_PRIME) % 1_000_000_000) + 1_000_000_000
-      );
+      const dateString = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+      return simpleHash(`daily-${dateString}`);
     }
     case "weekly": {
       const daysSinceFriday = (date.getDay() - 5 + 7) % 7;
       const fridayDate = new Date(date);
       fridayDate.setDate(day - daysSinceFriday);
-      const base =
-        fridayDate.getFullYear() * 10_000 +
-        (fridayDate.getMonth() + 1) * 100 +
-        fridayDate.getDate();
-      return (
-        (((base ^ 15_790_320) * WEEKLY_PRIME) % 1_000_000_000) + 2_000_000_000
-      );
+      const weekString = `${fridayDate.getFullYear()}-${(fridayDate.getMonth() + 1).toString().padStart(2, '0')}-${fridayDate.getDate().toString().padStart(2, '0')}`;
+      return simpleHash(`weekly-${weekString}`);
     }
     case "monthly": {
-      const base = year * 100 + month;
-      return (
-        (((base ^ 3_947_580) * MONTHLY_PRIME) % 1_000_000_000) + 3_000_000_000
-      );
+      const monthString = `${year}-${month.toString().padStart(2, '0')}`;
+      return simpleHash(`monthly-${monthString}`);
     }
   }
 }
