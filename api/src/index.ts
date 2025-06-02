@@ -62,7 +62,9 @@ async function getMovieByDateSeed(
         eq(translations.resourceType, "movie_title")
       )
     )
-    .orderBy(sql`RANDOM()`)
+    .orderBy(
+      sql`(ABS(${seed} % (SELECT COUNT(*) FROM movies)) + movies.rowid) % (SELECT COUNT(*) FROM movies)`
+    )
     .limit(1);
 
   if (results.length === 0) {
