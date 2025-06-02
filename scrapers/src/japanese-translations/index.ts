@@ -40,7 +40,7 @@ export default {
       if (!movieId) {
         return new Response("Movie ID is required", { status: 400 });
       }
-      return this.handleSingleMovieScraping(movieId, environment);
+      return this.handleSingleMovieScraping(movieId);
     }
 
     // デフォルトレスポンス
@@ -166,15 +166,13 @@ export default {
   /**
    * 単一映画のスクレイピングを処理する
    * @param movieId 映画ID
-   * @param environment 環境変数
    * @returns レスポンスオブジェクト
    */
   async handleSingleMovieScraping(
-    movieId: string,
-    environment: Environment
+    movieId: string
   ): Promise<Response> {
     try {
-      // TODO: 実装
+      console.log(`Movie ID: ${movieId}`);
       return new Response("Not implemented yet", { status: 501 });
     } catch (error) {
       console.error(`Error scraping movie ${movieId}:`, error);
