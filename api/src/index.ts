@@ -59,14 +59,10 @@ async function getMovieByDateSeed(
     .where(
       and(
         eq(movies.originalLanguage, translations.languageCode),
-        eq(translations.resourceType, "movie_title"),
-        eq(posterUrls.isPrimary, 1),
-        eq(posterUrls.languageCode, translations.languageCode)
+        eq(translations.resourceType, "movie_title")
       )
     )
-    .orderBy(
-      sql`(ABS(${seed} % (SELECT COUNT(*) FROM movies)) + movies.rowid) % (SELECT COUNT(*) FROM movies)`
-    )
+    .orderBy(sql`RANDOM()`)
     .limit(1);
 
   if (results.length === 0) {
