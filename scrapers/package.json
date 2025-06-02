@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node --loader ts-node/esm src/index.ts",
     "scrape:academy-awards": "node --loader ts-node/esm src/academy-awards.ts",
-    "scrape:movie-posters": "node --loader ts-node/esm src/movie-posters-cli.ts"
+    "scrape:movie-posters": "node --loader ts-node/esm src/movie-posters-cli.ts",
+    "scrape:japanese-translations": "node --loader ts-node/esm src/japanese-translations-cli.ts"
   },
   "dependencies": {
     "cheerio": "^1.0.0",
