@@ -5,7 +5,5 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify"
   },
-  "dependencies": {
-    "@shine/db": "workspace:*"
-  }
+  "dependencies": {}
 }

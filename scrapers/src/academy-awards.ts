@@ -1,13 +1,13 @@
-import { seedAcademyAwards } from "@shine/db/seeds/academy-awards";
+import { seedAcademyAwards } from "../../src/seeds/academy-awards";
 import * as cheerio from "cheerio";
-import { getDatabase, type Environment } from "../../db";
-import { awardCategories } from "../../db/schema/award-categories";
-import { awardCeremonies } from "../../db/schema/award-ceremonies";
-import { awardOrganizations } from "../../db/schema/award-organizations";
-import { movies } from "../../db/schema/movies";
-import { nominations } from "../../db/schema/nominations";
-import { referenceUrls } from "../../db/schema/reference-urls";
-import { translations } from "../../db/schema/translations";
+import { getDatabase, type Environment } from "../../src";
+import { awardCategories } from "../../src/schema/award-categories";
+import { awardCeremonies } from "../../src/schema/award-ceremonies";
+import { awardOrganizations } from "../../src/schema/award-organizations";
+import { movies } from "../../src/schema/movies";
+import { nominations } from "../../src/schema/nominations";
+import { referenceUrls } from "../../src/schema/reference-urls";
+import { translations } from "../../src/schema/translations";
 import { Element } from "domhandler";
 import { and, eq } from "drizzle-orm";
 

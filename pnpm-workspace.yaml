@@ -1,7 +1,7 @@
 packages:
   - api
   - scrapers
-  - db
+  - front
 ignoredBuiltDependencies:
   - esbuild
   - sharp
