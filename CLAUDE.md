@@ -53,14 +53,20 @@ pnpm run db:push
 
 ### Deployment
 ```bash
-# Deploy API to Cloudflare Workers
-pnpm run api:deploy
+# Deploy API to development environment
+pnpm run api:deploy:dev
+
+# Deploy API to production environment
+pnpm run api:deploy:prod
 
 # Deploy frontend to Cloudflare Pages
 pnpm run front:deploy
 
-# Deploy scrapers to Cloudflare Workers
-pnpm run scrapers:deploy
+# Deploy scrapers to development environment
+pnpm run scrapers:deploy:dev
+
+# Deploy scrapers to production environment
+pnpm run scrapers:deploy:prod
 ```
 
 ### Utilities
@@ -92,15 +98,25 @@ Important schema details:
 
 ## Database Configuration
 
-The project uses Turso (libSQL) as the database. Configuration requires:
-- `TURSO_DATABASE_URL`: Your Turso database URL (e.g., `libsql://your-database.turso.io`)
-- `TURSO_AUTH_TOKEN`: Your Turso authentication token
+The project uses Turso (libSQL) as the database with separate databases for development and production. Configuration requires:
+
+**Development Environment:**
+- `TURSO_DATABASE_URL_DEV`: Your development Turso database URL
+- `TURSO_AUTH_TOKEN_DEV`: Your development Turso authentication token
+
+**Production Environment:**
+- `TURSO_DATABASE_URL_PROD`: Your production Turso database URL  
+- `TURSO_AUTH_TOKEN_PROD`: Your production Turso authentication token
 
 For local development with Cloudflare Workers:
 1. Copy `.env.example` to `.env` in the root directory
-2. Add your Turso credentials to the `.env` file
+2. Add your Turso credentials for both development and production environments
+3. Environment variables are loaded automatically by wrangler during development
 
-Environment variables are loaded automatically by wrangler during development.
+For production deployment, set secrets using:
+```bash
+wrangler secret put TURSO_AUTH_TOKEN_PROD --env production
+```
 
 ## Data Collection Strategy
 
