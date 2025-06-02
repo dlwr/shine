@@ -11,7 +11,7 @@ SHINE is a comprehensive movie database project designed to be the world's most 
 The project uses a simplified monorepo structure with pnpm workspaces:
 
 - **api/** - Hono-based REST API running on Cloudflare Workers
-- **scrapers/** - Data collection tools (Wikipedia, IMDb planned) 
+- **scrapers/** - CLI-based data collection tools (Wikipedia, IMDb planned) 
 - **front/** - Astro-based frontend (Cloudflare Pages)
 - **src/** - Shared database schemas, migrations, and utilities
 
@@ -32,8 +32,8 @@ pnpm run api:dev
 # Start frontend development server  
 pnpm run front:dev
 
-# Start scrapers development server
-pnpm run scrapers:dev
+# Run scrapers (CLI tools)
+pnpm run scrapers:academy-awards
 ```
 
 ### Database Operations
@@ -62,11 +62,7 @@ pnpm run api:deploy:prod
 # Deploy frontend to Cloudflare Pages
 pnpm run front:deploy
 
-# Deploy scrapers to development environment
-pnpm run scrapers:deploy:dev
-
-# Deploy scrapers to production environment
-pnpm run scrapers:deploy:prod
+# Note: Scrapers run locally as CLI tools and are not deployed
 ```
 
 ### Utilities
@@ -120,12 +116,12 @@ wrangler secret put TURSO_AUTH_TOKEN_PROD --env production
 
 ## Data Collection Strategy
 
-Scrapers follow this priority order:
+Scrapers are CLI-based tools that run locally and follow this priority order:
 1. Wikipedia (primary source for basic info and awards)
 2. IMDb (planned for detailed information)  
 3. Other sources (future expansion)
 
-Scraping uses Cheerio for HTML parsing with error handling, retry logic, and incremental updates to avoid duplicate data.
+Scraping uses Cheerio for HTML parsing with error handling, retry logic, and incremental updates to avoid duplicate data. Run scrapers manually when data updates are needed.
 
 ## API Design
 

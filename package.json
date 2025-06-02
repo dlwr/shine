@@ -10,9 +10,7 @@
     "api:deploy:prod": "cd api && wrangler deploy --env production --minify",
     "front:dev": "cd front && pnpm run dev",
     "front:deploy": "cd front && pnpm run deploy",
-    "scrapers:dev": "cd scrapers && wrangler dev --env development",
-    "scrapers:deploy:dev": "cd scrapers && wrangler deploy --env development",
-    "scrapers:deploy:prod": "cd scrapers && wrangler deploy --env production --minify",
+    "scrapers:academy-awards": "cd scrapers && pnpm run scrape:academy-awards",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -30,6 +28,7 @@
     "globals": "^16.0.0",
     "prettier": "^3.5.3",
     "prettier-plugin-organize-imports": "^4.1.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.29.0",
     "wrangler": "^4.18.0"
