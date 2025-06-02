@@ -3,8 +3,10 @@ main = "src/index.ts"
 compatibility_date = "2025-03-26"
 compatibility_flags = ["nodejs_compat"]
 
+[env.development]
+vars = { TURSO_DATABASE_URL = "libsql://shine-dlwr.aws-ap-northeast-1.turso.io" }
+
 [vars]
-# Set these in .dev.vars for local development
 # For production, use wrangler secret for sensitive values
 TURSO_DATABASE_URL = "libsql://shine-dlwr.aws-ap-northeast-1.turso.io"
 # TURSO_AUTH_TOKEN should be set via: wrangler secret put TURSO_AUTH_TOKEN

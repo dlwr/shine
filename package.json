@@ -5,11 +5,11 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "api:dev": "cd api && wrangler dev",
+    "api:dev": "cd api && wrangler dev --env development",
     "api:deploy": "cd api && wrangler deploy --minify",
     "front:dev": "cd front && pnpm run dev",
     "front:deploy": "cd front && pnpm run deploy",
-    "scrapers:dev": "cd scrapers && wrangler dev",
+    "scrapers:dev": "cd scrapers && wrangler dev --env development",
     "scrapers:deploy": "cd scrapers && wrangler deploy --minify",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
