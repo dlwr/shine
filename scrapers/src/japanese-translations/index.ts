@@ -6,7 +6,7 @@ import {
   getMoviesWithoutJapaneseTranslation,
   saveJapaneseTranslation,
 } from "./repository.js";
-import { scrapeJapaneseTitleFromWikipedia } from "./scrapers/wikipedia-scraper.js";
+import { fetchJapaneseTitleFromTMDB } from "./scrapers/tmdb-scraper.js";
 
 // 処理するバッチサイズ
 const BATCH_SIZE = 20;
@@ -84,14 +84,21 @@ export default {
       // 各映画に対して処理を実行
       for (const movie of movies) {
         try {
-          // IMDb IDからWikipediaで日本語タイトルを検索
-          const japaneseTitle = await scrapeJapaneseTitleFromWikipedia(
-            movie.imdbId
+          console.log(
+            `Processing movie: ${movie.englishTitle} (${movie.imdbId})`
           );
 
-          // TODO: Wikipediaで見つからなかった場合は他のソースで検索を実装
-          // if (!japaneseTitle && movie.year) {
-          //   japaneseTitle = await scrapeFromOtherSource(movie.imdbId, movie.englishTitle, movie.year);
+          // TMDBから日本語タイトルを取得
+          const japaneseTitle = await fetchJapaneseTitleFromTMDB(
+            movie.imdbId,
+            movie.tmdbId ?? undefined,
+            environment
+          );
+
+          // TMDBで見つからなかった場合はWikipediaで検索
+          // if (!japaneseTitle) {
+          //   console.log(`  TMDB not found, trying Wikipedia...`);
+          //   japaneseTitle = await scrapeJapaneseTitleFromWikipedia(movie.imdbId);
           // }
 
           if (japaneseTitle) {
@@ -164,9 +171,7 @@ export default {
    * @param movieId 映画ID
    * @returns レスポンスオブジェクト
    */
-  async handleSingleMovieScraping(
-    movieId: string
-  ): Promise<Response> {
+  async handleSingleMovieScraping(movieId: string): Promise<Response> {
     try {
       console.log(`Movie ID: ${movieId}`);
       return new Response("Not implemented yet", { status: 501 });
