@@ -13,10 +13,14 @@
     "scrapers:academy-awards": "cd scrapers && pnpm run scrape:academy-awards",
     "scrapers:movie-posters": "cd scrapers && node src/movie-posters-simple.js",
     "scrapers:japanese-translations": "cd scrapers && pnpm run scrape:japanese-translations",
-    "db:studio": "drizzle-kit studio",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push"
+    "db:studio": "node scripts/setup-db-env.cjs drizzle-kit studio",
+    "db:generate": "node scripts/setup-db-env.cjs drizzle-kit generate",
+    "db:migrate": "node scripts/setup-db-env.cjs drizzle-kit migrate",
+    "db:push": "node scripts/setup-db-env.cjs drizzle-kit push",
+    "db:studio:prod": "NODE_ENV=production node scripts/setup-db-env.cjs drizzle-kit studio",
+    "db:generate:prod": "NODE_ENV=production node scripts/setup-db-env.cjs drizzle-kit generate",
+    "db:migrate:prod": "NODE_ENV=production node scripts/setup-db-env.cjs drizzle-kit migrate",
+    "db:push:prod": "NODE_ENV=production node scripts/setup-db-env.cjs drizzle-kit push"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250404.0",
