@@ -1,12 +1,12 @@
 /**
  * 既存の映画データに対する日本語翻訳データをスクレイピングするモジュール
  */
-import { getDatabase, type Environment } from "../../../src/index.js";
+import { getDatabase, type Environment } from "../../../src/index";
 import {
   getMoviesWithoutJapaneseTranslation,
   saveJapaneseTranslation,
-} from "./repository.js";
-import { fetchJapaneseTitleFromTMDB } from "./scrapers/tmdb-scraper.js";
+} from "./repository";
+import { fetchJapaneseTitleFromTMDB } from "./scrapers/tmdb-scraper";
 
 // 処理するバッチサイズ
 const BATCH_SIZE = 20;
@@ -91,7 +91,7 @@ export default {
           // TMDBから日本語タイトルを取得
           const japaneseTitle = await fetchJapaneseTitleFromTMDB(
             movie.imdbId,
-            movie.tmdbId ?? undefined,
+            movie.tmdbId,
             environment
           );
 

@@ -1,9 +1,9 @@
 /**
  * 日本語翻訳データの取得と保存を行うリポジトリモジュール
  */
-import { movies, translations } from "../../../src/schema/index.js";
+import { movies, translations } from "../../../src/schema/index";
 import { and, eq } from "drizzle-orm";
-import { type getDatabase } from "../../../src/index.js";
+import { type getDatabase } from "../../../src/index";
 
 /**
  * 日本語翻訳用の型定義
@@ -13,7 +13,7 @@ export interface Movie {
   imdbId: string;
   englishTitle: string;
   year?: number;
-  tmdbId?: number | null;
+  tmdbId: number | null;
 }
 
 /**
@@ -44,7 +44,7 @@ export async function getMoviesWithoutJapaneseTranslation(
       movieUid: movies.uid,
       imdbId: movies.imdbId,
       year: movies.year,
-      // tmdbId: movies.tmdbId, // Commented out until migration is applied
+      tmdbId: movies.tmdbId,
     })
     .from(movies)
     .innerJoin(
@@ -68,7 +68,7 @@ export async function getMoviesWithoutJapaneseTranslation(
       uid: movie.movieUid,
       imdbId: movie.imdbId,
       year: movie.year,
-      tmdbId: null, // movie.tmdbId, // Temporarily null until migration is applied
+      tmdbId: movie.tmdbId,
     });
   }
 

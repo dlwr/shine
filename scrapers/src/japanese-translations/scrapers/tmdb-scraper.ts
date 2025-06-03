@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-import { getDatabase, type Environment } from "../../../../src/index.js";
-import { movies } from "../../../../src/schema/movies.js";
+import { getDatabase, type Environment } from "../../../../src/index";
+import { movies } from "../../../../src/schema/movies";
 
 const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
 
@@ -24,7 +24,7 @@ interface TMDBFindResponse {
  */
 export async function fetchJapaneseTitleFromTMDB(
   imdbId: string,
-  tmdbId: number | undefined,
+  tmdbId: number | null,
   environment: Environment
 ): Promise<string | undefined> {
   const TMDB_API_KEY = environment.TMDB_API_KEY;

@@ -4,14 +4,17 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "start": "node --loader ts-node/esm src/index.ts",
-    "scrape:academy-awards": "node --loader ts-node/esm src/academy-awards.ts",
-    "scrape:movie-posters": "node --loader ts-node/esm src/movie-posters-cli.ts",
-    "scrape:japanese-translations": "node --loader ts-node/esm src/japanese-translations-cli.ts"
+    "start": "tsx src/index.ts",
+    "scrape:academy-awards": "tsx src/academy-awards.ts",
+    "scrape:movie-posters": "tsx src/movie-posters-cli.ts",
+    "scrape:japanese-translations": "tsx src/japanese-translations-cli.ts"
   },
   "dependencies": {
     "cheerio": "^1.0.0",
     "domhandler": "^5.0.3",
     "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.4"
   }
 }

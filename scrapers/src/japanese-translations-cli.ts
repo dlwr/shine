@@ -3,13 +3,13 @@
  */
 import { config } from "dotenv";
 import path from "node:path";
-import { getDatabase, type Environment } from "../../src/index.js";
+import { getDatabase, type Environment } from "../../src/index";
 import {
   getMoviesWithoutJapaneseTranslation,
   saveJapaneseTranslation,
-} from "./japanese-translations/repository.js";
-import { fetchJapaneseTitleFromTMDB } from "./japanese-translations/scrapers/tmdb-scraper.js";
-import { scrapeJapaneseTitleFromWikipedia } from "./japanese-translations/scrapers/wikipedia-scraper.js";
+} from "./japanese-translations/repository";
+import { fetchJapaneseTitleFromTMDB } from "./japanese-translations/scrapers/tmdb-scraper";
+import { scrapeJapaneseTitleFromWikipedia } from "./japanese-translations/scrapers/wikipedia-scraper";
 
 // 環境変数を読み込み（まずはデフォルトの場所から試行）
 config();
@@ -107,7 +107,7 @@ async function main() {
         // TMDBから日本語タイトルを取得
         let japaneseTitle = await fetchJapaneseTitleFromTMDB(
           movie.imdbId,
-          movie.tmdbId ?? undefined,
+          movie.tmdbId,
           environment
         );
 

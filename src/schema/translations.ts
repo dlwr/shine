@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
-import { generateUUID } from "../utils/uuid.js";
+import { generateUUID } from "../utils/uuid";
 
 export const translations = sqliteTable(
   "translations",

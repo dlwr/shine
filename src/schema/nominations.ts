@@ -1,9 +1,9 @@
 import { sql } from "drizzle-orm";
 import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
-import { generateUUID } from "../utils/uuid.js";
-import { awardCategories } from "./award-categories.js";
-import { awardCeremonies } from "./award-ceremonies.js";
-import { movies } from "./movies.js";
+import { generateUUID } from "../utils/uuid";
+import { awardCategories } from "./award-categories";
+import { awardCeremonies } from "./award-ceremonies";
+import { movies } from "./movies";
 
 export const nominations = sqliteTable(
   "nominations",

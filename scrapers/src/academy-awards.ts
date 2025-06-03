@@ -1,13 +1,13 @@
-import { seedAcademyAwards } from "../../src/seeds/academy-awards.js";
+import { seedAcademyAwards } from "../../src/seeds/academy-awards";
 import * as cheerio from "cheerio";
-import { getDatabase, type Environment } from "../../src/index.js";
-import { awardCategories } from "../../src/schema/award-categories.js";
-import { awardCeremonies } from "../../src/schema/award-ceremonies.js";
-import { awardOrganizations } from "../../src/schema/award-organizations.js";
-import { movies } from "../../src/schema/movies.js";
-import { nominations } from "../../src/schema/nominations.js";
-import { referenceUrls } from "../../src/schema/reference-urls.js";
-import { translations } from "../../src/schema/translations.js";
+import { getDatabase, type Environment } from "../../src/index";
+import { awardCategories } from "../../src/schema/award-categories";
+import { awardCeremonies } from "../../src/schema/award-ceremonies";
+import { awardOrganizations } from "../../src/schema/award-organizations";
+import { movies } from "../../src/schema/movies";
+import { nominations } from "../../src/schema/nominations";
+import { referenceUrls } from "../../src/schema/reference-urls";
+import { translations } from "../../src/schema/translations";
 import { Element } from "domhandler";
 import { and, eq } from "drizzle-orm";
 

@@ -2,12 +2,12 @@
  * Wikipedia日本語版から映画タイトルをスクレイピングするモジュール
  */
 import * as cheerio from "cheerio";
-import { fetchWithRetry } from "../../common/fetch-utilities.js";
+import { fetchWithRetry } from "../../common/fetch-utilities";
 import {
   extractMainTitle,
   extractWikipediaJsonLD,
   parseHTML,
-} from "../../common/parser-utilities.js";
+} from "../../common/parser-utilities";
 
 /**
  * IMDb IDからWikipedia日本語版の映画タイトルを取得
