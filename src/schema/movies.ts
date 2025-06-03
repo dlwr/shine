@@ -9,6 +9,7 @@ export const movies = sqliteTable("movies", {
   originalLanguage: text().notNull().default("en"),
   year: integer(),
   imdbId: text().unique(),
+  tmdbId: integer().unique(),
   createdAt: integer()
     .notNull()
     .default(sql`(unixepoch())`),

@@ -1,7 +1,7 @@
+import { eq, sql } from "drizzle-orm";
 import { getDatabase, type Environment } from "../../src";
 import { movies } from "../../src/schema/movies";
 import { posterUrls } from "../../src/schema/poster-urls";
-import { eq, isNotNull, sql } from "drizzle-orm";
 
 const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
 
@@ -15,16 +15,21 @@ interface TMDBMovieImages {
   }[];
 }
 
+interface TMDBMovieData {
+  id: number;
+  title: string;
+  original_title: string;
+  release_date: string;
+}
+
 interface TMDBFindResponse {
-  movie_results: {
-    id: number;
-    title: string;
-  }[];
+  movie_results: TMDBMovieData[];
 }
 
 interface MovieWithImdbId {
   uid: string;
   imdbId: string;
+  tmdbId: number | null;
 }
 
 let environment_: Environment;
@@ -64,11 +69,14 @@ export default {
 async function getMoviesWithImdbId(limit = 10): Promise<MovieWithImdbId[]> {
   const database = getDatabase(environment_);
 
+  // まず、ポスターがない映画を優先的に取得（TMDB IDもない映画を優先）
   const moviesWithoutPosters = await database
-    .select({ uid: movies.uid, imdbId: movies.imdbId })
+    .select({ uid: movies.uid, imdbId: movies.imdbId, tmdbId: movies.tmdbId })
     .from(movies)
     .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
-    .where(sql`${movies.imdbId} IS NOT NULL AND ${posterUrls.uid} IS NULL`)
+    .where(
+      sql`${movies.imdbId} IS NOT NULL AND ${posterUrls.uid} IS NULL AND ${movies.tmdbId} IS NULL`
+    )
     .limit(limit);
 
   const filteredMoviesWithoutPosters = moviesWithoutPosters.filter(
@@ -79,20 +87,40 @@ async function getMoviesWithImdbId(limit = 10): Promise<MovieWithImdbId[]> {
     return filteredMoviesWithoutPosters;
   }
 
-  const moviesWithImdbId = await database
-    .select({ uid: movies.uid, imdbId: movies.imdbId })
+  // ポスターがない映画（TMDB IDがある映画）
+  const moviesWithoutPostersButWithTmdb = await database
+    .select({ uid: movies.uid, imdbId: movies.imdbId, tmdbId: movies.tmdbId })
     .from(movies)
-    .where(isNotNull(movies.imdbId))
+    .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
+    .where(
+      sql`${movies.imdbId} IS NOT NULL AND ${posterUrls.uid} IS NULL AND ${movies.tmdbId} IS NOT NULL`
+    )
     .limit(limit);
 
-  return moviesWithImdbId.filter(
+  const filteredMoviesWithoutPostersButWithTmdb =
+    moviesWithoutPostersButWithTmdb.filter(
+      (movie): movie is MovieWithImdbId => movie.imdbId !== null
+    );
+
+  if (filteredMoviesWithoutPostersButWithTmdb.length > 0) {
+    return filteredMoviesWithoutPostersButWithTmdb;
+  }
+
+  // 最後に、TMDB IDがない映画を取得
+  const moviesWithImdbIdNoTmdb = await database
+    .select({ uid: movies.uid, imdbId: movies.imdbId, tmdbId: movies.tmdbId })
+    .from(movies)
+    .where(sql`${movies.imdbId} IS NOT NULL AND ${movies.tmdbId} IS NULL`)
+    .limit(limit);
+
+  return moviesWithImdbIdNoTmdb.filter(
     (movie): movie is MovieWithImdbId => movie.imdbId !== null
   );
 }
 
 async function fetchMovieImages(
   imdbId: string
-): Promise<TMDBMovieImages | undefined> {
+): Promise<{ images: TMDBMovieImages; tmdbId: number } | undefined> {
   if (!TMDB_API_KEY) {
     console.error("TMDb API key is not set");
     return undefined;
@@ -126,10 +154,53 @@ async function fetchMovieImages(
       throw new Error(`TMDb API error: ${imagesResponse.statusText}`);
     }
 
-    return (await imagesResponse.json()) as TMDBMovieImages;
+    const images = (await imagesResponse.json()) as TMDBMovieImages;
+    return { images, tmdbId };
   } catch (error) {
     console.error(`Error fetching TMDb images for IMDb ID ${imdbId}:`, error);
     return undefined;
+  }
+}
+
+async function saveTMDBId(movieUid: string, tmdbId: number): Promise<void> {
+  const database = getDatabase(environment_);
+
+  try {
+    // 既存のTMDB IDをチェック（この映画に対して）
+    const existingMovie = await database
+      .select({ tmdbId: movies.tmdbId })
+      .from(movies)
+      .where(eq(movies.uid, movieUid))
+      .limit(1);
+
+    if (existingMovie.length > 0 && existingMovie[0].tmdbId !== null) {
+      console.log(`  ! TMDB ID は既に存在します: ${existingMovie[0].tmdbId}`);
+      return;
+    }
+
+    // 他の映画で同じTMDB IDが使用されていないかチェック
+    const duplicateMovie = await database
+      .select({ uid: movies.uid, tmdbId: movies.tmdbId })
+      .from(movies)
+      .where(eq(movies.tmdbId, tmdbId))
+      .limit(1);
+
+    if (duplicateMovie.length > 0) {
+      console.log(
+        `  ! TMDB ID ${tmdbId} は他の映画で既に使用されています (${duplicateMovie[0].uid})`
+      );
+      return;
+    }
+
+    // TMDB IDを更新
+    await database
+      .update(movies)
+      .set({ tmdbId })
+      .where(eq(movies.uid, movieUid));
+
+    console.log(`  ✓ TMDB ID を保存しました: ${tmdbId}`);
+  } catch (error) {
+    console.error(`Error saving TMDB ID for movie ${movieUid}:`, error);
   }
 }
 
@@ -228,32 +299,84 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
     };
 
     try {
-      console.log(`  TMDb API からポスター情報を取得中...`);
-      const imagesData = await fetchMovieImages(movie.imdbId);
+      // 既にTMDB IDがある映画の場合、ポスター取得のみ行う
+      if (movie.tmdbId === null) {
+        // TMDB IDがない場合は、IMDb IDから検索
+        console.log(`  TMDb API からポスター情報を取得中...`);
+        const movieData = await fetchMovieImages(movie.imdbId);
 
-      if (
-        !imagesData ||
-        !imagesData.posters ||
-        imagesData.posters.length === 0
-      ) {
-        result.error = "No posters found";
-        results.failed++;
-        console.log(`  ✘ ポスターが見つかりませんでした`);
-      } else {
-        console.log(
-          `  ポスター候補: ${imagesData.posters.length}枚見つかりました`
-        );
-        console.log(`  データベースに保存中...`);
-        const savedCount = await savePosterUrls(movie.uid, imagesData.posters);
-        result.postersAdded = savedCount;
+        if (movieData) {
+          // TMDB ID を保存
+          await saveTMDBId(movie.uid, movieData.tmdbId);
 
-        if (savedCount > 0) {
-          results.success++;
-          console.log(`  ✓ ${savedCount}枚のポスターを保存しました`);
+          if (
+            !movieData.images.posters ||
+            movieData.images.posters.length === 0
+          ) {
+            result.error = "No posters found";
+            results.failed++;
+            console.log(`  ✘ ポスターが見つかりませんでした`);
+          } else {
+            console.log(
+              `  ポスター候補: ${movieData.images.posters.length}枚見つかりました`
+            );
+            console.log(`  データベースに保存中...`);
+            const savedCount = await savePosterUrls(
+              movie.uid,
+              movieData.images.posters
+            );
+            result.postersAdded = savedCount;
+
+            if (savedCount > 0) {
+              results.success++;
+              console.log(`  ✓ ${savedCount}枚のポスターを保存しました`);
+            } else {
+              results.failed++;
+              result.error = "No new posters saved";
+              console.log(`  ✘ 新しいポスターはありませんでした`);
+            }
+          }
         } else {
+          result.error = "No TMDb data found";
           results.failed++;
-          result.error = "No new posters saved";
-          console.log(`  ✘ 新しいポスターはありませんでした`);
+          console.log(`  ✘ TMDb データが見つかりませんでした`);
+        }
+      } else {
+        console.log(`  既存のTMDB ID を使用: ${movie.tmdbId}`);
+
+        // TMDB IDから直接ポスター情報を取得
+        const imagesUrl = new URL(
+          `${TMDB_API_BASE_URL}/movie/${movie.tmdbId}/images`
+        );
+        imagesUrl.searchParams.append("api_key", TMDB_API_KEY as string);
+
+        const imagesResponse = await fetch(imagesUrl.toString());
+        if (!imagesResponse.ok) {
+          throw new Error(`TMDb API error: ${imagesResponse.statusText}`);
+        }
+
+        const images = (await imagesResponse.json()) as TMDBMovieImages;
+
+        if (!images.posters || images.posters.length === 0) {
+          result.error = "No posters found";
+          results.failed++;
+          console.log(`  ✘ ポスターが見つかりませんでした`);
+        } else {
+          console.log(
+            `  ポスター候補: ${images.posters.length}枚見つかりました`
+          );
+          console.log(`  データベースに保存中...`);
+          const savedCount = await savePosterUrls(movie.uid, images.posters);
+          result.postersAdded = savedCount;
+
+          if (savedCount > 0) {
+            results.success++;
+            console.log(`  ✓ ${savedCount}枚のポスターを保存しました`);
+          } else {
+            results.failed++;
+            result.error = "No new posters saved";
+            console.log(`  ✘ 新しいポスターはありませんでした`);
+          }
         }
       }
     } catch (error) {
