@@ -1,16 +1,27 @@
 /**
  * 日本語翻訳スクレイピングのCLIエントリーポイント
  */
+import path from "path";
+import { fileURLToPath } from "url";
 import { config } from "dotenv";
-import { getDatabase, type Environment } from "../../src";
+import { getDatabase, type Environment } from "../../src/index.js";
 import {
   getMoviesWithoutJapaneseTranslation,
   saveJapaneseTranslation,
-} from "./japanese-translations/repository";
-import { scrapeJapaneseTitleFromWikipedia } from "./japanese-translations/scrapers/wikipedia-scraper";
+} from "./japanese-translations/repository.js";
+import { scrapeJapaneseTitleFromWikipedia } from "./japanese-translations/scrapers/wikipedia-scraper.js";
 
-// 環境変数を読み込み
+// 現在のファイルのディレクトリパスを取得
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// 環境変数を読み込み（まずはデフォルトの場所から試行）
 config();
+// もしくはプロジェクトルートから明示的に読み込み
+if (!process.env.TURSO_DATABASE_URL_DEV) {
+  const envPath = path.resolve(process.cwd(), "../.env");
+  config({ path: envPath });
+}
 
 // 処理するバッチサイズ（デフォルト）
 const DEFAULT_BATCH_SIZE = 20;
@@ -19,6 +30,7 @@ const DEFAULT_BATCH_SIZE = 20;
 const environment: Environment = {
   TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL_DEV || "",
   TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN_DEV || "",
+  TMDB_API_KEY: process.env.TMDB_API_KEY,
 };
 
 /**
@@ -27,24 +39,33 @@ const environment: Environment = {
 async function main() {
   try {
     // コマンドライン引数を解析
-    const args = process.argv.slice(2);
-    const limitIndex = args.indexOf("--limit");
-    const batchSize = limitIndex !== -1 && args[limitIndex + 1] 
-      ? parseInt(args[limitIndex + 1], 10) 
-      : DEFAULT_BATCH_SIZE;
-
-    if (isNaN(batchSize) || batchSize <= 0) {
-      console.error("無効なバッチサイズです。正の整数を指定してください。");
-      process.exit(1);
+    const arguments_ = process.argv.slice(2);
+    const limitIndex = arguments_.indexOf("--limit");
+    const isAllMode = arguments_.includes("--all");
+    
+    let batchSize = DEFAULT_BATCH_SIZE;
+    
+    if (isAllMode) {
+      batchSize = 0; // 全件処理
+      console.log("日本語翻訳スクレイピングを開始します (全件処理モード)");
+    } else if (limitIndex !== -1 && arguments_[limitIndex + 1]) {
+      batchSize = Number.parseInt(arguments_[limitIndex + 1], 10);
+      
+      if (Number.isNaN(batchSize) || batchSize <= 0) {
+        console.error("無効なバッチサイズです。正の整数を指定してください。");
+        throw new Error("Invalid batch size");
+      }
+      
+      console.log(`日本語翻訳スクレイピングを開始します (バッチサイズ: ${batchSize})`);
+    } else {
+      console.log(`日本語翻訳スクレイピングを開始します (バッチサイズ: ${batchSize})`);
     }
-
-    console.log(`日本語翻訳スクレイピングを開始します (バッチサイズ: ${batchSize})`);
 
     // 環境変数の確認
     if (!environment.TURSO_DATABASE_URL || !environment.TURSO_AUTH_TOKEN) {
       console.error("データベース接続情報が不足しています。");
       console.error("TURSO_DATABASE_URL_DEV と TURSO_AUTH_TOKEN_DEV を設定してください。");
-      process.exit(1);
+      throw new Error("Missing database connection info");
     }
 
     // データベース接続
@@ -67,9 +88,9 @@ async function main() {
     let errorCount = 0;
 
     // 各映画に対して処理を実行
-    for (let i = 0; i < movies.length; i++) {
-      const movie = movies[i];
-      const progress = `[${i + 1}/${movies.length}]`;
+    for (let index = 0; index < movies.length; index++) {
+      const movie = movies[index];
+      const progress = `[${index + 1}/${movies.length}]`;
       
       try {
         console.log(`${progress} 処理中: ${movie.englishTitle} (${movie.year || "年不明"}) - IMDb: ${movie.imdbId}`);
@@ -98,7 +119,7 @@ async function main() {
       }
 
       // 連続リクエストを避けるための待機（最後の処理以外）
-      if (i < movies.length - 1) {
+      if (index < movies.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
@@ -117,31 +138,30 @@ async function main() {
 
   } catch (error) {
     console.error("スクレイピング処理中にエラーが発生しました:", error);
-    process.exit(1);
+    throw error;
   }
 }
 
 // 使用方法の表示
 function showUsage() {
   console.log("使用方法:");
-  console.log("  pnpm run scrape:japanese-translations [--limit <数値>]");
+  console.log("  pnpm run scrape:japanese-translations [オプション]");
   console.log("");
   console.log("オプション:");
   console.log("  --limit <数値>  処理する映画の件数を指定 (デフォルト: 20)");
+  console.log("  --all           全件処理モード（日本語翻訳がないすべての映画を処理）");
+  console.log("  --help, -h      このヘルプを表示");
   console.log("");
   console.log("例:");
   console.log("  pnpm run scrape:japanese-translations");
   console.log("  pnpm run scrape:japanese-translations --limit 50");
+  console.log("  pnpm run scrape:japanese-translations --all");
 }
 
 // ヘルプオプションの処理
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
   showUsage();
-  process.exit(0);
+} else {
+  // メイン処理を実行
+  await main();
 }
-
-// メイン処理を実行
-main().catch((error) => {
-  console.error("予期しないエラーが発生しました:", error);
-  process.exit(1);
-});

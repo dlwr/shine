@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
-import { generateUUID } from "../utils/uuid";
-import { awardOrganizations } from "./award-organizations";
+import { generateUUID } from "../utils/uuid.js";
+import { awardOrganizations } from "./award-organizations.js";
 
 export const awardCeremonies = sqliteTable(
   "award_ceremonies",

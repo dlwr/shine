@@ -1,12 +1,12 @@
 /**
  * 既存の映画データに対する日本語翻訳データをスクレイピングするモジュール
  */
-import { getDatabase, type Environment } from "../../../src";
+import { getDatabase, type Environment } from "../../../src/index.js";
 import {
   getMoviesWithoutJapaneseTranslation,
   saveJapaneseTranslation,
-} from "./repository";
-import { scrapeJapaneseTitleFromWikipedia } from "./scrapers/wikipedia-scraper";
+} from "./repository.js";
+import { scrapeJapaneseTitleFromWikipedia } from "./scrapers/wikipedia-scraper.js";
 
 // 処理するバッチサイズ
 const BATCH_SIZE = 20;

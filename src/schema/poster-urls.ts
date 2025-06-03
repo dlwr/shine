@@ -6,8 +6,8 @@ import {
   text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
-import { generateUUID } from "../utils/uuid";
-import { movies } from "./movies";
+import { generateUUID } from "../utils/uuid.js";
+import { movies } from "./movies.js";
 
 export const posterUrls = sqliteTable(
   "poster_urls",

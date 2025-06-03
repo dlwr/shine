@@ -1,9 +1,9 @@
 /**
  * 日本語翻訳データの取得と保存を行うリポジトリモジュール
  */
-import { movies, translations } from "../../../src/schema";
+import { movies, translations } from "../../../src/schema/index.js";
 import { and, eq } from "drizzle-orm";
-import { type getDatabase } from "../../../src";
+import { type getDatabase } from "../../../src/index.js";
 
 /**
  * 日本語翻訳用の型定義
@@ -29,7 +29,7 @@ export interface Translation {
 /**
  * 日本語翻訳が未登録の映画データを取得する
  * @param db D1データベース
- * @param limit 取得件数
+ * @param limit 取得件数（0の場合は全件取得）
  * @returns 日本語翻訳が未登録の映画データ
  */
 export async function getMoviesWithoutJapaneseTranslation(
@@ -38,7 +38,7 @@ export async function getMoviesWithoutJapaneseTranslation(
 ): Promise<Movie[]> {
 
   // 英語タイトルを取得するために、まず英語の翻訳データを含む映画を取得
-  const moviesWithEnglishTitles = await database
+  const moviesWithEnglishTitlesQuery = database
     .select({
       movieUid: movies.uid,
       imdbId: movies.imdbId,
@@ -52,8 +52,12 @@ export async function getMoviesWithoutJapaneseTranslation(
         eq(translations.resourceUid, movies.uid),
         eq(translations.languageCode, "en")
       )
-    )
-    .limit(limit * 5); // より多くのデータを取得して、後でフィルタリング
+    );
+
+  // limitが0の場合は全件取得、それ以外は指定された件数の5倍取得（後でフィルタリング）
+  const moviesWithEnglishTitles = limit === 0 
+    ? await moviesWithEnglishTitlesQuery
+    : await moviesWithEnglishTitlesQuery.limit(limit * 5);
 
   // 映画UIDと英語タイトルのマッピングを作成
   const movieData = new Map();
@@ -90,7 +94,9 @@ export async function getMoviesWithoutJapaneseTranslation(
 
   // 英語タイトルを取得
   const result = [];
-  for (const movie of moviesWithoutJapanese.slice(0, limit)) {
+  const moviesToProcess = limit === 0 ? moviesWithoutJapanese : moviesWithoutJapanese.slice(0, limit);
+  
+  for (const movie of moviesToProcess) {
     const englishTitle = await getMovieTitle(database, movie.uid, "en");
     if (englishTitle) {
       result.push({
