@@ -85,7 +85,24 @@ async function getMovieByDateSeed(
       .limit(1);
 
     if (fallbackResults.length > 0) {
-      return fallbackResults;
+      const {
+        movies: movie,
+        translations: translation,
+        poster_urls: poster,
+      } = fallbackResults[0];
+
+      const imdbUrl = movie.imdbId
+        ? `https://www.imdb.com/title/${movie.imdbId}/`
+        : undefined;
+
+      return {
+        uid: movie.uid,
+        year: movie.year,
+        originalLanguage: movie.originalLanguage,
+        title: translation?.content,
+        posterUrl: poster?.url,
+        imdbUrl: imdbUrl,
+      };
     }
   }
 
