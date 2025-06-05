@@ -4,11 +4,11 @@ compatibility_date = "2025-03-26"
 compatibility_flags = ["nodejs_compat"]
 
 [env.development]
-name = "shine-api-dev"
+name = "shine-api"
 # Environment variables are loaded from .dev.vars file
 
 [env.production]
-name = "shine-api-prod"
+name = "shine-api"
 # TURSO_DATABASE_URL and TURSO_AUTH_TOKEN should be set via:
 # wrangler secret put TURSO_DATABASE_URL --env production
 # wrangler secret put TURSO_AUTH_TOKEN --env production
