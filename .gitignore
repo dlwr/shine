@@ -170,3 +170,4 @@ Thumbs.db
 db/dev
 worker-configuration.d.ts
 .dev.vars
+.claude/settings.local.json
