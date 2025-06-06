@@ -4,11 +4,7 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "start": "tsx src/index.ts",
-    "scrape:academy-awards": "tsx src/academy-awards.ts",
-    "scrape:movie-posters": "tsx src/movie-posters-cli.ts",
-    "scrape:japanese-translations": "tsx src/japanese-translations-cli.ts",
-    "scrape:cannes-film-festival": "tsx src/cannes-film-festival-cli.ts"
+    "start": "tsx src/index.ts"
   },
   "dependencies": {
     "cheerio": "^1.0.0",
