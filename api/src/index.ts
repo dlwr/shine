@@ -1,4 +1,5 @@
 import { getDatabase, type Environment } from "db";
+import { movieSelections } from "db/schema/movie-selections";
 import { movies } from "db/schema/movies";
 import { posterUrls } from "db/schema/poster-urls";
 import { translations } from "db/schema/translations";
@@ -18,6 +19,30 @@ function simpleHash(input: string): number {
     hash = hash & hash; // Convert to 32-bit integer
   }
   return Math.abs(hash);
+}
+
+function getSelectionDate(
+  date: Date,
+  type: "daily" | "weekly" | "monthly"
+): string {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  switch (type) {
+    case "daily": {
+      return `${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+    }
+    case "weekly": {
+      const daysSinceFriday = (date.getDay() - 5 + 7) % 7;
+      const fridayDate = new Date(date);
+      fridayDate.setDate(day - daysSinceFriday);
+      return `${fridayDate.getFullYear()}-${(fridayDate.getMonth() + 1).toString().padStart(2, "0")}-${fridayDate.getDate().toString().padStart(2, "0")}`;
+    }
+    case "monthly": {
+      return `${year}-${month.toString().padStart(2, "0")}-01`;
+    }
+  }
 }
 
 function getDateSeed(date: Date, type: "daily" | "weekly" | "monthly"): number {
@@ -46,9 +71,63 @@ function getDateSeed(date: Date, type: "daily" | "weekly" | "monthly"): number {
 
 async function getMovieByDateSeed(
   database: ReturnType<typeof getDatabase>,
-  seed: number,
+  date: Date,
+  type: "daily" | "weekly" | "monthly",
   preferredLanguage = "en"
 ) {
+  const selectionDate = getSelectionDate(date, type);
+
+  // First, check if we already have a selection for this date and type
+  const existingSelection = await database
+    .select()
+    .from(movieSelections)
+    .where(
+      and(
+        eq(movieSelections.selectionType, type),
+        eq(movieSelections.selectionDate, selectionDate)
+      )
+    )
+    .limit(1);
+
+  let movieId: string;
+
+  if (existingSelection.length > 0) {
+    // Use the existing selection
+    movieId = existingSelection[0].movieId;
+  } else {
+    // Generate a new selection
+    const seed = getDateSeed(date, type);
+
+    // Get a random movie using the seed
+    const randomMovieResult = await database
+      .select({ uid: movies.uid })
+      .from(movies)
+      .orderBy(
+        sql`(ABS(${seed} % (SELECT COUNT(*) FROM movies)) + movies.rowid) % (SELECT COUNT(*) FROM movies)`
+      )
+      .limit(1);
+
+    if (randomMovieResult.length === 0) {
+      return;
+    }
+
+    movieId = randomMovieResult[0].uid;
+
+    // Save the new selection to the database
+    try {
+      await database.insert(movieSelections).values({
+        selectionType: type,
+        selectionDate: selectionDate,
+        movieId: movieId,
+      });
+    } catch (error) {
+      // If there's a race condition and another instance already inserted this selection,
+      // just continue with the movieId we selected
+      console.error("Error saving movie selection:", error);
+    }
+  }
+
+  // Now fetch the full movie details with translations and poster
   const results = await database
     .select()
     .from(movies)
@@ -61,12 +140,11 @@ async function getMovieByDateSeed(
       )
     )
     .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
-    .orderBy(
-      sql`(ABS(${seed} % (SELECT COUNT(*) FROM movies)) + movies.rowid) % (SELECT COUNT(*) FROM movies)`
-    )
+    .where(eq(movies.uid, movieId))
     .limit(1);
 
   if (results.length === 0 || !results[0].translations?.content) {
+    // Try with default language
     const fallbackResults = await database
       .select()
       .from(movies)
@@ -79,9 +157,7 @@ async function getMovieByDateSeed(
         )
       )
       .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
-      .orderBy(
-        sql`(ABS(${seed} % (SELECT COUNT(*) FROM movies)) + movies.rowid) % (SELECT COUNT(*) FROM movies)`
-      )
+      .where(eq(movies.uid, movieId))
       .limit(1);
 
     if (fallbackResults.length > 0) {
@@ -159,14 +235,10 @@ app.get("/", async (c) => {
     const locale =
       preferredLanguages.find((lang) => ["en", "ja"].includes(lang)) || "en";
 
-    const dailySeed = getDateSeed(now, "daily");
-    const weeklySeed = getDateSeed(now, "weekly");
-    const monthlySeed = getDateSeed(now, "monthly");
-
     const [dailyMovie, weeklyMovie, monthlyMovie] = await Promise.all([
-      getMovieByDateSeed(database, dailySeed, locale),
-      getMovieByDateSeed(database, weeklySeed, locale),
-      getMovieByDateSeed(database, monthlySeed, locale),
+      getMovieByDateSeed(database, now, "daily", locale),
+      getMovieByDateSeed(database, now, "weekly", locale),
+      getMovieByDateSeed(database, now, "monthly", locale),
     ]);
 
     return c.json({
