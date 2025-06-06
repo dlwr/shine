@@ -9,6 +9,7 @@ import { movies } from "../../src/schema/movies";
 import { nominations } from "../../src/schema/nominations";
 import { referenceUrls } from "../../src/schema/reference-urls";
 import { translations } from "../../src/schema/translations";
+import { posterUrls } from "../../src/schema/poster-urls";
 
 const WIKIPEDIA_BASE_URL = "https://en.wikipedia.org";
 const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
@@ -32,6 +33,7 @@ interface MasterData {
 let masterData: MasterData | undefined;
 let environment_: Environment;
 let TMDB_API_KEY: string | undefined;
+let tmdbConfiguration: TMDatabaseConfiguration | undefined;
 
 export default {
   async fetch(request: Request, environment: Environment): Promise<Response> {
@@ -568,6 +570,42 @@ interface TMDatabaseMovieDetails {
   title: string;
   original_title: string;
   release_date: string;
+  poster_path?: string;
+}
+
+interface TMDatabaseConfiguration {
+  images: {
+    base_url: string;
+    secure_base_url: string;
+    poster_sizes: string[];
+  };
+}
+
+async function fetchTMDatabaseConfiguration(): Promise<TMDatabaseConfiguration | undefined> {
+  if (!TMDB_API_KEY) {
+    console.error("TMDb API key is not set");
+    return undefined;
+  }
+
+  if (tmdbConfiguration) {
+    return tmdbConfiguration;
+  }
+
+  try {
+    const configUrl = new URL(`${TMDB_API_BASE_URL}/configuration`);
+    configUrl.searchParams.append("api_key", TMDB_API_KEY);
+
+    const response = await fetch(configUrl.toString());
+    if (!response.ok) {
+      throw new Error(`TMDb API error: ${response.statusText}`);
+    }
+
+    tmdbConfiguration = (await response.json()) as TMDatabaseConfiguration;
+    return tmdbConfiguration;
+  } catch (error) {
+    console.error("Error fetching TMDb configuration:", error);
+    return undefined;
+  }
 }
 
 async function searchTMDatabaseMovie(
@@ -607,59 +645,90 @@ async function searchTMDatabaseMovie(
   }
 }
 
+interface MovieDetailsResult {
+  imdbId?: string;
+  posterPath?: string;
+  japaneseTitle?: string;
+}
+
 async function fetchTMDatabaseMovieDetails(
   movieId: number
-): Promise<string | undefined> {
+): Promise<MovieDetailsResult> {
   if (!TMDB_API_KEY) {
     console.error("TMDb API key is not set");
-    return undefined;
+    return {};
   }
 
   try {
-    const detailsUrl = new URL(`${TMDB_API_BASE_URL}/movie/${movieId}`);
-    detailsUrl.searchParams.append("api_key", TMDB_API_KEY);
-    detailsUrl.searchParams.append("language", "en-US");
+    // 英語版の詳細情報を取得
+    const detailsUrlEn = new URL(`${TMDB_API_BASE_URL}/movie/${movieId}`);
+    detailsUrlEn.searchParams.append("api_key", TMDB_API_KEY);
+    detailsUrlEn.searchParams.append("language", "en-US");
 
-    const response = await fetch(detailsUrl.toString());
-    if (!response.ok) {
-      throw new Error(`TMDb API error: ${response.statusText}`);
+    const responseEn = await fetch(detailsUrlEn.toString());
+    if (!responseEn.ok) {
+      throw new Error(`TMDb API error: ${responseEn.statusText}`);
     }
 
-    const data = (await response.json()) as TMDatabaseMovieDetails;
-    return data.imdb_id || undefined;
+    const dataEn = (await responseEn.json()) as TMDatabaseMovieDetails;
+    
+    // 日本語版の詳細情報を取得
+    const detailsUrlJa = new URL(`${TMDB_API_BASE_URL}/movie/${movieId}`);
+    detailsUrlJa.searchParams.append("api_key", TMDB_API_KEY);
+    detailsUrlJa.searchParams.append("language", "ja");
+
+    const responseJa = await fetch(detailsUrlJa.toString());
+    if (!responseJa.ok) {
+      throw new Error(`TMDb API error: ${responseJa.statusText}`);
+    }
+
+    const dataJa = (await responseJa.json()) as TMDatabaseMovieDetails;
+    
+    // 日本語タイトルが英語タイトルと異なる場合のみ保存
+    const japaneseTitle = dataJa.title && dataJa.title !== dataJa.original_title ? dataJa.title : undefined;
+
+    return {
+      imdbId: dataEn.imdb_id || undefined,
+      posterPath: dataEn.poster_path || undefined,
+      japaneseTitle
+    };
   } catch (error) {
     console.error(
       `Error fetching TMDb movie details for ID ${movieId}:`,
       error
     );
-    return undefined;
+    return {};
   }
 }
 
-async function fetchImdbId(
+async function fetchMovieDetails(
   title: string,
   year: number
-): Promise<string | undefined> {
+): Promise<MovieDetailsResult> {
   try {
     // TMDbで映画を検索
     const movieId = await searchTMDatabaseMovie(title, year);
     if (!movieId) {
       console.log(`No TMDb match found for ${title} (${year})`);
-      return undefined;
+      return {};
     }
 
     // 映画の詳細情報を取得
-    const imdbId = await fetchTMDatabaseMovieDetails(movieId);
-    if (imdbId) {
-      console.log(`Found IMDb ID for ${title} (${year}): ${imdbId}`);
-    } else {
-      console.log(`No IMDb ID found for ${title} (${year})`);
+    const details = await fetchTMDatabaseMovieDetails(movieId);
+    if (details.imdbId) {
+      console.log(`Found IMDb ID for ${title} (${year}): ${details.imdbId}`);
+    }
+    if (details.japaneseTitle) {
+      console.log(`Found Japanese title for ${title} (${year}): ${details.japaneseTitle}`);
+    }
+    if (details.posterPath) {
+      console.log(`Found poster for ${title} (${year}): ${details.posterPath}`);
     }
 
-    return imdbId;
+    return details;
   } catch (error) {
-    console.error(`Error fetching IMDb ID for ${title} (${year}):`, error);
-    return undefined;
+    console.error(`Error fetching movie details for ${title} (${year}):`, error);
+    return {};
   }
 }
 
@@ -671,8 +740,8 @@ async function processMovie(
   try {
     const database = getDatabase(environment_);
 
-    // IMDb IDを取得
-    const imdbId = await fetchImdbId(movieInfo.title, movieInfo.year);
+    // 映画の詳細情報を取得
+    const movieDetails = await fetchMovieDetails(movieInfo.title, movieInfo.year);
 
     // 既存の映画を検索
     const existingMovies = await database
@@ -700,15 +769,15 @@ async function processMovie(
       movieUid = existingMovie.uid;
 
       // IMDb IDが新しく取得できた場合は更新
-      if (imdbId && !existingMovie.imdbId) {
+      if (movieDetails.imdbId && !existingMovie.imdbId) {
         await database
           .update(movies)
           .set({
-            imdbId,
+            imdbId: movieDetails.imdbId,
             updatedAt: Math.floor(Date.now() / 1000),
           })
           .where(eq(movies.uid, movieUid));
-        console.log(`Updated IMDb ID for ${movieInfo.title}: ${imdbId}`);
+        console.log(`Updated IMDb ID for ${movieInfo.title}: ${movieDetails.imdbId}`);
       }
     } else {
       // 新規映画の作成
@@ -717,7 +786,7 @@ async function processMovie(
         .values({
           originalLanguage: "en",
           year: movieInfo.year,
-          imdbId: imdbId || undefined,
+          imdbId: movieDetails.imdbId || undefined,
         })
         .returning();
 
@@ -784,10 +853,73 @@ async function processMovie(
         },
       });
 
+    // 日本語タイトルの保存
+    if (movieDetails.japaneseTitle) {
+      await database
+        .insert(translations)
+        .values({
+          resourceType: "movie_title",
+          resourceUid: movieUid,
+          languageCode: "ja",
+          content: movieDetails.japaneseTitle,
+          isDefault: 0,
+        })
+        .onConflictDoUpdate({
+          target: [
+            translations.resourceType,
+            translations.resourceUid,
+            translations.languageCode,
+          ],
+          set: {
+            content: movieDetails.japaneseTitle,
+            updatedAt: Math.floor(Date.now() / 1000),
+          },
+        });
+    }
+
+    // ポスターURLの保存
+    if (movieDetails.posterPath) {
+      const config = await fetchTMDatabaseConfiguration();
+      if (config) {
+        // 複数のサイズを保存（w342とw780）
+        const posterSizes = ["w342", "w780"];
+        for (const size of posterSizes) {
+          if (config.images.poster_sizes.includes(size)) {
+            const posterUrl = `${config.images.secure_base_url}${size}${movieDetails.posterPath}`;
+            const width = Number.parseInt(size.slice(1), 10);
+            
+            await database
+              .insert(posterUrls)
+              .values({
+                movieUid: movieUid,
+                url: posterUrl,
+                width: width,
+                sourceType: "tmdb",
+                isPrimary: size === "w342" ? 1 : 0,
+              })
+              .onConflictDoUpdate({
+                target: [
+                  posterUrls.movieUid,
+                  posterUrls.width,
+                  posterUrls.height,
+                  posterUrls.languageCode,
+                  posterUrls.countryCode,
+                ],
+                set: {
+                  url: posterUrl,
+                  sourceType: "tmdb",
+                  updatedAt: Math.floor(Date.now() / 1000),
+                },
+              });
+          }
+        }
+      }
+    }
+
     console.log(
       `Processed ${existingMovies.length > 0 ? "updated" : "new"} movie: ${movieInfo.title} (${movieInfo.year}) - ${
         movieInfo.isWinner ? "Palme d'Or Winner" : "In Competition"
-      } ${imdbId ? `IMDb: ${imdbId}` : ""}`
+      } ${movieDetails.imdbId ? `IMDb: ${movieDetails.imdbId}` : ""} ${movieDetails.japaneseTitle ? `JA: ${movieDetails.japaneseTitle}` : ""} ${movieDetails.posterPath ? "Poster: ✓" : ""}`
     );
   } catch (error) {
     console.error(`Error processing movie ${movieInfo.title}:`, error);
