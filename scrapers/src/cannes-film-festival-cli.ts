@@ -1,0 +1,81 @@
+/**
+ * カンヌ映画祭スクレイピングのCLIエントリーポイント
+ */
+import { config } from "dotenv";
+import path from "node:path";
+import { type Environment } from "../../src/index";
+import cannesFilmFestival from "./cannes-film-festival";
+
+// 環境変数を読み込み（まずはデフォルトの場所から試行）
+config();
+// もしくはプロジェクトルートから明示的に読み込み
+if (!process.env.TURSO_DATABASE_URL_DEV) {
+  const environmentPath = path.resolve(process.cwd(), "../.env");
+  config({ path: environmentPath });
+}
+
+// 環境変数から設定を取得
+const environment: Environment = {
+  TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL_DEV || "",
+  TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN_DEV || "",
+  TMDB_API_KEY: process.env.TMDB_API_KEY,
+};
+
+/**
+ * カンヌ映画祭スクレイピングのメイン処理
+ */
+async function main() {
+  try {
+    console.log("カンヌ映画祭スクレイピングを開始します");
+
+    // 環境変数の確認
+    if (!environment.TURSO_DATABASE_URL || !environment.TURSO_AUTH_TOKEN) {
+      console.error("データベース接続情報が不足しています。");
+      console.error(
+        "TURSO_DATABASE_URL_DEV と TURSO_AUTH_TOKEN_DEV を設定してください。"
+      );
+      throw new Error("Missing database connection info");
+    }
+
+    if (!environment.TMDB_API_KEY) {
+      console.warn("警告: TMDB_API_KEY が設定されていません。IMDb ID の取得がスキップされます。");
+    }
+
+    // スクレイピング処理を実行
+    const request = new Request("http://localhost/");
+    const response = await cannesFilmFestival.fetch(request, environment);
+
+    if (response.status === 200) {
+      console.log("カンヌ映画祭スクレイピングが正常に完了しました");
+    } else {
+      const errorText = await response.text();
+      console.error("スクレイピング中にエラーが発生しました:", errorText);
+      throw new Error(errorText);
+    }
+  } catch (error) {
+    console.error("スクレイピング処理中にエラーが発生しました:", error);
+    throw error;
+  }
+}
+
+// 使用方法の表示
+function showUsage() {
+  console.log("使用方法:");
+  console.log("  pnpm run scrapers:cannes-film-festival");
+  console.log("");
+  console.log("オプション:");
+  console.log("  --help, -h      このヘルプを表示");
+  console.log("");
+  console.log("説明:");
+  console.log("  Wikipediaからカンヌ国際映画祭のコンペティション参加映画情報を");
+  console.log("  スクレイピングし、データベースに保存します。");
+  console.log("  Palme d'Or（パルム・ドール）受賞作品も含まれます。");
+}
+
+// ヘルプオプションの処理
+if (process.argv.includes("--help") || process.argv.includes("-h")) {
+  showUsage();
+} else {
+  // メイン処理を実行
+  await main();
+}
