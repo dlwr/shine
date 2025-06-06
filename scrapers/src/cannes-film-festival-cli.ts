@@ -26,7 +26,23 @@ const environment: Environment = {
  */
 async function main() {
   try {
-    console.log("カンヌ映画祭スクレイピングを開始します");
+    // コマンドライン引数を解析
+    const arguments_ = process.argv.slice(2);
+    const yearIndex = arguments_.indexOf("--year");
+    let targetYear: number | undefined;
+    
+    if (yearIndex !== -1 && arguments_[yearIndex + 1]) {
+      targetYear = Number.parseInt(arguments_[yearIndex + 1], 10);
+      
+      if (Number.isNaN(targetYear) || targetYear < 1946 || targetYear > new Date().getFullYear()) {
+        console.error("無効な年です。1946年以降の年を指定してください。");
+        throw new Error("Invalid year");
+      }
+      
+      console.log(`カンヌ映画祭スクレイピングを開始します (対象年: ${targetYear})`);
+    } else {
+      console.log("カンヌ映画祭スクレイピングを開始します");
+    }
 
     // 環境変数の確認
     if (!environment.TURSO_DATABASE_URL || !environment.TURSO_AUTH_TOKEN) {
@@ -42,7 +58,8 @@ async function main() {
     }
 
     // スクレイピング処理を実行
-    const request = new Request("http://localhost/");
+    const url = targetYear ? `http://localhost/?year=${targetYear}` : "http://localhost/";
+    const request = new Request(url);
     const response = await cannesFilmFestival.fetch(request, environment);
 
     if (response.status === 200) {
@@ -61,15 +78,20 @@ async function main() {
 // 使用方法の表示
 function showUsage() {
   console.log("使用方法:");
-  console.log("  pnpm run scrapers:cannes-film-festival");
+  console.log("  pnpm run scrapers:cannes-film-festival [オプション]");
   console.log("");
   console.log("オプション:");
+  console.log("  --year <年>     特定の年のみ処理 (例: --year 2024)");
   console.log("  --help, -h      このヘルプを表示");
   console.log("");
   console.log("説明:");
   console.log("  Wikipediaからカンヌ国際映画祭のコンペティション参加映画情報を");
   console.log("  スクレイピングし、データベースに保存します。");
   console.log("  Palme d'Or（パルム・ドール）受賞作品も含まれます。");
+  console.log("");
+  console.log("例:");
+  console.log("  pnpm run scrapers:cannes-film-festival");
+  console.log("  pnpm run scrapers:cannes-film-festival --year 2024");
 }
 
 // ヘルプオプションの処理
