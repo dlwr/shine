@@ -227,6 +227,7 @@ const apiUrl = import.meta.env.API_URL || "https://shine-api.yuta25.workers.dev/
     // Check if admin is logged in
     function updateButtonVisibility() {
       const isAdmin = localStorage.getItem('adminToken') !== null;
+      console.log('Updating button visibility. Is admin:', isAdmin);
       reselectButtons.forEach(button => {
         if (isAdmin) {
           button.classList.remove('hidden');
@@ -240,8 +241,14 @@ const apiUrl = import.meta.env.API_URL || "https://shine-api.yuta25.workers.dev/
     updateButtonVisibility();
     
     // Listen for login/logout events
-    window.addEventListener('adminLogin', updateButtonVisibility);
-    window.addEventListener('adminLogout', updateButtonVisibility);
+    window.addEventListener('adminLogin', () => {
+      console.log('Admin login event received');
+      updateButtonVisibility();
+    });
+    window.addEventListener('adminLogout', () => {
+      console.log('Admin logout event received');
+      updateButtonVisibility();
+    });
     
     reselectButtons.forEach(button => {
       button.addEventListener('click', async function() {
