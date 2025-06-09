@@ -68,17 +68,21 @@ const labels = {
     randomMovie: "Random Movie",
     daily: "Daily",
     weekly: "Weekly", 
-    monthly: "Monthly"
+    monthly: "Monthly",
+    reselect: "Re-select"
   },
   ja: {
     randomMovie: "ランダム映画",
     daily: "日替わり",
     weekly: "週替わり",
-    monthly: "月替わり"
+    monthly: "月替わり",
+    reselect: "再抽選"
   }
 };
 
 const t = labels[locale as keyof typeof labels] || labels.en;
+
+const apiUrl = import.meta.env.API_URL || "https://shine-api.yuta25.workers.dev/";
 ---
 
 <section class="movies-section">
@@ -88,14 +92,17 @@ const t = labels[locale as keyof typeof labels] || labels.en;
     <div class="movie-item">
       <div class="movie-label">{t.daily}</div>
       {movies.daily && <MovieCard movie={movies.daily} locale={locale} />}
+      <button class="reselect-btn" data-type="daily">{t.reselect}</button>
     </div>
     <div class="movie-item">
       <div class="movie-label">{t.weekly}</div>
       {movies.weekly && <MovieCard movie={movies.weekly} locale={locale} />}
+      <button class="reselect-btn" data-type="weekly">{t.reselect}</button>
     </div>
     <div class="movie-item">
       <div class="movie-label">{t.monthly}</div>
       {movies.monthly && <MovieCard movie={movies.monthly} locale={locale} />}
+      <button class="reselect-btn" data-type="monthly">{t.reselect}</button>
     </div>
   </div>
 </section>
@@ -175,6 +182,27 @@ const t = labels[locale as keyof typeof labels] || labels.en;
     cursor: not-allowed;
   }
 
+  .reselect-btn {
+    padding: 0.5rem 1rem;
+    margin-top: 1rem;
+    background-color: #48c774;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .reselect-btn:hover {
+    background-color: #40b968;
+  }
+
+  .reselect-btn:disabled {
+    background-color: #a0a0a0;
+    cursor: not-allowed;
+  }
+
   @media (max-width: 768px) {
     .movie-container {
       max-width: 95%;
@@ -187,3 +215,51 @@ const t = labels[locale as keyof typeof labels] || labels.en;
     }
   }
 </style>
+
+<script define:vars={{ locale, apiUrl }} is:inline>
+  document.addEventListener('DOMContentLoaded', function() {
+    const reselectButtons = document.querySelectorAll('.reselect-btn');
+    
+    reselectButtons.forEach(button => {
+      button.addEventListener('click', async function() {
+        const type = this.dataset.type;
+        const originalText = this.textContent;
+        
+        // Disable button and show loading state
+        this.disabled = true;
+        this.textContent = locale === 'ja' ? '抽選中...' : 'Selecting...';
+        
+        try {
+          const response = await fetch(`${apiUrl}reselect`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              type: type,
+              locale: locale
+            })
+          });
+          
+          if (!response.ok) {
+            throw new Error(`API request failed: ${response.status}`);
+          }
+          
+          const result = await response.json();
+          
+          if (result.movie) {
+            // Reload the page to show the new movie
+            window.location.reload();
+          }
+        } catch (error) {
+          console.error('Error re-selecting movie:', error);
+          alert(locale === 'ja' ? 'エラーが発生しました。再度お試しください。' : 'An error occurred. Please try again.');
+        } finally {
+          // Re-enable button
+          this.disabled = false;
+          this.textContent = originalText;
+        }
+      });
+    });
+  });
+</script>

@@ -13,7 +13,7 @@ export const getDatabase = (environment: Environment) => {
     url: environment.TURSO_DATABASE_URL,
     authToken: environment.TURSO_AUTH_TOKEN,
   });
-  
+
   return drizzle(client, {
     schema: {
       ...schema,

@@ -137,7 +137,8 @@ async function getMovieByDateSeed(
   database: ReturnType<typeof getDatabase>,
   date: Date,
   type: "daily" | "weekly" | "monthly",
-  preferredLanguage = "en"
+  preferredLanguage = "en",
+  forceNew = false
 ) {
   const selectionDate = getSelectionDate(date, type);
 
@@ -155,12 +156,17 @@ async function getMovieByDateSeed(
 
   let movieId: string;
 
-  if (existingSelection.length > 0) {
+  if (existingSelection.length > 0 && !forceNew) {
     // Use the existing selection
     movieId = existingSelection[0].movieId;
   } else {
     // Generate a new selection
-    const seed = getDateSeed(date, type);
+    let seed = getDateSeed(date, type);
+    
+    // If forcing new selection, add extra randomness
+    if (forceNew) {
+      seed = seed + Date.now();
+    }
 
     // Get a random movie using the seed
     const randomMovieResult = await database
@@ -177,8 +183,20 @@ async function getMovieByDateSeed(
 
     movieId = randomMovieResult[0].uid;
 
-    // Save the new selection to the database
+    // Save the new selection to the database (replace existing if needed)
     try {
+      if (existingSelection.length > 0) {
+        // Delete existing selection first
+        await database
+          .delete(movieSelections)
+          .where(
+            and(
+              eq(movieSelections.selectionType, type),
+              eq(movieSelections.selectionDate, selectionDate)
+            )
+          );
+      }
+      
       await database.insert(movieSelections).values({
         selectionType: type,
         selectionDate: selectionDate,
@@ -320,6 +338,30 @@ app.get("/", async (c) => {
     });
   } catch (error) {
     console.error("Error fetching feature movies:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+app.post("/reselect", async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const now = new Date();
+
+    const body = await c.req.json();
+    const { type, locale = "en" } = body;
+
+    if (!type || !["daily", "weekly", "monthly"].includes(type)) {
+      return c.json({ error: "Invalid selection type" }, 400);
+    }
+
+    const movie = await getMovieByDateSeed(database, now, type, locale, true);
+
+    return c.json({
+      type,
+      movie,
+    });
+  } catch (error) {
+    console.error("Error reselecting movie:", error);
     return c.json({ error: "Internal server error" }, 500);
   }
 });
