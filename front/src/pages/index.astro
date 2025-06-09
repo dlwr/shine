@@ -2,6 +2,7 @@
 import Movies from "../components/Movies.astro";
 import Layout from "../layouts/Layout.astro";
 import LanguageSelector from "../components/LanguageSelector.astro";
+import AdminLogin from "../components/AdminLogin.astro";
 
 function getLocaleFromRequest(request: Request): string {
   const url = new URL(request.url);
@@ -29,6 +30,7 @@ const locale = getLocaleFromRequest(Astro.request);
 ---
 
 <Layout>
+  <AdminLogin locale={locale} />
   <main>
     <h1>SHINE</h1>
     <LanguageSelector locale={locale} />

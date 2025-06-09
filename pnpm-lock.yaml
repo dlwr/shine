@@ -67,7 +67,20 @@ importers:
         specifier: ^4.19.1
         version: 4.19.1(@cloudflare/workers-types@4.20250605.0)
 
-  api: {}
+  api:
+    dependencies:
+      '@libsql/client':
+        specifier: ^0.15.8
+        version: 0.15.8
+      drizzle-orm:
+        specifier: ^0.44.2
+        version: 0.44.2(@cloudflare/workers-types@4.20250605.0)(@libsql/client@0.15.8)(better-sqlite3@11.10.0)(gel@2.1.0)
+      hono:
+        specifier: ^4.7.11
+        version: 4.7.11
+      jose:
+        specifier: ^6.0.11
+        version: 6.0.11
 
   front:
     dependencies:
@@ -2001,6 +2014,9 @@ packages:
   isexe@3.1.1:
     resolution: {integrity: sha512-LpB/54B+/2J5hqQ7imZHfdU31OlgQqx7ZicVlkm9kzg9/w8GKLEcFfJl/t7DCEDueOyBAD6zCCwTO6Fzs0NoEQ==}
     engines: {node: '>=16'}
+
+  jose@6.0.11:
+    resolution: {integrity: sha512-QxG7EaliDARm1O1S8BGakqncGT9s25bKL1WSf6/oa17Tkqwi8D2ZNglqCF+DsYF88/rV66Q/Q2mFAy697E1DUg==}
 
   js-base64@3.7.7:
     resolution: {integrity: sha512-7rCnleh0z2CkXhH67J8K1Ytz0b2Y+yxTPL+/KOJoa20hfnVQ/3/T6W/KflYI4bRHRagNeXeU2bkNGI3v1oS/lw==}
@@ -4910,6 +4926,8 @@ snapshots:
   isexe@2.0.0: {}
 
   isexe@3.1.1: {}
+
+  jose@6.0.11: {}
 
   js-base64@3.7.7: {}
 

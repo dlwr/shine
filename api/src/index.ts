@@ -1,4 +1,4 @@
-import { getDatabase, type Environment } from "db";
+import { getDatabase, type Environment, and, eq, sql } from "db";
 import { awardCategories } from "db/schema/award-categories";
 import { awardCeremonies } from "db/schema/award-ceremonies";
 import { awardOrganizations } from "db/schema/award-organizations";
@@ -7,11 +7,11 @@ import { movies } from "db/schema/movies";
 import { nominations } from "db/schema/nominations";
 import { posterUrls } from "db/schema/poster-urls";
 import { translations } from "db/schema/translations";
-import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { authMiddleware, createJWT } from "./auth";
 
-const app = new Hono();
+const app = new Hono<{ Bindings: Environment }>();
 
 app.use("*", cors());
 
@@ -112,7 +112,7 @@ async function getMovieNominations(
       awardCategories.name
     );
 
-  return nominationsData.map((nom) => ({
+  return nominationsData.map((nom: typeof nominationsData[0]) => ({
     uid: nom.nominationUid,
     isWinner: nom.isWinner === 1,
     specialMention: nom.specialMention,
@@ -312,6 +312,21 @@ function parseAcceptLanguage(acceptLanguage?: string): string[] {
     .map((lang) => lang.code);
 }
 
+app.post("/auth/login", async (c) => {
+  const { password } = await c.req.json();
+  
+  if (!password || !c.env.ADMIN_PASSWORD || password !== c.env.ADMIN_PASSWORD) {
+    return c.json({ error: "Invalid password" }, 401);
+  }
+  
+  if (!c.env.JWT_SECRET) {
+    return c.json({ error: "JWT_SECRET not configured" }, 500);
+  }
+  
+  const token = await createJWT(c.env.JWT_SECRET);
+  return c.json({ token });
+});
+
 app.get("/", async (c) => {
   try {
     const database = getDatabase(c.env as Environment);
@@ -342,7 +357,7 @@ app.get("/", async (c) => {
   }
 });
 
-app.post("/reselect", async (c) => {
+app.post("/reselect", authMiddleware, async (c) => {
   try {
     const database = getDatabase(c.env as Environment);
     const now = new Date();

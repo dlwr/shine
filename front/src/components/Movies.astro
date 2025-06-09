@@ -92,17 +92,17 @@ const apiUrl = import.meta.env.API_URL || "https://shine-api.yuta25.workers.dev/
     <div class="movie-item">
       <div class="movie-label">{t.daily}</div>
       {movies.daily && <MovieCard movie={movies.daily} locale={locale} />}
-      <button class="reselect-btn" data-type="daily">{t.reselect}</button>
+      <button class="reselect-btn admin-only hidden" data-type="daily">{t.reselect}</button>
     </div>
     <div class="movie-item">
       <div class="movie-label">{t.weekly}</div>
       {movies.weekly && <MovieCard movie={movies.weekly} locale={locale} />}
-      <button class="reselect-btn" data-type="weekly">{t.reselect}</button>
+      <button class="reselect-btn admin-only hidden" data-type="weekly">{t.reselect}</button>
     </div>
     <div class="movie-item">
       <div class="movie-label">{t.monthly}</div>
       {movies.monthly && <MovieCard movie={movies.monthly} locale={locale} />}
-      <button class="reselect-btn" data-type="monthly">{t.reselect}</button>
+      <button class="reselect-btn admin-only hidden" data-type="monthly">{t.reselect}</button>
     </div>
   </div>
 </section>
@@ -203,6 +203,10 @@ const apiUrl = import.meta.env.API_URL || "https://shine-api.yuta25.workers.dev/
     cursor: not-allowed;
   }
 
+  .reselect-btn.hidden {
+    display: none;
+  }
+
   @media (max-width: 768px) {
     .movie-container {
       max-width: 95%;
@@ -220,10 +224,35 @@ const apiUrl = import.meta.env.API_URL || "https://shine-api.yuta25.workers.dev/
   document.addEventListener('DOMContentLoaded', function() {
     const reselectButtons = document.querySelectorAll('.reselect-btn');
     
+    // Check if admin is logged in
+    function updateButtonVisibility() {
+      const isAdmin = localStorage.getItem('adminToken') !== null;
+      reselectButtons.forEach(button => {
+        if (isAdmin) {
+          button.classList.remove('hidden');
+        } else {
+          button.classList.add('hidden');
+        }
+      });
+    }
+    
+    // Initial check
+    updateButtonVisibility();
+    
+    // Listen for login/logout events
+    window.addEventListener('adminLogin', updateButtonVisibility);
+    window.addEventListener('adminLogout', updateButtonVisibility);
+    
     reselectButtons.forEach(button => {
       button.addEventListener('click', async function() {
         const type = this.dataset.type;
         const originalText = this.textContent;
+        const token = localStorage.getItem('adminToken');
+        
+        if (!token) {
+          alert(locale === 'ja' ? '管理者としてログインしてください' : 'Please login as admin');
+          return;
+        }
         
         // Disable button and show loading state
         this.disabled = true;
@@ -234,6 +263,7 @@ const apiUrl = import.meta.env.API_URL || "https://shine-api.yuta25.workers.dev/
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
               type: type,

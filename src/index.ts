@@ -2,10 +2,15 @@ import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import * as schema from "./schema/index";
 
+// Re-export drizzle-orm utilities
+export { and, eq, sql } from "drizzle-orm";
+
 export interface Environment {
   TMDB_API_KEY: string | undefined;
   TURSO_DATABASE_URL: string;
   TURSO_AUTH_TOKEN: string;
+  ADMIN_PASSWORD?: string;
+  JWT_SECRET?: string;
 }
 
 export const getDatabase = (environment: Environment) => {
