@@ -1,6 +1,10 @@
 import { getDatabase, type Environment } from "db";
+import { awardCategories } from "db/schema/award-categories";
+import { awardCeremonies } from "db/schema/award-ceremonies";
+import { awardOrganizations } from "db/schema/award-organizations";
 import { movieSelections } from "db/schema/movie-selections";
 import { movies } from "db/schema/movies";
+import { nominations } from "db/schema/nominations";
 import { posterUrls } from "db/schema/poster-urls";
 import { translations } from "db/schema/translations";
 import { and, eq, sql } from "drizzle-orm";
@@ -67,6 +71,66 @@ function getDateSeed(date: Date, type: "daily" | "weekly" | "monthly"): number {
       return simpleHash(`monthly-${monthString}`);
     }
   }
+}
+
+async function getMovieNominations(
+  database: ReturnType<typeof getDatabase>,
+  movieId: string
+) {
+  const nominationsData = await database
+    .select({
+      nominationUid: nominations.uid,
+      isWinner: nominations.isWinner,
+      specialMention: nominations.specialMention,
+      categoryUid: awardCategories.uid,
+      categoryName: awardCategories.name,
+      categoryNameEn: awardCategories.nameEn,
+      ceremonyUid: awardCeremonies.uid,
+      ceremonyNumber: awardCeremonies.ceremonyNumber,
+      ceremonyYear: awardCeremonies.year,
+      organizationUid: awardOrganizations.uid,
+      organizationName: awardOrganizations.name,
+      organizationShortName: awardOrganizations.shortName,
+    })
+    .from(nominations)
+    .innerJoin(
+      awardCategories,
+      eq(nominations.categoryUid, awardCategories.uid)
+    )
+    .innerJoin(
+      awardCeremonies,
+      eq(nominations.ceremonyUid, awardCeremonies.uid)
+    )
+    .innerJoin(
+      awardOrganizations,
+      eq(awardCeremonies.organizationUid, awardOrganizations.uid)
+    )
+    .where(eq(nominations.movieUid, movieId))
+    .orderBy(
+      awardCeremonies.year,
+      awardOrganizations.name,
+      awardCategories.name
+    );
+
+  return nominationsData.map((nom) => ({
+    uid: nom.nominationUid,
+    isWinner: nom.isWinner === 1,
+    specialMention: nom.specialMention,
+    category: {
+      uid: nom.categoryUid,
+      name: nom.categoryNameEn || nom.categoryName,
+    },
+    ceremony: {
+      uid: nom.ceremonyUid,
+      number: nom.ceremonyNumber,
+      year: nom.ceremonyYear,
+    },
+    organization: {
+      uid: nom.organizationUid,
+      name: nom.organizationName,
+      shortName: nom.organizationShortName,
+    },
+  }));
 }
 
 async function getMovieByDateSeed(
@@ -171,6 +235,9 @@ async function getMovieByDateSeed(
         ? `https://www.imdb.com/title/${movie.imdbId}/`
         : undefined;
 
+      // Get nominations for this movie
+      const movieNominations = await getMovieNominations(database, movie.uid);
+
       return {
         uid: movie.uid,
         year: movie.year,
@@ -178,6 +245,7 @@ async function getMovieByDateSeed(
         title: translation?.content,
         posterUrl: poster?.url,
         imdbUrl: imdbUrl,
+        nominations: movieNominations,
       };
     }
   }
@@ -196,6 +264,9 @@ async function getMovieByDateSeed(
     ? `https://www.imdb.com/title/${movie.imdbId}/`
     : undefined;
 
+  // Get nominations for this movie
+  const movieNominations = await getMovieNominations(database, movie.uid);
+
   return {
     uid: movie.uid,
     year: movie.year,
@@ -203,6 +274,7 @@ async function getMovieByDateSeed(
     title: translation?.content,
     posterUrl: poster?.url,
     imdbUrl: imdbUrl,
+    nominations: movieNominations,
   };
 }
 

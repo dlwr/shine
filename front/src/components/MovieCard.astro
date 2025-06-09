@@ -6,6 +6,25 @@ interface Props {
     year: number;
     posterUrl?: string;
     imdbUrl?: string;
+    nominations?: Array<{
+      uid: string;
+      isWinner: boolean;
+      specialMention?: string;
+      category: {
+        uid: string;
+        name: string;
+      };
+      ceremony: {
+        uid: string;
+        number: number;
+        year: number;
+      };
+      organization: {
+        uid: string;
+        name: string;
+        shortName: string;
+      };
+    }>;
   };
   locale?: string;
 }
@@ -13,11 +32,33 @@ interface Props {
 const { movie, locale = 'en' } = Astro.props;
 
 const labels = {
-  en: { noPoster: "No Poster" },
-  ja: { noPoster: "ポスターなし" }
+  en: { noPoster: "No Poster", winner: "Winner", nominee: "Nominee" },
+  ja: { noPoster: "ポスターなし", winner: "受賞", nominee: "ノミネート" }
 };
 
 const t = labels[locale as keyof typeof labels] || labels.en;
+
+// Group nominations by organization and ceremony
+const nominationsByOrg = movie.nominations?.reduce((acc, nom) => {
+  const orgKey = nom.organization.uid;
+  if (!acc[orgKey]) {
+    acc[orgKey] = {
+      organization: nom.organization,
+      ceremonies: {}
+    };
+  }
+  
+  const ceremonyKey = nom.ceremony.uid;
+  if (!acc[orgKey].ceremonies[ceremonyKey]) {
+    acc[orgKey].ceremonies[ceremonyKey] = {
+      ceremony: nom.ceremony,
+      nominations: []
+    };
+  }
+  
+  acc[orgKey].ceremonies[ceremonyKey].nominations.push(nom);
+  return acc;
+}, {} as Record<string, any>) || {};
 ---
 
 {
@@ -38,6 +79,28 @@ const t = labels[locale as keyof typeof labels] || labels.en;
       <div class="movie-info">
         <h3 class="title">{movie.title}</h3>
         <p class="year">{movie.year}</p>
+        {movie.nominations && movie.nominations.length > 0 && (
+          <div class="nominations">
+            {Object.values(nominationsByOrg).map((orgData: any) => (
+              <div class="org-group">
+                <h4 class="org-name">{orgData.organization.shortName || orgData.organization.name}</h4>
+                {Object.values(orgData.ceremonies).map((ceremonyData: any) => (
+                  <div class="ceremony-group">
+                    <span class="ceremony-year">{ceremonyData.ceremony.year}</span>
+                    <ul class="nomination-list">
+                      {ceremonyData.nominations.map((nom: any) => (
+                        <li class={nom.isWinner ? 'winner' : 'nominee'}>
+                          <span class="category-name">{nom.category.name}</span>
+                          <span class="status">{nom.isWinner ? t.winner : t.nominee}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </a>
   ) : (
@@ -52,6 +115,28 @@ const t = labels[locale as keyof typeof labels] || labels.en;
       <div class="movie-info">
         <h3 class="title">{movie.title}</h3>
         <p class="year">{movie.year}</p>
+        {movie.nominations && movie.nominations.length > 0 && (
+          <div class="nominations">
+            {Object.values(nominationsByOrg).map((orgData: any) => (
+              <div class="org-group">
+                <h4 class="org-name">{orgData.organization.shortName || orgData.organization.name}</h4>
+                {Object.values(orgData.ceremonies).map((ceremonyData: any) => (
+                  <div class="ceremony-group">
+                    <span class="ceremony-year">{ceremonyData.ceremony.year}</span>
+                    <ul class="nomination-list">
+                      {ceremonyData.nominations.map((nom: any) => (
+                        <li class={nom.isWinner ? 'winner' : 'nominee'}>
+                          <span class="category-name">{nom.category.name}</span>
+                          <span class="status">{nom.isWinner ? t.winner : t.nominee}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -112,9 +197,76 @@ const t = labels[locale as keyof typeof labels] || labels.en;
   }
 
   .year {
-    margin: 0;
+    margin: 0 0 16px 0;
     color: #666;
     font-size: 1.1rem;
+  }
+
+  .nominations {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+  }
+
+  .org-group {
+    margin-bottom: 16px;
+  }
+
+  .org-group:last-child {
+    margin-bottom: 0;
+  }
+
+  .org-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 8px 0;
+  }
+
+  .ceremony-group {
+    margin-bottom: 8px;
+  }
+
+  .ceremony-year {
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 500;
+  }
+
+  .nomination-list {
+    list-style: none;
+    padding: 0;
+    margin: 4px 0 0 0;
+  }
+
+  .nomination-list li {
+    font-size: 0.85rem;
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .category-name {
+    color: #555;
+  }
+
+  .status {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    margin-left: 8px;
+  }
+
+  .winner .status {
+    background: #ffd700;
+    color: #333;
+  }
+
+  .nominee .status {
+    background: #e3e3e3;
+    color: #555;
   }
 
   @media (max-width: 768px) {
