@@ -30,7 +30,7 @@ const t = translations[locale as keyof typeof translations] || translations.en;
 ---
 
 <div class="admin-section">
-  <button id="admin-button" class="admin-button">
+  <button id="admin-button" class="admin-button hidden">
     {t.adminButton}
   </button>
   
@@ -167,6 +167,10 @@ const t = translations[locale as keyof typeof translations] || translations.en;
   .error-message.hidden {
     display: none;
   }
+
+  .admin-button.hidden {
+    display: none;
+  }
 </style>
 
 <script>
@@ -188,14 +192,10 @@ const t = translations[locale as keyof typeof translations] || translations.en;
   adminButton.addEventListener('click', () => {
     if (localStorage.getItem('adminToken')) {
       // Logout
-      console.log('Logging out admin');
       localStorage.removeItem('adminToken');
       adminButton.classList.remove('logged-in');
       adminButton.textContent = document.documentElement.lang === 'ja' ? '管理者' : 'Admin';
       window.dispatchEvent(new Event('adminLogout'));
-      console.log('Admin logout event dispatched');
-      // Force page reload to ensure clean state
-      setTimeout(() => window.location.reload(), 100);
     } else {
       // Show login modal
       loginModal.classList.remove('hidden');
