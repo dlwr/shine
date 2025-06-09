@@ -12,3 +12,6 @@ name = "shine-api"
 # TURSO_DATABASE_URL and TURSO_AUTH_TOKEN should be set via:
 # wrangler secret put TURSO_DATABASE_URL --env production
 # wrangler secret put TURSO_AUTH_TOKEN --env production
+# wrangler.toml (wrangler v3.88.0^)
+[observability.logs]
+enabled = true
