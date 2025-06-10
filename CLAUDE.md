@@ -26,6 +26,9 @@ Key design patterns:
 
 ### Development
 ```bash
+# Start both API and frontend development servers
+pnpm run dev
+
 # Start API development server with local DB persistence
 pnpm run api:dev
 
@@ -217,3 +220,4 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 - Fixed environment variable names (removed _DEV suffix)
 - Added missing API endpoints documentation
 - Updated file paths to match current structure
+- Added `pnpm run dev` command to start both API and frontend concurrently
