@@ -4,14 +4,12 @@ export interface Props {
 }
 
 const { movieId } = Astro.props;
-const apiUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:8787";
 ---
 
 <div
   id="movie-editor"
   class="movie-editor"
   data-movie-id={movieId || ""}
-  data-api-url={apiUrl}
 >
   <div class="editor-container">
     <h2>映画の編集</h2>
@@ -327,10 +325,10 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:8787";
     constructor() {
       const editorEl = document.getElementById("movie-editor");
       this.movieId = editorEl?.dataset.movieId || "";
-      // Remove trailing slash from API URL
-      this.apiUrl = (
-        editorEl?.dataset.apiUrl || "http://localhost:8787"
-      ).replace(/\/$/, "");
+      // Determine API URL based on environment
+      this.apiUrl = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
+        ? 'http://localhost:8787'
+        : 'https://shine-api.yuta25.workers.dev';
       this.adminToken = localStorage.getItem("adminToken");
       this.currentEditingTranslation = null;
       this.init();
