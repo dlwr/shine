@@ -1,4 +1,4 @@
-import { getDatabase, type Environment, and, eq, sql } from "db";
+import { and, eq, getDatabase, sql, type Environment } from "db";
 import { awardCategories } from "db/schema/award-categories";
 import { awardCeremonies } from "db/schema/award-ceremonies";
 import { awardOrganizations } from "db/schema/award-organizations";
@@ -112,7 +112,7 @@ async function getMovieNominations(
       awardCategories.name
     );
 
-  return nominationsData.map((nom: typeof nominationsData[0]) => ({
+  return nominationsData.map((nom: (typeof nominationsData)[0]) => ({
     uid: nom.nominationUid,
     isWinner: nom.isWinner === 1,
     specialMention: nom.specialMention,
@@ -162,7 +162,7 @@ async function getMovieByDateSeed(
   } else {
     // Generate a new selection
     let seed = getDateSeed(date, type);
-    
+
     // If forcing new selection, add extra randomness
     if (forceNew) {
       seed = seed + Date.now();
@@ -196,7 +196,7 @@ async function getMovieByDateSeed(
             )
           );
       }
-      
+
       await database.insert(movieSelections).values({
         selectionType: type,
         selectionDate: selectionDate,
@@ -312,22 +312,20 @@ function parseAcceptLanguage(acceptLanguage?: string): string[] {
     .map((lang) => lang.code);
 }
 
-
 app.post("/auth/login", async (c) => {
   const { password } = await c.req.json();
-  
+
   if (!password || !c.env.ADMIN_PASSWORD || password !== c.env.ADMIN_PASSWORD) {
     return c.json({ error: "Invalid password" }, 401);
   }
-  
+
   if (!c.env.JWT_SECRET) {
     return c.json({ error: "JWT_SECRET not configured" }, 500);
   }
-  
+
   const token = await createJWT(c.env.JWT_SECRET);
   return c.json({ token });
 });
-
 
 app.get("/", async (c) => {
   try {
@@ -407,7 +405,7 @@ app.get("/movies/:id", async (c) => {
       .select({
         languageCode: translations.languageCode,
         content: translations.content,
-        isDefault: translations.isDefault
+        isDefault: translations.isDefault,
       })
       .from(translations)
       .where(
@@ -437,11 +435,17 @@ app.get("/movies/:id", async (c) => {
       imdbId: movie.imdbId,
       imdbUrl: imdbUrl,
       posterUrl: posterResult[0]?.url,
-      translations: movieTranslations.map((t: { languageCode: string; content: string; isDefault: number | null }) => ({
-        languageCode: t.languageCode,
-        content: t.content,
-        isDefault: t.isDefault === 1
-      })),
+      translations: movieTranslations.map(
+        (t: {
+          languageCode: string;
+          content: string;
+          isDefault: number | null;
+        }) => ({
+          languageCode: t.languageCode,
+          content: t.content,
+          isDefault: t.isDefault === 1,
+        })
+      ),
       nominations: movieNominations,
     });
   } catch (error) {
@@ -491,7 +495,7 @@ app.post("/movies/:id/translations", authMiddleware, async (c) => {
           .set({
             content,
             isDefault: isDefault ? 1 : 0,
-            updatedAt: Math.floor(Date.now() / 1000)
+            updatedAt: Math.floor(Date.now() / 1000),
           })
           .where(eq(translations.uid, existingTranslation[0].uid))
       : database.insert(translations).values({
@@ -543,12 +547,12 @@ app.get("/admin/movies", authMiddleware, async (c) => {
 
     // Get total count
     const countResult = await database
-      .select({ count: sql`count(*)`.as('count') })
+      .select({ count: sql`count(*)`.as("count") })
       .from(movies);
-    
+
     const totalCount = Number(countResult[0].count);
 
-    // Get movies with default translations and poster URLs
+    // Get movies with default translations and first poster URL
     const moviesResult = await database
       .select({
         uid: movies.uid,
@@ -556,7 +560,14 @@ app.get("/admin/movies", authMiddleware, async (c) => {
         originalLanguage: movies.originalLanguage,
         imdbId: movies.imdbId,
         title: translations.content,
-        posterUrl: posterUrls.url,
+        posterUrl: sql`
+          (
+                              SELECT url
+                              FROM poster_urls
+                              WHERE poster_urls.movie_uid = movies.uid
+                              LIMIT 1
+                            )
+        `.as("posterUrl"),
       })
       .from(movies)
       .leftJoin(
@@ -567,20 +578,21 @@ app.get("/admin/movies", authMiddleware, async (c) => {
           eq(translations.isDefault, 1)
         )
       )
-      .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
-      .orderBy(sql`movies.year DESC, movies.created_at DESC`)
+      .orderBy(sql`movies.created_at DESC`)
       .limit(limit)
       .offset(offset);
 
     return c.json({
-      movies: moviesResult.map((movie: typeof moviesResult[0]) => ({
+      movies: moviesResult.map((movie: (typeof moviesResult)[0]) => ({
         uid: movie.uid,
         year: movie.year,
         originalLanguage: movie.originalLanguage,
         imdbId: movie.imdbId,
-        title: movie.title || 'Untitled',
+        title: movie.title || "Untitled",
         posterUrl: movie.posterUrl,
-        imdbUrl: movie.imdbId ? `https://www.imdb.com/title/${movie.imdbId}/` : undefined,
+        imdbUrl: movie.imdbId
+          ? `https://www.imdb.com/title/${movie.imdbId}/`
+          : undefined,
       })),
       pagination: {
         page,
