@@ -29,11 +29,11 @@ function getCacheKey() {
 async function fetchMovie(locale: string) {
   try {
     const apiUrl =
-      import.meta.env.PUBLIC_API_URL || "https://shine-api.yuta25.workers.dev/";
+      import.meta.env.PUBLIC_API_URL || "https://shine-api.yuta25.workers.dev";
     console.log("Using API URL:", apiUrl);
 
     const cacheKey = getCacheKey();
-    const response = await fetch(`${apiUrl}?cache=${cacheKey}&locale=${locale}`, {
+    const response = await fetch(`${apiUrl}/?cache=${cacheKey}&locale=${locale}`, {
       headers: {
         "Cache-Control": "no-store",
         "Accept-Language": locale === 'ja' ? 'ja,en;q=0.5' : 'en',
@@ -82,7 +82,7 @@ const labels = {
 
 const t = labels[locale as keyof typeof labels] || labels.en;
 
-const apiUrl = import.meta.env.PUBLIC_API_URL || "https://shine-api.yuta25.workers.dev/";
+const apiUrl = import.meta.env.PUBLIC_API_URL || "https://shine-api.yuta25.workers.dev";
 ---
 
 <section class="movies-section">
@@ -259,7 +259,7 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || "https://shine-api.yuta25.worke
         this.textContent = locale === 'ja' ? '抽選中...' : 'Selecting...';
         
         try {
-          const response = await fetch(`${apiUrl}reselect`, {
+          const response = await fetch(`${apiUrl}/reselect`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
