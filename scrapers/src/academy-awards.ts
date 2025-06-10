@@ -10,10 +10,17 @@ import { referenceUrls } from "../../src/schema/reference-urls";
 import { translations } from "../../src/schema/translations";
 import { Element } from "domhandler";
 import { and, eq } from "drizzle-orm";
+import {
+  fetchImdbId,
+  fetchJapaneseTitleFromTMDB,
+  fetchTMDBMovieImages,
+  saveJapaneseTranslation,
+  savePosterUrls,
+  saveTMDBId,
+} from "./common/tmdb-utilities";
 
 const WIKIPEDIA_BASE_URL = "https://en.wikipedia.org";
 const ACADEMY_AWARDS_URL = `${WIKIPEDIA_BASE_URL}/wiki/Academy_Award_for_Best_Picture`;
-const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
 
 interface TableColumns {
   filmIndex: number;
@@ -422,116 +429,6 @@ function cleanupTitle(title: string): string {
     .trim();
 }
 
-// TMDb APIのレスポンス型
-interface TMDatabaseSearchResponse {
-  results: {
-    id: number;
-    title: string;
-    release_date: string;
-  }[];
-}
-
-interface TMDatabaseMovieDetails {
-  imdb_id: string;
-  title: string;
-  release_date: string;
-}
-
-// TMDb APIを使って映画を検索
-async function searchTMDatabaseMovie(
-  title: string,
-  year: number
-): Promise<number | undefined> {
-  if (!TMDB_API_KEY) {
-    console.error("TMDb API key is not set");
-    return undefined;
-  }
-
-  try {
-    const searchUrl = new URL(`${TMDB_API_BASE_URL}/search/movie`);
-    searchUrl.searchParams.append("api_key", TMDB_API_KEY);
-    searchUrl.searchParams.append("query", title);
-    searchUrl.searchParams.append("year", year.toString());
-    searchUrl.searchParams.append("language", "en-US");
-
-    const response = await fetch(searchUrl.toString());
-    if (!response.ok) {
-      throw new Error(`TMDb API error: ${response.statusText}`);
-    }
-
-    const data = (await response.json()) as TMDatabaseSearchResponse;
-
-    // 結果をフィルタリング
-    const matches = data.results.filter((movie) => {
-      const movieYear = new Date(movie.release_date).getFullYear();
-      return Math.abs(movieYear - year) <= 1; // 1年の誤差を許容
-    });
-
-    // 最も関連性の高い結果を返す
-    return matches.length > 0 ? matches[0].id : undefined;
-  } catch (error) {
-    console.error(`Error searching TMDb for ${title} (${year}):`, error);
-    return undefined;
-  }
-}
-
-// TMDb APIから映画の詳細情報を取得
-async function fetchTMDatabaseMovieDetails(
-  movieId: number
-): Promise<string | undefined> {
-  if (!TMDB_API_KEY) {
-    console.error("TMDb API key is not set");
-    return undefined;
-  }
-
-  try {
-    const detailsUrl = new URL(`${TMDB_API_BASE_URL}/movie/${movieId}`);
-    detailsUrl.searchParams.append("api_key", TMDB_API_KEY);
-    detailsUrl.searchParams.append("language", "en-US");
-
-    const response = await fetch(detailsUrl.toString());
-    if (!response.ok) {
-      throw new Error(`TMDb API error: ${response.statusText}`);
-    }
-
-    const data = (await response.json()) as TMDatabaseMovieDetails;
-    return data.imdb_id || undefined;
-  } catch (error) {
-    console.error(
-      `Error fetching TMDb movie details for ID ${movieId}:`,
-      error
-    );
-    return undefined;
-  }
-}
-
-// IMDb IDを取得する関数
-async function fetchImdbId(
-  title: string,
-  year: number
-): Promise<string | undefined> {
-  try {
-    // TMDbで映画を検索
-    const movieId = await searchTMDatabaseMovie(title, year);
-    if (!movieId) {
-      console.log(`No TMDb match found for ${title} (${year})`);
-      return undefined;
-    }
-
-    // 映画の詳細情報を取得
-    const imdbId = await fetchTMDatabaseMovieDetails(movieId);
-    if (imdbId) {
-      console.log(`Found IMDb ID for ${title} (${year}): ${imdbId}`);
-    } else {
-      console.log(`No IMDb ID found for ${title} (${year})`);
-    }
-
-    return imdbId;
-  } catch (error) {
-    console.error(`Error fetching IMDb ID for ${title} (${year}):`, error);
-    return undefined;
-  }
-}
 
 async function processMovie(
   title: string,
@@ -544,7 +441,10 @@ async function processMovie(
     const database = getDatabase(environment_);
 
     // IMDb IDを取得
-    const imdbId = await fetchImdbId(title, year);
+    let imdbId: string | undefined;
+    if (TMDB_API_KEY) {
+      imdbId = await fetchImdbId(title, year, TMDB_API_KEY);
+    }
 
     // 既存の映画を検索
     const existingMovies = await database
@@ -629,6 +529,45 @@ async function processMovie(
             updatedAt: Math.floor(Date.now() / 1000),
           },
         });
+    }
+
+    // 日本語翻訳の取得・保存
+    if (imdbId && TMDB_API_KEY) {
+      const japaneseTitle = await fetchJapaneseTitleFromTMDB(
+        imdbId,
+        existingMovies.length > 0 ? (existingMovies[0].movies.tmdbId ?? undefined) : undefined,
+        environment_
+      );
+      
+      if (japaneseTitle) {
+        await saveJapaneseTranslation(movieUid, japaneseTitle, environment_);
+      }
+
+      // ポスターの取得・保存
+      const movieImages = await fetchTMDBMovieImages(imdbId, TMDB_API_KEY);
+      if (movieImages) {
+        // TMDB IDを保存（まだ保存されていない場合）
+        const currentMovie = await database
+          .select({ tmdbId: movies.tmdbId })
+          .from(movies)
+          .where(eq(movies.uid, movieUid))
+          .limit(1);
+        
+        if (currentMovie.length > 0 && !currentMovie[0].tmdbId) {
+          await saveTMDBId(imdbId, movieImages.tmdbId, environment_);
+        }
+
+        // ポスターを保存
+        const posterCount = await savePosterUrls(
+          movieUid,
+          movieImages.images.posters,
+          environment_
+        );
+        
+        if (posterCount > 0) {
+          console.log(`  Saved ${posterCount} posters for ${title}`);
+        }
+      }
     }
 
     const ceremonyUid = await getOrCreateCeremony(year, master.organizationUid);
