@@ -235,7 +235,18 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - Corrected SQL ORDER BY clause to use proper camelCase column name `createdAt` instead of snake_case `created_at`
   - Used SQL template with schema field reference: `sql`${movies.createdAt} DESC`` at api/src/index.ts:581
 
+### 2025-06-10 (Updated)
+- Fixed API URL handling inconsistency:
+  - Standardized all API URL construction to NOT include trailing slash in base URL
+  - All API paths must start with leading slash (e.g., `/auth/login`, `/reselect`)
+  - Fixed `Movies.astro` and `wrangler.jsonc` to follow this pattern
+  - This prevents URL construction errors like `http://localhost:8787reselect`
+- Fixed `/reselect` endpoint:
+  - The endpoint expects `type` parameter, not `period`
+  - Request body should include both `type` and `locale`
+
 ### Development Guidelines
 - TSエラーとLintエラーをを絶対に無視するな
 - Database column names in schema use camelCase (e.g., `createdAt`, `updatedAt`) but are mapped to snake_case in the actual database
 - When writing SQL queries, use the schema field references directly instead of hardcoding column names
+- **API URL Convention**: Base URLs should NOT have trailing slashes, paths should start with leading slash
