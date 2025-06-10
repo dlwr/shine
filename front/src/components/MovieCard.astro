@@ -29,120 +29,179 @@ interface Props {
   locale?: string;
 }
 
-const { movie, locale = 'en' } = Astro.props;
+const { movie, locale = "en" } = Astro.props;
 
 const labels = {
-  en: { noPoster: "No Poster", winner: "Winner", nominee: "Nominee" },
-  ja: { noPoster: "ポスターなし", winner: "受賞", nominee: "ノミネート" }
+  en: {
+    noPoster: "No Poster",
+    winner: "Winner",
+    nominee: "Nominee",
+    edit: "Edit",
+  },
+  ja: {
+    noPoster: "ポスターなし",
+    winner: "受賞",
+    nominee: "ノミネート",
+    edit: "編集",
+  },
 };
 
 const t = labels[locale as keyof typeof labels] || labels.en;
 
 // Group nominations by organization and ceremony
-const nominationsByOrg = movie.nominations?.reduce((acc, nom) => {
-  const orgKey = nom.organization.uid;
-  if (!acc[orgKey]) {
-    acc[orgKey] = {
-      organization: nom.organization,
-      ceremonies: {}
-    };
-  }
-  
-  const ceremonyKey = nom.ceremony.uid;
-  if (!acc[orgKey].ceremonies[ceremonyKey]) {
-    acc[orgKey].ceremonies[ceremonyKey] = {
-      ceremony: nom.ceremony,
-      nominations: []
-    };
-  }
-  
-  acc[orgKey].ceremonies[ceremonyKey].nominations.push(nom);
-  return acc;
-}, {} as Record<string, any>) || {};
+const nominationsByOrg =
+  movie.nominations?.reduce(
+    (acc, nom) => {
+      const orgKey = nom.organization.uid;
+      if (!acc[orgKey]) {
+        acc[orgKey] = {
+          organization: nom.organization,
+          ceremonies: {},
+        };
+      }
+
+      const ceremonyKey = nom.ceremony.uid;
+      if (!acc[orgKey].ceremonies[ceremonyKey]) {
+        acc[orgKey].ceremonies[ceremonyKey] = {
+          ceremony: nom.ceremony,
+          nominations: [],
+        };
+      }
+
+      acc[orgKey].ceremonies[ceremonyKey].nominations.push(nom);
+      return acc;
+    },
+    {} as Record<string, any>
+  ) || {};
 ---
 
 {
   movie.imdbUrl ? (
-    <a
-      href={movie.imdbUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      class="movie-card"
-    >
-      <div class="poster">
-        {movie.posterUrl ? (
-          <img src={movie.posterUrl} alt={`${movie.title} poster`} />
-        ) : (
-          <div class="no-poster">{t.noPoster}</div>
-        )}
-      </div>
-      <div class="movie-info">
-        <h3 class="title">{movie.title}</h3>
-        <p class="year">{movie.year}</p>
-        {movie.nominations && movie.nominations.length > 0 && (
-          <div class="nominations">
-            {Object.values(nominationsByOrg).map((orgData: any) => (
-              <div class="org-group">
-                <h4 class="org-name">{orgData.organization.shortName || orgData.organization.name}</h4>
-                {Object.values(orgData.ceremonies).map((ceremonyData: any) => (
-                  <div class="ceremony-group">
-                    <span class="ceremony-year">{ceremonyData.ceremony.year}</span>
-                    <ul class="nomination-list">
-                      {ceremonyData.nominations.map((nom: any) => (
-                        <li class={nom.isWinner ? 'winner' : 'nominee'}>
-                          <span class="category-name">{nom.category.name}</span>
-                          <span class="status">{nom.isWinner ? t.winner : t.nominee}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </a>
+    <div class="movie-card-wrapper">
+      <a
+        href={movie.imdbUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="movie-card"
+      >
+        <div class="poster">
+          {movie.posterUrl ? (
+            <img src={movie.posterUrl} alt={`${movie.title} poster`} />
+          ) : (
+            <div class="no-poster">{t.noPoster}</div>
+          )}
+        </div>
+        <div class="movie-info">
+          <h3 class="title">{movie.title}</h3>
+          <p class="year">{movie.year}</p>
+          {movie.nominations && movie.nominations.length > 0 && (
+            <div class="nominations">
+              {Object.values(nominationsByOrg).map((orgData: any) => (
+                <div class="org-group">
+                  <h4 class="org-name">
+                    {orgData.organization.shortName ||
+                      orgData.organization.name}
+                  </h4>
+                  {Object.values(orgData.ceremonies).map(
+                    (ceremonyData: any) => (
+                      <div class="ceremony-group">
+                        <span class="ceremony-year">
+                          {ceremonyData.ceremony.year}
+                        </span>
+                        <ul class="nomination-list">
+                          {ceremonyData.nominations.map((nom: any) => (
+                            <li class={nom.isWinner ? "winner" : "nominee"}>
+                              <span class="category-name">
+                                {nom.category.name}
+                              </span>
+                              <span class="status">
+                                {nom.isWinner ? t.winner : t.nominee}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </a>
+      <button
+        class="edit-button"
+        data-movie-id={movie.uid}
+        style="display: none;"
+      >
+        {t.edit}
+      </button>
+    </div>
   ) : (
-    <div class="movie-card">
-      <div class="poster">
-        {movie.posterUrl ? (
-          <img src={movie.posterUrl} alt={`${movie.title} poster`} />
-        ) : (
-          <div class="no-poster">{t.noPoster}</div>
-        )}
+    <div class="movie-card-wrapper">
+      <div class="movie-card">
+        <div class="poster">
+          {movie.posterUrl ? (
+            <img src={movie.posterUrl} alt={`${movie.title} poster`} />
+          ) : (
+            <div class="no-poster">{t.noPoster}</div>
+          )}
+        </div>
+        <div class="movie-info">
+          <h3 class="title">{movie.title}</h3>
+          <p class="year">{movie.year}</p>
+          {movie.nominations && movie.nominations.length > 0 && (
+            <div class="nominations">
+              {Object.values(nominationsByOrg).map((orgData: any) => (
+                <div class="org-group">
+                  <h4 class="org-name">
+                    {orgData.organization.shortName ||
+                      orgData.organization.name}
+                  </h4>
+                  {Object.values(orgData.ceremonies).map(
+                    (ceremonyData: any) => (
+                      <div class="ceremony-group">
+                        <span class="ceremony-year">
+                          {ceremonyData.ceremony.year}
+                        </span>
+                        <ul class="nomination-list">
+                          {ceremonyData.nominations.map((nom: any) => (
+                            <li class={nom.isWinner ? "winner" : "nominee"}>
+                              <span class="category-name">
+                                {nom.category.name}
+                              </span>
+                              <span class="status">
+                                {nom.isWinner ? t.winner : t.nominee}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-      <div class="movie-info">
-        <h3 class="title">{movie.title}</h3>
-        <p class="year">{movie.year}</p>
-        {movie.nominations && movie.nominations.length > 0 && (
-          <div class="nominations">
-            {Object.values(nominationsByOrg).map((orgData: any) => (
-              <div class="org-group">
-                <h4 class="org-name">{orgData.organization.shortName || orgData.organization.name}</h4>
-                {Object.values(orgData.ceremonies).map((ceremonyData: any) => (
-                  <div class="ceremony-group">
-                    <span class="ceremony-year">{ceremonyData.ceremony.year}</span>
-                    <ul class="nomination-list">
-                      {ceremonyData.nominations.map((nom: any) => (
-                        <li class={nom.isWinner ? 'winner' : 'nominee'}>
-                          <span class="category-name">{nom.category.name}</span>
-                          <span class="status">{nom.isWinner ? t.winner : t.nominee}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <button
+        class="edit-button"
+        data-movie-id={movie.uid}
+        style="display: none;"
+      >
+        {t.edit}
+      </button>
     </div>
   )
 }
 
 <style>
+  .movie-card-wrapper {
+    position: relative;
+    height: 100%;
+  }
+
   .movie-card {
     border-radius: 12px;
     overflow: hidden;
@@ -269,6 +328,26 @@ const nominationsByOrg = movie.nominations?.reduce((acc, nom) => {
     color: #555;
   }
 
+  .edit-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(37, 99, 235, 0.9);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    z-index: 10;
+  }
+
+  .edit-button:hover {
+    background: rgba(29, 78, 216, 0.95);
+  }
+
   @media (max-width: 768px) {
     .poster {
       height: 400px;
@@ -283,3 +362,29 @@ const nominationsByOrg = movie.nominations?.reduce((acc, nom) => {
     }
   }
 </style>
+
+<script>
+  // Check if user is admin and show edit buttons
+  document.addEventListener("DOMContentLoaded", () => {
+    const adminToken = localStorage.getItem("adminToken");
+
+    if (adminToken) {
+      // Show all edit buttons for admin users
+      const editButtons = document.querySelectorAll(".edit-button");
+      editButtons.forEach((button) => {
+        (button as HTMLElement).style.display = "block";
+      });
+
+      // Add click event listeners
+      editButtons.forEach((button) => {
+        button.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const movieId = button.getAttribute("data-movie-id");
+          if (movieId) {
+            window.location.href = `/edit/${movieId}`;
+          }
+        });
+      });
+    }
+  });
+</script>

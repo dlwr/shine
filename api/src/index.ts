@@ -538,4 +538,154 @@ app.post("/reselect", authMiddleware, async (c) => {
   }
 });
 
+// Get movie details with all translations
+app.get("/movies/:id", async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const movieId = c.req.param("id");
+
+    // Get movie basic info
+    const movieResult = await database
+      .select()
+      .from(movies)
+      .where(eq(movies.uid, movieId))
+      .limit(1);
+
+    if (movieResult.length === 0) {
+      return c.json({ error: "Movie not found" }, 404);
+    }
+
+    const movie = movieResult[0];
+
+    // Get all translations for this movie
+    const movieTranslations = await database
+      .select({
+        languageCode: translations.languageCode,
+        content: translations.content,
+        isDefault: translations.isDefault
+      })
+      .from(translations)
+      .where(
+        and(
+          eq(translations.resourceUid, movieId),
+          eq(translations.resourceType, "movie_title")
+        )
+      );
+
+    // Get poster URLs
+    const posterResult = await database
+      .select()
+      .from(posterUrls)
+      .where(eq(posterUrls.movieUid, movieId));
+
+    // Get nominations
+    const movieNominations = await getMovieNominations(database, movieId);
+
+    const imdbUrl = movie.imdbId
+      ? `https://www.imdb.com/title/${movie.imdbId}/`
+      : undefined;
+
+    return c.json({
+      uid: movie.uid,
+      year: movie.year,
+      originalLanguage: movie.originalLanguage,
+      imdbId: movie.imdbId,
+      imdbUrl: imdbUrl,
+      posterUrl: posterResult[0]?.url,
+      translations: movieTranslations.map((t: { languageCode: string; content: string; isDefault: number | null }) => ({
+        languageCode: t.languageCode,
+        content: t.content,
+        isDefault: t.isDefault === 1
+      })),
+      nominations: movieNominations,
+    });
+  } catch (error) {
+    console.error("Error fetching movie details:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Add or update movie translation
+app.post("/movies/:id/translations", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const movieId = c.req.param("id");
+    const { languageCode, content, isDefault = false } = await c.req.json();
+
+    if (!languageCode || !content) {
+      return c.json({ error: "languageCode and content are required" }, 400);
+    }
+
+    // Check if movie exists
+    const movieExists = await database
+      .select({ uid: movies.uid })
+      .from(movies)
+      .where(eq(movies.uid, movieId))
+      .limit(1);
+
+    if (movieExists.length === 0) {
+      return c.json({ error: "Movie not found" }, 404);
+    }
+
+    // Check if translation already exists
+    const existingTranslation = await database
+      .select()
+      .from(translations)
+      .where(
+        and(
+          eq(translations.resourceUid, movieId),
+          eq(translations.resourceType, "movie_title"),
+          eq(translations.languageCode, languageCode)
+        )
+      )
+      .limit(1);
+
+    await (existingTranslation.length > 0
+      ? database
+          .update(translations)
+          .set({
+            content,
+            isDefault: isDefault ? 1 : 0,
+            updatedAt: Math.floor(Date.now() / 1000)
+          })
+          .where(eq(translations.uid, existingTranslation[0].uid))
+      : database.insert(translations).values({
+          resourceType: "movie_title",
+          resourceUid: movieId,
+          languageCode,
+          content,
+          isDefault: isDefault ? 1 : 0,
+        }));
+
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("Error adding/updating translation:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Delete movie translation
+app.delete("/movies/:id/translations/:lang", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const movieId = c.req.param("id");
+    const languageCode = c.req.param("lang");
+
+    await database
+      .delete(translations)
+      .where(
+        and(
+          eq(translations.resourceUid, movieId),
+          eq(translations.resourceType, "movie_title"),
+          eq(translations.languageCode, languageCode)
+        )
+      );
+
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting translation:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
 export default app;

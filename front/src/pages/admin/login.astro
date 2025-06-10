@@ -217,7 +217,11 @@ const t = translations[locale as keyof typeof translations] || translations.en;
     message.className = '';
     
     try {
-      const API_URL = 'http://localhost:8787';
+      // Determine API URL based on environment
+      const API_URL = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
+        ? 'http://localhost:8787'
+        : 'https://shine-api.yuta25.workers.dev';
+      console.log('Using API URL for login:', API_URL);
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {

@@ -1,0 +1,24 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import MovieEditor from '../../components/MovieEditor.astro';
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/');
+}
+---
+
+<Layout title="映画の編集 - SHINE">
+  <main>
+    <MovieEditor movieId={id} />
+  </main>
+</Layout>
+
+<style>
+  main {
+    min-height: 100vh;
+    background: #f3f4f6;
+    padding: 20px 0;
+  }
+</style>

@@ -1,0 +1,636 @@
+---
+export interface Props {
+  movieId?: string;
+}
+
+const { movieId } = Astro.props;
+const apiUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:8787";
+---
+
+<div
+  id="movie-editor"
+  class="movie-editor"
+  data-movie-id={movieId || ""}
+  data-api-url={apiUrl}
+>
+  <div class="editor-container">
+    <h2>映画の編集</h2>
+
+    <div id="loading" class="loading">データを読み込み中...</div>
+
+    <div id="editor-content" class="editor-content" style="display: none;">
+      <div class="movie-info">
+        <h3 id="movie-title">映画情報</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>年:</label>
+            <span id="movie-year"></span>
+          </div>
+          <div class="info-item">
+            <label>原語:</label>
+            <span id="movie-language"></span>
+          </div>
+          <div class="info-item">
+            <label>IMDb ID:</label>
+            <span id="movie-imdb"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="translations-section">
+        <div class="section-header">
+          <h3>翻訳管理</h3>
+          <button id="add-translation-btn" class="btn btn-primary"
+            >翻訳を追加</button
+          >
+        </div>
+
+        <div id="translations-list" class="translations-list"></div>
+      </div>
+    </div>
+
+    <div id="error" class="error" style="display: none;"></div>
+  </div>
+
+  <!-- Add Translation Modal -->
+  <div id="translation-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>翻訳を追加・編集</h3>
+        <button id="close-modal" class="close-btn">&times;</button>
+      </div>
+      <form id="translation-form">
+        <div class="form-group">
+          <label for="language-code">言語コード:</label>
+          <select id="language-code" required>
+            <option value="">言語を選択</option>
+            <option value="en">English (en)</option>
+            <option value="ja">日本語 (ja)</option>
+            <option value="fr">Français (fr)</option>
+            <option value="de">Deutsch (de)</option>
+            <option value="es">Español (es)</option>
+            <option value="it">Italiano (it)</option>
+            <option value="pt">Português (pt)</option>
+            <option value="ko">한국어 (ko)</option>
+            <option value="zh">中文 (zh)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="translation-content">タイトル:</label>
+          <input type="text" id="translation-content" required />
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="is-default" />
+            デフォルト翻訳として設定
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">保存</button>
+          <button type="button" id="cancel-btn" class="btn btn-secondary"
+            >キャンセル</button
+          >
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  .movie-editor {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .editor-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+  }
+
+  .error {
+    background: #fee;
+    color: #c33;
+    padding: 12px;
+    border-radius: 4px;
+    margin: 16px 0;
+  }
+
+  .movie-info {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 6px;
+    margin-bottom: 24px;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .info-item {
+    display: flex;
+    gap: 8px;
+  }
+
+  .info-item label {
+    font-weight: 600;
+    color: #555;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .translations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .translation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid #2563eb;
+  }
+
+  .translation-item.default {
+    border-left-color: #059669;
+  }
+
+  .translation-info {
+    flex: 1;
+  }
+
+  .translation-lang {
+    font-weight: 600;
+    color: #2563eb;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+  }
+
+  .translation-content {
+    margin-top: 4px;
+    font-size: 1.1rem;
+  }
+
+  .translation-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .btn-primary {
+    background: #2563eb;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #1d4ed8;
+  }
+
+  .btn-secondary {
+    background: #6b7280;
+    color: white;
+  }
+
+  .btn-secondary:hover {
+    background: #4b5563;
+  }
+
+  .btn-danger {
+    background: #dc2626;
+    color: white;
+  }
+
+  .btn-danger:hover {
+    background: #b91c1c;
+  }
+
+  .btn-small {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+
+  /* Modal styles */
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 500;
+    color: #374151;
+  }
+
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.875rem;
+  }
+
+  .form-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+  }
+</style>
+
+<script>
+  interface Translation {
+    languageCode: string;
+    content: string;
+    isDefault: boolean;
+  }
+
+  class MovieEditor {
+    private movieId: string;
+    private apiUrl: string;
+    private adminToken: string | null;
+    private currentEditingTranslation: Translation | null;
+
+    constructor() {
+      const editorEl = document.getElementById("movie-editor");
+      this.movieId = editorEl?.dataset.movieId || "";
+      // Remove trailing slash from API URL
+      this.apiUrl = (
+        editorEl?.dataset.apiUrl || "http://localhost:8787"
+      ).replace(/\/$/, "");
+      this.adminToken = localStorage.getItem("adminToken");
+      this.currentEditingTranslation = null;
+      this.init();
+    }
+
+    async init() {
+      if (!this.movieId) {
+        this.showError("映画IDが指定されていません");
+        return;
+      }
+
+      this.setupEventListeners();
+      await this.loadMovie();
+    }
+
+    setupEventListeners() {
+      document
+        .getElementById("add-translation-btn")
+        ?.addEventListener("click", () => {
+          this.openTranslationModal();
+        });
+
+      document.getElementById("close-modal")?.addEventListener("click", () => {
+        this.closeTranslationModal();
+      });
+
+      document.getElementById("cancel-btn")?.addEventListener("click", () => {
+        this.closeTranslationModal();
+      });
+
+      document
+        .getElementById("translation-form")
+        ?.addEventListener("submit", (e) => {
+          e.preventDefault();
+          this.saveTranslation();
+        });
+
+      // Click outside modal to close
+      document
+        .getElementById("translation-modal")
+        ?.addEventListener("click", (e) => {
+          if (e.target === e.currentTarget) {
+            this.closeTranslationModal();
+          }
+        });
+    }
+
+    async loadMovie() {
+      try {
+        const url = `${this.apiUrl}/movies/${this.movieId}`;
+        console.log("Fetching movie from:", url);
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error("API Error:", response.status, errorData);
+          throw new Error(
+            `映画の取得に失敗しました: ${response.status} ${errorData}`
+          );
+        }
+
+        const movie = await response.json();
+        this.displayMovie(movie);
+      } catch (error) {
+        console.error("Error loading movie:", error);
+        this.showError(
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      }
+    }
+
+    displayMovie(movie: any) {
+      const loadingEl = document.getElementById("loading");
+      const editorContentEl = document.getElementById("editor-content");
+      if (loadingEl) loadingEl.style.display = "none";
+      if (editorContentEl) editorContentEl.style.display = "block";
+
+      // Update movie info
+      const defaultTitle =
+        movie.translations.find((t: any) => t.isDefault)?.content ||
+        movie.translations[0]?.content ||
+        "無題";
+      const titleEl = document.getElementById("movie-title");
+      const yearEl = document.getElementById("movie-year");
+      const languageEl = document.getElementById("movie-language");
+      const imdbEl = document.getElementById("movie-imdb");
+
+      if (titleEl) titleEl.textContent = defaultTitle;
+      if (yearEl) yearEl.textContent = movie.year || "N/A";
+      if (languageEl) languageEl.textContent = movie.originalLanguage || "N/A";
+      if (imdbEl) imdbEl.textContent = movie.imdbId || "N/A";
+
+      // Display translations
+      this.displayTranslations(movie.translations);
+    }
+
+    displayTranslations(translations: Translation[]) {
+      const container = document.getElementById("translations-list");
+      if (!container) return;
+
+      container.innerHTML = "";
+
+      if (translations.length === 0) {
+        container.innerHTML = '<p class="no-translations">翻訳がありません</p>';
+        return;
+      }
+
+      translations.forEach((translation) => {
+        const item = document.createElement("div");
+        item.className = `translation-item ${translation.isDefault ? "default" : ""}`;
+
+        item.innerHTML = `
+          <div class="translation-info">
+            <div class="translation-lang">${translation.languageCode.toUpperCase()}${translation.isDefault ? " (デフォルト)" : ""}</div>
+            <div class="translation-content">${translation.content}</div>
+          </div>
+          <div class="translation-actions">
+            <button class="btn btn-secondary btn-small edit-btn" data-lang="${translation.languageCode}">編集</button>
+            <button class="btn btn-danger btn-small delete-btn" data-lang="${translation.languageCode}">削除</button>
+          </div>
+        `;
+
+        // Add event listeners
+        const editBtn = item.querySelector(".edit-btn");
+        if (editBtn)
+          editBtn.addEventListener("click", () => {
+            this.editTranslation(translation);
+          });
+
+        const deleteBtn = item.querySelector(".delete-btn");
+        if (deleteBtn)
+          deleteBtn.addEventListener("click", () => {
+            this.deleteTranslation(translation.languageCode);
+          });
+
+        container.appendChild(item);
+      });
+    }
+
+    openTranslationModal(translation: Translation | null = null) {
+      this.currentEditingTranslation = translation;
+      const modal = document.getElementById("translation-modal");
+      if (!modal) return;
+
+      if (translation) {
+        // Edit mode
+        const langCodeEl = document.getElementById(
+          "language-code"
+        ) as HTMLSelectElement | null;
+        const contentEl = document.getElementById(
+          "translation-content"
+        ) as HTMLInputElement | null;
+        const defaultEl = document.getElementById(
+          "is-default"
+        ) as HTMLInputElement | null;
+
+        if (langCodeEl) {
+          langCodeEl.value = translation.languageCode;
+          langCodeEl.disabled = true;
+        }
+        if (contentEl) contentEl.value = translation.content;
+        if (defaultEl) defaultEl.checked = translation.isDefault;
+      } else {
+        // Add mode
+        const formEl = document.getElementById(
+          "translation-form"
+        ) as HTMLFormElement | null;
+        const langCodeEl = document.getElementById(
+          "language-code"
+        ) as HTMLSelectElement | null;
+
+        if (formEl) formEl.reset();
+        if (langCodeEl) langCodeEl.disabled = false;
+      }
+
+      modal.style.display = "flex";
+    }
+
+    closeTranslationModal() {
+      const modal = document.getElementById("translation-modal");
+      if (modal) modal.style.display = "none";
+      this.currentEditingTranslation = null;
+    }
+
+    editTranslation(translation: Translation) {
+      this.openTranslationModal(translation);
+    }
+
+    async saveTranslation() {
+      if (!this.adminToken) {
+        this.showError("管理者権限が必要です");
+        return;
+      }
+
+      const languageCodeEl = document.getElementById(
+        "language-code"
+      ) as HTMLSelectElement | null;
+      const contentEl = document.getElementById(
+        "translation-content"
+      ) as HTMLInputElement | null;
+      const defaultEl = document.getElementById(
+        "is-default"
+      ) as HTMLInputElement | null;
+
+      if (!languageCodeEl || !contentEl || !defaultEl) {
+        this.showError("フォーム要素が見つかりません");
+        return;
+      }
+
+      const languageCode = languageCodeEl.value;
+      const content = contentEl.value;
+      const isDefault = defaultEl.checked;
+
+      if (!languageCode || !content) {
+        this.showError("言語コードとタイトルは必須です");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${this.apiUrl}/movies/${this.movieId}/translations`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${this.adminToken}`,
+            },
+            body: JSON.stringify({
+              languageCode,
+              content,
+              isDefault,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("翻訳の保存に失敗しました");
+        }
+
+        this.closeTranslationModal();
+        await this.loadMovie();
+      } catch (error) {
+        this.showError(
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      }
+    }
+
+    async deleteTranslation(languageCode: string) {
+      if (!this.adminToken) {
+        this.showError("管理者権限が必要です");
+        return;
+      }
+
+      if (!confirm(`${languageCode.toUpperCase()}の翻訳を削除しますか？`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${this.apiUrl}/movies/${this.movieId}/translations/${languageCode}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${this.adminToken}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("翻訳の削除に失敗しました");
+        }
+
+        await this.loadMovie();
+      } catch (error) {
+        this.showError(
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      }
+    }
+
+    showError(message: string) {
+      const errorDiv = document.getElementById("error");
+      if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = "block";
+
+        const loadingEl = document.getElementById("loading");
+        if (loadingEl) loadingEl.style.display = "none";
+
+        setTimeout(() => {
+          if (errorDiv) errorDiv.style.display = "none";
+        }, 5000);
+      }
+    }
+  }
+
+  // Initialize when DOM is loaded
+  document.addEventListener("DOMContentLoaded", () => {
+    new MovieEditor();
+  });
+</script>
