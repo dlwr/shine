@@ -86,7 +86,12 @@ async function fetchMasterData(): Promise<MasterData> {
   const [category] = await getDatabase(environment_)
     .select()
     .from(awardCategories)
-    .where(eq(awardCategories.shortName, "Best Picture"));
+    .where(
+      and(
+        eq(awardCategories.shortName, "Best Picture"),
+        eq(awardCategories.organizationUid, organization.uid)
+      )
+    );
 
   if (!category) {
     throw new Error("Best Picture category not found");
@@ -269,7 +274,7 @@ function processTableRows(
       continue;
     }
 
-    const extractedYear = extractYear($, $row);
+    const extractedYear = extractYear($row);
     if (extractedYear) {
       console.log(
         `Found new year: ${extractedYear} (previous: ${currentYear})`
@@ -297,7 +302,7 @@ function processTableRows(
       console.log(`Skipping duplicate: ${title} (${currentYear})`);
     } else {
       processedTitles.add(dedupeKey);
-      const isWinner = determineIfWinner($, $row);
+      const isWinner = determineIfWinner($row);
 
       console.log(
         `Adding movie: ${title} (${currentYear}) - ${
@@ -320,7 +325,6 @@ function processTableRows(
 }
 
 function extractYear(
-  $: cheerio.CheerioAPI,
   $row: cheerio.Cheerio<Element>
 ): number | undefined {
   const rowHeader = $row.find("th").first();
@@ -349,7 +353,6 @@ function extractYear(
 }
 
 function determineIfWinner(
-  $: cheerio.CheerioAPI,
   $row: cheerio.Cheerio<Element>
 ): boolean {
   const filmCell = $row.find("td").first();

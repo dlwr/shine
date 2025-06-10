@@ -55,7 +55,7 @@ async function main(): Promise<void> {
     }
     console.log("---");
 
-    await importMoviesFromList(filePath, awardName, environment, limit);
+    await importMoviesFromList(filePath, awardName, "Selected Films", environment, limit);
     
     console.log("---");
     console.log("Import completed successfully!");

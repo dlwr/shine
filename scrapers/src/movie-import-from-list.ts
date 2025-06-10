@@ -44,6 +44,7 @@ let tmdbConfiguration: TMDBConfiguration | undefined;
 export async function importMoviesFromList(
   filePath: string,
   awardName: string,
+  categoryName: string,
   environment: Environment,
   limit?: number
 ): Promise<void> {
@@ -69,7 +70,7 @@ export async function importMoviesFromList(
 
   // アワード組織とカテゴリーを作成
   const { organizationUid, categoryUid, ceremonyUid } = 
-    await createAwardStructure(awardName);
+    await createAwardStructure(awardName, categoryName);
 
   // 各映画を処理
   for (const [index, title] of movieTitles.entries()) {
@@ -88,7 +89,7 @@ export async function importMoviesFromList(
 /**
  * アワード組織、カテゴリー、セレモニーを作成
  */
-async function createAwardStructure(awardName: string): Promise<{
+async function createAwardStructure(awardName: string, categoryName: string): Promise<{
   organizationUid: string;
   categoryUid: string;
   ceremonyUid: string;
@@ -115,7 +116,6 @@ async function createAwardStructure(awardName: string): Promise<{
   }
 
   // カテゴリーを作成/取得
-  const categoryName = "Selected Films";
   await database
     .insert(awardCategories)
     .values({
@@ -128,7 +128,12 @@ async function createAwardStructure(awardName: string): Promise<{
   const [category] = await database
     .select()
     .from(awardCategories)
-    .where(eq(awardCategories.name, categoryName));
+    .where(
+      and(
+        eq(awardCategories.name, categoryName),
+        eq(awardCategories.organizationUid, organization.uid)
+      )
+    );
 
   if (!category) {
     throw new Error(`Failed to create category: ${categoryName}`);
@@ -148,7 +153,12 @@ async function createAwardStructure(awardName: string): Promise<{
   const [ceremony] = await database
     .select()
     .from(awardCeremonies)
-    .where(eq(awardCeremonies.year, currentYear));
+    .where(
+      and(
+        eq(awardCeremonies.year, currentYear),
+        eq(awardCeremonies.organizationUid, organization.uid)
+      )
+    );
 
   if (!ceremony) {
     throw new Error(`Failed to create ceremony for year: ${currentYear}`);
