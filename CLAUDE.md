@@ -178,6 +178,7 @@ Authentication is handled via JWT tokens (using `jose` library) stored in localS
 - `GET /admin/movies` - List all movies (paginated)
 - `POST /movies/:id/translations` - Add or update movie translation
 - `DELETE /movies/:id/translations/:lang` - Delete movie translation
+- `DELETE /admin/movies/:id` - Delete movie and all related data (nominations, translations, posters, selections)
 - `POST /reselect` - Force new movie selection for a specific period
 
 ### Admin Frontend Routes
@@ -221,3 +222,12 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 - Added missing API endpoints documentation
 - Updated file paths to match current structure
 - Added `pnpm run dev` command to start both API and frontend concurrently
+
+### 2025-06-10
+- Improved `/admin/movies` page with better sorting and poster display:
+  - Changed default sort order to `created_at DESC` (newest movies first)
+  - Modified poster display to show only one poster per movie instead of multiple
+- Added movie deletion functionality:
+  - New `DELETE /admin/movies/:id` API endpoint with cascading delete of all related data
+  - Added delete button with confirmation dialog in admin movies list
+  - Proper cleanup of movie_selections, nominations, translations, and poster_urls
