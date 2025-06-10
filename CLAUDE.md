@@ -253,8 +253,17 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - Fixed `content` field to store raw title text instead of formatted strings
   - Resolved all ESLint errors (non-null assertions, null vs undefined, unused variables)
 
+### 2025-06-11
+- Fixed Cloudflare Pages deployment environment variable issues:
+  - Environment variables in Cloudflare Pages must be set in `wrangler.jsonc` under `vars` section, not as secrets
+  - Astro components can access runtime environment variables via `Astro.locals?.runtime?.env`
+  - For fallback compatibility, use pattern: `runtimeEnv?.VAR || import.meta.env.VAR || "default"`
+  - Secrets and vars cannot coexist with the same name - delete secrets if using vars
+  - `front/src/components/Movies.astro:11-12` shows proper environment variable access pattern
+
 ### Development Guidelines
 - TSエラーとLintエラーをを絶対に無視するな
 - Database column names in schema use camelCase (e.g., `createdAt`, `updatedAt`) but are mapped to snake_case in the actual database
 - When writing SQL queries, use the schema field references directly instead of hardcoding column names
 - **API URL Convention**: Base URLs should NOT have trailing slashes, paths should start with leading slash
+- **Cloudflare Pages Environment Variables**: Use `vars` in wrangler.jsonc, access via `Astro.locals?.runtime?.env` in components
