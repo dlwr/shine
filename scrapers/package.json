@@ -4,7 +4,8 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "start": "tsx src/index.ts"
+    "start": "tsx src/index.ts",
+    "movie-import": "tsx src/movie-import-from-list-cli.ts"
   },
   "dependencies": {
     "cheerio": "^1.0.0",
