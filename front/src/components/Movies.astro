@@ -7,6 +7,10 @@ export interface Props {
 
 const { locale = 'en' } = Astro.props;
 
+// Get runtime environment variables from Cloudflare
+const runtimeEnv = Astro.locals?.runtime?.env;
+const API_URL = runtimeEnv?.PUBLIC_API_URL || import.meta.env.PUBLIC_API_URL || "https://shine-api.yuta25.workers.dev";
+
 type Movie = {
   uid: string;
   title: string;
@@ -28,12 +32,10 @@ function getCacheKey() {
 
 async function fetchMovie(locale: string) {
   try {
-    const apiUrl =
-      import.meta.env.PUBLIC_API_URL || "https://shine-api.yuta25.workers.dev";
-    console.log("Using API URL:", apiUrl);
+    console.log("Using API URL:", API_URL);
 
     const cacheKey = getCacheKey();
-    const response = await fetch(`${apiUrl}/?cache=${cacheKey}&locale=${locale}`, {
+    const response = await fetch(`${API_URL}/?cache=${cacheKey}&locale=${locale}`, {
       headers: {
         "Cache-Control": "no-store",
         "Accept-Language": locale === 'ja' ? 'ja,en;q=0.5' : 'en',
@@ -82,7 +84,7 @@ const labels = {
 
 const t = labels[locale as keyof typeof labels] || labels.en;
 
-const apiUrl = import.meta.env.PUBLIC_API_URL || "https://shine-api.yuta25.workers.dev";
+// Use the same API_URL variable defined above
 ---
 
 <section class="movies-section">
@@ -220,7 +222,7 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || "https://shine-api.yuta25.worke
   }
 </style>
 
-<script define:vars={{ locale, apiUrl }} is:inline>
+<script define:vars={{ locale, apiUrl: API_URL }} is:inline>
   document.addEventListener('DOMContentLoaded', function() {
     const reselectButtons = document.querySelectorAll('.reselect-btn');
     
