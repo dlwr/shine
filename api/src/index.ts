@@ -578,7 +578,7 @@ app.get("/admin/movies", authMiddleware, async (c) => {
           eq(translations.isDefault, 1)
         )
       )
-      .orderBy(sql`movies.created_at DESC`)
+      .orderBy(sql`${movies.createdAt} DESC`)
       .limit(limit)
       .offset(offset);
 
