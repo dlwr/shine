@@ -231,3 +231,11 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - New `DELETE /admin/movies/:id` API endpoint with cascading delete of all related data
   - Added delete button with confirmation dialog in admin movies list
   - Proper cleanup of movie_selections, nominations, translations, and poster_urls
+- Fixed `/admin/movies` API endpoint bug:
+  - Corrected SQL ORDER BY clause to use proper camelCase column name `createdAt` instead of snake_case `created_at`
+  - Used SQL template with schema field reference: `sql`${movies.createdAt} DESC`` at api/src/index.ts:581
+
+### Development Guidelines
+- TSエラーとLintエラーをを絶対に無視するな
+- Database column names in schema use camelCase (e.g., `createdAt`, `updatedAt`) but are mapped to snake_case in the actual database
+- When writing SQL queries, use the schema field references directly instead of hardcoding column names
