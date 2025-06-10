@@ -260,6 +260,12 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - For fallback compatibility, use pattern: `runtimeEnv?.VAR || import.meta.env.VAR || "default"`
   - Secrets and vars cannot coexist with the same name - delete secrets if using vars
   - `front/src/components/Movies.astro:11-12` shows proper environment variable access pattern
+- Fixed movie import nomination assignment bug:
+  - Movie import scripts were incorrectly assigning all nominations to Cannes Film Festival
+  - Root cause: Database lookups for categories and ceremonies didn't filter by `organizationUid`
+  - Fixed `scrapers/src/movie-import-from-list.ts` and `scrapers/src/academy-awards.ts` to use compound WHERE clauses
+  - Now properly filters by both identifying field AND `organizationUid` using `and()` condition
+  - This ensures nominations are assigned to the correct award organization
 
 ### Development Guidelines
 - TSエラーとLintエラーをを絶対に無視するな
