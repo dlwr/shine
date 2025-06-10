@@ -104,6 +104,10 @@ The project uses Turso (libSQL) as the database with separate databases for deve
 - `TURSO_DATABASE_URL_PROD`: Your production Turso database URL  
 - `TURSO_AUTH_TOKEN_PROD`: Your production Turso authentication token
 
+**Admin Authentication:**
+- `ADMIN_PASSWORD`: Admin password for login
+- `JWT_SECRET`: Secret key for JWT token generation
+
 For local development with Cloudflare Workers:
 1. Copy `.env.example` to `.env` in the root directory
 2. Add your Turso credentials for both development and production environments
@@ -112,6 +116,8 @@ For local development with Cloudflare Workers:
 For production deployment, set secrets using:
 ```bash
 wrangler secret put TURSO_AUTH_TOKEN_PROD --env production
+wrangler secret put ADMIN_PASSWORD --env production
+wrangler secret put JWT_SECRET --env production
 ```
 
 ## Data Collection Strategy
@@ -131,6 +137,22 @@ The main API endpoint (`/`) returns date-seeded movie selections:
 - Monthly: Changes every month
 
 Each selection uses hash-based seeding to ensure deterministic but varied results across different time periods.
+
+### Admin API Endpoints
+
+Authentication is handled via JWT tokens stored in localStorage (client-side only):
+- `POST /auth/login` - Login with admin password
+- `GET /admin/movies` - List all movies (paginated)
+- `POST /reselect` - Force new movie selection for a specific period
+
+### Admin Frontend Routes
+
+Admin interface pages (authentication required via localStorage token):
+- `/admin/login` - Admin login page
+- `/admin/movies` - Movies list with pagination
+- `/admin/movies/:id` - Edit movie details and translations
+
+Note: Authentication uses localStorage, not cookies, so server-side auth checks in Astro pages won't work.
 
 ## Code Style and Conventions
 
