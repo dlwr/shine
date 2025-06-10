@@ -1,0 +1,332 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Admin - Movies | SHINE">
+  <div class="admin-container">
+    <div class="admin-header">
+      <h1>Movies Management</h1>
+      <button id="logoutBtn" class="logout-btn">Logout</button>
+    </div>
+    
+    <div id="moviesContainer" class="movies-container">
+      <div class="loading">Loading movies...</div>
+    </div>
+    
+    <div id="pagination" class="pagination"></div>
+  </div>
+</Layout>
+
+<style>
+  .admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+
+  h1 {
+    color: #333;
+    margin: 0;
+  }
+
+  .logout-btn {
+    padding: 0.5rem 1rem;
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+  }
+
+  .logout-btn:hover {
+    background: #b91c1c;
+  }
+
+  .movies-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+  }
+
+  .error {
+    text-align: center;
+    padding: 3rem;
+    color: #dc2626;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th {
+    background: #f3f4f6;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  td {
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  tr:hover {
+    background: #f9fafb;
+  }
+
+  .movie-poster {
+    width: 50px;
+    height: 75px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+
+  .movie-title {
+    font-weight: 500;
+    color: #111827;
+  }
+
+  .movie-year {
+    color: #6b7280;
+  }
+
+  .movie-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .btn {
+    padding: 0.375rem 0.75rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-primary {
+    background: #2563eb;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #1d4ed8;
+  }
+
+  .btn-secondary {
+    background: #6b7280;
+    color: white;
+  }
+
+  .btn-secondary:hover {
+    background: #4b5563;
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .pagination button {
+    padding: 0.5rem 1rem;
+    border: 1px solid #e5e7eb;
+    background: white;
+    color: #374151;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .pagination button:hover:not(:disabled) {
+    background: #f3f4f6;
+  }
+
+  .pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .pagination span {
+    color: #6b7280;
+  }
+</style>
+
+<script>
+  // Determine API URL based on environment
+  const API_BASE = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
+    ? 'http://localhost:8787'
+    : 'https://shine-api.yuta25.workers.dev';
+  
+  let currentPage = 1;
+  let totalPages = 1;
+
+  function checkAuth() {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      window.location.href = '/admin/login';
+      return false;
+    }
+    return token;
+  }
+
+  interface Movie {
+    uid: string;
+    title: string;
+    year: number | null;
+    originalLanguage: string | null;
+    posterUrl: string | null;
+    imdbUrl?: string;
+  }
+
+  interface PaginationData {
+    page: number;
+    limit: number;
+    totalCount: number;
+    totalPages: number;
+  }
+
+  interface MoviesResponse {
+    movies: Movie[];
+    pagination: PaginationData;
+  }
+
+  async function fetchMovies(page = 1) {
+    const token = checkAuth();
+    if (!token) return;
+
+    const container = document.getElementById('moviesContainer');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="loading">Loading movies...</div>';
+
+    try {
+      const response = await fetch(`${API_BASE}/admin/movies?page=${page}&limit=20`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem('adminToken');
+        window.location.href = '/admin/login';
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch movies');
+      }
+
+      const data: MoviesResponse = await response.json();
+      currentPage = data.pagination.page;
+      totalPages = data.pagination.totalPages;
+      
+      renderMovies(data.movies);
+      renderPagination();
+    } catch (error) {
+      container.innerHTML = '<div class="error">Failed to load movies. Please try again.</div>';
+    }
+  }
+
+  function renderMovies(movies: Movie[]) {
+    const container = document.getElementById('moviesContainer');
+    if (!container) return;
+    
+    if (movies.length === 0) {
+      container.innerHTML = '<div class="loading">No movies found</div>';
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Poster</th>
+          <th>Title</th>
+          <th>Year</th>
+          <th>Language</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${movies.map((movie: Movie) => `
+          <tr>
+            <td>
+              ${movie.posterUrl 
+                ? `<img src="${movie.posterUrl}" alt="${movie.title}" class="movie-poster">` 
+                : '<div class="movie-poster" style="background: #e5e7eb;"></div>'
+              }
+            </td>
+            <td>
+              <div class="movie-title">${movie.title}</div>
+            </td>
+            <td class="movie-year">${movie.year || 'N/A'}</td>
+            <td>${movie.originalLanguage || 'N/A'}</td>
+            <td>
+              <div class="movie-actions">
+                <a href="/admin/movies/${movie.uid}" class="btn btn-primary">Edit</a>
+                ${movie.imdbUrl 
+                  ? `<a href="${movie.imdbUrl}" target="_blank" class="btn btn-secondary">IMDb</a>` 
+                  : ''
+                }
+              </div>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    `;
+    
+    container.innerHTML = '';
+    container.appendChild(table);
+  }
+
+  function renderPagination() {
+    const pagination = document.getElementById('pagination');
+    if (!pagination) return;
+    
+    pagination.innerHTML = `
+      <button id="prevBtn" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+      <span>Page ${currentPage} of ${totalPages}</span>
+      <button id="nextBtn" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+    `;
+
+    document.getElementById('prevBtn')?.addEventListener('click', () => {
+      if (currentPage > 1) fetchMovies(currentPage - 1);
+    });
+
+    document.getElementById('nextBtn')?.addEventListener('click', () => {
+      if (currentPage < totalPages) fetchMovies(currentPage + 1);
+    });
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    fetchMovies();
+
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+      localStorage.removeItem('adminToken');
+      window.location.href = '/';
+    });
+  });
+</script>

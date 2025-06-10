@@ -202,7 +202,7 @@ const t = translations[locale as keyof typeof translations] || translations.en;
   
   // Check if already logged in
   if (localStorage.getItem('adminToken')) {
-    window.location.href = '/';
+    window.location.href = '/admin/movies';
   }
   
   form.addEventListener('submit', async (e) => {
@@ -237,7 +237,7 @@ const t = translations[locale as keyof typeof translations] || translations.en;
         message.textContent = t.loginSuccess;
         
         setTimeout(() => {
-          window.location.href = '/';
+          window.location.href = '/admin/movies';
         }, 1000);
       } else {
         message.className = 'error';

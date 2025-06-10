@@ -312,141 +312,6 @@ function parseAcceptLanguage(acceptLanguage?: string): string[] {
     .map((lang) => lang.code);
 }
 
-app.get("/admin/login", async (c) => {
-  const html = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Admin Login - SHINE</title>
-      <style>
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          background: #f5f5f5;
-          margin: 0;
-          padding: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 100vh;
-        }
-        .login-container {
-          background: white;
-          padding: 2rem;
-          border-radius: 8px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-          width: 100%;
-          max-width: 400px;
-        }
-        h1 {
-          text-align: center;
-          margin-bottom: 2rem;
-          color: #333;
-        }
-        input {
-          width: 100%;
-          padding: 0.75rem;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          font-size: 1rem;
-          margin-bottom: 1rem;
-          box-sizing: border-box;
-        }
-        button {
-          width: 100%;
-          padding: 0.75rem;
-          background: #2563eb;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          font-size: 1rem;
-          cursor: pointer;
-        }
-        button:hover {
-          background: #1d4ed8;
-        }
-        button:disabled {
-          background: #9ca3af;
-          cursor: not-allowed;
-        }
-        .error {
-          color: #dc2626;
-          font-size: 0.875rem;
-          margin-top: 1rem;
-          text-align: center;
-        }
-        .success {
-          color: #059669;
-          font-size: 0.875rem;
-          margin-top: 1rem;
-          text-align: center;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="login-container">
-        <h1>SHINE Admin Login</h1>
-        <form id="loginForm">
-          <input type="password" id="password" placeholder="Enter admin password" required>
-          <button type="submit" id="submitBtn">Login</button>
-        </form>
-        <div id="message"></div>
-      </div>
-      
-      <script>
-        const form = document.getElementById('loginForm');
-        const passwordInput = document.getElementById('password');
-        const submitBtn = document.getElementById('submitBtn');
-        const message = document.getElementById('message');
-        
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          
-          const password = passwordInput.value;
-          if (!password) return;
-          
-          submitBtn.disabled = true;
-          submitBtn.textContent = 'Logging in...';
-          message.textContent = '';
-          
-          try {
-            const response = await fetch('/auth/login', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ password })
-            });
-            
-            if (response.ok) {
-              const { token } = await response.json();
-              localStorage.setItem('adminToken', token);
-              message.className = 'success';
-              message.textContent = 'Login successful! Redirecting...';
-              
-              setTimeout(() => {
-                window.location.href = '/';
-              }, 1000);
-            } else {
-              message.className = 'error';
-              message.textContent = 'Invalid password';
-            }
-          } catch (error) {
-            message.className = 'error';
-            message.textContent = 'Login failed. Please try again.';
-          } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Login';
-          }
-        });
-      </script>
-    </body>
-    </html>
-  `;
-  
-  return c.html(html);
-});
 
 app.post("/auth/login", async (c) => {
   const { password } = await c.req.json();
@@ -463,26 +328,6 @@ app.post("/auth/login", async (c) => {
   return c.json({ token });
 });
 
-app.get("/admin/logout", async (c) => {
-  const html = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Admin Logout - SHINE</title>
-    </head>
-    <body>
-      <script>
-        localStorage.removeItem('adminToken');
-        window.location.href = '/';
-      </script>
-    </body>
-    </html>
-  `;
-  
-  return c.html(html);
-});
 
 app.get("/", async (c) => {
   try {
@@ -684,6 +529,68 @@ app.delete("/movies/:id/translations/:lang", authMiddleware, async (c) => {
     return c.json({ success: true });
   } catch (error) {
     console.error("Error deleting translation:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Get all movies for admin
+app.get("/admin/movies", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const page = Number(c.req.query("page") || 1);
+    const limit = Number(c.req.query("limit") || 50);
+    const offset = (page - 1) * limit;
+
+    // Get total count
+    const countResult = await database
+      .select({ count: sql`count(*)`.as('count') })
+      .from(movies);
+    
+    const totalCount = Number(countResult[0].count);
+
+    // Get movies with default translations and poster URLs
+    const moviesResult = await database
+      .select({
+        uid: movies.uid,
+        year: movies.year,
+        originalLanguage: movies.originalLanguage,
+        imdbId: movies.imdbId,
+        title: translations.content,
+        posterUrl: posterUrls.url,
+      })
+      .from(movies)
+      .leftJoin(
+        translations,
+        and(
+          eq(movies.uid, translations.resourceUid),
+          eq(translations.resourceType, "movie_title"),
+          eq(translations.isDefault, 1)
+        )
+      )
+      .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
+      .orderBy(sql`movies.year DESC, movies.created_at DESC`)
+      .limit(limit)
+      .offset(offset);
+
+    return c.json({
+      movies: moviesResult.map((movie: typeof moviesResult[0]) => ({
+        uid: movie.uid,
+        year: movie.year,
+        originalLanguage: movie.originalLanguage,
+        imdbId: movie.imdbId,
+        title: movie.title || 'Untitled',
+        posterUrl: movie.posterUrl,
+        imdbUrl: movie.imdbId ? `https://www.imdb.com/title/${movie.imdbId}/` : undefined,
+      })),
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching movies list:", error);
     return c.json({ error: "Internal server error" }, 500);
   }
 });
