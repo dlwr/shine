@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { eq, or } from "drizzle-orm";
+import { eq, or, and } from "drizzle-orm";
 import { getDatabase, type Environment } from "../../src/index";
 import { movies } from "../../src/schema/movies";
 import { nominations } from "../../src/schema/nominations";
@@ -8,7 +8,6 @@ import { awardCeremonies } from "../../src/schema/award-ceremonies";
 import { awardOrganizations } from "../../src/schema/award-organizations";
 import { posterUrls } from "../../src/schema/poster-urls";
 import { translations } from "../../src/schema/translations";
-import { referenceUrls } from "../../src/schema/reference-urls";
 import { generateUUID } from "../../src/utils/uuid";
 
 const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
@@ -49,17 +48,18 @@ export async function importMoviesFromList(
   limit?: number
 ): Promise<void> {
   environment_ = environment;
-  TMDB_API_KEY = environment.TMDB_API_KEY;
+  TMDB_API_KEY = environment.TMDB_API_KEY || '';
 
   if (!TMDB_API_KEY) {
-    throw new Error("TMDB_API_KEY is required");
+    throw new Error('TMDB_API_KEY is required');
   }
+
 
   // TMDB設定を取得
   await fetchTMDBConfiguration();
 
   // JSONファイルを読み込み
-  const fileContent = readFileSync(filePath, "utf-8");
+  const fileContent = readFileSync(filePath, "utf8");
   const allMovieTitles: string[] = JSON.parse(fileContent);
   
   // limitが指定されている場合は制限
@@ -101,7 +101,7 @@ async function createAwardStructure(awardName: string): Promise<{
     .values({
       name: awardName,
       country: "Unknown",
-      establishedYear: null,
+      establishedYear: undefined,
     })
     .onConflictDoNothing();
 
@@ -141,7 +141,7 @@ async function createAwardStructure(awardName: string): Promise<{
     .values({
       organizationUid: organization.uid,
       year: currentYear,
-      date: new Date().toISOString().split("T")[0],
+      startDate: Math.floor(Date.now() / 1000),
     })
     .onConflictDoNothing();
 
@@ -166,7 +166,7 @@ async function createAwardStructure(awardName: string): Promise<{
  */
 async function processMovie(
   title: string,
-  organizationUid: string,
+  _organizationUid: string,
   categoryUid: string,
   ceremonyUid: string
 ): Promise<void> {
@@ -181,7 +181,7 @@ async function processMovie(
   }
 
   // 既存の映画をチェック（TMDB IDまたはIMDb IDで）
-  let existingMovie = null;
+  let existingMovie: typeof movies.$inferSelect | undefined;
   
   if (tmdbMovie.imdb_id) {
     [existingMovie] = await database
@@ -205,7 +205,7 @@ async function processMovie(
   let movieUid: string;
 
   if (existingMovie) {
-    console.log(`  Found existing movie: ${existingMovie.title}`);
+    console.log(`  Found existing movie (UID: ${existingMovie.uid})`);
     movieUid = existingMovie.uid;
     
     // TMDBデータで既存映画を更新
@@ -222,7 +222,7 @@ async function processMovie(
 /**
  * TMDBで映画を検索
  */
-async function searchMovieOnTMDB(title: string): Promise<TMDBMovieData | null> {
+async function searchMovieOnTMDB(title: string): Promise<TMDBMovieData | undefined> {
   try {
     const searchUrl = new URL(`${TMDB_API_BASE_URL}/search/movie`);
     searchUrl.searchParams.append("api_key", TMDB_API_KEY);
@@ -237,7 +237,7 @@ async function searchMovieOnTMDB(title: string): Promise<TMDBMovieData | null> {
     const data = (await response.json()) as TMDBSearchResponse;
     
     if (data.results.length === 0) {
-      return null;
+      return undefined;
     }
 
     // 最初の結果を返す（最も関連性が高いとされる）
@@ -247,7 +247,7 @@ async function searchMovieOnTMDB(title: string): Promise<TMDBMovieData | null> {
     return movie;
   } catch (error) {
     console.error(`Error searching TMDB for ${title}:`, error);
-    return null;
+    return undefined;
   }
 }
 
@@ -261,36 +261,80 @@ async function createNewMovie(tmdbMovie: TMDBMovieData): Promise<string> {
   // 公開年を抽出
   const releaseYear = tmdbMovie.release_date
     ? Number.parseInt(tmdbMovie.release_date.split("-")[0], 10)
-    : null;
+    : undefined;
 
   // 映画を作成
   await database.insert(movies).values({
     uid: movieUid,
-    title: tmdbMovie.title,
-    originalTitle: tmdbMovie.original_title,
-    releaseYear,
+    originalLanguage: "en", // Default to English for TMDB movies
+    year: releaseYear,
     tmdbId: tmdbMovie.id,
     imdbId: tmdbMovie.imdb_id,
   });
 
-  // 日本語翻訳を追加
-  if (tmdbMovie.title !== tmdbMovie.original_title) {
-    await database.insert(translations).values({
-      resourceType: "movie",
+  // 英語原題翻訳を追加（デフォルト）
+  if (tmdbMovie.original_title) {
+    console.log(`  Saving EN title: "${tmdbMovie.original_title}"`);
+    const insertResult = await database.insert(translations).values({
+      resourceType: "movie_title",
       resourceUid: movieUid,
-      languageCode: "ja",
-      content: `title:${tmdbMovie.title}`,
-    });
+      languageCode: "en",
+      content: tmdbMovie.original_title,
+      isDefault: 1,
+    }).onConflictDoNothing();
+    console.log(`  EN translation insert result:`, insertResult);
+  } else {
+    console.log(`  WARN: tmdbMovie.original_title is undefined!`);
   }
 
-  // 概要を追加
-  if (tmdbMovie.overview) {
-    await database.insert(translations).values({
-      resourceType: "movie",
-      resourceUid: movieUid,
-      languageCode: "ja",
-      content: `overview:${tmdbMovie.overview}`,
-    });
+  // 日本語翻訳を追加
+  if (tmdbMovie.title !== tmdbMovie.original_title || tmdbMovie.overview) {
+    // 既存の翻訳をチェック
+    const [existingTranslation] = await database
+      .select()
+      .from(translations)
+      .where(
+        and(
+          eq(translations.resourceType, "movie_title"),
+          eq(translations.resourceUid, movieUid),
+          eq(translations.languageCode, "ja")
+        )
+      )
+      .limit(1);
+
+    let content = "";
+    
+    // 日本語タイトルのみを保存（overviewは別途処理が必要）
+    if (tmdbMovie.title !== tmdbMovie.original_title) {
+      console.log(`  Adding JA title: "${tmdbMovie.title}"`);
+      content = tmdbMovie.title;
+    }
+
+    if (content) {
+      console.log(`  Final JA content: "${content}"`);
+      if (existingTranslation) {
+        // 既存の翻訳を更新
+        console.log(`  Updating existing JA translation`);
+        await database
+          .update(translations)
+          .set({
+            content,
+            updatedAt: Math.floor(Date.now() / 1000),
+          })
+          .where(eq(translations.uid, existingTranslation.uid));
+      } else {
+        // 新しい翻訳を挿入
+        console.log(`  Inserting new JA translation`);
+        await database.insert(translations).values({
+          resourceType: "movie_title",
+          resourceUid: movieUid,
+          languageCode: "ja",
+          content,
+        });
+      }
+    } else {
+      console.log(`  No JA content to save`);
+    }
   }
 
   // ポスターURLを追加
@@ -299,7 +343,7 @@ async function createNewMovie(tmdbMovie: TMDBMovieData): Promise<string> {
     await database.insert(posterUrls).values({
       movieUid,
       url: posterUrl,
-      source: "tmdb",
+      sourceType: "tmdb",
     });
   }
 
@@ -343,7 +387,7 @@ async function updateExistingMovie(
       await database.insert(posterUrls).values({
         movieUid,
         url: posterUrl,
-        source: "tmdb",
+        sourceType: "tmdb",
       });
     }
   }
@@ -360,7 +404,7 @@ async function hasValue(movieUid: string, field: keyof typeof movies.$inferSelec
     .where(eq(movies.uid, movieUid))
     .limit(1);
   
-  return movie && movie[field] != null;
+  return movie && movie[field] !== undefined;
 }
 
 /**
@@ -378,9 +422,11 @@ async function addNomination(
     .select()
     .from(nominations)
     .where(
-      eq(nominations.movieUid, movieUid) &&
-      eq(nominations.categoryUid, categoryUid) &&
-      eq(nominations.ceremonyUid, ceremonyUid)
+      and(
+        eq(nominations.movieUid, movieUid),
+        eq(nominations.categoryUid, categoryUid),
+        eq(nominations.ceremonyUid, ceremonyUid)
+      )
     )
     .limit(1);
 
@@ -394,7 +440,7 @@ async function addNomination(
     movieUid,
     categoryUid,
     ceremonyUid,
-    isWinner: false, // デフォルトはノミネートのみ
+    isWinner: 0, // デフォルトはノミネートのみ
   });
 
   console.log(`  Added nomination`);

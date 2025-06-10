@@ -4,7 +4,7 @@ import { config } from "dotenv";
 import { importMoviesFromList } from "./movie-import-from-list";
 
 // .envファイルを読み込み
-config({ path: "../.env" });
+config({ path: "../.dev.vars" });
 
 async function main(): Promise<void> {
   const arguments_ = process.argv.slice(2);
@@ -21,18 +21,18 @@ async function main(): Promise<void> {
   const limit = arguments_[2] ? Number.parseInt(arguments_[2], 10) : undefined;
 
   // 環境変数から設定を取得
-  const tursoUrl = process.env.TURSO_DATABASE_URL_DEV;  
-  const tursoToken = process.env.TURSO_AUTH_TOKEN_DEV;
+  const tursoUrl = process.env.TURSO_DATABASE_URL;  
+  const tursoToken = process.env.TURSO_AUTH_TOKEN;
   const tmdbKey = process.env.TMDB_API_KEY;
 
   // 必要な環境変数をチェック
   if (!tursoUrl) {
-    console.error("Error: TURSO_DATABASE_URL_DEV environment variable is required");
+    console.error("Error: TURSO_DATABASE_URL environment variable is required");
     process.exit(1);
   }
 
   if (!tursoToken) {
-    console.error("Error: TURSO_AUTH_TOKEN_DEV environment variable is required");
+    console.error("Error: TURSO_AUTH_TOKEN environment variable is required");
     process.exit(1);
   }
 
