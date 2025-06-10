@@ -205,3 +205,15 @@ Note: Authentication uses localStorage, not cookies, so server-side auth checks 
 - `src/schema/movie-selections.ts` - Movie selection persistence schema
 - `scrapers/src/japanese-translations/` - TMDb integration for translations
 - `scrapers/src/cannes-film-festival.ts` - Cannes scraper with year parameter support
+
+## Recent Changes Log
+
+Track recent changes and updates to keep CLAUDE.md synchronized with the codebase.
+
+### 2025-01-10
+- Updated CLAUDE.md to reflect current project state
+- Added movie_selections table documentation
+- Updated scraper commands (TMDb, Cannes Film Festival integration)
+- Fixed environment variable names (removed _DEV suffix)
+- Added missing API endpoints documentation
+- Updated file paths to match current structure
