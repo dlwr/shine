@@ -607,4 +607,59 @@ app.get("/admin/movies", authMiddleware, async (c) => {
   }
 });
 
+// Delete movie
+app.delete("/admin/movies/:id", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const movieId = c.req.param("id");
+
+    // Check if movie exists
+    const movieExists = await database
+      .select({ uid: movies.uid })
+      .from(movies)
+      .where(eq(movies.uid, movieId))
+      .limit(1);
+
+    if (movieExists.length === 0) {
+      return c.json({ error: "Movie not found" }, 404);
+    }
+
+    // Delete all related data in proper order
+    // 1. Delete movie selections
+    await database
+      .delete(movieSelections)
+      .where(eq(movieSelections.movieId, movieId));
+
+    // 2. Delete nominations
+    await database
+      .delete(nominations)
+      .where(eq(nominations.movieUid, movieId));
+
+    // 3. Delete translations
+    await database
+      .delete(translations)
+      .where(
+        and(
+          eq(translations.resourceUid, movieId),
+          eq(translations.resourceType, "movie_title")
+        )
+      );
+
+    // 4. Delete poster URLs
+    await database
+      .delete(posterUrls)
+      .where(eq(posterUrls.movieUid, movieId));
+
+    // 5. Finally delete the movie
+    await database
+      .delete(movies)
+      .where(eq(movies.uid, movieId));
+
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting movie:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
 export default app;

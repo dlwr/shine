@@ -141,6 +141,15 @@ import Layout from '../../layouts/Layout.astro';
     background: #4b5563;
   }
 
+  .btn-danger {
+    background: #dc2626;
+    color: white;
+  }
+
+  .btn-danger:hover {
+    background: #b91c1c;
+  }
+
   .pagination {
     display: flex;
     justify-content: center;
@@ -289,6 +298,7 @@ import Layout from '../../layouts/Layout.astro';
                   ? `<a href="${movie.imdbUrl}" target="_blank" class="btn btn-secondary">IMDb</a>` 
                   : ''
                 }
+                <button onclick="deleteMovie('${movie.uid}', '${movie.title}')" class="btn btn-danger">Delete</button>
               </div>
             </td>
           </tr>
@@ -318,6 +328,44 @@ import Layout from '../../layouts/Layout.astro';
       if (currentPage < totalPages) fetchMovies(currentPage + 1);
     });
   }
+
+  async function deleteMovie(movieId: string, movieTitle: string) {
+    if (!confirm(`Are you sure you want to delete "${movieTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    const token = checkAuth();
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_BASE}/admin/movies/${movieId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem('adminToken');
+        window.location.href = '/admin/login';
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to delete movie');
+      }
+
+      // Refresh the current page
+      fetchMovies(currentPage);
+      alert(`Movie "${movieTitle}" has been deleted successfully.`);
+    } catch (error) {
+      alert('Failed to delete movie. Please try again.');
+      console.error('Delete error:', error);
+    }
+  }
+
+  // Make deleteMovie available globally
+  (window as any).deleteMovie = deleteMovie;
 
   // Initialize
   document.addEventListener('DOMContentLoaded', () => {
