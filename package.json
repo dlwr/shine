@@ -12,6 +12,7 @@
     "front:dev": "cd front && pnpm run dev",
     "front:deploy": "cd front && pnpm run deploy",
     "scrapers:academy-awards": "cd scrapers && pnpm tsx src/academy-awards-cli.ts",
+    "scrapers:japan-academy-awards": "cd scrapers && pnpm tsx src/japan-academy-awards-cli.ts",
     "scrapers:movie-posters": "cd scrapers && pnpm tsx src/movie-posters-cli.ts",
     "scrapers:japanese-translations": "cd scrapers && pnpm tsx src/japanese-translations-cli.ts",
     "scrapers:cannes-film-festival": "cd scrapers && pnpm tsx src/cannes-film-festival-cli.ts",

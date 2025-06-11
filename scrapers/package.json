@@ -6,7 +6,8 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "movie-import": "tsx src/movie-import-from-list-cli.ts",
-    "academy-awards": "tsx src/academy-awards-cli.ts"
+    "academy-awards": "tsx src/academy-awards-cli.ts",
+    "japan-academy-awards": "tsx src/japan-academy-awards-cli.ts"
   },
   "dependencies": {
     "cheerio": "^1.0.0",
