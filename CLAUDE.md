@@ -349,6 +349,15 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - `pnpm run scrapers:japan-academy-awards --year 2024` (specific year)
   - `pnpm run scrapers:japan-academy-awards --dry-run` (safe testing)
 
+### 2025-06-11 (Movie Deletion Foreign Key Fix)
+- Fixed critical foreign key constraint error in movie deletion API:
+  - **Root cause**: `reference_urls` table deletion was missing from cascading delete logic
+  - **Solution**: Added `referenceUrls` deletion to movie delete endpoint at `api/src/index.ts:665-668`
+  - **Complete deletion order**: article_links → movie_selections → nominations → reference_urls → translations → poster_urls → movies
+  - **Prevention**: Added comprehensive guidelines for foreign key constraint handling in Development Guidelines
+- **Lesson learned**: Always verify ALL foreign key references across entire schema when implementing delete operations
+- **Key insight**: Most tables lack `onDelete: 'cascade'` configuration, requiring manual cascading delete implementation
+
 ### Development Guidelines
 - TSエラーとLintエラーをを絶対に無視するな
 - Database column names in schema use camelCase (e.g., `createdAt`, `updatedAt`) but are mapped to snake_case in the actual database
@@ -361,6 +370,12 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 - **TailwindCSS**: Use utility-first approach, preserve custom CSS only for complex animations/interactions
 - **Component Styling**: Follow responsive patterns like `text-xl md:text-2xl` and `p-5 md:p-6`
 - **Favicon Management**: Use ImageMagick to generate multiple favicon formats from source assets; maintain 16x16, 32x32, ICO, and Apple touch icon variants
+- **Database Foreign Key Constraints and Cascading Deletes**:
+  - **Critical**: When implementing delete operations for core entities (movies, awards, etc.), always verify ALL foreign key references across the entire schema
+  - Most tables do NOT have `onDelete: 'cascade'` configured, requiring manual deletion of related data
+  - **Movie deletion order**: article_links → movie_selections → nominations → reference_urls → translations → poster_urls → movies
+  - Use `Task` tool to search all schema files for foreign key references when implementing new delete operations
+  - Test delete operations in development to catch missing cascading delete logic before production
 - **Wikipedia Scraping Best Practices**: 
   - Use duplicate prevention logic (`Set<T>`) when processing tables to avoid year/data duplication
   - Implement multiple year detection patterns for robustness (`YYYY年（第X回）`, `第X回`, `YYYY年`)
