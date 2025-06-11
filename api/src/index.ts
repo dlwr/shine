@@ -7,6 +7,7 @@ import { movieSelections } from "db/schema/movie-selections";
 import { movies } from "db/schema/movies";
 import { nominations } from "db/schema/nominations";
 import { posterUrls } from "db/schema/poster-urls";
+import { referenceUrls } from "db/schema/reference-urls";
 import { translations } from "db/schema/translations";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -646,17 +647,27 @@ app.delete("/admin/movies/:id", authMiddleware, async (c) => {
     }
 
     // Delete all related data in proper order
-    // 1. Delete movie selections
+    // 1. Delete article links
+    await database
+      .delete(articleLinks)
+      .where(eq(articleLinks.movieUid, movieId));
+
+    // 2. Delete movie selections
     await database
       .delete(movieSelections)
       .where(eq(movieSelections.movieId, movieId));
 
-    // 2. Delete nominations
+    // 3. Delete nominations
     await database
       .delete(nominations)
       .where(eq(nominations.movieUid, movieId));
 
-    // 3. Delete translations
+    // 4. Delete reference URLs
+    await database
+      .delete(referenceUrls)
+      .where(eq(referenceUrls.movieUid, movieId));
+
+    // 5. Delete translations
     await database
       .delete(translations)
       .where(
@@ -666,12 +677,12 @@ app.delete("/admin/movies/:id", authMiddleware, async (c) => {
         )
       );
 
-    // 4. Delete poster URLs
+    // 6. Delete poster URLs
     await database
       .delete(posterUrls)
       .where(eq(posterUrls.movieUid, movieId));
 
-    // 5. Finally delete the movie
+    // 7. Finally delete the movie
     await database
       .delete(movies)
       .where(eq(movies.uid, movieId));
