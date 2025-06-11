@@ -1,5 +1,6 @@
 ---
 import MovieCard from "./MovieCard.astro";
+import { getApiUrl } from '../utils/api';
 
 export interface Props {
   locale?: string;
@@ -7,9 +8,7 @@ export interface Props {
 
 const { locale = 'en' } = Astro.props;
 
-// Get runtime environment variables from Cloudflare
-const runtimeEnv = Astro.locals?.runtime?.env;
-const API_URL = runtimeEnv?.PUBLIC_API_URL || import.meta.env.PUBLIC_API_URL || "http://localhost:8787";
+const API_URL = getApiUrl(Astro.locals);
 
 type Movie = {
   uid: string;

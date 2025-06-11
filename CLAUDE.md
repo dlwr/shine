@@ -324,6 +324,7 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 - When writing SQL queries, use the schema field references directly instead of hardcoding column names
 - **API URL Convention**: Base URLs should NOT have trailing slashes, paths should start with leading slash
 - **Cloudflare Pages Environment Variables**: Use `vars` in wrangler.jsonc, access via `Astro.locals?.runtime?.env` in components
+- **API URL Handling**: Always use `getApiUrl(Astro.locals)` utility from `front/src/utils/api.ts` instead of manual environment variable handling
 - **Mobile Responsiveness**: Consider mobile-first design with collapsible content for dense information
 - **Security**: Always implement rate limiting for public submission endpoints
 - **TailwindCSS**: Use utility-first approach, preserve custom CSS only for complex animations/interactions

@@ -1,6 +1,8 @@
 ---
 export const prerender = false;
 
+import { getApiUrl } from '../../utils/api';
+
 interface Movie {
   uid: string;
   title: string;
@@ -18,8 +20,7 @@ interface Article {
 }
 
 const { id } = Astro.params;
-const runtimeEnv = Astro.locals?.runtime?.env;
-const apiUrl = runtimeEnv?.PUBLIC_API_URL || import.meta.env.PUBLIC_API_URL || "http://localhost:8787";
+const apiUrl = getApiUrl(Astro.locals);
 
 // Fetch movie details
 const movieResponse = await fetch(`${apiUrl}/movies/${id}`);
