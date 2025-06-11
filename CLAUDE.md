@@ -267,9 +267,28 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - Now properly filters by both identifying field AND `organizationUid` using `and()` condition
   - This ensures nominations are assigned to the correct award organization
 
+### 2025-06-11 (Article Links Feature)
+- Added article links feature for user-submitted movie-related articles:
+  - New `article_links` table with spam/flagging support and rate limiting
+  - Public submission API with IP-based rate limiting (10 submissions per hour per IP)
+  - Article links displayed in MovieCard components (top 3 by submission date)
+  - Dedicated movie detail pages (`/movies/[id]`) for article submission
+  - Admin spam flagging functionality via `POST /admin/article-links/:id/spam`
+- Implemented mobile-responsive collapsible content:
+  - Nominations, article links, and add article button are collapsible on mobile (≤768px)
+  - Always expanded on desktop (>768px)
+  - Smooth animations with toggle button and icons
+- **Removed view counting feature completely**:
+  - Removed `viewCount` column from `article_links` table
+  - Removed `/article-links/:id/view` API endpoint
+  - Articles now sorted by `submittedAt DESC` instead of view count
+  - Cleaner UI without view count displays
+
 ### Development Guidelines
 - TSエラーとLintエラーをを絶対に無視するな
 - Database column names in schema use camelCase (e.g., `createdAt`, `updatedAt`) but are mapped to snake_case in the actual database
 - When writing SQL queries, use the schema field references directly instead of hardcoding column names
 - **API URL Convention**: Base URLs should NOT have trailing slashes, paths should start with leading slash
 - **Cloudflare Pages Environment Variables**: Use `vars` in wrangler.jsonc, access via `Astro.locals?.runtime?.env` in components
+- **Mobile Responsiveness**: Consider mobile-first design with collapsible content for dense information
+- **Security**: Always implement rate limiting for public submission endpoints
