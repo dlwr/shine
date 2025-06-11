@@ -292,6 +292,22 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - Rate-limited PRs: 5 per package, 3 for GitHub Actions
   - Includes GitHub Actions monitoring for CI/CD workflow updates
 
+### 2025-06-11 (TailwindCSS Migration)
+- Successfully migrated frontend from custom CSS to TailwindCSS v3:
+  - **Setup**: Added `@astrojs/tailwind` integration with `@tailwindcss/typography` plugin
+  - **Layout.astro**: Converted to utility classes with `bg-gray-50` body background
+  - **LanguageSelector.astro**: Complete TailwindCSS conversion with conditional classes
+  - **MovieCard.astro**: Major refactoring to TailwindCSS with preserved functionality
+    - Responsive design: `h-[400px] md:h-[450px]` for poster heights
+    - Modern card styling with hover effects and proper spacing
+    - Maintained collapsible mobile functionality with custom CSS for animations
+    - Updated nomination badges with `bg-yellow-400` for winners
+  - **Benefits**: Reduced CSS bundle size, unified design system, better responsive utilities
+- **Key Files**: 
+  - `front/astro.config.mjs`: Added TailwindCSS integration
+  - `front/tailwind.config.js`: Configured content paths and typography plugin
+  - All components now use utility-first approach with minimal custom CSS
+
 ### Development Guidelines
 - TSエラーとLintエラーをを絶対に無視するな
 - Database column names in schema use camelCase (e.g., `createdAt`, `updatedAt`) but are mapped to snake_case in the actual database
@@ -300,3 +316,5 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 - **Cloudflare Pages Environment Variables**: Use `vars` in wrangler.jsonc, access via `Astro.locals?.runtime?.env` in components
 - **Mobile Responsiveness**: Consider mobile-first design with collapsible content for dense information
 - **Security**: Always implement rate limiting for public submission endpoints
+- **TailwindCSS**: Use utility-first approach, preserve custom CSS only for complex animations/interactions
+- **Component Styling**: Follow responsive patterns like `text-xl md:text-2xl` and `p-5 md:p-6`
