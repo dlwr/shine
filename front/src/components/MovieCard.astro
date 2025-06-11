@@ -89,48 +89,52 @@ const nominationsByOrg =
   ) || {};
 ---
 
-<div class="movie-card-wrapper">
-  <div class="movie-card">
+<div class="relative h-full">
+  <div class="rounded-xl overflow-hidden shadow-lg transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-2xl bg-white h-full flex flex-col w-full">
     {
       movie.imdbUrl ? (
         <a
           href={movie.imdbUrl}
           target="_blank"
           rel="noopener noreferrer"
-          class="movie-main-link"
+          class="text-inherit no-underline block"
         >
-          <div class="poster">
+          <div class="h-[400px] md:h-[450px] bg-gray-100 flex items-center justify-center">
             {movie.posterUrl ? (
-              <img src={movie.posterUrl} alt={`${movie.title} poster`} />
+              <img src={movie.posterUrl} alt={`${movie.title} poster`} class="w-full h-full object-cover" />
             ) : (
-              <div class="no-poster">{t.noPoster}</div>
+              <div class="text-gray-500 text-xl">{t.noPoster}</div>
             )}
           </div>
-          <div class="movie-info">
-            <h3 class="title">{movie.title}</h3>
-            <p class="year">{movie.year}</p>
+          <div class="p-5 md:p-6 flex-grow flex flex-col">
+            <h3 class="m-0 mb-3 text-xl md:text-2xl font-semibold">{movie.title}</h3>
+            <p class="m-0 mb-4 text-gray-600 text-lg">{movie.year}</p>
             <div class="collapsible-content">
               {movie.nominations && movie.nominations.length > 0 && (
-                <div class="nominations">
+                <div class="mt-auto pt-4 border-t border-gray-200">
                   {Object.values(nominationsByOrg).map((orgData: any) => (
-                    <div class="org-group">
-                      <h4 class="org-name">
+                    <div class="mb-4 last:mb-0">
+                      <h4 class="text-sm font-semibold text-gray-700 mb-2">
                         {orgData.organization.shortName ||
                           orgData.organization.name}
                       </h4>
                       {Object.values(orgData.ceremonies).map(
                         (ceremonyData: any) => (
-                          <div class="ceremony-group">
-                            <span class="ceremony-year">
+                          <div class="mb-2">
+                            <span class="text-xs text-gray-600 font-medium">
                               {ceremonyData.ceremony.year}
                             </span>
-                            <ul class="nomination-list">
+                            <ul class="list-none p-0 mt-1">
                               {ceremonyData.nominations.map((nom: any) => (
-                                <li class={nom.isWinner ? "winner" : "nominee"}>
-                                  <span class="category-name">
+                                <li class="text-xs py-1 flex items-center justify-between">
+                                  <span class="text-gray-700">
                                     {nom.category.name}
                                   </span>
-                                  <span class="status">
+                                  <span class={`text-xs px-2 py-1 rounded font-medium ml-2 ${
+                                    nom.isWinner 
+                                      ? 'bg-yellow-400 text-gray-900' 
+                                      : 'bg-gray-200 text-gray-700'
+                                  }`}>
                                     {nom.isWinner ? t.winner : t.nominee}
                                   </span>
                                 </li>
@@ -144,69 +148,73 @@ const nominationsByOrg =
                 </div>
               )}
               {movie.articleLinks && movie.articleLinks.length > 0 && (
-                <div class="article-links">
-                  <h4 class="section-title">{t.relatedArticles}</h4>
-                  <ul class="article-list">
+                <div class="px-6 pb-2 border-t border-gray-200">
+                  <h4 class="text-sm font-semibold text-gray-700 mt-4 mb-3">{t.relatedArticles}</h4>
+                  <ul class="list-none p-0 m-0">
                     {movie.articleLinks.map((article) => (
-                      <li>
+                      <li class="mb-1.5 last:mb-0">
                         <a
                           href={article.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          class="article-link"
+                          class="block px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-md no-underline text-inherit transition-all duration-200 hover:bg-gray-100 hover:border-gray-300 hover:translate-x-0.5"
                           data-article-id={article.uid}
                         >
-                          <span class="article-title">{article.title}</span>
+                          <span class="text-xs text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap block leading-snug">{article.title}</span>
                         </a>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
-              <a href={`/movies/${movie.uid}`} class="add-article-link">
+              <a href={`/movies/${movie.uid}`} class="inline-block mx-6 my-3 px-2 py-1 text-gray-500 no-underline rounded text-xs font-normal transition-all duration-200 border border-transparent hover:text-gray-700 hover:bg-gray-100 hover:border-gray-200">
                 + {t.addArticle}
               </a>
             </div>
-            <button class="toggle-details" type="button">
+            <button class="toggle-details hidden w-full px-3 py-2 mt-3 bg-transparent border border-gray-200 rounded-md text-gray-500 text-sm cursor-pointer transition-all duration-200 items-center justify-center gap-2 hover:bg-gray-50 hover:border-gray-300" type="button">
               <span class="toggle-text">{t.showMore}</span>
-              <span class="toggle-icon">▼</span>
+              <span class="toggle-icon text-xs">▼</span>
             </button>
           </div>
         </a>
       ) : (
-        <div class="movie-main-content">
-          <div class="poster">
+        <div class="block">
+          <div class="h-[400px] md:h-[450px] bg-gray-100 flex items-center justify-center">
             {movie.posterUrl ? (
-              <img src={movie.posterUrl} alt={`${movie.title} poster`} />
+              <img src={movie.posterUrl} alt={`${movie.title} poster`} class="w-full h-full object-cover" />
             ) : (
-              <div class="no-poster">{t.noPoster}</div>
+              <div class="text-gray-500 text-xl">{t.noPoster}</div>
             )}
           </div>
-          <div class="movie-info">
-            <h3 class="title">{movie.title}</h3>
-            <p class="year">{movie.year}</p>
+          <div class="p-5 md:p-6 flex-grow flex flex-col">
+            <h3 class="m-0 mb-3 text-xl md:text-2xl font-semibold">{movie.title}</h3>
+            <p class="m-0 mb-4 text-gray-600 text-lg">{movie.year}</p>
             <div class="collapsible-content">
               {movie.nominations && movie.nominations.length > 0 && (
-                <div class="nominations">
+                <div class="mt-auto pt-4 border-t border-gray-200">
                   {Object.values(nominationsByOrg).map((orgData: any) => (
-                    <div class="org-group">
-                      <h4 class="org-name">
+                    <div class="mb-4 last:mb-0">
+                      <h4 class="text-sm font-semibold text-gray-700 mb-2">
                         {orgData.organization.shortName ||
                           orgData.organization.name}
                       </h4>
                       {Object.values(orgData.ceremonies).map(
                         (ceremonyData: any) => (
-                          <div class="ceremony-group">
-                            <span class="ceremony-year">
+                          <div class="mb-2">
+                            <span class="text-xs text-gray-600 font-medium">
                               {ceremonyData.ceremony.year}
                             </span>
-                            <ul class="nomination-list">
+                            <ul class="list-none p-0 mt-1">
                               {ceremonyData.nominations.map((nom: any) => (
-                                <li class={nom.isWinner ? "winner" : "nominee"}>
-                                  <span class="category-name">
+                                <li class="text-xs py-1 flex items-center justify-between">
+                                  <span class="text-gray-700">
                                     {nom.category.name}
                                   </span>
-                                  <span class="status">
+                                  <span class={`text-xs px-2 py-1 rounded font-medium ml-2 ${
+                                    nom.isWinner 
+                                      ? 'bg-yellow-400 text-gray-900' 
+                                      : 'bg-gray-200 text-gray-700'
+                                  }`}>
                                     {nom.isWinner ? t.winner : t.nominee}
                                   </span>
                                 </li>
@@ -220,274 +228,45 @@ const nominationsByOrg =
                 </div>
               )}
               {movie.articleLinks && movie.articleLinks.length > 0 && (
-                <div class="article-links">
-                  <h4 class="section-title">{t.relatedArticles}</h4>
-                  <ul class="article-list">
+                <div class="px-6 pb-2 border-t border-gray-200">
+                  <h4 class="text-sm font-semibold text-gray-700 mt-4 mb-3">{t.relatedArticles}</h4>
+                  <ul class="list-none p-0 m-0">
                     {movie.articleLinks.map((article) => (
-                      <li>
+                      <li class="mb-1.5 last:mb-0">
                         <a
                           href={article.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          class="article-link"
+                          class="block px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-md no-underline text-inherit transition-all duration-200 hover:bg-gray-100 hover:border-gray-300 hover:translate-x-0.5"
                           data-article-id={article.uid}
                         >
-                          <span class="article-title">{article.title}</span>
+                          <span class="text-xs text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap block leading-snug">{article.title}</span>
                         </a>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
-              <a href={`/movies/${movie.uid}`} class="add-article-link">
+              <a href={`/movies/${movie.uid}`} class="inline-block mx-6 my-3 px-2 py-1 text-gray-500 no-underline rounded text-xs font-normal transition-all duration-200 border border-transparent hover:text-gray-700 hover:bg-gray-100 hover:border-gray-200">
                 + {t.addArticle}
               </a>
             </div>
-            <button class="toggle-details" type="button">
+            <button class="toggle-details hidden w-full px-3 py-2 mt-3 bg-transparent border border-gray-200 rounded-md text-gray-500 text-sm cursor-pointer transition-all duration-200 items-center justify-center gap-2 hover:bg-gray-50 hover:border-gray-300" type="button">
               <span class="toggle-text">{t.showMore}</span>
-              <span class="toggle-icon">▼</span>
+              <span class="toggle-icon text-xs">▼</span>
             </button>
           </div>
         </div>
       )
     }
   </div>
-  <button class="edit-button" data-movie-id={movie.uid} style="display: none;">
+  <button class="edit-button absolute top-3 right-3 bg-blue-600/90 text-white border-0 px-4 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors duration-200 z-10 hover:bg-blue-700/95 hidden" data-movie-id={movie.uid}>
     {t.edit}
   </button>
 </div>
 
 <style>
-  .movie-card-wrapper {
-    position: relative;
-    height: 100%;
-  }
-
-  .movie-card {
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    transition:
-      transform 0.3s ease,
-      box-shadow 0.3s ease;
-    background: white;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .movie-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
-  }
-
-  .movie-main-link {
-    text-decoration: none;
-    color: inherit;
-    display: block;
-  }
-
-  .movie-main-content {
-    display: block;
-  }
-
-  .poster {
-    height: 450px;
-    background: #f0f0f0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .poster img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .no-poster {
-    color: #999;
-    font-size: 1.25rem;
-  }
-
-  .movie-info {
-    padding: 24px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .title {
-    margin: 0 0 12px 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-  }
-
-  .year {
-    margin: 0 0 16px 0;
-    color: #666;
-    font-size: 1.1rem;
-  }
-
-  .nominations {
-    margin-top: auto;
-    padding-top: 16px;
-    border-top: 1px solid #eee;
-  }
-
-  .org-group {
-    margin-bottom: 16px;
-  }
-
-  .org-group:last-child {
-    margin-bottom: 0;
-  }
-
-  .org-name {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #333;
-    margin: 0 0 8px 0;
-  }
-
-  .ceremony-group {
-    margin-bottom: 8px;
-  }
-
-  .ceremony-year {
-    font-size: 0.85rem;
-    color: #666;
-    font-weight: 500;
-  }
-
-  .nomination-list {
-    list-style: none;
-    padding: 0;
-    margin: 4px 0 0 0;
-  }
-
-  .nomination-list li {
-    font-size: 0.85rem;
-    padding: 4px 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .category-name {
-    color: #555;
-  }
-
-  .status {
-    font-size: 0.75rem;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-weight: 500;
-    margin-left: 8px;
-  }
-
-  .winner .status {
-    background: #ffd700;
-    color: #333;
-  }
-
-  .nominee .status {
-    background: #e3e3e3;
-    color: #555;
-  }
-
-  .edit-button {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: rgba(37, 99, 235, 0.9);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s ease;
-    z-index: 10;
-  }
-
-  .edit-button:hover {
-    background: rgba(29, 78, 216, 0.95);
-  }
-
-  .article-links {
-    padding: 0 24px 8px 24px;
-    border-top: 1px solid #eee;
-  }
-
-  .section-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #333;
-    margin: 16px 0 12px 0;
-  }
-
-  .article-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .article-list li {
-    margin-bottom: 6px;
-  }
-
-  .article-list li:last-child {
-    margin-bottom: 0;
-  }
-
-  .article-link {
-    display: block;
-    padding: 6px 10px;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    text-decoration: none;
-    color: inherit;
-    transition: all 0.2s ease;
-  }
-
-  .article-link:hover {
-    background: #f3f4f6;
-    border-color: #d1d5db;
-    transform: translateX(2px);
-  }
-
-  .article-title {
-    font-size: 0.8rem;
-    color: #374151;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    line-height: 1.4;
-  }
-
-  .add-article-link {
-    display: inline-block;
-    margin: 12px 24px 16px 24px;
-    padding: 4px 8px;
-    color: #6b7280;
-    text-decoration: none;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 400;
-    transition: all 0.2s ease;
-    border: 1px solid transparent;
-  }
-
-  .add-article-link:hover {
-    color: #374151;
-    background: #f3f4f6;
-    border-color: #e5e7eb;
-  }
-
+  /* Custom styles for collapsible functionality */
   .collapsible-content {
     max-height: 0;
     overflow: hidden;
@@ -499,31 +278,8 @@ const nominationsByOrg =
     transition: max-height 0.5s ease-in;
   }
 
-  .toggle-details {
-    display: none;
-    width: 100%;
-    padding: 8px 12px;
-    margin-top: 12px;
-    background: transparent;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    color: #6b7280;
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .toggle-details:hover {
-    background: #f9fafb;
-    border-color: #d1d5db;
-  }
-
   .toggle-icon {
     transition: transform 0.2s ease;
-    font-size: 0.8rem;
   }
 
   .toggle-details.expanded .toggle-icon {
@@ -531,20 +287,8 @@ const nominationsByOrg =
   }
 
   @media (max-width: 768px) {
-    .poster {
-      height: 400px;
-    }
-
-    .movie-info {
-      padding: 20px;
-    }
-
-    .title {
-      font-size: 1.3rem;
-    }
-
     .toggle-details {
-      display: flex;
+      display: flex !important;
     }
 
     .collapsible-content {
@@ -556,24 +300,16 @@ const nominationsByOrg =
       max-height: 2000px;
       overflow: visible;
     }
-
-    .article-links {
-      padding: 16px 0 8px 0;
-    }
-
-    .add-article-link {
-      margin: 12px 0 16px 0;
-    }
   }
 
   @media (min-width: 769px) {
     .collapsible-content {
-      max-height: none;
-      overflow: visible;
+      max-height: none !important;
+      overflow: visible !important;
     }
-
+    
     .toggle-details {
-      display: none;
+      display: none !important;
     }
   }
 </style>
@@ -599,6 +335,7 @@ const nominationsByOrg =
       // Show all edit buttons for admin users
       const editButtons = document.querySelectorAll(".edit-button");
       editButtons.forEach((button) => {
+        button.classList.remove("hidden");
         button.style.display = "block";
       });
 
