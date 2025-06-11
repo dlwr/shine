@@ -29,6 +29,7 @@ async function main() {
     // コマンドライン引数を解析
     const arguments_ = process.argv.slice(2);
     const yearIndex = arguments_.indexOf("--year");
+    const winnersOnlyFlag = arguments_.includes("--winners-only");
     let targetYear: number | undefined;
     
     if (yearIndex !== -1 && arguments_[yearIndex + 1]) {
@@ -39,9 +40,17 @@ async function main() {
         throw new Error("Invalid year");
       }
       
-      console.log(`カンヌ映画祭スクレイピングを開始します (対象年: ${targetYear})`);
+      if (winnersOnlyFlag) {
+        console.log(`カンヌ映画祭受賞作品の更新を開始します (対象年: ${targetYear})`);
+      } else {
+        console.log(`カンヌ映画祭スクレイピングを開始します (対象年: ${targetYear})`);
+      }
     } else {
-      console.log("カンヌ映画祭スクレイピングを開始します");
+      if (winnersOnlyFlag) {
+        console.log("カンヌ映画祭受賞作品の更新を開始します");
+      } else {
+        console.log("カンヌ映画祭スクレイピングを開始します");
+      }
     }
 
     // 環境変数の確認
@@ -58,12 +67,30 @@ async function main() {
     }
 
     // スクレイピング処理を実行
-    const url = targetYear ? `http://localhost/?year=${targetYear}` : "http://localhost/";
+    let url = "http://localhost/";
+    const searchParams = new URLSearchParams();
+    
+    if (targetYear) {
+      searchParams.append("year", targetYear.toString());
+    }
+    
+    if (winnersOnlyFlag) {
+      searchParams.append("winners-only", "true");
+    }
+    
+    if (searchParams.toString()) {
+      url += `?${searchParams.toString()}`;
+    }
+    
     const request = new Request(url);
     const response = await cannesFilmFestival.fetch(request, environment);
 
     if (response.status === 200) {
-      console.log("カンヌ映画祭スクレイピングが正常に完了しました");
+      if (winnersOnlyFlag) {
+        console.log("カンヌ映画祭受賞作品の更新が正常に完了しました");
+      } else {
+        console.log("カンヌ映画祭スクレイピングが正常に完了しました");
+      }
     } else {
       const errorText = await response.text();
       console.error("スクレイピング中にエラーが発生しました:", errorText);
@@ -81,17 +108,24 @@ function showUsage() {
   console.log("  pnpm run scrapers:cannes-film-festival [オプション]");
   console.log("");
   console.log("オプション:");
-  console.log("  --year <年>     特定の年のみ処理 (例: --year 2024)");
-  console.log("  --help, -h      このヘルプを表示");
+  console.log("  --year <年>      特定の年のみ処理 (例: --year 2024)");
+  console.log("  --winners-only   受賞作品のisWinnerのみを更新（軽量モード）");
+  console.log("  --help, -h       このヘルプを表示");
   console.log("");
   console.log("説明:");
   console.log("  Wikipediaからカンヌ国際映画祭のコンペティション参加映画情報を");
   console.log("  スクレイピングし、データベースに保存します。");
   console.log("  Palme d'Or（パルム・ドール）受賞作品も含まれます。");
   console.log("");
+  console.log("  --winners-only オプションを使用すると、既存のノミネーションの");
+  console.log("  isWinnerフラグのみを更新し、新規映画の取得やポスターの");
+  console.log("  ダウンロードはスキップされます。");
+  console.log("");
   console.log("例:");
   console.log("  pnpm run scrapers:cannes-film-festival");
   console.log("  pnpm run scrapers:cannes-film-festival --year 2024");
+  console.log("  pnpm run scrapers:cannes-film-festival --winners-only");
+  console.log("  pnpm run scrapers:cannes-film-festival --year 2024 --winners-only");
 }
 
 // ヘルプオプションの処理

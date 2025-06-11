@@ -42,13 +42,25 @@ export default {
 
     const url = new URL(request.url);
     const yearParameter = url.searchParams.get("year");
+    const winnersOnlyParameter = url.searchParams.get("winners-only");
 
     try {
-      if (yearParameter) {
-        const targetYear = Number.parseInt(yearParameter, 10);
-        await scrapeCannesFilmFestivalYear(targetYear);
+      if (winnersOnlyParameter === "true") {
+        // 受賞作品のみ更新
+        if (yearParameter) {
+          const targetYear = Number.parseInt(yearParameter, 10);
+          await updateCannesWinnersOnly(targetYear);
+        } else {
+          await updateAllCannesWinnersOnly();
+        }
       } else {
-        await scrapeCannesFilmFestival();
+        // 通常のスクレイピング
+        if (yearParameter) {
+          const targetYear = Number.parseInt(yearParameter, 10);
+          await scrapeCannesFilmFestivalYear(targetYear);
+        } else {
+          await scrapeCannesFilmFestival();
+        }
       }
       return new Response("Scraping completed successfully", { status: 200 });
     } catch (error) {
@@ -504,7 +516,7 @@ function findPalmeDOrWinner(
   $: cheerio.CheerioAPI,
   year: number
 ): MovieInfo | undefined {
-  // Palme d'Or セクションを探す
+  // まずinfoboxでPalme d'Orを探す
   const infoBox = $(".infobox");
 
   if (infoBox.length > 0) {
@@ -544,7 +556,257 @@ function findPalmeDOrWinner(
     }
   }
 
+  // infoboxで見つからない場合、Awardsセクションを探す
+  const headings = $("h2, h3, h4");
+  
+  for (const heading of headings.toArray()) {
+    const $heading = $(heading);
+    const text = $heading.text().toLowerCase();
+
+    if (text.includes("award") || text.includes("prize")) {
+      // Awards セクションの後のコンテンツを探す
+      let nextElement = $heading.parent().next();
+      let attempts = 0;
+
+      while (nextElement.length > 0 && attempts < 10) {
+        // リスト形式の受賞作品を探す
+        const listItems = nextElement.find("li");
+        
+        for (const item of listItems.toArray()) {
+          const $item = $(item);
+          const itemText = $item.text().toLowerCase();
+          
+          if (itemText.includes("palme d'or") || itemText.includes("palm d'or")) {
+            // Palme d'Or を見つけた場合、映画タイトルを抽出
+            const titleElement = $item.find("i").first();
+            const linkElement = $item.find("a").first();
+            
+            let title = "";
+            let referenceUrl: string | undefined;
+
+            if (titleElement.length > 0) {
+              title = titleElement.text().trim();
+            } else if (linkElement.length > 0) {
+              // リンクテキストがPalme d'Orではなく映画タイトルかチェック
+              const linkText = linkElement.text().trim();
+              if (!linkText.toLowerCase().includes("palme") && !linkText.toLowerCase().includes("palm")) {
+                title = linkText;
+                const href = linkElement.attr("href");
+                if (href) {
+                  referenceUrl = `${WIKIPEDIA_BASE_URL}${href}`;
+                }
+              }
+            }
+
+            if (!title) {
+              // タイトルを抽出するために、テキストをパース
+              const fullText = $item.text();
+              // "Palme d'Or:" の後または映画タイトルを示すパターンを探す
+              const patterns = [
+                /palme d'or[:\s-]+([^,\n(]+)/i,
+                /palm d'or[:\s-]+([^,\n(]+)/i,
+                /golden palm[:\s-]+([^,\n(]+)/i
+              ];
+              
+              for (const pattern of patterns) {
+                const match = fullText.match(pattern);
+                if (match) {
+                  title = match[1].trim();
+                  break;
+                }
+              }
+            }
+
+            if (title) {
+              return {
+                title: cleanupTitle(title),
+                year,
+                isWinner: true,
+                referenceUrl,
+              };
+            }
+          }
+        }
+        
+        // テーブル形式の受賞作品も探す
+        const tables = nextElement.find("table");
+        for (const table of tables.toArray()) {
+          const $table = $(table);
+          const rows = $table.find("tr");
+          
+          for (const row of rows.toArray()) {
+            const $row = $(row);
+            const rowText = $row.text().toLowerCase();
+            
+            if (rowText.includes("palme d'or") || rowText.includes("palm d'or")) {
+              const cells = $row.find("td");
+              if (cells.length > 1) {
+                // 2番目のセルに映画タイトルがある場合が多い
+                const titleCell = cells.eq(1);
+                const titleElement = titleCell.find("i").first();
+                const linkElement = titleCell.find("a").first();
+                
+                let title = "";
+                let referenceUrl: string | undefined;
+
+                if (titleElement.length > 0) {
+                  title = titleElement.text().trim();
+                } else if (linkElement.length > 0) {
+                  title = linkElement.text().trim();
+                  const href = linkElement.attr("href");
+                  if (href) {
+                    referenceUrl = `${WIKIPEDIA_BASE_URL}${href}`;
+                  }
+                } else {
+                  title = titleCell.text().trim();
+                }
+
+                if (title) {
+                  return {
+                    title: cleanupTitle(title),
+                    year,
+                    isWinner: true,
+                    referenceUrl,
+                  };
+                }
+              }
+            }
+          }
+        }
+
+        if (nextElement.is("h2, h3, h4")) {
+          break;
+        }
+
+        nextElement = nextElement.next();
+        attempts++;
+      }
+    }
+  }
+
   return undefined;
+}
+
+export async function updateAllCannesWinnersOnly() {
+  try {
+    const master = await fetchMasterData();
+
+    const currentYear = new Date().getFullYear();
+    for (let year = currentYear; year >= 1946; year--) {
+      console.log(`\nUpdating Cannes winners for ${year}...`);
+
+      try {
+        await updateCannesWinnersOnly(year);
+      } catch (error) {
+        console.error(`Error updating winners for year ${year}:`, error);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+
+    console.log("Cannes winners update completed successfully");
+  } catch (error) {
+    console.error("Error updating Cannes winners:", error);
+    throw error;
+  }
+}
+
+export async function updateCannesWinnersOnly(year: number) {
+  try {
+    const master = await fetchMasterData();
+    
+    console.log(`Processing Cannes ${year} winners...`);
+
+    const winner = await fetchPalmeDOrWinner(year);
+
+    if (winner) {
+      await updateWinnerStatus(
+        winner,
+        await getOrCreateCeremony(year, master.organizationUid),
+        master
+      );
+      console.log(`Updated winner for ${year}: ${winner.title}`);
+    } else {
+      console.log(`No Palme d'Or winner found for ${year}`);
+    }
+
+    console.log(`Cannes ${year} winner update completed`);
+  } catch (error) {
+    console.error(`Error updating Cannes ${year} winners:`, error);
+    throw error;
+  }
+}
+
+async function fetchPalmeDOrWinner(year: number): Promise<MovieInfo | undefined> {
+  const yearUrl = `${WIKIPEDIA_BASE_URL}/wiki/${year}_Cannes_Film_Festival`;
+
+  console.log(`Fetching ${yearUrl}...`);
+  const response = await fetch(yearUrl);
+
+  if (!response.ok) {
+    console.log(`Page not found for ${year}, skipping...`);
+    return undefined;
+  }
+
+  const html = await response.text();
+  const $ = cheerio.load(html);
+
+  return findPalmeDOrWinner($, year);
+}
+
+async function updateWinnerStatus(
+  movieInfo: MovieInfo,
+  ceremonyUid: string,
+  master: MasterData
+) {
+  try {
+    const database = getDatabase(environment_);
+
+    // 既存の映画を検索
+    const existingMovies = await database
+      .select({
+        movies: movies,
+        translations: translations,
+      })
+      .from(movies)
+      .innerJoin(
+        translations,
+        and(
+          eq(translations.resourceUid, movies.uid),
+          eq(translations.resourceType, "movie_title"),
+          eq(translations.languageCode, "en"),
+          eq(translations.isDefault, 1)
+        )
+      )
+      .where(eq(translations.content, movieInfo.title));
+
+    if (existingMovies.length === 0) {
+      console.log(`Movie not found in database: ${movieInfo.title}`);
+      return;
+    }
+
+    const movieUid = existingMovies[0].movies.uid;
+
+    // ノミネーション情報を更新
+    const result = await database
+      .update(nominations)
+      .set({
+        isWinner: 1,
+        updatedAt: Math.floor(Date.now() / 1000),
+      })
+      .where(
+        and(
+          eq(nominations.movieUid, movieUid),
+          eq(nominations.ceremonyUid, ceremonyUid),
+          eq(nominations.categoryUid, master.palmeDOrCategoryUid)
+        )
+      );
+
+    console.log(`Updated winner status for ${movieInfo.title} (${movieInfo.year})`);
+  } catch (error) {
+    console.error(`Error updating winner status for ${movieInfo.title}:`, error);
+    throw error;
+  }
 }
 
 function cleanupTitle(title: string): string {
