@@ -284,6 +284,14 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - Articles now sorted by `submittedAt DESC` instead of view count
   - Cleaner UI without view count displays
 
+### 2025-06-11 (Dependabot Setup)
+- Added Dependabot configuration (`.github/dependabot.yml`) for automated dependency updates:
+  - Monitors all workspace packages: root, api, scrapers, front
+  - Weekly updates on Monday 9:00 AM
+  - Scoped commit message prefixes: `deps(api)`, `deps(scrapers)`, `deps(front)`, `deps`
+  - Rate-limited PRs: 5 per package, 3 for GitHub Actions
+  - Includes GitHub Actions monitoring for CI/CD workflow updates
+
 ### Development Guidelines
 - TSエラーとLintエラーをを絶対に無視するな
 - Database column names in schema use camelCase (e.g., `createdAt`, `updatedAt`) but are mapped to snake_case in the actual database
