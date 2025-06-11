@@ -318,6 +318,19 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - `front/src/layouts/Layout.astro`: Updated with comprehensive favicon link tags
   - `front/public/favicon-*.png`, `favicon.ico`, `apple-touch-icon.png`: Generated optimized files
 
+### 2025-06-11 (Cannes Winner Update Enhancement)
+- Added `--winners-only` option to Cannes Film Festival scraper for lightweight winner status updates:
+  - **Lightweight mode**: Skips TMDb API calls, poster downloads, and new movie creation
+  - **Winner detection improvement**: Enhanced `findPalmeDOrWinner` function with better Wikipedia parsing
+  - **CLI support**: Added `--winners-only` flag to `cannes-film-festival-cli.ts`
+  - **Database efficiency**: Only updates `isWinner` flag in existing nominations
+- **Usage**: 
+  - `pnpm run scrapers:cannes-film-festival --winners-only` (all years)
+  - `pnpm run scrapers:cannes-film-festival --year 2024 --winners-only` (specific year)
+- **Key Files**:
+  - `scrapers/src/cannes-film-festival.ts`: Added `updateAllCannesWinnersOnly()` and `updateCannesWinnersOnly(year)` functions
+  - `scrapers/src/cannes-film-festival-cli.ts`: Added CLI argument parsing for `--winners-only` flag
+
 ### Development Guidelines
 - TSエラーとLintエラーをを絶対に無視するな
 - Database column names in schema use camelCase (e.g., `createdAt`, `updatedAt`) but are mapped to snake_case in the actual database
