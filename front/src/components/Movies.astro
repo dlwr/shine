@@ -9,7 +9,7 @@ const { locale = 'en' } = Astro.props;
 
 // Get runtime environment variables from Cloudflare
 const runtimeEnv = Astro.locals?.runtime?.env;
-const API_URL = runtimeEnv?.PUBLIC_API_URL || import.meta.env.PUBLIC_API_URL || "https://shine-api.yuta25.workers.dev";
+const API_URL = runtimeEnv?.API_URL || import.meta.env.PUBLIC_API_URL || "http://localhost:8787";
 
 type Movie = {
   uid: string;
