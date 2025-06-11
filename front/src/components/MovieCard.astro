@@ -45,7 +45,6 @@ const labels = {
     nominee: "Nominee",
     edit: "Edit",
     relatedArticles: "Related Articles",
-    views: "views",
     addArticle: "Add Article",
   },
   ja: {
@@ -54,7 +53,6 @@ const labels = {
     nominee: "ノミネート",
     edit: "編集",
     relatedArticles: "関連記事",
-    views: "閲覧",
     addArticle: "記事を追加",
   },
 };
@@ -207,9 +205,6 @@ const nominationsByOrg =
                   data-article-id={article.uid}
                 >
                   <span class="article-title">{article.title}</span>
-                  <span class="article-views">
-                    {article.viewCount} {t.views}
-                  </span>
                 </a>
               </li>
             ))}
@@ -413,9 +408,7 @@ const nominationsByOrg =
   }
 
   .article-link {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: block;
     padding: 6px 10px;
     background: #f9fafb;
     border: 1px solid #e5e7eb;
@@ -434,18 +427,10 @@ const nominationsByOrg =
   .article-title {
     font-size: 0.8rem;
     color: #374151;
-    flex: 1;
-    margin-right: 8px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     line-height: 1.4;
-  }
-
-  .article-views {
-    font-size: 0.7rem;
-    color: #9ca3af;
-    white-space: nowrap;
   }
 
   .add-article-link {
@@ -517,21 +502,21 @@ const nominationsByOrg =
       });
     }
 
-    // Track article link clicks
-    const articleLinks = document.querySelectorAll(".article-link");
-    articleLinks.forEach((link) => {
-      link.addEventListener("click", async () => {
-        const articleId = link.getAttribute("data-article-id");
-        if (articleId) {
+    // Track article link clicks using event delegation to prevent duplicate handlers
+    const movieCard = document.currentScript.closest('.movie-card-wrapper');
+    if (movieCard) {
+      movieCard.addEventListener("click", async (e) => {
+        const link = e.target.closest(".article-link");
+        if (link && link.dataset.articleId) {
           // Send view count increment request (fire and forget)
           const apiUrl = window.API_URL || "http://localhost:8787";
-          fetch(`${apiUrl}/article-links/${articleId}/view`, {
+          fetch(`${apiUrl}/article-links/${link.dataset.articleId}/view`, {
             method: "POST",
           }).catch(() => {
             // Ignore errors - don't block navigation
           });
         }
       });
-    });
+    }
   });
 </script>
