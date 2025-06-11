@@ -10,7 +10,7 @@
     "japan-academy-awards": "tsx src/japan-academy-awards-cli.ts"
   },
   "dependencies": {
-    "cheerio": "^1.0.0",
+    "cheerio": "^1.1.0",
     "domhandler": "^5.0.3",
     "dotenv": "^16.4.7"
   },
