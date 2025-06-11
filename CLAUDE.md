@@ -308,6 +308,16 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - `front/tailwind.config.js`: Configured content paths and typography plugin
   - All components now use utility-first approach with minimal custom CSS
 
+### 2025-06-11 (Favicon Optimization)
+- Optimized favicon implementation with modern best practices:
+  - **Multi-format support**: Generated ICO, PNG (16x16, 32x32), and Apple touch icon (180x180)
+  - **File size optimization**: Reduced from 1.3MB original to optimized sizes (731B-23KB per format)
+  - **Cross-platform compatibility**: Added proper favicon declarations in `Layout.astro` for all device types
+  - **Tools used**: ImageMagick for automated favicon generation from source assets
+- **Key Files**:
+  - `front/src/layouts/Layout.astro`: Updated with comprehensive favicon link tags
+  - `front/public/favicon-*.png`, `favicon.ico`, `apple-touch-icon.png`: Generated optimized files
+
 ### Development Guidelines
 - TSエラーとLintエラーをを絶対に無視するな
 - Database column names in schema use camelCase (e.g., `createdAt`, `updatedAt`) but are mapped to snake_case in the actual database
@@ -318,3 +328,4 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 - **Security**: Always implement rate limiting for public submission endpoints
 - **TailwindCSS**: Use utility-first approach, preserve custom CSS only for complex animations/interactions
 - **Component Styling**: Follow responsive patterns like `text-xl md:text-2xl` and `p-5 md:p-6`
+- **Favicon Management**: Use ImageMagick to generate multiple favicon formats from source assets; maintain 16x16, 32x32, ICO, and Apple touch icon variants
