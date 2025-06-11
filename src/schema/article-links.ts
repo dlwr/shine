@@ -17,7 +17,6 @@ export const articleLinks = sqliteTable('article_links', {
     .notNull()
     .$default(() => new Date()),
   submitterIp: text('submitter_ip'),
-  viewCount: integer('view_count').notNull().default(0),
   isSpam: integer('is_spam', { mode: 'boolean' }).notNull().default(false),
   isFlagged: integer('is_flagged', { mode: 'boolean' }).notNull().default(false),
 });

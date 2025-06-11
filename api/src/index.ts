@@ -286,14 +286,13 @@ async function getMovieByDateSeed(
   // Get nominations for this movie
   const movieNominations = await getMovieNominations(database, movie.uid);
 
-  // Get top article links for this movie
+  // Get article links for this movie
   const topArticles = await database
     .select({
       uid: articleLinks.uid,
       url: articleLinks.url,
       title: articleLinks.title,
       description: articleLinks.description,
-      viewCount: articleLinks.viewCount,
     })
     .from(articleLinks)
     .where(
@@ -303,7 +302,7 @@ async function getMovieByDateSeed(
         eq(articleLinks.isFlagged, false)
       )
     )
-    .orderBy(sql`${articleLinks.viewCount} DESC`)
+    .orderBy(sql`${articleLinks.submittedAt} DESC`)
     .limit(3);
 
   return {
@@ -770,7 +769,6 @@ app.get("/movies/:id/article-links", async (c) => {
         title: articleLinks.title,
         description: articleLinks.description,
         submittedAt: articleLinks.submittedAt,
-        viewCount: articleLinks.viewCount,
       })
       .from(articleLinks)
       .where(
@@ -780,30 +778,12 @@ app.get("/movies/:id/article-links", async (c) => {
           eq(articleLinks.isFlagged, false)
         )
       )
-      .orderBy(sql`${articleLinks.viewCount} DESC, ${articleLinks.submittedAt} DESC`)
+      .orderBy(sql`${articleLinks.submittedAt} DESC`)
       .limit(20);
       
     return c.json(articles);
   } catch (error) {
     console.error("Error fetching article links:", error);
-    return c.json({ error: "Internal server error" }, 500);
-  }
-});
-
-// Increment view count for article
-app.post("/article-links/:id/view", async (c) => {
-  try {
-    const database = getDatabase(c.env as Environment);
-    const articleId = c.req.param("id");
-    
-    await database
-      .update(articleLinks)
-      .set({ viewCount: sql`${articleLinks.viewCount} + 1` })
-      .where(eq(articleLinks.uid, articleId));
-      
-    return c.json({ success: true });
-  } catch (error) {
-    console.error("Error incrementing view count:", error);
     return c.json({ error: "Internal server error" }, 500);
   }
 });

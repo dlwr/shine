@@ -30,7 +30,6 @@ interface Props {
       url: string;
       title: string;
       description?: string;
-      viewCount: number;
     }>;
   };
   locale?: string;
@@ -615,55 +614,32 @@ const nominationsByOrg =
       });
     }
 
-    // Track article link clicks using event delegation
+    // Handle collapsible content
     const movieCards = document.querySelectorAll('.movie-card-wrapper');
-    
-    movieCards.forEach((movieCard) => {
-      // Article link clicks
-      movieCard.addEventListener("click", async (e) => {
-        const link = e.target.closest(".article-link");
-        if (link && link.dataset.articleId) {
-          // Send view count increment request (fire and forget)
-          const apiUrl = window.API_URL || "http://localhost:8787";
-          fetch(`${apiUrl}/article-links/${link.dataset.articleId}/view`, {
-            method: "POST",
-          }).catch(() => {
-            // Ignore errors - don't block navigation
-          });
-        }
-      });
 
+    movieCards.forEach((movieCard) => {
       // Handle toggle details button
       const toggleButton = movieCard.querySelector('.toggle-details');
       const collapsibleContent = movieCard.querySelector('.collapsible-content');
       const toggleText = movieCard.querySelector('.toggle-text');
-      
-      console.log('Toggle elements found:', { toggleButton, collapsibleContent, toggleText });
       
       if (toggleButton && collapsibleContent && toggleText) {
         toggleButton.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
           
-          console.log('Toggle button clicked');
-          
           const isExpanded = collapsibleContent.classList.contains('expanded');
-          console.log('Current state - isExpanded:', isExpanded);
           
           if (isExpanded) {
             collapsibleContent.classList.remove('expanded');
             toggleButton.classList.remove('expanded');
             toggleText.textContent = locale === 'ja' ? '詳細を表示' : 'Show details';
-            console.log('Collapsed content');
           } else {
             collapsibleContent.classList.add('expanded');
             toggleButton.classList.add('expanded');
             toggleText.textContent = locale === 'ja' ? '詳細を隠す' : 'Hide details';
-            console.log('Expanded content');
           }
         });
-      } else {
-        console.log('Some toggle elements not found in movieCard:', movieCard);
       }
     });
   }

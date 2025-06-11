@@ -43,6 +43,13 @@
       "when": 1749604411005,
       "tag": "0005_daily_fat_cobra",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1749608365889,
+      "tag": "0006_windy_brood",
+      "breakpoints": true
     }
   ]
 }

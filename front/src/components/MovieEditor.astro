@@ -320,7 +320,6 @@ const { movieId } = Astro.props;
     private movieId: string;
     private apiUrl: string;
     private adminToken: string | null;
-    private currentEditingTranslation: Translation | null;
 
     constructor() {
       const editorEl = document.getElementById("movie-editor");
@@ -330,7 +329,6 @@ const { movieId } = Astro.props;
         ? 'http://localhost:8787'
         : 'https://shine-api.yuta25.workers.dev';
       this.adminToken = localStorage.getItem("adminToken");
-      this.currentEditingTranslation = null;
       this.init();
     }
 
@@ -470,7 +468,6 @@ const { movieId } = Astro.props;
     }
 
     openTranslationModal(translation: Translation | null = null) {
-      this.currentEditingTranslation = translation;
       const modal = document.getElementById("translation-modal");
       if (!modal) return;
 
@@ -511,7 +508,6 @@ const { movieId } = Astro.props;
     closeTranslationModal() {
       const modal = document.getElementById("translation-modal");
       if (modal) modal.style.display = "none";
-      this.currentEditingTranslation = null;
     }
 
     editTranslation(translation: Translation) {

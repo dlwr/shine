@@ -1,6 +1,22 @@
 ---
 export const prerender = false;
 
+interface Movie {
+  uid: string;
+  title: string;
+  year: number;
+  posterUrl?: string;
+  imdbUrl?: string;
+}
+
+interface Article {
+  uid: string;
+  url: string;
+  title: string;
+  description?: string;
+  submittedAt: string;
+}
+
 const { id } = Astro.params;
 const runtimeEnv = Astro.locals?.runtime?.env;
 const apiUrl = runtimeEnv?.API_URL || import.meta.env.PUBLIC_API_URL || "http://localhost:8787";
@@ -10,11 +26,11 @@ const movieResponse = await fetch(`${apiUrl}/movies/${id}`);
 if (!movieResponse.ok) {
   return Astro.redirect("/404");
 }
-const movie = await movieResponse.json();
+const movie: Movie = await movieResponse.json();
 
 // Fetch article links
 const articlesResponse = await fetch(`${apiUrl}/movies/${id}/article-links`);
-const articles = articlesResponse.ok ? await articlesResponse.json() : [];
+const articles: Article[] = articlesResponse.ok ? await articlesResponse.json() : [];
 
 // Determine locale
 const locale = Astro.url.searchParams.get("locale") || "en";
@@ -29,7 +45,6 @@ const labels = {
     articleDescription: "Description (optional)",
     submit: "Submit",
     submitting: "Submitting...",
-    views: "views",
     noArticles: "No articles yet. Be the first to add one!",
     backToHome: "Back to Home",
     success: "Article submitted successfully!",
@@ -45,7 +60,6 @@ const labels = {
     articleDescription: "説明（任意）",
     submit: "送信",
     submitting: "送信中...",
-    views: "閲覧",
     noArticles: "まだ記事がありません。最初の1つを追加しましょう！",
     backToHome: "ホームに戻る",
     success: "記事が正常に送信されました！",
@@ -240,7 +254,7 @@ const t = labels[locale as keyof typeof labels] || labels.en;
         <h2 class="section-title">{t.relatedArticles}</h2>
         {articles.length > 0 ? (
           <ul class="article-list">
-            {articles.map((article: any) => (
+            {articles.map((article) => (
               <li class="article-item">
                 <a
                   href={article.url}
@@ -251,10 +265,11 @@ const t = labels[locale as keyof typeof labels] || labels.en;
                 >
                   {article.title}
                 </a>
-                <div class="article-meta">
-                  {article.viewCount} {t.views}
-                  {article.description && ` • ${article.description}`}
-                </div>
+                {article.description && (
+                  <div class="article-meta">
+                    {article.description}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -284,7 +299,7 @@ const t = labels[locale as keyof typeof labels] || labels.en;
       </div>
     </div>
 
-    <script define:vars={{ apiUrl, movieId: id, t }}>
+    <script define:vars={{ apiUrl, movieId: id, t }} is:inline>
       document.getElementById("article-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         
@@ -338,21 +353,6 @@ const t = labels[locale as keyof typeof labels] || labels.en;
           submitButton.disabled = false;
           submitButton.textContent = t.submit;
         }
-      });
-
-      // Track article link clicks
-      document.querySelectorAll(".article-link").forEach((link) => {
-        link.addEventListener("click", async (e) => {
-          const articleId = link.getAttribute("data-article-id");
-          if (articleId) {
-            // Send view count increment request (fire and forget)
-            fetch(`${apiUrl}/article-links/${articleId}/view`, {
-              method: "POST",
-            }).catch(() => {
-              // Ignore errors - don't block navigation
-            });
-          }
-        });
       });
     </script>
   </body>
