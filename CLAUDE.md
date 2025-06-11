@@ -331,6 +331,24 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - `scrapers/src/cannes-film-festival.ts`: Added `updateAllCannesWinnersOnly()` and `updateCannesWinnersOnly(year)` functions
   - `scrapers/src/cannes-film-festival-cli.ts`: Added CLI argument parsing for `--winners-only` flag
 
+### 2025-06-11 (Japan Academy Awards Scraper Implementation)
+- Successfully implemented Japan Academy Awards scraper from consolidated Wikipedia page:
+  - **Source**: Uses `https://ja.wikipedia.org/wiki/日本アカデミー賞作品賞` (consolidated awards page)
+  - **Coverage**: Extracts 159 movies across years 1978-2024 (missing: 1979, 1989, 1999, 2009, 2019)
+  - **Year detection**: Multi-pattern approach (`YYYY年（第X回）`, `第X回`, `YYYY年`) with ceremony calculation `1976 + X = year`
+  - **Duplicate prevention**: Implemented `processedYears` Set to avoid processing same year multiple times
+  - **2024 special handling**: Extracts movies from text format rather than table (5 nominees: 侍タイムスリッパー, キングダム 大将軍の帰還, 正体, 夜明けのすべて, ラストマイル)
+- **CLI Integration**: Full support for `--year`, `--dry-run`, `--seed` options
+- **Code Quality**: ESLint compliant, proper TypeScript types, clean production-ready code
+- **Key Files**:
+  - `scrapers/src/japan-academy-awards.ts`: Main scraper implementation
+  - `scrapers/src/japan-academy-awards-cli.ts`: CLI interface
+  - `src/seeds/japan-academy-awards.ts`: Database seeding
+- **Usage**:
+  - `pnpm run scrapers:japan-academy-awards` (all years)
+  - `pnpm run scrapers:japan-academy-awards --year 2024` (specific year)
+  - `pnpm run scrapers:japan-academy-awards --dry-run` (safe testing)
+
 ### Development Guidelines
 - TSエラーとLintエラーをを絶対に無視するな
 - Database column names in schema use camelCase (e.g., `createdAt`, `updatedAt`) but are mapped to snake_case in the actual database
@@ -343,3 +361,9 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 - **TailwindCSS**: Use utility-first approach, preserve custom CSS only for complex animations/interactions
 - **Component Styling**: Follow responsive patterns like `text-xl md:text-2xl` and `p-5 md:p-6`
 - **Favicon Management**: Use ImageMagick to generate multiple favicon formats from source assets; maintain 16x16, 32x32, ICO, and Apple touch icon variants
+- **Wikipedia Scraping Best Practices**: 
+  - Use duplicate prevention logic (`Set<T>`) when processing tables to avoid year/data duplication
+  - Implement multiple year detection patterns for robustness (`YYYY年（第X回）`, `第X回`, `YYYY年`)
+  - Handle special cases where data appears in text format rather than tables (e.g., 2024 Japan Academy Awards)
+  - Always include comprehensive error handling and skip logic for malformed/irrelevant tables
+  - Remove debug output before production; keep only essential operational logs
