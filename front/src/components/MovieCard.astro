@@ -352,15 +352,14 @@ const nominationsByOrg =
     }
 
     // Handle collapsible content
-    const movieCards = document.querySelectorAll('.movie-card-wrapper');
-
-    movieCards.forEach((movieCard) => {
-      // Handle toggle details button
-      const toggleButton = movieCard.querySelector('.toggle-details');
-      const collapsibleContent = movieCard.querySelector('.collapsible-content');
-      const toggleText = movieCard.querySelector('.toggle-text');
+    const toggleButtons = document.querySelectorAll('.toggle-details');
+    
+    toggleButtons.forEach((toggleButton) => {
+      const movieCard = toggleButton.closest('.relative');
+      const collapsibleContent = movieCard?.querySelector('.collapsible-content');
+      const toggleText = toggleButton.querySelector('.toggle-text');
       
-      if (toggleButton && collapsibleContent && toggleText) {
+      if (collapsibleContent && toggleText) {
         toggleButton.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
