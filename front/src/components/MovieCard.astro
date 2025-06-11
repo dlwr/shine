@@ -46,6 +46,8 @@ const labels = {
     edit: "Edit",
     relatedArticles: "Related Articles",
     addArticle: "Add Article",
+    showMore: "Show details",
+    showLess: "Hide details",
   },
   ja: {
     noPoster: "ポスターなし",
@@ -54,6 +56,8 @@ const labels = {
     edit: "編集",
     relatedArticles: "関連記事",
     addArticle: "記事を追加",
+    showMore: "詳細を表示",
+    showLess: "詳細を隠す",
   },
 };
 
@@ -106,39 +110,68 @@ const nominationsByOrg =
           <div class="movie-info">
             <h3 class="title">{movie.title}</h3>
             <p class="year">{movie.year}</p>
-            {movie.nominations && movie.nominations.length > 0 && (
-              <div class="nominations">
-                {Object.values(nominationsByOrg).map((orgData: any) => (
-                  <div class="org-group">
-                    <h4 class="org-name">
-                      {orgData.organization.shortName ||
-                        orgData.organization.name}
-                    </h4>
-                    {Object.values(orgData.ceremonies).map(
-                      (ceremonyData: any) => (
-                        <div class="ceremony-group">
-                          <span class="ceremony-year">
-                            {ceremonyData.ceremony.year}
-                          </span>
-                          <ul class="nomination-list">
-                            {ceremonyData.nominations.map((nom: any) => (
-                              <li class={nom.isWinner ? "winner" : "nominee"}>
-                                <span class="category-name">
-                                  {nom.category.name}
-                                </span>
-                                <span class="status">
-                                  {nom.isWinner ? t.winner : t.nominee}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            <div class="collapsible-content">
+              {movie.nominations && movie.nominations.length > 0 && (
+                <div class="nominations">
+                  {Object.values(nominationsByOrg).map((orgData: any) => (
+                    <div class="org-group">
+                      <h4 class="org-name">
+                        {orgData.organization.shortName ||
+                          orgData.organization.name}
+                      </h4>
+                      {Object.values(orgData.ceremonies).map(
+                        (ceremonyData: any) => (
+                          <div class="ceremony-group">
+                            <span class="ceremony-year">
+                              {ceremonyData.ceremony.year}
+                            </span>
+                            <ul class="nomination-list">
+                              {ceremonyData.nominations.map((nom: any) => (
+                                <li class={nom.isWinner ? "winner" : "nominee"}>
+                                  <span class="category-name">
+                                    {nom.category.name}
+                                  </span>
+                                  <span class="status">
+                                    {nom.isWinner ? t.winner : t.nominee}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {movie.articleLinks && movie.articleLinks.length > 0 && (
+                <div class="article-links">
+                  <h4 class="section-title">{t.relatedArticles}</h4>
+                  <ul class="article-list">
+                    {movie.articleLinks.map((article) => (
+                      <li>
+                        <a
+                          href={article.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="article-link"
+                          data-article-id={article.uid}
+                        >
+                          <span class="article-title">{article.title}</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <a href={`/movies/${movie.uid}`} class="add-article-link">
+                + {t.addArticle}
+              </a>
+            </div>
+            <button class="toggle-details" type="button">
+              <span class="toggle-text">{t.showMore}</span>
+              <span class="toggle-icon">▼</span>
+            </button>
           </div>
         </a>
       ) : (
@@ -153,68 +186,72 @@ const nominationsByOrg =
           <div class="movie-info">
             <h3 class="title">{movie.title}</h3>
             <p class="year">{movie.year}</p>
-            {movie.nominations && movie.nominations.length > 0 && (
-              <div class="nominations">
-                {Object.values(nominationsByOrg).map((orgData: any) => (
-                  <div class="org-group">
-                    <h4 class="org-name">
-                      {orgData.organization.shortName ||
-                        orgData.organization.name}
-                    </h4>
-                    {Object.values(orgData.ceremonies).map(
-                      (ceremonyData: any) => (
-                        <div class="ceremony-group">
-                          <span class="ceremony-year">
-                            {ceremonyData.ceremony.year}
-                          </span>
-                          <ul class="nomination-list">
-                            {ceremonyData.nominations.map((nom: any) => (
-                              <li class={nom.isWinner ? "winner" : "nominee"}>
-                                <span class="category-name">
-                                  {nom.category.name}
-                                </span>
-                                <span class="status">
-                                  {nom.isWinner ? t.winner : t.nominee}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            <div class="collapsible-content">
+              {movie.nominations && movie.nominations.length > 0 && (
+                <div class="nominations">
+                  {Object.values(nominationsByOrg).map((orgData: any) => (
+                    <div class="org-group">
+                      <h4 class="org-name">
+                        {orgData.organization.shortName ||
+                          orgData.organization.name}
+                      </h4>
+                      {Object.values(orgData.ceremonies).map(
+                        (ceremonyData: any) => (
+                          <div class="ceremony-group">
+                            <span class="ceremony-year">
+                              {ceremonyData.ceremony.year}
+                            </span>
+                            <ul class="nomination-list">
+                              {ceremonyData.nominations.map((nom: any) => (
+                                <li class={nom.isWinner ? "winner" : "nominee"}>
+                                  <span class="category-name">
+                                    {nom.category.name}
+                                  </span>
+                                  <span class="status">
+                                    {nom.isWinner ? t.winner : t.nominee}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {movie.articleLinks && movie.articleLinks.length > 0 && (
+                <div class="article-links">
+                  <h4 class="section-title">{t.relatedArticles}</h4>
+                  <ul class="article-list">
+                    {movie.articleLinks.map((article) => (
+                      <li>
+                        <a
+                          href={article.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="article-link"
+                          data-article-id={article.uid}
+                        >
+                          <span class="article-title">{article.title}</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <a href={`/movies/${movie.uid}`} class="add-article-link">
+                + {t.addArticle}
+              </a>
+            </div>
+            <button class="toggle-details" type="button">
+              <span class="toggle-text">{t.showMore}</span>
+              <span class="toggle-icon">▼</span>
+            </button>
           </div>
         </div>
       )
     }
-    {
-      movie.articleLinks && movie.articleLinks.length > 0 && (
-        <div class="article-links">
-          <h4 class="section-title">{t.relatedArticles}</h4>
-          <ul class="article-list">
-            {movie.articleLinks.map((article) => (
-              <li>
-                <a
-                  href={article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="article-link"
-                  data-article-id={article.uid}
-                >
-                  <span class="article-title">{article.title}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )
-    }
-    <a href={`/movies/${movie.uid}`} class="add-article-link">
-      + {t.addArticle}
-    </a>
   </div>
   <button class="edit-button" data-movie-id={movie.uid} style="display: none;">
     {t.edit}
@@ -452,6 +489,48 @@ const nominationsByOrg =
     border-color: #e5e7eb;
   }
 
+  .collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+  }
+
+  .collapsible-content.expanded {
+    max-height: 2000px;
+    transition: max-height 0.5s ease-in;
+  }
+
+  .toggle-details {
+    display: none;
+    width: 100%;
+    padding: 8px 12px;
+    margin-top: 12px;
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    color: #6b7280;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .toggle-details:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+  }
+
+  .toggle-icon {
+    transition: transform 0.2s ease;
+    font-size: 0.8rem;
+  }
+
+  .toggle-details.expanded .toggle-icon {
+    transform: rotate(180deg);
+  }
+
   @media (max-width: 768px) {
     .poster {
       height: 400px;
@@ -464,6 +543,39 @@ const nominationsByOrg =
     .title {
       font-size: 1.3rem;
     }
+
+    .toggle-details {
+      display: flex;
+    }
+
+    .collapsible-content {
+      max-height: 0;
+      overflow: hidden;
+    }
+
+    .collapsible-content.expanded {
+      max-height: 2000px;
+      overflow: visible;
+    }
+
+    .article-links {
+      padding: 16px 0 8px 0;
+    }
+
+    .add-article-link {
+      margin: 12px 0 16px 0;
+    }
+  }
+
+  @media (min-width: 769px) {
+    .collapsible-content {
+      max-height: none;
+      overflow: visible;
+    }
+
+    .toggle-details {
+      display: none;
+    }
   }
 </style>
 
@@ -473,6 +585,7 @@ const nominationsByOrg =
       Astro.locals?.runtime?.env?.API_URL ||
       import.meta.env.PUBLIC_API_URL ||
       "http://localhost:8787",
+    locale: locale,
   }}
   is:inline
 >
@@ -480,7 +593,7 @@ const nominationsByOrg =
   window.API_URL = apiUrl;
 
   // Check if user is admin and show edit buttons
-  document.addEventListener("DOMContentLoaded", () => {
+  function initializeMovieCard() {
     const adminToken = localStorage.getItem("adminToken");
 
     if (adminToken) {
@@ -502,9 +615,11 @@ const nominationsByOrg =
       });
     }
 
-    // Track article link clicks using event delegation to prevent duplicate handlers
-    const movieCard = document.currentScript.closest('.movie-card-wrapper');
-    if (movieCard) {
+    // Track article link clicks using event delegation
+    const movieCards = document.querySelectorAll('.movie-card-wrapper');
+    
+    movieCards.forEach((movieCard) => {
+      // Article link clicks
       movieCard.addEventListener("click", async (e) => {
         const link = e.target.closest(".article-link");
         if (link && link.dataset.articleId) {
@@ -517,6 +632,46 @@ const nominationsByOrg =
           });
         }
       });
-    }
-  });
+
+      // Handle toggle details button
+      const toggleButton = movieCard.querySelector('.toggle-details');
+      const collapsibleContent = movieCard.querySelector('.collapsible-content');
+      const toggleText = movieCard.querySelector('.toggle-text');
+      
+      console.log('Toggle elements found:', { toggleButton, collapsibleContent, toggleText });
+      
+      if (toggleButton && collapsibleContent && toggleText) {
+        toggleButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          console.log('Toggle button clicked');
+          
+          const isExpanded = collapsibleContent.classList.contains('expanded');
+          console.log('Current state - isExpanded:', isExpanded);
+          
+          if (isExpanded) {
+            collapsibleContent.classList.remove('expanded');
+            toggleButton.classList.remove('expanded');
+            toggleText.textContent = locale === 'ja' ? '詳細を表示' : 'Show details';
+            console.log('Collapsed content');
+          } else {
+            collapsibleContent.classList.add('expanded');
+            toggleButton.classList.add('expanded');
+            toggleText.textContent = locale === 'ja' ? '詳細を隠す' : 'Hide details';
+            console.log('Expanded content');
+          }
+        });
+      } else {
+        console.log('Some toggle elements not found in movieCard:', movieCard);
+      }
+    });
+  }
+
+  // Initialize immediately if DOM is ready, otherwise wait for it
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeMovieCard);
+  } else {
+    initializeMovieCard();
+  }
 </script>
