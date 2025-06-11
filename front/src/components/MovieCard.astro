@@ -25,6 +25,13 @@ interface Props {
         shortName: string;
       };
     }>;
+    articleLinks?: Array<{
+      uid: string;
+      url: string;
+      title: string;
+      description?: string;
+      viewCount: number;
+    }>;
   };
   locale?: string;
 }
@@ -37,12 +44,18 @@ const labels = {
     winner: "Winner",
     nominee: "Nominee",
     edit: "Edit",
+    relatedArticles: "Related Articles",
+    views: "views",
+    addArticle: "Add Article",
   },
   ja: {
     noPoster: "ポスターなし",
     winner: "受賞",
     nominee: "ノミネート",
     edit: "編集",
+    relatedArticles: "関連記事",
+    views: "閲覧",
+    addArticle: "記事を追加",
   },
 };
 
@@ -127,6 +140,30 @@ const nominationsByOrg =
               ))}
             </div>
           )}
+          {movie.articleLinks && movie.articleLinks.length > 0 && (
+            <div class="article-links">
+              <h4 class="section-title">{t.relatedArticles}</h4>
+              <ul class="article-list">
+                {movie.articleLinks.map((article) => (
+                  <li>
+                    <a
+                      href={article.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="article-link"
+                      data-article-id={article.uid}
+                    >
+                      <span class="article-title">{article.title}</span>
+                      <span class="article-views">{article.viewCount} {t.views}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <a href={`/movies/${movie.uid}`} class="add-article-link">
+            {t.addArticle}
+          </a>
         </div>
       </a>
       <button
@@ -183,6 +220,30 @@ const nominationsByOrg =
               ))}
             </div>
           )}
+          {movie.articleLinks && movie.articleLinks.length > 0 && (
+            <div class="article-links">
+              <h4 class="section-title">{t.relatedArticles}</h4>
+              <ul class="article-list">
+                {movie.articleLinks.map((article) => (
+                  <li>
+                    <a
+                      href={article.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="article-link"
+                      data-article-id={article.uid}
+                    >
+                      <span class="article-title">{article.title}</span>
+                      <span class="article-views">{article.viewCount} {t.views}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <a href={`/movies/${movie.uid}`} class="add-article-link">
+            {t.addArticle}
+          </a>
         </div>
       </div>
       <button
@@ -348,6 +409,78 @@ const nominationsByOrg =
     background: rgba(29, 78, 216, 0.95);
   }
 
+  .article-links {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+  }
+
+  .section-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 12px 0;
+  }
+
+  .article-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .article-list li {
+    margin-bottom: 8px;
+  }
+
+  .article-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #f8f8f8;
+    border-radius: 6px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.2s ease;
+  }
+
+  .article-link:hover {
+    background: #e8e8e8;
+  }
+
+  .article-title {
+    font-size: 0.85rem;
+    color: #333;
+    flex: 1;
+    margin-right: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .article-views {
+    font-size: 0.75rem;
+    color: #666;
+    white-space: nowrap;
+  }
+
+  .add-article-link {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 8px 16px;
+    background: #2563eb;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background 0.2s ease;
+  }
+
+  .add-article-link:hover {
+    background: #1d4ed8;
+  }
+
   @media (max-width: 768px) {
     .poster {
       height: 400px;
@@ -386,5 +519,23 @@ const nominationsByOrg =
         });
       });
     }
+
+    // Track article link clicks
+    const articleLinks = document.querySelectorAll(".article-link");
+    articleLinks.forEach((link) => {
+      link.addEventListener("click", async () => {
+        const articleId = link.getAttribute("data-article-id");
+        if (articleId) {
+          // Send view count increment request (fire and forget)
+          const runtimeEnv = (window as any).RUNTIME_ENV || {};
+          const apiUrl = runtimeEnv.API_URL || import.meta.env.PUBLIC_API_URL || "http://localhost:8787";
+          fetch(`${apiUrl}/article-links/${articleId}/view`, {
+            method: "POST",
+          }).catch(() => {
+            // Ignore errors - don't block navigation
+          });
+        }
+      });
+    });
   });
 </script>

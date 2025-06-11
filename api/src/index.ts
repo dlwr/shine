@@ -1,4 +1,5 @@
 import { and, eq, getDatabase, sql, type Environment } from "db";
+import { articleLinks } from "db/schema/article-links";
 import { awardCategories } from "db/schema/award-categories";
 import { awardCeremonies } from "db/schema/award-ceremonies";
 import { awardOrganizations } from "db/schema/award-organizations";
@@ -285,6 +286,26 @@ async function getMovieByDateSeed(
   // Get nominations for this movie
   const movieNominations = await getMovieNominations(database, movie.uid);
 
+  // Get top article links for this movie
+  const topArticles = await database
+    .select({
+      uid: articleLinks.uid,
+      url: articleLinks.url,
+      title: articleLinks.title,
+      description: articleLinks.description,
+      viewCount: articleLinks.viewCount,
+    })
+    .from(articleLinks)
+    .where(
+      and(
+        eq(articleLinks.movieUid, movie.uid),
+        eq(articleLinks.isSpam, false),
+        eq(articleLinks.isFlagged, false)
+      )
+    )
+    .orderBy(sql`${articleLinks.viewCount} DESC`)
+    .limit(3);
+
   return {
     uid: movie.uid,
     year: movie.year,
@@ -293,6 +314,7 @@ async function getMovieByDateSeed(
     posterUrl: poster?.url,
     imdbUrl: imdbUrl,
     nominations: movieNominations,
+    articleLinks: topArticles,
   };
 }
 
@@ -658,6 +680,148 @@ app.delete("/admin/movies/:id", authMiddleware, async (c) => {
     return c.json({ success: true });
   } catch (error) {
     console.error("Error deleting movie:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Submit article link
+app.post("/movies/:id/article-links", async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const movieId = c.req.param("id");
+    const { url, title, description } = await c.req.json();
+    
+    // Validate inputs
+    if (!url || !title) {
+      return c.json({ error: "URL and title are required" }, 400);
+    }
+    
+    // Basic URL validation
+    try {
+      new URL(url);
+    } catch {
+      return c.json({ error: "Invalid URL format" }, 400);
+    }
+    
+    // Check if movie exists
+    const movieExists = await database
+      .select({ uid: movies.uid })
+      .from(movies)
+      .where(eq(movies.uid, movieId))
+      .limit(1);
+      
+    if (movieExists.length === 0) {
+      return c.json({ error: "Movie not found" }, 404);
+    }
+    
+    // Get IP address for rate limiting
+    const ip = c.req.header("cf-connecting-ip") || 
+               c.req.header("x-forwarded-for") || 
+               c.req.header("x-real-ip") || 
+               "unknown";
+    
+    // Check rate limit (max 10 submissions per IP per hour)
+    const oneHourAgo = new Date();
+    oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+    
+    const recentSubmissions = await database
+      .select({ count: sql<number>`count(*)` })
+      .from(articleLinks)
+      .where(
+        and(
+          eq(articleLinks.submitterIp, ip),
+          sql`${articleLinks.submittedAt} > ${oneHourAgo}`
+        )
+      );
+      
+    if (recentSubmissions[0].count >= 10) {
+      return c.json({ error: "Rate limit exceeded. Please try again later." }, 429);
+    }
+    
+    // Insert article link
+    const newArticle = await database
+      .insert(articleLinks)
+      .values({
+        movieUid: movieId,
+        url,
+        title: title.slice(0, 200), // Limit title length
+        description: description ? description.slice(0, 500) : undefined,
+        submitterIp: ip,
+      })
+      .returning();
+      
+    return c.json(newArticle[0]);
+  } catch (error) {
+    console.error("Error submitting article link:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Get article links for a movie
+app.get("/movies/:id/article-links", async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const movieId = c.req.param("id");
+    
+    const articles = await database
+      .select({
+        uid: articleLinks.uid,
+        url: articleLinks.url,
+        title: articleLinks.title,
+        description: articleLinks.description,
+        submittedAt: articleLinks.submittedAt,
+        viewCount: articleLinks.viewCount,
+      })
+      .from(articleLinks)
+      .where(
+        and(
+          eq(articleLinks.movieUid, movieId),
+          eq(articleLinks.isSpam, false),
+          eq(articleLinks.isFlagged, false)
+        )
+      )
+      .orderBy(sql`${articleLinks.viewCount} DESC, ${articleLinks.submittedAt} DESC`)
+      .limit(20);
+      
+    return c.json(articles);
+  } catch (error) {
+    console.error("Error fetching article links:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Increment view count for article
+app.post("/article-links/:id/view", async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const articleId = c.req.param("id");
+    
+    await database
+      .update(articleLinks)
+      .set({ viewCount: sql`${articleLinks.viewCount} + 1` })
+      .where(eq(articleLinks.uid, articleId));
+      
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("Error incrementing view count:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Admin: Flag article as spam
+app.post("/admin/article-links/:id/spam", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const articleId = c.req.param("id");
+    
+    await database
+      .update(articleLinks)
+      .set({ isSpam: true })
+      .where(eq(articleLinks.uid, articleId));
+      
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("Error flagging article as spam:", error);
     return c.json({ error: "Internal server error" }, 500);
   }
 });
