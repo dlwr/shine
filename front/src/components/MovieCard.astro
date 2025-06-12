@@ -43,8 +43,8 @@ const labels = {
     winner: "Winner",
     nominee: "Nominee",
     edit: "Edit",
-    relatedArticles: "Related Articles",
-    addArticle: "Add Article",
+    relatedArticles: "Submitted Links",
+    addArticle: "Add Link",
     showMore: "Show details",
     showLess: "Hide details",
   },
@@ -53,8 +53,8 @@ const labels = {
     winner: "受賞",
     nominee: "ノミネート",
     edit: "編集",
-    relatedArticles: "関連記事",
-    addArticle: "記事を追加",
+    relatedArticles: "投稿されたリンク",
+    addArticle: "リンクを追加",
     showMore: "詳細を表示",
     showLess: "詳細を隠す",
   },
@@ -90,7 +90,9 @@ const nominationsByOrg =
 ---
 
 <div class="relative h-full w-80">
-  <div class="rounded-xl overflow-hidden shadow-lg transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-2xl bg-white h-full flex flex-col w-full">
+  <div
+    class="rounded-xl overflow-hidden shadow-lg transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-2xl bg-white h-full flex flex-col w-full"
+  >
     {
       movie.imdbUrl ? (
         <a
@@ -101,13 +103,19 @@ const nominationsByOrg =
         >
           <div class="h-[400px] md:h-[450px] bg-gray-100 flex items-center justify-center">
             {movie.posterUrl ? (
-              <img src={movie.posterUrl} alt={`${movie.title} poster`} class="w-full h-full object-cover" />
+              <img
+                src={movie.posterUrl}
+                alt={`${movie.title} poster`}
+                class="w-full h-full object-cover"
+              />
             ) : (
               <div class="text-gray-500 text-xl">{t.noPoster}</div>
             )}
           </div>
           <div class="p-5 md:p-6 flex-grow flex flex-col">
-            <h3 class="m-0 mb-3 text-xl md:text-2xl font-semibold">{movie.title}</h3>
+            <h3 class="m-0 mb-3 text-xl md:text-2xl font-semibold">
+              {movie.title}
+            </h3>
             <p class="m-0 mb-4 text-gray-600 text-lg">{movie.year}</p>
             <div class="collapsible-content">
               {movie.nominations && movie.nominations.length > 0 && (
@@ -130,11 +138,13 @@ const nominationsByOrg =
                                   <span class="text-gray-700">
                                     {nom.category.name}
                                   </span>
-                                  <span class={`text-xs px-2 py-1 rounded font-medium ml-2 ${
-                                    nom.isWinner 
-                                      ? 'bg-yellow-400 text-gray-900' 
-                                      : 'bg-gray-200 text-gray-700'
-                                  }`}>
+                                  <span
+                                    class={`text-xs px-2 py-1 rounded font-medium ml-2 ${
+                                      nom.isWinner
+                                        ? "bg-yellow-400 text-gray-900"
+                                        : "bg-gray-200 text-gray-700"
+                                    }`}
+                                  >
                                     {nom.isWinner ? t.winner : t.nominee}
                                   </span>
                                 </li>
@@ -149,7 +159,9 @@ const nominationsByOrg =
               )}
               {movie.articleLinks && movie.articleLinks.length > 0 && (
                 <div class="px-6 pb-2 border-t border-gray-200">
-                  <h4 class="text-sm font-semibold text-gray-700 mt-4 mb-3">{t.relatedArticles}</h4>
+                  <h4 class="text-sm font-semibold text-gray-700 mt-4 mb-3">
+                    {t.relatedArticles}
+                  </h4>
                   <ul class="list-none p-0 m-0">
                     {movie.articleLinks.map((article) => (
                       <li class="mb-1.5 last:mb-0">
@@ -160,18 +172,26 @@ const nominationsByOrg =
                           class="block px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-md no-underline text-inherit transition-all duration-200 hover:bg-gray-100 hover:border-gray-300 hover:translate-x-0.5"
                           data-article-id={article.uid}
                         >
-                          <span class="text-xs text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap block leading-snug">{article.title}</span>
+                          <span class="text-xs text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap block leading-snug">
+                            {article.title}
+                          </span>
                         </a>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
-              <a href={`/movies/${movie.uid}`} class="inline-block mx-6 my-3 px-2 py-1 text-gray-500 no-underline rounded text-xs font-normal transition-all duration-200 border border-transparent hover:text-gray-700 hover:bg-gray-100 hover:border-gray-200">
+              <a
+                href={`/movies/${movie.uid}`}
+                class="inline-block mx-6 my-3 px-2 py-1 text-gray-500 no-underline rounded text-xs font-normal transition-all duration-200 border border-transparent hover:text-gray-700 hover:bg-gray-100 hover:border-gray-200"
+              >
                 + {t.addArticle}
               </a>
             </div>
-            <button class="toggle-details hidden w-full px-3 py-2 mt-3 bg-transparent border border-gray-200 rounded-md text-gray-500 text-sm cursor-pointer transition-all duration-200 items-center justify-center gap-2 hover:bg-gray-50 hover:border-gray-300" type="button">
+            <button
+              class="toggle-details hidden w-full px-3 py-2 mt-3 bg-transparent border border-gray-200 rounded-md text-gray-500 text-sm cursor-pointer transition-all duration-200 items-center justify-center gap-2 hover:bg-gray-50 hover:border-gray-300"
+              type="button"
+            >
               <span class="toggle-text">{t.showMore}</span>
               <span class="toggle-icon text-xs">▼</span>
             </button>
@@ -181,13 +201,19 @@ const nominationsByOrg =
         <div class="block">
           <div class="h-[400px] md:h-[450px] bg-gray-100 flex items-center justify-center">
             {movie.posterUrl ? (
-              <img src={movie.posterUrl} alt={`${movie.title} poster`} class="w-full h-full object-cover" />
+              <img
+                src={movie.posterUrl}
+                alt={`${movie.title} poster`}
+                class="w-full h-full object-cover"
+              />
             ) : (
               <div class="text-gray-500 text-xl">{t.noPoster}</div>
             )}
           </div>
           <div class="p-5 md:p-6 flex-grow flex flex-col">
-            <h3 class="m-0 mb-3 text-xl md:text-2xl font-semibold">{movie.title}</h3>
+            <h3 class="m-0 mb-3 text-xl md:text-2xl font-semibold">
+              {movie.title}
+            </h3>
             <p class="m-0 mb-4 text-gray-600 text-lg">{movie.year}</p>
             <div class="collapsible-content">
               {movie.nominations && movie.nominations.length > 0 && (
@@ -210,11 +236,13 @@ const nominationsByOrg =
                                   <span class="text-gray-700">
                                     {nom.category.name}
                                   </span>
-                                  <span class={`text-xs px-2 py-1 rounded font-medium ml-2 ${
-                                    nom.isWinner 
-                                      ? 'bg-yellow-400 text-gray-900' 
-                                      : 'bg-gray-200 text-gray-700'
-                                  }`}>
+                                  <span
+                                    class={`text-xs px-2 py-1 rounded font-medium ml-2 ${
+                                      nom.isWinner
+                                        ? "bg-yellow-400 text-gray-900"
+                                        : "bg-gray-200 text-gray-700"
+                                    }`}
+                                  >
                                     {nom.isWinner ? t.winner : t.nominee}
                                   </span>
                                 </li>
@@ -229,7 +257,9 @@ const nominationsByOrg =
               )}
               {movie.articleLinks && movie.articleLinks.length > 0 && (
                 <div class="px-6 pb-2 border-t border-gray-200">
-                  <h4 class="text-sm font-semibold text-gray-700 mt-4 mb-3">{t.relatedArticles}</h4>
+                  <h4 class="text-sm font-semibold text-gray-700 mt-4 mb-3">
+                    {t.relatedArticles}
+                  </h4>
                   <ul class="list-none p-0 m-0">
                     {movie.articleLinks.map((article) => (
                       <li class="mb-1.5 last:mb-0">
@@ -240,18 +270,26 @@ const nominationsByOrg =
                           class="block px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-md no-underline text-inherit transition-all duration-200 hover:bg-gray-100 hover:border-gray-300 hover:translate-x-0.5"
                           data-article-id={article.uid}
                         >
-                          <span class="text-xs text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap block leading-snug">{article.title}</span>
+                          <span class="text-xs text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap block leading-snug">
+                            {article.title}
+                          </span>
                         </a>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
-              <a href={`/movies/${movie.uid}`} class="inline-block mx-6 my-3 px-2 py-1 text-gray-500 no-underline rounded text-xs font-normal transition-all duration-200 border border-transparent hover:text-gray-700 hover:bg-gray-100 hover:border-gray-200">
+              <a
+                href={`/movies/${movie.uid}`}
+                class="inline-block mx-6 my-3 px-2 py-1 text-gray-500 no-underline rounded text-xs font-normal transition-all duration-200 border border-transparent hover:text-gray-700 hover:bg-gray-100 hover:border-gray-200"
+              >
                 + {t.addArticle}
               </a>
             </div>
-            <button class="toggle-details hidden w-full px-3 py-2 mt-3 bg-transparent border border-gray-200 rounded-md text-gray-500 text-sm cursor-pointer transition-all duration-200 items-center justify-center gap-2 hover:bg-gray-50 hover:border-gray-300" type="button">
+            <button
+              class="toggle-details hidden w-full px-3 py-2 mt-3 bg-transparent border border-gray-200 rounded-md text-gray-500 text-sm cursor-pointer transition-all duration-200 items-center justify-center gap-2 hover:bg-gray-50 hover:border-gray-300"
+              type="button"
+            >
               <span class="toggle-text">{t.showMore}</span>
               <span class="toggle-icon text-xs">▼</span>
             </button>
@@ -260,7 +298,10 @@ const nominationsByOrg =
       )
     }
   </div>
-  <button class="edit-button absolute top-3 right-3 bg-blue-600/90 text-white border-0 px-4 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors duration-200 z-10 hover:bg-blue-700/95 hidden" data-movie-id={movie.uid}>
+  <button
+    class="edit-button absolute top-3 right-3 bg-blue-600/90 text-white border-0 px-4 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors duration-200 z-10 hover:bg-blue-700/95 hidden"
+    data-movie-id={movie.uid}
+  >
     {t.edit}
   </button>
 </div>
@@ -307,7 +348,7 @@ const nominationsByOrg =
       max-height: none !important;
       overflow: visible !important;
     }
-    
+
     .toggle-details {
       display: none !important;
     }
@@ -352,28 +393,32 @@ const nominationsByOrg =
     }
 
     // Handle collapsible content
-    const toggleButtons = document.querySelectorAll('.toggle-details');
-    
+    const toggleButtons = document.querySelectorAll(".toggle-details");
+
     toggleButtons.forEach((toggleButton) => {
-      const movieCard = toggleButton.closest('.relative');
-      const collapsibleContent = movieCard?.querySelector('.collapsible-content');
-      const toggleText = toggleButton.querySelector('.toggle-text');
-      
+      const movieCard = toggleButton.closest(".relative");
+      const collapsibleContent = movieCard?.querySelector(
+        ".collapsible-content"
+      );
+      const toggleText = toggleButton.querySelector(".toggle-text");
+
       if (collapsibleContent && toggleText) {
-        toggleButton.addEventListener('click', (e) => {
+        toggleButton.addEventListener("click", (e) => {
           e.preventDefault();
           e.stopPropagation();
-          
-          const isExpanded = collapsibleContent.classList.contains('expanded');
-          
+
+          const isExpanded = collapsibleContent.classList.contains("expanded");
+
           if (isExpanded) {
-            collapsibleContent.classList.remove('expanded');
-            toggleButton.classList.remove('expanded');
-            toggleText.textContent = locale === 'ja' ? '詳細を表示' : 'Show details';
+            collapsibleContent.classList.remove("expanded");
+            toggleButton.classList.remove("expanded");
+            toggleText.textContent =
+              locale === "ja" ? "詳細を表示" : "Show details";
           } else {
-            collapsibleContent.classList.add('expanded');
-            toggleButton.classList.add('expanded');
-            toggleText.textContent = locale === 'ja' ? '詳細を隠す' : 'Hide details';
+            collapsibleContent.classList.add("expanded");
+            toggleButton.classList.add("expanded");
+            toggleText.textContent =
+              locale === "ja" ? "詳細を隠す" : "Hide details";
           }
         });
       }
@@ -381,8 +426,8 @@ const nominationsByOrg =
   }
 
   // Initialize immediately if DOM is ready, otherwise wait for it
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeMovieCard);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeMovieCard);
   } else {
     initializeMovieCard();
   }

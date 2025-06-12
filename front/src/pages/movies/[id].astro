@@ -1,7 +1,7 @@
 ---
 export const prerender = false;
 
-import { getApiUrl } from '../../utils/api';
+import { getApiUrl } from "../../utils/api";
 
 interface Movie {
   uid: string;
@@ -31,7 +31,9 @@ const movie: Movie = await movieResponse.json();
 
 // Fetch article links
 const articlesResponse = await fetch(`${apiUrl}/movies/${id}/article-links`);
-const articles: Article[] = articlesResponse.ok ? await articlesResponse.json() : [];
+const articles: Article[] = articlesResponse.ok
+  ? await articlesResponse.json()
+  : [];
 
 // Determine locale
 const locale = Astro.url.searchParams.get("locale") || "en";
@@ -39,8 +41,8 @@ const locale = Astro.url.searchParams.get("locale") || "en";
 const labels = {
   en: {
     title: "Movie Details",
-    relatedArticles: "Related Articles",
-    addArticle: "Add New Article",
+    relatedArticles: "Submitted Links",
+    addArticle: "Add Link",
     articleUrl: "Article URL",
     articleTitle: "Article Title",
     articleDescription: "Description (optional)",
@@ -54,8 +56,8 @@ const labels = {
   },
   ja: {
     title: "映画詳細",
-    relatedArticles: "関連記事",
-    addArticle: "新しい記事を追加",
+    relatedArticles: "投稿されたリンク",
+    addArticle: "リンクを追加",
     articleUrl: "記事のURL",
     articleTitle: "記事のタイトル",
     articleDescription: "説明（任意）",
@@ -80,7 +82,8 @@ const t = labels[locale as keyof typeof labels] || labels.en;
     <title>{movie.title} - {t.title}</title>
     <style>
       body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         margin: 0;
         padding: 0;
         background: #f5f5f5;
@@ -253,30 +256,30 @@ const t = labels[locale as keyof typeof labels] || labels.en;
 
       <div class="articles-section">
         <h2 class="section-title">{t.relatedArticles}</h2>
-        {articles.length > 0 ? (
-          <ul class="article-list">
-            {articles.map((article) => (
-              <li class="article-item">
-                <a
-                  href={article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="article-link"
-                  data-article-id={article.uid}
-                >
-                  {article.title}
-                </a>
-                {article.description && (
-                  <div class="article-meta">
-                    {article.description}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p class="no-articles">{t.noArticles}</p>
-        )}
+        {
+          articles.length > 0 ? (
+            <ul class="article-list">
+              {articles.map((article) => (
+                <li class="article-item">
+                  <a
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="article-link"
+                    data-article-id={article.uid}
+                  >
+                    {article.title}
+                  </a>
+                  {article.description && (
+                    <div class="article-meta">{article.description}</div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p class="no-articles">{t.noArticles}</p>
+          )
+        }
       </div>
 
       <div class="add-article-section">
@@ -288,11 +291,18 @@ const t = labels[locale as keyof typeof labels] || labels.en;
           </div>
           <div class="form-group">
             <label for="title">{t.articleTitle}</label>
-            <input type="text" id="title" name="title" required maxlength="200" />
+            <input
+              type="text"
+              id="title"
+              name="title"
+              required
+              maxlength="200"
+            />
           </div>
           <div class="form-group">
             <label for="description">{t.articleDescription}</label>
-            <textarea id="description" name="description" maxlength="500"></textarea>
+            <textarea id="description" name="description" maxlength="500"
+            ></textarea>
           </div>
           <button type="submit" class="submit-button">{t.submit}</button>
           <div id="message" class="message" style="display: none;"></div>
@@ -301,60 +311,65 @@ const t = labels[locale as keyof typeof labels] || labels.en;
     </div>
 
     <script define:vars={{ apiUrl, movieId: id, t }} is:inline>
-      document.getElementById("article-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        
-        const form = e.target;
-        const submitButton = form.querySelector('button[type="submit"]');
-        const messageDiv = document.getElementById("message");
-        
-        // Disable form during submission
-        submitButton.disabled = true;
-        submitButton.textContent = t.submitting;
-        messageDiv.style.display = "none";
-        
-        const formData = new FormData(form);
-        const data = {
-          url: formData.get("url"),
-          title: formData.get("title"),
-          description: formData.get("description") || undefined,
-        };
-        
-        try {
-          const response = await fetch(`${apiUrl}/movies/${movieId}/article-links`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
-          });
-          
-          if (response.ok) {
-            messageDiv.textContent = t.success;
-            messageDiv.className = "message success";
+      document
+        .getElementById("article-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const form = e.target;
+          const submitButton = form.querySelector('button[type="submit"]');
+          const messageDiv = document.getElementById("message");
+
+          // Disable form during submission
+          submitButton.disabled = true;
+          submitButton.textContent = t.submitting;
+          messageDiv.style.display = "none";
+
+          const formData = new FormData(form);
+          const data = {
+            url: formData.get("url"),
+            title: formData.get("title"),
+            description: formData.get("description") || undefined,
+          };
+
+          try {
+            const response = await fetch(
+              `${apiUrl}/movies/${movieId}/article-links`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+              }
+            );
+
+            if (response.ok) {
+              messageDiv.textContent = t.success;
+              messageDiv.className = "message success";
+              messageDiv.style.display = "block";
+
+              // Reset form
+              form.reset();
+
+              // Reload page after 2 seconds to show new article
+              setTimeout(() => {
+                window.location.reload();
+              }, 2000);
+            } else if (response.status === 429) {
+              throw new Error(t.rateLimit);
+            } else {
+              throw new Error(t.error);
+            }
+          } catch (error) {
+            messageDiv.textContent = error.message || t.error;
+            messageDiv.className = "message error";
             messageDiv.style.display = "block";
-            
-            // Reset form
-            form.reset();
-            
-            // Reload page after 2 seconds to show new article
-            setTimeout(() => {
-              window.location.reload();
-            }, 2000);
-          } else if (response.status === 429) {
-            throw new Error(t.rateLimit);
-          } else {
-            throw new Error(t.error);
+          } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = t.submit;
           }
-        } catch (error) {
-          messageDiv.textContent = error.message || t.error;
-          messageDiv.className = "message error";
-          messageDiv.style.display = "block";
-        } finally {
-          submitButton.disabled = false;
-          submitButton.textContent = t.submit;
-        }
-      });
+        });
     </script>
   </body>
 </html>
