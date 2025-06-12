@@ -6,7 +6,7 @@
     "deploy": "wrangler deploy --minify"
   },
   "dependencies": {
-    "@libsql/client": "^0.15.8",
+    "@libsql/client": "^0.15.9",
     "drizzle-orm": "^0.44.2",
     "hono": "^4.7.11",
     "jose": "^6.0.11"
