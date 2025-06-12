@@ -28,8 +28,17 @@
    * Environment Variables
    * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
    */
-  "vars": {
-    "PUBLIC_API_URL": "https://shine-api.yuta25.workers.dev"
+  "env": {
+    "development": {
+      "vars": {
+        "PUBLIC_API_URL": "http://localhost:8787"
+      }
+    },
+    "production": {
+      "vars": {
+        "PUBLIC_API_URL": "https://shine-api.yuta25.workers.dev"
+      }
+    }
   },
   /**
    * Note: Use secrets to store sensitive data.
