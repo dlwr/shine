@@ -183,6 +183,9 @@ Authentication is handled via JWT tokens (using `jose` library) stored in localS
 - `POST /movies/:id/translations` - Add or update movie translation
 - `DELETE /movies/:id/translations/:lang` - Delete movie translation
 - `DELETE /admin/movies/:id` - Delete movie and all related data (nominations, translations, posters, selections)
+- `PUT /admin/movies/:id/imdb-id` - Update IMDb ID with optional TMDb data refresh
+- `POST /admin/movies/:id/posters` - Add poster URL to movie
+- `DELETE /admin/movies/:movieId/posters/:posterId` - Delete poster from movie
 - `POST /reselect` - Force new movie selection for a specific period
 
 ### Admin Frontend Routes
@@ -331,6 +334,25 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - `scrapers/src/cannes-film-festival.ts`: Added `updateAllCannesWinnersOnly()` and `updateCannesWinnersOnly(year)` functions
   - `scrapers/src/cannes-film-festival-cli.ts`: Added CLI argument parsing for `--winners-only` flag
 
+### 2025-06-13 (Admin Movie Management Enhancement)
+- **IMDb ID Manual Update with TMDb Integration**:
+  - Added `PUT /admin/movies/:id/imdb-id` API endpoint with optional TMDb data refresh
+  - Includes TMDb ID auto-detection, poster fetching, and Japanese translation retrieval
+  - Frontend modal with checkbox for "TMDbから追加データを取得" option
+  - Comprehensive validation: IMDb ID format, duplicate prevention, API error handling
+  - Fixed missing `tmdbId` field in movie details API response (`/movies/:id`)
+- **Poster Management System**:
+  - Added `POST /admin/movies/:id/posters` and `DELETE /admin/movies/:movieId/posters/:posterId` endpoints
+  - Complete poster CRUD operations with primary poster designation
+  - Frontend grid-based poster display with thumbnails, metadata, and delete functionality
+  - Support for manual poster addition with URL, dimensions, language, and source tracking
+  - Enhanced movie details API to include complete poster information array
+- **Key Features**:
+  - Manual IMDb ID updates trigger optional TMDb data synchronization
+  - Poster management with visual grid interface and primary designation
+  - Comprehensive form validation and error handling across all new features
+  - Real-time UI updates after all operations
+
 ### 2025-06-11 (Japan Academy Awards Scraper Implementation)
 - Successfully implemented Japan Academy Awards scraper from consolidated Wikipedia page:
   - **Source**: Uses `https://ja.wikipedia.org/wiki/日本アカデミー賞作品賞` (consolidated awards page)
@@ -382,3 +404,15 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - Handle special cases where data appears in text format rather than tables (e.g., 2024 Japan Academy Awards)
   - Always include comprehensive error handling and skip logic for malformed/irrelevant tables
   - Remove debug output before production; keep only essential operational logs
+- **Admin Interface Development**:
+  - Always include proper TypeScript types for API responses to avoid runtime errors
+  - Use modal-based UI patterns for complex form interactions (IMDb ID, poster management)
+  - Implement comprehensive form validation both client and server-side
+  - Provide immediate user feedback for all operations (success/error messages)
+  - Use grid layouts for visual content management (poster thumbnails)
+  - Implement confirmation dialogs for destructive operations (delete)
+- **TMDb API Integration Best Practices**:
+  - Always use existing TMDb utility functions from `scrapers/src/common/tmdb-utilities.ts`
+  - Implement graceful fallbacks when TMDb data is unavailable
+  - Log essential operations but remove debug output for production
+  - Use consistent error handling patterns across TMDb API calls

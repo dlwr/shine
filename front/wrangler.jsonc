@@ -29,7 +29,7 @@
    * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
    */
   "env": {
-    "development": {
+    "preview": {
       "vars": {
         "PUBLIC_API_URL": "http://localhost:8787"
       }
