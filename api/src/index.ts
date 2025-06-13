@@ -455,6 +455,7 @@ app.get("/movies/:id", async (c) => {
       year: movie.year,
       originalLanguage: movie.originalLanguage,
       imdbId: movie.imdbId,
+      tmdbId: movie.tmdbId,
       imdbUrl: imdbUrl,
       posterUrl: posterResult[0]?.url,
       translations: movieTranslations.map(
@@ -658,9 +659,7 @@ app.delete("/admin/movies/:id", authMiddleware, async (c) => {
       .where(eq(movieSelections.movieId, movieId));
 
     // 3. Delete nominations
-    await database
-      .delete(nominations)
-      .where(eq(nominations.movieUid, movieId));
+    await database.delete(nominations).where(eq(nominations.movieUid, movieId));
 
     // 4. Delete reference URLs
     await database
@@ -678,14 +677,10 @@ app.delete("/admin/movies/:id", authMiddleware, async (c) => {
       );
 
     // 6. Delete poster URLs
-    await database
-      .delete(posterUrls)
-      .where(eq(posterUrls.movieUid, movieId));
+    await database.delete(posterUrls).where(eq(posterUrls.movieUid, movieId));
 
     // 7. Finally delete the movie
-    await database
-      .delete(movies)
-      .where(eq(movies.uid, movieId));
+    await database.delete(movies).where(eq(movies.uid, movieId));
 
     return c.json({ success: true });
   } catch (error) {
@@ -700,40 +695,41 @@ app.post("/movies/:id/article-links", async (c) => {
     const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("id");
     const { url, title, description } = await c.req.json();
-    
+
     // Validate inputs
     if (!url || !title) {
       return c.json({ error: "URL and title are required" }, 400);
     }
-    
+
     // Basic URL validation
     try {
       new URL(url);
     } catch {
       return c.json({ error: "Invalid URL format" }, 400);
     }
-    
+
     // Check if movie exists
     const movieExists = await database
       .select({ uid: movies.uid })
       .from(movies)
       .where(eq(movies.uid, movieId))
       .limit(1);
-      
+
     if (movieExists.length === 0) {
       return c.json({ error: "Movie not found" }, 404);
     }
-    
+
     // Get IP address for rate limiting
-    const ip = c.req.header("cf-connecting-ip") || 
-               c.req.header("x-forwarded-for") || 
-               c.req.header("x-real-ip") || 
-               "unknown";
-    
+    const ip =
+      c.req.header("cf-connecting-ip") ||
+      c.req.header("x-forwarded-for") ||
+      c.req.header("x-real-ip") ||
+      "unknown";
+
     // Check rate limit (max 10 submissions per IP per hour)
     const oneHourAgo = new Date();
     oneHourAgo.setHours(oneHourAgo.getHours() - 1);
-    
+
     const recentSubmissions = await database
       .select({ count: sql<number>`count(*)` })
       .from(articleLinks)
@@ -743,11 +739,14 @@ app.post("/movies/:id/article-links", async (c) => {
           sql`${articleLinks.submittedAt} > ${oneHourAgo}`
         )
       );
-      
+
     if (recentSubmissions[0].count >= 10) {
-      return c.json({ error: "Rate limit exceeded. Please try again later." }, 429);
+      return c.json(
+        { error: "Rate limit exceeded. Please try again later." },
+        429
+      );
     }
-    
+
     // Insert article link
     const newArticle = await database
       .insert(articleLinks)
@@ -759,7 +758,7 @@ app.post("/movies/:id/article-links", async (c) => {
         submitterIp: ip,
       })
       .returning();
-      
+
     return c.json(newArticle[0]);
   } catch (error) {
     console.error("Error submitting article link:", error);
@@ -772,7 +771,7 @@ app.get("/movies/:id/article-links", async (c) => {
   try {
     const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("id");
-    
+
     const articles = await database
       .select({
         uid: articleLinks.uid,
@@ -791,7 +790,7 @@ app.get("/movies/:id/article-links", async (c) => {
       )
       .orderBy(sql`${articleLinks.submittedAt} DESC`)
       .limit(20);
-      
+
     return c.json(articles);
   } catch (error) {
     console.error("Error fetching article links:", error);
@@ -804,12 +803,12 @@ app.post("/admin/article-links/:id/spam", authMiddleware, async (c) => {
   try {
     const database = getDatabase(c.env as Environment);
     const articleId = c.req.param("id");
-    
+
     await database
       .update(articleLinks)
       .set({ isSpam: true })
       .where(eq(articleLinks.uid, articleId));
-      
+
     return c.json({ success: true });
   } catch (error) {
     console.error("Error flagging article as spam:", error);
@@ -822,24 +821,24 @@ app.put("/admin/movies/:id/imdb-id", authMiddleware, async (c) => {
   try {
     const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("id");
-    const { imdbId } = await c.req.json();
-    
+    const { imdbId, refreshData = false } = await c.req.json();
+
     // Validate IMDB ID format (optional field, can be null/empty)
     if (imdbId && !/^tt\d+$/.test(imdbId)) {
       return c.json({ error: "IMDB ID must be in format 'tt1234567'" }, 400);
     }
-    
+
     // Check if movie exists
     const movieExists = await database
       .select({ uid: movies.uid })
       .from(movies)
       .where(eq(movies.uid, movieId))
       .limit(1);
-      
+
     if (movieExists.length === 0) {
       return c.json({ error: "Movie not found" }, 404);
     }
-    
+
     // Check if IMDB ID is already used by another movie
     if (imdbId) {
       const existingMovie = await database
@@ -847,22 +846,93 @@ app.put("/admin/movies/:id/imdb-id", authMiddleware, async (c) => {
         .from(movies)
         .where(and(eq(movies.imdbId, imdbId), not(eq(movies.uid, movieId))))
         .limit(1);
-        
+
       if (existingMovie.length > 0) {
-        return c.json({ error: "IMDB ID is already used by another movie" }, 409);
+        return c.json(
+          { error: "IMDB ID is already used by another movie" },
+          409
+        );
       }
     }
-    
-    // Update IMDB ID
+
+    // Update IMDB ID first
     await database
       .update(movies)
-      .set({ 
+      .set({
         imdbId: imdbId || undefined,
-        updatedAt: sql`(unixepoch())`
+        updatedAt: sql`(unixepoch())`,
       })
       .where(eq(movies.uid, movieId));
-      
-    return c.json({ success: true });
+
+    // If refreshData is true and imdbId is provided, fetch additional data from TMDb
+    const refreshResults = {
+      tmdbId: undefined as number | undefined,
+      postersAdded: 0,
+      translationsAdded: 0,
+    };
+
+    if (refreshData && imdbId && c.env.TMDB_API_KEY) {
+      try {
+        // Import TMDb utilities
+        const {
+          findTMDBByImdbId,
+          fetchTMDBMovieImages,
+          savePosterUrls,
+          fetchJapaneseTitleFromTMDB,
+          saveJapaneseTranslation,
+        } = await import("../../scrapers/src/common/tmdb-utilities");
+
+        // Find TMDb ID
+        const tmdbId = await findTMDBByImdbId(imdbId, c.env.TMDB_API_KEY);
+        
+        if (tmdbId) {
+          // Update TMDb ID
+          await database
+            .update(movies)
+            .set({ tmdbId })
+            .where(eq(movies.uid, movieId));
+
+          refreshResults.tmdbId = tmdbId;
+
+          // Fetch and save posters
+          const imagesData = await fetchTMDBMovieImages(
+            imdbId,
+            c.env.TMDB_API_KEY
+          );
+          if (imagesData) {
+            const savedPosters = await savePosterUrls(
+              movieId,
+              imagesData.images.posters,
+              c.env as Environment
+            );
+            refreshResults.postersAdded = savedPosters;
+          }
+
+          // Fetch and save Japanese translation
+          const japaneseTitle = await fetchJapaneseTitleFromTMDB(
+            imdbId,
+            tmdbId,
+            c.env as Environment
+          );
+          if (japaneseTitle) {
+            await saveJapaneseTranslation(
+              movieId,
+              japaneseTitle,
+              c.env as Environment
+            );
+            refreshResults.translationsAdded = 1;
+          }
+        }
+      } catch (refreshError) {
+        console.warn("Error during data refresh:", refreshError);
+        // Continue without failing the main operation
+      }
+    }
+
+    return c.json({
+      success: true,
+      refreshResults: refreshData ? refreshResults : undefined,
+    });
   } catch (error) {
     console.error("Error updating IMDB ID:", error);
     return c.json({ error: "Internal server error" }, 500);

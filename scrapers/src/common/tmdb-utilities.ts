@@ -4,8 +4,8 @@
 import { eq } from "drizzle-orm";
 import { getDatabase, type Environment } from "../../../src/index";
 import { movies } from "../../../src/schema/movies";
-import { translations } from "../../../src/schema/translations";
 import { posterUrls } from "../../../src/schema/poster-urls";
+import { translations } from "../../../src/schema/translations";
 
 const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
 
@@ -159,11 +159,11 @@ export async function fetchJapaneseTitleFromTMDB(
     if (!movieTmdbId) {
       console.log(`  TMDB ID not found, searching by IMDb ID: ${imdbId}`);
       const foundTmdbId = await findTMDBByImdbId(imdbId, TMDB_API_KEY);
-      
+
       if (!foundTmdbId) {
         return undefined;
       }
-      
+
       movieTmdbId = foundTmdbId;
 
       console.log(`  Found TMDB ID: ${movieTmdbId}`);
@@ -172,8 +172,12 @@ export async function fetchJapaneseTitleFromTMDB(
     }
 
     // 日本語の映画情報を取得
-    const movieData = await fetchTMDBMovieDetails(movieTmdbId, TMDB_API_KEY, "ja");
-    
+    const movieData = await fetchTMDBMovieDetails(
+      movieTmdbId,
+      TMDB_API_KEY,
+      "ja"
+    );
+
     if (!movieData) {
       return undefined;
     }

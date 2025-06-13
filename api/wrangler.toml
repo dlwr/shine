@@ -7,6 +7,9 @@ compatibility_flags = ["nodejs_compat"]
 name = "shine-api"
 # Environment variables are loaded from .dev.vars file
 
+[dev]
+port = 8787
+
 [env.production]
 name = "shine-api"
 # TURSO_DATABASE_URL and TURSO_AUTH_TOKEN should be set via:

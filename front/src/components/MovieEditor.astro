@@ -35,6 +35,10 @@ const { movieId } = Astro.props;
               <button id="edit-imdb-btn" class="btn btn-small btn-secondary">編集</button>
             </div>
           </div>
+          <div class="info-item">
+            <label>TMDb ID:</label>
+            <span id="movie-tmdb"></span>
+          </div>
         </div>
       </div>
 
@@ -109,6 +113,15 @@ const { movieId } = Astro.props;
           <input type="text" id="imdb-id-input" placeholder="tt0123456 または空欄" />
           <small class="form-help">
             IMDb IDは「tt」から始まる数字（例: tt0123456）、または空欄にしてください
+          </small>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="refresh-data" />
+            TMDbから追加データを取得（TMDb ID、ポスター、日本語翻訳）
+          </label>
+          <small class="form-help">
+            チェックすると、IMDb IDからTMDbのデータベースを検索して関連情報を自動取得します
           </small>
         </div>
         <div class="form-actions">
@@ -484,11 +497,13 @@ const { movieId } = Astro.props;
       const yearEl = document.getElementById("movie-year");
       const languageEl = document.getElementById("movie-language");
       const imdbEl = document.getElementById("movie-imdb");
+      const tmdbEl = document.getElementById("movie-tmdb");
 
       if (titleEl) titleEl.textContent = defaultTitle;
       if (yearEl) yearEl.textContent = movie.year || "N/A";
       if (languageEl) languageEl.textContent = movie.originalLanguage || "N/A";
       if (imdbEl) imdbEl.textContent = movie.imdbId || "N/A";
+      if (tmdbEl) tmdbEl.textContent = movie.tmdbId || "N/A";
 
       // Display translations
       this.displayTranslations(movie.translations);
@@ -705,12 +720,15 @@ const { movieId } = Astro.props;
       }
 
       const inputEl = document.getElementById("imdb-id-input") as HTMLInputElement | null;
+      const refreshEl = document.getElementById("refresh-data") as HTMLInputElement | null;
+      
       if (!inputEl) {
         this.showError("入力フィールドが見つかりません");
         return;
       }
 
       const imdbId = inputEl.value.trim();
+      const refreshData = refreshEl?.checked || false;
 
       // Validate IMDb ID format if not empty
       if (imdbId && !/^tt\d+$/.test(imdbId)) {
@@ -727,13 +745,43 @@ const { movieId } = Astro.props;
               "Content-Type": "application/json",
               Authorization: `Bearer ${this.adminToken}`,
             },
-            body: JSON.stringify({ imdbId: imdbId || undefined }),
+            body: JSON.stringify({ 
+              imdbId: imdbId || undefined,
+              refreshData 
+            }),
           }
         );
 
         if (!response.ok) {
-          const errorData = await response.json();
+          const errorData = await response.json() as { error?: string };
           throw new Error(errorData.error || "IMDb IDの更新に失敗しました");
+        }
+
+        const result = await response.json() as {
+          success: boolean;
+          refreshResults?: {
+            tmdbId?: number;
+            postersAdded: number;
+            translationsAdded: number;
+          };
+        };
+        
+        // Show refresh results if data was refreshed
+        if (result.refreshResults) {
+          const { tmdbId, postersAdded, translationsAdded } = result.refreshResults;
+          let message = "IMDb IDを更新しました。";
+          
+          if (tmdbId) {
+            message += `\nTMDb ID: ${tmdbId}`;
+          }
+          if (postersAdded > 0) {
+            message += `\nポスター: ${postersAdded}件追加`;
+          }
+          if (translationsAdded > 0) {
+            message += `\n日本語翻訳: ${translationsAdded}件追加`;
+          }
+          
+          alert(message);
         }
 
         this.closeImdbModal();
