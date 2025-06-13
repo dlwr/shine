@@ -42,6 +42,15 @@ const { movieId } = Astro.props;
         </div>
       </div>
 
+      <div class="posters-section">
+        <div class="section-header">
+          <h3>ポスター管理</h3>
+          <button id="add-poster-btn" class="btn btn-primary">ポスターを追加</button>
+        </div>
+
+        <div id="posters-list" class="posters-list"></div>
+      </div>
+
       <div class="translations-section">
         <div class="section-header">
           <h3>翻訳管理</h3>
@@ -131,6 +140,61 @@ const { movieId } = Astro.props;
       </form>
     </div>
   </div>
+
+  <!-- Add Poster Modal -->
+  <div id="poster-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>ポスターを追加</h3>
+        <button id="close-poster-modal" class="close-btn">&times;</button>
+      </div>
+      <form id="poster-form">
+        <div class="form-group">
+          <label for="poster-url-input">ポスターURL:</label>
+          <input type="url" id="poster-url-input" required placeholder="https://example.com/poster.jpg" />
+          <small class="form-help">
+            ポスター画像のURLを入力してください（JPG、PNG、WebP形式）
+          </small>
+        </div>
+        <div class="form-group">
+          <label for="poster-width">幅 (px):</label>
+          <input type="number" id="poster-width" placeholder="オプション" />
+        </div>
+        <div class="form-group">
+          <label for="poster-height">高さ (px):</label>
+          <input type="number" id="poster-height" placeholder="オプション" />
+        </div>
+        <div class="form-group">
+          <label for="poster-language">言語コード:</label>
+          <select id="poster-language">
+            <option value="">言語を選択（オプション）</option>
+            <option value="en">English (en)</option>
+            <option value="ja">日本語 (ja)</option>
+            <option value="fr">Français (fr)</option>
+            <option value="de">Deutsch (de)</option>
+            <option value="es">Español (es)</option>
+            <option value="it">Italiano (it)</option>
+            <option value="pt">Português (pt)</option>
+            <option value="ko">한국어 (ko)</option>
+            <option value="zh">中文 (zh)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="poster-primary" />
+            プライマリポスターに設定
+          </label>
+          <small class="form-help">
+            チェックすると、このポスターがメインポスターになります
+          </small>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">追加</button>
+          <button type="button" id="cancel-poster-btn" class="btn btn-secondary">キャンセル</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -205,6 +269,57 @@ const { movieId } = Astro.props;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+  }
+
+  .posters-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .poster-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+  }
+
+  .poster-item.primary {
+    border-color: #059669;
+    border-width: 2px;
+  }
+
+  .poster-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .poster-info {
+    padding: 12px;
+  }
+
+  .poster-primary-badge {
+    background: #059669;
+    color: white;
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    display: inline-block;
+  }
+
+  .poster-details {
+    font-size: 0.875rem;
+    color: #666;
+    margin-bottom: 8px;
+  }
+
+  .poster-actions {
+    display: flex;
+    gap: 8px;
   }
 
   .translations-list {
@@ -368,6 +483,16 @@ const { movieId } = Astro.props;
     isDefault: boolean;
   }
 
+  interface Poster {
+    uid: string;
+    url: string;
+    width?: number;
+    height?: number;
+    languageCode?: string;
+    sourceType: string;
+    isPrimary: boolean;
+  }
+
   class MovieEditor {
     private movieId: string;
     private apiUrl: string;
@@ -395,6 +520,38 @@ const { movieId } = Astro.props;
     }
 
     setupEventListeners() {
+      // Poster management
+      document
+        .getElementById("add-poster-btn")
+        ?.addEventListener("click", () => {
+          this.openPosterModal();
+        });
+
+      document.getElementById("close-poster-modal")?.addEventListener("click", () => {
+        this.closePosterModal();
+      });
+
+      document.getElementById("cancel-poster-btn")?.addEventListener("click", () => {
+        this.closePosterModal();
+      });
+
+      document
+        .getElementById("poster-form")
+        ?.addEventListener("submit", (e) => {
+          e.preventDefault();
+          this.savePoster();
+        });
+
+      // Click outside poster modal to close
+      document
+        .getElementById("poster-modal")
+        ?.addEventListener("click", (e) => {
+          if (e.target === e.currentTarget) {
+            this.closePosterModal();
+          }
+        });
+
+      // Translation management
       document
         .getElementById("add-translation-btn")
         ?.addEventListener("click", () => {
@@ -505,8 +662,55 @@ const { movieId } = Astro.props;
       if (imdbEl) imdbEl.textContent = movie.imdbId || "N/A";
       if (tmdbEl) tmdbEl.textContent = movie.tmdbId || "N/A";
 
+      // Display posters
+      this.displayPosters(movie.posters || []);
+
       // Display translations
       this.displayTranslations(movie.translations);
+    }
+
+    displayPosters(posters: Poster[]) {
+      const container = document.getElementById("posters-list");
+      if (!container) return;
+
+      container.innerHTML = "";
+
+      if (posters.length === 0) {
+        container.innerHTML = '<p class="no-posters">ポスターがありません</p>';
+        return;
+      }
+
+      posters.forEach((poster) => {
+        const item = document.createElement("div");
+        item.className = `poster-item ${poster.isPrimary ? "primary" : ""}`;
+
+        const dimensions = poster.width && poster.height ? ` (${poster.width}×${poster.height})` : "";
+        const sourceText = poster.sourceType === "manual" ? "手動追加" : poster.sourceType.toUpperCase();
+        
+        item.innerHTML = `
+          <img src="${poster.url}" alt="Movie Poster" class="poster-image" loading="lazy" />
+          <div class="poster-info">
+            ${poster.isPrimary ? '<span class="poster-primary-badge">プライマリ</span>' : ''}
+            <div class="poster-details">
+              ${poster.languageCode ? `言語: ${poster.languageCode.toUpperCase()}` : '言語: 未指定'}<br>
+              ソース: ${sourceText}${dimensions}
+            </div>
+            <div class="poster-actions">
+              <button class="btn btn-danger btn-small delete-poster-btn" data-poster-id="${poster.uid}">削除</button>
+            </div>
+          </div>
+        `;
+
+        // Add event listeners
+        const deleteBtn = item.querySelector(".delete-poster-btn");
+        if (deleteBtn) {
+          deleteBtn.addEventListener("click", () => {
+            this.deletePoster(poster.uid);
+          });
+        }
+
+        container.appendChild(item);
+      });
     }
 
     displayTranslations(translations: Translation[]) {
@@ -785,6 +989,118 @@ const { movieId } = Astro.props;
         }
 
         this.closeImdbModal();
+        await this.loadMovie();
+      } catch (error) {
+        this.showError(
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      }
+    }
+
+    openPosterModal() {
+      const modal = document.getElementById("poster-modal");
+      const formEl = document.getElementById("poster-form") as HTMLFormElement | null;
+      
+      if (!modal) return;
+      
+      // Reset form
+      if (formEl) formEl.reset();
+      
+      modal.style.display = "flex";
+    }
+
+    closePosterModal() {
+      const modal = document.getElementById("poster-modal");
+      if (modal) modal.style.display = "none";
+    }
+
+    async savePoster() {
+      if (!this.adminToken) {
+        this.showError("管理者権限が必要です");
+        return;
+      }
+
+      const urlEl = document.getElementById("poster-url-input") as HTMLInputElement | null;
+      const widthEl = document.getElementById("poster-width") as HTMLInputElement | null;
+      const heightEl = document.getElementById("poster-height") as HTMLInputElement | null;
+      const languageEl = document.getElementById("poster-language") as HTMLSelectElement | null;
+      const primaryEl = document.getElementById("poster-primary") as HTMLInputElement | null;
+      
+      if (!urlEl) {
+        this.showError("入力フィールドが見つかりません");
+        return;
+      }
+
+      const url = urlEl.value.trim();
+      const width = widthEl?.value ? parseInt(widthEl.value) : undefined;
+      const height = heightEl?.value ? parseInt(heightEl.value) : undefined;
+      const languageCode = languageEl?.value || undefined;
+      const isPrimary = primaryEl?.checked || false;
+
+      if (!url) {
+        this.showError("ポスターURLは必須です");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${this.apiUrl}/admin/movies/${this.movieId}/posters`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${this.adminToken}`,
+            },
+            body: JSON.stringify({ 
+              url,
+              width,
+              height,
+              languageCode,
+              isPrimary
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json() as { error?: string };
+          throw new Error(errorData.error || "ポスターの追加に失敗しました");
+        }
+
+        this.closePosterModal();
+        await this.loadMovie();
+      } catch (error) {
+        this.showError(
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      }
+    }
+
+    async deletePoster(posterId: string) {
+      if (!this.adminToken) {
+        this.showError("管理者権限が必要です");
+        return;
+      }
+
+      if (!confirm("このポスターを削除しますか？")) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${this.apiUrl}/admin/movies/${this.movieId}/posters/${posterId}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${this.adminToken}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json() as { error?: string };
+          throw new Error(errorData.error || "ポスターの削除に失敗しました");
+        }
+
         await this.loadMovie();
       } catch (error) {
         this.showError(

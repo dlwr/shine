@@ -439,9 +439,18 @@ app.get("/movies/:id", async (c) => {
 
     // Get poster URLs
     const posterResult = await database
-      .select()
+      .select({
+        uid: posterUrls.uid,
+        url: posterUrls.url,
+        width: posterUrls.width,
+        height: posterUrls.height,
+        languageCode: posterUrls.languageCode,
+        sourceType: posterUrls.sourceType,
+        isPrimary: posterUrls.isPrimary,
+      })
       .from(posterUrls)
-      .where(eq(posterUrls.movieUid, movieId));
+      .where(eq(posterUrls.movieUid, movieId))
+      .orderBy(posterUrls.isPrimary, posterUrls.createdAt);
 
     // Get nominations
     const movieNominations = await getMovieNominations(database, movieId);
@@ -458,6 +467,15 @@ app.get("/movies/:id", async (c) => {
       tmdbId: movie.tmdbId,
       imdbUrl: imdbUrl,
       posterUrl: posterResult[0]?.url,
+      posters: posterResult.map((p) => ({
+        uid: p.uid,
+        url: p.url,
+        width: p.width,
+        height: p.height,
+        languageCode: p.languageCode,
+        sourceType: p.sourceType,
+        isPrimary: p.isPrimary === 1,
+      })),
       translations: movieTranslations.map(
         (t: {
           languageCode: string;
@@ -812,6 +830,110 @@ app.post("/admin/article-links/:id/spam", authMiddleware, async (c) => {
     return c.json({ success: true });
   } catch (error) {
     console.error("Error flagging article as spam:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Admin: Add poster URL
+app.post("/admin/movies/:id/posters", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const movieId = c.req.param("id");
+    const { url, width, height, languageCode, isPrimary = false } = await c.req.json();
+    
+    // Validate inputs
+    if (!url) {
+      return c.json({ error: "URL is required" }, 400);
+    }
+    
+    // Basic URL validation
+    try {
+      new URL(url);
+    } catch {
+      return c.json({ error: "Invalid URL format" }, 400);
+    }
+    
+    // Check if movie exists
+    const movieExists = await database
+      .select({ uid: movies.uid })
+      .from(movies)
+      .where(eq(movies.uid, movieId))
+      .limit(1);
+      
+    if (movieExists.length === 0) {
+      return c.json({ error: "Movie not found" }, 404);
+    }
+    
+    // Check if URL already exists for this movie
+    const existingPoster = await database
+      .select({ uid: posterUrls.uid })
+      .from(posterUrls)
+      .where(and(eq(posterUrls.movieUid, movieId), eq(posterUrls.url, url)))
+      .limit(1);
+      
+    if (existingPoster.length > 0) {
+      return c.json({ error: "Poster URL already exists for this movie" }, 409);
+    }
+    
+    // If setting as primary, unset other primary posters
+    if (isPrimary) {
+      await database
+        .update(posterUrls)
+        .set({ isPrimary: 0 })
+        .where(eq(posterUrls.movieUid, movieId));
+    }
+    
+    // Add poster URL
+    const newPoster = await database
+      .insert(posterUrls)
+      .values({
+        movieUid: movieId,
+        url,
+        width: width || undefined,
+        height: height || undefined,
+        languageCode: languageCode || undefined,
+        sourceType: "manual",
+        isPrimary: isPrimary ? 1 : 0,
+      })
+      .returning();
+      
+    return c.json(newPoster[0]);
+  } catch (error) {
+    console.error("Error adding poster:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Admin: Delete poster URL
+app.delete("/admin/movies/:movieId/posters/:posterId", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const movieId = c.req.param("movieId");
+    const posterId = c.req.param("posterId");
+    
+    // Check if poster exists and belongs to the movie
+    const posterExists = await database
+      .select({ uid: posterUrls.uid, movieUid: posterUrls.movieUid })
+      .from(posterUrls)
+      .where(eq(posterUrls.uid, posterId))
+      .limit(1);
+      
+    if (posterExists.length === 0) {
+      return c.json({ error: "Poster not found" }, 404);
+    }
+    
+    if (posterExists[0].movieUid !== movieId) {
+      return c.json({ error: "Poster does not belong to this movie" }, 400);
+    }
+    
+    // Delete poster
+    await database
+      .delete(posterUrls)
+      .where(eq(posterUrls.uid, posterId));
+      
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting poster:", error);
     return c.json({ error: "Internal server error" }, 500);
   }
 });
