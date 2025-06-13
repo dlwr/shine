@@ -386,7 +386,7 @@ const nominationsByOrg =
           e.stopPropagation();
           const movieId = button.getAttribute("data-movie-id");
           if (movieId) {
-            window.location.href = `/edit/${movieId}`;
+            window.location.href = `/admin/movies/${movieId}`;
           }
         });
       });

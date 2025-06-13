@@ -30,7 +30,10 @@ const { movieId } = Astro.props;
           </div>
           <div class="info-item">
             <label>IMDb ID:</label>
-            <span id="movie-imdb"></span>
+            <div class="imdb-edit-container">
+              <span id="movie-imdb"></span>
+              <button id="edit-imdb-btn" class="btn btn-small btn-secondary">編集</button>
+            </div>
           </div>
         </div>
       </div>
@@ -92,6 +95,29 @@ const { movieId } = Astro.props;
       </form>
     </div>
   </div>
+
+  <!-- Edit IMDB ID Modal -->
+  <div id="imdb-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>IMDb ID編集</h3>
+        <button id="close-imdb-modal" class="close-btn">&times;</button>
+      </div>
+      <form id="imdb-form">
+        <div class="form-group">
+          <label for="imdb-id-input">IMDb ID:</label>
+          <input type="text" id="imdb-id-input" placeholder="tt0123456 または空欄" />
+          <small class="form-help">
+            IMDb IDは「tt」から始まる数字（例: tt0123456）、または空欄にしてください
+          </small>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">保存</button>
+          <button type="button" id="cancel-imdb-btn" class="btn btn-secondary">キャンセル</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -146,6 +172,19 @@ const { movieId } = Astro.props;
   .info-item label {
     font-weight: 600;
     color: #555;
+  }
+
+  .imdb-edit-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .form-help {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.75rem;
+    color: #666;
   }
 
   .section-header {
@@ -370,6 +409,37 @@ const { movieId } = Astro.props;
         ?.addEventListener("click", (e) => {
           if (e.target === e.currentTarget) {
             this.closeTranslationModal();
+          }
+        });
+
+      // IMDb ID editing
+      document
+        .getElementById("edit-imdb-btn")
+        ?.addEventListener("click", () => {
+          this.openImdbModal();
+        });
+
+      document.getElementById("close-imdb-modal")?.addEventListener("click", () => {
+        this.closeImdbModal();
+      });
+
+      document.getElementById("cancel-imdb-btn")?.addEventListener("click", () => {
+        this.closeImdbModal();
+      });
+
+      document
+        .getElementById("imdb-form")
+        ?.addEventListener("submit", (e) => {
+          e.preventDefault();
+          this.saveImdbId();
+        });
+
+      // Click outside IMDB modal to close
+      document
+        .getElementById("imdb-modal")
+        ?.addEventListener("click", (e) => {
+          if (e.target === e.currentTarget) {
+            this.closeImdbModal();
           }
         });
     }
@@ -599,6 +669,74 @@ const { movieId } = Astro.props;
           throw new Error("翻訳の削除に失敗しました");
         }
 
+        await this.loadMovie();
+      } catch (error) {
+        this.showError(
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      }
+    }
+
+    openImdbModal() {
+      const modal = document.getElementById("imdb-modal");
+      const currentImdbEl = document.getElementById("movie-imdb");
+      const inputEl = document.getElementById("imdb-id-input") as HTMLInputElement | null;
+      
+      if (!modal) return;
+      
+      // Pre-fill current IMDb ID
+      if (currentImdbEl && inputEl) {
+        const currentImdb = currentImdbEl.textContent;
+        inputEl.value = currentImdb === "N/A" ? "" : currentImdb || "";
+      }
+      
+      modal.style.display = "flex";
+    }
+
+    closeImdbModal() {
+      const modal = document.getElementById("imdb-modal");
+      if (modal) modal.style.display = "none";
+    }
+
+    async saveImdbId() {
+      if (!this.adminToken) {
+        this.showError("管理者権限が必要です");
+        return;
+      }
+
+      const inputEl = document.getElementById("imdb-id-input") as HTMLInputElement | null;
+      if (!inputEl) {
+        this.showError("入力フィールドが見つかりません");
+        return;
+      }
+
+      const imdbId = inputEl.value.trim();
+
+      // Validate IMDb ID format if not empty
+      if (imdbId && !/^tt\d+$/.test(imdbId)) {
+        this.showError("IMDb IDは「tt」から始まる数字の形式で入力してください（例: tt0123456）");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${this.apiUrl}/admin/movies/${this.movieId}/imdb-id`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${this.adminToken}`,
+            },
+            body: JSON.stringify({ imdbId: imdbId || undefined }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "IMDb IDの更新に失敗しました");
+        }
+
+        this.closeImdbModal();
         await this.loadMovie();
       } catch (error) {
         this.showError(

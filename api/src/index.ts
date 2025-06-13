@@ -1,4 +1,4 @@
-import { and, eq, getDatabase, sql, type Environment } from "db";
+import { and, eq, getDatabase, not, sql, type Environment } from "db";
 import { articleLinks } from "db/schema/article-links";
 import { awardCategories } from "db/schema/award-categories";
 import { awardCeremonies } from "db/schema/award-ceremonies";
@@ -813,6 +813,58 @@ app.post("/admin/article-links/:id/spam", authMiddleware, async (c) => {
     return c.json({ success: true });
   } catch (error) {
     console.error("Error flagging article as spam:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Admin: Update movie IMDB ID
+app.put("/admin/movies/:id/imdb-id", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const movieId = c.req.param("id");
+    const { imdbId } = await c.req.json();
+    
+    // Validate IMDB ID format (optional field, can be null/empty)
+    if (imdbId && !/^tt\d+$/.test(imdbId)) {
+      return c.json({ error: "IMDB ID must be in format 'tt1234567'" }, 400);
+    }
+    
+    // Check if movie exists
+    const movieExists = await database
+      .select({ uid: movies.uid })
+      .from(movies)
+      .where(eq(movies.uid, movieId))
+      .limit(1);
+      
+    if (movieExists.length === 0) {
+      return c.json({ error: "Movie not found" }, 404);
+    }
+    
+    // Check if IMDB ID is already used by another movie
+    if (imdbId) {
+      const existingMovie = await database
+        .select({ uid: movies.uid })
+        .from(movies)
+        .where(and(eq(movies.imdbId, imdbId), not(eq(movies.uid, movieId))))
+        .limit(1);
+        
+      if (existingMovie.length > 0) {
+        return c.json({ error: "IMDB ID is already used by another movie" }, 409);
+      }
+    }
+    
+    // Update IMDB ID
+    await database
+      .update(movies)
+      .set({ 
+        imdbId: imdbId || undefined,
+        updatedAt: sql`(unixepoch())`
+      })
+      .where(eq(movies.uid, movieId));
+      
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("Error updating IMDB ID:", error);
     return c.json({ error: "Internal server error" }, 500);
   }
 });
