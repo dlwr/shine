@@ -18,7 +18,7 @@
     "typescript": "^5.8.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250610.0",
+    "@cloudflare/workers-types": "^4.20250614.0",
     "@tailwindcss/typography": "^0.5.16",
     "tailwindcss": "^3.4.17",
     "wrangler": "^4.6.0"
