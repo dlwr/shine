@@ -311,6 +311,32 @@ const t = labels[locale as keyof typeof labels] || labels.en;
     </div>
 
     <script define:vars={{ apiUrl, movieId: id, t }} is:inline>
+      // Auto-fetch title when URL changes
+      document.getElementById("url").addEventListener("blur", async (e) => {
+        const url = e.target.value.trim();
+        const titleInput = document.getElementById("title");
+        
+        if (url && !titleInput.value.trim()) {
+          try {
+            const response = await fetch(`${apiUrl}/fetch-url-title`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ url }),
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              titleInput.value = data.title;
+            }
+          } catch (error) {
+            // Silently fail - user can enter title manually
+            console.warn("Failed to fetch URL title:", error);
+          }
+        }
+      });
+
       document
         .getElementById("article-form")
         .addEventListener("submit", async (e) => {
