@@ -5,10 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro build && wrangler pages dev",
-    "astro": "astro",
-    "deploy": "astro build && wrangler pages deploy",
-    "cf-typegen": "wrangler types"
+    "astro": "astro"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
