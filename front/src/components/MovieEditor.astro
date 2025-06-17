@@ -37,7 +37,10 @@ const { movieId } = Astro.props;
           </div>
           <div class="info-item">
             <label>TMDb ID:</label>
-            <span id="movie-tmdb"></span>
+            <div class="tmdb-edit-container">
+              <span id="movie-tmdb"></span>
+              <button id="edit-tmdb-btn" class="btn btn-small btn-secondary">編集</button>
+            </div>
           </div>
         </div>
       </div>
@@ -136,6 +139,38 @@ const { movieId } = Astro.props;
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">保存</button>
           <button type="button" id="cancel-imdb-btn" class="btn btn-secondary">キャンセル</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit TMDb ID Modal -->
+  <div id="tmdb-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>TMDb ID編集</h3>
+        <button id="close-tmdb-modal" class="close-btn">&times;</button>
+      </div>
+      <form id="tmdb-form">
+        <div class="form-group">
+          <label for="tmdb-id-input">TMDb ID:</label>
+          <input type="number" id="tmdb-id-input" placeholder="123456 または空欄" min="1" />
+          <small class="form-help">
+            TMDb IDは正の整数（例: 123456）、または空欄にしてください
+          </small>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="tmdb-refresh-data" />
+            TMDbから追加データを取得（ポスター、日本語翻訳）
+          </label>
+          <small class="form-help">
+            チェックすると、TMDb IDから関連情報を自動取得します
+          </small>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">保存</button>
+          <button type="button" id="cancel-tmdb-btn" class="btn btn-secondary">キャンセル</button>
         </div>
       </form>
     </div>
@@ -251,7 +286,8 @@ const { movieId } = Astro.props;
     color: #555;
   }
 
-  .imdb-edit-container {
+  .imdb-edit-container,
+  .tmdb-edit-container {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -610,6 +646,37 @@ const { movieId } = Astro.props;
         ?.addEventListener("click", (e) => {
           if (e.target === e.currentTarget) {
             this.closeImdbModal();
+          }
+        });
+
+      // TMDb ID editing
+      document
+        .getElementById("edit-tmdb-btn")
+        ?.addEventListener("click", () => {
+          this.openTmdbModal();
+        });
+
+      document.getElementById("close-tmdb-modal")?.addEventListener("click", () => {
+        this.closeTmdbModal();
+      });
+
+      document.getElementById("cancel-tmdb-btn")?.addEventListener("click", () => {
+        this.closeTmdbModal();
+      });
+
+      document
+        .getElementById("tmdb-form")
+        ?.addEventListener("submit", (e) => {
+          e.preventDefault();
+          this.saveTmdbId();
+        });
+
+      // Click outside TMDb modal to close
+      document
+        .getElementById("tmdb-modal")
+        ?.addEventListener("click", (e) => {
+          if (e.target === e.currentTarget) {
+            this.closeTmdbModal();
           }
         });
     }
@@ -982,13 +1049,111 @@ const { movieId } = Astro.props;
             message += `\nポスター: ${postersAdded}件追加`;
           }
           if (translationsAdded > 0) {
-            message += `\n日本語翻訳: ${translationsAdded}件追加`;
+            message += `\n翻訳: ${translationsAdded}件追加（英語・日本語）`;
           }
           
           alert(message);
         }
 
         this.closeImdbModal();
+        await this.loadMovie();
+      } catch (error) {
+        this.showError(
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      }
+    }
+
+    openTmdbModal() {
+      const modal = document.getElementById("tmdb-modal");
+      const currentTmdbEl = document.getElementById("movie-tmdb");
+      const inputEl = document.getElementById("tmdb-id-input") as HTMLInputElement | null;
+      
+      if (!modal) return;
+      
+      // Pre-fill current TMDb ID
+      if (currentTmdbEl && inputEl) {
+        const currentTmdb = currentTmdbEl.textContent;
+        inputEl.value = currentTmdb === "N/A" ? "" : currentTmdb || "";
+      }
+      
+      modal.style.display = "flex";
+    }
+
+    closeTmdbModal() {
+      const modal = document.getElementById("tmdb-modal");
+      if (modal) modal.style.display = "none";
+    }
+
+    async saveTmdbId() {
+      if (!this.adminToken) {
+        this.showError("管理者権限が必要です");
+        return;
+      }
+
+      const inputEl = document.getElementById("tmdb-id-input") as HTMLInputElement | null;
+      const refreshEl = document.getElementById("tmdb-refresh-data") as HTMLInputElement | null;
+      
+      if (!inputEl) {
+        this.showError("入力フィールドが見つかりません");
+        return;
+      }
+
+      const tmdbIdStr = inputEl.value.trim();
+      const tmdbId = tmdbIdStr ? parseInt(tmdbIdStr, 10) : undefined;
+      const refreshData = refreshEl?.checked || false;
+
+      // Validate TMDb ID if not empty
+      if (tmdbIdStr && (!Number.isInteger(tmdbId) || (tmdbId && tmdbId <= 0))) {
+        this.showError("TMDb IDは正の整数で入力してください（例: 123456）");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${this.apiUrl}/admin/movies/${this.movieId}/tmdb-id`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${this.adminToken}`,
+            },
+            body: JSON.stringify({ 
+              tmdbId,
+              refreshData 
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json() as { error?: string };
+          throw new Error(errorData.error || "TMDb IDの更新に失敗しました");
+        }
+
+        const result = await response.json() as {
+          success: boolean;
+          refreshResults?: {
+            postersAdded: number;
+            translationsAdded: number;
+          };
+        };
+        
+        // Show refresh results if data was refreshed
+        if (result.refreshResults) {
+          const { postersAdded, translationsAdded } = result.refreshResults;
+          let message = "TMDb IDを更新しました。";
+          
+          if (postersAdded > 0) {
+            message += `\nポスター: ${postersAdded}件追加`;
+          }
+          if (translationsAdded > 0) {
+            message += `\n翻訳: ${translationsAdded}件追加（英語・日本語）`;
+          }
+          
+          alert(message);
+        }
+
+        this.closeTmdbModal();
         await this.loadMovie();
       } catch (error) {
         this.showError(

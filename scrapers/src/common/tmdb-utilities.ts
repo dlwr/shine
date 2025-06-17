@@ -40,6 +40,50 @@ export interface TMDBSearchResponse {
   }[];
 }
 
+export interface TMDBTranslationsResponse {
+  id: number;
+  translations: {
+    iso_3166_1: string;
+    iso_639_1: string;
+    name: string;
+    english_name: string;
+    data: {
+      homepage: string;
+      overview: string;
+      runtime: number;
+      tagline: string;
+      title: string;
+    };
+  }[];
+}
+
+/**
+ * TMDb APIから映画の翻訳情報を取得
+ */
+export async function fetchTMDBMovieTranslations(
+  movieId: number,
+  tmdbApiKey: string
+): Promise<TMDBTranslationsResponse | undefined> {
+  try {
+    const translationsUrl = new URL(`${TMDB_API_BASE_URL}/movie/${movieId}/translations`);
+    translationsUrl.searchParams.append("api_key", tmdbApiKey);
+
+    const response = await fetch(translationsUrl.toString());
+    if (!response.ok) {
+      throw new Error(`TMDb API error: ${response.statusText}`);
+    }
+
+    const data = (await response.json()) as TMDBTranslationsResponse;
+    return data;
+  } catch (error) {
+    console.error(
+      `Error fetching TMDb translations for movie ID ${movieId}:`,
+      error
+    );
+    return undefined;
+  }
+}
+
 /**
  * TMDb APIを使って映画を検索（タイトルと年で）
  */

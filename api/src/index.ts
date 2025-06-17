@@ -839,42 +839,48 @@ app.post("/admin/movies/:id/posters", authMiddleware, async (c) => {
   try {
     const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("id");
-    const { url, width, height, languageCode, isPrimary = false } = await c.req.json();
-    
+    const {
+      url,
+      width,
+      height,
+      languageCode,
+      isPrimary = false,
+    } = await c.req.json();
+
     // Validate inputs
     if (!url) {
       return c.json({ error: "URL is required" }, 400);
     }
-    
+
     // Basic URL validation
     try {
       new URL(url);
     } catch {
       return c.json({ error: "Invalid URL format" }, 400);
     }
-    
+
     // Check if movie exists
     const movieExists = await database
       .select({ uid: movies.uid })
       .from(movies)
       .where(eq(movies.uid, movieId))
       .limit(1);
-      
+
     if (movieExists.length === 0) {
       return c.json({ error: "Movie not found" }, 404);
     }
-    
+
     // Check if URL already exists for this movie
     const existingPoster = await database
       .select({ uid: posterUrls.uid })
       .from(posterUrls)
       .where(and(eq(posterUrls.movieUid, movieId), eq(posterUrls.url, url)))
       .limit(1);
-      
+
     if (existingPoster.length > 0) {
       return c.json({ error: "Poster URL already exists for this movie" }, 409);
     }
-    
+
     // If setting as primary, unset other primary posters
     if (isPrimary) {
       await database
@@ -882,7 +888,7 @@ app.post("/admin/movies/:id/posters", authMiddleware, async (c) => {
         .set({ isPrimary: 0 })
         .where(eq(posterUrls.movieUid, movieId));
     }
-    
+
     // Add poster URL
     const newPoster = await database
       .insert(posterUrls)
@@ -896,7 +902,7 @@ app.post("/admin/movies/:id/posters", authMiddleware, async (c) => {
         isPrimary: isPrimary ? 1 : 0,
       })
       .returning();
-      
+
     return c.json(newPoster[0]);
   } catch (error) {
     console.error("Error adding poster:", error);
@@ -905,38 +911,40 @@ app.post("/admin/movies/:id/posters", authMiddleware, async (c) => {
 });
 
 // Admin: Delete poster URL
-app.delete("/admin/movies/:movieId/posters/:posterId", authMiddleware, async (c) => {
-  try {
-    const database = getDatabase(c.env as Environment);
-    const movieId = c.req.param("movieId");
-    const posterId = c.req.param("posterId");
-    
-    // Check if poster exists and belongs to the movie
-    const posterExists = await database
-      .select({ uid: posterUrls.uid, movieUid: posterUrls.movieUid })
-      .from(posterUrls)
-      .where(eq(posterUrls.uid, posterId))
-      .limit(1);
-      
-    if (posterExists.length === 0) {
-      return c.json({ error: "Poster not found" }, 404);
+app.delete(
+  "/admin/movies/:movieId/posters/:posterId",
+  authMiddleware,
+  async (c) => {
+    try {
+      const database = getDatabase(c.env as Environment);
+      const movieId = c.req.param("movieId");
+      const posterId = c.req.param("posterId");
+
+      // Check if poster exists and belongs to the movie
+      const posterExists = await database
+        .select({ uid: posterUrls.uid, movieUid: posterUrls.movieUid })
+        .from(posterUrls)
+        .where(eq(posterUrls.uid, posterId))
+        .limit(1);
+
+      if (posterExists.length === 0) {
+        return c.json({ error: "Poster not found" }, 404);
+      }
+
+      if (posterExists[0].movieUid !== movieId) {
+        return c.json({ error: "Poster does not belong to this movie" }, 400);
+      }
+
+      // Delete poster
+      await database.delete(posterUrls).where(eq(posterUrls.uid, posterId));
+
+      return c.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting poster:", error);
+      return c.json({ error: "Internal server error" }, 500);
     }
-    
-    if (posterExists[0].movieUid !== movieId) {
-      return c.json({ error: "Poster does not belong to this movie" }, 400);
-    }
-    
-    // Delete poster
-    await database
-      .delete(posterUrls)
-      .where(eq(posterUrls.uid, posterId));
-      
-    return c.json({ success: true });
-  } catch (error) {
-    console.error("Error deleting poster:", error);
-    return c.json({ error: "Internal server error" }, 500);
   }
-});
+);
 
 // Admin: Update movie IMDB ID
 app.put("/admin/movies/:id/imdb-id", authMiddleware, async (c) => {
@@ -999,14 +1007,13 @@ app.put("/admin/movies/:id/imdb-id", authMiddleware, async (c) => {
         const {
           findTMDBByImdbId,
           fetchTMDBMovieImages,
+          fetchTMDBMovieTranslations,
           savePosterUrls,
-          fetchJapaneseTitleFromTMDB,
-          saveJapaneseTranslation,
         } = await import("../../scrapers/src/common/tmdb-utilities");
 
         // Find TMDb ID
         const tmdbId = await findTMDBByImdbId(imdbId, c.env.TMDB_API_KEY);
-        
+
         if (tmdbId) {
           // Update TMDb ID
           await database
@@ -1030,20 +1037,79 @@ app.put("/admin/movies/:id/imdb-id", authMiddleware, async (c) => {
             refreshResults.postersAdded = savedPosters;
           }
 
-          // Fetch and save Japanese translation
-          const japaneseTitle = await fetchJapaneseTitleFromTMDB(
-            imdbId,
-            tmdbId,
-            c.env as Environment
+          // Fetch and save translations using TMDb Translations API
+          let translationsAddedForImdb = 0;
+          const { translations } = await import(
+            "../../src/schema/translations"
           );
-          if (japaneseTitle) {
-            await saveJapaneseTranslation(
-              movieId,
-              japaneseTitle,
-              c.env as Environment
+
+          // Get all translations from TMDb
+          const translationsData = await fetchTMDBMovieTranslations(
+            tmdbId,
+            c.env.TMDB_API_KEY
+          );
+
+          if (translationsData?.translations) {
+            // Find English title (original language)
+            const englishTranslation = translationsData.translations.find(
+              (t) => t.iso_639_1 === "en" && t.data?.title
             );
-            refreshResults.translationsAdded = 1;
+
+            if (englishTranslation?.data?.title) {
+              await database
+                .insert(translations)
+                .values({
+                  resourceType: "movie_title",
+                  resourceUid: movieId,
+                  languageCode: "en",
+                  content: englishTranslation.data.title,
+                  isDefault: 1,
+                })
+                .onConflictDoUpdate({
+                  target: [
+                    translations.resourceType,
+                    translations.resourceUid,
+                    translations.languageCode,
+                  ],
+                  set: {
+                    content: englishTranslation.data.title,
+                    updatedAt: Math.floor(Date.now() / 1000),
+                  },
+                });
+              translationsAddedForImdb++;
+            }
+
+            // Find Japanese title
+            const japaneseTranslation = translationsData.translations.find(
+              (t) => t.iso_639_1 === "ja" && t.data?.title
+            );
+
+            if (japaneseTranslation?.data?.title) {
+              await database
+                .insert(translations)
+                .values({
+                  resourceType: "movie_title",
+                  resourceUid: movieId,
+                  languageCode: "ja",
+                  content: japaneseTranslation.data.title,
+                  isDefault: 0,
+                })
+                .onConflictDoUpdate({
+                  target: [
+                    translations.resourceType,
+                    translations.resourceUid,
+                    translations.languageCode,
+                  ],
+                  set: {
+                    content: japaneseTranslation.data.title,
+                    updatedAt: Math.floor(Date.now() / 1000),
+                  },
+                });
+              translationsAddedForImdb++;
+            }
           }
+
+          refreshResults.translationsAdded = translationsAddedForImdb;
         }
       } catch (refreshError) {
         console.warn("Error during data refresh:", refreshError);
@@ -1057,6 +1123,200 @@ app.put("/admin/movies/:id/imdb-id", authMiddleware, async (c) => {
     });
   } catch (error) {
     console.error("Error updating IMDB ID:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Admin: Update movie TMDb ID
+app.put("/admin/movies/:id/tmdb-id", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const movieId = c.req.param("id");
+    const { tmdbId, refreshData = false } = await c.req.json();
+
+    // Validate TMDb ID (must be a positive integer)
+    if (
+      tmdbId !== null &&
+      tmdbId !== undefined &&
+      (!Number.isInteger(tmdbId) || tmdbId <= 0)
+    ) {
+      return c.json({ error: "TMDb ID must be a positive integer" }, 400);
+    }
+
+    // Check if movie exists
+    const movieExists = await database
+      .select({ uid: movies.uid, imdbId: movies.imdbId })
+      .from(movies)
+      .where(eq(movies.uid, movieId))
+      .limit(1);
+
+    if (movieExists.length === 0) {
+      return c.json({ error: "Movie not found" }, 404);
+    }
+
+    // Check if TMDb ID is already used by another movie
+    if (tmdbId) {
+      const existingMovie = await database
+        .select({ uid: movies.uid })
+        .from(movies)
+        .where(and(eq(movies.tmdbId, tmdbId), not(eq(movies.uid, movieId))))
+        .limit(1);
+
+      if (existingMovie.length > 0) {
+        return c.json(
+          { error: "TMDb ID is already used by another movie" },
+          409
+        );
+      }
+    }
+
+    // Update TMDb ID
+    await database
+      .update(movies)
+      .set({
+        tmdbId: tmdbId || undefined,
+        updatedAt: sql`(unixepoch())`,
+      })
+      .where(eq(movies.uid, movieId));
+
+    // If refreshData is true and tmdbId is provided, fetch additional data from TMDb
+    const refreshResults = {
+      postersAdded: 0,
+      translationsAdded: 0,
+    };
+
+    if (refreshData && tmdbId && c.env.TMDB_API_KEY) {
+      try {
+        // Import TMDb utilities
+        const { fetchTMDBMovieTranslations, savePosterUrls } = await import(
+          "../../scrapers/src/common/tmdb-utilities"
+        );
+
+        interface TMDBMovieImages {
+          id: number;
+          posters: {
+            file_path: string;
+            width: number;
+            height: number;
+            iso_639_1: string | null;
+          }[];
+        }
+
+        // Fetch and save posters using TMDb ID directly
+        const imagesUrl = new URL(
+          `https://api.themoviedb.org/3/movie/${tmdbId}/images`
+        );
+        imagesUrl.searchParams.append("api_key", c.env.TMDB_API_KEY);
+
+        const imagesResponse = await fetch(imagesUrl.toString());
+        if (imagesResponse.ok) {
+          const images = (await imagesResponse.json()) as TMDBMovieImages;
+          if (images.posters && images.posters.length > 0) {
+            const savedPosters = await savePosterUrls(
+              movieId,
+              images.posters,
+              c.env as Environment
+            );
+            refreshResults.postersAdded = savedPosters;
+          }
+        }
+
+        // Fetch and save translations using TMDb Translations API
+        let translationsAdded = 0;
+        const database = getDatabase(c.env as Environment);
+        const { translations } = await import("../../src/schema/translations");
+
+        // Get all translations from TMDb
+        const translationsData = await fetchTMDBMovieTranslations(
+          tmdbId,
+          c.env.TMDB_API_KEY
+        );
+
+        console.log(
+          `Translations data for TMDb ID ${tmdbId}:`,
+          translationsData?.translations?.length || 0,
+          "translations found"
+        );
+
+        if (translationsData?.translations) {
+          // Find English title (original language)
+          const englishTranslation = translationsData.translations.find(
+            (t) => t.iso_639_1 === "en" && t.data?.title
+          );
+
+          if (englishTranslation?.data?.title) {
+            await database
+              .insert(translations)
+              .values({
+                resourceType: "movie_title",
+                resourceUid: movieId,
+                languageCode: "en",
+                content: englishTranslation.data.title,
+                isDefault: 1,
+              })
+              .onConflictDoUpdate({
+                target: [
+                  translations.resourceType,
+                  translations.resourceUid,
+                  translations.languageCode,
+                ],
+                set: {
+                  content: englishTranslation.data.title,
+                  updatedAt: Math.floor(Date.now() / 1000),
+                },
+              });
+            translationsAdded++;
+            console.log(
+              `Saved English title: ${englishTranslation.data.title}`
+            );
+          }
+
+          // Find Japanese title
+          const japaneseTranslation = translationsData.translations.find(
+            (t) => t.iso_639_1 === "ja" && t.data?.title
+          );
+
+          if (japaneseTranslation?.data?.title) {
+            await database
+              .insert(translations)
+              .values({
+                resourceType: "movie_title",
+                resourceUid: movieId,
+                languageCode: "ja",
+                content: japaneseTranslation.data.title,
+                isDefault: 0,
+              })
+              .onConflictDoUpdate({
+                target: [
+                  translations.resourceType,
+                  translations.resourceUid,
+                  translations.languageCode,
+                ],
+                set: {
+                  content: japaneseTranslation.data.title,
+                  updatedAt: Math.floor(Date.now() / 1000),
+                },
+              });
+            translationsAdded++;
+            console.log(
+              `Saved Japanese title: ${japaneseTranslation.data.title}`
+            );
+          }
+        }
+
+        refreshResults.translationsAdded = translationsAdded;
+      } catch (refreshError) {
+        console.warn("Error during data refresh:", refreshError);
+        // Continue without failing the main operation
+      }
+    }
+
+    return c.json({
+      success: true,
+      refreshResults: refreshData ? refreshResults : undefined,
+    });
+  } catch (error) {
+    console.error("Error updating TMDb ID:", error);
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -1080,8 +1340,9 @@ app.post("/fetch-url-title", async (c) => {
     // Fetch URL content
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      },
     });
 
     if (!response.ok) {
