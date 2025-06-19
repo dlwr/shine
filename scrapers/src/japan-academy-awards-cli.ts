@@ -1,3 +1,5 @@
+#!/usr/bin/env -S tsx
+
 /**
  * 日本アカデミー賞スクレイピングのCLIエントリーポイント
  */
@@ -28,7 +30,10 @@ const shouldSeed = arguments_.includes("--seed");
 const shouldHelp = arguments_.includes("--help") || arguments_.includes("-h");
 const isDryRun = arguments_.includes("--dry-run");
 const yearIndex = arguments_.indexOf("--year");
-const year = yearIndex !== -1 && yearIndex + 1 < arguments_.length ? arguments_[yearIndex + 1] : undefined;
+const year =
+  yearIndex !== -1 && yearIndex + 1 < arguments_.length
+    ? arguments_[yearIndex + 1]
+    : undefined;
 
 if (shouldHelp) {
   console.log(`
@@ -63,7 +68,9 @@ try {
 
   if (shouldSeed) {
     console.log("Seeding Japan Academy Awards...");
-    const seedUrl = isDryRun ? "http://localhost/seed?dry-run=true" : "http://localhost/seed";
+    const seedUrl = isDryRun
+      ? "http://localhost/seed?dry-run=true"
+      : "http://localhost/seed";
     const seedRequest = new Request(seedUrl);
     await japanAcademyAwards.fetch(seedRequest, environment);
     console.log("Seeding completed successfully");
