@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose';
 import type { Context } from 'hono';
-import type { Environment } from 'db';
+import type { Environment } from '../../src';
 
 const JWT_ALGORITHM = 'HS256';
 const JWT_EXPIRATION = '24h';
