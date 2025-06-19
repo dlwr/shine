@@ -378,9 +378,9 @@ const t = labels[locale as keyof typeof labels] || labels.en;
               // Reset form
               form.reset();
 
-              // Reload page after 2 seconds to show new article
+              // Redirect to home page after 2 seconds
               setTimeout(() => {
-                window.location.reload();
+                window.location.href = `/?locale=${new URLSearchParams(window.location.search).get('locale') || 'en'}`;
               }, 2000);
             } else if (response.status === 429) {
               throw new Error(t.rateLimit);
