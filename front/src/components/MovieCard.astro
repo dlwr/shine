@@ -410,6 +410,54 @@ const nominationsByOrg =
         });
       });
     });
+
+    // Handle mobile tap interactions for streaming menu
+    const movieCards = document.querySelectorAll(".movie-card");
+    movieCards.forEach((card) => {
+      const container = card.closest(".movie-card-container");
+      const streamingMenu = card.querySelector(".streaming-menu");
+      
+      if (container && streamingMenu) {
+        let touchStartTime = 0;
+        
+        // Handle touch events for mobile
+        card.addEventListener("touchstart", (e) => {
+          touchStartTime = Date.now();
+        });
+        
+        card.addEventListener("touchend", (e) => {
+          const touchDuration = Date.now() - touchStartTime;
+          
+          // Only respond to quick taps (not scrolls)
+          if (touchDuration < 200) {
+            e.preventDefault();
+            
+            const isOpen = streamingMenu.classList.contains("mobile-open");
+            
+            // Close all other open menus
+            document.querySelectorAll(".streaming-menu.mobile-open").forEach((menu) => {
+              menu.classList.remove("mobile-open");
+            });
+            
+            // Toggle current menu
+            if (!isOpen) {
+              streamingMenu.classList.add("mobile-open");
+            }
+          }
+        });
+      }
+    });
+
+    // Close streaming menu when clicking outside
+    document.addEventListener("click", (e) => {
+      const openMenus = document.querySelectorAll(".streaming-menu.mobile-open");
+      openMenus.forEach((menu) => {
+        const container = menu.closest(".movie-card-container");
+        if (container && !container.contains(e.target)) {
+          menu.classList.remove("mobile-open");
+        }
+      });
+    });
   }
 
   // Initialize immediately if DOM is ready, otherwise wait for it
