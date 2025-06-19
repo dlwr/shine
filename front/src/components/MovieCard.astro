@@ -119,10 +119,10 @@ const nominationsByOrg =
 
 <div class="relative h-full w-80 movie-card-container">
   <div
-    class="rounded-xl overflow-hidden shadow-lg transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-2xl bg-white h-full flex flex-col w-full cursor-pointer movie-card"
+    class="rounded-xl overflow-hidden shadow-lg bg-white h-full flex flex-col w-full cursor-pointer movie-card"
     data-movie-title={movie.title}
   >
-    <div class="h-[400px] md:h-[450px] bg-gray-100 flex items-center justify-center relative">
+    <div class="poster-area h-[400px] md:h-[450px] bg-gray-100 flex items-center justify-center relative">
       {movie.posterUrl ? (
         <img
           src={movie.posterUrl}
@@ -134,8 +134,8 @@ const nominationsByOrg =
       )}
       
       <!-- Streaming services hover menu -->
-      <div class="streaming-menu absolute inset-0 bg-black/80 flex items-center justify-center opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-lg p-6 max-w-xs w-full mx-4">
+      <div class="streaming-menu absolute inset-0 bg-black/80 flex items-center justify-center opacity-0 pointer-events-none">
+        <div class="streaming-menu-content bg-white rounded-lg p-6 max-w-xs w-full mx-4">
           <h4 class="text-lg font-semibold text-gray-900 mb-4 text-center">{t.searchOn}</h4>
           <div class="grid grid-cols-1 gap-3">
             {streamingServices.map((service) => (
@@ -143,7 +143,8 @@ const nominationsByOrg =
                 href={service.url(movie.title)}
                 target="_blank"
                 rel="noopener noreferrer"
-                class={`block px-4 py-3 rounded-md text-center text-sm font-medium transition-all duration-200 hover:scale-105 ${service.color}`}
+                class={`streaming-link block px-4 py-3 rounded-md text-center text-sm font-medium ${service.color}`}
+                data-service={service.name}
               >
                 {service.name}
               </a>
@@ -154,7 +155,8 @@ const nominationsByOrg =
               href={movie.imdbUrl}
               target="_blank"
               rel="noopener noreferrer"
-              class="block px-4 py-3 mt-3 bg-yellow-500 text-gray-900 rounded-md text-center text-sm font-medium transition-all duration-200 hover:scale-105"
+              class="streaming-link block px-4 py-3 mt-3 bg-yellow-500 text-gray-900 rounded-md text-center text-sm font-medium"
+              data-service="IMDb"
             >
               IMDb
             </a>
@@ -163,7 +165,8 @@ const nominationsByOrg =
             href={`https://www.google.com/search?q=${encodeURIComponent(movie.title + " " + movie.year + " " + (locale === "ja" ? "映画" : "movie"))}`}
             target="_blank"
             rel="noopener noreferrer"
-            class="block px-4 py-3 mt-3 bg-gray-600 text-white rounded-md text-center text-sm font-medium transition-all duration-200 hover:scale-105"
+            class="streaming-link block px-4 py-3 mt-3 bg-gray-600 text-white rounded-md text-center text-sm font-medium"
+            data-service="Google"
           >
             Google
           </a>
@@ -288,20 +291,41 @@ const nominationsByOrg =
   /* Streaming menu hover styles */
   .movie-card-container:hover .streaming-menu {
     opacity: 1;
+    pointer-events: auto;
   }
 
   .streaming-menu {
     z-index: 20;
   }
+  
+  .streaming-menu.mobile-open {
+    opacity: 1 !important;
+    pointer-events: auto;
+  }
 
   /* Mobile-specific styles */
   @media (max-width: 768px) {
-    .movie-card-container:hover .streaming-menu {
-      opacity: 0;
+    .movie-card-container:hover .streaming-menu,
+    .movie-card-container .streaming-menu {
+      opacity: 0 !important;
+      display: none !important;
     }
 
-    .streaming-menu.mobile-open {
-      opacity: 1;
+    .movie-card-container .streaming-menu.mobile-open,
+    .movie-card-container:hover .streaming-menu.mobile-open {
+      display: flex !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      background-color: rgba(0, 0, 0, 0.8) !important;
+      align-items: center !important;
+      justify-content: center !important;
+      z-index: 9999 !important;
     }
 
     .toggle-details {
@@ -411,53 +435,77 @@ const nominationsByOrg =
       });
     });
 
-    // Handle mobile tap interactions for streaming menu
-    const movieCards = document.querySelectorAll(".movie-card");
-    movieCards.forEach((card) => {
-      const container = card.closest(".movie-card-container");
-      const streamingMenu = card.querySelector(".streaming-menu");
+    // Handle mobile tap interactions for streaming menu - only set up once globally
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    
+    if (isMobile && !window.mobileHandlersSetup) {
+      console.log("Setting up mobile handlers (once)");
+      window.mobileHandlersSetup = true;
       
-      if (container && streamingMenu) {
-        let touchStartTime = 0;
+      // Use event delegation to handle all poster area clicks
+      document.addEventListener("click", function(e) {
+        const posterArea = e.target.closest(".poster-area");
+        const streamingMenuContent = e.target.closest('.streaming-menu-content');
+        const streamingLink = e.target.closest('.streaming-link');
         
-        // Handle touch events for mobile
-        card.addEventListener("touchstart", (e) => {
-          touchStartTime = Date.now();
+        console.log("Click detected:", {
+          posterArea: !!posterArea,
+          streamingMenuContent: !!streamingMenuContent,
+          streamingLink: !!streamingLink
         });
         
-        card.addEventListener("touchend", (e) => {
-          const touchDuration = Date.now() - touchStartTime;
+        if (posterArea && !streamingMenuContent && !streamingLink) {
+          console.log("Poster clicked!");
+          e.preventDefault();
+          e.stopPropagation();
           
-          // Only respond to quick taps (not scrolls)
-          if (touchDuration < 200) {
-            e.preventDefault();
-            
+          const streamingMenu = posterArea.querySelector(".streaming-menu");
+          if (streamingMenu) {
             const isOpen = streamingMenu.classList.contains("mobile-open");
+            console.log("Current state:", isOpen ? "open" : "closed");
             
-            // Close all other open menus
-            document.querySelectorAll(".streaming-menu.mobile-open").forEach((menu) => {
-              menu.classList.remove("mobile-open");
+            // Close all other menus first
+            document.querySelectorAll(".streaming-menu.mobile-open").forEach(menu => {
+              if (menu !== streamingMenu) {
+                menu.classList.remove("mobile-open");
+              }
             });
             
-            // Toggle current menu
-            if (!isOpen) {
-              streamingMenu.classList.add("mobile-open");
-            }
+            // Toggle this menu with a small delay to avoid conflicts
+            setTimeout(() => {
+              if (isOpen) {
+                streamingMenu.classList.remove("mobile-open");
+                console.log("Closed menu via poster click");
+              } else {
+                streamingMenu.classList.add("mobile-open");
+                console.log("Opened menu via poster click");
+              }
+            }, 10);
           }
-        });
-      }
-    });
-
-    // Close streaming menu when clicking outside
-    document.addEventListener("click", (e) => {
-      const openMenus = document.querySelectorAll(".streaming-menu.mobile-open");
-      openMenus.forEach((menu) => {
-        const container = menu.closest(".movie-card-container");
-        if (container && !container.contains(e.target)) {
-          menu.classList.remove("mobile-open");
+        } else if (!posterArea && !streamingMenuContent) {
+          // Close all menus when clicking outside
+          console.log("Clicking outside, closing all menus via outside click");
+          document.querySelectorAll(".streaming-menu.mobile-open").forEach(menu => {
+            menu.classList.remove("mobile-open");
+            console.log("Closed menu via outside click");
+          });
         }
       });
-    });
+      
+      // Disable streaming links when menu is not open
+      document.addEventListener("click", function(e) {
+        if (e.target.closest(".streaming-link")) {
+          const link = e.target.closest(".streaming-link");
+          const menu = link.closest(".streaming-menu");
+          console.log("Streaming link clicked, menu open:", menu?.classList.contains("mobile-open"));
+          if (!menu || !menu.classList.contains("mobile-open")) {
+            console.log("Preventing streaming link click");
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }
+      });
+    }
   }
 
   // Initialize immediately if DOM is ready, otherwise wait for it
