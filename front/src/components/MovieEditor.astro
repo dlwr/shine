@@ -54,6 +54,15 @@ const { movieId } = Astro.props;
         <div id="posters-list" class="posters-list"></div>
       </div>
 
+      <div class="nominations-section">
+        <div class="section-header">
+          <h3>ノミネート管理</h3>
+          <button id="add-nomination-btn" class="btn btn-primary">ノミネートを追加</button>
+        </div>
+
+        <div id="nominations-list" class="nominations-list"></div>
+      </div>
+
       <div class="translations-section">
         <div class="section-header">
           <h3>翻訳管理</h3>
@@ -171,6 +180,53 @@ const { movieId } = Astro.props;
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">保存</button>
           <button type="button" id="cancel-tmdb-btn" class="btn btn-secondary">キャンセル</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Nomination Modal -->
+  <div id="nomination-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="nomination-modal-title">ノミネートを追加</h3>
+        <button id="close-nomination-modal" class="close-btn">&times;</button>
+      </div>
+      <form id="nomination-form">
+        <div class="form-group">
+          <label for="nomination-organization">賞の団体:</label>
+          <select id="nomination-organization" required>
+            <option value="">団体を選択</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="nomination-ceremony">授賞式:</label>
+          <select id="nomination-ceremony" required disabled>
+            <option value="">授賞式を選択</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="nomination-category">カテゴリ:</label>
+          <select id="nomination-category" required disabled>
+            <option value="">カテゴリを選択</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="nomination-winner" />
+            受賞
+          </label>
+        </div>
+        <div class="form-group">
+          <label for="nomination-special-mention">特別言及:</label>
+          <input type="text" id="nomination-special-mention" placeholder="オプション" />
+          <small class="form-help">
+            特別な言及がある場合（例：特別賞、優秀賞など）
+          </small>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="nomination-submit-btn">追加</button>
+          <button type="button" id="cancel-nomination-btn" class="btn btn-secondary">キャンセル</button>
         </div>
       </form>
     </div>
@@ -358,6 +414,72 @@ const { movieId } = Astro.props;
     gap: 8px;
   }
 
+  .nominations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .no-nominations {
+    color: #6b7280;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .nomination-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid #7c3aed;
+  }
+
+  .nomination-item.winner {
+    border-left-color: #059669;
+    background: #f0fdf4;
+  }
+
+  .nomination-info {
+    flex: 1;
+  }
+
+  .nomination-header {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+
+  .nomination-details {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+
+  .nomination-special {
+    font-size: 0.875rem;
+    font-style: italic;
+    color: #7c3aed;
+  }
+
+  .nomination-winner-badge {
+    background: #059669;
+    color: white;
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+  }
+
+  .nomination-actions {
+    display: flex;
+    gap: 8px;
+  }
+
   .translations-list {
     display: flex;
     flex-direction: column;
@@ -519,6 +641,47 @@ const { movieId } = Astro.props;
     isDefault: boolean;
   }
 
+  interface Nomination {
+    uid: string;
+    isWinner: boolean;
+    specialMention?: string;
+    category: {
+      uid: string;
+      name: string;
+    };
+    ceremony: {
+      uid: string;
+      number?: number;
+      year: number;
+    };
+    organization: {
+      uid: string;
+      name: string;
+      shortName?: string;
+    };
+  }
+
+  interface AwardOrganization {
+    uid: string;
+    name: string;
+    country?: string;
+  }
+
+  interface AwardCeremony {
+    uid: string;
+    organizationUid: string;
+    year: number;
+    ceremonyNumber?: number;
+    organizationName: string;
+  }
+
+  interface AwardCategory {
+    uid: string;
+    organizationUid: string;
+    name: string;
+    organizationName: string;
+  }
+
   interface Poster {
     uid: string;
     url: string;
@@ -533,6 +696,12 @@ const { movieId } = Astro.props;
     private movieId: string;
     private apiUrl: string;
     private adminToken: string | null;
+    private awards: {
+      organizations: AwardOrganization[];
+      ceremonies: AwardCeremony[];
+      categories: AwardCategory[];
+    } | null = null;
+    private editingNomination: Nomination | null = null;
 
     constructor() {
       const editorEl = document.getElementById("movie-editor");
@@ -553,9 +722,55 @@ const { movieId } = Astro.props;
 
       this.setupEventListeners();
       await this.loadMovie();
+      await this.loadAwards();
     }
 
     setupEventListeners() {
+      // Nomination management
+      document
+        .getElementById("add-nomination-btn")
+        ?.addEventListener("click", async () => {
+          await this.openNominationModal();
+        });
+
+      document.getElementById("close-nomination-modal")?.addEventListener("click", () => {
+        this.closeNominationModal();
+      });
+
+      document.getElementById("cancel-nomination-btn")?.addEventListener("click", () => {
+        this.closeNominationModal();
+      });
+
+      document
+        .getElementById("nomination-form")
+        ?.addEventListener("submit", (e) => {
+          e.preventDefault();
+          this.saveNomination();
+        });
+
+      // Click outside nomination modal to close
+      document
+        .getElementById("nomination-modal")
+        ?.addEventListener("click", (e) => {
+          if (e.target === e.currentTarget) {
+            this.closeNominationModal();
+          }
+        });
+
+      // Organization change handler
+      document
+        .getElementById("nomination-organization")
+        ?.addEventListener("change", (e) => {
+          this.onOrganizationChange((e.target as HTMLSelectElement).value);
+        });
+
+      // Ceremony change handler
+      document
+        .getElementById("nomination-ceremony")
+        ?.addEventListener("change", (e) => {
+          this.onCeremonyChange((e.target as HTMLSelectElement).value);
+        });
+
       // Poster management
       document
         .getElementById("add-poster-btn")
@@ -681,6 +896,36 @@ const { movieId } = Astro.props;
         });
     }
 
+    async loadAwards() {
+      if (!this.adminToken) {
+        console.warn("No admin token found for loading awards");
+        return;
+      }
+
+      try {
+        console.log("Loading awards from:", `${this.apiUrl}/admin/awards`);
+        const response = await fetch(`${this.apiUrl}/admin/awards`, {
+          headers: {
+            Authorization: `Bearer ${this.adminToken}`,
+          },
+        });
+
+        console.log("Awards response status:", response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Awards API error:", response.status, errorText);
+          throw new Error(`Failed to load awards data: ${response.status} ${errorText}`);
+        }
+
+        this.awards = await response.json();
+        console.log("Awards loaded successfully:", this.awards);
+      } catch (error) {
+        console.error("Error loading awards:", error);
+        this.showError("賞のデータを読み込めませんでした: " + (error instanceof Error ? error.message : "Unknown error"));
+      }
+    }
+
     async loadMovie() {
       try {
         const url = `${this.apiUrl}/movies/${this.movieId}`;
@@ -732,6 +977,9 @@ const { movieId } = Astro.props;
       // Display posters
       this.displayPosters(movie.posters || []);
 
+      // Display nominations
+      this.displayNominations(movie.nominations || []);
+
       // Display translations
       this.displayTranslations(movie.translations);
     }
@@ -773,6 +1021,59 @@ const { movieId } = Astro.props;
         if (deleteBtn) {
           deleteBtn.addEventListener("click", () => {
             this.deletePoster(poster.uid);
+          });
+        }
+
+        container.appendChild(item);
+      });
+    }
+
+    displayNominations(nominations: Nomination[]) {
+      const container = document.getElementById("nominations-list");
+      if (!container) return;
+
+      container.innerHTML = "";
+
+      if (nominations.length === 0) {
+        container.innerHTML = '<p class="no-nominations">ノミネートがありません</p>';
+        return;
+      }
+
+      nominations.forEach((nomination) => {
+        const item = document.createElement("div");
+        item.className = `nomination-item ${nomination.isWinner ? "winner" : ""}`;
+
+        const organizationName = nomination.organization.shortName || nomination.organization.name;
+        const ceremonyInfo = nomination.ceremony.year + (nomination.ceremony.number ? ` (第${nomination.ceremony.number}回)` : '');
+        
+        item.innerHTML = `
+          <div class="nomination-info">
+            <div class="nomination-header">
+              ${nomination.category.name}${nomination.isWinner ? '<span class="nomination-winner-badge">受賞</span>' : ''}
+            </div>
+            <div class="nomination-details">
+              ${organizationName} ${ceremonyInfo}
+            </div>
+            ${nomination.specialMention ? `<div class="nomination-special">${nomination.specialMention}</div>` : ''}
+          </div>
+          <div class="nomination-actions">
+            <button class="btn btn-secondary btn-small edit-nomination-btn" data-nomination-uid="${nomination.uid}">編集</button>
+            <button class="btn btn-danger btn-small delete-nomination-btn" data-nomination-uid="${nomination.uid}">削除</button>
+          </div>
+        `;
+
+        // Add event listeners
+        const editBtn = item.querySelector(".edit-nomination-btn");
+        if (editBtn) {
+          editBtn.addEventListener("click", async () => {
+            await this.editNomination(nomination);
+          });
+        }
+
+        const deleteBtn = item.querySelector(".delete-nomination-btn");
+        if (deleteBtn) {
+          deleteBtn.addEventListener("click", () => {
+            this.deleteNomination(nomination.uid);
           });
         }
 
@@ -1264,6 +1565,299 @@ const { movieId } = Astro.props;
         if (!response.ok) {
           const errorData = await response.json() as { error?: string };
           throw new Error(errorData.error || "ポスターの削除に失敗しました");
+        }
+
+        await this.loadMovie();
+      } catch (error) {
+        this.showError(
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      }
+    }
+
+    async openNominationModal(nomination: Nomination | null = null) {
+      console.log("Opening nomination modal, awards data:", this.awards);
+      
+      // If awards data is not loaded, try to load it now
+      if (!this.awards) {
+        console.log("Awards data not loaded, attempting to load...");
+        await this.loadAwards();
+        
+        if (!this.awards) {
+          console.error("Failed to load awards data");
+          this.showError("賞のデータが読み込まれていません");
+          return;
+        }
+      }
+
+      const modal = document.getElementById("nomination-modal");
+      const titleEl = document.getElementById("nomination-modal-title");
+      const submitBtn = document.getElementById("nomination-submit-btn");
+      
+      if (!modal) return;
+
+      // Set edit mode
+      this.editingNomination = nomination;
+      
+      if (nomination) {
+        // Edit mode
+        if (titleEl) titleEl.textContent = "ノミネートを編集";
+        if (submitBtn) submitBtn.textContent = "更新";
+      } else {
+        // Add mode
+        if (titleEl) titleEl.textContent = "ノミネートを追加";
+        if (submitBtn) submitBtn.textContent = "追加";
+      }
+
+      // Populate organizations
+      this.populateOrganizations();
+      
+      if (nomination) {
+        // Pre-fill form for editing
+        const orgSelect = document.getElementById("nomination-organization") as HTMLSelectElement;
+        const ceremonySelect = document.getElementById("nomination-ceremony") as HTMLSelectElement;
+        const categorySelect = document.getElementById("nomination-category") as HTMLSelectElement;
+        const winnerCheck = document.getElementById("nomination-winner") as HTMLInputElement;
+        const specialInput = document.getElementById("nomination-special-mention") as HTMLInputElement;
+
+        if (orgSelect) {
+          orgSelect.value = nomination.organization.uid;
+          this.onOrganizationChange(nomination.organization.uid);
+          
+          // Wait for ceremonies to populate, then set values
+          setTimeout(() => {
+            if (ceremonySelect) {
+              ceremonySelect.value = nomination.ceremony.uid;
+              this.onCeremonyChange(nomination.ceremony.uid);
+              
+              // Wait for categories to populate, then set values
+              setTimeout(() => {
+                if (categorySelect) categorySelect.value = nomination.category.uid;
+              }, 100);
+            }
+          }, 100);
+        }
+        
+        if (winnerCheck) winnerCheck.checked = nomination.isWinner;
+        if (specialInput) specialInput.value = nomination.specialMention || "";
+      } else {
+        // Reset form for adding
+        const formEl = document.getElementById("nomination-form") as HTMLFormElement;
+        if (formEl) formEl.reset();
+        this.resetNominationSelects();
+      }
+      
+      modal.style.display = "flex";
+    }
+
+    closeNominationModal() {
+      const modal = document.getElementById("nomination-modal");
+      if (modal) modal.style.display = "none";
+      this.editingNomination = null;
+    }
+
+    populateOrganizations() {
+      if (!this.awards) return;
+      
+      const select = document.getElementById("nomination-organization") as HTMLSelectElement;
+      if (!select) return;
+      
+      // Clear existing options except the first one
+      select.innerHTML = '<option value="">団体を選択</option>';
+      
+      this.awards.organizations.forEach(org => {
+        const option = document.createElement("option");
+        option.value = org.uid;
+        option.textContent = org.name;
+        select.appendChild(option);
+      });
+    }
+
+    onOrganizationChange(organizationUid: string) {
+      this.populateCeremonies(organizationUid);
+      this.populateCategories(organizationUid);
+    }
+
+    onCeremonyChange(ceremonyUid: string) {
+      // Enable category select after ceremony is selected
+      const categorySelect = document.getElementById("nomination-category") as HTMLSelectElement;
+      if (categorySelect && ceremonyUid) {
+        categorySelect.disabled = false;
+      }
+    }
+
+    populateCeremonies(organizationUid: string) {
+      if (!this.awards) return;
+      
+      const select = document.getElementById("nomination-ceremony") as HTMLSelectElement;
+      if (!select) return;
+      
+      // Clear and disable
+      select.innerHTML = '<option value="">授賞式を選択</option>';
+      select.disabled = !organizationUid;
+      
+      if (!organizationUid) return;
+      
+      // Filter ceremonies by organization
+      const ceremonies = this.awards.ceremonies.filter(c => c.organizationUid === organizationUid);
+      
+      ceremonies.forEach(ceremony => {
+        const option = document.createElement("option");
+        option.value = ceremony.uid;
+        option.textContent = `${ceremony.year}年` + (ceremony.ceremonyNumber ? ` (第${ceremony.ceremonyNumber}回)` : '');
+        select.appendChild(option);
+      });
+      
+      select.disabled = false;
+    }
+
+    populateCategories(organizationUid: string) {
+      if (!this.awards) return;
+      
+      const select = document.getElementById("nomination-category") as HTMLSelectElement;
+      if (!select) return;
+      
+      // Clear and disable
+      select.innerHTML = '<option value="">カテゴリを選択</option>';
+      select.disabled = !organizationUid;
+      
+      if (!organizationUid) return;
+      
+      // Filter categories by organization
+      const categories = this.awards.categories.filter(c => c.organizationUid === organizationUid);
+      
+      categories.forEach(category => {
+        const option = document.createElement("option");
+        option.value = category.uid;
+        option.textContent = category.name;
+        select.appendChild(option);
+      });
+      
+      select.disabled = false;
+    }
+
+    resetNominationSelects() {
+      const ceremonySelect = document.getElementById("nomination-ceremony") as HTMLSelectElement;
+      const categorySelect = document.getElementById("nomination-category") as HTMLSelectElement;
+      
+      if (ceremonySelect) {
+        ceremonySelect.innerHTML = '<option value="">授賞式を選択</option>';
+        ceremonySelect.disabled = true;
+      }
+      
+      if (categorySelect) {
+        categorySelect.innerHTML = '<option value="">カテゴリを選択</option>';
+        categorySelect.disabled = true;
+      }
+    }
+
+    async editNomination(nomination: Nomination) {
+      await this.openNominationModal(nomination);
+    }
+
+    async saveNomination() {
+      if (!this.adminToken) {
+        this.showError("管理者権限が必要です");
+        return;
+      }
+
+      const ceremonySelect = document.getElementById("nomination-ceremony") as HTMLSelectElement;
+      const categorySelect = document.getElementById("nomination-category") as HTMLSelectElement;
+      const winnerCheck = document.getElementById("nomination-winner") as HTMLInputElement;
+      const specialInput = document.getElementById("nomination-special-mention") as HTMLInputElement;
+
+      if (!ceremonySelect || !categorySelect || !winnerCheck || !specialInput) {
+        this.showError("フォーム要素が見つかりません");
+        return;
+      }
+
+      const ceremonyUid = ceremonySelect.value;
+      const categoryUid = categorySelect.value;
+      const isWinner = winnerCheck.checked;
+      const specialMention = specialInput.value.trim() || undefined;
+
+      if (!ceremonyUid || !categoryUid) {
+        this.showError("授賞式とカテゴリは必須です");
+        return;
+      }
+
+      try {
+        let response;
+        
+        if (this.editingNomination) {
+          // Update existing nomination
+          response = await fetch(
+            `${this.apiUrl}/admin/nominations/${this.editingNomination.uid}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${this.adminToken}`,
+              },
+              body: JSON.stringify({
+                isWinner,
+                specialMention,
+              }),
+            }
+          );
+        } else {
+          // Add new nomination
+          response = await fetch(
+            `${this.apiUrl}/admin/movies/${this.movieId}/nominations`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${this.adminToken}`,
+              },
+              body: JSON.stringify({
+                ceremonyUid,
+                categoryUid,
+                isWinner,
+                specialMention,
+              }),
+            }
+          );
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json() as { error?: string };
+          throw new Error(errorData.error || "ノミネートの保存に失敗しました");
+        }
+
+        this.closeNominationModal();
+        await this.loadMovie();
+      } catch (error) {
+        this.showError(
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      }
+    }
+
+    async deleteNomination(nominationUid: string) {
+      if (!this.adminToken) {
+        this.showError("管理者権限が必要です");
+        return;
+      }
+
+      if (!confirm("このノミネートを削除しますか？")) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${this.apiUrl}/admin/nominations/${nominationUid}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${this.adminToken}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json() as { error?: string };
+          throw new Error(errorData.error || "ノミネートの削除に失敗しました");
         }
 
         await this.loadMovie();

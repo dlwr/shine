@@ -689,7 +689,7 @@ function findPalmeDOrWinner(
 
 export async function updateAllCannesWinnersOnly() {
   try {
-    const master = await fetchMasterData();
+    await fetchMasterData();
 
     const currentYear = new Date().getFullYear();
     for (let year = currentYear; year >= 1946; year--) {
@@ -788,7 +788,7 @@ async function updateWinnerStatus(
     const movieUid = existingMovies[0].movies.uid;
 
     // ノミネーション情報を更新
-    const result = await database
+    await database
       .update(nominations)
       .set({
         isWinner: 1,

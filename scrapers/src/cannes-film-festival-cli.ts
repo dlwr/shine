@@ -68,18 +68,18 @@ async function main() {
 
     // スクレイピング処理を実行
     let url = "http://localhost/";
-    const searchParams = new URLSearchParams();
+    const searchParameters = new URLSearchParams();
     
     if (targetYear) {
-      searchParams.append("year", targetYear.toString());
+      searchParameters.append("year", targetYear.toString());
     }
     
     if (winnersOnlyFlag) {
-      searchParams.append("winners-only", "true");
+      searchParameters.append("winners-only", "true");
     }
     
-    if (searchParams.toString()) {
-      url += `?${searchParams.toString()}`;
+    if (searchParameters.toString()) {
+      url += `?${searchParameters.toString()}`;
     }
     
     const request = new Request(url);

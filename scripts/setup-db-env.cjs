@@ -2,26 +2,26 @@
 
 require('dotenv').config();
 
-const env = process.env.NODE_ENV || 'development';
-const isDev = env === 'development';
+const environment = process.env.NODE_ENV || 'development';
+const isDevelopment = environment === 'development';
 
-const dbUrl = isDev ? process.env.TURSO_DATABASE_URL_DEV : process.env.TURSO_DATABASE_URL_PROD;
-const authToken = isDev ? process.env.TURSO_AUTH_TOKEN_DEV : process.env.TURSO_AUTH_TOKEN_PROD;
+const databaseUrl = isDevelopment ? process.env.TURSO_DATABASE_URL_DEV : process.env.TURSO_DATABASE_URL_PROD;
+const authToken = isDevelopment ? process.env.TURSO_AUTH_TOKEN_DEV : process.env.TURSO_AUTH_TOKEN_PROD;
 
-if (!dbUrl || !authToken) {
-  console.error(`Missing database credentials for ${env} environment`);
+if (!databaseUrl || !authToken) {
+  console.error(`Missing database credentials for ${environment} environment`);
   console.error('Please ensure the following environment variables are set:');
-  console.error(isDev ? '- TURSO_DATABASE_URL_DEV' : '- TURSO_DATABASE_URL_PROD');
-  console.error(isDev ? '- TURSO_AUTH_TOKEN_DEV' : '- TURSO_AUTH_TOKEN_PROD');
+  console.error(isDevelopment ? '- TURSO_DATABASE_URL_DEV' : '- TURSO_DATABASE_URL_PROD');
+  console.error(isDevelopment ? '- TURSO_AUTH_TOKEN_DEV' : '- TURSO_AUTH_TOKEN_PROD');
   process.exit(1);
 }
 
-process.env.TURSO_DATABASE_URL = dbUrl;
+process.env.TURSO_DATABASE_URL = databaseUrl;
 process.env.TURSO_AUTH_TOKEN = authToken;
 
 const command = process.argv.slice(2).join(' ');
 if (command) {
-  const { execSync } = require('child_process');
+  const { execSync } = require('node:child_process');
   try {
     execSync(command, { stdio: 'inherit', env: process.env });
   } catch (error) {

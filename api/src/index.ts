@@ -1321,6 +1321,215 @@ app.put("/admin/movies/:id/tmdb-id", authMiddleware, async (c) => {
   }
 });
 
+// Admin: Get award organizations, ceremonies, and categories for nomination editing
+app.get("/admin/awards", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+
+    // Get award organizations
+    const organizations = await database
+      .select({
+        uid: awardOrganizations.uid,
+        name: awardOrganizations.name,
+        country: awardOrganizations.country,
+      })
+      .from(awardOrganizations)
+      .orderBy(awardOrganizations.name);
+
+    // Get award ceremonies
+    const ceremonies = await database
+      .select({
+        uid: awardCeremonies.uid,
+        organizationUid: awardCeremonies.organizationUid,
+        year: awardCeremonies.year,
+        ceremonyNumber: awardCeremonies.ceremonyNumber,
+        organizationName: awardOrganizations.name,
+      })
+      .from(awardCeremonies)
+      .innerJoin(
+        awardOrganizations,
+        eq(awardCeremonies.organizationUid, awardOrganizations.uid)
+      )
+      .orderBy(awardOrganizations.name, awardCeremonies.year);
+
+    // Get award categories
+    const categories = await database
+      .select({
+        uid: awardCategories.uid,
+        organizationUid: awardCategories.organizationUid,
+        name: awardCategories.name,
+        organizationName: awardOrganizations.name,
+      })
+      .from(awardCategories)
+      .innerJoin(
+        awardOrganizations,
+        eq(awardCategories.organizationUid, awardOrganizations.uid)
+      )
+      .orderBy(awardOrganizations.name, awardCategories.name);
+
+    return c.json({
+      organizations,
+      ceremonies,
+      categories,
+    });
+  } catch (error) {
+    console.error("Error fetching awards data:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Admin: Add nomination
+app.post("/admin/movies/:movieId/nominations", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const movieId = c.req.param("movieId");
+    const { ceremonyUid, categoryUid, isWinner = false, specialMention } =
+      await c.req.json();
+
+    // Validate required fields
+    if (!ceremonyUid || !categoryUid) {
+      return c.json(
+        { error: "Ceremony and category are required" },
+        400
+      );
+    }
+
+    // Check if movie exists
+    const movieExists = await database
+      .select({ uid: movies.uid })
+      .from(movies)
+      .where(eq(movies.uid, movieId))
+      .limit(1);
+
+    if (movieExists.length === 0) {
+      return c.json({ error: "Movie not found" }, 404);
+    }
+
+    // Check if ceremony exists
+    const ceremonyExists = await database
+      .select({ uid: awardCeremonies.uid })
+      .from(awardCeremonies)
+      .where(eq(awardCeremonies.uid, ceremonyUid))
+      .limit(1);
+
+    if (ceremonyExists.length === 0) {
+      return c.json({ error: "Ceremony not found" }, 404);
+    }
+
+    // Check if category exists
+    const categoryExists = await database
+      .select({ uid: awardCategories.uid })
+      .from(awardCategories)
+      .where(eq(awardCategories.uid, categoryUid))
+      .limit(1);
+
+    if (categoryExists.length === 0) {
+      return c.json({ error: "Category not found" }, 404);
+    }
+
+    // Check if nomination already exists
+    const existingNomination = await database
+      .select({ uid: nominations.uid })
+      .from(nominations)
+      .where(
+        and(
+          eq(nominations.movieUid, movieId),
+          eq(nominations.ceremonyUid, ceremonyUid),
+          eq(nominations.categoryUid, categoryUid)
+        )
+      )
+      .limit(1);
+
+    if (existingNomination.length > 0) {
+      return c.json(
+        { error: "Nomination already exists for this movie, ceremony, and category" },
+        409
+      );
+    }
+
+    // Add nomination
+    const newNomination = await database
+      .insert(nominations)
+      .values({
+        movieUid: movieId,
+        ceremonyUid,
+        categoryUid,
+        isWinner: isWinner ? 1 : 0,
+        specialMention: specialMention || undefined,
+      })
+      .returning();
+
+    return c.json(newNomination[0]);
+  } catch (error) {
+    console.error("Error adding nomination:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Admin: Update nomination
+app.put("/admin/nominations/:nominationId", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const nominationId = c.req.param("nominationId");
+    const { isWinner, specialMention } = await c.req.json();
+
+    // Check if nomination exists
+    const nomination = await database
+      .select({ uid: nominations.uid })
+      .from(nominations)
+      .where(eq(nominations.uid, nominationId))
+      .limit(1);
+
+    if (nomination.length === 0) {
+      return c.json({ error: "Nomination not found" }, 404);
+    }
+
+    // Update nomination
+    await database
+      .update(nominations)
+      .set({
+        isWinner: isWinner ? 1 : 0,
+        specialMention: specialMention || undefined,
+        updatedAt: sql`(unixepoch())`,
+      })
+      .where(eq(nominations.uid, nominationId));
+
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("Error updating nomination:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Admin: Delete nomination
+app.delete("/admin/nominations/:nominationId", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const nominationId = c.req.param("nominationId");
+
+    // Check if nomination exists
+    const nomination = await database
+      .select({ uid: nominations.uid })
+      .from(nominations)
+      .where(eq(nominations.uid, nominationId))
+      .limit(1);
+
+    if (nomination.length === 0) {
+      return c.json({ error: "Nomination not found" }, 404);
+    }
+
+    // Delete nomination
+    await database
+      .delete(nominations)
+      .where(eq(nominations.uid, nominationId));
+
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting nomination:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
 // Get URL title
 app.post("/fetch-url-title", async (c) => {
   try {

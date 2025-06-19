@@ -3,20 +3,20 @@
 require('dotenv').config();
 const { createClient } = require('@libsql/client');
 
-const env = process.env.NODE_ENV || 'development';
-const isDev = env === 'development';
+const environment = process.env.NODE_ENV || 'development';
+const isDevelopment = environment === 'development';
 
-const dbUrl = isDev ? process.env.TURSO_DATABASE_URL_DEV : process.env.TURSO_DATABASE_URL_PROD;
-const authToken = isDev ? process.env.TURSO_AUTH_TOKEN_DEV : process.env.TURSO_AUTH_TOKEN_PROD;
+const databaseUrl = isDevelopment ? process.env.TURSO_DATABASE_URL_DEV : process.env.TURSO_DATABASE_URL_PROD;
+const authToken = isDevelopment ? process.env.TURSO_AUTH_TOKEN_DEV : process.env.TURSO_AUTH_TOKEN_PROD;
 
-if (!dbUrl || !authToken) {
-  console.error(`Missing database credentials for ${env} environment`);
+if (!databaseUrl || !authToken) {
+  console.error(`Missing database credentials for ${environment} environment`);
   process.exit(1);
 }
 
 async function checkMigrations() {
   const client = createClient({
-    url: dbUrl,
+    url: databaseUrl,
     authToken: authToken,
   });
 
@@ -33,9 +33,9 @@ async function checkMigrations() {
       // Get all migrations
       const migrations = await client.execute('SELECT * FROM __drizzle_migrations ORDER BY created_at');
       console.log('\nApplied migrations:');
-      migrations.rows.forEach(row => {
+      for (const row of migrations.rows) {
         console.log(`- ${row.tag} (${new Date(row.created_at).toISOString()})`);
-      });
+      }
     } else {
       console.log('✗ Migrations table does not exist');
     }
