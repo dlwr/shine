@@ -160,7 +160,7 @@ const nominationsByOrg =
             </a>
           )}
           <a
-            href={`https://www.google.com/search?q=${encodeURIComponent(movie.title + " " + movie.year + " 映画")}`}
+            href={`https://www.google.com/search?q=${encodeURIComponent(movie.title + " " + movie.year + " " + (locale === "ja" ? "映画" : "movie"))}`}
             target="_blank"
             rel="noopener noreferrer"
             class="block px-4 py-3 mt-3 bg-gray-600 text-white rounded-md text-center text-sm font-medium transition-all duration-200 hover:scale-105"
