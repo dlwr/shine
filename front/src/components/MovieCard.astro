@@ -159,6 +159,14 @@ const nominationsByOrg =
               IMDb
             </a>
           )}
+          <a
+            href={`https://www.google.com/search?q=${encodeURIComponent(movie.title + " " + movie.year + " 映画")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="block px-4 py-3 mt-3 bg-gray-600 text-white rounded-md text-center text-sm font-medium transition-all duration-200 hover:scale-105"
+          >
+            Google
+          </a>
         </div>
       </div>
     </div>
@@ -286,10 +294,14 @@ const nominationsByOrg =
     z-index: 20;
   }
 
-  /* Prevent hover menu on mobile */
+  /* Mobile-specific styles */
   @media (max-width: 768px) {
     .movie-card-container:hover .streaming-menu {
       opacity: 0;
+    }
+
+    .streaming-menu.mobile-open {
+      opacity: 1;
     }
 
     .toggle-details {
