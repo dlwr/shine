@@ -71,23 +71,27 @@ const streamingServices = [
   {
     name: "U-NEXT",
     color: "bg-black text-white",
-    url: (title: string) => `https://video.unext.jp/freeword?query=${encodeURIComponent(title)}`
+    url: (title: string) =>
+      `https://video.unext.jp/freeword?query=${encodeURIComponent(title)}`,
   },
   {
     name: "Amazon Prime",
     color: "bg-blue-600 text-white",
-    url: (title: string) => `https://www.amazon.co.jp/s?k=${encodeURIComponent(title)}&i=prime-instant-video`
+    url: (title: string) =>
+      `https://www.amazon.co.jp/s?k=${encodeURIComponent(title)}&i=prime-instant-video`,
   },
   {
     name: "TMDb",
     color: "bg-green-600 text-white",
-    url: (title: string) => `https://www.themoviedb.org/search?query=${encodeURIComponent(title)}`
+    url: (title: string) =>
+      `https://www.themoviedb.org/search?query=${encodeURIComponent(title)}`,
   },
   {
     name: "Filmarks",
     color: "bg-purple-600 text-white",
-    url: (title: string) => `https://filmarks.com/search/movies?q=${encodeURIComponent(title)}`
-  }
+    url: (title: string) =>
+      `https://filmarks.com/search/movies?q=${encodeURIComponent(title)}`,
+  },
 ];
 
 // Group nominations by organization and ceremony
@@ -119,48 +123,62 @@ const nominationsByOrg =
 
 <div class="relative h-full w-80 movie-card-container">
   <div
-    class="rounded-xl overflow-hidden shadow-lg bg-white h-full flex flex-col w-full cursor-pointer movie-card"
+    class="rounded-xl overflow-hidden shadow-lg bg-white h-full flex flex-col w-full movie-card"
     data-movie-title={movie.title}
   >
-    <div class="poster-area h-[400px] md:h-[450px] bg-gray-100 flex items-center justify-center relative">
-      {movie.posterUrl ? (
-        <img
-          src={movie.posterUrl}
-          alt={`${movie.title} poster`}
-          class="w-full h-full object-cover"
-        />
-      ) : (
-        <div class="text-gray-500 text-xl">{t.noPoster}</div>
-      )}
-      
+    <div
+      class="poster-area h-[400px] md:h-[450px] bg-gray-100 flex items-center justify-center relative"
+    >
+      {
+        movie.posterUrl ? (
+          <img
+            src={movie.posterUrl}
+            alt={`${movie.title} poster`}
+            class="w-full h-full object-cover"
+          />
+        ) : (
+          <div class="text-gray-500 text-xl">{t.noPoster}</div>
+        )
+      }
+
       <!-- Streaming services hover menu -->
-      <div class="streaming-menu absolute inset-0 bg-black/80 flex items-center justify-center opacity-0 pointer-events-none">
-        <div class="streaming-menu-content bg-white rounded-lg p-6 max-w-xs w-full mx-4">
-          <h4 class="text-lg font-semibold text-gray-900 mb-4 text-center">{t.searchOn}</h4>
+      <div
+        class="streaming-menu absolute inset-0 bg-black/80 flex items-center justify-center opacity-0 pointer-events-none"
+      >
+        <div
+          class="streaming-menu-content bg-white rounded-lg p-6 max-w-xs w-full mx-4"
+        >
+          <h4 class="text-lg font-semibold text-gray-900 mb-4 text-center">
+            {t.searchOn}
+          </h4>
           <div class="grid grid-cols-1 gap-3">
-            {streamingServices.map((service) => (
+            {
+              streamingServices.map((service) => (
+                <a
+                  href={service.url(movie.title)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class={`streaming-link block px-4 py-3 rounded-md text-center text-sm font-medium ${service.color}`}
+                  data-service={service.name}
+                >
+                  {service.name}
+                </a>
+              ))
+            }
+          </div>
+          {
+            movie.imdbUrl && (
               <a
-                href={service.url(movie.title)}
+                href={movie.imdbUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                class={`streaming-link block px-4 py-3 rounded-md text-center text-sm font-medium ${service.color}`}
-                data-service={service.name}
+                class="streaming-link block px-4 py-3 mt-3 bg-yellow-500 text-gray-900 rounded-md text-center text-sm font-medium"
+                data-service="IMDb"
               >
-                {service.name}
+                IMDb
               </a>
-            ))}
-          </div>
-          {movie.imdbUrl && (
-            <a
-              href={movie.imdbUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="streaming-link block px-4 py-3 mt-3 bg-yellow-500 text-gray-900 rounded-md text-center text-sm font-medium"
-              data-service="IMDb"
-            >
-              IMDb
-            </a>
-          )}
+            )
+          }
           <a
             href={`https://www.google.com/search?q=${encodeURIComponent(movie.title + " " + movie.year + " " + (locale === "ja" ? "映画" : "movie"))}`}
             target="_blank"
@@ -173,76 +191,80 @@ const nominationsByOrg =
         </div>
       </div>
     </div>
-    
+
     <div class="p-5 md:p-6 flex-grow flex flex-col">
       <h3 class="m-0 mb-3 text-xl md:text-2xl font-semibold">
         {movie.title}
       </h3>
       <p class="m-0 mb-4 text-gray-600 text-lg">{movie.year}</p>
       <div class="collapsible-content">
-        {movie.nominations && movie.nominations.length > 0 && (
-          <div class="mt-auto pt-4 border-t border-gray-200">
-            {Object.values(nominationsByOrg).map((orgData: any) => (
-              <div class="mb-4 last:mb-0">
-                <h4 class="text-sm font-semibold text-gray-700 mb-2">
-                  {orgData.organization.shortName ||
-                    orgData.organization.name}
-                </h4>
-                {Object.values(orgData.ceremonies).map(
-                  (ceremonyData: any) => (
-                    <div class="mb-2">
-                      <span class="text-xs text-gray-600 font-medium">
-                        {ceremonyData.ceremony.year}
-                      </span>
-                      <ul class="list-none p-0 mt-1">
-                        {ceremonyData.nominations.map((nom: any) => (
-                          <li class="text-xs py-1 flex items-center justify-between">
-                            <span class="text-gray-700">
-                              {nom.category.name}
-                            </span>
-                            <span
-                              class={`text-xs px-2 py-1 rounded font-medium ml-2 ${
-                                nom.isWinner
-                                  ? "bg-yellow-400 text-gray-900"
-                                  : "bg-gray-200 text-gray-700"
-                              }`}
-                            >
-                              {nom.isWinner ? t.winner : t.nominee}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-        {movie.articleLinks && movie.articleLinks.length > 0 && (
-          <div class="px-6 pb-2 border-t border-gray-200">
-            <h4 class="text-sm font-semibold text-gray-700 mt-4 mb-3">
-              {t.relatedArticles}
-            </h4>
-            <ul class="list-none p-0 m-0">
-              {movie.articleLinks.map((article) => (
-                <li class="mb-1.5 last:mb-0">
-                  <a
-                    href={article.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="block px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-md no-underline text-inherit transition-all duration-200 hover:bg-gray-100 hover:border-gray-300 hover:translate-x-0.5"
-                    data-article-id={article.uid}
-                  >
-                    <span class="text-xs text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap block leading-snug">
-                      {article.title}
-                    </span>
-                  </a>
-                </li>
+        {
+          movie.nominations && movie.nominations.length > 0 && (
+            <div class="mt-auto pt-4 border-t border-gray-200">
+              {Object.values(nominationsByOrg).map((orgData: any) => (
+                <div class="mb-4 last:mb-0">
+                  <h4 class="text-sm font-semibold text-gray-700 mb-2">
+                    {orgData.organization.shortName ||
+                      orgData.organization.name}
+                  </h4>
+                  {Object.values(orgData.ceremonies).map(
+                    (ceremonyData: any) => (
+                      <div class="mb-2">
+                        <span class="text-xs text-gray-600 font-medium">
+                          {ceremonyData.ceremony.year}
+                        </span>
+                        <ul class="list-none p-0 mt-1">
+                          {ceremonyData.nominations.map((nom: any) => (
+                            <li class="text-xs py-1 flex items-center justify-between">
+                              <span class="text-gray-700">
+                                {nom.category.name}
+                              </span>
+                              <span
+                                class={`text-xs px-2 py-1 rounded font-medium ml-2 ${
+                                  nom.isWinner
+                                    ? "bg-yellow-400 text-gray-900"
+                                    : "bg-gray-200 text-gray-700"
+                                }`}
+                              >
+                                {nom.isWinner ? t.winner : t.nominee}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )
+                  )}
+                </div>
               ))}
-            </ul>
-          </div>
-        )}
+            </div>
+          )
+        }
+        {
+          movie.articleLinks && movie.articleLinks.length > 0 && (
+            <div class="px-6 pb-2 border-t border-gray-200">
+              <h4 class="text-sm font-semibold text-gray-700 mt-4 mb-3">
+                {t.relatedArticles}
+              </h4>
+              <ul class="list-none p-0 m-0">
+                {movie.articleLinks.map((article) => (
+                  <li class="mb-1.5 last:mb-0">
+                    <a
+                      href={article.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="block px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-md no-underline text-inherit transition-all duration-200 hover:bg-gray-100 hover:border-gray-300 hover:translate-x-0.5"
+                      data-article-id={article.uid}
+                    >
+                      <span class="text-xs text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap block leading-snug">
+                        {article.title}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
         <a
           href={`/movies/${movie.uid}`}
           class="inline-block mx-6 my-3 px-2 py-1 text-gray-500 no-underline rounded text-xs font-normal transition-all duration-200 border border-transparent hover:text-gray-700 hover:bg-gray-100 hover:border-gray-200"
@@ -289,7 +311,7 @@ const nominationsByOrg =
   }
 
   /* Streaming menu hover styles */
-  .movie-card-container:hover .streaming-menu {
+  .poster-area:hover .streaming-menu {
     opacity: 1;
     pointer-events: auto;
   }
@@ -297,7 +319,7 @@ const nominationsByOrg =
   .streaming-menu {
     z-index: 20;
   }
-  
+
   .streaming-menu.mobile-open {
     opacity: 1 !important;
     pointer-events: auto;
@@ -437,40 +459,44 @@ const nominationsByOrg =
 
     // Handle mobile tap interactions for streaming menu - only set up once globally
     const isMobile = window.matchMedia("(max-width: 768px)").matches;
-    
+
     if (isMobile && !window.mobileHandlersSetup) {
       console.log("Setting up mobile handlers (once)");
       window.mobileHandlersSetup = true;
-      
+
       // Use event delegation to handle all poster area clicks
-      document.addEventListener("click", function(e) {
+      document.addEventListener("click", function (e) {
         const posterArea = e.target.closest(".poster-area");
-        const streamingMenuContent = e.target.closest('.streaming-menu-content');
-        const streamingLink = e.target.closest('.streaming-link');
-        
+        const streamingMenuContent = e.target.closest(
+          ".streaming-menu-content"
+        );
+        const streamingLink = e.target.closest(".streaming-link");
+
         console.log("Click detected:", {
           posterArea: !!posterArea,
           streamingMenuContent: !!streamingMenuContent,
-          streamingLink: !!streamingLink
+          streamingLink: !!streamingLink,
         });
-        
+
         if (posterArea && !streamingMenuContent && !streamingLink) {
           console.log("Poster clicked!");
           e.preventDefault();
           e.stopPropagation();
-          
+
           const streamingMenu = posterArea.querySelector(".streaming-menu");
           if (streamingMenu) {
             const isOpen = streamingMenu.classList.contains("mobile-open");
             console.log("Current state:", isOpen ? "open" : "closed");
-            
+
             // Close all other menus first
-            document.querySelectorAll(".streaming-menu.mobile-open").forEach(menu => {
-              if (menu !== streamingMenu) {
-                menu.classList.remove("mobile-open");
-              }
-            });
-            
+            document
+              .querySelectorAll(".streaming-menu.mobile-open")
+              .forEach((menu) => {
+                if (menu !== streamingMenu) {
+                  menu.classList.remove("mobile-open");
+                }
+              });
+
             // Toggle this menu with a small delay to avoid conflicts
             setTimeout(() => {
               if (isOpen) {
@@ -485,19 +511,24 @@ const nominationsByOrg =
         } else if (!posterArea && !streamingMenuContent) {
           // Close all menus when clicking outside
           console.log("Clicking outside, closing all menus via outside click");
-          document.querySelectorAll(".streaming-menu.mobile-open").forEach(menu => {
-            menu.classList.remove("mobile-open");
-            console.log("Closed menu via outside click");
-          });
+          document
+            .querySelectorAll(".streaming-menu.mobile-open")
+            .forEach((menu) => {
+              menu.classList.remove("mobile-open");
+              console.log("Closed menu via outside click");
+            });
         }
       });
-      
+
       // Disable streaming links when menu is not open
-      document.addEventListener("click", function(e) {
+      document.addEventListener("click", function (e) {
         if (e.target.closest(".streaming-link")) {
           const link = e.target.closest(".streaming-link");
           const menu = link.closest(".streaming-menu");
-          console.log("Streaming link clicked, menu open:", menu?.classList.contains("mobile-open"));
+          console.log(
+            "Streaming link clicked, menu open:",
+            menu?.classList.contains("mobile-open")
+          );
           if (!menu || !menu.classList.contains("mobile-open")) {
             console.log("Preventing streaming link click");
             e.preventDefault();
