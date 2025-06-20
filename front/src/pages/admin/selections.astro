@@ -1,0 +1,614 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Movie Selections - Admin | SHINE">
+  <div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h1 class="mb-4 text-3xl font-bold text-gray-900">
+        Movie Selections Preview
+      </h1>
+      <p class="mb-8 text-gray-600">
+        Preview and manage upcoming movie selections for daily, weekly, and
+        monthly picks.
+      </p>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Next Daily Selection -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+          <div class="px-6 py-4 bg-blue-50 border-b border-blue-200">
+            <h2 class="text-lg font-semibold text-blue-900">Next Daily</h2>
+            <p class="text-sm text-blue-700" id="next-daily-date">Loading...</p>
+          </div>
+          <div class="p-6">
+            <div id="next-daily-movie" class="text-center text-gray-500">
+              Loading...
+            </div>
+            <div
+              class="mt-4 space-y-2"
+              id="next-daily-actions"
+              style="display: none;"
+            >
+              <button
+                type="button"
+                class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onclick="openOverrideModal('daily')"
+              >
+                Override Selection
+              </button>
+              <button
+                type="button"
+                class="w-full px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                onclick="editMovie('daily')"
+                id="edit-daily-btn"
+              >
+                Edit Movie
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Next Weekly Selection -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+          <div class="px-6 py-4 bg-green-50 border-b border-green-200">
+            <h2 class="text-lg font-semibold text-green-900">Next Weekly</h2>
+            <p class="text-sm text-green-700" id="next-weekly-date">
+              Loading...
+            </p>
+          </div>
+          <div class="p-6">
+            <div id="next-weekly-movie" class="text-center text-gray-500">
+              Loading...
+            </div>
+            <div
+              class="mt-4 space-y-2"
+              id="next-weekly-actions"
+              style="display: none;"
+            >
+              <button
+                type="button"
+                class="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                onclick="openOverrideModal('weekly')"
+              >
+                Override Selection
+              </button>
+              <button
+                type="button"
+                class="w-full px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                onclick="editMovie('weekly')"
+                id="edit-weekly-btn"
+              >
+                Edit Movie
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Next Monthly Selection -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+          <div class="px-6 py-4 bg-purple-50 border-b border-purple-200">
+            <h2 class="text-lg font-semibold text-purple-900">Next Monthly</h2>
+            <p class="text-sm text-purple-700" id="next-monthly-date">
+              Loading...
+            </p>
+          </div>
+          <div class="p-6">
+            <div id="next-monthly-movie" class="text-center text-gray-500">
+              Loading...
+            </div>
+            <div
+              class="mt-4 space-y-2"
+              id="next-monthly-actions"
+              style="display: none;"
+            >
+              <button
+                type="button"
+                class="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                onclick="openOverrideModal('monthly')"
+              >
+                Override Selection
+              </button>
+              <button
+                type="button"
+                class="w-full px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                onclick="editMovie('monthly')"
+                id="edit-monthly-btn"
+              >
+                Edit Movie
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="mt-8 flex justify-center space-x-4">
+        <a
+          href="/admin/movies"
+          class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+        >
+          Back to Movies
+        </a>
+        <button
+          type="button"
+          class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          onclick="refreshPreview()"
+        >
+          Refresh Preview
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Override Modal -->
+  <div
+    id="override-modal"
+    class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden"
+    style="z-index: 50;"
+  >
+    <div
+      class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
+    >
+      <div
+        class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+      >
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <h3
+            class="text-lg leading-6 font-medium text-gray-900 mb-4"
+            id="override-modal-title"
+          >
+            Override Selection
+          </h3>
+
+          <div class="space-y-4">
+            <div class="flex space-x-4">
+              <button
+                type="button"
+                id="search-tab"
+                class="flex-1 px-3 py-2 text-sm font-medium border-b-2 border-indigo-500 text-indigo-600"
+                onclick="switchTab('search')"
+              >
+                Search Movies
+              </button>
+              <button
+                type="button"
+                id="random-tab"
+                class="flex-1 px-3 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700"
+                onclick="switchTab('random')"
+              >
+                Random Selection
+              </button>
+            </div>
+
+            <!-- Search Tab Content -->
+            <div id="search-content">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Search Movies
+                </label>
+                <input
+                  type="text"
+                  id="movie-search"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Type movie title to search..."
+                  oninput="searchMovies()"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Select Movie
+                </label>
+                <div
+                  id="movie-search-results"
+                  class="max-h-60 overflow-y-auto border border-gray-300 rounded-md"
+                >
+                  <div class="p-4 text-center text-gray-500">
+                    Type to search for movies...
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Random Tab Content -->
+            <div id="random-content" style="display: none;">
+              <div class="text-center space-y-4">
+                <p class="text-sm text-gray-600">
+                  Generate a new random movie selection for this period
+                </p>
+                <button
+                  type="button"
+                  id="generate-random-btn"
+                  class="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  onclick="generateRandomMovie()"
+                >
+                  Generate Random Movie
+                </button>
+                <div id="random-movie-result" class="mt-4" style="display: none;">
+                  <!-- Random movie result will be displayed here -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button
+            type="button"
+            id="override-confirm-btn"
+            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            onclick="confirmOverride()"
+            disabled
+          >
+            Override Selection
+          </button>
+          <button
+            type="button"
+            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+            onclick="closeOverrideModal()"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    // Check authentication
+    const token = localStorage.getItem("adminToken");
+    if (!token) {
+      window.location.href = "/admin/login";
+    }
+
+    let currentOverrideType = null;
+    let currentOverrideDate = null;
+    let selectedMovieId = null;
+    let searchTimeout = null;
+    let movieData = {
+      daily: null,
+      weekly: null,
+      monthly: null
+    };
+
+    function getApiUrl() {
+      return window.location.hostname === "localhost"
+        ? "http://localhost:8787"
+        : "https://shine-api.yuta25.workers.dev";
+    }
+
+    function getAuthHeaders() {
+      const token = localStorage.getItem("adminToken");
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    }
+
+    async function loadPreview() {
+      try {
+        const response = await fetch(
+          `${getApiUrl()}/admin/preview-selections`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              ...getAuthHeaders(),
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to load preview");
+        }
+
+        const data = await response.json();
+
+        // Update UI
+        updateSelectionCard("daily", data.nextDaily);
+        updateSelectionCard("weekly", data.nextWeekly);
+        updateSelectionCard("monthly", data.nextMonthly);
+      } catch (error) {
+        console.error("Error loading preview:", error);
+        alert("Failed to load preview. Please try again.");
+      }
+    }
+
+    function updateSelectionCard(type, selectionData) {
+      const dateElement = document.getElementById(`next-${type}-date`);
+      const movieElement = document.getElementById(`next-${type}-movie`);
+      const actionsElement = document.getElementById(`next-${type}-actions`);
+
+      dateElement.textContent = selectionData.date;
+
+      if (selectionData.movie) {
+        // Store movie data for edit function
+        movieData[type] = selectionData.movie;
+        
+        movieElement.innerHTML = `
+          <div class="flex flex-col items-center space-y-3">
+            ${
+              selectionData.movie.posterUrl
+                ? `<img src="${selectionData.movie.posterUrl}" alt="${selectionData.movie.title}" class="w-24 h-36 object-cover rounded-md shadow-sm" />`
+                : '<div class="w-24 h-36 bg-gray-200 rounded-md flex items-center justify-center"><span class="text-gray-500 text-xs">No poster</span></div>'
+            }
+            <div class="text-center">
+              <h3 class="font-medium text-gray-900">${selectionData.movie.title || "Untitled"}</h3>
+              <p class="text-sm text-gray-500">${selectionData.movie.year || "Unknown year"}</p>
+              ${
+                selectionData.movie.nominations &&
+                selectionData.movie.nominations.length > 0
+                  ? `<div class="mt-1"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">${selectionData.movie.nominations.length} nomination${selectionData.movie.nominations.length !== 1 ? "s" : ""}</span></div>`
+                  : ""
+              }
+            </div>
+          </div>
+        `;
+        actionsElement.style.display = "block";
+      } else {
+        movieData[type] = null;
+        movieElement.innerHTML =
+          '<div class="text-center text-gray-500">No movie found</div>';
+        actionsElement.style.display = "none";
+      }
+    }
+
+    function openOverrideModal(type) {
+      currentOverrideType = type;
+
+      // Get the date for this type
+      const dateElement = document.getElementById(`next-${type}-date`);
+      currentOverrideDate = dateElement.textContent;
+
+      document.getElementById("override-modal-title").textContent =
+        `Override ${type.charAt(0).toUpperCase() + type.slice(1)} Selection`;
+      document.getElementById("override-modal").classList.remove("hidden");
+      
+      // Reset to search tab
+      switchTab('search');
+      document.getElementById("movie-search").value = "";
+      document.getElementById("movie-search-results").innerHTML =
+        '<div class="p-4 text-center text-gray-500">Type to search for movies...</div>';
+      document.getElementById("random-movie-result").style.display = "none";
+      selectedMovieId = null;
+      document.getElementById("override-confirm-btn").disabled = true;
+    }
+
+    function closeOverrideModal() {
+      document.getElementById("override-modal").classList.add("hidden");
+      currentOverrideType = null;
+      currentOverrideDate = null;
+      selectedMovieId = null;
+    }
+
+    async function searchMovies() {
+      const query = document.getElementById("movie-search").value.trim();
+
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+
+      if (query.length < 2) {
+        document.getElementById("movie-search-results").innerHTML =
+          '<div class="p-4 text-center text-gray-500">Type at least 2 characters to search...</div>';
+        return;
+      }
+
+      searchTimeout = setTimeout(async () => {
+        try {
+          const response = await fetch(
+            `${getApiUrl()}/admin/movies?limit=20&search=${encodeURIComponent(query)}`,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders(),
+              },
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error("Search failed");
+          }
+
+          const data = await response.json();
+          displaySearchResults(data.movies || []);
+        } catch (error) {
+          console.error("Search error:", error);
+          document.getElementById("movie-search-results").innerHTML =
+            '<div class="p-4 text-center text-red-500">Search failed. Please try again.</div>';
+        }
+      }, 300);
+    }
+
+    function displaySearchResults(movies) {
+      const resultsContainer = document.getElementById("movie-search-results");
+
+      if (movies.length === 0) {
+        resultsContainer.innerHTML =
+          '<div class="p-4 text-center text-gray-500">No movies found.</div>';
+        return;
+      }
+
+      resultsContainer.innerHTML = movies
+        .map(
+          (movie) => `
+        <div class="p-3 border-b border-gray-200 hover:bg-gray-50 cursor-pointer" onclick="selectMovie('${movie.uid}', '${movie.title?.replace(/'/g, "&#39;") || "Untitled"}', ${movie.year || "null"})">
+          <div class="flex items-center space-x-3">
+            ${
+              movie.posterUrl
+                ? `<img src="${movie.posterUrl}" alt="${movie.title}" class="w-12 h-18 object-cover rounded" />`
+                : '<div class="w-12 h-18 bg-gray-200 rounded flex items-center justify-center"><span class="text-gray-500 text-xs">No poster</span></div>'
+            }
+            <div class="flex-1">
+              <h4 class="font-medium text-gray-900">${movie.title || "Untitled"}</h4>
+              <p class="text-sm text-gray-500">${movie.year || "Unknown year"}</p>
+            </div>
+          </div>
+        </div>
+      `
+        )
+        .join("");
+    }
+
+    function selectMovie(movieId, title, year) {
+      selectedMovieId = movieId;
+
+      // Update search results to show selection
+      const resultsContainer = document.getElementById("movie-search-results");
+      resultsContainer.innerHTML = `
+        <div class="p-4 bg-indigo-50 border border-indigo-200 rounded">
+          <div class="flex items-center space-x-2">
+            <svg class="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+            </svg>
+            <div>
+              <h4 class="font-medium text-indigo-900">${title}</h4>
+              <p class="text-sm text-indigo-700">${year || "Unknown year"}</p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("override-confirm-btn").disabled = false;
+    }
+
+    async function confirmOverride() {
+      if (!selectedMovieId || !currentOverrideType || !currentOverrideDate) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${getApiUrl()}/admin/override-selection`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...getAuthHeaders(),
+            },
+            body: JSON.stringify({
+              type: currentOverrideType,
+              date: currentOverrideDate,
+              movieId: selectedMovieId,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Override failed");
+        }
+
+        closeOverrideModal();
+        await loadPreview(); // Refresh the preview
+        alert("Selection overridden successfully!");
+      } catch (error) {
+        console.error("Override error:", error);
+        alert("Failed to override selection. Please try again.");
+      }
+    }
+
+    function switchTab(tabName) {
+      const searchTab = document.getElementById("search-tab");
+      const randomTab = document.getElementById("random-tab");
+      const searchContent = document.getElementById("search-content");
+      const randomContent = document.getElementById("random-content");
+
+      if (tabName === "search") {
+        searchTab.classList.add("border-indigo-500", "text-indigo-600");
+        searchTab.classList.remove("border-transparent", "text-gray-500");
+        randomTab.classList.add("border-transparent", "text-gray-500");
+        randomTab.classList.remove("border-indigo-500", "text-indigo-600");
+        searchContent.style.display = "block";
+        randomContent.style.display = "none";
+      } else if (tabName === "random") {
+        randomTab.classList.add("border-indigo-500", "text-indigo-600");
+        randomTab.classList.remove("border-transparent", "text-gray-500");
+        searchTab.classList.add("border-transparent", "text-gray-500");
+        searchTab.classList.remove("border-indigo-500", "text-indigo-600");
+        randomContent.style.display = "block";
+        searchContent.style.display = "none";
+      }
+    }
+
+    async function generateRandomMovie() {
+      if (!currentOverrideType) return;
+
+      const generateBtn = document.getElementById("generate-random-btn");
+      const originalText = generateBtn.textContent;
+      
+      generateBtn.disabled = true;
+      generateBtn.textContent = "Generating...";
+
+      try {
+        const response = await fetch(`${getApiUrl()}/reselect`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({
+            type: currentOverrideType,
+            locale: "en",
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to generate random movie");
+        }
+
+        const data = await response.json();
+        
+        if (data.movie) {
+          selectedMovieId = data.movie.uid;
+          
+          // Display the random movie result
+          const resultContainer = document.getElementById("random-movie-result");
+          resultContainer.innerHTML = `
+            <div class="p-4 bg-purple-50 border border-purple-200 rounded">
+              <div class="flex items-center space-x-3">
+                ${data.movie.posterUrl 
+                  ? `<img src="${data.movie.posterUrl}" alt="${data.movie.title}" class="w-16 h-24 object-cover rounded" />` 
+                  : '<div class="w-16 h-24 bg-gray-200 rounded flex items-center justify-center"><span class="text-gray-500 text-xs">No poster</span></div>'
+                }
+                <div class="flex-1">
+                  <h4 class="font-medium text-purple-900">${data.movie.title || "Untitled"}</h4>
+                  <p class="text-sm text-purple-700">${data.movie.year || "Unknown year"}</p>
+                  ${data.movie.nominations && data.movie.nominations.length > 0 
+                    ? `<p class="text-xs text-purple-600 mt-1">${data.movie.nominations.length} nomination${data.movie.nominations.length !== 1 ? 's' : ''}</p>`
+                    : ''
+                  }
+                </div>
+                <svg class="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+            </div>
+          `;
+          resultContainer.style.display = "block";
+          document.getElementById("override-confirm-btn").disabled = false;
+        } else {
+          throw new Error("No movie returned from random selection");
+        }
+
+      } catch (error) {
+        console.error("Generate random movie error:", error);
+        alert("Failed to generate random movie. Please try again.");
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = originalText;
+      }
+    }
+
+    function editMovie(type) {
+      const movie = movieData[type];
+      if (movie && movie.uid) {
+        window.location.href = `/admin/movies/${movie.uid}`;
+      } else {
+        alert("No movie found to edit for this selection.");
+      }
+    }
+
+    async function refreshPreview() {
+      await loadPreview();
+    }
+
+    // Load preview on page load
+    document.addEventListener("DOMContentLoaded", loadPreview);
+  </script>
+</Layout>
