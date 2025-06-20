@@ -43,7 +43,7 @@ function getCurrentUrl(newLocale: string): string {
     langOptions.forEach(option => {
       option.addEventListener('click', (e) => {
         e.preventDefault();
-        const newLocale = (e.target as HTMLElement).dataset.locale;
+        const newLocale = (e.target as unknown as HTMLElement).dataset.locale;
         if (newLocale) {
           const url = new URL(window.location.href);
           url.searchParams.set('locale', newLocale);

@@ -761,14 +761,14 @@ const { movieId } = Astro.props;
       document
         .getElementById("nomination-organization")
         ?.addEventListener("change", (e) => {
-          this.onOrganizationChange((e.target as HTMLSelectElement).value);
+          this.onOrganizationChange((e.target as unknown as HTMLSelectElement).value);
         });
 
       // Ceremony change handler
       document
         .getElementById("nomination-ceremony")
         ?.addEventListener("change", (e) => {
-          this.onCeremonyChange((e.target as HTMLSelectElement).value);
+          this.onCeremonyChange((e.target as unknown as HTMLSelectElement).value);
         });
 
       // Poster management
@@ -1132,13 +1132,13 @@ const { movieId } = Astro.props;
         // Edit mode
         const langCodeEl = document.getElementById(
           "language-code"
-        ) as HTMLSelectElement | null;
+        ) as unknown as HTMLSelectElement | null;
         const contentEl = document.getElementById(
           "translation-content"
-        ) as HTMLInputElement | null;
+        ) as unknown as HTMLInputElement | null;
         const defaultEl = document.getElementById(
           "is-default"
-        ) as HTMLInputElement | null;
+        ) as unknown as HTMLInputElement | null;
 
         if (langCodeEl) {
           langCodeEl.value = translation.languageCode;
@@ -1150,10 +1150,10 @@ const { movieId } = Astro.props;
         // Add mode
         const formEl = document.getElementById(
           "translation-form"
-        ) as HTMLFormElement | null;
+        ) as unknown as HTMLFormElement | null;
         const langCodeEl = document.getElementById(
           "language-code"
-        ) as HTMLSelectElement | null;
+        ) as unknown as HTMLSelectElement | null;
 
         if (formEl) formEl.reset();
         if (langCodeEl) langCodeEl.disabled = false;
@@ -1179,13 +1179,13 @@ const { movieId } = Astro.props;
 
       const languageCodeEl = document.getElementById(
         "language-code"
-      ) as HTMLSelectElement | null;
+      ) as unknown as HTMLSelectElement | null;
       const contentEl = document.getElementById(
         "translation-content"
-      ) as HTMLInputElement | null;
+      ) as unknown as HTMLInputElement | null;
       const defaultEl = document.getElementById(
         "is-default"
-      ) as HTMLInputElement | null;
+      ) as unknown as HTMLInputElement | null;
 
       if (!languageCodeEl || !contentEl || !defaultEl) {
         this.showError("フォーム要素が見つかりません");
@@ -1267,7 +1267,7 @@ const { movieId } = Astro.props;
     openImdbModal() {
       const modal = document.getElementById("imdb-modal");
       const currentImdbEl = document.getElementById("movie-imdb");
-      const inputEl = document.getElementById("imdb-id-input") as HTMLInputElement | null;
+      const inputEl = document.getElementById("imdb-id-input") as unknown as HTMLInputElement | null;
       
       if (!modal) return;
       
@@ -1291,8 +1291,8 @@ const { movieId } = Astro.props;
         return;
       }
 
-      const inputEl = document.getElementById("imdb-id-input") as HTMLInputElement | null;
-      const refreshEl = document.getElementById("refresh-data") as HTMLInputElement | null;
+      const inputEl = document.getElementById("imdb-id-input") as unknown as HTMLInputElement | null;
+      const refreshEl = document.getElementById("refresh-data") as unknown as HTMLInputElement | null;
       
       if (!inputEl) {
         this.showError("入力フィールドが見つかりません");
@@ -1368,7 +1368,7 @@ const { movieId } = Astro.props;
     openTmdbModal() {
       const modal = document.getElementById("tmdb-modal");
       const currentTmdbEl = document.getElementById("movie-tmdb");
-      const inputEl = document.getElementById("tmdb-id-input") as HTMLInputElement | null;
+      const inputEl = document.getElementById("tmdb-id-input") as unknown as HTMLInputElement | null;
       
       if (!modal) return;
       
@@ -1392,8 +1392,8 @@ const { movieId } = Astro.props;
         return;
       }
 
-      const inputEl = document.getElementById("tmdb-id-input") as HTMLInputElement | null;
-      const refreshEl = document.getElementById("tmdb-refresh-data") as HTMLInputElement | null;
+      const inputEl = document.getElementById("tmdb-id-input") as unknown as HTMLInputElement | null;
+      const refreshEl = document.getElementById("tmdb-refresh-data") as unknown as HTMLInputElement | null;
       
       if (!inputEl) {
         this.showError("入力フィールドが見つかりません");
@@ -1465,7 +1465,7 @@ const { movieId } = Astro.props;
 
     openPosterModal() {
       const modal = document.getElementById("poster-modal");
-      const formEl = document.getElementById("poster-form") as HTMLFormElement | null;
+      const formEl = document.getElementById("poster-form") as unknown as HTMLFormElement | null;
       
       if (!modal) return;
       
@@ -1486,11 +1486,11 @@ const { movieId } = Astro.props;
         return;
       }
 
-      const urlEl = document.getElementById("poster-url-input") as HTMLInputElement | null;
-      const widthEl = document.getElementById("poster-width") as HTMLInputElement | null;
-      const heightEl = document.getElementById("poster-height") as HTMLInputElement | null;
-      const languageEl = document.getElementById("poster-language") as HTMLSelectElement | null;
-      const primaryEl = document.getElementById("poster-primary") as HTMLInputElement | null;
+      const urlEl = document.getElementById("poster-url-input") as unknown as HTMLInputElement | null;
+      const widthEl = document.getElementById("poster-width") as unknown as HTMLInputElement | null;
+      const heightEl = document.getElementById("poster-height") as unknown as HTMLInputElement | null;
+      const languageEl = document.getElementById("poster-language") as unknown as HTMLSelectElement | null;
+      const primaryEl = document.getElementById("poster-primary") as unknown as HTMLInputElement | null;
       
       if (!urlEl) {
         this.showError("入力フィールドが見つかりません");
@@ -1614,11 +1614,11 @@ const { movieId } = Astro.props;
       
       if (nomination) {
         // Pre-fill form for editing
-        const orgSelect = document.getElementById("nomination-organization") as HTMLSelectElement;
-        const ceremonySelect = document.getElementById("nomination-ceremony") as HTMLSelectElement;
-        const categorySelect = document.getElementById("nomination-category") as HTMLSelectElement;
-        const winnerCheck = document.getElementById("nomination-winner") as HTMLInputElement;
-        const specialInput = document.getElementById("nomination-special-mention") as HTMLInputElement;
+        const orgSelect = document.getElementById("nomination-organization") as unknown as HTMLSelectElement;
+        const ceremonySelect = document.getElementById("nomination-ceremony") as unknown as HTMLSelectElement;
+        const categorySelect = document.getElementById("nomination-category") as unknown as HTMLSelectElement;
+        const winnerCheck = document.getElementById("nomination-winner") as unknown as HTMLInputElement;
+        const specialInput = document.getElementById("nomination-special-mention") as unknown as HTMLInputElement;
 
         if (orgSelect) {
           orgSelect.value = nomination.organization.uid;
@@ -1642,7 +1642,7 @@ const { movieId } = Astro.props;
         if (specialInput) specialInput.value = nomination.specialMention || "";
       } else {
         // Reset form for adding
-        const formEl = document.getElementById("nomination-form") as HTMLFormElement;
+        const formEl = document.getElementById("nomination-form") as unknown as HTMLFormElement;
         if (formEl) formEl.reset();
         this.resetNominationSelects();
       }
@@ -1659,7 +1659,7 @@ const { movieId } = Astro.props;
     populateOrganizations() {
       if (!this.awards) return;
       
-      const select = document.getElementById("nomination-organization") as HTMLSelectElement;
+      const select = document.getElementById("nomination-organization") as unknown as HTMLSelectElement;
       if (!select) return;
       
       // Clear existing options except the first one
@@ -1680,7 +1680,7 @@ const { movieId } = Astro.props;
 
     onCeremonyChange(ceremonyUid: string) {
       // Enable category select after ceremony is selected
-      const categorySelect = document.getElementById("nomination-category") as HTMLSelectElement;
+      const categorySelect = document.getElementById("nomination-category") as unknown as HTMLSelectElement;
       if (categorySelect && ceremonyUid) {
         categorySelect.disabled = false;
       }
@@ -1689,7 +1689,7 @@ const { movieId } = Astro.props;
     populateCeremonies(organizationUid: string) {
       if (!this.awards) return;
       
-      const select = document.getElementById("nomination-ceremony") as HTMLSelectElement;
+      const select = document.getElementById("nomination-ceremony") as unknown as HTMLSelectElement;
       if (!select) return;
       
       // Clear and disable
@@ -1714,7 +1714,7 @@ const { movieId } = Astro.props;
     populateCategories(organizationUid: string) {
       if (!this.awards) return;
       
-      const select = document.getElementById("nomination-category") as HTMLSelectElement;
+      const select = document.getElementById("nomination-category") as unknown as HTMLSelectElement;
       if (!select) return;
       
       // Clear and disable
@@ -1737,8 +1737,8 @@ const { movieId } = Astro.props;
     }
 
     resetNominationSelects() {
-      const ceremonySelect = document.getElementById("nomination-ceremony") as HTMLSelectElement;
-      const categorySelect = document.getElementById("nomination-category") as HTMLSelectElement;
+      const ceremonySelect = document.getElementById("nomination-ceremony") as unknown as HTMLSelectElement;
+      const categorySelect = document.getElementById("nomination-category") as unknown as HTMLSelectElement;
       
       if (ceremonySelect) {
         ceremonySelect.innerHTML = '<option value="">授賞式を選択</option>';
@@ -1761,10 +1761,10 @@ const { movieId } = Astro.props;
         return;
       }
 
-      const ceremonySelect = document.getElementById("nomination-ceremony") as HTMLSelectElement;
-      const categorySelect = document.getElementById("nomination-category") as HTMLSelectElement;
-      const winnerCheck = document.getElementById("nomination-winner") as HTMLInputElement;
-      const specialInput = document.getElementById("nomination-special-mention") as HTMLInputElement;
+      const ceremonySelect = document.getElementById("nomination-ceremony") as unknown as HTMLSelectElement;
+      const categorySelect = document.getElementById("nomination-category") as unknown as HTMLSelectElement;
+      const winnerCheck = document.getElementById("nomination-winner") as unknown as HTMLInputElement;
+      const specialInput = document.getElementById("nomination-special-mention") as unknown as HTMLInputElement;
 
       if (!ceremonySelect || !categorySelect || !winnerCheck || !specialInput) {
         this.showError("フォーム要素が見つかりません");

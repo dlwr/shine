@@ -178,7 +178,7 @@ const t = translations[locale as keyof typeof translations] || translations.en;
   const adminButton = document.getElementById('admin-button')!;
   const loginModal = document.getElementById('login-modal')!;
   const loginForm = document.getElementById('login-form')!;
-  const passwordInput = document.getElementById('password-input') as HTMLInputElement;
+  const passwordInput = document.getElementById('password-input') as unknown as HTMLInputElement;
   const cancelButton = document.getElementById('cancel-button')!;
   const errorMessage = document.getElementById('error-message')!;
 

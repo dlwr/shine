@@ -12,6 +12,20 @@ import Layout from '../../layouts/Layout.astro';
       </div>
     </div>
     
+    <div class="search-container">
+      <div class="search-input-wrapper">
+        <input
+          type="text"
+          id="movieSearch"
+          class="search-input"
+          placeholder="Search movies by title..."
+        />
+        <button id="clearSearchBtn" class="clear-search-btn" style="display: none;">
+          ✕
+        </button>
+      </div>
+    </div>
+    
     <div id="moviesContainer" class="movies-container">
       <div class="loading">Loading movies...</div>
     </div>
@@ -202,6 +216,57 @@ import Layout from '../../layouts/Layout.astro';
   .pagination span {
     color: #6b7280;
   }
+
+  .search-container {
+    margin-bottom: 2rem;
+  }
+
+  .search-input-wrapper {
+    position: relative;
+    max-width: 400px;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  }
+
+  .clear-search-btn {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.25rem;
+    border-radius: 50%;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+  }
+
+  .clear-search-btn:hover {
+    background: #f3f4f6;
+    color: #374151;
+  }
 </style>
 
 <script>
@@ -212,6 +277,8 @@ import Layout from '../../layouts/Layout.astro';
   
   let currentPage = 1;
   let totalPages = 1;
+  let currentSearchQuery = '';
+  let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
   function checkAuth() {
     const token = localStorage.getItem('adminToken');
@@ -243,7 +310,7 @@ import Layout from '../../layouts/Layout.astro';
     pagination: PaginationData;
   }
 
-  async function fetchMovies(page = 1) {
+  async function fetchMovies(page = 1, searchQuery = '') {
     const token = checkAuth();
     if (!token) return;
 
@@ -253,7 +320,8 @@ import Layout from '../../layouts/Layout.astro';
     container.innerHTML = '<div class="loading">Loading movies...</div>';
 
     try {
-      const response = await fetch(`${API_BASE}/admin/movies?page=${page}&limit=20`, {
+      const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
+      const response = await fetch(`${API_BASE}/admin/movies?page=${page}&limit=20${searchParam}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -344,11 +412,11 @@ import Layout from '../../layouts/Layout.astro';
     `;
 
     document.getElementById('prevBtn')?.addEventListener('click', () => {
-      if (currentPage > 1) fetchMovies(currentPage - 1);
+      if (currentPage > 1) fetchMovies(currentPage - 1, currentSearchQuery);
     });
 
     document.getElementById('nextBtn')?.addEventListener('click', () => {
-      if (currentPage < totalPages) fetchMovies(currentPage + 1);
+      if (currentPage < totalPages) fetchMovies(currentPage + 1, currentSearchQuery);
     });
   }
 
@@ -379,12 +447,46 @@ import Layout from '../../layouts/Layout.astro';
       }
 
       // Refresh the current page
-      fetchMovies(currentPage);
+      fetchMovies(currentPage, currentSearchQuery);
       alert(`Movie "${movieTitle}" has been deleted successfully.`);
     } catch (error) {
       alert('Failed to delete movie. Please try again.');
       console.error('Delete error:', error);
     }
+  }
+
+  function setupSearchFunctionality() {
+    const searchInput = document.getElementById('movieSearch') as unknown as HTMLInputElement;
+    const clearSearchBtn = document.getElementById('clearSearchBtn') as unknown as HTMLButtonElement;
+
+    if (!searchInput || !clearSearchBtn) return;
+
+    searchInput.addEventListener('input', (e) => {
+      const query = (e.target as unknown as HTMLInputElement).value.trim();
+      
+      // Show/hide clear button
+      clearSearchBtn.style.display = query ? 'flex' : 'none';
+      
+      // Clear existing timeout
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+      
+      // Set new timeout for search
+      searchTimeout = setTimeout(() => {
+        currentSearchQuery = query;
+        currentPage = 1; // Reset to first page for new search
+        fetchMovies(1, query);
+      }, 300);
+    });
+
+    clearSearchBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      clearSearchBtn.style.display = 'none';
+      currentSearchQuery = '';
+      currentPage = 1;
+      fetchMovies(1, '');
+    });
   }
 
   // Make deleteMovie available globally
@@ -394,6 +496,7 @@ import Layout from '../../layouts/Layout.astro';
   document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
     fetchMovies();
+    setupSearchFunctionality();
 
     document.getElementById('logoutBtn')?.addEventListener('click', () => {
       localStorage.removeItem('adminToken');
