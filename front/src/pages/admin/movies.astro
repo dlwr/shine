@@ -6,7 +6,10 @@ import Layout from '../../layouts/Layout.astro';
   <div class="admin-container">
     <div class="admin-header">
       <h1>Movies Management</h1>
-      <button id="logoutBtn" class="logout-btn">Logout</button>
+      <div class="header-actions">
+        <a href="/admin/selections" class="nav-btn">Movie Selections</a>
+        <button id="logoutBtn" class="logout-btn">Logout</button>
+      </div>
     </div>
     
     <div id="moviesContainer" class="movies-container">
@@ -29,6 +32,26 @@ import Layout from '../../layouts/Layout.astro';
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .nav-btn {
+    padding: 0.5rem 1rem;
+    background: #4f46e5;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    transition: background-color 0.2s;
+  }
+
+  .nav-btn:hover {
+    background: #4338ca;
   }
 
   h1 {
