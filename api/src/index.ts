@@ -403,6 +403,123 @@ app.post("/reselect", authMiddleware, async (c) => {
   }
 });
 
+// Admin: Preview next period movie selections
+app.get("/admin/preview-selections", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const now = new Date();
+
+    const localeParameter = c.req.query("locale");
+    const locale = localeParameter || "en";
+
+    // Calculate next dates
+    const nextDay = new Date(now);
+    nextDay.setDate(now.getDate() + 1);
+
+    const daysSinceFriday = (now.getDay() - 5 + 7) % 7;
+    const fridayDate = new Date(now);
+    fridayDate.setDate(now.getDate() - daysSinceFriday);
+    const nextFriday = new Date(fridayDate);
+    nextFriday.setDate(fridayDate.getDate() + 7);
+
+    const nextMonth = new Date(now);
+    nextMonth.setMonth(now.getMonth() + 1);
+    nextMonth.setDate(1);
+
+    // Get next period selections
+    const [nextDailyMovie, nextWeeklyMovie, nextMonthlyMovie] =
+      await Promise.all([
+        getMovieByDateSeed(database, nextDay, "daily", locale),
+        getMovieByDateSeed(database, nextFriday, "weekly", locale),
+        getMovieByDateSeed(database, nextMonth, "monthly", locale),
+      ]);
+
+    return c.json({
+      nextDaily: {
+        date: getSelectionDate(nextDay, "daily"),
+        movie: nextDailyMovie,
+      },
+      nextWeekly: {
+        date: getSelectionDate(nextFriday, "weekly"),
+        movie: nextWeeklyMovie,
+      },
+      nextMonthly: {
+        date: getSelectionDate(nextMonth, "monthly"),
+        movie: nextMonthlyMovie,
+      },
+    });
+  } catch (error) {
+    console.error("Error previewing next selections:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Admin: Override movie selection for specific date/type
+app.post("/admin/override-selection", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const { type, date, movieId } = await c.req.json();
+
+    // Validate inputs
+    if (!type || !["daily", "weekly", "monthly"].includes(type)) {
+      return c.json({ error: "Invalid selection type" }, 400);
+    }
+
+    if (!date) {
+      return c.json({ error: "Date is required" }, 400);
+    }
+
+    if (!movieId) {
+      return c.json({ error: "Movie ID is required" }, 400);
+    }
+
+    // Validate date format
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date)) {
+      return c.json({ error: "Date must be in YYYY-MM-DD format" }, 400);
+    }
+
+    // Check if movie exists
+    const movieExists = await database
+      .select({ uid: movies.uid })
+      .from(movies)
+      .where(eq(movies.uid, movieId))
+      .limit(1);
+
+    if (movieExists.length === 0) {
+      return c.json({ error: "Movie not found" }, 404);
+    }
+
+    // Delete existing selection if any
+    await database
+      .delete(movieSelections)
+      .where(
+        and(
+          eq(movieSelections.selectionType, type),
+          eq(movieSelections.selectionDate, date)
+        )
+      );
+
+    // Insert new selection
+    const newSelection = await database
+      .insert(movieSelections)
+      .values({
+        selectionType: type,
+        selectionDate: date,
+        movieId: movieId,
+      })
+      .returning();
+
+    return c.json({
+      success: true,
+      selection: newSelection[0],
+    });
+  } catch (error) {
+    console.error("Error overriding selection:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
 // Get movie details with all translations
 app.get("/movies/:id", async (c) => {
   try {
@@ -585,16 +702,10 @@ app.get("/admin/movies", authMiddleware, async (c) => {
     const page = Number(c.req.query("page") || 1);
     const limit = Number(c.req.query("limit") || 50);
     const offset = (page - 1) * limit;
+    const search = c.req.query("search");
 
-    // Get total count
-    const countResult = await database
-      .select({ count: sql`count(*)`.as("count") })
-      .from(movies);
-
-    const totalCount = Number(countResult[0].count);
-
-    // Get movies with default translations and first poster URL
-    const moviesResult = await database
+    // Build base query
+    const baseQuery = database
       .select({
         uid: movies.uid,
         year: movies.year,
@@ -618,10 +729,39 @@ app.get("/admin/movies", authMiddleware, async (c) => {
           eq(translations.resourceType, "movie_title"),
           eq(translations.isDefault, 1)
         )
-      )
-      .orderBy(sql`${movies.createdAt} DESC`)
-      .limit(limit)
-      .offset(offset);
+      );
+
+    // Apply search filter if provided
+    const query = search
+      ? baseQuery.where(sql`${translations.content} LIKE ${"%" + search + "%"}`)
+      : baseQuery;
+
+    // Build count query
+    const baseCountQuery = database
+      .select({ count: sql`count(*)`.as("count") })
+      .from(movies)
+      .leftJoin(
+        translations,
+        and(
+          eq(movies.uid, translations.resourceUid),
+          eq(translations.resourceType, "movie_title"),
+          eq(translations.isDefault, 1)
+        )
+      );
+
+    const countQuery = search
+      ? baseCountQuery.where(sql`${translations.content} LIKE ${"%" + search + "%"}`)
+      : baseCountQuery;
+
+    const [countResult, moviesResult] = await Promise.all([
+      countQuery,
+      query
+        .orderBy(sql`${movies.createdAt} DESC`)
+        .limit(limit)
+        .offset(offset),
+    ]);
+
+    const totalCount = Number(countResult[0].count);
 
     return c.json({
       movies: moviesResult.map((movie: (typeof moviesResult)[0]) => ({
@@ -1383,15 +1523,16 @@ app.post("/admin/movies/:movieId/nominations", authMiddleware, async (c) => {
   try {
     const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("movieId");
-    const { ceremonyUid, categoryUid, isWinner = false, specialMention } =
-      await c.req.json();
+    const {
+      ceremonyUid,
+      categoryUid,
+      isWinner = false,
+      specialMention,
+    } = await c.req.json();
 
     // Validate required fields
     if (!ceremonyUid || !categoryUid) {
-      return c.json(
-        { error: "Ceremony and category are required" },
-        400
-      );
+      return c.json({ error: "Ceremony and category are required" }, 400);
     }
 
     // Check if movie exists
@@ -1442,7 +1583,10 @@ app.post("/admin/movies/:movieId/nominations", authMiddleware, async (c) => {
 
     if (existingNomination.length > 0) {
       return c.json(
-        { error: "Nomination already exists for this movie, ceremony, and category" },
+        {
+          error:
+            "Nomination already exists for this movie, ceremony, and category",
+        },
         409
       );
     }
@@ -1519,9 +1663,7 @@ app.delete("/admin/nominations/:nominationId", authMiddleware, async (c) => {
     }
 
     // Delete nomination
-    await database
-      .delete(nominations)
-      .where(eq(nominations.uid, nominationId));
+    await database.delete(nominations).where(eq(nominations.uid, nominationId));
 
     return c.json({ success: true });
   } catch (error) {
