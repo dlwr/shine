@@ -1,5 +1,3 @@
-import type { Environment } from "db";
-import { movieSelections, movies, translations } from "src/schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock the db module
