@@ -135,6 +135,159 @@ async function getMovieNominations(
   }));
 }
 
+async function getMovieByDateSeedPreview(
+  database: ReturnType<typeof getDatabase>,
+  date: Date,
+  type: "daily" | "weekly" | "monthly",
+  preferredLanguage = "en"
+) {
+  const selectionDate = getSelectionDate(date, type);
+
+  // Check if we already have a selection for this date and type
+  const existingSelection = await database
+    .select()
+    .from(movieSelections)
+    .where(
+      and(
+        eq(movieSelections.selectionType, type),
+        eq(movieSelections.selectionDate, selectionDate)
+      )
+    )
+    .limit(1);
+
+  let movieId: string;
+
+  if (existingSelection.length > 0) {
+    // Use the existing selection
+    movieId = existingSelection[0].movieId;
+  } else {
+    // Generate a preview selection WITHOUT saving to database
+    const seed = getDateSeed(date, type);
+
+    // Get a random movie using the seed
+    const randomMovieResult = await database
+      .select({ uid: movies.uid })
+      .from(movies)
+      .orderBy(
+        sql`(ABS(${seed} % (SELECT COUNT(*) FROM movies)) + movies.rowid) % (SELECT COUNT(*) FROM movies)`
+      )
+      .limit(1);
+
+    if (randomMovieResult.length === 0) {
+      return;
+    }
+
+    movieId = randomMovieResult[0].uid;
+    // NOTE: We do NOT save this to the database for preview
+  }
+
+  // Now fetch the full movie details with translations and poster
+  const results = await database
+    .select()
+    .from(movies)
+    .leftJoin(
+      translations,
+      and(
+        eq(movies.uid, translations.resourceUid),
+        eq(translations.resourceType, "movie_title"),
+        eq(translations.languageCode, preferredLanguage)
+      )
+    )
+    .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
+    .where(eq(movies.uid, movieId))
+    .limit(1);
+
+  if (results.length === 0 || !results[0].translations?.content) {
+    // Try with default language
+    const fallbackResults = await database
+      .select()
+      .from(movies)
+      .leftJoin(
+        translations,
+        and(
+          eq(movies.uid, translations.resourceUid),
+          eq(translations.resourceType, "movie_title"),
+          eq(translations.isDefault, 1)
+        )
+      )
+      .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
+      .where(eq(movies.uid, movieId))
+      .limit(1);
+
+    if (fallbackResults.length > 0) {
+      const {
+        movies: movie,
+        translations: translation,
+        poster_urls: poster,
+      } = fallbackResults[0];
+
+      const imdbUrl = movie.imdbId
+        ? `https://www.imdb.com/title/${movie.imdbId}/`
+        : undefined;
+
+      // Get nominations for this movie
+      const movieNominations = await getMovieNominations(database, movie.uid);
+
+      return {
+        uid: movie.uid,
+        year: movie.year,
+        originalLanguage: movie.originalLanguage,
+        title: translation?.content,
+        posterUrl: poster?.url,
+        imdbUrl: imdbUrl,
+        nominations: movieNominations,
+      };
+    }
+  }
+
+  if (results.length === 0) {
+    return;
+  }
+
+  const {
+    movies: movie,
+    translations: translation,
+    poster_urls: poster,
+  } = results[0];
+
+  const imdbUrl = movie.imdbId
+    ? `https://www.imdb.com/title/${movie.imdbId}/`
+    : undefined;
+
+  // Get nominations for this movie
+  const movieNominations = await getMovieNominations(database, movie.uid);
+
+  // Get article links for this movie
+  const topArticles = await database
+    .select({
+      uid: articleLinks.uid,
+      url: articleLinks.url,
+      title: articleLinks.title,
+      description: articleLinks.description,
+    })
+    .from(articleLinks)
+    .where(
+      and(
+        eq(articleLinks.movieUid, movie.uid),
+        eq(articleLinks.isSpam, false),
+        eq(articleLinks.isFlagged, false)
+      )
+    )
+    .orderBy(sql`${articleLinks.submittedAt} DESC`)
+    .limit(3);
+
+  return {
+    uid: movie.uid,
+    year: movie.year,
+    originalLanguage: movie.originalLanguage,
+    title: translation?.content,
+    posterUrl: poster?.url,
+    imdbUrl: imdbUrl,
+    nominations: movieNominations,
+    articleLinks: topArticles,
+  };
+}
+
 async function getMovieByDateSeed(
   database: ReturnType<typeof getDatabase>,
   date: Date,
@@ -426,12 +579,12 @@ app.get("/admin/preview-selections", authMiddleware, async (c) => {
     nextMonth.setMonth(now.getMonth() + 1);
     nextMonth.setDate(1);
 
-    // Get next period selections
+    // Get next period selections (preview only - don't save to database)
     const [nextDailyMovie, nextWeeklyMovie, nextMonthlyMovie] =
       await Promise.all([
-        getMovieByDateSeed(database, nextDay, "daily", locale),
-        getMovieByDateSeed(database, nextFriday, "weekly", locale),
-        getMovieByDateSeed(database, nextMonth, "monthly", locale),
+        getMovieByDateSeedPreview(database, nextDay, "daily", locale),
+        getMovieByDateSeedPreview(database, nextFriday, "weekly", locale),
+        getMovieByDateSeedPreview(database, nextMonth, "monthly", locale),
       ]);
 
     return c.json({
@@ -450,6 +603,62 @@ app.get("/admin/preview-selections", authMiddleware, async (c) => {
     });
   } catch (error) {
     console.error("Error previewing next selections:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+
+// Admin: Clean up future movie selections
+app.delete("/admin/cleanup-future-selections", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const now = new Date();
+    
+    const currentDates = {
+      daily: getSelectionDate(now, "daily"),
+      weekly: getSelectionDate(now, "weekly"),
+      monthly: getSelectionDate(now, "monthly"),
+    };
+    
+    // Delete selections that are in the future
+    const deletedDaily = await database
+      .delete(movieSelections)
+      .where(
+        and(
+          eq(movieSelections.selectionType, "daily"),
+          sql`${movieSelections.selectionDate} > ${currentDates.daily}`
+        )
+      );
+      
+    const deletedWeekly = await database
+      .delete(movieSelections)
+      .where(
+        and(
+          eq(movieSelections.selectionType, "weekly"),
+          sql`${movieSelections.selectionDate} > ${currentDates.weekly}`
+        )
+      );
+      
+    const deletedMonthly = await database
+      .delete(movieSelections)
+      .where(
+        and(
+          eq(movieSelections.selectionType, "monthly"),
+          sql`${movieSelections.selectionDate} > ${currentDates.monthly}`
+        )
+      );
+    
+    return c.json({ 
+      success: true,
+      currentDates,
+      deletedCount: {
+        daily: deletedDaily.rowsAffected || 0,
+        weekly: deletedWeekly.rowsAffected || 0,
+        monthly: deletedMonthly.rowsAffected || 0,
+      }
+    });
+  } catch (error) {
+    console.error("Error cleaning up future selections:", error);
     return c.json({ error: "Internal server error" }, 500);
   }
 });
