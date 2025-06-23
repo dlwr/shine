@@ -1,4 +1,4 @@
-import { and, eq, getDatabase, not, sql, type Environment } from "db";
+import { and, eq, getDatabase, like, not, sql, type Environment } from "db";
 import { articleLinks } from "db/schema/article-links";
 import { awardCategories } from "db/schema/award-categories";
 import { awardCeremonies } from "db/schema/award-ceremonies";
@@ -11,6 +11,7 @@ import { referenceUrls } from "db/schema/reference-urls";
 import { translations } from "db/schema/translations";
 import { Hono } from "hono";
 import { authMiddleware } from "../auth";
+import { sanitizeText } from "../middleware/sanitizer";
 
 interface MovieDatabaseTranslation {
   iso_639_1: string;
@@ -26,9 +27,10 @@ adminRoutes.get("/movies", authMiddleware, async (c) => {
   try {
     const database = getDatabase(c.env as Environment);
     const page = Number(c.req.query("page") || 1);
-    const limit = Number(c.req.query("limit") || 50);
+    const limit = Math.min(Number(c.req.query("limit") || 50), 100);
+    const rawSearch = c.req.query("search");
+    const search = rawSearch ? sanitizeText(rawSearch) : undefined;
     const offset = (page - 1) * limit;
-    const search = c.req.query("search");
 
     // Build base query
     const baseQuery = database
@@ -59,7 +61,7 @@ adminRoutes.get("/movies", authMiddleware, async (c) => {
 
     // Apply search filter if provided
     const query = search
-      ? baseQuery.where(sql`${translations.content} LIKE ${"%" + search + "%"}`)
+      ? baseQuery.where(like(translations.content, `%${search}%`))
       : baseQuery;
 
     // Build count query
@@ -76,7 +78,7 @@ adminRoutes.get("/movies", authMiddleware, async (c) => {
       );
 
     const countQuery = search
-      ? baseCountQuery.where(sql`${translations.content} LIKE ${"%" + search + "%"}`)
+      ? baseCountQuery.where(like(translations.content, `%${search}%`))
       : baseCountQuery;
 
     const [countResult, moviesResult] = await Promise.all([

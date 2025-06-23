@@ -9,6 +9,7 @@ import { posterUrls } from "db/schema/poster-urls";
 import { translations } from "db/schema/translations";
 import { Hono } from "hono";
 import { authMiddleware } from "../auth";
+import { sanitizeText, sanitizeUrl } from "../middleware/sanitizer";
 
 export const moviesRoutes = new Hono<{ Bindings: Environment }>();
 
@@ -169,11 +170,19 @@ moviesRoutes.post("/:id/translations", authMiddleware, async (c) => {
   try {
     const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("id");
-    const { languageCode, content, isDefault = false } = await c.req.json();
-
-    if (!languageCode || !content) {
+    const { languageCode, content: rawContent } = await c.req.json();
+    
+    if (!languageCode || !rawContent) {
       return c.json({ error: "languageCode and content are required" }, 400);
     }
+    
+    if (languageCode.length !== 2) {
+      return c.json({ error: "Language code must be 2 characters" }, 400);
+    }
+    
+    const content = sanitizeText(rawContent);
+    const isDefault = false;
+
 
     // Check if movie exists
     const movieExists = await database
@@ -252,19 +261,23 @@ moviesRoutes.post("/:id/article-links", async (c) => {
   try {
     const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("id");
-    const { url, title, description } = await c.req.json();
-
-    // Validate inputs
-    if (!url || !title) {
+    const { url: rawUrl, title: rawTitle, description: rawDescription } = await c.req.json();
+    
+    if (!rawUrl || !rawTitle) {
       return c.json({ error: "URL and title are required" }, 400);
     }
-
-    // Basic URL validation
-    try {
-      new URL(url);
-    } catch {
-      return c.json({ error: "Invalid URL format" }, 400);
+    
+    if (rawTitle.length > 200) {
+      return c.json({ error: "Title too long" }, 400);
     }
+    
+    if (rawDescription && rawDescription.length > 500) {
+      return c.json({ error: "Description too long" }, 400);
+    }
+    
+    const url = sanitizeUrl(rawUrl);
+    const title = sanitizeText(rawTitle);
+    const description = rawDescription ? sanitizeText(rawDescription) : undefined;
 
     // Check if movie exists
     const movieExists = await database

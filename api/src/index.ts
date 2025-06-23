@@ -6,10 +6,25 @@ import { selectionsRoutes } from "./routes/selections";
 import { moviesRoutes } from "./routes/movies";
 import { adminRoutes } from "./routes/admin";
 import { utilitiesRoutes } from "./routes/utilities";
+import { securityHeaders } from "./middleware/security";
 
 const app = new Hono<{ Bindings: Environment }>();
 
-app.use("*", cors());
+app.use("*", cors({
+  origin: [
+    "https://shine.yuta25.jp",
+    "https://dlwr.github.io",
+    "http://localhost:3000",
+    "http://localhost:4321",
+    "http://localhost:8787",
+    "http://localhost:8888",
+    "http://localhost:8889",
+    "http://localhost:5173"
+  ],
+  credentials: true
+}));
+
+app.use("*", securityHeaders);
 
 // Mount route modules
 app.route("/auth", authRoutes);
