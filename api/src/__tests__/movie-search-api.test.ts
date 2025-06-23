@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 describe("Movie Search API", () => {
   beforeEach(() => {
@@ -14,35 +14,50 @@ describe("Movie Search API", () => {
 
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        movies: [
-          {
-            uid: "test-1",
-            title: "Test Movie",
-            year: 2023,
-            originalLanguage: "en",
-            hasAwards: false,
+      json: () =>
+        Promise.resolve({
+          movies: [
+            {
+              uid: "test-1",
+              title: "Test Movie",
+              year: 2023,
+              originalLanguage: "en",
+              hasAwards: false,
+            },
+          ],
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            totalCount: 1,
+            hasNextPage: false,
+            hasPrevPage: false,
           },
-        ],
-        pagination: {
-          currentPage: 1,
-          totalPages: 1,
-          totalCount: 1,
-          hasNextPage: false,
-          hasPrevPage: false,
-        },
-        filters: {
-          query: "Test Movie",
-        },
-      }),
+          filters: {
+            query: "Test Movie",
+          },
+        }),
     });
 
-    globalThis.fetch = mockFetch;
+    vi.stubGlobal("fetch", mockFetch);
 
-    const response = await fetch(`http://localhost:8787/movies/search?${searchParameters}`);
-    const data = await response.json() as {
-      movies: { uid: string; title: string; year: number; originalLanguage: string; hasAwards: boolean }[];
-      pagination: { currentPage: number; totalPages: number; totalCount: number; hasNextPage: boolean; hasPrevPage: boolean };
+    const response = await fetch(
+      `http://localhost:8787/movies/search?${searchParameters}`
+    );
+    const data = (await response.json()) as {
+      movies: {
+        uid: string;
+        title: string;
+        year: number;
+        originalLanguage: string;
+        hasAwards: boolean;
+      }[];
+      pagination: {
+        currentPage: number;
+        totalPages: number;
+        totalCount: number;
+        hasNextPage: boolean;
+        hasPrevPage: boolean;
+      };
     };
 
     expect(response.ok).toBe(true);
@@ -60,34 +75,43 @@ describe("Movie Search API", () => {
 
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        movies: [
-          {
-            uid: "test-1",
-            title: "Movie 2023",
-            year: 2023,
-            originalLanguage: "en",
-            hasAwards: false,
+      json: () =>
+        Promise.resolve({
+          movies: [
+            {
+              uid: "test-1",
+              title: "Movie 2023",
+              year: 2023,
+              originalLanguage: "en",
+              hasAwards: false,
+            },
+          ],
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            totalCount: 1,
+            hasNextPage: false,
+            hasPrevPage: false,
           },
-        ],
-        pagination: {
-          currentPage: 1,
-          totalPages: 1,
-          totalCount: 1,
-          hasNextPage: false,
-          hasPrevPage: false,
-        },
-        filters: {
-          year: 2023,
-        },
-      }),
+          filters: {
+            year: 2023,
+          },
+        }),
     });
 
-    globalThis.fetch = mockFetch;
+    vi.stubGlobal("fetch", mockFetch);
 
-    const response = await fetch(`http://localhost:8787/movies/search?${searchParameters}`);
-    const data = await response.json() as {
-      movies: { uid: string; title: string; year: number; originalLanguage: string; hasAwards: boolean }[];
+    const response = await fetch(
+      `http://localhost:8787/movies/search?${searchParameters}`
+    );
+    const data = (await response.json()) as {
+      movies: {
+        uid: string;
+        title: string;
+        year: number;
+        originalLanguage: string;
+        hasAwards: boolean;
+      }[];
       filters: { year: number };
     };
 
@@ -104,35 +128,44 @@ describe("Movie Search API", () => {
     });
 
     const mockFetch = vi.fn().mockResolvedValue({
-      ok: true, 
-      json: () => Promise.resolve({
-        movies: [
-          {
-            uid: "test-1",
-            title: "Japanese Movie",
-            year: 2023,
-            originalLanguage: "ja",
-            hasAwards: false,
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          movies: [
+            {
+              uid: "test-1",
+              title: "Japanese Movie",
+              year: 2023,
+              originalLanguage: "ja",
+              hasAwards: false,
+            },
+          ],
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            totalCount: 1,
+            hasNextPage: false,
+            hasPrevPage: false,
           },
-        ],
-        pagination: {
-          currentPage: 1,
-          totalPages: 1,
-          totalCount: 1,
-          hasNextPage: false,
-          hasPrevPage: false,
-        },
-        filters: {
-          language: "ja",
-        },
-      }),
+          filters: {
+            language: "ja",
+          },
+        }),
     });
 
-    globalThis.fetch = mockFetch;
+    vi.stubGlobal("fetch", mockFetch);
 
-    const response = await fetch(`http://localhost:8787/movies/search?${searchParameters}`);
-    const data = await response.json() as {
-      movies: { uid: string; title: string; year: number; originalLanguage: string; hasAwards: boolean }[];
+    const response = await fetch(
+      `http://localhost:8787/movies/search?${searchParameters}`
+    );
+    const data = (await response.json()) as {
+      movies: {
+        uid: string;
+        title: string;
+        year: number;
+        originalLanguage: string;
+        hasAwards: boolean;
+      }[];
       filters: { language: string };
     };
 
@@ -150,34 +183,43 @@ describe("Movie Search API", () => {
 
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        movies: [
-          {
-            uid: "test-1",
-            title: "Award Winner",
-            year: 2023,
-            originalLanguage: "en",
+      json: () =>
+        Promise.resolve({
+          movies: [
+            {
+              uid: "test-1",
+              title: "Award Winner",
+              year: 2023,
+              originalLanguage: "en",
+              hasAwards: true,
+            },
+          ],
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            totalCount: 1,
+            hasNextPage: false,
+            hasPrevPage: false,
+          },
+          filters: {
             hasAwards: true,
           },
-        ],
-        pagination: {
-          currentPage: 1,
-          totalPages: 1,
-          totalCount: 1,
-          hasNextPage: false,
-          hasPrevPage: false,
-        },
-        filters: {
-          hasAwards: true,
-        },
-      }),
+        }),
     });
 
-    globalThis.fetch = mockFetch;
+    vi.stubGlobal("fetch", mockFetch);
 
-    const response = await fetch(`http://localhost:8787/movies/search?${searchParameters}`);
-    const data = await response.json() as {
-      movies: { uid: string; title: string; year: number; originalLanguage: string; hasAwards: boolean }[];
+    const response = await fetch(
+      `http://localhost:8787/movies/search?${searchParameters}`
+    );
+    const data = (await response.json()) as {
+      movies: {
+        uid: string;
+        title: string;
+        year: number;
+        originalLanguage: string;
+        hasAwards: boolean;
+      }[];
       filters: { hasAwards: boolean };
     };
 
@@ -194,24 +236,32 @@ describe("Movie Search API", () => {
 
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        movies: [],
-        pagination: {
-          currentPage: 2,
-          totalPages: 3,
-          totalCount: 15,
-          hasNextPage: true,
-          hasPrevPage: true,
-        },
-        filters: {},
-      }),
+      json: () =>
+        Promise.resolve({
+          movies: [],
+          pagination: {
+            currentPage: 2,
+            totalPages: 3,
+            totalCount: 15,
+            hasNextPage: true,
+            hasPrevPage: true,
+          },
+          filters: {},
+        }),
     });
 
-    globalThis.fetch = mockFetch;
+    vi.stubGlobal("fetch", mockFetch);
 
-    const response = await fetch(`http://localhost:8787/movies/search?${searchParameters}`);
-    const data = await response.json() as {
-      pagination: { currentPage: number; totalPages: number; hasNextPage: boolean; hasPrevPage: boolean };
+    const response = await fetch(
+      `http://localhost:8787/movies/search?${searchParameters}`
+    );
+    const data = (await response.json()) as {
+      pagination: {
+        currentPage: number;
+        totalPages: number;
+        hasNextPage: boolean;
+        hasPrevPage: boolean;
+      };
     };
 
     expect(response.ok).toBe(true);
@@ -230,25 +280,28 @@ describe("Movie Search API", () => {
 
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        movies: [],
-        pagination: {
-          currentPage: 1,
-          totalPages: 0,
-          totalCount: 0,
-          hasNextPage: false,
-          hasPrevPage: false,
-        },
-        filters: {
-          query: "NonexistentMovie",
-        },
-      }),
+      json: () =>
+        Promise.resolve({
+          movies: [],
+          pagination: {
+            currentPage: 1,
+            totalPages: 0,
+            totalCount: 0,
+            hasNextPage: false,
+            hasPrevPage: false,
+          },
+          filters: {
+            query: "NonexistentMovie",
+          },
+        }),
     });
 
-    globalThis.fetch = mockFetch;
+    vi.stubGlobal("fetch", mockFetch);
 
-    const response = await fetch(`http://localhost:8787/movies/search?${searchParameters}`);
-    const data = await response.json() as {
+    const response = await fetch(
+      `http://localhost:8787/movies/search?${searchParameters}`
+    );
+    const data = (await response.json()) as {
       movies: unknown[];
       pagination: { totalCount: number };
     };
@@ -266,22 +319,25 @@ describe("Movie Search API", () => {
 
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        movies: [],
-        pagination: {
-          currentPage: 1,
-          totalPages: 0,
-          totalCount: 0,
-          hasNextPage: false,
-          hasPrevPage: false,
-        },
-        filters: {},
-      }),
+      json: () =>
+        Promise.resolve({
+          movies: [],
+          pagination: {
+            currentPage: 1,
+            totalPages: 0,
+            totalCount: 0,
+            hasNextPage: false,
+            hasPrevPage: false,
+          },
+          filters: {},
+        }),
     });
 
-    globalThis.fetch = mockFetch;
+    vi.stubGlobal("fetch", mockFetch);
 
-    const response = await fetch(`http://localhost:8787/movies/search?${searchParameters}`);
+    const response = await fetch(
+      `http://localhost:8787/movies/search?${searchParameters}`
+    );
 
     expect(response.ok).toBe(true);
   });
@@ -295,23 +351,26 @@ describe("Movie Search API", () => {
 
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        movies: [],
-        pagination: {
-          currentPage: 1,
-          totalPages: 0,
-          totalCount: 0,
-          hasNextPage: false,
-          hasPrevPage: false,
-        },
-        filters: {},
-      }),
+      json: () =>
+        Promise.resolve({
+          movies: [],
+          pagination: {
+            currentPage: 1,
+            totalPages: 0,
+            totalCount: 0,
+            hasNextPage: false,
+            hasPrevPage: false,
+          },
+          filters: {},
+        }),
     });
 
-    globalThis.fetch = mockFetch;
+    vi.stubGlobal("fetch", mockFetch);
 
-    const response = await fetch(`http://localhost:8787/movies/search?${searchParameters}`);
-    const data = await response.json() as {
+    const response = await fetch(
+      `http://localhost:8787/movies/search?${searchParameters}`
+    );
+    const data = (await response.json()) as {
       filters: { year?: number };
     };
 
