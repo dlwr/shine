@@ -1,0 +1,63 @@
+---
+export interface Props {
+  fallback?: string;
+  showRetry?: boolean;
+  onRetry?: string;
+  className?: string;
+}
+
+const { 
+  fallback = 'Something went wrong. Please refresh the page and try again.',
+  showRetry = false,
+  onRetry,
+  className = ''
+} = Astro.props;
+---
+
+<div class={`bg-red-50 border border-red-200 rounded-lg p-6 text-center ${className}`}>
+  <div class="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.083 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+    </svg>
+  </div>
+  
+  <h3 class="text-lg font-medium text-red-800 mb-2">エラーが発生しました</h3>
+  <p class="text-red-700 mb-4">{fallback}</p>
+  
+  {showRetry && onRetry && (
+    <button 
+      onclick={onRetry}
+      class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition-colors duration-200"
+    >
+      再試行
+    </button>
+  )}
+  
+  {!showRetry && (
+    <button 
+      onclick="window.location.reload()"
+      class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition-colors duration-200"
+    >
+      ページを再読み込み
+    </button>
+  )}
+</div>
+
+<script>
+  function handleError(error: Error | string, elementId?: string) {
+    console.error('Error caught by ErrorBoundary:', error);
+    
+    const errorElement = elementId ? document.getElementById(elementId) : null;
+    if (errorElement) {
+      errorElement.style.display = 'block';
+    }
+  }
+
+  window.addEventListener('unhandledrejection', (event) => {
+    handleError(event.reason);
+  });
+
+  window.addEventListener('error', (event) => {
+    handleError(event.error);
+  });
+</script>

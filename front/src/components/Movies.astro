@@ -1,5 +1,7 @@
 ---
 import MovieCard from "./MovieCard.astro";
+import LoadingSpinner from "./LoadingSpinner.astro";
+import ErrorBoundary from "./ErrorBoundary.astro";
 import { getApiUrl } from '../utils/api';
 
 export interface Props {
@@ -51,18 +53,21 @@ async function fetchMovie(locale: string) {
       monthly: Movie;
     };
 
-    return movies;
+    return { movies, error: null };
   } catch (error) {
     console.error("Error fetching movies:", error);
     return {
-      daily: { uid: "1", title: "The Shawshank Redemption", year: 1994 },
-      weekly: { uid: "1", title: "The Shawshank Redemption", year: 1994 },
-      monthly: { uid: "1", title: "The Shawshank Redemption", year: 1994 },
+      movies: {
+        daily: { uid: "1", title: "The Shawshank Redemption", year: 1994 },
+        weekly: { uid: "1", title: "The Shawshank Redemption", year: 1994 },
+        monthly: { uid: "1", title: "The Shawshank Redemption", year: 1994 },
+      },
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
     };
   }
 }
 
-const movies = await fetchMovie(locale);
+const { movies, error } = await fetchMovie(locale);
 
 const labels = {
   en: {
@@ -89,21 +94,43 @@ const t = labels[locale as keyof typeof labels] || labels.en;
 <section class="movies-section">
   <h2>{t.randomMovie}</h2>
 
+  {error && (
+    <ErrorBoundary 
+      fallback={locale === 'ja' ? 'APIから映画データを取得できませんでした。フォールバック映画を表示しています。' : 'Failed to fetch movie data from API. Showing fallback movies.'}
+      className="mb-4"
+    />
+  )}
+
   <div id="movie-container" class="movie-container">
     <div class="movie-item">
       <div class="movie-label">{t.daily}</div>
       {movies.daily && <MovieCard movie={movies.daily} locale={locale} />}
-      <button class="reselect-btn admin-only hidden" data-type="daily">{t.reselect}</button>
+      <button class="reselect-btn admin-only hidden" data-type="daily" data-loading="false">
+        <span class="btn-text">{t.reselect}</span>
+        <div class="btn-loading hidden">
+          <LoadingSpinner size="small" color="white" message="" />
+        </div>
+      </button>
     </div>
     <div class="movie-item">
       <div class="movie-label">{t.weekly}</div>
       {movies.weekly && <MovieCard movie={movies.weekly} locale={locale} />}
-      <button class="reselect-btn admin-only hidden" data-type="weekly">{t.reselect}</button>
+      <button class="reselect-btn admin-only hidden" data-type="weekly" data-loading="false">
+        <span class="btn-text">{t.reselect}</span>
+        <div class="btn-loading hidden">
+          <LoadingSpinner size="small" color="white" message="" />
+        </div>
+      </button>
     </div>
     <div class="movie-item">
       <div class="movie-label">{t.monthly}</div>
       {movies.monthly && <MovieCard movie={movies.monthly} locale={locale} />}
-      <button class="reselect-btn admin-only hidden" data-type="monthly">{t.reselect}</button>
+      <button class="reselect-btn admin-only hidden" data-type="monthly" data-loading="false">
+        <span class="btn-text">{t.reselect}</span>
+        <div class="btn-loading hidden">
+          <LoadingSpinner size="small" color="white" message="" />
+        </div>
+      </button>
     </div>
   </div>
 </section>
@@ -208,6 +235,24 @@ const t = labels[locale as keyof typeof labels] || labels.en;
     display: none;
   }
 
+  .btn-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-loading.hidden {
+    display: none;
+  }
+
+  .reselect-btn[data-loading="true"] .btn-text {
+    display: none;
+  }
+
+  .reselect-btn[data-loading="true"] .btn-loading {
+    display: flex;
+  }
+
   @media (max-width: 768px) {
     .movie-container {
       max-width: 95%;
@@ -257,7 +302,7 @@ const t = labels[locale as keyof typeof labels] || labels.en;
         
         // Disable button and show loading state
         this.disabled = true;
-        this.textContent = locale === 'ja' ? '抽選中...' : 'Selecting...';
+        this.setAttribute('data-loading', 'true');
         
         try {
           const response = await fetch(`${apiUrl}/reselect`, {
@@ -288,7 +333,7 @@ const t = labels[locale as keyof typeof labels] || labels.en;
         } finally {
           // Re-enable button
           this.disabled = false;
-          this.textContent = originalText;
+          this.setAttribute('data-loading', 'false');
         }
       });
     });

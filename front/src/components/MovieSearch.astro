@@ -1,4 +1,6 @@
 ---
+import LoadingSpinner from './LoadingSpinner.astro';
+import ErrorBoundary from './ErrorBoundary.astro';
 import { getApiUrl } from '../utils/api';
 
 export interface Props {
@@ -98,9 +100,8 @@ const API_URL = getApiUrl(Astro.locals);
     </div>
   </form>
   
-  <div id="loading" class="hidden text-center py-8">
-    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-    <p class="mt-2 text-gray-600">{t.loading}</p>
+  <div id="loading" class="hidden">
+    <LoadingSpinner size="medium" color="blue" message={t.loading} />
   </div>
   
   <div id="search-results" class="hidden">
@@ -126,6 +127,14 @@ const API_URL = getApiUrl(Astro.locals);
   <div id="no-results" class="hidden text-center py-8">
     <p class="text-gray-600">{t.noResults}</p>
   </div>
+  
+  <div id="error-state" class="hidden">
+    <ErrorBoundary 
+      fallback={locale === 'ja' ? '検索中にエラーが発生しました。もう一度お試しください。' : 'An error occurred while searching. Please try again.'}
+      showRetry={true}
+      onRetry="performSearch()"
+    />
+  </div>
 </div>
 
 <script define:vars={{ locale, apiUrl: API_URL, labels: t }} is:inline>
@@ -137,6 +146,7 @@ const API_URL = getApiUrl(Astro.locals);
     const loadingEl = document.getElementById('loading');
     const resultsEl = document.getElementById('search-results');
     const noResultsEl = document.getElementById('no-results');
+    const errorStateEl = document.getElementById('error-state');
     const moviesGrid = document.getElementById('movies-grid');
     const resultsHeader = document.getElementById('results-header').querySelector('h3');
     const paginationInfo = document.getElementById('pagination-info');
@@ -215,7 +225,7 @@ const API_URL = getApiUrl(Astro.locals);
       } catch (error) {
         console.error('Search error:', error);
         hideAllStates();
-        noResultsEl.classList.remove('hidden');
+        errorStateEl.classList.remove('hidden');
       }
     }
     
@@ -223,7 +233,11 @@ const API_URL = getApiUrl(Astro.locals);
       loadingEl.classList.add('hidden');
       resultsEl.classList.add('hidden');
       noResultsEl.classList.add('hidden');
+      errorStateEl.classList.add('hidden');
     }
+    
+    // Make performSearch globally available for error retry
+    window.performSearch = performSearch;
     
     function displayResults(data) {
       const { movies, pagination } = data;
