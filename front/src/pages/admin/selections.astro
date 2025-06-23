@@ -528,7 +528,7 @@ import Layout from "../../layouts/Layout.astro";
     }
 
     async function generateRandomMovie() {
-      if (!currentOverrideType) return;
+      if (!currentOverrideType || !currentOverrideDate) return;
 
       const generateBtn = document.getElementById("generate-random-btn");
       const originalText = generateBtn.textContent;
@@ -537,7 +537,7 @@ import Layout from "../../layouts/Layout.astro";
       generateBtn.textContent = "Generating...";
 
       try {
-        const response = await fetch(`${getApiUrl()}/reselect`, {
+        const response = await fetch(`${getApiUrl()}/admin/random-movie-preview`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -545,6 +545,7 @@ import Layout from "../../layouts/Layout.astro";
           },
           body: JSON.stringify({
             type: currentOverrideType,
+            date: currentOverrideDate,
             locale: "en",
           }),
         });
@@ -553,25 +554,25 @@ import Layout from "../../layouts/Layout.astro";
           throw new Error("Failed to generate random movie");
         }
 
-        const data = await response.json();
+        const movie = await response.json();
         
-        if (data.movie) {
-          selectedMovieId = data.movie.uid;
+        if (movie && movie.uid) {
+          selectedMovieId = movie.uid;
           
           // Display the random movie result
           const resultContainer = document.getElementById("random-movie-result");
           resultContainer.innerHTML = `
             <div class="p-4 bg-purple-50 border border-purple-200 rounded">
               <div class="flex items-center space-x-3">
-                ${data.movie.posterUrl 
-                  ? `<img src="${data.movie.posterUrl}" alt="${data.movie.title}" class="w-16 h-24 object-cover rounded" />` 
+                ${movie.posterUrl 
+                  ? `<img src="${movie.posterUrl}" alt="${movie.title}" class="w-16 h-24 object-cover rounded" />` 
                   : '<div class="w-16 h-24 bg-gray-200 rounded flex items-center justify-center"><span class="text-gray-500 text-xs">No poster</span></div>'
                 }
                 <div class="flex-1">
-                  <h4 class="font-medium text-purple-900">${data.movie.title || "Untitled"}</h4>
-                  <p class="text-sm text-purple-700">${data.movie.year || "Unknown year"}</p>
-                  ${data.movie.nominations && data.movie.nominations.length > 0 
-                    ? `<p class="text-xs text-purple-600 mt-1">${data.movie.nominations.length} nomination${data.movie.nominations.length !== 1 ? 's' : ''}</p>`
+                  <h4 class="font-medium text-purple-900">${movie.title || "Untitled"}</h4>
+                  <p class="text-sm text-purple-700">${movie.year || "Unknown year"}</p>
+                  ${movie.nominations && movie.nominations.length > 0 
+                    ? `<p class="text-xs text-purple-600 mt-1">${movie.nominations.length} nomination${movie.nominations.length !== 1 ? 's' : ''}</p>`
                     : ''
                   }
                 </div>

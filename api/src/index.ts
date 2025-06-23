@@ -663,6 +663,160 @@ app.delete("/admin/cleanup-future-selections", authMiddleware, async (c) => {
   }
 });
 
+// Admin: Generate random movie preview for a specific date/type (no DB write)
+app.post("/admin/random-movie-preview", authMiddleware, async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const { type, date, locale = "en" } = await c.req.json();
+
+    // Validate inputs
+    if (!type || !["daily", "weekly", "monthly"].includes(type)) {
+      return c.json({ error: "Invalid selection type" }, 400);
+    }
+
+    if (!date) {
+      return c.json({ error: "Date is required" }, 400);
+    }
+
+    // Validate date format
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date)) {
+      return c.json({ error: "Date must be in YYYY-MM-DD format" }, 400);
+    }
+
+    // Parse the date and generate a preview (no DB write)
+    const targetDate = new Date(date + "T00:00:00.000Z");
+    
+    // Generate a random seed based on date + current timestamp for randomness
+    const baseSeed = getDateSeed(targetDate, type);
+    const randomSeed = baseSeed + Date.now();
+
+    // Get a random movie using the random seed
+    const randomMovieResult = await database
+      .select({ uid: movies.uid })
+      .from(movies)
+      .orderBy(
+        sql`(ABS(${randomSeed} % (SELECT COUNT(*) FROM movies)) + movies.rowid) % (SELECT COUNT(*) FROM movies)`
+      )
+      .limit(1);
+
+    if (randomMovieResult.length === 0) {
+      return c.json({ error: "No movies found" }, 404);
+    }
+
+    const movieId = randomMovieResult[0].uid;
+
+    // Fetch the full movie details (reuse existing logic)
+    const results = await database
+      .select()
+      .from(movies)
+      .leftJoin(
+        translations,
+        and(
+          eq(movies.uid, translations.resourceUid),
+          eq(translations.resourceType, "movie_title"),
+          eq(translations.languageCode, locale)
+        )
+      )
+      .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
+      .where(eq(movies.uid, movieId))
+      .limit(1);
+
+    if (results.length === 0 || !results[0].translations?.content) {
+      // Try with default language
+      const fallbackResults = await database
+        .select()
+        .from(movies)
+        .leftJoin(
+          translations,
+          and(
+            eq(movies.uid, translations.resourceUid),
+            eq(translations.resourceType, "movie_title"),
+            eq(translations.isDefault, 1)
+          )
+        )
+        .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
+        .where(eq(movies.uid, movieId))
+        .limit(1);
+
+      if (fallbackResults.length > 0) {
+        const {
+          movies: movie,
+          translations: translation,
+          poster_urls: poster,
+        } = fallbackResults[0];
+
+        const imdbUrl = movie.imdbId
+          ? `https://www.imdb.com/title/${movie.imdbId}/`
+          : undefined;
+
+        // Get nominations for this movie
+        const movieNominations = await getMovieNominations(database, movie.uid);
+
+        return c.json({
+          uid: movie.uid,
+          year: movie.year,
+          originalLanguage: movie.originalLanguage,
+          title: translation?.content,
+          posterUrl: poster?.url,
+          imdbUrl: imdbUrl,
+          nominations: movieNominations,
+        });
+      }
+    }
+
+    if (results.length === 0) {
+      return c.json({ error: "Movie not found" }, 404);
+    }
+
+    const {
+      movies: movie,
+      translations: translation,
+      poster_urls: poster,
+    } = results[0];
+
+    const imdbUrl = movie.imdbId
+      ? `https://www.imdb.com/title/${movie.imdbId}/`
+      : undefined;
+
+    // Get nominations for this movie
+    const movieNominations = await getMovieNominations(database, movie.uid);
+
+    // Get article links for this movie
+    const topArticles = await database
+      .select({
+        uid: articleLinks.uid,
+        url: articleLinks.url,
+        title: articleLinks.title,
+        description: articleLinks.description,
+      })
+      .from(articleLinks)
+      .where(
+        and(
+          eq(articleLinks.movieUid, movie.uid),
+          eq(articleLinks.isSpam, false),
+          eq(articleLinks.isFlagged, false)
+        )
+      )
+      .orderBy(sql`${articleLinks.submittedAt} DESC`)
+      .limit(3);
+
+    return c.json({
+      uid: movie.uid,
+      year: movie.year,
+      originalLanguage: movie.originalLanguage,
+      title: translation?.content,
+      posterUrl: poster?.url,
+      imdbUrl: imdbUrl,
+      nominations: movieNominations,
+      articleLinks: topArticles,
+    });
+  } catch (error) {
+    console.error("Error generating random movie preview:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
 // Admin: Override movie selection for specific date/type
 app.post("/admin/override-selection", authMiddleware, async (c) => {
   try {
