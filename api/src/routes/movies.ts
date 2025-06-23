@@ -1,4 +1,4 @@
-import { and, eq, getDatabase, sql, type Environment } from "db";
+import { and, eq, getDatabase, like, sql, type Environment } from "db";
 import { articleLinks } from "db/schema/article-links";
 import { awardCategories } from "db/schema/award-categories";
 import { awardCeremonies } from "db/schema/award-ceremonies";
@@ -12,6 +12,142 @@ import { authMiddleware } from "../auth";
 import { sanitizeText, sanitizeUrl } from "../middleware/sanitizer";
 
 export const moviesRoutes = new Hono<{ Bindings: Environment }>();
+
+// Search movies endpoint
+moviesRoutes.get("/search", async (c) => {
+  try {
+    const database = getDatabase(c.env as Environment);
+    const page = Number(c.req.query("page") || 1);
+    const limit = Math.min(Number(c.req.query("limit") || 20), 100);
+    const rawQuery = c.req.query("q");
+    const yearFilter = c.req.query("year");
+    const languageFilter = c.req.query("language");
+    const hasAwardsFilter = c.req.query("hasAwards");
+    
+    const query = rawQuery ? sanitizeText(rawQuery) : undefined;
+    const offset = (page - 1) * limit;
+
+    // Build search conditions
+    const conditions = [];
+    
+    if (query) {
+      conditions.push(like(translations.content, `%${query}%`));
+    }
+    
+    if (yearFilter && !Number.isNaN(Number(yearFilter))) {
+      conditions.push(eq(movies.year, Number(yearFilter)));
+    }
+    
+    if (languageFilter) {
+      conditions.push(eq(movies.originalLanguage, languageFilter));
+    }
+
+    // Base query for movies with translations
+    const baseQuery = database
+      .select({
+        uid: movies.uid,
+        year: movies.year,
+        originalLanguage: movies.originalLanguage,
+        imdbId: movies.imdbId,
+        tmdbId: movies.tmdbId,
+        title: translations.content,
+        posterUrl: sql`
+          (
+            SELECT url
+            FROM poster_urls
+            WHERE poster_urls.movie_uid = movies.uid
+            ORDER BY is_primary DESC, created_at ASC
+            LIMIT 1
+          )
+        `.as("posterUrl"),
+        hasAwards: sql`
+          CASE WHEN EXISTS (
+            SELECT 1 FROM nominations 
+            WHERE nominations.movie_uid = movies.uid
+          ) THEN 1 ELSE 0 END
+        `.as("hasAwards"),
+      })
+      .from(movies)
+      .leftJoin(
+        translations,
+        and(
+          eq(movies.uid, translations.resourceUid),
+          eq(translations.resourceType, "movie_title"),
+          eq(translations.isDefault, 1)
+        )
+      );
+
+    // Apply conditions
+    const searchQuery = conditions.length > 0 
+      ? baseQuery.where(and(...conditions))
+      : baseQuery;
+
+    // Handle awards filter
+    const finalQuery = hasAwardsFilter === "true"
+      ? searchQuery.having(sql`hasAwards = 1`)
+      : (hasAwardsFilter === "false"
+        ? searchQuery.having(sql`hasAwards = 0`)
+        : searchQuery);
+
+    // Count query
+    const baseCountQuery = database
+      .select({ count: sql`COUNT(DISTINCT movies.uid)`.as("count") })
+      .from(movies)
+      .leftJoin(
+        translations,
+        and(
+          eq(movies.uid, translations.resourceUid),
+          eq(translations.resourceType, "movie_title"),
+          eq(translations.isDefault, 1)
+        )
+      );
+
+    const countQuery = conditions.length > 0 
+      ? baseCountQuery.where(and(...conditions))
+      : baseCountQuery;
+
+    // Execute queries
+    const [countResult, moviesResult] = await Promise.all([
+      countQuery,
+      finalQuery
+        .orderBy(sql`${movies.year} DESC`, sql`${translations.content} ASC`)
+        .limit(limit)
+        .offset(offset),
+    ]);
+
+    const totalCount = Number(countResult[0].count);
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return c.json({
+      movies: moviesResult.map((movie) => ({
+        uid: movie.uid,
+        year: movie.year,
+        originalLanguage: movie.originalLanguage,
+        imdbId: movie.imdbId,
+        tmdbId: movie.tmdbId,
+        title: movie.title || "Untitled",
+        posterUrl: movie.posterUrl,
+        hasAwards: movie.hasAwards === 1,
+      })),
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+      filters: {
+        query,
+        year: yearFilter ? Number(yearFilter) : undefined,
+        language: languageFilter,
+        hasAwards: hasAwardsFilter === "true" ? true : (hasAwardsFilter === "false" ? false : undefined),
+      },
+    });
+  } catch (error) {
+    console.error("Error searching movies:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
 
 async function getMovieNominations(
   database: ReturnType<typeof getDatabase>,

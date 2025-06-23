@@ -13,10 +13,10 @@ const languages = [
 function getCurrentUrl(newLocale: string): string {
   if (typeof window !== 'undefined') {
     const url = new URL(window.location.href);
-    url.searchParams.set('locale', newLocale);
+    url.searchParams.set('lang', newLocale);
     return url.toString();
   }
-  return `?locale=${newLocale}`;
+  return `?lang=${newLocale}`;
 }
 ---
 
@@ -46,7 +46,7 @@ function getCurrentUrl(newLocale: string): string {
         const newLocale = (e.target as unknown as HTMLElement).dataset.locale;
         if (newLocale) {
           const url = new URL(window.location.href);
-          url.searchParams.set('locale', newLocale);
+          url.searchParams.set('lang', newLocale);
           window.location.href = url.toString();
         }
       });

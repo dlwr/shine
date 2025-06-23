@@ -1,0 +1,297 @@
+---
+import { getApiUrl } from '../utils/api';
+
+export interface Props {
+  locale?: string;
+}
+
+const { locale = 'en' } = Astro.props;
+
+const labels = {
+  en: {
+    searchTitle: "Search Movies",
+    searchPlaceholder: "Search movie titles...",
+    filterByYear: "Filter by year",
+    filterByLanguage: "Filter by language", 
+    filterByAwards: "Filter by awards",
+    allYears: "All years",
+    allLanguages: "All languages",
+    allAwards: "All",
+    hasAwards: "Has awards",
+    noAwards: "No awards",
+    searchButton: "Search",
+    loading: "Loading...",
+    noResults: "No movies found",
+    results: "Results",
+    page: "Page",
+    of: "of",
+    previous: "Previous", 
+    next: "Next"
+  },
+  ja: {
+    searchTitle: "映画検索",
+    searchPlaceholder: "映画タイトルを検索...",
+    filterByYear: "年でフィルター",
+    filterByLanguage: "言語でフィルター",
+    filterByAwards: "受賞歴でフィルター", 
+    allYears: "すべての年",
+    allLanguages: "すべての言語",
+    allAwards: "すべて",
+    hasAwards: "受賞あり",
+    noAwards: "受賞なし",
+    searchButton: "検索",
+    loading: "読み込み中...",
+    noResults: "映画が見つかりません",
+    results: "検索結果",
+    page: "ページ",
+    of: "/",
+    previous: "前へ",
+    next: "次へ"
+  }
+};
+
+const t = labels[locale as keyof typeof labels] || labels.en;
+const API_URL = getApiUrl(Astro.locals);
+---
+
+<div class="movie-search">
+  <h2 class="text-2xl md:text-3xl font-bold text-center mb-8 text-gray-800">{t.searchTitle}</h2>
+  
+  <form class="search-form mb-8 space-y-4" id="search-form">
+    <div class="flex flex-col md:flex-row gap-4">
+      <input 
+        type="text" 
+        id="search-query"
+        placeholder={t.searchPlaceholder}
+        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      />
+      <button 
+        type="submit"
+        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+      >
+        {t.searchButton}
+      </button>
+    </div>
+    
+    <div class="flex flex-col md:flex-row gap-4">
+      <select id="year-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+        <option value="">{t.allYears}</option>
+      </select>
+      
+      <select id="language-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+        <option value="">{t.allLanguages}</option>
+        <option value="en">English</option>
+        <option value="ja">日本語</option>
+        <option value="fr">Français</option>
+        <option value="de">Deutsch</option>
+        <option value="es">Español</option>
+        <option value="it">Italiano</option>
+        <option value="ko">한국어</option>
+        <option value="zh">中文</option>
+      </select>
+      
+      <select id="awards-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+        <option value="">{t.allAwards}</option>
+        <option value="true">{t.hasAwards}</option>
+        <option value="false">{t.noAwards}</option>
+      </select>
+    </div>
+  </form>
+  
+  <div id="loading" class="hidden text-center py-8">
+    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    <p class="mt-2 text-gray-600">{t.loading}</p>
+  </div>
+  
+  <div id="search-results" class="hidden">
+    <div id="results-header" class="mb-6">
+      <h3 class="text-xl font-semibold text-gray-800"></h3>
+      <div id="pagination-info" class="text-sm text-gray-600 mt-1"></div>
+    </div>
+    
+    <div id="movies-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+    </div>
+    
+    <div id="pagination" class="flex justify-center items-center space-x-4">
+      <button id="prev-page" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed">
+        {t.previous}
+      </button>
+      <span id="page-info" class="text-gray-600"></span>
+      <button id="next-page" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed">
+        {t.next}
+      </button>
+    </div>
+  </div>
+  
+  <div id="no-results" class="hidden text-center py-8">
+    <p class="text-gray-600">{t.noResults}</p>
+  </div>
+</div>
+
+<script define:vars={{ locale, apiUrl: API_URL, labels: t }} is:inline>
+  let currentPage = 1;
+  let currentFilters = {};
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('search-form');
+    const loadingEl = document.getElementById('loading');
+    const resultsEl = document.getElementById('search-results');
+    const noResultsEl = document.getElementById('no-results');
+    const moviesGrid = document.getElementById('movies-grid');
+    const resultsHeader = document.getElementById('results-header').querySelector('h3');
+    const paginationInfo = document.getElementById('pagination-info');
+    const pageInfo = document.getElementById('page-info');
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+    const yearFilter = document.getElementById('year-filter');
+    
+    // Populate year filter
+    const currentYear = new Date().getFullYear();
+    for (let year = currentYear; year >= 1900; year--) {
+      const option = document.createElement('option');
+      option.value = year;
+      option.textContent = year;
+      yearFilter.appendChild(option);
+    }
+    
+    searchForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      currentPage = 1;
+      performSearch();
+    });
+    
+    prevBtn.addEventListener('click', function() {
+      if (currentPage > 1) {
+        currentPage--;
+        performSearch();
+      }
+    });
+    
+    nextBtn.addEventListener('click', function() {
+      currentPage++;
+      performSearch();
+    });
+    
+    async function performSearch() {
+      const query = document.getElementById('search-query').value.trim();
+      const year = document.getElementById('year-filter').value;
+      const language = document.getElementById('language-filter').value;
+      const awards = document.getElementById('awards-filter').value;
+      
+      currentFilters = { query, year, language, awards };
+      
+      // Show loading
+      hideAllStates();
+      loadingEl.classList.remove('hidden');
+      
+      try {
+        const params = new URLSearchParams({
+          page: currentPage.toString(),
+          limit: '20'
+        });
+        
+        if (query) params.append('q', query);
+        if (year) params.append('year', year);
+        if (language) params.append('language', language);
+        if (awards) params.append('hasAwards', awards);
+        
+        const response = await fetch(`${apiUrl}/movies/search?${params}`);
+        
+        if (!response.ok) {
+          throw new Error(`Search failed: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        hideAllStates();
+        
+        if (data.movies && data.movies.length > 0) {
+          displayResults(data);
+          resultsEl.classList.remove('hidden');
+        } else {
+          noResultsEl.classList.remove('hidden');
+        }
+        
+      } catch (error) {
+        console.error('Search error:', error);
+        hideAllStates();
+        noResultsEl.classList.remove('hidden');
+      }
+    }
+    
+    function hideAllStates() {
+      loadingEl.classList.add('hidden');
+      resultsEl.classList.add('hidden');
+      noResultsEl.classList.add('hidden');
+    }
+    
+    function displayResults(data) {
+      const { movies, pagination } = data;
+      
+      resultsHeader.textContent = `${labels.results} (${pagination.totalCount})`;
+      paginationInfo.textContent = `${labels.page} ${pagination.currentPage} ${labels.of} ${pagination.totalPages}`;
+      pageInfo.textContent = `${labels.page} ${pagination.currentPage} ${labels.of} ${pagination.totalPages}`;
+      
+      prevBtn.disabled = !pagination.hasPrevPage;
+      nextBtn.disabled = !pagination.hasNextPage;
+      
+      moviesGrid.innerHTML = '';
+      
+      movies.forEach(movie => {
+        const movieCard = createMovieCard(movie);
+        moviesGrid.appendChild(movieCard);
+      });
+    }
+    
+    function createMovieCard(movie) {
+      const card = document.createElement('div');
+      card.className = 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200';
+      
+      const imdbUrl = movie.imdbId ? `https://www.imdb.com/title/${movie.imdbId}/` : null;
+      const awardsIcon = movie.hasAwards ? '🏆' : '';
+      
+      card.innerHTML = `
+        <div class="relative">
+          ${movie.posterUrl ? 
+            `<img src="${movie.posterUrl}" alt="${movie.title}" class="w-full h-64 object-cover">` :
+            `<div class="w-full h-64 bg-gray-200 flex items-center justify-center">
+              <span class="text-gray-500 text-sm">No Image</span>
+            </div>`
+          }
+          ${awardsIcon ? `<div class="absolute top-2 right-2 text-2xl">${awardsIcon}</div>` : ''}
+        </div>
+        <div class="p-4">
+          <h3 class="font-semibold text-lg mb-2 line-clamp-2">${movie.title || 'Untitled'}</h3>
+          <div class="text-sm text-gray-600 space-y-1">
+            <div>Year: ${movie.year || 'Unknown'}</div>
+            <div>Language: ${movie.originalLanguage?.toUpperCase() || 'Unknown'}</div>
+            ${movie.hasAwards ? '<div class="text-yellow-600 font-medium">Award Winner</div>' : ''}
+          </div>
+          <div class="mt-4 flex space-x-2">
+            <a href="/movies/${movie.uid}" 
+               class="flex-1 text-center px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
+              View Details
+            </a>
+            ${imdbUrl ? 
+              `<a href="${imdbUrl}" target="_blank" rel="noopener"
+                 class="px-3 py-2 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600 transition-colors">
+                IMDb
+              </a>` : ''
+            }
+          </div>
+        </div>
+      `;
+      
+      return card;
+    }
+  });
+</script>
+
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
