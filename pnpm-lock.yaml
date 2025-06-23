@@ -18,8 +18,8 @@ importers:
         specifier: ^0.44.2
         version: 0.44.2(@cloudflare/workers-types@4.20250617.0)(@libsql/client@0.15.9)(@types/better-sqlite3@7.6.13)(better-sqlite3@11.10.0)(gel@2.1.0)
       hono:
-        specifier: ^4.7.11
-        version: 4.7.11
+        specifier: ^4.8.2
+        version: 4.8.2
       jose:
         specifier: ^6.0.11
         version: 6.0.11
@@ -2520,8 +2520,8 @@ packages:
   headers-polyfill@4.0.3:
     resolution: {integrity: sha512-IScLbePpkvO846sIwOtOTDjutRMWdXdJmXdMvk6gCBHxFO8d+QKOQedyZSxFTTFYRSmlgSTDtXqqq4pcenBXLQ==}
 
-  hono@4.7.11:
-    resolution: {integrity: sha512-rv0JMwC0KALbbmwJDEnxvQCeJh+xbS3KEWW5PC9cMJ08Ur9xgatI0HmtgYZfOdOSOeYsp5LO2cOhdI8cLEbDEQ==}
+  hono@4.8.2:
+    resolution: {integrity: sha512-hM+1RIn9PK1I6SiTNS6/y7O1mvg88awYLFEuEtoiMtRyT3SD2iu9pSFgbBXT3b1Ua4IwzvSTLvwO0SEhDxCi4w==}
     engines: {node: '>=16.9.0'}
 
   hosted-git-info@7.0.2:
@@ -6581,7 +6581,7 @@ snapshots:
 
   headers-polyfill@4.0.3: {}
 
-  hono@4.7.11: {}
+  hono@4.8.2: {}
 
   hosted-git-info@7.0.2:
     dependencies:
