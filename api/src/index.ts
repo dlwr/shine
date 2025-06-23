@@ -2,6 +2,7 @@ import type { Environment } from "db";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { securityHeaders } from "./middleware/security";
+import { globalErrorHandler, notFoundHandler } from "./middleware/error-handler";
 import { adminRoutes } from "./routes/admin";
 import { authRoutes } from "./routes/auth";
 import { moviesRoutes } from "./routes/movies";
@@ -28,6 +29,7 @@ app.use(
 );
 
 app.use("*", securityHeaders);
+app.use("*", globalErrorHandler);
 
 // Mount route modules
 app.route("/auth", authRoutes);
@@ -35,5 +37,7 @@ app.route("/", selectionsRoutes); // Main endpoint for movie selections
 app.route("/movies", moviesRoutes);
 app.route("/admin", adminRoutes);
 app.route("/", utilitiesRoutes); // Utility endpoints like fetch-url-title
+
+app.notFound(notFoundHandler);
 
 export default app;

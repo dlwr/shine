@@ -60,7 +60,11 @@ describe("JWT Authentication", () => {
       await authMiddleware(mockContext, mockNext);
 
       expect(mockContext.json).toHaveBeenCalledWith(
-        { error: "Unauthorized" },
+        { 
+          error: "Authentication token is required",
+          code: "AUTHENTICATION_ERROR",
+          details: { reason: "MISSING_TOKEN" }
+        },
         401
       );
       expect(mockNext).not.toHaveBeenCalled();
@@ -72,7 +76,11 @@ describe("JWT Authentication", () => {
       await authMiddleware(mockContext, mockNext);
 
       expect(mockContext.json).toHaveBeenCalledWith(
-        { error: "Unauthorized" },
+        { 
+          error: "Authentication token is required",
+          code: "AUTHENTICATION_ERROR",
+          details: { reason: "MISSING_TOKEN" }
+        },
         401
       );
       expect(mockNext).not.toHaveBeenCalled();
@@ -85,7 +93,10 @@ describe("JWT Authentication", () => {
       await authMiddleware(mockContext, mockNext);
 
       expect(mockContext.json).toHaveBeenCalledWith(
-        { error: "JWT_SECRET not configured" },
+        { 
+          error: "Internal server error",
+          code: "INTERNAL_ERROR"
+        },
         500
       );
       expect(mockNext).not.toHaveBeenCalled();
@@ -97,7 +108,11 @@ describe("JWT Authentication", () => {
       await authMiddleware(mockContext, mockNext);
 
       expect(mockContext.json).toHaveBeenCalledWith(
-        { error: "Invalid token" },
+        { 
+          error: "Invalid authentication token",
+          code: "AUTHENTICATION_ERROR",
+          details: { reason: "INVALID_TOKEN" }
+        },
         401
       );
       expect(mockNext).not.toHaveBeenCalled();
