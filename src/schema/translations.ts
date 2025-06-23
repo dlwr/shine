@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 import { generateUUID } from "../utils/uuid";
 
 export const translations = sqliteTable(
@@ -23,6 +23,9 @@ export const translations = sqliteTable(
   (table) => {
     return [
       unique().on(table.resourceType, table.resourceUid, table.languageCode),
+      index("translations_resource_type_idx").on(table.resourceType),
+      index("translations_resource_uid_idx").on(table.resourceUid),
+      index("translations_language_code_idx").on(table.languageCode),
     ];
   }
 );

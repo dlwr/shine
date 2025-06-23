@@ -22,14 +22,14 @@
     "scrapers:japanese-translations": "cd scrapers && pnpm tsx src/japanese-translations-cli.ts",
     "scrapers:cannes-film-festival": "cd scrapers && pnpm tsx src/cannes-film-festival-cli.ts",
     "scrapers:movie-import": "cd scrapers && pnpm tsx src/movie-import-from-list-cli.ts",
-    "db:studio": "node scripts/setup-db-env.cjs drizzle-kit studio",
-    "db:generate": "node scripts/setup-db-env.cjs drizzle-kit generate",
-    "db:migrate": "node scripts/setup-db-env.cjs drizzle-kit migrate",
-    "db:push": "node scripts/setup-db-env.cjs drizzle-kit push",
-    "db:studio:prod": "NODE_ENV=production node scripts/setup-db-env.cjs drizzle-kit studio",
-    "db:generate:prod": "NODE_ENV=production node scripts/setup-db-env.cjs drizzle-kit generate",
-    "db:migrate:prod": "NODE_ENV=production node scripts/setup-db-env.cjs drizzle-kit migrate",
-    "db:push:prod": "NODE_ENV=production node scripts/setup-db-env.cjs drizzle-kit push"
+    "db:studio": "node scripts/setup-database-environment.cjs drizzle-kit studio",
+    "db:generate": "node scripts/setup-database-environment.cjs drizzle-kit generate",
+    "db:migrate": "node scripts/setup-database-environment.cjs drizzle-kit migrate",
+    "db:push": "node scripts/setup-database-environment.cjs drizzle-kit push",
+    "db:studio:prod": "NODE_ENV=production node scripts/setup-database-environment.cjs drizzle-kit studio",
+    "db:generate:prod": "NODE_ENV=production node scripts/setup-database-environment.cjs drizzle-kit generate",
+    "db:migrate:prod": "NODE_ENV=production node scripts/setup-database-environment.cjs drizzle-kit migrate",
+    "db:push:prod": "NODE_ENV=production node scripts/setup-database-environment.cjs drizzle-kit push"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.0",

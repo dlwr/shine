@@ -173,3 +173,4 @@ worker-configuration.d.ts
 .claude/settings.local.json
 
 tmp
+shine.db

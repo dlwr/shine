@@ -50,6 +50,13 @@
       "when": 1749608365889,
       "tag": "0006_windy_brood",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1750660194948,
+      "tag": "0007_sweet_sasquatch",
+      "breakpoints": true
     }
   ]
 }
