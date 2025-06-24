@@ -72,6 +72,26 @@ pnpm run front:deploy
 # Note: Scrapers run locally as CLI tools and are not deployed
 ```
 
+### API Documentation
+```bash
+# Validate OpenAPI specification
+pnpm run docs:validate
+
+# Build static documentation
+pnpm run docs:build
+
+# Preview documentation locally  
+pnpm run docs:serve
+
+# Bundle OpenAPI spec to JSON
+pnpm run docs:bundle
+
+# Access interactive documentation (when API is running)
+# Swagger UI: http://localhost:8787/docs
+# ReDoc: http://localhost:8787/docs/redoc
+# OpenAPI spec: http://localhost:8787/docs/openapi.yml
+```
+
 ### Utilities
 ```bash
 # Lint code

@@ -29,13 +29,18 @@
     "db:studio:prod": "NODE_ENV=production node scripts/setup-database-environment.cjs drizzle-kit studio",
     "db:generate:prod": "NODE_ENV=production node scripts/setup-database-environment.cjs drizzle-kit generate",
     "db:migrate:prod": "NODE_ENV=production node scripts/setup-database-environment.cjs drizzle-kit migrate",
-    "db:push:prod": "NODE_ENV=production node scripts/setup-database-environment.cjs drizzle-kit push"
+    "db:push:prod": "NODE_ENV=production node scripts/setup-database-environment.cjs drizzle-kit push",
+    "docs:validate": "redocly lint api/openapi.yml",
+    "docs:build": "redocly build-docs api/openapi.yml --output docs/api.html",
+    "docs:serve": "redocly preview-docs api/openapi.yml",
+    "docs:bundle": "redocly bundle api/openapi.yml --output api/openapi.json"
   },
   "devDependencies": {
     "@astrojs/ts-plugin": "^1.10.4",
     "@cloudflare/vitest-pool-workers": "^0.8.44",
     "@cloudflare/workers-types": "^4.20250610.0",
     "@eslint/js": "^9.29.0",
+    "@redocly/cli": "^1.34.3",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.0.3",
     "@typescript-eslint/eslint-plugin": "^8.29.0",

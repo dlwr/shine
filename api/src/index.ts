@@ -5,6 +5,7 @@ import { securityHeaders } from "./middleware/security";
 import { globalErrorHandler, notFoundHandler } from "./middleware/error-handler";
 import { adminRoutes } from "./routes/admin";
 import { authRoutes } from "./routes/auth";
+import { documentationRoutes } from "./routes/documentation";
 import { moviesRoutes } from "./routes/movies";
 import { selectionsRoutes } from "./routes/selections";
 import { utilitiesRoutes } from "./routes/utilities";
@@ -29,11 +30,15 @@ app.use(
   })
 );
 
-app.use("*", securityHeaders);
+// Apply security headers to all routes except documentation
+app.use("*", async (c, next) => {
+  return c.req.path.startsWith("/docs") ? await next() : await securityHeaders(c, next);
+});
 app.use("*", globalErrorHandler);
 
 // Mount route modules
 app.route("/auth", authRoutes);
+app.route("/docs", documentationRoutes); // API documentation
 app.route("/", selectionsRoutes); // Main endpoint for movie selections
 app.route("/movies", moviesRoutes);
 app.route("/admin", adminRoutes);
