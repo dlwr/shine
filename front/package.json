@@ -10,7 +10,7 @@
   "dependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/cloudflare": "^12.6.0",
-    "astro": "^5.9.3"
+    "astro": "^5.10.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.10",
