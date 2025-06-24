@@ -59,7 +59,7 @@ jobs:
         if: steps.lockfile-check.outputs.needs_update == 'true'
         run: |
           echo "Updating lockfile..."
-          pnpm install
+          pnpm install --no-frozen-lockfile
           
       - name: Commit lockfile update
         if: steps.lockfile-check.outputs.needs_update == 'true'
