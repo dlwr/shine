@@ -32,7 +32,7 @@
     "db:push:prod": "NODE_ENV=production node scripts/setup-database-environment.cjs drizzle-kit push"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.8.0",
+    "@cloudflare/vitest-pool-workers": "^0.8.44",
     "@cloudflare/workers-types": "^4.20250610.0",
     "@eslint/js": "^9.29.0",
     "@types/better-sqlite3": "^7.6.13",
