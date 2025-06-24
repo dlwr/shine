@@ -7,11 +7,16 @@
   "name": "shine-front",
   "compatibility_date": "2025-03-27",
   "compatibility_flags": [
-    "nodejs_compat"
+    "nodejs_compat",
+    "global_fetch_strictly_public"
   ],
-  "pages_build_output_dir": "./dist",
+  "main": "./dist/_worker.js/index.js",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
   "observability": {
-    "enabled": true,
+    "enabled": true
   },
   /**
    * Smart Placement
@@ -39,7 +44,7 @@
         "PUBLIC_API_URL": "https://shine-api.yuta25.workers.dev"
       }
     }
-  },
+  }
   /**
    * Note: Use secrets to store sensitive data.
    * https://developers.cloudflare.com/workers/configuration/secrets/

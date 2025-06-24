@@ -15,7 +15,7 @@
     "api:deploy:dev": "cd api && wrangler deploy --env development",
     "api:deploy:prod": "cd api && wrangler deploy --env production --minify",
     "front:dev": "cd front && pnpm run dev",
-    "front:deploy": "cd front && pnpm run build && wrangler pages deploy dist",
+    "front:deploy": "cd front && pnpm run build && wrangler deploy --env production --minify",
     "scrapers:academy-awards": "cd scrapers && pnpm tsx src/academy-awards-cli.ts",
     "scrapers:japan-academy-awards": "cd scrapers && pnpm tsx src/japan-academy-awards-cli.ts",
     "scrapers:movie-posters": "cd scrapers && pnpm tsx src/movie-posters-cli.ts",
