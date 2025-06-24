@@ -3,11 +3,11 @@
  * Handles both development and production environments consistently
  */
 export function getApiUrl(astroLocals?: { runtime?: { env?: Record<string, string> } }): string {
-  // For Cloudflare Pages runtime environment
+  // For Cloudflare Workers runtime environment
   const runtimeEnvironment = astroLocals?.runtime?.env;
   
   // Priority order:
-  // 1. Runtime environment variable (Cloudflare Pages)
+  // 1. Runtime environment variable (Cloudflare Workers/Pages)
   // 2. Build-time environment variable (Astro)
   // 3. Development fallback
   return runtimeEnvironment?.PUBLIC_API_URL || 

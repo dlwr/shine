@@ -1,12 +1,12 @@
 ---
 import MovieCard from "./MovieCard.astro";
-import { getApiUrl } from '../utils/api';
+import { getApiUrl } from "../utils/api";
 
 export interface Props {
   locale?: string;
 }
 
-const { locale = 'en' } = Astro.props;
+const { locale = "en" } = Astro.props;
 
 const API_URL = getApiUrl(Astro.locals);
 
@@ -31,15 +31,16 @@ function getCacheKey() {
 
 async function fetchMovie(locale: string) {
   try {
-    console.log("Using API URL:", API_URL);
-
     const cacheKey = getCacheKey();
-    const response = await fetch(`${API_URL}/?cache=${cacheKey}&locale=${locale}`, {
-      headers: {
-        "Cache-Control": "no-store",
-        "Accept-Language": locale === 'ja' ? 'ja,en;q=0.5' : 'en',
-      },
-    });
+    const response = await fetch(
+      `https://shine-api.yuta25.workers.dev/?cache=${cacheKey}&locale=${locale}`,
+      {
+        headers: {
+          "Cache-Control": "no-store",
+          "Accept-Language": locale === "ja" ? "ja,en;q=0.5" : "en",
+        },
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status}`);
@@ -68,17 +69,17 @@ const labels = {
   en: {
     randomMovie: "Random Movie",
     daily: "Daily",
-    weekly: "Weekly", 
+    weekly: "Weekly",
     monthly: "Monthly",
-    reselect: "Re-select"
+    reselect: "Re-select",
   },
   ja: {
     randomMovie: "ランダム映画",
     daily: "日替わり",
     weekly: "週替わり",
     monthly: "月替わり",
-    reselect: "再抽選"
-  }
+    reselect: "再抽選",
+  },
 };
 
 const t = labels[locale as keyof typeof labels] || labels.en;
@@ -93,17 +94,23 @@ const t = labels[locale as keyof typeof labels] || labels.en;
     <div class="movie-item">
       <div class="movie-label">{t.daily}</div>
       {movies.daily && <MovieCard movie={movies.daily} locale={locale} />}
-      <button class="reselect-btn admin-only hidden" data-type="daily">{t.reselect}</button>
+      <button class="reselect-btn admin-only hidden" data-type="daily"
+        >{t.reselect}</button
+      >
     </div>
     <div class="movie-item">
       <div class="movie-label">{t.weekly}</div>
       {movies.weekly && <MovieCard movie={movies.weekly} locale={locale} />}
-      <button class="reselect-btn admin-only hidden" data-type="weekly">{t.reselect}</button>
+      <button class="reselect-btn admin-only hidden" data-type="weekly"
+        >{t.reselect}</button
+      >
     </div>
     <div class="movie-item">
       <div class="movie-label">{t.monthly}</div>
       {movies.monthly && <MovieCard movie={movies.monthly} locale={locale} />}
-      <button class="reselect-btn admin-only hidden" data-type="monthly">{t.reselect}</button>
+      <button class="reselect-btn admin-only hidden" data-type="monthly"
+        >{t.reselect}</button
+      >
     </div>
   </div>
 </section>
@@ -222,69 +229,77 @@ const t = labels[locale as keyof typeof labels] || labels.en;
 </style>
 
 <script define:vars={{ locale, apiUrl: API_URL }} is:inline>
-  document.addEventListener('DOMContentLoaded', function() {
-    const reselectButtons = document.querySelectorAll('.reselect-btn');
-    
+  document.addEventListener("DOMContentLoaded", function () {
+    const reselectButtons = document.querySelectorAll(".reselect-btn");
+
     // Check if admin is logged in
     function updateButtonVisibility() {
-      const isAdmin = localStorage.getItem('adminToken') !== null;
-      reselectButtons.forEach(button => {
+      const isAdmin = localStorage.getItem("adminToken") !== null;
+      reselectButtons.forEach((button) => {
         if (isAdmin) {
-          button.classList.remove('hidden');
+          button.classList.remove("hidden");
         } else {
-          button.classList.add('hidden');
+          button.classList.add("hidden");
         }
       });
     }
-    
+
     // Initial check
     updateButtonVisibility();
-    
+
     // Listen for login/logout events
-    window.addEventListener('adminLogin', updateButtonVisibility);
-    window.addEventListener('adminLogout', updateButtonVisibility);
-    
-    reselectButtons.forEach(button => {
-      button.addEventListener('click', async function() {
+    window.addEventListener("adminLogin", updateButtonVisibility);
+    window.addEventListener("adminLogout", updateButtonVisibility);
+
+    reselectButtons.forEach((button) => {
+      button.addEventListener("click", async function () {
         const type = this.dataset.type;
         const originalText = this.textContent;
-        const token = localStorage.getItem('adminToken');
-        
+        const token = localStorage.getItem("adminToken");
+
         if (!token) {
-          alert(locale === 'ja' ? '管理者としてログインしてください' : 'Please login as admin');
+          alert(
+            locale === "ja"
+              ? "管理者としてログインしてください"
+              : "Please login as admin"
+          );
           return;
         }
-        
+
         // Disable button and show loading state
         this.disabled = true;
-        this.textContent = locale === 'ja' ? '抽選中...' : 'Selecting...';
-        
+        this.textContent = locale === "ja" ? "抽選中..." : "Selecting...";
+
         try {
           const response = await fetch(`${apiUrl}/reselect`, {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
               type: type,
-              locale: locale
-            })
+              locale: locale,
+            }),
           });
-          
+
           if (!response.ok) {
             throw new Error(`API request failed: ${response.status}`);
           }
-          
+
           const result = await response.json();
-          
+
           if (result.movie) {
             // Reload the page to show the new movie
             window.location.reload();
           }
         } catch (error) {
-          console.error('Error re-selecting movie:', error);
-          alert(locale === 'ja' ? 'エラーが発生しました。再度お試しください。' : 'An error occurred. Please try again.');
+          console.error("Error re-selecting movie:", error);
+          alert(
+            locale === "ja"
+              ? "エラーが発生しました。再度お試しください。"
+              : "An error occurred. Please try again."
+          );
         } finally {
           // Re-enable button
           this.disabled = false;

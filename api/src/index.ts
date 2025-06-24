@@ -16,6 +16,7 @@ app.use(
     origin: [
       "https://shine-film.com",
       "https://dlwr.github.io",
+      "https://shine-front-production.yuta25.workers.dev",
       "http://localhost:3000",
       "http://localhost:4321",
       "http://localhost:8787",
