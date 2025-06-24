@@ -1,17 +1,36 @@
 {
-  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020"],
+    "module": "ESNext",
+    "moduleDetection": "force",
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "verbatimModuleSyntax": true,
+    "plugins": [
+      {
+        "name": "@astrojs/ts-plugin"
+      }
+    ],
+    "types": [
+      "vitest/globals",
+      "@cloudflare/workers-types/2023-07-01"
+    ]
+  },
   "include": [".astro/types.d.ts", "**/*"],
   "exclude": [
     "dist",
     "../api/src/__tests__/**/*",
     "../scrapers/src/__tests__/**/*",
-    "../src/__tests__/**/*",
-    "**/*.test.ts",
-    "**/*.spec.ts"
-  ],
-  "compilerOptions": {
-    "types": [
-      "@cloudflare/workers-types/2023-07-01"
-    ]
-  }
+    "../src/__tests__/**/*"
+  ]
 }
