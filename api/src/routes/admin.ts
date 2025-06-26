@@ -896,3 +896,203 @@ adminRoutes.delete("/nominations/:nominationId", authMiddleware, async c => {
     return c.json({ error: "Internal server error" }, 500);
   }
 });
+
+// Merge movies - combines source movie data into target movie and deletes source
+adminRoutes.post(
+  "/movies/:sourceId/merge/:targetId",
+  authMiddleware,
+  async c => {
+    try {
+      const database = getDatabase(c.env as Environment);
+      const sourceId = c.req.param("sourceId");
+      const targetId = c.req.param("targetId");
+
+      if (sourceId === targetId) {
+        return c.json(
+          { error: "Source and target cannot be the same movie" },
+          400,
+        );
+      }
+
+      // Verify both movies exist
+      const [sourceMovie] = await database
+        .select()
+        .from(movies)
+        .where(eq(movies.uid, sourceId))
+        .limit(1);
+
+      const [targetMovie] = await database
+        .select()
+        .from(movies)
+        .where(eq(movies.uid, targetId))
+        .limit(1);
+
+      if (!sourceMovie) {
+        return c.json({ error: "Source movie not found" }, 404);
+      }
+
+      if (!targetMovie) {
+        return c.json({ error: "Target movie not found" }, 404);
+      }
+
+      // Merge operations in transaction
+      await database.transaction(async tx => {
+        // Update article_links
+        await tx
+          .update(articleLinks)
+          .set({ movieUid: targetId })
+          .where(eq(articleLinks.movieUid, sourceId));
+
+        // Update movie_selections
+        await tx
+          .update(movieSelections)
+          .set({ movieId: targetId })
+          .where(eq(movieSelections.movieId, sourceId));
+
+        // Update nominations
+        await tx
+          .update(nominations)
+          .set({ movieUid: targetId })
+          .where(eq(nominations.movieUid, sourceId));
+
+        // Update reference_urls
+        await tx
+          .update(referenceUrls)
+          .set({ movieUid: targetId })
+          .where(eq(referenceUrls.movieUid, sourceId));
+
+        // Merge translations (avoid duplicates)
+        const sourceTranslations = await tx
+          .select()
+          .from(translations)
+          .where(
+            and(
+              eq(translations.resourceType, "movie_title"),
+              eq(translations.resourceUid, sourceId),
+            ),
+          );
+
+        for (const translation of sourceTranslations) {
+          await tx
+            .insert(translations)
+            .values({
+              resourceType: "movie_title",
+              resourceUid: targetId,
+              languageCode: translation.languageCode,
+              content: translation.content,
+              isDefault: translation.isDefault,
+            })
+            .onConflictDoNothing({
+              target: [
+                translations.resourceType,
+                translations.resourceUid,
+                translations.languageCode,
+              ],
+            });
+        }
+
+        // Delete source translations
+        await tx
+          .delete(translations)
+          .where(
+            and(
+              eq(translations.resourceType, "movie_title"),
+              eq(translations.resourceUid, sourceId),
+            ),
+          );
+
+        // Merge poster URLs (avoid duplicates by URL)
+        const sourcePosters = await tx
+          .select()
+          .from(posterUrls)
+          .where(eq(posterUrls.movieUid, sourceId));
+
+        // Get existing target posters to check for URL duplicates
+        const existingTargetPosters = await tx
+          .select({ url: posterUrls.url })
+          .from(posterUrls)
+          .where(eq(posterUrls.movieUid, targetId));
+
+        const existingUrls = new Set(existingTargetPosters.map(p => p.url));
+
+        for (const poster of sourcePosters) {
+          // Only insert if URL doesn't already exist for target movie
+          if (!existingUrls.has(poster.url)) {
+            await tx.insert(posterUrls).values({
+              movieUid: targetId,
+              url: poster.url,
+              width: poster.width,
+              height: poster.height,
+              languageCode: poster.languageCode,
+              countryCode: poster.countryCode,
+              sourceType: poster.sourceType,
+              isPrimary: poster.isPrimary,
+            });
+          }
+        }
+
+        // Delete source posters
+        await tx.delete(posterUrls).where(eq(posterUrls.movieUid, sourceId));
+
+        // Update target movie with merged metadata (preserve existing if target has data)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const updateData: any = {
+          updatedAt: sql`(unixepoch())`,
+        };
+
+        if (!targetMovie.imdbId && sourceMovie.imdbId) {
+          // Check if IMDb ID is already used by another movie
+          const existingImdbMovie = await tx
+            .select({ uid: movies.uid })
+            .from(movies)
+            .where(and(
+              eq(movies.imdbId, sourceMovie.imdbId),
+              not(eq(movies.uid, targetId))
+            ))
+            .limit(1);
+
+          if (existingImdbMovie.length === 0) {
+            updateData.imdbId = sourceMovie.imdbId;
+          }
+        }
+
+        if (!targetMovie.tmdbId && sourceMovie.tmdbId) {
+          // Check if TMDb ID is already used by another movie
+          const existingTmdbMovie = await tx
+            .select({ uid: movies.uid })
+            .from(movies)
+            .where(and(
+              eq(movies.tmdbId, sourceMovie.tmdbId),
+              not(eq(movies.uid, targetId))
+            ))
+            .limit(1);
+
+          if (existingTmdbMovie.length === 0) {
+            updateData.tmdbId = sourceMovie.tmdbId;
+          }
+        }
+
+        if (Object.keys(updateData).length > 1) {
+          await tx
+            .update(movies)
+            .set(updateData)
+            .where(eq(movies.uid, targetId));
+        }
+
+        // Finally, delete the source movie
+        await tx.delete(movies).where(eq(movies.uid, sourceId));
+      });
+
+      return c.json({
+        success: true,
+        message: `Movie ${sourceId} successfully merged into ${targetId}`,
+      });
+    } catch (error) {
+      console.error("Error merging movies:", error);
+      return c.json({ 
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : String(error)
+      }, 500);
+    }
+  },
+);

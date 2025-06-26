@@ -390,6 +390,7 @@ import Layout from '../../layouts/Layout.astro';
                   : ''
                 }
                 <button onclick="deleteMovie('${movie.uid}', '${movie.title}')" class="btn btn-danger">Delete</button>
+                <button onclick="showMergeDialog('${movie.uid}', '${movie.title}')" class="btn btn-secondary">Merge</button>
               </div>
             </td>
           </tr>
@@ -491,6 +492,58 @@ import Layout from '../../layouts/Layout.astro';
 
   // Make deleteMovie available globally
   (window as any).deleteMovie = deleteMovie;
+
+  // Merge movies functionality
+  function showMergeDialog(sourceId: string, sourceTitle: string) {
+    const targetId = prompt(`映画「${sourceTitle}」を他の映画にマージします。\n\nマージ先の映画IDを入力してください：`);
+    
+    if (targetId && targetId.trim()) {
+      const confirmed = confirm(
+        `確認：\n\n` +
+        `マージ元: ${sourceTitle} (${sourceId})\n` +
+        `マージ先: ${targetId.trim()}\n\n` +
+        `マージ元の映画とそのデータは削除されます。\n` +
+        `この操作は取り消せません。\n\n` +
+        `続行しますか？`
+      );
+      
+      if (confirmed) {
+        mergeMovies(sourceId, targetId.trim(), sourceTitle);
+      }
+    }
+  }
+
+  async function mergeMovies(sourceId: string, targetId: string, sourceTitle: string) {
+    const token = checkAuth();
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_BASE}/admin/movies/${sourceId}/merge/${targetId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      // Refresh the movies list
+      fetchMovies(currentPage, currentSearchQuery);
+      alert(`Movie "${sourceTitle}" has been successfully merged.`);
+    } catch (error) {
+      alert(`Failed to merge movie: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Merge error:', error);
+    }
+  }
+
+  // Make showMergeDialog available globally
+  (window as any).showMergeDialog = showMergeDialog;
 
   // Initialize
   document.addEventListener('DOMContentLoaded', () => {
