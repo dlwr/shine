@@ -10,8 +10,11 @@ import { posterUrls } from "db/schema/poster-urls";
 import { translations } from "db/schema/translations";
 import { Hono } from "hono";
 import { authMiddleware } from "../auth";
+import { EdgeCache, getCacheTTL, createCachedResponse, createETag, checkETag } from "../utils/cache";
 
 export const selectionsRoutes = new Hono<{ Bindings: Environment }>();
+
+const cache = new EdgeCache();
 
 function simpleHash(input: string): number {
   let hash = 0;
@@ -486,9 +489,7 @@ function parseAcceptLanguage(acceptLanguage?: string): string[] {
 // Main endpoint for date-seeded movie selections
 selectionsRoutes.get("/", async (c) => {
   try {
-    const database = getDatabase(c.env as Environment);
     const now = new Date();
-
     const localeParameter = c.req.query("locale");
     const acceptLanguage = c.req.header("accept-language");
     const preferredLanguages = localeParameter
@@ -497,17 +498,60 @@ selectionsRoutes.get("/", async (c) => {
     const locale =
       preferredLanguages.find((lang) => ["en", "ja"].includes(lang)) || "en";
 
+    // Generate cache keys for each selection type
+    const dailyDate = getSelectionDate(now, "daily");
+    const weeklyDate = getSelectionDate(now, "weekly");  
+    const monthlyDate = getSelectionDate(now, "monthly");
+
+    // Try to get cached response first
+    const cacheKey = `selections:all:${dailyDate}:${weeklyDate}:${monthlyDate}:${locale}:v1`;
+    const cachedResponse = await cache.get(cacheKey);
+    
+    if (cachedResponse) {
+      console.log("Cache hit for selections:", cacheKey);
+      return cachedResponse;
+    }
+
+    console.log("Cache miss for selections:", cacheKey);
+
+    // If not cached, fetch from database
+    const database = getDatabase(c.env as Environment);
     const [dailyMovie, weeklyMovie, monthlyMovie] = await Promise.all([
       getMovieByDateSeed(database, now, "daily", locale),
       getMovieByDateSeed(database, now, "weekly", locale),
       getMovieByDateSeed(database, now, "monthly", locale),
     ]);
 
-    return c.json({
+    const result = {
       daily: dailyMovie,
       weekly: weeklyMovie,
       monthly: monthlyMovie,
+    };
+
+    // Create ETag for the response
+    const etag = createETag(result);
+    
+    // Check if client has the same version
+    if (checkETag(c.req, etag)) {
+      return c.newResponse('', 304, {
+        'ETag': etag,
+        'Cache-Control': 'public, max-age=3600',
+      });
+    }
+
+    // Determine TTL based on the shortest period (daily)
+    const ttl = getCacheTTL.selections.daily;
+    
+    // Create cached response with appropriate headers
+    const response = createCachedResponse(result, ttl, {
+      'ETag': etag,
+      'X-Cache-Status': 'MISS',
     });
+
+    // Store in cache
+    await cache.put(cacheKey, response, ttl);
+
+    return response;
   } catch (error) {
     console.error("Error fetching feature movies:", error);
     return c.json({ error: "Internal server error" }, 500);
@@ -527,7 +571,16 @@ selectionsRoutes.post("/reselect", authMiddleware, async (c) => {
       return c.json({ error: "Invalid selection type" }, 400);
     }
 
+    // Invalidate related caches before reselecting
+    const dateForType = getSelectionDate(now, type);
+    await Promise.all([
+      cache.deleteByPattern(`selections:${type}:${dateForType}`),
+      cache.deleteByPattern(`selections:all:`)
+    ]);
+
     const movie = await getMovieByDateSeed(database, now, type, locale, true);
+
+    console.log(`Cache invalidated for ${type} selection on ${dateForType}`);
 
     return c.json({
       type,

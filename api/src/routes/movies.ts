@@ -10,8 +10,11 @@ import { translations } from "db/schema/translations";
 import { Hono } from "hono";
 import { authMiddleware } from "../auth";
 import { sanitizeText, sanitizeUrl } from "../middleware/sanitizer";
+import { EdgeCache, getCacheKeyForMovie, getCacheTTL, createCachedResponse, createETag, checkETag } from "../utils/cache";
 
 export const moviesRoutes = new Hono<{ Bindings: Environment }>();
+
+const cache = new EdgeCache();
 
 // Search movies endpoint
 moviesRoutes.get("/search", async (c) => {
@@ -212,8 +215,20 @@ async function getMovieNominations(
 // Get movie details with all translations
 moviesRoutes.get("/:id", async (c) => {
   try {
-    const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("id");
+    
+    // Check cache first
+    const cacheKey = getCacheKeyForMovie(movieId, true);
+    const cachedResponse = await cache.get(cacheKey);
+    
+    if (cachedResponse) {
+      console.log("Cache hit for movie details:", movieId);
+      return cachedResponse;
+    }
+
+    console.log("Cache miss for movie details:", movieId);
+    
+    const database = getDatabase(c.env as Environment);
 
     // Get movie basic info
     const movieResult = await database
@@ -265,7 +280,7 @@ moviesRoutes.get("/:id", async (c) => {
       ? `https://www.imdb.com/title/${movie.imdbId}/`
       : undefined;
 
-    return c.json({
+    const result = {
       uid: movie.uid,
       year: movie.year,
       originalLanguage: movie.originalLanguage,
@@ -294,7 +309,30 @@ moviesRoutes.get("/:id", async (c) => {
         })
       ),
       nominations: movieNominations,
+    };
+
+    // Create ETag for the response
+    const etag = createETag(result);
+    
+    // Check if client has the same version
+    if (checkETag(c.req, etag)) {
+      return c.newResponse('', 304, {
+        'ETag': etag,
+        'Cache-Control': 'public, max-age=86400',
+      });
+    }
+
+    // Create cached response with 24 hour TTL
+    const ttl = getCacheTTL.movie.full;
+    const response = createCachedResponse(result, ttl, {
+      'ETag': etag,
+      'X-Cache-Status': 'MISS',
     });
+
+    // Store in cache
+    await cache.put(cacheKey, response, ttl);
+
+    return response;
   } catch (error) {
     console.error("Error fetching movie details:", error);
     return c.json({ error: "Internal server error" }, 500);
@@ -361,6 +399,15 @@ moviesRoutes.post("/:id/translations", authMiddleware, async (c) => {
           isDefault: isDefault ? 1 : 0,
         }));
 
+    // Invalidate movie details cache
+    await Promise.all([
+      cache.delete(getCacheKeyForMovie(movieId, true)),
+      cache.delete(getCacheKeyForMovie(movieId, false)),
+      cache.deleteByPattern(`selections:all:`), // Invalidate main selections that might include this movie
+    ]);
+
+    console.log(`Cache invalidated for movie ${movieId} after translation update`);
+
     return c.json({ success: true });
   } catch (error) {
     console.error("Error adding/updating translation:", error);
@@ -384,6 +431,15 @@ moviesRoutes.delete("/:id/translations/:lang", authMiddleware, async (c) => {
           eq(translations.languageCode, languageCode)
         )
       );
+
+    // Invalidate movie details cache
+    await Promise.all([
+      cache.delete(getCacheKeyForMovie(movieId, true)),
+      cache.delete(getCacheKeyForMovie(movieId, false)),
+      cache.deleteByPattern(`selections:all:`),
+    ]);
+
+    console.log(`Cache invalidated for movie ${movieId} after translation deletion`);
 
     return c.json({ success: true });
   } catch (error) {
