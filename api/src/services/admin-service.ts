@@ -1,0 +1,409 @@
+import { and, eq, like, not, sql } from "db";
+import { articleLinks } from "db/schema/article-links";
+import { movieSelections } from "db/schema/movie-selections";
+import { movies } from "db/schema/movies";
+import { nominations } from "db/schema/nominations";
+import { posterUrls } from "db/schema/poster-urls";
+import { referenceUrls } from "db/schema/reference-urls";
+import { translations } from "db/schema/translations";
+import { BaseService } from "./base-service";
+import type {
+  MergeMoviesOptions,
+  PaginationOptions,
+  TMDBMovieData,
+  UpdateIMDBIdOptions,
+} from "./types";
+
+export class AdminService extends BaseService {
+  async getMovies(options: PaginationOptions & { search?: string }) {
+    const { page, limit, search } = options;
+    const offset = (page - 1) * limit;
+
+    const baseQuery = this.database
+      .select({
+        uid: movies.uid,
+        year: movies.year,
+        originalLanguage: movies.originalLanguage,
+        imdbId: movies.imdbId,
+        title: translations.content,
+        posterUrl: sql`
+          (
+            SELECT url
+            FROM poster_urls
+            WHERE poster_urls.movie_uid = movies.uid
+            LIMIT 1
+          )
+        `.as("posterUrl"),
+        nominationCount: sql`
+          (
+            SELECT COUNT(*)
+            FROM nominations
+            WHERE nominations.movie_uid = movies.uid
+          )
+        `.as("nominationCount"),
+      })
+      .from(movies)
+      .leftJoin(
+        translations,
+        and(
+          eq(translations.resourceUid, movies.uid),
+          eq(translations.resourceType, "movie_title"),
+          eq(translations.languageCode, "ja"),
+        ),
+      );
+
+    const searchCondition = search ? like(translations.content, `%${search}%`) : undefined;
+    const query = searchCondition ? baseQuery.where(searchCondition) : baseQuery;
+
+    const allMovies = await query
+      .orderBy(sql`${movies.createdAt} DESC`)
+      .limit(limit)
+      .offset(offset);
+
+    const totalCountResult = await this.database
+      .select({ count: sql`COUNT(*)`.as("count") })
+      .from(movies)
+      .leftJoin(
+        translations,
+        and(
+          eq(translations.resourceUid, movies.uid),
+          eq(translations.resourceType, "movie_title"),
+          eq(translations.languageCode, "ja"),
+        ),
+      )
+      .where(search ? like(translations.content, `%${search}%`) : sql`1=1`);
+
+    const totalCount = Number(totalCountResult[0]?.count) || 0;
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      movies: allMovies,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    };
+  }
+
+  async deleteMovie(movieId: string): Promise<void> {
+    await this.database.transaction(async trx => {
+      await trx.delete(articleLinks).where(eq(articleLinks.movieUid, movieId));
+      await trx
+        .delete(movieSelections)
+        .where(eq(movieSelections.movieId, movieId));
+      await trx.delete(nominations).where(eq(nominations.movieUid, movieId));
+      await trx
+        .delete(referenceUrls)
+        .where(eq(referenceUrls.movieUid, movieId));
+      await trx
+        .delete(translations)
+        .where(eq(translations.resourceUid, movieId));
+      await trx.delete(posterUrls).where(eq(posterUrls.movieUid, movieId));
+      await trx.delete(movies).where(eq(movies.uid, movieId));
+    });
+  }
+
+  async updateIMDbId(
+    movieId: string,
+    options: UpdateIMDBIdOptions,
+  ): Promise<{
+    tmdbId?: number;
+    postersAdded: number;
+    translationsAdded: number;
+  }> {
+    const { imdbId, fetchTMDBData = false } = options;
+
+    // Validate IMDb ID format
+    if (!/^tt\d+$/.test(imdbId)) {
+      throw new Error("Invalid IMDb ID format");
+    }
+
+    // Check for duplicate IMDb ID
+    const existingMovie = await this.database
+      .select({ uid: movies.uid })
+      .from(movies)
+      .where(and(eq(movies.imdbId, imdbId), not(eq(movies.uid, movieId))))
+      .limit(1);
+
+    if (existingMovie.length > 0) {
+      throw new Error("IMDb ID already exists for another movie");
+    }
+
+    let tmdbId: number | undefined;
+    let postersAdded = 0;
+    let translationsAdded = 0;
+
+    if (fetchTMDBData) {
+      try {
+        const tmdbData = await this.fetchTMDBDataByImdbId(imdbId);
+        if (tmdbData) {
+          tmdbId = tmdbData.tmdbId;
+          postersAdded = await this.addPostersFromTMDB(movieId, tmdbData.movie);
+          translationsAdded = await this.addTranslationsFromTMDB(
+            movieId,
+            tmdbData.movie,
+          );
+        }
+      } catch (error) {
+        console.error("Failed to fetch TMDB data:", error);
+      }
+    }
+
+    await this.database
+      .update(movies)
+      .set({
+        imdbId,
+        ...(tmdbId && { tmdbId }),
+        updatedAt: Math.floor(Date.now() / 1000),
+      })
+      .where(eq(movies.uid, movieId));
+
+    return { tmdbId, postersAdded, translationsAdded };
+  }
+
+  async addPoster(
+    movieId: string,
+    posterData: {
+      url: string;
+      width?: number;
+      height?: number;
+      language?: string;
+      source?: string;
+      isPrimary?: boolean;
+    },
+  ) {
+    const {
+      url,
+      width,
+      height,
+      language = "en",
+      source = "manual",
+      isPrimary = false,
+    } = posterData;
+
+    if (isPrimary) {
+      await this.database
+        .update(posterUrls)
+        .set({ isPrimary: 0 })
+        .where(eq(posterUrls.movieUid, movieId));
+    }
+
+    const [newPoster] = await this.database
+      .insert(posterUrls)
+      .values({
+        movieUid: movieId,
+        url,
+        width,
+        height,
+        languageCode: language,
+        sourceType: source,
+        isPrimary: isPrimary ? 1 : 0,
+        createdAt: Math.floor(Date.now() / 1000),
+        updatedAt: Math.floor(Date.now() / 1000),
+      })
+      .returning();
+
+    return newPoster;
+  }
+
+  async deletePoster(movieId: string, posterId: string): Promise<void> {
+    await this.database
+      .delete(posterUrls)
+      .where(
+        and(eq(posterUrls.uid, posterId), eq(posterUrls.movieUid, movieId)),
+      );
+  }
+
+  async mergeMovies(options: MergeMoviesOptions): Promise<void> {
+    const {
+      sourceMovieId,
+      targetMovieId,
+      preserveTranslations = true,
+      preservePosters = true,
+    } = options;
+
+    if (sourceMovieId === targetMovieId) {
+      throw new Error("Cannot merge a movie with itself");
+    }
+
+    await this.database.transaction(async trx => {
+      // Merge nominations
+      await trx
+        .update(nominations)
+        .set({ movieUid: targetMovieId, updatedAt: Math.floor(Date.now() / 1000) })
+        .where(eq(nominations.movieUid, sourceMovieId));
+
+      // Merge movie selections
+      await trx
+        .update(movieSelections)
+        .set({
+          movieId: targetMovieId,
+          updatedAt: Math.floor(Date.now() / 1000),
+        })
+        .where(eq(movieSelections.movieId, sourceMovieId));
+
+      // Merge article links
+      await trx
+        .update(articleLinks)
+        .set({ movieUid: targetMovieId })
+        .where(eq(articleLinks.movieUid, sourceMovieId));
+
+      // Merge reference URLs
+      await trx
+        .update(referenceUrls)
+        .set({
+          movieUid: targetMovieId,
+          updatedAt: Math.floor(Date.now() / 1000),
+        })
+        .where(eq(referenceUrls.movieUid, sourceMovieId));
+
+      // Update or delete translations based on preserveTranslations flag
+      void (preserveTranslations
+        ? await trx
+            .update(translations)
+            .set({
+              resourceUid: targetMovieId,
+              updatedAt: Math.floor(Date.now() / 1000),
+            })
+            .where(eq(translations.resourceUid, sourceMovieId))
+        : await trx
+            .delete(translations)
+            .where(eq(translations.resourceUid, sourceMovieId)));
+
+      // Update or delete posters based on preservePosters flag
+      void (preservePosters
+        ? await trx
+            .update(posterUrls)
+            .set({
+              movieUid: targetMovieId,
+              updatedAt: Math.floor(Date.now() / 1000),
+            })
+            .where(eq(posterUrls.movieUid, sourceMovieId))
+        : await trx
+            .delete(posterUrls)
+            .where(eq(posterUrls.movieUid, sourceMovieId)));
+
+      // Delete the source movie
+      await trx.delete(movies).where(eq(movies.uid, sourceMovieId));
+    });
+  }
+
+  private async fetchTMDBDataByImdbId(imdbId: string): Promise<{
+    tmdbId: number;
+    movie: TMDBMovieData;
+  } | undefined> {
+    const apiKey = this.env.TMDB_API_KEY;
+    if (!apiKey) {
+      throw new Error("TMDB API key not configured");
+    }
+
+    // Find TMDb ID from IMDb ID
+    const findResponse = await fetch(
+      `https://api.themoviedb.org/3/find/${imdbId}?api_key=${apiKey}&external_source=imdb_id`,
+    );
+
+    if (!findResponse.ok) {
+      throw new Error(`TMDB API error: ${findResponse.statusText}`);
+    }
+
+    const findData = (await findResponse.json()) as {
+      movie_results?: { id: number }[];
+    };
+    if (!findData.movie_results || findData.movie_results.length === 0) {
+      return undefined;
+    }
+
+    const tmdbId = findData.movie_results[0].id;
+
+    // Get detailed movie data with translations
+    const movieResponse = await fetch(
+      `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${apiKey}&append_to_response=translations`,
+    );
+
+    if (!movieResponse.ok) {
+      throw new Error(`TMDB API error: ${movieResponse.statusText}`);
+    }
+
+    const movieData = (await movieResponse.json()) as TMDBMovieData;
+
+    return {
+      tmdbId,
+      movie: movieData,
+    };
+  }
+
+  private async addPostersFromTMDB(
+    movieId: string,
+    tmdbData: TMDBMovieData,
+  ): Promise<number> {
+    if (!tmdbData.poster_path) return 0;
+
+    const url = `https://image.tmdb.org/t/p/w500${tmdbData.poster_path}`;
+
+    // Check if this poster already exists
+    const existingPoster = await this.database
+      .select({ uid: posterUrls.uid })
+      .from(posterUrls)
+      .where(and(eq(posterUrls.movieUid, movieId), eq(posterUrls.url, url)))
+      .limit(1);
+
+    if (existingPoster.length > 0) return 0;
+
+    await this.database.insert(posterUrls).values({
+      movieUid: movieId,
+      url,
+      width: 500,
+      height: 750,
+      languageCode: "en",
+      sourceType: "tmdb",
+      isPrimary: 0,
+      createdAt: Math.floor(Date.now() / 1000),
+      updatedAt: Math.floor(Date.now() / 1000),
+    });
+
+    return 1;
+  }
+
+  private async addTranslationsFromTMDB(
+    movieId: string,
+    tmdbData: TMDBMovieData,
+  ): Promise<number> {
+    let addedCount = 0;
+
+    if (tmdbData.translations?.translations) {
+      for (const translation of tmdbData.translations.translations) {
+        if (translation.iso_639_1 === "ja" && translation.data?.title) {
+          // Check if Japanese translation already exists
+          const existingTranslation = await this.database
+            .select({ uid: translations.uid })
+            .from(translations)
+            .where(
+              and(
+                eq(translations.resourceUid, movieId),
+                eq(translations.resourceType, "movie_title"),
+                eq(translations.languageCode, "ja"),
+              ),
+            )
+            .limit(1);
+
+          if (existingTranslation.length === 0) {
+            await this.database.insert(translations).values({
+              resourceType: "movie_title",
+              resourceUid: movieId,
+              languageCode: "ja",
+              content: translation.data.title,
+              createdAt: Math.floor(Date.now() / 1000),
+              updatedAt: Math.floor(Date.now() / 1000),
+            });
+            addedCount++;
+          }
+        }
+      }
+    }
+
+    return addedCount;
+  }
+}

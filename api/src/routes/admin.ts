@@ -1045,10 +1045,12 @@ adminRoutes.post(
           const existingImdbMovie = await tx
             .select({ uid: movies.uid })
             .from(movies)
-            .where(and(
-              eq(movies.imdbId, sourceMovie.imdbId),
-              not(eq(movies.uid, targetId))
-            ))
+            .where(
+              and(
+                eq(movies.imdbId, sourceMovie.imdbId),
+                not(eq(movies.uid, targetId)),
+              ),
+            )
             .limit(1);
 
           if (existingImdbMovie.length === 0) {
@@ -1061,10 +1063,12 @@ adminRoutes.post(
           const existingTmdbMovie = await tx
             .select({ uid: movies.uid })
             .from(movies)
-            .where(and(
-              eq(movies.tmdbId, sourceMovie.tmdbId),
-              not(eq(movies.uid, targetId))
-            ))
+            .where(
+              and(
+                eq(movies.tmdbId, sourceMovie.tmdbId),
+                not(eq(movies.uid, targetId)),
+              ),
+            )
             .limit(1);
 
           if (existingTmdbMovie.length === 0) {
@@ -1089,10 +1093,13 @@ adminRoutes.post(
       });
     } catch (error) {
       console.error("Error merging movies:", error);
-      return c.json({ 
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error)
-      }, 500);
+      return c.json(
+        {
+          error: "Internal server error",
+          details: error instanceof Error ? error.message : String(error),
+        },
+        500,
+      );
     }
   },
 );
