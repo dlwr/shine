@@ -170,13 +170,22 @@ async function getMovieByDateSeedPreview(
     const seed = getDateSeed(date, type);
 
     // Get a random movie using the seed
+    const totalMovies = await database
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(movies);
+
+    const count = totalMovies[0].count;
+    if (count === 0) {
+      return;
+    }
+
+    const offset = Math.abs(seed) % count;
     const randomMovieResult = await database
       .select({ uid: movies.uid })
       .from(movies)
-      .orderBy(
-        sql`(ABS(${seed} % (SELECT COUNT(*) FROM movies)) + movies.rowid) % (SELECT COUNT(*) FROM movies)`,
-      )
-      .limit(1);
+      .orderBy(movies.createdAt)
+      .limit(1)
+      .offset(offset);
 
     if (randomMovieResult.length === 0) {
       return;
@@ -329,13 +338,22 @@ async function getMovieByDateSeed(
     }
 
     // Get a random movie using the seed
+    const totalMovies = await database
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(movies);
+
+    const count = totalMovies[0].count;
+    if (count === 0) {
+      return;
+    }
+
+    const offset = Math.abs(seed) % count;
     const randomMovieResult = await database
       .select({ uid: movies.uid })
       .from(movies)
-      .orderBy(
-        sql`(ABS(${seed} % (SELECT COUNT(*) FROM movies)) + movies.rowid) % (SELECT COUNT(*) FROM movies)`,
-      )
-      .limit(1);
+      .orderBy(movies.createdAt)
+      .limit(1)
+      .offset(offset);
 
     if (randomMovieResult.length === 0) {
       return;
@@ -740,13 +758,22 @@ selectionsRoutes.post(
       const randomSeed = baseSeed + Date.now();
 
       // Get a random movie using the random seed
+      const totalMovies = await database
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(movies);
+
+      const count = totalMovies[0].count;
+      if (count === 0) {
+        return c.json({ error: "No movies found" }, 404);
+      }
+
+      const offset = Math.abs(randomSeed) % count;
       const randomMovieResult = await database
         .select({ uid: movies.uid })
         .from(movies)
-        .orderBy(
-          sql`(ABS(${randomSeed} % (SELECT COUNT(*) FROM movies)) + movies.rowid) % (SELECT COUNT(*) FROM movies)`,
-        )
-        .limit(1);
+        .orderBy(movies.createdAt)
+        .limit(1)
+        .offset(offset);
 
       if (randomMovieResult.length === 0) {
         return c.json({ error: "No movies found" }, 404);

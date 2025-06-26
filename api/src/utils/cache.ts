@@ -13,8 +13,15 @@ export interface CacheMetrics {
 export class EdgeCache {
   private cache = (caches as unknown as { default: Cache }).default;
   private metrics: CacheMetrics = { hits: 0, misses: 0, hitRate: 0 };
+  private isDevelopment = true; // Always disable cache in development
 
   async get(key: string): Promise<Response | undefined> {
+    if (this.isDevelopment) {
+      this.metrics.misses++;
+      this.updateHitRate();
+      return undefined;
+    }
+
     try {
       const cached = await this.cache.match(key);
       if (cached) {
@@ -34,6 +41,10 @@ export class EdgeCache {
   }
 
   async put(key: string, response: Response, ttl?: number): Promise<void> {
+    if (this.isDevelopment) {
+      return;
+    }
+
     try {
       const responseToCache = response.clone();
 
@@ -55,6 +66,10 @@ export class EdgeCache {
   }
 
   async delete(key: string): Promise<boolean> {
+    if (this.isDevelopment) {
+      return true;
+    }
+
     try {
       return await this.cache.delete(key);
     } catch (error) {
@@ -64,6 +79,10 @@ export class EdgeCache {
   }
 
   async deleteByPattern(pattern: string): Promise<number> {
+    if (this.isDevelopment) {
+      return 0;
+    }
+
     try {
       let deleted = 0;
       const keys = await this.cache.keys();

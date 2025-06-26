@@ -35,7 +35,7 @@ async function fetchMovie(locale: string) {
   try {
     const cacheKey = getCacheKey();
     const response = await fetch(
-      `https://shine-api.yuta25.workers.dev/?cache=${cacheKey}&locale=${locale}`,
+      `${API_URL}/?cache=${cacheKey}&locale=${locale}`,
       {
         headers: {
           "Cache-Control": "no-store",
@@ -311,7 +311,6 @@ const t = labels[locale as keyof typeof labels] || labels.en;
     reselectButtons.forEach((button) => {
       button.addEventListener("click", async function () {
         const type = this.dataset.type;
-        const originalText = this.textContent;
         const token = localStorage.getItem("adminToken");
 
         if (!token) {
