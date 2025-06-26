@@ -25,7 +25,7 @@ interface TMDBFindResponse {
 export async function fetchJapaneseTitleFromTMDB(
   imdbId: string,
   tmdbId: number | null,
-  environment: Environment
+  environment: Environment,
 ): Promise<string | undefined> {
   const TMDB_API_KEY = environment.TMDB_API_KEY;
 
@@ -88,7 +88,7 @@ export async function fetchJapaneseTitleFromTMDB(
   } catch (error) {
     console.error(
       `Error fetching Japanese title from TMDB for IMDb ID ${imdbId}:`,
-      error
+      error,
     );
     return undefined;
   }
@@ -103,7 +103,7 @@ export async function fetchJapaneseTitleFromTMDB(
 async function saveTMDBId(
   imdbId: string,
   tmdbId: number,
-  environment: Environment
+  environment: Environment,
 ): Promise<void> {
   const database = getDatabase(environment);
 
@@ -134,7 +134,7 @@ async function saveTMDBId(
 
     if (duplicateMovie.length > 0) {
       console.log(
-        `  TMDB ID ${tmdbId} is already used by another movie (${duplicateMovie[0].uid})`
+        `  TMDB ID ${tmdbId} is already used by another movie (${duplicateMovie[0].uid})`,
       );
       return;
     }

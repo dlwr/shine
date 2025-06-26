@@ -1,5 +1,6 @@
-import { seedAcademyAwards } from "../../src/seeds/academy-awards";
 import * as cheerio from "cheerio";
+import { Element } from "domhandler";
+import { and, eq } from "drizzle-orm";
 import { getDatabase, type Environment } from "../../src/index";
 import { awardCategories } from "../../src/schema/award-categories";
 import { awardCeremonies } from "../../src/schema/award-ceremonies";
@@ -8,8 +9,7 @@ import { movies } from "../../src/schema/movies";
 import { nominations } from "../../src/schema/nominations";
 import { referenceUrls } from "../../src/schema/reference-urls";
 import { translations } from "../../src/schema/translations";
-import { Element } from "domhandler";
-import { and, eq } from "drizzle-orm";
+import { seedAcademyAwards } from "../../src/seeds/academy-awards";
 import {
   fetchImdbId,
   fetchJapaneseTitleFromTMDB,
@@ -65,7 +65,7 @@ export default {
     } catch (error) {
       return new Response(
         `Error: ${error instanceof Error ? error.message : String(error)}`,
-        { status: 500 }
+        { status: 500 },
       );
     }
   },
@@ -89,8 +89,8 @@ async function fetchMasterData(): Promise<MasterData> {
     .where(
       and(
         eq(awardCategories.shortName, "Best Picture"),
-        eq(awardCategories.organizationUid, organization.uid)
-      )
+        eq(awardCategories.organizationUid, organization.uid),
+      ),
     );
 
   if (!category) {
@@ -103,7 +103,7 @@ async function fetchMasterData(): Promise<MasterData> {
     .where(eq(awardCeremonies.organizationUid, organization.uid));
 
   const ceremonies = new Map<number, string>(
-    ceremoniesData.map((ceremony) => [ceremony.year as number, ceremony.uid])
+    ceremoniesData.map(ceremony => [ceremony.year as number, ceremony.uid]),
   );
 
   masterData = {
@@ -117,7 +117,7 @@ async function fetchMasterData(): Promise<MasterData> {
 
 async function getOrCreateCeremony(
   year: number,
-  organizationUid: string
+  organizationUid: string,
 ): Promise<string> {
   const database = getDatabase(environment_);
   const [ceremony] = await database
@@ -166,7 +166,7 @@ export async function scrapeAcademyAwards() {
           movie.title,
           movie.year,
           movie.isWinner,
-          movie.referenceUrl
+          movie.referenceUrl,
         );
         moviesProcessed++;
         if (movie.isWinner) winnersProcessed++;
@@ -174,7 +174,7 @@ export async function scrapeAcademyAwards() {
     }
 
     console.log(
-      `Scraping completed successfully: ${moviesProcessed} movies processed, ${winnersProcessed} winners`
+      `Scraping completed successfully: ${moviesProcessed} movies processed, ${winnersProcessed} winners`,
     );
   } catch (error) {
     console.error("Error scraping Academy Awards:", error);
@@ -185,13 +185,13 @@ export async function scrapeAcademyAwards() {
 function analyzeTableStructure(
   $: cheerio.CheerioAPI,
   $table: cheerio.Cheerio<Element>,
-  tableIndex: number
+  tableIndex: number,
 ): TableColumns | undefined {
   const headerRow = $table.find("tr").first();
   const headerTexts = headerRow
     .find("th")
     .map((_: number, element: Element) =>
-      $(element).text().trim().toLowerCase()
+      $(element).text().trim().toLowerCase(),
     )
     .get();
 
@@ -238,12 +238,12 @@ function analyzeTableStructure(
   }
 
   let tableType: "film" | "producer" | "unknown" = "film";
-  if (headerTexts.some((text) => text.includes("producer"))) {
+  if (headerTexts.some(text => text.includes("producer"))) {
     tableType = "producer";
   }
 
   console.log(
-    `Table ${tableIndex}: film=${filmIndex}, year=${yearIndex}, producer=${producerIndex}, type=${tableType}`
+    `Table ${tableIndex}: film=${filmIndex}, year=${yearIndex}, producer=${producerIndex}, type=${tableType}`,
   );
 
   return { filmIndex, yearIndex, producerIndex, tableType };
@@ -251,7 +251,7 @@ function analyzeTableStructure(
 
 function processTableRows(
   $: cheerio.CheerioAPI,
-  $table: cheerio.Cheerio<Element>
+  $table: cheerio.Cheerio<Element>,
 ): MovieInfo[] {
   const rows = $table.find("tr");
   const result: MovieInfo[] = [];
@@ -277,7 +277,7 @@ function processTableRows(
     const extractedYear = extractYear($row);
     if (extractedYear) {
       console.log(
-        `Found new year: ${extractedYear} (previous: ${currentYear})`
+        `Found new year: ${extractedYear} (previous: ${currentYear})`,
       );
       currentYear = extractedYear;
       processedTitles.clear();
@@ -307,7 +307,7 @@ function processTableRows(
       console.log(
         `Adding movie: ${title} (${currentYear}) - ${
           isWinner ? "Winner" : "Nominee"
-        } ${imdbId ? `IMDb: ${imdbId}` : ""}`
+        } ${imdbId ? `IMDb: ${imdbId}` : ""}`,
       );
 
       result.push({
@@ -324,9 +324,7 @@ function processTableRows(
   return result;
 }
 
-function extractYear(
-  $row: cheerio.Cheerio<Element>
-): number | undefined {
+function extractYear($row: cheerio.Cheerio<Element>): number | undefined {
   const rowHeader = $row.find("th").first();
   if (rowHeader.length > 0) {
     const yearText = rowHeader.text().trim();
@@ -352,9 +350,7 @@ function extractYear(
   return undefined;
 }
 
-function determineIfWinner(
-  $row: cheerio.Cheerio<Element>
-): boolean {
+function determineIfWinner($row: cheerio.Cheerio<Element>): boolean {
   const filmCell = $row.find("td").first();
 
   if (filmCell.find("b").length > 0) {
@@ -382,7 +378,7 @@ function determineIfWinner(
 
 function extractMovieTitle(
   $: cheerio.CheerioAPI,
-  $row: cheerio.Cheerio<Element>
+  $row: cheerio.Cheerio<Element>,
 ): { title: string; referenceUrl?: string; imdbId?: string } {
   const filmCell = $row.find("td").first();
   if (!filmCell || filmCell.length === 0) return { title: "" };
@@ -428,16 +424,15 @@ function cleanupTitle(title: string): string {
   return title
     .replaceAll(/\s*\([^)]*\)/g, "")
     .replaceAll(/\s*\[[^\]]*\]/g, "")
-    .replaceAll('*', "")
+    .replaceAll("*", "")
     .trim();
 }
-
 
 async function processMovie(
   title: string,
   year: number,
   isWinner: boolean,
-  referenceUrl?: string
+  referenceUrl?: string,
 ) {
   try {
     const master = await fetchMasterData();
@@ -462,8 +457,8 @@ async function processMovie(
           eq(translations.resourceUid, movies.uid),
           eq(translations.resourceType, "movie_title"),
           eq(translations.languageCode, "en"),
-          eq(translations.isDefault, 1)
-        )
+          eq(translations.isDefault, 1),
+        ),
       )
       .where(eq(translations.content, title));
 
@@ -538,10 +533,12 @@ async function processMovie(
     if (imdbId && TMDB_API_KEY) {
       const japaneseTitle = await fetchJapaneseTitleFromTMDB(
         imdbId,
-        existingMovies.length > 0 ? (existingMovies[0].movies.tmdbId ?? undefined) : undefined,
-        environment_
+        existingMovies.length > 0
+          ? (existingMovies[0].movies.tmdbId ?? undefined)
+          : undefined,
+        environment_,
       );
-      
+
       if (japaneseTitle) {
         await saveJapaneseTranslation(movieUid, japaneseTitle, environment_);
       }
@@ -555,7 +552,7 @@ async function processMovie(
           .from(movies)
           .where(eq(movies.uid, movieUid))
           .limit(1);
-        
+
         if (currentMovie.length > 0 && !currentMovie[0].tmdbId) {
           await saveTMDBId(imdbId, movieImages.tmdbId, environment_);
         }
@@ -564,9 +561,9 @@ async function processMovie(
         const posterCount = await savePosterUrls(
           movieUid,
           movieImages.images.posters,
-          environment_
+          environment_,
         );
-        
+
         if (posterCount > 0) {
           console.log(`  Saved ${posterCount} posters for ${title}`);
         }
@@ -599,7 +596,7 @@ async function processMovie(
     console.log(
       `Processed ${existingMovies.length > 0 ? "updated" : "new"} movie: ${title} (${year}) - ${
         isWinner ? "Winner" : "Nominee"
-      } ${imdbId ? `IMDb: ${imdbId}` : ""}`
+      } ${imdbId ? `IMDb: ${imdbId}` : ""}`,
     );
   } catch (error) {
     console.error(`Error processing movie ${title}:`, error);

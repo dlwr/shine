@@ -53,11 +53,11 @@ async function main() {
       }
 
       console.log(
-        `日本語翻訳スクレイピングを開始します (バッチサイズ: ${batchSize})`
+        `日本語翻訳スクレイピングを開始します (バッチサイズ: ${batchSize})`,
       );
     } else {
       console.log(
-        `日本語翻訳スクレイピングを開始します (バッチサイズ: ${batchSize})`
+        `日本語翻訳スクレイピングを開始します (バッチサイズ: ${batchSize})`,
       );
     }
 
@@ -65,7 +65,7 @@ async function main() {
     if (!environment.TURSO_DATABASE_URL || !environment.TURSO_AUTH_TOKEN) {
       console.error("データベース接続情報が不足しています。");
       console.error(
-        "TURSO_DATABASE_URL_DEV と TURSO_AUTH_TOKEN_DEV を設定してください。"
+        "TURSO_DATABASE_URL_DEV と TURSO_AUTH_TOKEN_DEV を設定してください。",
       );
       throw new Error("Missing database connection info");
     }
@@ -77,7 +77,7 @@ async function main() {
     console.log("日本語翻訳が未登録の映画を検索中...");
     const movies = await getMoviesWithoutJapaneseTranslation(
       database,
-      batchSize
+      batchSize,
     );
 
     if (movies.length === 0) {
@@ -86,7 +86,7 @@ async function main() {
     }
 
     console.log(
-      `${movies.length}件の映画が見つかりました。スクレイピングを開始します。`
+      `${movies.length}件の映画が見つかりました。スクレイピングを開始します。`,
     );
     console.log("─".repeat(80));
 
@@ -101,14 +101,14 @@ async function main() {
 
       try {
         console.log(
-          `${progress} 処理中: ${movie.englishTitle} (${movie.year || "年不明"}) - IMDb: ${movie.imdbId}`
+          `${progress} 処理中: ${movie.englishTitle} (${movie.year || "年不明"}) - IMDb: ${movie.imdbId}`,
         );
 
         // TMDBから日本語タイトルを取得
         let japaneseTitle = await fetchJapaneseTitleFromTMDB(
           movie.imdbId,
           movie.tmdbId,
-          environment
+          environment,
         );
 
         // TMDBで見つからなかった場合はWikipediaで検索（フォールバック）
@@ -127,7 +127,7 @@ async function main() {
           });
 
           console.log(
-            `✅ ${progress} 成功: ${movie.englishTitle} → ${japaneseTitle}`
+            `✅ ${progress} 成功: ${movie.englishTitle} → ${japaneseTitle}`,
           );
           successCount++;
         } else {
@@ -136,14 +136,14 @@ async function main() {
         }
       } catch (error) {
         console.error(
-          `💥 ${progress} エラー: ${movie.englishTitle} - ${error instanceof Error ? error.message : String(error)}`
+          `💥 ${progress} エラー: ${movie.englishTitle} - ${error instanceof Error ? error.message : String(error)}`,
         );
         errorCount++;
       }
 
       // 連続リクエストを避けるための待機（最後の処理以外）
       if (index < movies.length - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
 
@@ -157,7 +157,7 @@ async function main() {
 
     if (successCount > 0) {
       console.log(
-        `\n${successCount}件の日本語翻訳をデータベースに保存しました。`
+        `\n${successCount}件の日本語翻訳をデータベースに保存しました。`,
       );
     }
   } catch (error) {
@@ -174,7 +174,7 @@ function showUsage() {
   console.log("オプション:");
   console.log("  --limit <数値>  処理する映画の件数を指定 (デフォルト: 20)");
   console.log(
-    "  --all           全件処理モード（日本語翻訳がないすべての映画を処理）"
+    "  --all           全件処理モード（日本語翻訳がないすべての映画を処理）",
   );
   console.log("  --help, -h      このヘルプを表示");
   console.log("");

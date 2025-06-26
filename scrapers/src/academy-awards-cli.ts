@@ -30,7 +30,7 @@ async function main() {
     const arguments_ = process.argv.slice(2);
     const seedIndex = arguments_.indexOf("--seed");
     const shouldSeed = seedIndex !== -1;
-    
+
     if (shouldSeed) {
       console.log("アカデミー賞マスターデータのシードを開始します");
     } else {
@@ -41,13 +41,15 @@ async function main() {
     if (!environment.TURSO_DATABASE_URL || !environment.TURSO_AUTH_TOKEN) {
       console.error("データベース接続情報が不足しています。");
       console.error(
-        "TURSO_DATABASE_URL_DEV と TURSO_AUTH_TOKEN_DEV を設定してください。"
+        "TURSO_DATABASE_URL_DEV と TURSO_AUTH_TOKEN_DEV を設定してください。",
       );
       throw new Error("Missing database connection info");
     }
 
     if (!environment.TMDB_API_KEY) {
-      console.warn("警告: TMDB_API_KEY が設定されていません。IMDb ID の取得がスキップされます。");
+      console.warn(
+        "警告: TMDB_API_KEY が設定されていません。IMDb ID の取得がスキップされます。",
+      );
     }
 
     // スクレイピング処理を実行
@@ -56,7 +58,7 @@ async function main() {
     const response = await academyAwards.fetch(request, environment);
 
     if (response.status === 200) {
-      const message = shouldSeed 
+      const message = shouldSeed
         ? "アカデミー賞マスターデータのシードが正常に完了しました"
         : "アカデミー賞スクレイピングが正常に完了しました";
       console.log(message);
@@ -77,7 +79,9 @@ function showUsage() {
   console.log("  pnpm run scrapers:academy-awards [オプション]");
   console.log("");
   console.log("オプション:");
-  console.log("  --seed          マスターデータ（組織・カテゴリ・セレモニー）のシードを実行");
+  console.log(
+    "  --seed          マスターデータ（組織・カテゴリ・セレモニー）のシードを実行",
+  );
   console.log("  --help, -h      このヘルプを表示");
   console.log("");
   console.log("説明:");
@@ -87,7 +91,9 @@ function showUsage() {
   console.log("");
   console.log("例:");
   console.log("  pnpm run scrapers:academy-awards --seed    # 初回実行時");
-  console.log("  pnpm run scrapers:academy-awards           # 通常のスクレイピング");
+  console.log(
+    "  pnpm run scrapers:academy-awards           # 通常のスクレイピング",
+  );
 }
 
 // ヘルプオプションの処理

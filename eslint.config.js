@@ -17,7 +17,7 @@ export default tseslint.config(
       "**/*.mjs",
       "**/*.js",
       "**/.astro/**",
-      "**/worker-configuration.d.ts"
-    ]
-  }
+      "**/worker-configuration.d.ts",
+    ],
+  },
 );

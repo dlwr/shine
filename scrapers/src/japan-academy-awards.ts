@@ -57,7 +57,7 @@ export default {
       console.log("seeding japan academy awards");
       if (isDryRun) {
         console.log(
-          "[DRY RUN] Would seed Japan Academy Awards organization and categories"
+          "[DRY RUN] Would seed Japan Academy Awards organization and categories",
         );
       } else {
         await seedJapanAcademyAwards(environment_);
@@ -68,7 +68,7 @@ export default {
     try {
       if (isDryRun) {
         console.log(
-          "[DRY RUN MODE] No actual database operations will be performed"
+          "[DRY RUN MODE] No actual database operations will be performed",
         );
       }
 
@@ -82,7 +82,7 @@ export default {
     } catch (error) {
       return new Response(
         `Error: ${error instanceof Error ? error.message : String(error)}`,
-        { status: 500 }
+        { status: 500 },
       );
     }
   },
@@ -133,7 +133,7 @@ async function fetchMasterData(): Promise<MasterData> {
     .where(eq(awardCeremonies.organizationUid, organization.uid));
 
   const ceremonies = new Map<number, string>(
-    ceremoniesData.map((ceremony) => [ceremony.year as number, ceremony.uid])
+    ceremoniesData.map(ceremony => [ceremony.year as number, ceremony.uid]),
   );
 
   masterData = {
@@ -147,7 +147,7 @@ async function fetchMasterData(): Promise<MasterData> {
 
 async function getOrCreateCeremony(
   year: number,
-  organizationUid: string
+  organizationUid: string,
 ): Promise<string> {
   const database = getDatabase(environment_);
   const [ceremony] = await database
@@ -174,11 +174,11 @@ async function getOrCreateCeremony(
 export async function scrapeJapanAcademyAwards() {
   try {
     console.log("Fetching data from Japanese Wikipedia main awards page...");
-    
+
     if (isDryRun) {
       console.log("[DRY RUN MODE] Fetching all Japan Academy Awards data");
     }
-    
+
     await scrapeMainAwardsPage();
     console.log("Japan Academy Awards scraping completed successfully");
   } catch (error) {
@@ -190,11 +190,13 @@ export async function scrapeJapanAcademyAwards() {
 export async function scrapeJapanAcademyAwardsYear(year: number) {
   try {
     console.log(`Fetching Japan Academy Awards data for ${year}...`);
-    
+
     if (isDryRun) {
-      console.log(`[DRY RUN MODE] Fetching Japan Academy Awards data for ${year}`);
+      console.log(
+        `[DRY RUN MODE] Fetching Japan Academy Awards data for ${year}`,
+      );
     }
-    
+
     await scrapeMainAwardsPageForYear(year);
     console.log(`Japan Academy Awards ${year} scraping completed successfully`);
   } catch (error) {
@@ -235,14 +237,18 @@ async function scrapeMainAwardsPageForYear(targetYear: number) {
   const html = await response.text();
   const $ = cheerio.load(html);
 
-  const movies = extractAllMoviesFromMainPage($).filter(movie => movie.year === targetYear);
+  const movies = extractAllMoviesFromMainPage($).filter(
+    movie => movie.year === targetYear,
+  );
 
   // 映画を処理
   for (const movie of movies) {
     await processMovie(movie);
   }
 
-  console.log(`Processed ${movies.length} movies for Japan Academy Awards ${targetYear}`);
+  console.log(
+    `Processed ${movies.length} movies for Japan Academy Awards ${targetYear}`,
+  );
 }
 
 function extractAllMoviesFromMainPage($: cheerio.CheerioAPI): MovieInfo[] {
@@ -251,31 +257,38 @@ function extractAllMoviesFromMainPage($: cheerio.CheerioAPI): MovieInfo[] {
   // 各表を順番に処理
   const tables = $("table").toArray();
   const processedYears = new Set<number>(); // 重複する年を避けるため
-  
+
   for (const table of tables) {
     const $table = $(table);
-    
+
     // 表の直前にある要素から具体的な年を探す
     let specificYear: number | undefined;
     let $previousElement = $table.prev();
-    
+
     // 直前の数個の要素を調べて年を探す
-    for (let elementIndex = 0; elementIndex < 10 && $previousElement.length > 0; elementIndex++) {
+    for (
+      let elementIndex = 0;
+      elementIndex < 10 && $previousElement.length > 0;
+      elementIndex++
+    ) {
       const previousText = $previousElement.text().trim();
-      
+
       // 「2024年（第48回）」のようなパターン
       const yearAndCeremonyMatch = previousText.match(/(\d{4})年.*第(\d+)回/);
       if (yearAndCeremonyMatch) {
         specificYear = Number.parseInt(yearAndCeremonyMatch[1], 10);
         // 2024年の場合は特別処理：テキストから映画を抽出
         if (specificYear === 2024 && !processedYears.has(specificYear)) {
-          const moviesFromText = extractMoviesFromText(previousText, specificYear);
+          const moviesFromText = extractMoviesFromText(
+            previousText,
+            specificYear,
+          );
           movies.push(...moviesFromText);
           processedYears.add(specificYear); // 処理済みとしてマーク
         }
         break;
       }
-      
+
       // 第X回のパターンを探す
       const ceremonyMatch = previousText.match(/第(\d+)回/);
       if (ceremonyMatch) {
@@ -283,53 +296,56 @@ function extractAllMoviesFromMainPage($: cheerio.CheerioAPI): MovieInfo[] {
         specificYear = 1976 + ceremonyNumber;
         break;
       }
-      
+
       // 西暦年のパターン
       const yearMatch = previousText.match(/(\d{4})年/);
       if (yearMatch) {
         specificYear = Number.parseInt(yearMatch[1], 10);
         break;
       }
-      
+
       $previousElement = $previousElement.prev();
     }
-    
+
     // 年が見つからない場合は、このテーブルをスキップ
     if (!specificYear) {
       continue; // この表をスキップして次の表に進む
     }
-    
+
     // 重複する年をチェック
     if (processedYears.has(specificYear)) {
       continue;
     }
-    
+
     // 妥当な年範囲をチェック
     const currentYear = new Date().getFullYear();
     if (specificYear >= 1978 && specificYear <= currentYear) {
-      const tableMovies = extractMoviesFromTableWithYear($, $table, specificYear);
+      const tableMovies = extractMoviesFromTableWithYear(
+        $,
+        $table,
+        specificYear,
+      );
       movies.push(...tableMovies);
       processedYears.add(specificYear); // 処理済みとしてマーク
     }
   }
-
 
   return movies;
 }
 
 function extractMoviesFromText(text: string, year: number): MovieInfo[] {
   const movies: MovieInfo[] = [];
-  
+
   // 2024年の映画タイトル
   if (year === 2024) {
     const titles2024 = [
       "侍タイムスリッパー",
-      "キングダム 大将軍の帰還", 
+      "キングダム 大将軍の帰還",
       "正体",
       "夜明けのすべて",
-      "ラストマイル"
+      "ラストマイル",
     ];
-    
+
     for (const title of titles2024) {
       if (text.includes(title)) {
         // 2024年の最優秀賞は「ゴジラ-1.0」だが、ここで抽出する映画は優秀賞のみ
@@ -342,60 +358,72 @@ function extractMoviesFromText(text: string, year: number): MovieInfo[] {
       }
     }
   }
-  
+
   return movies;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function extractMoviesFromTableWithYear($: cheerio.CheerioAPI, $table: any, year: number): MovieInfo[] {
+function extractMoviesFromTableWithYear(
+  $: cheerio.CheerioAPI,
+  $table: any,
+  year: number,
+): MovieInfo[] {
   const movies: MovieInfo[] = [];
-  
+
   // 表全体のテキストを確認して、統計表かどうかを判定
   const tableText = $table.text();
   // 配給会社や監督の統計表は除外（「回」「回数」などの文字が多数含まれる）
-  if (tableText.includes("配給会社") || tableText.includes("複数回受賞") || 
-      (tableText.match(/\d+回/g) || []).length > 5) { // 「X回」という表記が5つ以上ある場合は統計表
+  if (
+    tableText.includes("配給会社") ||
+    tableText.includes("複数回受賞") ||
+    (tableText.match(/\d+回/g) || []).length > 5
+  ) {
+    // 「X回」という表記が5つ以上ある場合は統計表
     return movies;
   }
-  
+
   // 表の行をチェック
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   $table.find("tr").each((_: any, element: any) => {
     const $row = $(element);
     const cells = $row.find("td");
-    
-    if (cells.length >= 4) { // 4列以上の表（作品名、製作会社、監督、脚本）
+
+    if (cells.length >= 4) {
+      // 4列以上の表（作品名、製作会社、監督、脚本）
       const titleCell = cells.eq(0);
       const titleText = titleCell.text().trim();
-      
+
       // 映画タイトルを抽出
       let title: string | undefined;
-      
+
       // 『』で囲まれたタイトル
       const titleMatch = titleText.match(/『([^』]+)』/);
       if (titleMatch) {
         title = titleMatch[1];
       } else {
         // 『』がない場合も考慮
-        const cleanTitle = titleText.replaceAll(/\[.*?\]/g, '').trim();
-        if (cleanTitle && 
-            !cleanTitle.includes('作品名') && 
-            !cleanTitle.includes('製作') &&
-            !cleanTitle.includes('監督') &&
-            !cleanTitle.includes('脚本') &&
-            cleanTitle.length > 1) {
+        const cleanTitle = titleText.replaceAll(/\[.*?\]/g, "").trim();
+        if (
+          cleanTitle &&
+          !cleanTitle.includes("作品名") &&
+          !cleanTitle.includes("製作") &&
+          !cleanTitle.includes("監督") &&
+          !cleanTitle.includes("脚本") &&
+          cleanTitle.length > 1
+        ) {
           title = cleanTitle;
         }
       }
-      
+
       if (title) {
         // 最優秀賞かどうかをチェック
-        const cellHtml = titleCell.html() || '';
-        const isWinner = titleCell.find("b, strong").length > 0 || 
-                        titleText.includes("**") ||
-                        cellHtml.includes("<b>") ||
-                        cellHtml.includes("<strong>");
-        
+        const cellHtml = titleCell.html() || "";
+        const isWinner =
+          titleCell.find("b, strong").length > 0 ||
+          titleText.includes("**") ||
+          cellHtml.includes("<b>") ||
+          cellHtml.includes("<strong>");
+
         // リンクを探す
         let referenceUrl: string | undefined;
         const linkElement = titleCell.find("a").first();
@@ -416,11 +444,9 @@ function extractMoviesFromTableWithYear($: cheerio.CheerioAPI, $table: any, year
       }
     }
   });
-  
+
   return movies;
 }
-
-
 
 async function processMovie(movieInfo: MovieInfo) {
   try {
@@ -428,7 +454,7 @@ async function processMovie(movieInfo: MovieInfo) {
       console.log(
         `[DRY RUN] Would process movie: ${movieInfo.title} (${movieInfo.year}) - ${
           movieInfo.isWinner ? "Winner" : "Nominee"
-        } [${movieInfo.categoryType}]`
+        } [${movieInfo.categoryType}]`,
       );
       return;
     }
@@ -461,8 +487,8 @@ async function processMovie(movieInfo: MovieInfo) {
           eq(translations.resourceUid, movies.uid),
           eq(translations.resourceType, "movie_title"),
           eq(translations.languageCode, "ja"),
-          eq(translations.isDefault, 1)
-        )
+          eq(translations.isDefault, 1),
+        ),
       )
       .where(eq(translations.content, movieInfo.title));
 
@@ -477,9 +503,17 @@ async function processMovie(movieInfo: MovieInfo) {
     }
 
     // どちらかで既存の映画が見つかった場合
-    const existingMovies = existingMoviesByTitle.length > 0 
-      ? existingMoviesByTitle 
-      : (existingMovieByImdbId ? [{ movies: existingMovieByImdbId, translations: existingMoviesByTitle[0]?.translations }] : []);
+    const existingMovies =
+      existingMoviesByTitle.length > 0
+        ? existingMoviesByTitle
+        : existingMovieByImdbId
+          ? [
+              {
+                movies: existingMovieByImdbId,
+                translations: existingMoviesByTitle[0]?.translations,
+              },
+            ]
+          : [];
 
     let movieUid: string;
 
@@ -582,7 +616,7 @@ async function processMovie(movieInfo: MovieInfo) {
         const posterCount = await savePosterUrls(
           movieUid,
           movieImages.images.posters,
-          environment_
+          environment_,
         );
 
         if (posterCount > 0) {
@@ -593,7 +627,7 @@ async function processMovie(movieInfo: MovieInfo) {
 
     const ceremonyUid = await getOrCreateCeremony(
       movieInfo.year,
-      master.organizationUid
+      master.organizationUid,
     );
 
     // ノミネーション情報の更新または追加
@@ -620,7 +654,7 @@ async function processMovie(movieInfo: MovieInfo) {
     console.log(
       `Processed ${existingMovies.length > 0 ? "updated" : "new"} movie: ${movieInfo.title} (${movieInfo.year}) - ${
         movieInfo.isWinner ? "Winner" : "Nominee"
-      } [${movieInfo.categoryType}] ${imdbId ? `IMDb: ${imdbId}` : ""}`
+      } [${movieInfo.categoryType}] ${imdbId ? `IMDb: ${imdbId}` : ""}`,
     );
   } catch (error) {
     console.error(`Error processing movie ${movieInfo.title}:`, error);
@@ -629,7 +663,7 @@ async function processMovie(movieInfo: MovieInfo) {
 }
 
 async function fetchEnglishTitleFromTMDB(
-  imdbId: string
+  imdbId: string,
 ): Promise<string | undefined> {
   const TMDB_API_KEY_LOCAL = TMDB_API_KEY;
   if (!TMDB_API_KEY_LOCAL) {

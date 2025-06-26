@@ -27,7 +27,7 @@ export const referenceUrls = sqliteTable(
       .notNull()
       .default(sql`(unixepoch())`),
   },
-  (table) => [unique().on(table.movieUid, table.sourceType, table.languageCode)]
+  table => [unique().on(table.movieUid, table.sourceType, table.languageCode)],
 );
 
 export const referenceUrlsIndexes = {

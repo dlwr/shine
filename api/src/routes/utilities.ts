@@ -1,10 +1,10 @@
-import { Hono } from "hono";
 import type { Environment } from "db";
+import { Hono } from "hono";
 
 export const utilitiesRoutes = new Hono<{ Bindings: Environment }>();
 
 // Get URL title
-utilitiesRoutes.post("/fetch-url-title", async (c) => {
+utilitiesRoutes.post("/fetch-url-title", async c => {
   try {
     const { url } = await c.req.json();
 

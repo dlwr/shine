@@ -10,14 +10,21 @@ import { translations } from "db/schema/translations";
 import { Hono } from "hono";
 import { authMiddleware } from "../auth";
 import { sanitizeText, sanitizeUrl } from "../middleware/sanitizer";
-import { EdgeCache, getCacheKeyForMovie, getCacheTTL, createCachedResponse, createETag, checkETag } from "../utils/cache";
+import {
+  checkETag,
+  createCachedResponse,
+  createETag,
+  EdgeCache,
+  getCacheKeyForMovie,
+  getCacheTTL,
+} from "../utils/cache";
 
 export const moviesRoutes = new Hono<{ Bindings: Environment }>();
 
 const cache = new EdgeCache();
 
 // Search movies endpoint
-moviesRoutes.get("/search", async (c) => {
+moviesRoutes.get("/search", async c => {
   try {
     const database = getDatabase(c.env as Environment);
     const page = Number(c.req.query("page") || 1);
@@ -26,21 +33,21 @@ moviesRoutes.get("/search", async (c) => {
     const yearFilter = c.req.query("year");
     const languageFilter = c.req.query("language");
     const hasAwardsFilter = c.req.query("hasAwards");
-    
+
     const query = rawQuery ? sanitizeText(rawQuery) : undefined;
     const offset = (page - 1) * limit;
 
     // Build search conditions
     const conditions = [];
-    
+
     if (query) {
       conditions.push(like(translations.content, `%${query}%`));
     }
-    
+
     if (yearFilter && !Number.isNaN(Number(yearFilter))) {
       conditions.push(eq(movies.year, Number(yearFilter)));
     }
-    
+
     if (languageFilter) {
       conditions.push(eq(movies.originalLanguage, languageFilter));
     }
@@ -76,21 +83,21 @@ moviesRoutes.get("/search", async (c) => {
         and(
           eq(movies.uid, translations.resourceUid),
           eq(translations.resourceType, "movie_title"),
-          eq(translations.isDefault, 1)
-        )
+          eq(translations.isDefault, 1),
+        ),
       );
 
     // Apply conditions
-    const searchQuery = conditions.length > 0 
-      ? baseQuery.where(and(...conditions))
-      : baseQuery;
+    const searchQuery =
+      conditions.length > 0 ? baseQuery.where(and(...conditions)) : baseQuery;
 
     // Handle awards filter
-    const finalQuery = hasAwardsFilter === "true"
-      ? searchQuery.having(sql`hasAwards = 1`)
-      : (hasAwardsFilter === "false"
-        ? searchQuery.having(sql`hasAwards = 0`)
-        : searchQuery);
+    const finalQuery =
+      hasAwardsFilter === "true"
+        ? searchQuery.having(sql`hasAwards = 1`)
+        : hasAwardsFilter === "false"
+          ? searchQuery.having(sql`hasAwards = 0`)
+          : searchQuery;
 
     // Count query
     const baseCountQuery = database
@@ -101,13 +108,14 @@ moviesRoutes.get("/search", async (c) => {
         and(
           eq(movies.uid, translations.resourceUid),
           eq(translations.resourceType, "movie_title"),
-          eq(translations.isDefault, 1)
-        )
+          eq(translations.isDefault, 1),
+        ),
       );
 
-    const countQuery = conditions.length > 0 
-      ? baseCountQuery.where(and(...conditions))
-      : baseCountQuery;
+    const countQuery =
+      conditions.length > 0
+        ? baseCountQuery.where(and(...conditions))
+        : baseCountQuery;
 
     // Execute queries
     const [countResult, moviesResult] = await Promise.all([
@@ -122,7 +130,7 @@ moviesRoutes.get("/search", async (c) => {
     const totalPages = Math.ceil(totalCount / limit);
 
     return c.json({
-      movies: moviesResult.map((movie) => ({
+      movies: moviesResult.map(movie => ({
         uid: movie.uid,
         year: movie.year,
         originalLanguage: movie.originalLanguage,
@@ -143,7 +151,12 @@ moviesRoutes.get("/search", async (c) => {
         query,
         year: yearFilter ? Number(yearFilter) : undefined,
         language: languageFilter,
-        hasAwards: hasAwardsFilter === "true" ? true : (hasAwardsFilter === "false" ? false : undefined),
+        hasAwards:
+          hasAwardsFilter === "true"
+            ? true
+            : hasAwardsFilter === "false"
+              ? false
+              : undefined,
       },
     });
   } catch (error) {
@@ -154,7 +167,7 @@ moviesRoutes.get("/search", async (c) => {
 
 async function getMovieNominations(
   database: ReturnType<typeof getDatabase>,
-  movieId: string
+  movieId: string,
 ) {
   const nominationsData = await database
     .select({
@@ -174,21 +187,21 @@ async function getMovieNominations(
     .from(nominations)
     .innerJoin(
       awardCategories,
-      eq(nominations.categoryUid, awardCategories.uid)
+      eq(nominations.categoryUid, awardCategories.uid),
     )
     .innerJoin(
       awardCeremonies,
-      eq(nominations.ceremonyUid, awardCeremonies.uid)
+      eq(nominations.ceremonyUid, awardCeremonies.uid),
     )
     .innerJoin(
       awardOrganizations,
-      eq(awardCeremonies.organizationUid, awardOrganizations.uid)
+      eq(awardCeremonies.organizationUid, awardOrganizations.uid),
     )
     .where(eq(nominations.movieUid, movieId))
     .orderBy(
       awardCeremonies.year,
       awardOrganizations.name,
-      awardCategories.name
+      awardCategories.name,
     );
 
   return nominationsData.map((nom: (typeof nominationsData)[0]) => ({
@@ -213,21 +226,21 @@ async function getMovieNominations(
 }
 
 // Get movie details with all translations
-moviesRoutes.get("/:id", async (c) => {
+moviesRoutes.get("/:id", async c => {
   try {
     const movieId = c.req.param("id");
-    
+
     // Check cache first
     const cacheKey = getCacheKeyForMovie(movieId, true);
     const cachedResponse = await cache.get(cacheKey);
-    
+
     if (cachedResponse) {
       console.log("Cache hit for movie details:", movieId);
       return cachedResponse;
     }
 
     console.log("Cache miss for movie details:", movieId);
-    
+
     const database = getDatabase(c.env as Environment);
 
     // Get movie basic info
@@ -254,8 +267,8 @@ moviesRoutes.get("/:id", async (c) => {
       .where(
         and(
           eq(translations.resourceUid, movieId),
-          eq(translations.resourceType, "movie_title")
-        )
+          eq(translations.resourceType, "movie_title"),
+        ),
       );
 
     // Get poster URLs
@@ -288,7 +301,7 @@ moviesRoutes.get("/:id", async (c) => {
       tmdbId: movie.tmdbId,
       imdbUrl: imdbUrl,
       posterUrl: posterResult[0]?.url,
-      posters: posterResult.map((p) => ({
+      posters: posterResult.map(p => ({
         uid: p.uid,
         url: p.url,
         width: p.width,
@@ -306,27 +319,27 @@ moviesRoutes.get("/:id", async (c) => {
           languageCode: t.languageCode,
           content: t.content,
           isDefault: t.isDefault === 1,
-        })
+        }),
       ),
       nominations: movieNominations,
     };
 
     // Create ETag for the response
     const etag = createETag(result);
-    
+
     // Check if client has the same version
     if (checkETag(c.req, etag)) {
-      return c.newResponse('', 304, {
-        'ETag': etag,
-        'Cache-Control': 'public, max-age=86400',
+      return c.newResponse("", 304, {
+        ETag: etag,
+        "Cache-Control": "public, max-age=86400",
       });
     }
 
     // Create cached response with 24 hour TTL
     const ttl = getCacheTTL.movie.full;
     const response = createCachedResponse(result, ttl, {
-      'ETag': etag,
-      'X-Cache-Status': 'MISS',
+      ETag: etag,
+      "X-Cache-Status": "MISS",
     });
 
     // Store in cache
@@ -340,23 +353,22 @@ moviesRoutes.get("/:id", async (c) => {
 });
 
 // Add or update movie translation
-moviesRoutes.post("/:id/translations", authMiddleware, async (c) => {
+moviesRoutes.post("/:id/translations", authMiddleware, async c => {
   try {
     const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("id");
     const { languageCode, content: rawContent } = await c.req.json();
-    
+
     if (!languageCode || !rawContent) {
       return c.json({ error: "languageCode and content are required" }, 400);
     }
-    
+
     if (languageCode.length !== 2) {
       return c.json({ error: "Language code must be 2 characters" }, 400);
     }
-    
+
     const content = sanitizeText(rawContent);
     const isDefault = false;
-
 
     // Check if movie exists
     const movieExists = await database
@@ -377,8 +389,8 @@ moviesRoutes.post("/:id/translations", authMiddleware, async (c) => {
         and(
           eq(translations.resourceUid, movieId),
           eq(translations.resourceType, "movie_title"),
-          eq(translations.languageCode, languageCode)
-        )
+          eq(translations.languageCode, languageCode),
+        ),
       )
       .limit(1);
 
@@ -406,7 +418,9 @@ moviesRoutes.post("/:id/translations", authMiddleware, async (c) => {
       cache.deleteByPattern(`selections:all:`), // Invalidate main selections that might include this movie
     ]);
 
-    console.log(`Cache invalidated for movie ${movieId} after translation update`);
+    console.log(
+      `Cache invalidated for movie ${movieId} after translation update`,
+    );
 
     return c.json({ success: true });
   } catch (error) {
@@ -416,7 +430,7 @@ moviesRoutes.post("/:id/translations", authMiddleware, async (c) => {
 });
 
 // Delete movie translation
-moviesRoutes.delete("/:id/translations/:lang", authMiddleware, async (c) => {
+moviesRoutes.delete("/:id/translations/:lang", authMiddleware, async c => {
   try {
     const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("id");
@@ -428,8 +442,8 @@ moviesRoutes.delete("/:id/translations/:lang", authMiddleware, async (c) => {
         and(
           eq(translations.resourceUid, movieId),
           eq(translations.resourceType, "movie_title"),
-          eq(translations.languageCode, languageCode)
-        )
+          eq(translations.languageCode, languageCode),
+        ),
       );
 
     // Invalidate movie details cache
@@ -439,7 +453,9 @@ moviesRoutes.delete("/:id/translations/:lang", authMiddleware, async (c) => {
       cache.deleteByPattern(`selections:all:`),
     ]);
 
-    console.log(`Cache invalidated for movie ${movieId} after translation deletion`);
+    console.log(
+      `Cache invalidated for movie ${movieId} after translation deletion`,
+    );
 
     return c.json({ success: true });
   } catch (error) {
@@ -449,27 +465,33 @@ moviesRoutes.delete("/:id/translations/:lang", authMiddleware, async (c) => {
 });
 
 // Submit article link
-moviesRoutes.post("/:id/article-links", async (c) => {
+moviesRoutes.post("/:id/article-links", async c => {
   try {
     const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("id");
-    const { url: rawUrl, title: rawTitle, description: rawDescription } = await c.req.json();
-    
+    const {
+      url: rawUrl,
+      title: rawTitle,
+      description: rawDescription,
+    } = await c.req.json();
+
     if (!rawUrl || !rawTitle) {
       return c.json({ error: "URL and title are required" }, 400);
     }
-    
+
     if (rawTitle.length > 200) {
       return c.json({ error: "Title too long" }, 400);
     }
-    
+
     if (rawDescription && rawDescription.length > 500) {
       return c.json({ error: "Description too long" }, 400);
     }
-    
+
     const url = sanitizeUrl(rawUrl);
     const title = sanitizeText(rawTitle);
-    const description = rawDescription ? sanitizeText(rawDescription) : undefined;
+    const description = rawDescription
+      ? sanitizeText(rawDescription)
+      : undefined;
 
     // Check if movie exists
     const movieExists = await database
@@ -499,14 +521,14 @@ moviesRoutes.post("/:id/article-links", async (c) => {
       .where(
         and(
           eq(articleLinks.submitterIp, ip),
-          sql`${articleLinks.submittedAt} > ${oneHourAgo}`
-        )
+          sql`${articleLinks.submittedAt} > ${oneHourAgo}`,
+        ),
       );
 
     if (recentSubmissions[0].count >= 10) {
       return c.json(
         { error: "Rate limit exceeded. Please try again later." },
-        429
+        429,
       );
     }
 
@@ -530,7 +552,7 @@ moviesRoutes.post("/:id/article-links", async (c) => {
 });
 
 // Get article links for a movie
-moviesRoutes.get("/:id/article-links", async (c) => {
+moviesRoutes.get("/:id/article-links", async c => {
   try {
     const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("id");
@@ -548,8 +570,8 @@ moviesRoutes.get("/:id/article-links", async (c) => {
         and(
           eq(articleLinks.movieUid, movieId),
           eq(articleLinks.isSpam, false),
-          eq(articleLinks.isFlagged, false)
-        )
+          eq(articleLinks.isFlagged, false),
+        ),
       )
       .orderBy(sql`${articleLinks.submittedAt} DESC`)
       .limit(20);

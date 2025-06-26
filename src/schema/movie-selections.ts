@@ -23,17 +23,17 @@ export const movieSelections = sqliteTable(
       .notNull()
       .default(sql`(unixepoch())`),
   },
-  (table) => ({
+  table => ({
     selectionTypeIdx: index("movie_selections_selection_type_idx").on(
-      table.selectionType
+      table.selectionType,
     ),
     selectionDateIdx: index("movie_selections_selection_date_idx").on(
-      table.selectionDate
+      table.selectionDate,
     ),
     movieIdIdx: index("movie_selections_movie_id_idx").on(table.movieId),
     typeAndDateIdx: index("movie_selections_type_date_idx").on(
       table.selectionType,
-      table.selectionDate
+      table.selectionDate,
     ),
-  })
+  }),
 );

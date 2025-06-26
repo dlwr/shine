@@ -1,9 +1,9 @@
-import { Hono } from "hono";
 import type { Environment } from "db";
+import { Hono } from "hono";
 
 const documentationRoutes = new Hono<{ Bindings: Environment }>();
 
-documentationRoutes.get("/openapi.yml", async (c) => {
+documentationRoutes.get("/openapi.yml", async c => {
   const openapiSpec = `openapi: 3.0.3
 info:
   title: SHINE Movie Database API
@@ -199,11 +199,11 @@ tags:
 
   return c.text(openapiSpec, 200, {
     "Content-Type": "application/x-yaml",
-    "Cache-Control": "public, max-age=3600"
+    "Cache-Control": "public, max-age=3600",
   });
 });
 
-documentationRoutes.get("/", async (c) => {
+documentationRoutes.get("/", async c => {
   // Override CSP for documentation page to allow external CDN resources
   c.header(
     "Content-Security-Policy",
@@ -215,12 +215,12 @@ documentationRoutes.get("/", async (c) => {
       "connect-src 'self'; " +
       "object-src 'none'; " +
       "media-src 'self'; " +
-      "form-action 'self';"
+      "form-action 'self';",
   );
 
   const baseUrl = new URL(c.req.url).origin;
   const openapiUrl = `${baseUrl}/docs/openapi.yml`;
-  
+
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -367,11 +367,11 @@ documentationRoutes.get("/", async (c) => {
 </html>`;
 
   return c.html(html, 200, {
-    "Cache-Control": "public, max-age=3600"
+    "Cache-Control": "public, max-age=3600",
   });
 });
 
-documentationRoutes.get("/redoc", async (c) => {
+documentationRoutes.get("/redoc", async c => {
   // Override CSP for ReDoc documentation page
   c.header(
     "Content-Security-Policy",
@@ -383,12 +383,12 @@ documentationRoutes.get("/redoc", async (c) => {
       "connect-src 'self'; " +
       "object-src 'none'; " +
       "media-src 'self'; " +
-      "form-action 'self';"
+      "form-action 'self';",
   );
 
   const baseUrl = new URL(c.req.url).origin;
   const openapiUrl = `${baseUrl}/docs/openapi.yml`;
-  
+
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -466,7 +466,7 @@ documentationRoutes.get("/redoc", async (c) => {
 </html>`;
 
   return c.html(html, 200, {
-    "Cache-Control": "public, max-age=3600"
+    "Cache-Control": "public, max-age=3600",
   });
 });
 

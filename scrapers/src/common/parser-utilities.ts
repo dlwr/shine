@@ -18,7 +18,7 @@ export function parseHTML(html: string): cheerio.CheerioAPI {
  * @returns JSON-LDデータ（見つからない場合はundefined）
  */
 export function extractWikipediaJsonLD(
-  $: cheerio.CheerioAPI
+  $: cheerio.CheerioAPI,
 ): Record<string, unknown> | undefined {
   try {
     const scriptContent = $('script[type="application/ld+json"]').html();

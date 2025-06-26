@@ -27,8 +27,8 @@ export const awardCategories = sqliteTable(
       .notNull()
       .default(sql`(unixepoch())`),
   },
-  (table) => [
+  table => [
     unique().on(table.name),
     unique().on(table.organizationUid, table.shortName),
-  ]
+  ],
 );

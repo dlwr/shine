@@ -6,17 +6,14 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "shine-front",
   "compatibility_date": "2025-03-27",
-  "compatibility_flags": [
-    "nodejs_compat",
-    "global_fetch_strictly_public"
-  ],
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "main": "./dist/_worker.js/index.js",
   "assets": {
     "directory": "./dist",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
   },
   "observability": {
-    "enabled": true
+    "enabled": true,
   },
   /**
    * Smart Placement
@@ -36,15 +33,15 @@
   "env": {
     "preview": {
       "vars": {
-        "PUBLIC_API_URL": "http://localhost:8787"
-      }
+        "PUBLIC_API_URL": "http://localhost:8787",
+      },
     },
     "production": {
       "vars": {
-        "PUBLIC_API_URL": "https://shine-api.yuta25.workers.dev"
-      }
-    }
-  }
+        "PUBLIC_API_URL": "https://shine-api.yuta25.workers.dev",
+      },
+    },
+  },
   /**
    * Note: Use secrets to store sensitive data.
    * https://developers.cloudflare.com/workers/configuration/secrets/

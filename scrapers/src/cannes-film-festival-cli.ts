@@ -31,19 +31,27 @@ async function main() {
     const yearIndex = arguments_.indexOf("--year");
     const winnersOnlyFlag = arguments_.includes("--winners-only");
     let targetYear: number | undefined;
-    
+
     if (yearIndex !== -1 && arguments_[yearIndex + 1]) {
       targetYear = Number.parseInt(arguments_[yearIndex + 1], 10);
-      
-      if (Number.isNaN(targetYear) || targetYear < 1946 || targetYear > new Date().getFullYear()) {
+
+      if (
+        Number.isNaN(targetYear) ||
+        targetYear < 1946 ||
+        targetYear > new Date().getFullYear()
+      ) {
         console.error("無効な年です。1946年以降の年を指定してください。");
         throw new Error("Invalid year");
       }
-      
+
       if (winnersOnlyFlag) {
-        console.log(`カンヌ映画祭受賞作品の更新を開始します (対象年: ${targetYear})`);
+        console.log(
+          `カンヌ映画祭受賞作品の更新を開始します (対象年: ${targetYear})`,
+        );
       } else {
-        console.log(`カンヌ映画祭スクレイピングを開始します (対象年: ${targetYear})`);
+        console.log(
+          `カンヌ映画祭スクレイピングを開始します (対象年: ${targetYear})`,
+        );
       }
     } else {
       if (winnersOnlyFlag) {
@@ -57,31 +65,33 @@ async function main() {
     if (!environment.TURSO_DATABASE_URL || !environment.TURSO_AUTH_TOKEN) {
       console.error("データベース接続情報が不足しています。");
       console.error(
-        "TURSO_DATABASE_URL_DEV と TURSO_AUTH_TOKEN_DEV を設定してください。"
+        "TURSO_DATABASE_URL_DEV と TURSO_AUTH_TOKEN_DEV を設定してください。",
       );
       throw new Error("Missing database connection info");
     }
 
     if (!environment.TMDB_API_KEY) {
-      console.warn("警告: TMDB_API_KEY が設定されていません。IMDb ID の取得がスキップされます。");
+      console.warn(
+        "警告: TMDB_API_KEY が設定されていません。IMDb ID の取得がスキップされます。",
+      );
     }
 
     // スクレイピング処理を実行
     let url = "http://localhost/";
     const searchParameters = new URLSearchParams();
-    
+
     if (targetYear) {
       searchParameters.append("year", targetYear.toString());
     }
-    
+
     if (winnersOnlyFlag) {
       searchParameters.append("winners-only", "true");
     }
-    
+
     if (searchParameters.toString()) {
       url += `?${searchParameters.toString()}`;
     }
-    
+
     const request = new Request(url);
     const response = await cannesFilmFestival.fetch(request, environment);
 
@@ -113,11 +123,15 @@ function showUsage() {
   console.log("  --help, -h       このヘルプを表示");
   console.log("");
   console.log("説明:");
-  console.log("  Wikipediaからカンヌ国際映画祭のコンペティション参加映画情報を");
+  console.log(
+    "  Wikipediaからカンヌ国際映画祭のコンペティション参加映画情報を",
+  );
   console.log("  スクレイピングし、データベースに保存します。");
   console.log("  Palme d'Or（パルム・ドール）受賞作品も含まれます。");
   console.log("");
-  console.log("  --winners-only オプションを使用すると、既存のノミネーションの");
+  console.log(
+    "  --winners-only オプションを使用すると、既存のノミネーションの",
+  );
   console.log("  isWinnerフラグのみを更新し、新規映画の取得やポスターの");
   console.log("  ダウンロードはスキップされます。");
   console.log("");
@@ -125,7 +139,9 @@ function showUsage() {
   console.log("  pnpm run scrapers:cannes-film-festival");
   console.log("  pnpm run scrapers:cannes-film-festival --year 2024");
   console.log("  pnpm run scrapers:cannes-film-festival --winners-only");
-  console.log("  pnpm run scrapers:cannes-film-festival --year 2024 --winners-only");
+  console.log(
+    "  pnpm run scrapers:cannes-film-festival --year 2024 --winners-only",
+  );
 }
 
 // ヘルプオプションの処理

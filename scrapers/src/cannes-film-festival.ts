@@ -7,9 +7,9 @@ import { awardCeremonies } from "../../src/schema/award-ceremonies";
 import { awardOrganizations } from "../../src/schema/award-organizations";
 import { movies } from "../../src/schema/movies";
 import { nominations } from "../../src/schema/nominations";
+import { posterUrls } from "../../src/schema/poster-urls";
 import { referenceUrls } from "../../src/schema/reference-urls";
 import { translations } from "../../src/schema/translations";
-import { posterUrls } from "../../src/schema/poster-urls";
 
 const WIKIPEDIA_BASE_URL = "https://en.wikipedia.org";
 const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
@@ -66,7 +66,7 @@ export default {
     } catch (error) {
       return new Response(
         `Error: ${error instanceof Error ? error.message : String(error)}`,
-        { status: 500 }
+        { status: 500 },
       );
     }
   },
@@ -135,8 +135,8 @@ async function fetchMasterData(): Promise<MasterData> {
     .from(awardCategories)
     .where(eq(awardCategories.organizationUid, organization.uid));
 
-  const palmeDOr = categories.find((cat) => cat.shortName === "Palme d'Or");
-  const grandPrix = categories.find((cat) => cat.shortName === "Grand Prix");
+  const palmeDOr = categories.find(cat => cat.shortName === "Palme d'Or");
+  const grandPrix = categories.find(cat => cat.shortName === "Grand Prix");
 
   if (!palmeDOr || !grandPrix) {
     throw new Error("Required categories not found");
@@ -148,7 +148,7 @@ async function fetchMasterData(): Promise<MasterData> {
     .where(eq(awardCeremonies.organizationUid, organization.uid));
 
   const ceremonies = new Map<number, string>(
-    ceremoniesData.map((ceremony) => [ceremony.year as number, ceremony.uid])
+    ceremoniesData.map(ceremony => [ceremony.year as number, ceremony.uid]),
   );
 
   masterData = {
@@ -163,7 +163,7 @@ async function fetchMasterData(): Promise<MasterData> {
 
 async function getOrCreateCeremony(
   year: number,
-  organizationUid: string
+  organizationUid: string,
 ): Promise<string> {
   const database = getDatabase(environment_);
   const [ceremony] = await database
@@ -203,7 +203,7 @@ export async function scrapeCannesFilmFestival() {
           await processMovie(
             movie,
             await getOrCreateCeremony(year, master.organizationUid),
-            master
+            master,
           );
         }
 
@@ -214,7 +214,7 @@ export async function scrapeCannesFilmFestival() {
       }
 
       // 短い遅延を入れてサーバーに負荷をかけないようにする
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
     console.log("Cannes Film Festival scraping completed successfully");
@@ -236,7 +236,7 @@ export async function scrapeCannesFilmFestivalYear(year: number) {
       await processMovie(
         movie,
         await getOrCreateCeremony(year, master.organizationUid),
-        master
+        master,
       );
     }
 
@@ -280,7 +280,7 @@ async function scrapeYearPage(year: number): Promise<MovieInfo[]> {
   const palmeDOrWinner = findPalmeDOrWinner($, year);
   if (palmeDOrWinner) {
     // 既存のリストから該当する映画を見つけて更新
-    const existingMovie = movies.find((m) => m.title === palmeDOrWinner.title);
+    const existingMovie = movies.find(m => m.title === palmeDOrWinner.title);
     if (existingMovie) {
       existingMovie.isWinner = true;
     } else {
@@ -292,7 +292,7 @@ async function scrapeYearPage(year: number): Promise<MovieInfo[]> {
 }
 
 function findCompetitionSection(
-  $: cheerio.CheerioAPI
+  $: cheerio.CheerioAPI,
 ): cheerio.Cheerio<Element> | undefined {
   // すべてのテーブルをチェック
   const tables = $("table.wikitable");
@@ -309,17 +309,17 @@ function findCompetitionSection(
 
     // 映画のテーブルかどうかを判定
     const hasFilmHeaders = headerTexts.some(
-      (header) =>
+      header =>
         header.includes("title") ||
         header.includes("film") ||
-        header.includes("director")
+        header.includes("director"),
     );
 
     const hasPersonHeaders = headerTexts.some(
-      (header) =>
+      header =>
         header.includes("jury") ||
         header.includes("member") ||
-        header.includes("president")
+        header.includes("president"),
     );
 
     if (hasFilmHeaders && !hasPersonHeaders) {
@@ -350,7 +350,7 @@ function findCompetitionSection(
             .get();
 
           const hasFilmHeaders = headerTexts.some(
-            (header) => header.includes("title") || header.includes("director")
+            header => header.includes("title") || header.includes("director"),
           );
 
           if (hasFilmHeaders) {
@@ -367,7 +367,7 @@ function findCompetitionSection(
             .get();
 
           const hasFilmHeaders = headerTexts.some(
-            (header) => header.includes("title") || header.includes("director")
+            header => header.includes("title") || header.includes("director"),
           );
 
           if (hasFilmHeaders) {
@@ -394,7 +394,7 @@ function findCompetitionSection(
 function extractMoviesFromSection(
   _$: cheerio.CheerioAPI,
   section: cheerio.Cheerio<Element>,
-  year: number
+  year: number,
 ): MovieInfo[] {
   const movies: MovieInfo[] = [];
 
@@ -424,7 +424,7 @@ function extractMoviesFromSection(
 function parseMovieListItem(
   _$: cheerio.CheerioAPI,
   $item: cheerio.Cheerio<Element>,
-  year: number
+  year: number,
 ): MovieInfo | undefined {
   const text = $item.text();
 
@@ -472,7 +472,7 @@ function parseMovieListItem(
 function parseMovieTableRow(
   _$: cheerio.CheerioAPI,
   $row: cheerio.Cheerio<Element>,
-  year: number
+  year: number,
 ): MovieInfo | undefined {
   const cells = $row.find("td");
   if (cells.length < 2) return undefined;
@@ -514,7 +514,7 @@ function parseMovieTableRow(
 
 function findPalmeDOrWinner(
   $: cheerio.CheerioAPI,
-  year: number
+  year: number,
 ): MovieInfo | undefined {
   // まずinfoboxでPalme d'Orを探す
   const infoBox = $(".infobox");
@@ -558,7 +558,7 @@ function findPalmeDOrWinner(
 
   // infoboxで見つからない場合、Awardsセクションを探す
   const headings = $("h2, h3, h4");
-  
+
   for (const heading of headings.toArray()) {
     const $heading = $(heading);
     const text = $heading.text().toLowerCase();
@@ -571,16 +571,19 @@ function findPalmeDOrWinner(
       while (nextElement.length > 0 && attempts < 10) {
         // リスト形式の受賞作品を探す
         const listItems = nextElement.find("li");
-        
+
         for (const item of listItems.toArray()) {
           const $item = $(item);
           const itemText = $item.text().toLowerCase();
-          
-          if (itemText.includes("palme d'or") || itemText.includes("palm d'or")) {
+
+          if (
+            itemText.includes("palme d'or") ||
+            itemText.includes("palm d'or")
+          ) {
             // Palme d'Or を見つけた場合、映画タイトルを抽出
             const titleElement = $item.find("i").first();
             const linkElement = $item.find("a").first();
-            
+
             let title = "";
             let referenceUrl: string | undefined;
 
@@ -589,7 +592,10 @@ function findPalmeDOrWinner(
             } else if (linkElement.length > 0) {
               // リンクテキストがPalme d'Orではなく映画タイトルかチェック
               const linkText = linkElement.text().trim();
-              if (!linkText.toLowerCase().includes("palme") && !linkText.toLowerCase().includes("palm")) {
+              if (
+                !linkText.toLowerCase().includes("palme") &&
+                !linkText.toLowerCase().includes("palm")
+              ) {
                 title = linkText;
                 const href = linkElement.attr("href");
                 if (href) {
@@ -605,9 +611,9 @@ function findPalmeDOrWinner(
               const patterns = [
                 /palme d'or[:\s-]+([^,\n(]+)/i,
                 /palm d'or[:\s-]+([^,\n(]+)/i,
-                /golden palm[:\s-]+([^,\n(]+)/i
+                /golden palm[:\s-]+([^,\n(]+)/i,
               ];
-              
+
               for (const pattern of patterns) {
                 const match = fullText.match(pattern);
                 if (match) {
@@ -627,25 +633,28 @@ function findPalmeDOrWinner(
             }
           }
         }
-        
+
         // テーブル形式の受賞作品も探す
         const tables = nextElement.find("table");
         for (const table of tables.toArray()) {
           const $table = $(table);
           const rows = $table.find("tr");
-          
+
           for (const row of rows.toArray()) {
             const $row = $(row);
             const rowText = $row.text().toLowerCase();
-            
-            if (rowText.includes("palme d'or") || rowText.includes("palm d'or")) {
+
+            if (
+              rowText.includes("palme d'or") ||
+              rowText.includes("palm d'or")
+            ) {
               const cells = $row.find("td");
               if (cells.length > 1) {
                 // 2番目のセルに映画タイトルがある場合が多い
                 const titleCell = cells.eq(1);
                 const titleElement = titleCell.find("i").first();
                 const linkElement = titleCell.find("a").first();
-                
+
                 let title = "";
                 let referenceUrl: string | undefined;
 
@@ -701,7 +710,7 @@ export async function updateAllCannesWinnersOnly() {
         console.error(`Error updating winners for year ${year}:`, error);
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     console.log("Cannes winners update completed successfully");
@@ -714,7 +723,7 @@ export async function updateAllCannesWinnersOnly() {
 export async function updateCannesWinnersOnly(year: number) {
   try {
     const master = await fetchMasterData();
-    
+
     console.log(`Processing Cannes ${year} winners...`);
 
     const winner = await fetchPalmeDOrWinner(year);
@@ -723,7 +732,7 @@ export async function updateCannesWinnersOnly(year: number) {
       await updateWinnerStatus(
         winner,
         await getOrCreateCeremony(year, master.organizationUid),
-        master
+        master,
       );
       console.log(`Updated winner for ${year}: ${winner.title}`);
     } else {
@@ -737,7 +746,9 @@ export async function updateCannesWinnersOnly(year: number) {
   }
 }
 
-async function fetchPalmeDOrWinner(year: number): Promise<MovieInfo | undefined> {
+async function fetchPalmeDOrWinner(
+  year: number,
+): Promise<MovieInfo | undefined> {
   const yearUrl = `${WIKIPEDIA_BASE_URL}/wiki/${year}_Cannes_Film_Festival`;
 
   console.log(`Fetching ${yearUrl}...`);
@@ -757,7 +768,7 @@ async function fetchPalmeDOrWinner(year: number): Promise<MovieInfo | undefined>
 async function updateWinnerStatus(
   movieInfo: MovieInfo,
   ceremonyUid: string,
-  master: MasterData
+  master: MasterData,
 ) {
   try {
     const database = getDatabase(environment_);
@@ -775,8 +786,8 @@ async function updateWinnerStatus(
           eq(translations.resourceUid, movies.uid),
           eq(translations.resourceType, "movie_title"),
           eq(translations.languageCode, "en"),
-          eq(translations.isDefault, 1)
-        )
+          eq(translations.isDefault, 1),
+        ),
       )
       .where(eq(translations.content, movieInfo.title));
 
@@ -798,13 +809,18 @@ async function updateWinnerStatus(
         and(
           eq(nominations.movieUid, movieUid),
           eq(nominations.ceremonyUid, ceremonyUid),
-          eq(nominations.categoryUid, master.palmeDOrCategoryUid)
-        )
+          eq(nominations.categoryUid, master.palmeDOrCategoryUid),
+        ),
       );
 
-    console.log(`Updated winner status for ${movieInfo.title} (${movieInfo.year})`);
+    console.log(
+      `Updated winner status for ${movieInfo.title} (${movieInfo.year})`,
+    );
   } catch (error) {
-    console.error(`Error updating winner status for ${movieInfo.title}:`, error);
+    console.error(
+      `Error updating winner status for ${movieInfo.title}:`,
+      error,
+    );
     throw error;
   }
 }
@@ -843,7 +859,9 @@ interface TMDatabaseConfiguration {
   };
 }
 
-async function fetchTMDatabaseConfiguration(): Promise<TMDatabaseConfiguration | undefined> {
+async function fetchTMDatabaseConfiguration(): Promise<
+  TMDatabaseConfiguration | undefined
+> {
   if (!TMDB_API_KEY) {
     console.error("TMDb API key is not set");
     return undefined;
@@ -872,7 +890,7 @@ async function fetchTMDatabaseConfiguration(): Promise<TMDatabaseConfiguration |
 
 async function searchTMDatabaseMovie(
   title: string,
-  year: number
+  year: number,
 ): Promise<number | undefined> {
   if (!TMDB_API_KEY) {
     console.error("TMDb API key is not set");
@@ -894,7 +912,7 @@ async function searchTMDatabaseMovie(
     const data = (await response.json()) as TMDatabaseSearchResponse;
 
     // 結果をフィルタリング
-    const matches = data.results.filter((movie) => {
+    const matches = data.results.filter(movie => {
       const movieYear = new Date(movie.release_date).getFullYear();
       return Math.abs(movieYear - year) <= 1; // 1年の誤差を許容
     });
@@ -914,7 +932,7 @@ interface MovieDetailsResult {
 }
 
 async function fetchTMDatabaseMovieDetails(
-  movieId: number
+  movieId: number,
 ): Promise<MovieDetailsResult> {
   if (!TMDB_API_KEY) {
     console.error("TMDb API key is not set");
@@ -933,7 +951,7 @@ async function fetchTMDatabaseMovieDetails(
     }
 
     const dataEn = (await responseEn.json()) as TMDatabaseMovieDetails;
-    
+
     // 日本語版の詳細情報を取得
     const detailsUrlJa = new URL(`${TMDB_API_BASE_URL}/movie/${movieId}`);
     detailsUrlJa.searchParams.append("api_key", TMDB_API_KEY);
@@ -945,19 +963,22 @@ async function fetchTMDatabaseMovieDetails(
     }
 
     const dataJa = (await responseJa.json()) as TMDatabaseMovieDetails;
-    
+
     // 日本語タイトルが英語タイトルと異なる場合のみ保存
-    const japaneseTitle = dataJa.title && dataJa.title !== dataJa.original_title ? dataJa.title : undefined;
+    const japaneseTitle =
+      dataJa.title && dataJa.title !== dataJa.original_title
+        ? dataJa.title
+        : undefined;
 
     return {
       imdbId: dataEn.imdb_id || undefined,
       posterPath: dataEn.poster_path || undefined,
-      japaneseTitle
+      japaneseTitle,
     };
   } catch (error) {
     console.error(
       `Error fetching TMDb movie details for ID ${movieId}:`,
-      error
+      error,
     );
     return {};
   }
@@ -965,7 +986,7 @@ async function fetchTMDatabaseMovieDetails(
 
 async function fetchMovieDetails(
   title: string,
-  year: number
+  year: number,
 ): Promise<MovieDetailsResult> {
   try {
     // TMDbで映画を検索
@@ -981,7 +1002,9 @@ async function fetchMovieDetails(
       console.log(`Found IMDb ID for ${title} (${year}): ${details.imdbId}`);
     }
     if (details.japaneseTitle) {
-      console.log(`Found Japanese title for ${title} (${year}): ${details.japaneseTitle}`);
+      console.log(
+        `Found Japanese title for ${title} (${year}): ${details.japaneseTitle}`,
+      );
     }
     if (details.posterPath) {
       console.log(`Found poster for ${title} (${year}): ${details.posterPath}`);
@@ -989,7 +1012,10 @@ async function fetchMovieDetails(
 
     return details;
   } catch (error) {
-    console.error(`Error fetching movie details for ${title} (${year}):`, error);
+    console.error(
+      `Error fetching movie details for ${title} (${year}):`,
+      error,
+    );
     return {};
   }
 }
@@ -997,13 +1023,16 @@ async function fetchMovieDetails(
 async function processMovie(
   movieInfo: MovieInfo,
   ceremonyUid: string,
-  master: MasterData
+  master: MasterData,
 ) {
   try {
     const database = getDatabase(environment_);
 
     // 映画の詳細情報を取得
-    const movieDetails = await fetchMovieDetails(movieInfo.title, movieInfo.year);
+    const movieDetails = await fetchMovieDetails(
+      movieInfo.title,
+      movieInfo.year,
+    );
 
     // 既存の映画を検索
     const existingMovies = await database
@@ -1018,8 +1047,8 @@ async function processMovie(
           eq(translations.resourceUid, movies.uid),
           eq(translations.resourceType, "movie_title"),
           eq(translations.languageCode, "en"),
-          eq(translations.isDefault, 1)
-        )
+          eq(translations.isDefault, 1),
+        ),
       )
       .where(eq(translations.content, movieInfo.title));
 
@@ -1039,7 +1068,9 @@ async function processMovie(
             updatedAt: Math.floor(Date.now() / 1000),
           })
           .where(eq(movies.uid, movieUid));
-        console.log(`Updated IMDb ID for ${movieInfo.title}: ${movieDetails.imdbId}`);
+        console.log(
+          `Updated IMDb ID for ${movieInfo.title}: ${movieDetails.imdbId}`,
+        );
       }
     } else {
       // 新規映画の作成
@@ -1149,7 +1180,7 @@ async function processMovie(
           if (config.images.poster_sizes.includes(size)) {
             const posterUrl = `${config.images.secure_base_url}${size}${movieDetails.posterPath}`;
             const width = Number.parseInt(size.slice(1), 10);
-            
+
             await database
               .insert(posterUrls)
               .values({
@@ -1181,7 +1212,7 @@ async function processMovie(
     console.log(
       `Processed ${existingMovies.length > 0 ? "updated" : "new"} movie: ${movieInfo.title} (${movieInfo.year}) - ${
         movieInfo.isWinner ? "Palme d'Or Winner" : "In Competition"
-      } ${movieDetails.imdbId ? `IMDb: ${movieDetails.imdbId}` : ""} ${movieDetails.japaneseTitle ? `JA: ${movieDetails.japaneseTitle}` : ""} ${movieDetails.posterPath ? "Poster: ✓" : ""}`
+      } ${movieDetails.imdbId ? `IMDb: ${movieDetails.imdbId}` : ""} ${movieDetails.japaneseTitle ? `JA: ${movieDetails.japaneseTitle}` : ""} ${movieDetails.posterPath ? "Poster: ✓" : ""}`,
     );
   } catch (error) {
     console.error(`Error processing movie ${movieInfo.title}:`, error);

@@ -87,10 +87,12 @@ describe("Fetch Utilities", () => {
         ok: false,
         status: 500,
       };
-      vi.mocked(fetch).mockResolvedValue(mockErrorResponse as unknown as Response);
+      vi.mocked(fetch).mockResolvedValue(
+        mockErrorResponse as unknown as Response,
+      );
 
       await expect(
-        fetchWithRetry("https://example.com", {}, 2, 10)
+        fetchWithRetry("https://example.com", {}, 2, 10),
       ).rejects.toThrow("HTTP error! Status: 500");
 
       expect(fetch).toHaveBeenCalledTimes(3); // Initial + 2 retries
@@ -101,7 +103,9 @@ describe("Fetch Utilities", () => {
         ok: false,
         status: 500,
       };
-      vi.mocked(fetch).mockResolvedValue(mockErrorResponse as unknown as Response);
+      vi.mocked(fetch).mockResolvedValue(
+        mockErrorResponse as unknown as Response,
+      );
 
       const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
 
@@ -142,7 +146,7 @@ describe("Fetch Utilities", () => {
       });
 
       expect(result).toBe(
-        "https://example.com/?query=hello+world&special=a%26b%3Dc"
+        "https://example.com/?query=hello+world&special=a%26b%3Dc",
       );
     });
 
@@ -160,7 +164,7 @@ describe("Fetch Utilities", () => {
       });
 
       expect(result).toContain(
-        "query=%E3%83%86%E3%82%B9%E3%83%88%E6%98%A0%E7%94%BB"
+        "query=%E3%83%86%E3%82%B9%E3%83%88%E6%98%A0%E7%94%BB",
       );
     });
 

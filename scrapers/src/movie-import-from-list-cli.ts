@@ -10,9 +10,15 @@ async function main(): Promise<void> {
   const arguments_ = process.argv.slice(2);
 
   if (arguments_.length < 2) {
-    console.log("Usage: movie-import-from-list-cli <json-file-path> <award-name> [limit]");
-    console.log("Example: movie-import-from-list-cli ./tmp/1000_movies.json \"Best 1000 Movies\"");
-    console.log("Example: movie-import-from-list-cli ./tmp/1000_movies.json \"Best 1000 Movies\" 5");
+    console.log(
+      "Usage: movie-import-from-list-cli <json-file-path> <award-name> [limit]",
+    );
+    console.log(
+      'Example: movie-import-from-list-cli ./tmp/1000_movies.json "Best 1000 Movies"',
+    );
+    console.log(
+      'Example: movie-import-from-list-cli ./tmp/1000_movies.json "Best 1000 Movies" 5',
+    );
     process.exit(1);
   }
 
@@ -21,7 +27,7 @@ async function main(): Promise<void> {
   const limit = arguments_[2] ? Number.parseInt(arguments_[2], 10) : undefined;
 
   // 環境変数から設定を取得
-  const tursoUrl = process.env.TURSO_DATABASE_URL;  
+  const tursoUrl = process.env.TURSO_DATABASE_URL;
   const tursoToken = process.env.TURSO_AUTH_TOKEN;
   const tmdbKey = process.env.TMDB_API_KEY;
 
@@ -55,8 +61,14 @@ async function main(): Promise<void> {
     }
     console.log("---");
 
-    await importMoviesFromList(filePath, awardName, "Selected Films", environment, limit);
-    
+    await importMoviesFromList(
+      filePath,
+      awardName,
+      "Selected Films",
+      environment,
+      limit,
+    );
+
     console.log("---");
     console.log("Import completed successfully!");
   } catch (error) {

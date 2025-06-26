@@ -1,7 +1,15 @@
-import type { Context, Next, MiddlewareHandler } from 'hono';
-import { createInternalServerError, isValidationError, formatZodErrors, createValidationError } from '../utils/error-handlers.js';
+import type { Context, MiddlewareHandler, Next } from "hono";
+import {
+  createInternalServerError,
+  createValidationError,
+  formatZodErrors,
+  isValidationError,
+} from "../utils/error-handlers.js";
 
-export const globalErrorHandler: MiddlewareHandler = async (c: Context, next: Next) => {
+export const globalErrorHandler: MiddlewareHandler = async (
+  c: Context,
+  next: Next,
+) => {
   try {
     await next();
   } catch (error) {
@@ -11,14 +19,14 @@ export const globalErrorHandler: MiddlewareHandler = async (c: Context, next: Ne
     }
 
     if (error instanceof Error) {
-      if (error.name === 'SQLiteError' || error.name === 'LibsqlError') {
-        console.error('Database error:', error.message);
-        return createInternalServerError(c, error, 'database operation');
+      if (error.name === "SQLiteError" || error.name === "LibsqlError") {
+        console.error("Database error:", error.message);
+        return createInternalServerError(c, error, "database operation");
       }
 
-      if (error.message.includes('fetch')) {
-        console.error('Network error:', error.message);
-        return createInternalServerError(c, error, 'external API call');
+      if (error.message.includes("fetch")) {
+        console.error("Network error:", error.message);
+        return createInternalServerError(c, error, "external API call");
       }
     }
 
@@ -29,13 +37,13 @@ export const globalErrorHandler: MiddlewareHandler = async (c: Context, next: Ne
 export const notFoundHandler = (c: Context) => {
   return c.json(
     {
-      error: 'Endpoint not found',
-      code: 'NOT_FOUND',
+      error: "Endpoint not found",
+      code: "NOT_FOUND",
       details: {
         path: c.req.path,
         method: c.req.method,
       },
     },
-    404
+    404,
   );
 };

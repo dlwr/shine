@@ -62,10 +62,12 @@ export interface TMDBTranslationsResponse {
  */
 export async function fetchTMDBMovieTranslations(
   movieId: number,
-  tmdbApiKey: string
+  tmdbApiKey: string,
 ): Promise<TMDBTranslationsResponse | undefined> {
   try {
-    const translationsUrl = new URL(`${TMDB_API_BASE_URL}/movie/${movieId}/translations`);
+    const translationsUrl = new URL(
+      `${TMDB_API_BASE_URL}/movie/${movieId}/translations`,
+    );
     translationsUrl.searchParams.append("api_key", tmdbApiKey);
 
     const response = await fetch(translationsUrl.toString());
@@ -78,7 +80,7 @@ export async function fetchTMDBMovieTranslations(
   } catch (error) {
     console.error(
       `Error fetching TMDb translations for movie ID ${movieId}:`,
-      error
+      error,
     );
     return undefined;
   }
@@ -90,7 +92,7 @@ export async function fetchTMDBMovieTranslations(
 export async function searchTMDBMovie(
   title: string,
   year: number,
-  tmdbApiKey: string
+  tmdbApiKey: string,
 ): Promise<number | undefined> {
   try {
     const searchUrl = new URL(`${TMDB_API_BASE_URL}/search/movie`);
@@ -107,7 +109,7 @@ export async function searchTMDBMovie(
     const data = (await response.json()) as TMDBSearchResponse;
 
     // 結果をフィルタリング
-    const matches = data.results.filter((movie) => {
+    const matches = data.results.filter(movie => {
       const movieYear = new Date(movie.release_date).getFullYear();
       return Math.abs(movieYear - year) <= 1; // 1年の誤差を許容
     });
@@ -126,7 +128,7 @@ export async function searchTMDBMovie(
 export async function fetchTMDBMovieDetails(
   movieId: number,
   tmdbApiKey: string,
-  language = "en-US"
+  language = "en-US",
 ): Promise<TMDBMovieData | undefined> {
   try {
     const detailsUrl = new URL(`${TMDB_API_BASE_URL}/movie/${movieId}`);
@@ -143,7 +145,7 @@ export async function fetchTMDBMovieDetails(
   } catch (error) {
     console.error(
       `Error fetching TMDb movie details for ID ${movieId}:`,
-      error
+      error,
     );
     return undefined;
   }
@@ -154,7 +156,7 @@ export async function fetchTMDBMovieDetails(
  */
 export async function findTMDBByImdbId(
   imdbId: string,
-  tmdbApiKey: string
+  tmdbApiKey: string,
 ): Promise<number | undefined> {
   try {
     const findUrl = new URL(`${TMDB_API_BASE_URL}/find/${imdbId}`);
@@ -187,7 +189,7 @@ export async function findTMDBByImdbId(
 export async function fetchJapaneseTitleFromTMDB(
   imdbId: string,
   tmdbId: number | undefined,
-  environment: Environment
+  environment: Environment,
 ): Promise<string | undefined> {
   const TMDB_API_KEY = environment.TMDB_API_KEY;
 
@@ -219,7 +221,7 @@ export async function fetchJapaneseTitleFromTMDB(
     const movieData = await fetchTMDBMovieDetails(
       movieTmdbId,
       TMDB_API_KEY,
-      "ja"
+      "ja",
     );
 
     if (!movieData) {
@@ -237,7 +239,7 @@ export async function fetchJapaneseTitleFromTMDB(
   } catch (error) {
     console.error(
       `Error fetching Japanese title from TMDB for IMDb ID ${imdbId}:`,
-      error
+      error,
     );
     return undefined;
   }
@@ -248,7 +250,7 @@ export async function fetchJapaneseTitleFromTMDB(
  */
 export async function fetchTMDBMovieImages(
   imdbId: string,
-  tmdbApiKey: string
+  tmdbApiKey: string,
 ): Promise<{ images: TMDBMovieImages; tmdbId: number } | undefined> {
   try {
     const tmdbId = await findTMDBByImdbId(imdbId, tmdbApiKey);
@@ -278,7 +280,7 @@ export async function fetchTMDBMovieImages(
 export async function saveTMDBId(
   imdbId: string,
   tmdbId: number,
-  environment: Environment
+  environment: Environment,
 ): Promise<void> {
   const database = getDatabase(environment);
 
@@ -309,7 +311,7 @@ export async function saveTMDBId(
 
     if (duplicateMovie.length > 0) {
       console.log(
-        `  TMDB ID ${tmdbId} is already used by another movie (${duplicateMovie[0].uid})`
+        `  TMDB ID ${tmdbId} is already used by another movie (${duplicateMovie[0].uid})`,
       );
       return;
     }
@@ -332,7 +334,7 @@ export async function saveTMDBId(
 export async function saveJapaneseTranslation(
   movieUid: string,
   japaneseTitle: string,
-  environment: Environment
+  environment: Environment,
 ): Promise<void> {
   const database = getDatabase(environment);
 
@@ -370,7 +372,7 @@ export async function saveJapaneseTranslation(
 export async function savePosterUrls(
   movieUid: string,
   posters: TMDBMovieImages["posters"],
-  environment: Environment
+  environment: Environment,
 ): Promise<number> {
   if (!posters || posters.length === 0) {
     return 0;
@@ -385,7 +387,7 @@ export async function savePosterUrls(
       .from(posterUrls)
       .where(eq(posterUrls.movieUid, movieUid));
 
-    const existingUrls = new Set(existingPosters.map((p) => p.url));
+    const existingUrls = new Set(existingPosters.map(p => p.url));
 
     for (const poster of posters) {
       const url = `https://image.tmdb.org/t/p/original${poster.file_path}`;
@@ -420,7 +422,7 @@ export async function savePosterUrls(
 export async function fetchImdbId(
   title: string,
   year: number,
-  tmdbApiKey: string
+  tmdbApiKey: string,
 ): Promise<string | undefined> {
   try {
     // TMDbで映画を検索

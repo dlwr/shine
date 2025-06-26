@@ -60,7 +60,7 @@ export default {
       console.error("Error processing posters:", error);
       return new Response(
         `Error: ${error instanceof Error ? error.message : String(error)}`,
-        { status: 500 }
+        { status: 500 },
       );
     }
   },
@@ -75,12 +75,12 @@ async function getMoviesWithImdbId(limit = 10): Promise<MovieWithImdbId[]> {
     .from(movies)
     .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
     .where(
-      sql`${movies.imdbId} IS NOT NULL AND ${posterUrls.uid} IS NULL AND ${movies.tmdbId} IS NULL`
+      sql`${movies.imdbId} IS NOT NULL AND ${posterUrls.uid} IS NULL AND ${movies.tmdbId} IS NULL`,
     )
     .limit(limit);
 
   const filteredMoviesWithoutPosters = moviesWithoutPosters.filter(
-    (movie): movie is MovieWithImdbId => movie.imdbId !== null
+    (movie): movie is MovieWithImdbId => movie.imdbId !== null,
   );
 
   if (filteredMoviesWithoutPosters.length > 0) {
@@ -93,13 +93,13 @@ async function getMoviesWithImdbId(limit = 10): Promise<MovieWithImdbId[]> {
     .from(movies)
     .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
     .where(
-      sql`${movies.imdbId} IS NOT NULL AND ${posterUrls.uid} IS NULL AND ${movies.tmdbId} IS NOT NULL`
+      sql`${movies.imdbId} IS NOT NULL AND ${posterUrls.uid} IS NULL AND ${movies.tmdbId} IS NOT NULL`,
     )
     .limit(limit);
 
   const filteredMoviesWithoutPostersButWithTmdb =
     moviesWithoutPostersButWithTmdb.filter(
-      (movie): movie is MovieWithImdbId => movie.imdbId !== null
+      (movie): movie is MovieWithImdbId => movie.imdbId !== null,
     );
 
   if (filteredMoviesWithoutPostersButWithTmdb.length > 0) {
@@ -114,12 +114,12 @@ async function getMoviesWithImdbId(limit = 10): Promise<MovieWithImdbId[]> {
     .limit(limit);
 
   return moviesWithImdbIdNoTmdb.filter(
-    (movie): movie is MovieWithImdbId => movie.imdbId !== null
+    (movie): movie is MovieWithImdbId => movie.imdbId !== null,
   );
 }
 
 async function fetchMovieImages(
-  imdbId: string
+  imdbId: string,
 ): Promise<{ images: TMDBMovieImages; tmdbId: number } | undefined> {
   if (!TMDB_API_KEY) {
     console.error("TMDb API key is not set");
@@ -187,7 +187,7 @@ async function saveTMDBId(movieUid: string, tmdbId: number): Promise<void> {
 
     if (duplicateMovie.length > 0) {
       console.log(
-        `  ! TMDB ID ${tmdbId} は他の映画で既に使用されています (${duplicateMovie[0].uid})`
+        `  ! TMDB ID ${tmdbId} は他の映画で既に使用されています (${duplicateMovie[0].uid})`,
       );
       return;
     }
@@ -206,7 +206,7 @@ async function saveTMDBId(movieUid: string, tmdbId: number): Promise<void> {
 
 async function savePosterUrls(
   movieUid: string,
-  posters: TMDBMovieImages["posters"]
+  posters: TMDBMovieImages["posters"],
 ): Promise<number> {
   if (!posters || posters.length === 0) {
     return 0;
@@ -221,7 +221,7 @@ async function savePosterUrls(
       .from(posterUrls)
       .where(eq(posterUrls.movieUid, movieUid));
 
-    const existingUrls = new Set(existingPosters.map((p) => p.url));
+    const existingUrls = new Set(existingPosters.map(p => p.url));
 
     for (const poster of posters) {
       const url = `https://image.tmdb.org/t/p/original${poster.file_path}`;
@@ -283,7 +283,7 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
 
   for (const movie of moviesWithImdbId) {
     console.log(
-      `[${results.processed + 1}/${moviesWithImdbId.length}] 処理開始: IMDb ID ${movie.imdbId}`
+      `[${results.processed + 1}/${moviesWithImdbId.length}] 処理開始: IMDb ID ${movie.imdbId}`,
     );
 
     results.processed++;
@@ -318,12 +318,12 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
             console.log(`  ✘ ポスターが見つかりませんでした`);
           } else {
             console.log(
-              `  ポスター候補: ${movieData.images.posters.length}枚見つかりました`
+              `  ポスター候補: ${movieData.images.posters.length}枚見つかりました`,
             );
             console.log(`  データベースに保存中...`);
             const savedCount = await savePosterUrls(
               movie.uid,
-              movieData.images.posters
+              movieData.images.posters,
             );
             result.postersAdded = savedCount;
 
@@ -346,7 +346,7 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
 
         // TMDB IDから直接ポスター情報を取得
         const imagesUrl = new URL(
-          `${TMDB_API_BASE_URL}/movie/${movie.tmdbId}/images`
+          `${TMDB_API_BASE_URL}/movie/${movie.tmdbId}/images`,
         );
         imagesUrl.searchParams.append("api_key", TMDB_API_KEY as string);
 
@@ -363,7 +363,7 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
           console.log(`  ✘ ポスターが見つかりませんでした`);
         } else {
           console.log(
-            `  ポスター候補: ${images.posters.length}枚見つかりました`
+            `  ポスター候補: ${images.posters.length}枚見つかりました`,
           );
           console.log(`  データベースに保存中...`);
           const savedCount = await savePosterUrls(movie.uid, images.posters);
@@ -387,20 +387,20 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
 
     results.results.push(result);
     console.log(
-      `[${results.processed}/${moviesWithImdbId.length}] 処理完了: IMDb ID ${movie.imdbId}`
+      `[${results.processed}/${moviesWithImdbId.length}] 処理完了: IMDb ID ${movie.imdbId}`,
     );
     console.log(
-      `進捗状況: 成功=${results.success}, 失敗=${results.failed}, 合計=${results.processed}/${moviesWithImdbId.length}`
+      `進捗状況: 成功=${results.success}, 失敗=${results.failed}, 合計=${results.processed}/${moviesWithImdbId.length}`,
     );
     console.log(`------------------------------`);
   }
 
   console.log(
-    `処理完了: 合計=${results.processed}件 (成功=${results.success}件, 失敗=${results.failed}件)`
+    `処理完了: 合計=${results.processed}件 (成功=${results.success}件, 失敗=${results.failed}件)`,
   );
   const totalPosters = results.results.reduce(
     (sum, item) => sum + item.postersAdded,
-    0
+    0,
   );
   console.log(`保存されたポスター数: 合計${totalPosters}枚`);
 

@@ -1,22 +1,22 @@
-import type { Context } from 'hono';
-import type { 
-  ApiErrorResponse, 
-  ValidationError, 
-  DatabaseError, 
-  ExternalApiError, 
-  RateLimitError, 
-  AuthenticationError, 
-  NotFoundError, 
-  ConflictError 
-} from '../types/errors.js';
-import { ErrorCodes } from '../types/errors.js';
+import type { Context } from "hono";
+import type {
+  ApiErrorResponse,
+  AuthenticationError,
+  ConflictError,
+  DatabaseError,
+  ExternalApiError,
+  NotFoundError,
+  RateLimitError,
+  ValidationError,
+} from "../types/errors.js";
+import { ErrorCodes } from "../types/errors.js";
 
 export function createValidationError(
   c: Context,
-  validationErrors: { field: string; message: string }[]
+  validationErrors: { field: string; message: string }[],
 ): Response {
   const errorResponse: ValidationError = {
-    error: 'Validation failed',
+    error: "Validation failed",
     code: ErrorCodes.VALIDATION_ERROR,
     details: validationErrors,
   };
@@ -27,12 +27,15 @@ export function createDatabaseError(
   c: Context,
   operation: string,
   table?: string,
-  originalError?: unknown
+  originalError?: unknown,
 ): Response {
-  console.error(`Database error in ${operation}${table ? ` on table ${table}` : ''}:`, originalError);
-  
+  console.error(
+    `Database error in ${operation}${table ? ` on table ${table}` : ""}:`,
+    originalError,
+  );
+
   const errorResponse: DatabaseError = {
-    error: 'Database operation failed',
+    error: "Database operation failed",
     code: ErrorCodes.DATABASE_ERROR,
     details: {
       operation,
@@ -46,10 +49,10 @@ export function createExternalApiError(
   c: Context,
   service: string,
   statusCode?: number,
-  originalError?: unknown
+  originalError?: unknown,
 ): Response {
   console.error(`External API error for ${service}:`, originalError);
-  
+
   const errorResponse: ExternalApiError = {
     error: `External service ${service} is unavailable`,
     code: ErrorCodes.EXTERNAL_API_ERROR,
@@ -64,10 +67,10 @@ export function createExternalApiError(
 export function createRateLimitError(
   c: Context,
   resetTime: number,
-  limit: number
+  limit: number,
 ): Response {
   const errorResponse: RateLimitError = {
-    error: 'Rate limit exceeded',
+    error: "Rate limit exceeded",
     code: ErrorCodes.RATE_LIMIT_EXCEEDED,
     details: {
       resetTime,
@@ -79,13 +82,17 @@ export function createRateLimitError(
 
 export function createAuthenticationError(
   c: Context,
-  reason: 'INVALID_TOKEN' | 'EXPIRED_TOKEN' | 'MISSING_TOKEN' | 'INVALID_CREDENTIALS'
+  reason:
+    | "INVALID_TOKEN"
+    | "EXPIRED_TOKEN"
+    | "MISSING_TOKEN"
+    | "INVALID_CREDENTIALS",
 ): Response {
   const messages = {
-    INVALID_TOKEN: 'Invalid authentication token',
-    EXPIRED_TOKEN: 'Authentication token has expired',
-    MISSING_TOKEN: 'Authentication token is required',
-    INVALID_CREDENTIALS: 'Invalid credentials provided',
+    INVALID_TOKEN: "Invalid authentication token",
+    EXPIRED_TOKEN: "Authentication token has expired",
+    MISSING_TOKEN: "Authentication token is required",
+    INVALID_CREDENTIALS: "Invalid credentials provided",
   };
 
   const errorResponse: AuthenticationError = {
@@ -99,7 +106,7 @@ export function createAuthenticationError(
 export function createNotFoundError(
   c: Context,
   resource: string,
-  identifier: string
+  identifier: string,
 ): Response {
   const errorResponse: NotFoundError = {
     error: `${resource} not found`,
@@ -115,7 +122,7 @@ export function createNotFoundError(
 export function createConflictError(
   c: Context,
   resource: string,
-  constraint: string
+  constraint: string,
 ): Response {
   const errorResponse: ConflictError = {
     error: `${resource} already exists`,
@@ -131,29 +138,36 @@ export function createConflictError(
 export function createInternalServerError(
   c: Context,
   originalError?: unknown,
-  context?: string
+  context?: string,
 ): Response {
-  console.error(`Internal server error${context ? ` in ${context}` : ''}:`, originalError);
-  
+  console.error(
+    `Internal server error${context ? ` in ${context}` : ""}:`,
+    originalError,
+  );
+
   const errorResponse: ApiErrorResponse = {
-    error: 'Internal server error',
+    error: "Internal server error",
     code: ErrorCodes.INTERNAL_ERROR,
   };
   return c.json(errorResponse, 500);
 }
 
-export function isValidationError(error: unknown): error is { issues: { path: (string | number)[]; message: string }[] } {
+export function isValidationError(
+  error: unknown,
+): error is { issues: { path: (string | number)[]; message: string }[] } {
   return (
-    typeof error === 'object' &&
+    typeof error === "object" &&
     error !== null &&
-    'issues' in error &&
+    "issues" in error &&
     Array.isArray((error as { issues: unknown }).issues)
   );
 }
 
-export function formatZodErrors(zodError: { issues: { path: (string | number)[]; message: string }[] }): { field: string; message: string }[] {
+export function formatZodErrors(zodError: {
+  issues: { path: (string | number)[]; message: string }[];
+}): { field: string; message: string }[] {
   return zodError.issues.map(issue => ({
-    field: issue.path.join('.') || 'root',
+    field: issue.path.join(".") || "root",
     message: issue.message,
   }));
 }

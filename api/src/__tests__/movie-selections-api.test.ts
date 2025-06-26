@@ -15,7 +15,7 @@ const mockDatabase = {
                 translations: { content: "Test Movie" },
                 poster_urls: { url: "https://example.com/poster.jpg" },
               },
-            ])
+            ]),
           ),
         })),
       })),
@@ -28,7 +28,7 @@ const mockDatabase = {
               selectionDate: "2025-06-21",
               movieId: "movie-1",
             },
-          ])
+          ]),
         ),
       })),
       orderBy: vi.fn(() => ({
@@ -46,7 +46,7 @@ const mockDatabase = {
             selectionDate: "2025-06-21",
             movieId: "movie-2",
           },
-        ])
+        ]),
       ),
     })),
   })),
@@ -55,7 +55,7 @@ const mockDatabase = {
   })),
 };
 
-vi.mock("db", async (importOriginal) => {
+vi.mock("db", async importOriginal => {
   const actual = await importOriginal<typeof import("db")>();
   return {
     ...actual,

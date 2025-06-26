@@ -52,7 +52,7 @@ export default {
       {
         status: 200,
         headers: { "Content-Type": "text/plain" },
-      }
+      },
     );
   },
 
@@ -67,7 +67,7 @@ export default {
       const database = getDatabase(environment);
       const movies = await getMoviesWithoutJapaneseTranslation(
         database,
-        BATCH_SIZE
+        BATCH_SIZE,
       );
 
       if (movies.length === 0) {
@@ -85,14 +85,14 @@ export default {
       for (const movie of movies) {
         try {
           console.log(
-            `Processing movie: ${movie.englishTitle} (${movie.imdbId})`
+            `Processing movie: ${movie.englishTitle} (${movie.imdbId})`,
           );
 
           // TMDBから日本語タイトルを取得
           const japaneseTitle = await fetchJapaneseTitleFromTMDB(
             movie.imdbId,
             movie.tmdbId,
-            environment
+            environment,
           );
 
           // TMDBで見つからなかった場合はWikipediaで検索
@@ -138,7 +138,7 @@ export default {
         }
 
         // 連続リクエストを避けるための待機
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
       return new Response(
@@ -150,7 +150,7 @@ export default {
         {
           status: 200,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     } catch (error) {
       console.error("Batch scraping error:", error);
@@ -161,7 +161,7 @@ export default {
         {
           status: 500,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
   },
@@ -184,7 +184,7 @@ export default {
         {
           status: 500,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
   },

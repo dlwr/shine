@@ -1,29 +1,35 @@
-import { SignJWT, jwtVerify } from 'jose';
-import type { Context } from 'hono';
-import type { Environment } from '../../src';
-import { createAuthenticationError, createInternalServerError } from './utils/error-handlers';
+import type { Context } from "hono";
+import { SignJWT, jwtVerify } from "jose";
+import type { Environment } from "../../src";
+import {
+  createAuthenticationError,
+  createInternalServerError,
+} from "./utils/error-handlers";
 
-const JWT_ALGORITHM = 'HS256';
-const JWT_EXPIRATION = '24h';
+const JWT_ALGORITHM = "HS256";
+const JWT_EXPIRATION = "24h";
 
 export async function createJWT(secret: string): Promise<string> {
   const encoder = new TextEncoder();
   const secretKey = encoder.encode(secret);
-  
-  const jwt = await new SignJWT({ role: 'admin' })
+
+  const jwt = await new SignJWT({ role: "admin" })
     .setProtectedHeader({ alg: JWT_ALGORITHM })
     .setIssuedAt()
     .setExpirationTime(JWT_EXPIRATION)
     .sign(secretKey);
-    
+
   return jwt;
 }
 
-export async function verifyJWT(token: string, secret: string): Promise<boolean> {
+export async function verifyJWT(
+  token: string,
+  secret: string,
+): Promise<boolean> {
   try {
     const encoder = new TextEncoder();
     const secretKey = encoder.encode(secret);
-    
+
     await jwtVerify(token, secretKey);
     return true;
   } catch {
@@ -31,27 +37,34 @@ export async function verifyJWT(token: string, secret: string): Promise<boolean>
   }
 }
 
-export async function authMiddleware(c: Context<{ Bindings: Environment }>, next: () => Promise<void>) {
+export async function authMiddleware(
+  c: Context<{ Bindings: Environment }>,
+  next: () => Promise<void>,
+) {
   try {
-    const authHeader = c.req.header('Authorization');
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return createAuthenticationError(c, 'MISSING_TOKEN');
+    const authHeader = c.req.header("Authorization");
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return createAuthenticationError(c, "MISSING_TOKEN");
     }
-    
+
     if (!c.env.JWT_SECRET) {
-      return createInternalServerError(c, new Error('JWT_SECRET not configured'), 'authentication middleware');
+      return createInternalServerError(
+        c,
+        new Error("JWT_SECRET not configured"),
+        "authentication middleware",
+      );
     }
-    
+
     const token = authHeader.slice(7);
     const isValid = await verifyJWT(token, c.env.JWT_SECRET);
-    
+
     if (!isValid) {
-      return createAuthenticationError(c, 'INVALID_TOKEN');
+      return createAuthenticationError(c, "INVALID_TOKEN");
     }
-    
+
     await next();
   } catch (error) {
-    return createInternalServerError(c, error, 'authentication middleware');
+    return createInternalServerError(c, error, "authentication middleware");
   }
 }

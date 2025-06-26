@@ -17,11 +17,11 @@ export const securityHeaders = async (c: Context, next: Next) => {
       "font-src 'self'; " +
       "object-src 'none'; " +
       "media-src 'self'; " +
-      "form-action 'self';"
+      "form-action 'self';",
   );
   c.header(
     "Strict-Transport-Security",
-    "max-age=31536000; includeSubDomains; preload"
+    "max-age=31536000; includeSubDomains; preload",
   );
   c.header(
     "Permissions-Policy",
@@ -35,6 +35,6 @@ export const securityHeaders = async (c: Context, next: Next) => {
       "speaker=(), " +
       "accelerometer=(), " +
       "clipboard-read=(), " +
-      "clipboard-write=()"
+      "clipboard-write=()",
   );
 };

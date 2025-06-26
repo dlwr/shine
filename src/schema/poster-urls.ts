@@ -32,7 +32,7 @@ export const posterUrls = sqliteTable(
       .notNull()
       .default(sql`(unixepoch())`),
   },
-  (table) => [
+  table => [
     index("poster_urls_movie_idx").on(table.movieUid),
     index("poster_urls_primary_idx").on(table.movieUid, table.isPrimary),
     uniqueIndex("poster_urls_unique_idx").on(
@@ -40,7 +40,7 @@ export const posterUrls = sqliteTable(
       table.width,
       table.height,
       table.languageCode,
-      table.countryCode
+      table.countryCode,
     ),
-  ]
+  ],
 );

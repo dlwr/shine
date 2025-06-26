@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Context } from "hono";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Environment } from "../../../src";
 import { authMiddleware, createJWT, verifyJWT } from "../auth";
 
@@ -60,67 +60,75 @@ describe("JWT Authentication", () => {
       await authMiddleware(mockContext, mockNext);
 
       expect(mockContext.json).toHaveBeenCalledWith(
-        { 
+        {
           error: "Authentication token is required",
           code: "AUTHENTICATION_ERROR",
-          details: { reason: "MISSING_TOKEN" }
+          details: { reason: "MISSING_TOKEN" },
         },
-        401
+        401,
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should return 401 when Authorization header does not start with Bearer", async () => {
-      (mockContext.req.header as ReturnType<typeof vi.fn>).mockReturnValue("Basic token");
+      (mockContext.req.header as ReturnType<typeof vi.fn>).mockReturnValue(
+        "Basic token",
+      );
 
       await authMiddleware(mockContext, mockNext);
 
       expect(mockContext.json).toHaveBeenCalledWith(
-        { 
+        {
           error: "Authentication token is required",
           code: "AUTHENTICATION_ERROR",
-          details: { reason: "MISSING_TOKEN" }
+          details: { reason: "MISSING_TOKEN" },
         },
-        401
+        401,
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should return 500 when JWT_SECRET is not configured", async () => {
-      (mockContext.req.header as ReturnType<typeof vi.fn>).mockReturnValue("Bearer valid-token");
+      (mockContext.req.header as ReturnType<typeof vi.fn>).mockReturnValue(
+        "Bearer valid-token",
+      );
       mockContext.env.JWT_SECRET = undefined;
 
       await authMiddleware(mockContext, mockNext);
 
       expect(mockContext.json).toHaveBeenCalledWith(
-        { 
+        {
           error: "Internal server error",
-          code: "INTERNAL_ERROR"
+          code: "INTERNAL_ERROR",
         },
-        500
+        500,
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should return 401 when token is invalid", async () => {
-      (mockContext.req.header as ReturnType<typeof vi.fn>).mockReturnValue("Bearer invalid-token");
+      (mockContext.req.header as ReturnType<typeof vi.fn>).mockReturnValue(
+        "Bearer invalid-token",
+      );
 
       await authMiddleware(mockContext, mockNext);
 
       expect(mockContext.json).toHaveBeenCalledWith(
-        { 
+        {
           error: "Invalid authentication token",
           code: "AUTHENTICATION_ERROR",
-          details: { reason: "INVALID_TOKEN" }
+          details: { reason: "INVALID_TOKEN" },
         },
-        401
+        401,
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should call next when token is valid", async () => {
       const validToken = await createJWT(testSecret);
-      (mockContext.req.header as ReturnType<typeof vi.fn>).mockReturnValue(`Bearer ${validToken}`);
+      (mockContext.req.header as ReturnType<typeof vi.fn>).mockReturnValue(
+        `Bearer ${validToken}`,
+      );
 
       await authMiddleware(mockContext, mockNext);
 

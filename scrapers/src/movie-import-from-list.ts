@@ -1,11 +1,11 @@
+import { and, eq, or } from "drizzle-orm";
 import { readFileSync } from "node:fs";
-import { eq, or, and } from "drizzle-orm";
 import { getDatabase, type Environment } from "../../src/index";
-import { movies } from "../../src/schema/movies";
-import { nominations } from "../../src/schema/nominations";
 import { awardCategories } from "../../src/schema/award-categories";
 import { awardCeremonies } from "../../src/schema/award-ceremonies";
 import { awardOrganizations } from "../../src/schema/award-organizations";
+import { movies } from "../../src/schema/movies";
+import { nominations } from "../../src/schema/nominations";
 import { posterUrls } from "../../src/schema/poster-urls";
 import { translations } from "../../src/schema/translations";
 import { generateUUID } from "../../src/utils/uuid";
@@ -46,15 +46,14 @@ export async function importMoviesFromList(
   awardName: string,
   categoryName: string,
   environment: Environment,
-  limit?: number
+  limit?: number,
 ): Promise<void> {
   environment_ = environment;
-  TMDB_API_KEY = environment.TMDB_API_KEY || '';
+  TMDB_API_KEY = environment.TMDB_API_KEY || "";
 
   if (!TMDB_API_KEY) {
-    throw new Error('TMDB_API_KEY is required');
+    throw new Error("TMDB_API_KEY is required");
   }
-
 
   // TMDB設定を取得
   await fetchTMDBConfiguration();
@@ -62,20 +61,22 @@ export async function importMoviesFromList(
   // JSONファイルを読み込み
   const fileContent = readFileSync(filePath, "utf8");
   const allMovieTitles: string[] = JSON.parse(fileContent);
-  
+
   // limitが指定されている場合は制限
   const movieTitles = limit ? allMovieTitles.slice(0, limit) : allMovieTitles;
 
-  console.log(`Importing ${movieTitles.length}${limit ? ` (limited from ${allMovieTitles.length})` : ''} movies from ${filePath}`);
+  console.log(
+    `Importing ${movieTitles.length}${limit ? ` (limited from ${allMovieTitles.length})` : ""} movies from ${filePath}`,
+  );
 
   // アワード組織とカテゴリーを作成
-  const { organizationUid, categoryUid, ceremonyUid } = 
+  const { organizationUid, categoryUid, ceremonyUid } =
     await createAwardStructure(awardName, categoryName);
 
   // 各映画を処理
   for (const [index, title] of movieTitles.entries()) {
     console.log(`\n[${index + 1}/${movieTitles.length}] Processing: ${title}`);
-    
+
     try {
       await processMovie(title, organizationUid, categoryUid, ceremonyUid);
     } catch (error) {
@@ -89,7 +90,10 @@ export async function importMoviesFromList(
 /**
  * アワード組織、カテゴリー、セレモニーを作成
  */
-async function createAwardStructure(awardName: string, categoryName: string): Promise<{
+async function createAwardStructure(
+  awardName: string,
+  categoryName: string,
+): Promise<{
   organizationUid: string;
   categoryUid: string;
   ceremonyUid: string;
@@ -131,8 +135,8 @@ async function createAwardStructure(awardName: string, categoryName: string): Pr
     .where(
       and(
         eq(awardCategories.name, categoryName),
-        eq(awardCategories.organizationUid, organization.uid)
-      )
+        eq(awardCategories.organizationUid, organization.uid),
+      ),
     );
 
   if (!category) {
@@ -156,8 +160,8 @@ async function createAwardStructure(awardName: string, categoryName: string): Pr
     .where(
       and(
         eq(awardCeremonies.year, currentYear),
-        eq(awardCeremonies.organizationUid, organization.uid)
-      )
+        eq(awardCeremonies.organizationUid, organization.uid),
+      ),
     );
 
   if (!ceremony) {
@@ -178,13 +182,13 @@ async function processMovie(
   title: string,
   _organizationUid: string,
   categoryUid: string,
-  ceremonyUid: string
+  ceremonyUid: string,
 ): Promise<void> {
   const database = getDatabase(environment_);
 
   // TMDBで映画を検索
   const tmdbMovie = await searchMovieOnTMDB(title);
-  
+
   if (!tmdbMovie) {
     console.log(`  TMDB search failed for: ${title}`);
     return;
@@ -192,7 +196,7 @@ async function processMovie(
 
   // 既存の映画をチェック（TMDB IDまたはIMDb IDで）
   let existingMovie: typeof movies.$inferSelect | undefined;
-  
+
   if (tmdbMovie.imdb_id) {
     [existingMovie] = await database
       .select()
@@ -200,8 +204,8 @@ async function processMovie(
       .where(
         or(
           eq(movies.tmdbId, tmdbMovie.id),
-          eq(movies.imdbId, tmdbMovie.imdb_id)
-        )
+          eq(movies.imdbId, tmdbMovie.imdb_id),
+        ),
       )
       .limit(1);
   } else {
@@ -217,7 +221,7 @@ async function processMovie(
   if (existingMovie) {
     console.log(`  Found existing movie (UID: ${existingMovie.uid})`);
     movieUid = existingMovie.uid;
-    
+
     // TMDBデータで既存映画を更新
     await updateExistingMovie(existingMovie.uid, tmdbMovie);
   } else {
@@ -232,7 +236,9 @@ async function processMovie(
 /**
  * TMDBで映画を検索
  */
-async function searchMovieOnTMDB(title: string): Promise<TMDBMovieData | undefined> {
+async function searchMovieOnTMDB(
+  title: string,
+): Promise<TMDBMovieData | undefined> {
   try {
     const searchUrl = new URL(`${TMDB_API_BASE_URL}/search/movie`);
     searchUrl.searchParams.append("api_key", TMDB_API_KEY);
@@ -245,15 +251,17 @@ async function searchMovieOnTMDB(title: string): Promise<TMDBMovieData | undefin
     }
 
     const data = (await response.json()) as TMDBSearchResponse;
-    
+
     if (data.results.length === 0) {
       return undefined;
     }
 
     // 最初の結果を返す（最も関連性が高いとされる）
     const movie = data.results[0];
-    console.log(`  Found on TMDB: ${movie.title} (${movie.release_date?.split("-")[0] || "Unknown"})`);
-    
+    console.log(
+      `  Found on TMDB: ${movie.title} (${movie.release_date?.split("-")[0] || "Unknown"})`,
+    );
+
     return movie;
   } catch (error) {
     console.error(`Error searching TMDB for ${title}:`, error);
@@ -285,13 +293,16 @@ async function createNewMovie(tmdbMovie: TMDBMovieData): Promise<string> {
   // 英語原題翻訳を追加（デフォルト）
   if (tmdbMovie.original_title) {
     console.log(`  Saving EN title: "${tmdbMovie.original_title}"`);
-    const insertResult = await database.insert(translations).values({
-      resourceType: "movie_title",
-      resourceUid: movieUid,
-      languageCode: "en",
-      content: tmdbMovie.original_title,
-      isDefault: 1,
-    }).onConflictDoNothing();
+    const insertResult = await database
+      .insert(translations)
+      .values({
+        resourceType: "movie_title",
+        resourceUid: movieUid,
+        languageCode: "en",
+        content: tmdbMovie.original_title,
+        isDefault: 1,
+      })
+      .onConflictDoNothing();
     console.log(`  EN translation insert result:`, insertResult);
   } else {
     console.log(`  WARN: tmdbMovie.original_title is undefined!`);
@@ -307,13 +318,13 @@ async function createNewMovie(tmdbMovie: TMDBMovieData): Promise<string> {
         and(
           eq(translations.resourceType, "movie_title"),
           eq(translations.resourceUid, movieUid),
-          eq(translations.languageCode, "ja")
-        )
+          eq(translations.languageCode, "ja"),
+        ),
       )
       .limit(1);
 
     let content = "";
-    
+
     // 日本語タイトルのみを保存（overviewは別途処理が必要）
     if (tmdbMovie.title !== tmdbMovie.original_title) {
       console.log(`  Adding JA title: "${tmdbMovie.title}"`);
@@ -365,18 +376,18 @@ async function createNewMovie(tmdbMovie: TMDBMovieData): Promise<string> {
  */
 async function updateExistingMovie(
   movieUid: string,
-  tmdbMovie: TMDBMovieData
+  tmdbMovie: TMDBMovieData,
 ): Promise<void> {
   const database = getDatabase(environment_);
 
   // TMDBデータで更新
   const updates: Partial<typeof movies.$inferInsert> = {};
-  
-  if (!await hasValue(movieUid, "tmdbId")) {
+
+  if (!(await hasValue(movieUid, "tmdbId"))) {
     updates.tmdbId = tmdbMovie.id;
   }
-  
-  if (!await hasValue(movieUid, "imdbId") && tmdbMovie.imdb_id) {
+
+  if (!(await hasValue(movieUid, "imdbId")) && tmdbMovie.imdb_id) {
     updates.imdbId = tmdbMovie.imdb_id;
   }
 
@@ -406,14 +417,17 @@ async function updateExistingMovie(
 /**
  * 指定フィールドに値があるかチェック
  */
-async function hasValue(movieUid: string, field: keyof typeof movies.$inferSelect): Promise<boolean> {
+async function hasValue(
+  movieUid: string,
+  field: keyof typeof movies.$inferSelect,
+): Promise<boolean> {
   const database = getDatabase(environment_);
   const [movie] = await database
     .select({ [field]: movies[field] })
     .from(movies)
     .where(eq(movies.uid, movieUid))
     .limit(1);
-  
+
   return movie && movie[field] !== undefined;
 }
 
@@ -423,7 +437,7 @@ async function hasValue(movieUid: string, field: keyof typeof movies.$inferSelec
 async function addNomination(
   movieUid: string,
   categoryUid: string,
-  ceremonyUid: string
+  ceremonyUid: string,
 ): Promise<void> {
   const database = getDatabase(environment_);
 
@@ -435,8 +449,8 @@ async function addNomination(
       and(
         eq(nominations.movieUid, movieUid),
         eq(nominations.categoryUid, categoryUid),
-        eq(nominations.ceremonyUid, ceremonyUid)
-      )
+        eq(nominations.ceremonyUid, ceremonyUid),
+      ),
     )
     .limit(1);
 

@@ -14,7 +14,7 @@ export async function fetchWithRetry(
   url: string,
   options: RequestInit = {},
   retries = 3,
-  delay = 1000
+  delay = 1000,
 ): Promise<string> {
   try {
     const response = await fetch(url, {
@@ -37,9 +37,9 @@ export async function fetchWithRetry(
     }
 
     console.warn(
-      `Fetch failed, retrying in ${delay}ms... (${retries} retries left)`
+      `Fetch failed, retrying in ${delay}ms... (${retries} retries left)`,
     );
-    await new Promise((resolve) => setTimeout(resolve, delay));
+    await new Promise(resolve => setTimeout(resolve, delay));
 
     return fetchWithRetry(url, options, retries - 1, delay * 1.5);
   }
@@ -53,7 +53,7 @@ export async function fetchWithRetry(
  */
 export function buildUrl(
   baseUrl: string,
-  parameters: Record<string, string>
+  parameters: Record<string, string>,
 ): string {
   const url = new URL(baseUrl);
 

@@ -29,5 +29,5 @@ export const nominations = sqliteTable(
       .notNull()
       .default(sql`(unixepoch())`),
   },
-  (table) => [unique().on(table.movieUid, table.ceremonyUid, table.categoryUid)]
+  table => [unique().on(table.movieUid, table.ceremonyUid, table.categoryUid)],
 );

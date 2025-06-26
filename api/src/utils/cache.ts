@@ -93,14 +93,14 @@ export class EdgeCache {
 export const getCacheKeyForSelection = (
   type: string,
   date: string,
-  locale: string
+  locale: string,
 ): string => {
   return `selections:${type}:${date}:${locale}:v1`;
 };
 
 export const getCacheKeyForMovie = (
   movieId: string,
-  includeDetails = false
+  includeDetails = false,
 ): string => {
   const suffix = includeDetails ? "full" : "basic";
   return `movie:${movieId}:${suffix}:v1`;
@@ -110,11 +110,11 @@ export const getCacheKeyForSearch = (
   query: string,
   page: number,
   limit: number,
-  filters: Record<string, unknown>
+  filters: Record<string, unknown>,
 ): string => {
   const filterString = Object.entries(filters)
     .filter(
-      ([, value]) => value !== undefined && value !== null && value !== ""
+      ([, value]) => value !== undefined && value !== null && value !== "",
     )
     .map(([key, value]) => `${key}:${value}`)
     .sort()
@@ -160,7 +160,7 @@ export const getCacheTTL = {
 export const createCachedResponse = (
   data: unknown,
   ttl: number,
-  additionalHeaders: Record<string, string> = {}
+  additionalHeaders: Record<string, string> = {},
 ): Response => {
   const headers = {
     "Content-Type": "application/json",
@@ -175,7 +175,7 @@ export const createCachedResponse = (
 export const shouldCacheSearch = (
   query: string,
   year?: number,
-  language?: string
+  language?: string,
 ): boolean => {
   if (!query || query.length < 3) return true;
   if (year !== undefined || language !== undefined) return false;
@@ -192,8 +192,8 @@ export const shouldCacheSearch = (
     "nominated",
   ];
 
-  return commonQueries.some((common) =>
-    query.toLowerCase().includes(common.toLowerCase())
+  return commonQueries.some(common =>
+    query.toLowerCase().includes(common.toLowerCase()),
   );
 };
 
@@ -210,7 +210,7 @@ export const createETag = (data: unknown): string => {
 
 export const checkETag = (
   request: { header: (name: string) => string | undefined },
-  etag: string
+  etag: string,
 ): boolean => {
   const ifNoneMatch = request.header("If-None-Match");
   return ifNoneMatch === etag;

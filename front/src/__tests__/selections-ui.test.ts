@@ -165,7 +165,9 @@ describe("Admin Selections UI Logic", () => {
         configurable: true,
       });
 
-      expect(getApiUrlProduction()).toBe("https://shine-api.yuta25.workers.dev");
+      expect(getApiUrlProduction()).toBe(
+        "https://shine-api.yuta25.workers.dev",
+      );
     });
   });
 
@@ -190,24 +192,30 @@ describe("Admin Selections UI Logic", () => {
   describe("Movie Data Management", () => {
     it("should store movie data correctly", () => {
       const movieData: {
-        daily: undefined | {
-          uid: string;
-          title: string;
-          year: number;
-          posterUrl: string;
-        };
-        weekly: undefined | {
-          uid: string;
-          title: string;
-          year: number;
-          posterUrl: string;
-        };
-        monthly: undefined | {
-          uid: string;
-          title: string;
-          year: number;
-          posterUrl: string;
-        };
+        daily:
+          | undefined
+          | {
+              uid: string;
+              title: string;
+              year: number;
+              posterUrl: string;
+            };
+        weekly:
+          | undefined
+          | {
+              uid: string;
+              title: string;
+              year: number;
+              posterUrl: string;
+            };
+        monthly:
+          | undefined
+          | {
+              uid: string;
+              title: string;
+              year: number;
+              posterUrl: string;
+            };
       } = {
         daily: undefined,
         weekly: undefined,
@@ -271,7 +279,11 @@ describe("Admin Selections UI Logic", () => {
         },
       };
 
-      document.getElementById = vi.fn((id: string) => (mockElements[id as keyof typeof mockElements] as HTMLElement) || undefined);
+      document.getElementById = vi.fn(
+        (id: string) =>
+          (mockElements[id as keyof typeof mockElements] as HTMLElement) ||
+          undefined,
+      );
     });
 
     it("should switch to search tab correctly", () => {
@@ -322,11 +334,10 @@ describe("Admin Selections UI Logic", () => {
       const searchUrl = `${baseUrl}/admin/movies?limit=20&search=${encodeURIComponent(query)}`;
 
       expect(searchUrl).toBe(
-        "http://localhost:8787/admin/movies?limit=20&search=The%20Pianist"
+        "http://localhost:8787/admin/movies?limit=20&search=The%20Pianist",
       );
     });
   });
-
 
   describe("Movie Selection Display", () => {
     it("should generate correct movie card HTML", () => {
@@ -387,11 +398,10 @@ describe("Admin Selections UI Logic", () => {
       expect(response.ok).toBe(false);
       expect(response.status).toBe(401);
 
-      const data = await response.json() as { error: string };
+      const data = (await response.json()) as { error: string };
       expect(data.error).toBe("Unauthorized");
     });
   });
-
 
   describe("Form Validation", () => {
     it("should validate override request data", () => {

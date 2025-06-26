@@ -175,7 +175,7 @@ describe("Movie Selections E2E Workflows", () => {
       const searchUrl = `${mockApiBase}/admin/movies?limit=20&search=${encodeURIComponent(searchQuery)}`;
 
       expect(searchUrl).toBe(
-        "http://localhost:8787/admin/movies?limit=20&search=Pianist"
+        "http://localhost:8787/admin/movies?limit=20&search=Pianist",
       );
 
       // Step 2: Get search results

@@ -15,7 +15,7 @@ import {
  * @returns 日本語タイトル (見つからない場合はundefined)
  */
 export async function scrapeJapaneseTitleFromWikipedia(
-  imdbId: string
+  imdbId: string,
 ): Promise<string | undefined> {
   try {
     // まずIMDb IDで日本語版Wikipediaを検索
@@ -90,7 +90,7 @@ function extractMovieTitle($: cheerio.CheerioAPI): string | undefined {
 
   // 方法2: infoboxから取得
   const infoboxTitle = $(
-    '.infobox th:contains("邦題"), .infobox th:contains("日本語題")'
+    '.infobox th:contains("邦題"), .infobox th:contains("日本語題")',
   )
     .next("td")
     .text()

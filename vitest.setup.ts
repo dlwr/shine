@@ -1,6 +1,6 @@
 import { webcrypto } from "node:crypto";
-import { TextEncoder, TextDecoder } from "node:util";
-import { vi } from 'vitest';
+import { TextDecoder, TextEncoder } from "node:util";
+import { vi } from "vitest";
 
 // Polyfill Web Crypto API for Node.js environment
 if (!globalThis.crypto) {
@@ -14,7 +14,8 @@ if (!globalThis.TextEncoder) {
 }
 
 if (!globalThis.TextDecoder) {
-  globalThis.TextDecoder = TextDecoder as unknown as typeof globalThis.TextDecoder;
+  globalThis.TextDecoder =
+    TextDecoder as unknown as typeof globalThis.TextDecoder;
 }
 
 // Mock Cloudflare Workers Cache API
@@ -26,7 +27,7 @@ const mockCache = {
 };
 
 // Global caches mock
-Object.defineProperty(globalThis, 'caches', {
+Object.defineProperty(globalThis, "caches", {
   value: {
     default: mockCache,
     open: vi.fn().mockResolvedValue(mockCache),
@@ -34,7 +35,7 @@ Object.defineProperty(globalThis, 'caches', {
   writable: true,
 });
 
-// Mock console methods to reduce noise in tests  
+// Mock console methods to reduce noise in tests
 globalThis.console = {
   ...console,
   log: vi.fn(),
@@ -48,9 +49,11 @@ globalThis.fetch = vi.fn();
 
 // Mock btoa/atob for base64 encoding in Node.js environment
 if (!globalThis.btoa) {
-  globalThis.btoa = (input: string) => Buffer.from(input, 'binary').toString('base64');
+  globalThis.btoa = (input: string) =>
+    Buffer.from(input, "binary").toString("base64");
 }
 
 if (!globalThis.atob) {
-  globalThis.atob = (input: string) => Buffer.from(input, 'base64').toString('binary');
+  globalThis.atob = (input: string) =>
+    Buffer.from(input, "base64").toString("binary");
 }

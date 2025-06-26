@@ -23,7 +23,7 @@ interface MovieDatabaseTranslation {
 export const adminRoutes = new Hono<{ Bindings: Environment }>();
 
 // Get all movies for admin
-adminRoutes.get("/movies", authMiddleware, async (c) => {
+adminRoutes.get("/movies", authMiddleware, async c => {
   try {
     const database = getDatabase(c.env as Environment);
     const page = Number(c.req.query("page") || 1);
@@ -55,8 +55,8 @@ adminRoutes.get("/movies", authMiddleware, async (c) => {
         and(
           eq(movies.uid, translations.resourceUid),
           eq(translations.resourceType, "movie_title"),
-          eq(translations.isDefault, 1)
-        )
+          eq(translations.isDefault, 1),
+        ),
       );
 
     // Apply search filter if provided
@@ -73,8 +73,8 @@ adminRoutes.get("/movies", authMiddleware, async (c) => {
         and(
           eq(movies.uid, translations.resourceUid),
           eq(translations.resourceType, "movie_title"),
-          eq(translations.isDefault, 1)
-        )
+          eq(translations.isDefault, 1),
+        ),
       );
 
     const countQuery = search
@@ -117,7 +117,7 @@ adminRoutes.get("/movies", authMiddleware, async (c) => {
 });
 
 // Delete movie
-adminRoutes.delete("/movies/:id", authMiddleware, async (c) => {
+adminRoutes.delete("/movies/:id", authMiddleware, async c => {
   try {
     const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("id");
@@ -158,8 +158,8 @@ adminRoutes.delete("/movies/:id", authMiddleware, async (c) => {
       .where(
         and(
           eq(translations.resourceUid, movieId),
-          eq(translations.resourceType, "movie_title")
-        )
+          eq(translations.resourceType, "movie_title"),
+        ),
       );
 
     // 6. Delete poster URLs
@@ -176,7 +176,7 @@ adminRoutes.delete("/movies/:id", authMiddleware, async (c) => {
 });
 
 // Flag article as spam
-adminRoutes.post("/article-links/:id/spam", authMiddleware, async (c) => {
+adminRoutes.post("/article-links/:id/spam", authMiddleware, async c => {
   try {
     const database = getDatabase(c.env as Environment);
     const articleId = c.req.param("id");
@@ -194,7 +194,7 @@ adminRoutes.post("/article-links/:id/spam", authMiddleware, async (c) => {
 });
 
 // Add poster URL
-adminRoutes.post("/movies/:id/posters", authMiddleware, async (c) => {
+adminRoutes.post("/movies/:id/posters", authMiddleware, async c => {
   try {
     const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("id");
@@ -273,7 +273,7 @@ adminRoutes.post("/movies/:id/posters", authMiddleware, async (c) => {
 adminRoutes.delete(
   "/movies/:movieId/posters/:posterId",
   authMiddleware,
-  async (c) => {
+  async c => {
     try {
       const database = getDatabase(c.env as Environment);
       const movieId = c.req.param("movieId");
@@ -302,11 +302,11 @@ adminRoutes.delete(
       console.error("Error deleting poster:", error);
       return c.json({ error: "Internal server error" }, 500);
     }
-  }
+  },
 );
 
 // Update movie IMDB ID
-adminRoutes.put("/movies/:id/imdb-id", authMiddleware, async (c) => {
+adminRoutes.put("/movies/:id/imdb-id", authMiddleware, async c => {
   try {
     const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("id");
@@ -339,7 +339,7 @@ adminRoutes.put("/movies/:id/imdb-id", authMiddleware, async (c) => {
       if (existingMovie.length > 0) {
         return c.json(
           { error: "IMDB ID is already used by another movie" },
-          409
+          409,
         );
       }
     }
@@ -385,13 +385,13 @@ adminRoutes.put("/movies/:id/imdb-id", authMiddleware, async (c) => {
           // Fetch and save posters
           const imagesData = await fetchTMDBMovieImages(
             imdbId,
-            c.env.TMDB_API_KEY
+            c.env.TMDB_API_KEY,
           );
           if (imagesData) {
             const savedPosters = await savePosterUrls(
               movieId,
               imagesData.images.posters,
-              c.env as Environment
+              c.env as Environment,
             );
             refreshResults.postersAdded = savedPosters;
           }
@@ -405,13 +405,14 @@ adminRoutes.put("/movies/:id/imdb-id", authMiddleware, async (c) => {
           // Get all translations from TMDb
           const translationsData = await fetchTMDBMovieTranslations(
             tmdbId,
-            c.env.TMDB_API_KEY
+            c.env.TMDB_API_KEY,
           );
 
           if (translationsData?.translations) {
             // Find English title (original language)
             const englishTranslation = translationsData.translations.find(
-              (t: MovieDatabaseTranslation) => t.iso_639_1 === "en" && t.data?.title
+              (t: MovieDatabaseTranslation) =>
+                t.iso_639_1 === "en" && t.data?.title,
             );
 
             if (englishTranslation?.data?.title) {
@@ -440,7 +441,8 @@ adminRoutes.put("/movies/:id/imdb-id", authMiddleware, async (c) => {
 
             // Find Japanese title
             const japaneseTranslation = translationsData.translations.find(
-              (t: MovieDatabaseTranslation) => t.iso_639_1 === "ja" && t.data?.title
+              (t: MovieDatabaseTranslation) =>
+                t.iso_639_1 === "ja" && t.data?.title,
             );
 
             if (japaneseTranslation?.data?.title) {
@@ -487,7 +489,7 @@ adminRoutes.put("/movies/:id/imdb-id", authMiddleware, async (c) => {
 });
 
 // Update movie TMDb ID
-adminRoutes.put("/movies/:id/tmdb-id", authMiddleware, async (c) => {
+adminRoutes.put("/movies/:id/tmdb-id", authMiddleware, async c => {
   try {
     const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("id");
@@ -524,7 +526,7 @@ adminRoutes.put("/movies/:id/tmdb-id", authMiddleware, async (c) => {
       if (existingMovie.length > 0) {
         return c.json(
           { error: "TMDb ID is already used by another movie" },
-          409
+          409,
         );
       }
     }
@@ -563,7 +565,7 @@ adminRoutes.put("/movies/:id/tmdb-id", authMiddleware, async (c) => {
 
         // Fetch and save posters using TMDb ID directly
         const imagesUrl = new URL(
-          `https://api.themoviedb.org/3/movie/${tmdbId}/images`
+          `https://api.themoviedb.org/3/movie/${tmdbId}/images`,
         );
         imagesUrl.searchParams.append("api_key", c.env.TMDB_API_KEY);
 
@@ -574,7 +576,7 @@ adminRoutes.put("/movies/:id/tmdb-id", authMiddleware, async (c) => {
             const savedPosters = await savePosterUrls(
               movieId,
               images.posters,
-              c.env as Environment
+              c.env as Environment,
             );
             refreshResults.postersAdded = savedPosters;
           }
@@ -583,24 +585,27 @@ adminRoutes.put("/movies/:id/tmdb-id", authMiddleware, async (c) => {
         // Fetch and save translations using TMDb Translations API
         let translationsAdded = 0;
         const database = getDatabase(c.env as Environment);
-        const { translations } = await import("../../../src/schema/translations");
+        const { translations } = await import(
+          "../../../src/schema/translations"
+        );
 
         // Get all translations from TMDb
         const translationsData = await fetchTMDBMovieTranslations(
           tmdbId,
-          c.env.TMDB_API_KEY
+          c.env.TMDB_API_KEY,
         );
 
         console.log(
           `Translations data for TMDb ID ${tmdbId}:`,
           translationsData?.translations?.length || 0,
-          "translations found"
+          "translations found",
         );
 
         if (translationsData?.translations) {
           // Find English title (original language)
           const englishTranslation = translationsData.translations.find(
-            (t: MovieDatabaseTranslation) => t.iso_639_1 === "en" && t.data?.title
+            (t: MovieDatabaseTranslation) =>
+              t.iso_639_1 === "en" && t.data?.title,
           );
 
           if (englishTranslation?.data?.title) {
@@ -626,13 +631,14 @@ adminRoutes.put("/movies/:id/tmdb-id", authMiddleware, async (c) => {
               });
             translationsAdded++;
             console.log(
-              `Saved English title: ${englishTranslation.data.title}`
+              `Saved English title: ${englishTranslation.data.title}`,
             );
           }
 
           // Find Japanese title
           const japaneseTranslation = translationsData.translations.find(
-            (t: MovieDatabaseTranslation) => t.iso_639_1 === "ja" && t.data?.title
+            (t: MovieDatabaseTranslation) =>
+              t.iso_639_1 === "ja" && t.data?.title,
           );
 
           if (japaneseTranslation?.data?.title) {
@@ -658,7 +664,7 @@ adminRoutes.put("/movies/:id/tmdb-id", authMiddleware, async (c) => {
               });
             translationsAdded++;
             console.log(
-              `Saved Japanese title: ${japaneseTranslation.data.title}`
+              `Saved Japanese title: ${japaneseTranslation.data.title}`,
             );
           }
         }
@@ -681,7 +687,7 @@ adminRoutes.put("/movies/:id/tmdb-id", authMiddleware, async (c) => {
 });
 
 // Get award organizations, ceremonies, and categories for nomination editing
-adminRoutes.get("/awards", authMiddleware, async (c) => {
+adminRoutes.get("/awards", authMiddleware, async c => {
   try {
     const database = getDatabase(c.env as Environment);
 
@@ -707,7 +713,7 @@ adminRoutes.get("/awards", authMiddleware, async (c) => {
       .from(awardCeremonies)
       .innerJoin(
         awardOrganizations,
-        eq(awardCeremonies.organizationUid, awardOrganizations.uid)
+        eq(awardCeremonies.organizationUid, awardOrganizations.uid),
       )
       .orderBy(awardOrganizations.name, awardCeremonies.year);
 
@@ -722,7 +728,7 @@ adminRoutes.get("/awards", authMiddleware, async (c) => {
       .from(awardCategories)
       .innerJoin(
         awardOrganizations,
-        eq(awardCategories.organizationUid, awardOrganizations.uid)
+        eq(awardCategories.organizationUid, awardOrganizations.uid),
       )
       .orderBy(awardOrganizations.name, awardCategories.name);
 
@@ -738,7 +744,7 @@ adminRoutes.get("/awards", authMiddleware, async (c) => {
 });
 
 // Add nomination
-adminRoutes.post("/movies/:movieId/nominations", authMiddleware, async (c) => {
+adminRoutes.post("/movies/:movieId/nominations", authMiddleware, async c => {
   try {
     const database = getDatabase(c.env as Environment);
     const movieId = c.req.param("movieId");
@@ -795,8 +801,8 @@ adminRoutes.post("/movies/:movieId/nominations", authMiddleware, async (c) => {
         and(
           eq(nominations.movieUid, movieId),
           eq(nominations.ceremonyUid, ceremonyUid),
-          eq(nominations.categoryUid, categoryUid)
-        )
+          eq(nominations.categoryUid, categoryUid),
+        ),
       )
       .limit(1);
 
@@ -806,7 +812,7 @@ adminRoutes.post("/movies/:movieId/nominations", authMiddleware, async (c) => {
           error:
             "Nomination already exists for this movie, ceremony, and category",
         },
-        409
+        409,
       );
     }
 
@@ -830,7 +836,7 @@ adminRoutes.post("/movies/:movieId/nominations", authMiddleware, async (c) => {
 });
 
 // Update nomination
-adminRoutes.put("/nominations/:nominationId", authMiddleware, async (c) => {
+adminRoutes.put("/nominations/:nominationId", authMiddleware, async c => {
   try {
     const database = getDatabase(c.env as Environment);
     const nominationId = c.req.param("nominationId");
@@ -865,7 +871,7 @@ adminRoutes.put("/nominations/:nominationId", authMiddleware, async (c) => {
 });
 
 // Delete nomination
-adminRoutes.delete("/nominations/:nominationId", authMiddleware, async (c) => {
+adminRoutes.delete("/nominations/:nominationId", authMiddleware, async c => {
   try {
     const database = getDatabase(c.env as Environment);
     const nominationId = c.req.param("nominationId");

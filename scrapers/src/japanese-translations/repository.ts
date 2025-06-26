@@ -1,9 +1,9 @@
 /**
  * 日本語翻訳データの取得と保存を行うリポジトリモジュール
  */
-import { movies, translations } from "../../../src/schema/index";
 import { and, eq } from "drizzle-orm";
 import { type getDatabase } from "../../../src/index";
+import { movies, translations } from "../../../src/schema/index";
 
 /**
  * 日本語翻訳用の型定義
@@ -35,9 +35,8 @@ export interface Translation {
  */
 export async function getMoviesWithoutJapaneseTranslation(
   database: ReturnType<typeof getDatabase>,
-  limit = 20
+  limit = 20,
 ): Promise<Movie[]> {
-
   // 英語タイトルを取得するために、まず英語の翻訳データを含む映画を取得
   const moviesWithEnglishTitlesQuery = database
     .select({
@@ -52,14 +51,15 @@ export async function getMoviesWithoutJapaneseTranslation(
       and(
         eq(translations.resourceType, "movie_title"),
         eq(translations.resourceUid, movies.uid),
-        eq(translations.languageCode, "en")
-      )
+        eq(translations.languageCode, "en"),
+      ),
     );
 
   // limitが0の場合は全件取得、それ以外は指定された件数の5倍取得（後でフィルタリング）
-  const moviesWithEnglishTitles = limit === 0 
-    ? await moviesWithEnglishTitlesQuery
-    : await moviesWithEnglishTitlesQuery.limit(limit * 5);
+  const moviesWithEnglishTitles =
+    limit === 0
+      ? await moviesWithEnglishTitlesQuery
+      : await moviesWithEnglishTitlesQuery.limit(limit * 5);
 
   // 映画UIDと英語タイトルのマッピングを作成
   const movieData = new Map();
@@ -81,24 +81,25 @@ export async function getMoviesWithoutJapaneseTranslation(
     .where(
       and(
         eq(translations.resourceType, "movie_title"),
-        eq(translations.languageCode, "ja")
-      )
+        eq(translations.languageCode, "ja"),
+      ),
     );
 
   // 日本語翻訳が存在する映画UIDのセットを作成
   const japaneseMovieUids = new Set(
-    moviesWithJapaneseTitles.map((movie) => movie.movieUid)
+    moviesWithJapaneseTitles.map(movie => movie.movieUid),
   );
 
   // 日本語翻訳が存在しない映画のみをフィルタリング
   const moviesWithoutJapanese = [...movieData.values()].filter(
-    (movie: Movie) => !japaneseMovieUids.has(movie.uid)
+    (movie: Movie) => !japaneseMovieUids.has(movie.uid),
   );
 
   // 英語タイトルを取得
   const result = [];
-  const moviesToProcess = limit === 0 ? moviesWithoutJapanese : moviesWithoutJapanese.slice(0, limit);
-  
+  const moviesToProcess =
+    limit === 0 ? moviesWithoutJapanese : moviesWithoutJapanese.slice(0, limit);
+
   for (const movie of moviesToProcess) {
     const englishTitle = await getMovieTitle(database, movie.uid, "en");
     if (englishTitle) {
@@ -122,7 +123,7 @@ export async function getMoviesWithoutJapaneseTranslation(
 async function getMovieTitle(
   database: ReturnType<typeof getDatabase>,
   movieUid: string,
-  languageCode: string
+  languageCode: string,
 ): Promise<string | undefined> {
   const result = await database
     .select({
@@ -133,8 +134,8 @@ async function getMovieTitle(
       and(
         eq(translations.resourceType, "movie_title"),
         eq(translations.resourceUid, movieUid),
-        eq(translations.languageCode, languageCode)
-      )
+        eq(translations.languageCode, languageCode),
+      ),
     )
     .limit(1);
 
@@ -149,7 +150,7 @@ async function getMovieTitle(
  */
 export async function saveJapaneseTranslation(
   database: ReturnType<typeof getDatabase>,
-  translation: Translation
+  translation: Translation,
 ): Promise<unknown> {
   // 既存の翻訳を確認
   const existingTranslation = await database
@@ -159,8 +160,8 @@ export async function saveJapaneseTranslation(
       and(
         eq(translations.resourceType, translation.resourceType),
         eq(translations.resourceUid, translation.resourceUid),
-        eq(translations.languageCode, translation.languageCode)
-      )
+        eq(translations.languageCode, translation.languageCode),
+      ),
     )
     .limit(1);
 
@@ -190,7 +191,7 @@ export async function saveJapaneseTranslation(
           and(
             eq(translations.resourceType, translation.resourceType),
             eq(translations.resourceUid, translation.resourceUid),
-            eq(translations.languageCode, translation.languageCode)
-          )
+            eq(translations.languageCode, translation.languageCode),
+          ),
         );
 }

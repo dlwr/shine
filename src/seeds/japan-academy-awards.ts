@@ -28,7 +28,9 @@ export async function seedJapanAcademyAwards(environment: Environment) {
       .where(eq(awardOrganizations.name, "Japan Academy Awards"));
 
     if (!organization) {
-      throw new Error("Failed to insert or find Japan Academy Awards organization");
+      throw new Error(
+        "Failed to insert or find Japan Academy Awards organization",
+      );
     }
   }
 
@@ -88,5 +90,7 @@ export async function seedJapanAcademyAwards(environment: Environment) {
     }
   }
 
-  console.log("Japan Academy Awards organization and categories seeded successfully");
+  console.log(
+    "Japan Academy Awards organization and categories seeded successfully",
+  );
 }

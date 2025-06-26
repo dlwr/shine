@@ -16,7 +16,7 @@ function simpleHash(input: string): number {
 
 function getSelectionDate(
   date: Date,
-  type: "daily" | "weekly" | "monthly"
+  type: "daily" | "weekly" | "monthly",
 ): string {
   const year = date.getFullYear();
   const month = date.getMonth() + 1;

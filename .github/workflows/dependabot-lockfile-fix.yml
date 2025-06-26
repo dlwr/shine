@@ -49,7 +49,7 @@ jobs:
         run: |
           # Check if package.json and lockfile are in sync
           echo "Checking lockfile consistency..."
-          
+
           # Always assume Dependabot PRs need lockfile update
           # since they typically only update package.json
           echo "needs_update=true" >> $GITHUB_OUTPUT
@@ -60,13 +60,13 @@ jobs:
         run: |
           echo "Updating lockfile..."
           pnpm install --no-frozen-lockfile
-          
+
       - name: Commit lockfile update
         if: steps.lockfile-check.outputs.needs_update == 'true'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
+
           if git diff --quiet pnpm-lock.yaml; then
             echo "No lockfile changes to commit"
           else

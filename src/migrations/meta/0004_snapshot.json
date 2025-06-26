@@ -98,17 +98,12 @@
       "indexes": {
         "award_categories_name_unique": {
           "name": "award_categories_name_unique",
-          "columns": [
-            "name"
-          ],
+          "columns": ["name"],
           "isUnique": true
         },
         "award_categories_organizationUid_shortName_unique": {
           "name": "award_categories_organizationUid_shortName_unique",
-          "columns": [
-            "organization_uid",
-            "short_name"
-          ],
+          "columns": ["organization_uid", "short_name"],
           "isUnique": true
         }
       },
@@ -117,12 +112,8 @@
           "name": "award_categories_organization_uid_award_organizations_uid_fk",
           "tableFrom": "award_categories",
           "tableTo": "award_organizations",
-          "columnsFrom": [
-            "organization_uid"
-          ],
-          "columnsTo": [
-            "uid"
-          ],
+          "columnsFrom": ["organization_uid"],
+          "columnsTo": ["uid"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -210,18 +201,12 @@
       "indexes": {
         "award_ceremonies_organizationUid_year_unique": {
           "name": "award_ceremonies_organizationUid_year_unique",
-          "columns": [
-            "organization_uid",
-            "year"
-          ],
+          "columns": ["organization_uid", "year"],
           "isUnique": true
         },
         "award_ceremonies_organizationUid_ceremonyNumber_unique": {
           "name": "award_ceremonies_organizationUid_ceremonyNumber_unique",
-          "columns": [
-            "organization_uid",
-            "ceremony_number"
-          ],
+          "columns": ["organization_uid", "ceremony_number"],
           "isUnique": true
         }
       },
@@ -230,12 +215,8 @@
           "name": "award_ceremonies_organization_uid_award_organizations_uid_fk",
           "tableFrom": "award_ceremonies",
           "tableTo": "award_organizations",
-          "columnsFrom": [
-            "organization_uid"
-          ],
-          "columnsTo": [
-            "uid"
-          ],
+          "columnsFrom": ["organization_uid"],
+          "columnsTo": ["uid"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -316,16 +297,12 @@
       "indexes": {
         "award_organizations_name_unique": {
           "name": "award_organizations_name_unique",
-          "columns": [
-            "name"
-          ],
+          "columns": ["name"],
           "isUnique": true
         },
         "award_organizations_shortName_unique": {
           "name": "award_organizations_shortName_unique",
-          "columns": [
-            "short_name"
-          ],
+          "columns": ["short_name"],
           "isUnique": true
         }
       },
@@ -385,31 +362,22 @@
       "indexes": {
         "movie_selections_selection_type_idx": {
           "name": "movie_selections_selection_type_idx",
-          "columns": [
-            "selection_type"
-          ],
+          "columns": ["selection_type"],
           "isUnique": false
         },
         "movie_selections_selection_date_idx": {
           "name": "movie_selections_selection_date_idx",
-          "columns": [
-            "selection_date"
-          ],
+          "columns": ["selection_date"],
           "isUnique": false
         },
         "movie_selections_movie_id_idx": {
           "name": "movie_selections_movie_id_idx",
-          "columns": [
-            "movie_id"
-          ],
+          "columns": ["movie_id"],
           "isUnique": false
         },
         "movie_selections_type_date_idx": {
           "name": "movie_selections_type_date_idx",
-          "columns": [
-            "selection_type",
-            "selection_date"
-          ],
+          "columns": ["selection_type", "selection_date"],
           "isUnique": false
         }
       },
@@ -418,12 +386,8 @@
           "name": "movie_selections_movie_id_movies_uid_fk",
           "tableFrom": "movie_selections",
           "tableTo": "movies",
-          "columnsFrom": [
-            "movie_id"
-          ],
-          "columnsTo": [
-            "uid"
-          ],
+          "columnsFrom": ["movie_id"],
+          "columnsTo": ["uid"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -491,16 +455,12 @@
       "indexes": {
         "movies_imdbId_unique": {
           "name": "movies_imdbId_unique",
-          "columns": [
-            "imdb_id"
-          ],
+          "columns": ["imdb_id"],
           "isUnique": true
         },
         "movies_tmdbId_unique": {
           "name": "movies_tmdbId_unique",
-          "columns": [
-            "tmdb_id"
-          ],
+          "columns": ["tmdb_id"],
           "isUnique": true
         }
       },
@@ -575,11 +535,7 @@
       "indexes": {
         "nominations_movieUid_ceremonyUid_categoryUid_unique": {
           "name": "nominations_movieUid_ceremonyUid_categoryUid_unique",
-          "columns": [
-            "movie_uid",
-            "ceremony_uid",
-            "category_uid"
-          ],
+          "columns": ["movie_uid", "ceremony_uid", "category_uid"],
           "isUnique": true
         }
       },
@@ -588,12 +544,8 @@
           "name": "nominations_movie_uid_movies_uid_fk",
           "tableFrom": "nominations",
           "tableTo": "movies",
-          "columnsFrom": [
-            "movie_uid"
-          ],
-          "columnsTo": [
-            "uid"
-          ],
+          "columnsFrom": ["movie_uid"],
+          "columnsTo": ["uid"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -601,12 +553,8 @@
           "name": "nominations_ceremony_uid_award_ceremonies_uid_fk",
           "tableFrom": "nominations",
           "tableTo": "award_ceremonies",
-          "columnsFrom": [
-            "ceremony_uid"
-          ],
-          "columnsTo": [
-            "uid"
-          ],
+          "columnsFrom": ["ceremony_uid"],
+          "columnsTo": ["uid"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -614,12 +562,8 @@
           "name": "nominations_category_uid_award_categories_uid_fk",
           "tableFrom": "nominations",
           "tableTo": "award_categories",
-          "columnsFrom": [
-            "category_uid"
-          ],
-          "columnsTo": [
-            "uid"
-          ],
+          "columnsFrom": ["category_uid"],
+          "columnsTo": ["uid"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -715,17 +659,12 @@
       "indexes": {
         "poster_urls_movie_idx": {
           "name": "poster_urls_movie_idx",
-          "columns": [
-            "movie_uid"
-          ],
+          "columns": ["movie_uid"],
           "isUnique": false
         },
         "poster_urls_primary_idx": {
           "name": "poster_urls_primary_idx",
-          "columns": [
-            "movie_uid",
-            "is_primary"
-          ],
+          "columns": ["movie_uid", "is_primary"],
           "isUnique": false
         },
         "poster_urls_unique_idx": {
@@ -745,12 +684,8 @@
           "name": "poster_urls_movie_uid_movies_uid_fk",
           "tableFrom": "poster_urls",
           "tableTo": "movies",
-          "columnsFrom": [
-            "movie_uid"
-          ],
-          "columnsTo": [
-            "uid"
-          ],
+          "columnsFrom": ["movie_uid"],
+          "columnsTo": ["uid"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -839,11 +774,7 @@
       "indexes": {
         "reference_urls_movieUid_sourceType_languageCode_unique": {
           "name": "reference_urls_movieUid_sourceType_languageCode_unique",
-          "columns": [
-            "movie_uid",
-            "source_type",
-            "language_code"
-          ],
+          "columns": ["movie_uid", "source_type", "language_code"],
           "isUnique": true
         }
       },
@@ -852,12 +783,8 @@
           "name": "reference_urls_movie_uid_movies_uid_fk",
           "tableFrom": "reference_urls",
           "tableTo": "movies",
-          "columnsFrom": [
-            "movie_uid"
-          ],
-          "columnsTo": [
-            "uid"
-          ],
+          "columnsFrom": ["movie_uid"],
+          "columnsTo": ["uid"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -932,11 +859,7 @@
       "indexes": {
         "translations_resourceType_resourceUid_languageCode_unique": {
           "name": "translations_resourceType_resourceUid_languageCode_unique",
-          "columns": [
-            "resource_type",
-            "resource_uid",
-            "language_code"
-          ],
+          "columns": ["resource_type", "resource_uid", "language_code"],
           "isUnique": true
         }
       },

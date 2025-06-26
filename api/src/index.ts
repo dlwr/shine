@@ -1,8 +1,11 @@
 import type { Environment } from "db";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import {
+  globalErrorHandler,
+  notFoundHandler,
+} from "./middleware/error-handler";
 import { securityHeaders } from "./middleware/security";
-import { globalErrorHandler, notFoundHandler } from "./middleware/error-handler";
 import { adminRoutes } from "./routes/admin";
 import { authRoutes } from "./routes/auth";
 import { documentationRoutes } from "./routes/documentation";
@@ -27,12 +30,14 @@ app.use(
       "http://localhost:5173",
     ],
     credentials: true,
-  })
+  }),
 );
 
 // Apply security headers to all routes except documentation
 app.use("*", async (c, next) => {
-  return c.req.path.startsWith("/docs") ? await next() : await securityHeaders(c, next);
+  return c.req.path.startsWith("/docs")
+    ? await next()
+    : await securityHeaders(c, next);
 });
 app.use("*", globalErrorHandler);
 
