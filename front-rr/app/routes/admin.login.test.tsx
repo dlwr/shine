@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/no-null */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -125,7 +126,27 @@ describe('AdminLogin Component', () => {
       const actionData = undefined;
 
       render(
-        <AdminLogin actionData={actionData as Route.ActionArgs['data']} />
+        <AdminLogin
+          actionData={actionData}
+          loaderData={undefined}
+          params={{}}
+          matches={[
+            {
+              id: 'root',
+              params: {},
+              pathname: '/',
+              data: undefined,
+              handle: undefined
+            },
+            {
+              id: 'routes/admin.login',
+              params: {},
+              pathname: '/admin/login',
+              data: undefined,
+              handle: undefined
+            }
+          ]}
+        />
       );
 
       expect(screen.getByText('管理者ログイン')).toBeInTheDocument();
@@ -141,7 +162,27 @@ describe('AdminLogin Component', () => {
       };
 
       render(
-        <AdminLogin actionData={actionData as Route.ActionArgs['data']} />
+        <AdminLogin
+          actionData={actionData}
+          loaderData={undefined}
+          params={{}}
+          matches={[
+            {
+              id: 'root',
+              params: {},
+              pathname: '/',
+              data: undefined,
+              handle: undefined
+            },
+            {
+              id: 'routes/admin.login',
+              params: {},
+              pathname: '/admin/login',
+              data: undefined,
+              handle: undefined
+            }
+          ]}
+        />
       );
 
       expect(
@@ -163,7 +204,27 @@ describe('AdminLogin Component', () => {
       });
 
       render(
-        <AdminLogin actionData={actionData as Route.ActionArgs['data']} />
+        <AdminLogin
+          actionData={actionData}
+          loaderData={undefined}
+          params={{}}
+          matches={[
+            {
+              id: 'root',
+              params: {},
+              pathname: '/',
+              data: undefined,
+              handle: undefined
+            },
+            {
+              id: 'routes/admin.login',
+              params: {},
+              pathname: '/admin/login',
+              data: undefined,
+              handle: undefined
+            }
+          ]}
+        />
       );
 
       await waitFor(() => {
@@ -186,7 +247,27 @@ describe('AdminLogin Component', () => {
 
       const actionData = undefined;
       render(
-        <AdminLogin actionData={actionData as Route.ActionArgs['data']} />
+        <AdminLogin
+          actionData={actionData}
+          loaderData={undefined}
+          params={{}}
+          matches={[
+            {
+              id: 'root',
+              params: {},
+              pathname: '/',
+              data: undefined,
+              handle: undefined
+            },
+            {
+              id: 'routes/admin.login',
+              params: {},
+              pathname: '/admin/login',
+              data: undefined,
+              handle: undefined
+            }
+          ]}
+        />
       );
 
       expect(mockLocation.href).toBe('/admin/movies');
@@ -196,7 +277,27 @@ describe('AdminLogin Component', () => {
       const actionData = undefined;
 
       render(
-        <AdminLogin actionData={actionData as Route.ActionArgs['data']} />
+        <AdminLogin
+          actionData={actionData}
+          loaderData={undefined}
+          params={{}}
+          matches={[
+            {
+              id: 'root',
+              params: {},
+              pathname: '/',
+              data: undefined,
+              handle: undefined
+            },
+            {
+              id: 'routes/admin.login',
+              params: {},
+              pathname: '/admin/login',
+              data: undefined,
+              handle: undefined
+            }
+          ]}
+        />
       );
 
       const passwordInput = screen.getByLabelText('パスワード');
@@ -212,7 +313,27 @@ describe('AdminLogin Component', () => {
       const actionData = undefined;
 
       render(
-        <AdminLogin actionData={actionData as Route.ActionArgs['data']} />
+        <AdminLogin
+          actionData={actionData}
+          loaderData={undefined}
+          params={{}}
+          matches={[
+            {
+              id: 'root',
+              params: {},
+              pathname: '/',
+              data: undefined,
+              handle: undefined
+            },
+            {
+              id: 'routes/admin.login',
+              params: {},
+              pathname: '/admin/login',
+              data: undefined,
+              handle: undefined
+            }
+          ]}
+        />
       );
 
       const homeLink = screen.getByRole('link', { name: /ホームに戻る/ });

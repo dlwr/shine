@@ -1,8 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import MovieDetail, { loader, meta } from './movies.$id';
-import type { Route } from './+types/movies.$id';
 
 // Cloudflare環境のモック
 const createMockContext = (apiUrl = 'http://localhost:8787') => ({
@@ -97,8 +97,24 @@ describe('MovieDetail Component', () => {
       const parameters = { id: 'movie-123' };
       const result = await loader({
         context,
-        params: parameters
-      } as Route.LoaderArgs);
+        params: parameters,
+        matches: [
+          {
+            id: 'root',
+            params: {},
+            pathname: '/',
+            data: undefined,
+            handle: undefined
+          },
+          {
+            id: 'routes/movies.$id',
+            params: { id: 'movie-123' },
+            pathname: '/movies/movie-123',
+            data: undefined,
+            handle: undefined
+          }
+        ]
+      } as any);
 
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:8787/movies/movie-123'
@@ -119,8 +135,24 @@ describe('MovieDetail Component', () => {
       const parameters = { id: 'non-existent' };
       const result = await loader({
         context,
-        params: parameters
-      } as Route.LoaderArgs);
+        params: parameters,
+        matches: [
+          {
+            id: 'root',
+            params: {},
+            pathname: '/',
+            data: undefined,
+            handle: undefined
+          },
+          {
+            id: 'routes/movies.$id',
+            params: { id: 'movie-123' },
+            pathname: '/movies/movie-123',
+            data: undefined,
+            handle: undefined
+          }
+        ]
+      } as any);
 
       expect(result).toEqual({
         error: '映画が見つかりませんでした',
@@ -136,8 +168,24 @@ describe('MovieDetail Component', () => {
       const parameters = { id: 'movie-123' };
       const result = await loader({
         context,
-        params: parameters
-      } as Route.LoaderArgs);
+        params: parameters,
+        matches: [
+          {
+            id: 'root',
+            params: {},
+            pathname: '/',
+            data: undefined,
+            handle: undefined
+          },
+          {
+            id: 'routes/movies.$id',
+            params: { id: 'movie-123' },
+            pathname: '/movies/movie-123',
+            data: undefined,
+            handle: undefined
+          }
+        ]
+      } as any);
 
       expect(result).toEqual({
         error: 'APIへの接続に失敗しました',
@@ -152,7 +200,33 @@ describe('MovieDetail Component', () => {
         movieDetail: mockMovieDetail
       };
 
-      const result = meta({ data: loaderData } as Route.MetaArgs);
+      const result = meta({
+        data: loaderData,
+        location: {
+          pathname: '/movies/movie-123',
+          search: '',
+          hash: '',
+          state: undefined,
+          key: ''
+        },
+        params: { id: 'movie-123' },
+        matches: [
+          {
+            id: 'root',
+            params: {},
+            pathname: '/',
+            data: undefined,
+            handle: undefined
+          },
+          {
+            id: 'routes/movies.$id',
+            params: { id: 'movie-123' },
+            pathname: '/movies/movie-123',
+            data: undefined,
+            handle: undefined
+          }
+        ]
+      } as any);
 
       expect(result).toEqual([
         { title: 'パルム・ドール受賞作品 (2023) | SHINE' },
@@ -170,7 +244,33 @@ describe('MovieDetail Component', () => {
         status: 404
       };
 
-      const result = meta({ data: loaderData } as Route.MetaArgs);
+      const result = meta({
+        data: loaderData,
+        location: {
+          pathname: '/movies/movie-123',
+          search: '',
+          hash: '',
+          state: undefined,
+          key: ''
+        },
+        params: { id: 'movie-123' },
+        matches: [
+          {
+            id: 'root',
+            params: {},
+            pathname: '/',
+            data: undefined,
+            handle: undefined
+          },
+          {
+            id: 'routes/movies.$id',
+            params: { id: 'movie-123' },
+            pathname: '/movies/movie-123',
+            data: undefined,
+            handle: undefined
+          }
+        ]
+      } as any);
 
       expect(result).toEqual([
         { title: '映画が見つかりません | SHINE' },
@@ -190,7 +290,27 @@ describe('MovieDetail Component', () => {
 
       render(
         <MovieDetail
-          loaderData={loaderData as Route.ComponentProps['loaderData']}
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{ id: 'movie-123' }}
+          matches={
+            [
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/movies.$id',
+                params: { id: 'movie-123' },
+                pathname: '/movies/movie-123',
+                data: loaderData,
+                handle: undefined
+              }
+            ] as any
+          }
         />
       );
 
@@ -218,7 +338,27 @@ describe('MovieDetail Component', () => {
 
       render(
         <MovieDetail
-          loaderData={loaderData as Route.ComponentProps['loaderData']}
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{ id: 'movie-123' }}
+          matches={
+            [
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/movies.$id',
+                params: { id: 'movie-123' },
+                pathname: '/movies/movie-123',
+                data: loaderData,
+                handle: undefined
+              }
+            ] as any
+          }
         />
       );
 
@@ -241,7 +381,27 @@ describe('MovieDetail Component', () => {
 
       render(
         <MovieDetail
-          loaderData={loaderData as Route.ComponentProps['loaderData']}
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{ id: 'movie-123' }}
+          matches={
+            [
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/movies.$id',
+                params: { id: 'movie-123' },
+                pathname: '/movies/movie-123',
+                data: loaderData,
+                handle: undefined
+              }
+            ] as any
+          }
         />
       );
 
@@ -259,7 +419,27 @@ describe('MovieDetail Component', () => {
 
       render(
         <MovieDetail
-          loaderData={loaderData as Route.ComponentProps['loaderData']}
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{ id: 'movie-123' }}
+          matches={
+            [
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/movies.$id',
+                params: { id: 'movie-123' },
+                pathname: '/movies/movie-123',
+                data: loaderData,
+                handle: undefined
+              }
+            ] as any
+          }
         />
       );
 
@@ -274,7 +454,27 @@ describe('MovieDetail Component', () => {
 
       render(
         <MovieDetail
-          loaderData={loaderData as Route.ComponentProps['loaderData']}
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{ id: 'movie-123' }}
+          matches={
+            [
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/movies.$id',
+                params: { id: 'movie-123' },
+                pathname: '/movies/movie-123',
+                data: loaderData,
+                handle: undefined
+              }
+            ] as any
+          }
         />
       );
 

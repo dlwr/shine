@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Route } from './+types/home';
 
-export function meta(): Route.MetaDescriptor[] {
+export function meta(): Route.MetaDescriptors {
   return [
     { title: 'SHINE - 世界最高の映画データベース' },
     {
@@ -42,7 +43,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     );
   }
 
-  const { movieSelections } = loaderData;
+  const { movieSelections } = loaderData as { movieSelections: any };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -58,7 +59,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
               今日の映画
             </h2>
-            {movieSelections.daily && (
+            {movieSelections?.daily && (
               <MovieCard movie={movieSelections.daily} />
             )}
           </section>
@@ -68,7 +69,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
               今週の映画
             </h2>
-            {movieSelections.weekly && (
+            {movieSelections?.weekly && (
               <MovieCard movie={movieSelections.weekly} />
             )}
           </section>
@@ -78,7 +79,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
               今月の映画
             </h2>
-            {movieSelections.monthly && (
+            {movieSelections?.monthly && (
               <MovieCard movie={movieSelections.monthly} />
             )}
           </section>
@@ -109,8 +110,7 @@ interface MovieData {
 }
 
 function MovieCard({ movie }: { movie: MovieData }) {
-  const winningNominations =
-    movie.nominations?.filter((n) => n.isWinner) || [];
+  const winningNominations = movie.nominations?.filter((n) => n.isWinner) || [];
 
   return (
     <div className="space-y-4">
@@ -125,13 +125,13 @@ function MovieCard({ movie }: { movie: MovieData }) {
             className="w-full h-64 object-cover rounded-lg"
           />
         )}
-        <h3 className="text-lg font-medium text-gray-900 mt-2">{movie.title}</h3>
+        <h3 className="text-lg font-medium text-gray-900 mt-2">
+          {movie.title}
+        </h3>
       </a>
 
       <div className="space-y-1">
-        <p className="text-sm text-gray-600">
-          {movie.year}年
-        </p>
+        <p className="text-sm text-gray-600">{movie.year}年</p>
 
         {winningNominations.length > 0 && (
           <div className="space-y-1">
@@ -140,7 +140,8 @@ function MovieCard({ movie }: { movie: MovieData }) {
                 key={index}
                 className="inline-block bg-yellow-400 text-yellow-900 text-xs px-2 py-1 rounded-full"
               >
-                🏆 {nomination.organization.name} {nomination.ceremony.year} 受賞
+                🏆 {nomination.organization.name} {nomination.ceremony.year}{' '}
+                受賞
               </span>
             ))}
           </div>

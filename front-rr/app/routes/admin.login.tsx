@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import type { Route } from './+types/admin.login';
 
-export function meta(): Route.MetaDescriptor[] {
+export function meta(): Route.MetaDescriptors {
   return [
     { title: '管理者ログイン | SHINE' },
     { name: 'description', content: 'SHINE管理画面へのログイン' }
@@ -29,7 +29,7 @@ export async function action({ context, request }: Route.ActionArgs) {
       return { error: 'ログインに失敗しました' };
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as { token: string };
     return { success: true, token: data.token };
   } catch {
     return { error: 'ログインに失敗しました' };
@@ -49,7 +49,12 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
 
   // ログイン成功時の処理
   useEffect(() => {
-    if (actionData?.success && actionData?.token && typeof globalThis !== 'undefined' && globalThis.window) {
+    if (
+      actionData?.success &&
+      actionData?.token &&
+      typeof globalThis !== 'undefined' &&
+      globalThis.window
+    ) {
       globalThis.localStorage.setItem('adminToken', actionData.token);
       globalThis.location.href = '/admin/movies';
     }

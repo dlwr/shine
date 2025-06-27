@@ -28,7 +28,7 @@ interface PaginationData {
   totalPages: number;
 }
 
-export function meta(): Route.MetaDescriptor[] {
+export function meta(): Route.MetaDescriptors {
   return [
     { title: '映画管理 | SHINE Admin' },
     { name: 'description', content: '映画データベースの管理画面' }
@@ -40,7 +40,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   let token: string | undefined;
 
   if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
-    token = globalThis.localStorage.getItem('adminToken');
+    token = globalThis.localStorage.getItem('adminToken') || undefined;
   }
 
   if (!token) {
@@ -100,7 +100,7 @@ const handleDelete = (movieUid: string) => {
 };
 
 export default function AdminMovies({ loaderData }: Route.ComponentProps) {
-  const { movies, pagination } = loaderData as {
+  const { movies, pagination } = loaderData as unknown as {
     movies: AdminMovieData[];
     pagination: PaginationData;
   };

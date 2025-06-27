@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Search, { loader, meta } from './search';
-import type { Route } from './+types/search';
 
 // fetchのモック
 globalThis.fetch = vi.fn();
@@ -78,9 +78,29 @@ describe('Search Component', () => {
 
       const context = createMockContext();
       const url = new URL('http://localhost:3000/search?q=test');
-      const request = { url } as Request;
+      const request = { url } as unknown as Request;
 
-      const result = await loader({ context, request } as Route.LoaderArgs);
+      const result = await loader({
+        context,
+        request,
+        params: {},
+        matches: [
+          {
+            id: 'root',
+            params: {},
+            pathname: '/',
+            data: undefined,
+            handle: undefined
+          },
+          {
+            id: 'routes/search',
+            params: {},
+            pathname: '/search',
+            data: undefined,
+            handle: undefined
+          }
+        ]
+      } as any);
 
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:8787/movies/search?q=test&page=1&limit=20'
@@ -94,9 +114,29 @@ describe('Search Component', () => {
     it('検索クエリなしの場合は空の結果を返す', async () => {
       const context = createMockContext();
       const url = new URL('http://localhost:3000/search');
-      const request = { url } as Request;
+      const request = { url } as unknown as Request;
 
-      const result = await loader({ context, request } as Route.LoaderArgs);
+      const result = await loader({
+        context,
+        request,
+        params: {},
+        matches: [
+          {
+            id: 'root',
+            params: {},
+            pathname: '/',
+            data: undefined,
+            handle: undefined
+          },
+          {
+            id: 'routes/search',
+            params: {},
+            pathname: '/search',
+            data: undefined,
+            handle: undefined
+          }
+        ]
+      } as any);
 
       expect(result).toEqual({
         searchQuery: '',
@@ -110,9 +150,29 @@ describe('Search Component', () => {
 
       const context = createMockContext();
       const url = new URL('http://localhost:3000/search?q=test');
-      const request = { url } as Request;
+      const request = { url } as unknown as Request;
 
-      const result = await loader({ context, request } as Route.LoaderArgs);
+      const result = await loader({
+        context,
+        request,
+        params: {},
+        matches: [
+          {
+            id: 'root',
+            params: {},
+            pathname: '/',
+            data: undefined,
+            handle: undefined
+          },
+          {
+            id: 'routes/search',
+            params: {},
+            pathname: '/search',
+            data: undefined,
+            handle: undefined
+          }
+        ]
+      } as any);
 
       expect(result).toEqual({
         searchQuery: 'test',
@@ -128,7 +188,33 @@ describe('Search Component', () => {
         searchResults: mockSearchResults
       };
 
-      const result = meta({ data: loaderData } as Route.MetaArgs);
+      const result = meta({
+        data: loaderData,
+        location: {
+          pathname: '/search',
+          search: '?q=test%20movie',
+          hash: '',
+          state: undefined,
+          key: ''
+        },
+        params: {},
+        matches: [
+          {
+            id: 'root',
+            params: {},
+            pathname: '/',
+            data: undefined,
+            handle: undefined
+          },
+          {
+            id: 'routes/search',
+            params: {},
+            pathname: '/search',
+            data: undefined,
+            handle: undefined
+          }
+        ]
+      } as any);
 
       expect(result).toEqual([
         { title: '「test movie」の検索結果 | SHINE' },
@@ -145,7 +231,33 @@ describe('Search Component', () => {
         searchResults: undefined
       };
 
-      const result = meta({ data: loaderData } as Route.MetaArgs);
+      const result = meta({
+        data: loaderData,
+        location: {
+          pathname: '/search',
+          search: '?q=test%20movie',
+          hash: '',
+          state: undefined,
+          key: ''
+        },
+        params: {},
+        matches: [
+          {
+            id: 'root',
+            params: {},
+            pathname: '/',
+            data: undefined,
+            handle: undefined
+          },
+          {
+            id: 'routes/search',
+            params: {},
+            pathname: '/search',
+            data: undefined,
+            handle: undefined
+          }
+        ]
+      } as any);
 
       expect(result).toEqual([
         { title: '映画検索 | SHINE' },
@@ -162,7 +274,29 @@ describe('Search Component', () => {
       };
 
       render(
-        <Search loaderData={loaderData as Route.ComponentProps['loaderData']} />
+        <Search
+          loaderData={loaderData as any}
+          actionData={undefined as any}
+          params={{}}
+          matches={
+            [
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/search',
+                params: {},
+                pathname: '/search',
+                data: loaderData,
+                handle: undefined
+              }
+            ] as any
+          }
+        />
       );
 
       expect(screen.getByText('映画検索')).toBeInTheDocument();
@@ -179,7 +313,29 @@ describe('Search Component', () => {
       };
 
       render(
-        <Search loaderData={loaderData as Route.ComponentProps['loaderData']} />
+        <Search
+          loaderData={loaderData as any}
+          actionData={undefined as any}
+          params={{}}
+          matches={
+            [
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/search',
+                params: {},
+                pathname: '/search',
+                data: loaderData,
+                handle: undefined
+              }
+            ] as any
+          }
+        />
       );
 
       expect(screen.getByText('「test」の検索結果')).toBeInTheDocument();
@@ -198,7 +354,29 @@ describe('Search Component', () => {
       };
 
       render(
-        <Search loaderData={loaderData as Route.ComponentProps['loaderData']} />
+        <Search
+          loaderData={loaderData as any}
+          actionData={undefined as any}
+          params={{}}
+          matches={
+            [
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/search',
+                params: {},
+                pathname: '/search',
+                data: loaderData,
+                handle: undefined
+              }
+            ] as any
+          }
+        />
       );
 
       expect(
@@ -213,7 +391,29 @@ describe('Search Component', () => {
       };
 
       render(
-        <Search loaderData={loaderData as Route.ComponentProps['loaderData']} />
+        <Search
+          loaderData={loaderData as any}
+          actionData={undefined as any}
+          params={{}}
+          matches={
+            [
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/search',
+                params: {},
+                pathname: '/search',
+                data: loaderData,
+                handle: undefined
+              }
+            ] as any
+          }
+        />
       );
 
       expect(screen.getByText('検索に失敗しました')).toBeInTheDocument();
@@ -226,7 +426,29 @@ describe('Search Component', () => {
       };
 
       render(
-        <Search loaderData={loaderData as Route.ComponentProps['loaderData']} />
+        <Search
+          loaderData={loaderData as any}
+          actionData={undefined as any}
+          params={{}}
+          matches={
+            [
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/search',
+                params: {},
+                pathname: '/search',
+                data: loaderData,
+                handle: undefined
+              }
+            ] as any
+          }
+        />
       );
 
       const movieLinks = screen.getAllByRole('link');
@@ -245,7 +467,29 @@ describe('Search Component', () => {
       };
 
       render(
-        <Search loaderData={loaderData as Route.ComponentProps['loaderData']} />
+        <Search
+          loaderData={loaderData as any}
+          actionData={undefined as any}
+          params={{}}
+          matches={
+            [
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/search',
+                params: {},
+                pathname: '/search',
+                data: loaderData,
+                handle: undefined
+              }
+            ] as any
+          }
+        />
       );
 
       const homeLink = screen.getByRole('link', { name: /ホームに戻る/ });

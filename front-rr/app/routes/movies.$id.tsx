@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Route } from './+types/movies.$id';
 
 interface MovieDetailData {
@@ -39,15 +40,15 @@ interface MovieDetailData {
   }[];
 }
 
-export function meta({ data }: Route.MetaArgs): Route.MetaDescriptor[] {
-  if ('error' in data && data.error) {
+export function meta({ data }: Route.MetaArgs): Route.MetaDescriptors {
+  if (data && 'error' in data && data.error) {
     return [
       { title: '映画が見つかりません | SHINE' },
       { name: 'description', content: '指定された映画は見つかりませんでした。' }
     ];
   }
 
-  const movieDetail = data.movieDetail as MovieDetailData;
+  const movieDetail = data?.movieDetail as unknown as MovieDetailData;
   const title =
     movieDetail.translations?.find((t) => t.languageCode === 'ja')?.content ||
     '映画詳細';
@@ -114,17 +115,20 @@ export default function MovieDetail({ loaderData }: Route.ComponentProps) {
     );
   }
 
-  const { movieDetail } = loaderData;
+  const { movieDetail } = loaderData as unknown as {
+    movieDetail: MovieDetailData;
+  };
   const title =
-    movieDetail.translations?.find((t) => t.languageCode === 'ja')?.content ||
-    'タイトル不明';
+    movieDetail?.translations?.find((t: any) => t.languageCode === 'ja')
+      ?.content || 'タイトル不明';
   const posterUrl =
-    movieDetail.posterUrls?.find((p) => p.isPrimary)?.url ||
-    movieDetail.posterUrls?.[0]?.url;
+    movieDetail?.posterUrls?.find((p: any) => p.isPrimary)?.url ||
+    movieDetail?.posterUrls?.[0]?.url;
 
   const winningNominations =
-    movieDetail.nominations?.filter((n) => n.isWinner) || [];
-  const nominees = movieDetail.nominations?.filter((n) => !n.isWinner) || [];
+    movieDetail?.nominations?.filter((n: any) => n.isWinner) || [];
+  const nominees =
+    movieDetail?.nominations?.filter((n: any) => !n.isWinner) || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -156,9 +160,9 @@ export default function MovieDetail({ loaderData }: Route.ComponentProps) {
             <header>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{title}</h1>
               <div className="flex flex-wrap gap-4 text-gray-600">
-                <span>{movieDetail.movie.year}年</span>
-                <span>{movieDetail.movie.duration}分</span>
-                <span>IMDb: {movieDetail.movie.imdbId}</span>
+                <span>{movieDetail?.movie.year}年</span>
+                <span>{movieDetail?.movie.duration}分</span>
+                <span>IMDb: {movieDetail?.movie.imdbId}</span>
               </div>
             </header>
 
@@ -170,7 +174,7 @@ export default function MovieDetail({ loaderData }: Route.ComponentProps) {
                 </h2>
                 <div className="space-y-3">
                   {/* 受賞 */}
-                  {winningNominations.map((nomination, index) => (
+                  {winningNominations.map((nomination: any, index: number) => (
                     <div
                       key={index}
                       className="inline-block bg-yellow-400 text-yellow-900 px-3 py-2 rounded-lg mr-2 mb-2"
@@ -184,7 +188,7 @@ export default function MovieDetail({ loaderData }: Route.ComponentProps) {
                   ))}
 
                   {/* ノミネート */}
-                  {nominees.map((nomination, index) => (
+                  {nominees.map((nomination: any, index: number) => (
                     <div
                       key={index}
                       className="inline-block bg-gray-200 text-gray-800 px-3 py-2 rounded-lg mr-2 mb-2"

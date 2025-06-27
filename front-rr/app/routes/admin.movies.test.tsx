@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, unicorn/no-null */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -101,9 +102,12 @@ describe('AdminMovies Component', () => {
 
       const context = createMockContext();
       const url = new URL('http://localhost:3000/admin/movies?page=1');
-      const request = { url } as Request;
+      const request = { url } as unknown as Request;
 
-      const result = await loader({ context, request } as Route.LoaderArgs);
+      const result = (await loader({
+        context,
+        request
+      } as Route.LoaderArgs)) as any;
 
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:8787/admin/movies?page=1&limit=20',
@@ -120,9 +124,12 @@ describe('AdminMovies Component', () => {
 
       const context = createMockContext();
       const url = new URL('http://localhost:3000/admin/movies');
-      const request = { url } as Request;
+      const request = { url } as unknown as Request;
 
-      const result = await loader({ context, request } as Route.LoaderArgs);
+      const result = (await loader({
+        context,
+        request
+      } as Route.LoaderArgs)) as any;
 
       expect(result.status).toBe(302);
       expect(result.headers.get('Location')).toBe('/admin/login');
@@ -137,9 +144,12 @@ describe('AdminMovies Component', () => {
 
       const context = createMockContext();
       const url = new URL('http://localhost:3000/admin/movies');
-      const request = { url } as Request;
+      const request = { url } as unknown as Request;
 
-      const result = await loader({ context, request } as Route.LoaderArgs);
+      const result = (await loader({
+        context,
+        request
+      } as Route.LoaderArgs)) as any;
 
       expect(result.status).toBe(302);
       expect(result.headers.get('Location')).toBe('/admin/login');
@@ -163,7 +173,25 @@ describe('AdminMovies Component', () => {
 
       render(
         <AdminMovies
-          loaderData={loaderData as Route.ComponentProps['loaderData']}
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{}}
+          matches={[
+            {
+              id: 'root',
+              params: {},
+              pathname: '/',
+              data: undefined,
+              handle: undefined
+            },
+            {
+              id: 'routes/admin.movies',
+              params: {},
+              pathname: '/admin/movies',
+              data: undefined,
+              handle: undefined
+            }
+          ]}
         />
       );
 
@@ -187,7 +215,25 @@ describe('AdminMovies Component', () => {
 
       render(
         <AdminMovies
-          loaderData={loaderData as Route.ComponentProps['loaderData']}
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{}}
+          matches={[
+            {
+              id: 'root',
+              params: {},
+              pathname: '/',
+              data: undefined,
+              handle: undefined
+            },
+            {
+              id: 'routes/admin.movies',
+              params: {},
+              pathname: '/admin/movies',
+              data: undefined,
+              handle: undefined
+            }
+          ]}
         />
       );
 
@@ -200,7 +246,25 @@ describe('AdminMovies Component', () => {
 
       render(
         <AdminMovies
-          loaderData={loaderData as Route.ComponentProps['loaderData']}
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{}}
+          matches={[
+            {
+              id: 'root',
+              params: {},
+              pathname: '/',
+              data: undefined,
+              handle: undefined
+            },
+            {
+              id: 'routes/admin.movies',
+              params: {},
+              pathname: '/admin/movies',
+              data: undefined,
+              handle: undefined
+            }
+          ]}
         />
       );
 
@@ -214,7 +278,25 @@ describe('AdminMovies Component', () => {
 
       render(
         <AdminMovies
-          loaderData={loaderData as Route.ComponentProps['loaderData']}
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{}}
+          matches={[
+            {
+              id: 'root',
+              params: {},
+              pathname: '/',
+              data: undefined,
+              handle: undefined
+            },
+            {
+              id: 'routes/admin.movies',
+              params: {},
+              pathname: '/admin/movies',
+              data: undefined,
+              handle: undefined
+            }
+          ]}
         />
       );
 
@@ -227,7 +309,25 @@ describe('AdminMovies Component', () => {
 
       render(
         <AdminMovies
-          loaderData={loaderData as Route.ComponentProps['loaderData']}
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{}}
+          matches={[
+            {
+              id: 'root',
+              params: {},
+              pathname: '/',
+              data: undefined,
+              handle: undefined
+            },
+            {
+              id: 'routes/admin.movies',
+              params: {},
+              pathname: '/admin/movies',
+              data: undefined,
+              handle: undefined
+            }
+          ]}
         />
       );
 
@@ -244,7 +344,25 @@ describe('AdminMovies Component', () => {
 
       render(
         <AdminMovies
-          loaderData={loaderData as Route.ComponentProps['loaderData']}
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{}}
+          matches={[
+            {
+              id: 'root',
+              params: {},
+              pathname: '/',
+              data: undefined,
+              handle: undefined
+            },
+            {
+              id: 'routes/admin.movies',
+              params: {},
+              pathname: '/admin/movies',
+              data: undefined,
+              handle: undefined
+            }
+          ]}
         />
       );
 
@@ -256,7 +374,25 @@ describe('AdminMovies Component', () => {
 
       render(
         <AdminMovies
-          loaderData={loaderData as Route.ComponentProps['loaderData']}
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{}}
+          matches={[
+            {
+              id: 'root',
+              params: {},
+              pathname: '/',
+              data: undefined,
+              handle: undefined
+            },
+            {
+              id: 'routes/admin.movies',
+              params: {},
+              pathname: '/admin/movies',
+              data: undefined,
+              handle: undefined
+            }
+          ]}
         />
       );
 
@@ -275,7 +411,25 @@ describe('AdminMovies Component', () => {
 
       render(
         <AdminMovies
-          loaderData={loaderData as Route.ComponentProps['loaderData']}
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{}}
+          matches={[
+            {
+              id: 'root',
+              params: {},
+              pathname: '/',
+              data: undefined,
+              handle: undefined
+            },
+            {
+              id: 'routes/admin.movies',
+              params: {},
+              pathname: '/admin/movies',
+              data: undefined,
+              handle: undefined
+            }
+          ]}
         />
       );
 

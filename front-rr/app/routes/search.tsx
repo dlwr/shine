@@ -24,7 +24,7 @@ interface SearchPaginationData {
   totalPages: number;
 }
 
-export function meta({ data }: Route.MetaArgs): Route.MetaDescriptor[] {
+export function meta({ data }: Route.MetaArgs): Route.MetaDescriptors {
   const { searchQuery } = data as { searchQuery: string };
 
   if (searchQuery) {

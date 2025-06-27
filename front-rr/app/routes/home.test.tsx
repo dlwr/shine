@@ -1,8 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Home, { loader, meta } from './home';
-import type { Route } from './+types/home';
 
 // Cloudflare環境のモック
 const createMockContext = (apiUrl = 'http://localhost:8787') => ({
@@ -106,7 +106,19 @@ describe('Home Component', () => {
       } as Response);
 
       const context = createMockContext();
-      const result = await loader({ context } as Route.LoaderArgs);
+      const result = await loader({
+        context,
+        params: {},
+        matches: [
+          {
+            id: 'root',
+            params: {},
+            pathname: '/',
+            data: undefined,
+            handle: undefined
+          }
+        ]
+      } as any);
 
       expect(mockFetch).toHaveBeenCalledWith('http://localhost:8787/');
       expect(result).toEqual({
@@ -119,7 +131,19 @@ describe('Home Component', () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
       const context = createMockContext();
-      const result = await loader({ context } as Route.LoaderArgs);
+      const result = await loader({
+        context,
+        params: {},
+        matches: [
+          {
+            id: 'root',
+            params: {},
+            pathname: '/',
+            data: undefined,
+            handle: undefined
+          }
+        ]
+      } as any);
 
       expect(result).toEqual({
         error: 'APIへの接続に失敗しました'
@@ -134,7 +158,19 @@ describe('Home Component', () => {
       } as Response);
 
       const context = createMockContext();
-      const result = await loader({ context } as Route.LoaderArgs);
+      const result = await loader({
+        context,
+        params: {},
+        matches: [
+          {
+            id: 'root',
+            params: {},
+            pathname: '/',
+            data: undefined,
+            handle: undefined
+          }
+        ]
+      } as any);
 
       expect(result).toEqual({
         error: 'データの取得に失敗しました'
@@ -164,7 +200,29 @@ describe('Home Component', () => {
       };
 
       render(
-        <Home loaderData={loaderData as Route.ComponentProps['loaderData']} />
+        <Home
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{}}
+          matches={
+            [
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/home',
+                params: {},
+                pathname: '/',
+                data: loaderData,
+                handle: undefined
+              }
+            ] as any
+          }
+        />
       );
 
       // 各セクションのタイトルが表示される
@@ -184,7 +242,29 @@ describe('Home Component', () => {
       };
 
       render(
-        <Home loaderData={loaderData as Route.ComponentProps['loaderData']} />
+        <Home
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{}}
+          matches={
+            [
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/home',
+                params: {},
+                pathname: '/',
+                data: loaderData,
+                handle: undefined
+              }
+            ] as any
+          }
+        />
       );
 
       expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
@@ -197,7 +277,29 @@ describe('Home Component', () => {
       };
 
       render(
-        <Home loaderData={loaderData as Route.ComponentProps['loaderData']} />
+        <Home
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{}}
+          matches={
+            [
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/home',
+                params: {},
+                pathname: '/',
+                data: loaderData,
+                handle: undefined
+              }
+            ] as any
+          }
+        />
       );
 
       expect(
@@ -211,7 +313,29 @@ describe('Home Component', () => {
       };
 
       render(
-        <Home loaderData={loaderData as Route.ComponentProps['loaderData']} />
+        <Home
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{}}
+          matches={
+            [
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/home',
+                params: {},
+                pathname: '/',
+                data: loaderData,
+                handle: undefined
+              }
+            ] as any
+          }
+        />
       );
 
       const dailyMovieLink = screen.getByRole('link', { name: /テスト映画/ });
