@@ -94,6 +94,12 @@ export class SelectionsService extends BaseService {
     nextMonthly: { date: string; movie?: MovieSelection };
   }> {
     const now = new Date();
+    console.log(
+      "🔍 Getting next period previews for locale:",
+      locale,
+      "at",
+      now.toISOString(),
+    );
 
     // Calculate next dates
     const nextDay = new Date(now);
@@ -109,28 +115,64 @@ export class SelectionsService extends BaseService {
     nextMonth.setMonth(now.getMonth() + 1);
     nextMonth.setDate(1);
 
-    // Get next period selections (preview only - don't save to database)
+    const nextDates = {
+      daily: this.getSelectionDate(nextDay, "daily"),
+      weekly: this.getSelectionDate(nextFriday, "weekly"),
+      monthly: this.getSelectionDate(nextMonth, "monthly"),
+    };
+
+    console.log("📅 Next dates calculated:", nextDates);
+
+    // Check cache first for preview results
+    const cacheKey = `preview-selections-${locale}-${nextDates.daily}-${nextDates.weekly}-${nextDates.monthly}`;
+    const cachedResult = await this.cache.get(cacheKey);
+
+    if (cachedResult && cachedResult.data) {
+      console.log("💾 Using cached preview results");
+      return cachedResult.data as {
+        nextDaily: { date: string; movie?: MovieSelection | undefined };
+        nextWeekly: { date: string; movie?: MovieSelection | undefined };
+        nextMonthly: { date: string; movie?: MovieSelection | undefined };
+      };
+    }
+
+    // Get next period selections - use existing if available, otherwise generate preview
     const [nextDailyMovie, nextWeeklyMovie, nextMonthlyMovie] =
       await Promise.all([
-        this.generateMovieSelection(nextDay, "daily", locale, false),
-        this.generateMovieSelection(nextFriday, "weekly", locale, false),
-        this.generateMovieSelection(nextMonth, "monthly", locale, false),
+        this.getMovieByDateSeed(nextDay, "daily", locale),
+        this.getMovieByDateSeed(nextFriday, "weekly", locale),
+        this.getMovieByDateSeed(nextMonth, "monthly", locale),
       ]);
 
-    return {
+    console.log("🎬 Generated movie selections:", {
+      daily: nextDailyMovie?.title || "No movie",
+      weekly: nextWeeklyMovie?.title || "No movie",
+      monthly: nextMonthlyMovie?.title || "No movie",
+    });
+
+    const result = {
       nextDaily: {
-        date: this.getSelectionDate(nextDay, "daily"),
+        date: nextDates.daily,
         movie: nextDailyMovie,
       },
       nextWeekly: {
-        date: this.getSelectionDate(nextFriday, "weekly"),
+        date: nextDates.weekly,
         movie: nextWeeklyMovie,
       },
       nextMonthly: {
-        date: this.getSelectionDate(nextMonth, "monthly"),
+        date: nextDates.monthly,
         movie: nextMonthlyMovie,
       },
     };
+
+    // Cache the preview results for 10 minutes
+    await this.cache.set(cacheKey, result, 600); // 10 minutes TTL
+
+    console.log(
+      "✅ Final preview result (cached):",
+      JSON.stringify(result, undefined, 2),
+    );
+    return result;
   }
 
   async overrideSelection(
@@ -184,9 +226,8 @@ export class SelectionsService extends BaseService {
 
     // Try to get cached result
     const cached = await this.cache.get(cacheKey);
-    if (cached) {
-      const text = await cached.text();
-      return JSON.parse(text) as MovieSelection;
+    if (cached && cached.data) {
+      return cached.data as MovieSelection;
     }
 
     // Check for existing selection in database

@@ -284,6 +284,9 @@ import Layout from "../../layouts/Layout.astro";
 
     async function loadPreview() {
       try {
+        console.log("🔄 Loading preview selections...");
+        console.log("API URL:", getApiUrl());
+        
         const response = await fetch(
           `${getApiUrl()}/admin/preview-selections`,
           {
@@ -294,23 +297,29 @@ import Layout from "../../layouts/Layout.astro";
           }
         );
 
+        console.log("📡 Response status:", response.status);
+
         if (!response.ok) {
+          console.error("❌ Response failed:", response.status, response.statusText);
           throw new Error("Failed to load preview");
         }
 
         const data = await response.json();
+        console.log("✅ Preview data received:", JSON.stringify(data, null, 2));
 
         // Update UI
         updateSelectionCard("daily", data.nextDaily);
         updateSelectionCard("weekly", data.nextWeekly);
         updateSelectionCard("monthly", data.nextMonthly);
       } catch (error) {
-        console.error("Error loading preview:", error);
+        console.error("❌ Error loading preview:", error);
         alert("Failed to load preview. Please try again.");
       }
     }
 
     function updateSelectionCard(type, selectionData) {
+      console.log(`🎬 Updating ${type} selection card:`, selectionData);
+      
       const dateElement = document.getElementById(`next-${type}-date`);
       const movieElement = document.getElementById(`next-${type}-movie`);
       const actionsElement = document.getElementById(`next-${type}-actions`);

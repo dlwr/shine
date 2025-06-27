@@ -84,7 +84,7 @@ moviesRoutes.get("/:id", async c => {
 
     if (cachedResponse) {
       console.log("Cache hit for movie details:", movieId);
-      return cachedResponse;
+      return c.json(cachedResponse.data as Record<string, unknown>);
     }
 
     console.log("Cache miss for movie details:", movieId);

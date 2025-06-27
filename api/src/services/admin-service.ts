@@ -180,9 +180,18 @@ export class AdminService extends BaseService {
         organizationShortName: awardOrganizations.shortName,
       })
       .from(nominations)
-      .innerJoin(awardCategories, eq(awardCategories.uid, nominations.categoryUid))
-      .innerJoin(awardCeremonies, eq(awardCeremonies.uid, nominations.ceremonyUid))
-      .innerJoin(awardOrganizations, eq(awardOrganizations.uid, awardCeremonies.organizationUid))
+      .innerJoin(
+        awardCategories,
+        eq(awardCategories.uid, nominations.categoryUid),
+      )
+      .innerJoin(
+        awardCeremonies,
+        eq(awardCeremonies.uid, nominations.ceremonyUid),
+      )
+      .innerJoin(
+        awardOrganizations,
+        eq(awardOrganizations.uid, awardCeremonies.organizationUid),
+      )
       .where(eq(nominations.movieUid, movieId))
       .orderBy(awardCeremonies.year, awardCategories.name);
 

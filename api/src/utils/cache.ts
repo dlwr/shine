@@ -15,8 +15,9 @@ export class EdgeCache {
   private metrics: CacheMetrics = { hits: 0, misses: 0, hitRate: 0 };
   private isDevelopment = true; // Always disable cache in development
 
-  async get(key: string): Promise<Response | undefined> {
-    if (this.isDevelopment) {
+  async getResponse(key: string): Promise<Response | undefined> {
+    // Allow caching for preview keys even in development
+    if (this.isDevelopment && !key.startsWith("preview-")) {
       this.metrics.misses++;
       this.updateHitRate();
       return undefined;
@@ -41,7 +42,8 @@ export class EdgeCache {
   }
 
   async put(key: string, response: Response, ttl?: number): Promise<void> {
-    if (this.isDevelopment) {
+    // Allow caching for preview keys even in development
+    if (this.isDevelopment && !key.startsWith("preview-")) {
       return;
     }
 
@@ -65,8 +67,62 @@ export class EdgeCache {
     }
   }
 
+  async set(key: string, data: unknown, ttl = 3600): Promise<void> {
+    // Allow caching for preview keys even in development
+    if (this.isDevelopment && !key.startsWith("preview-")) {
+      return;
+    }
+
+    try {
+      const response = new Response(
+        JSON.stringify({ data, cachedAt: Date.now() }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": `max-age=${ttl}`,
+          },
+        },
+      );
+      await this.cache.put(key, response);
+    } catch (error) {
+      console.error("Cache set error:", error);
+    }
+  }
+
+  async get(
+    key: string,
+  ): Promise<{ data: unknown; cachedAt: number } | undefined> {
+    // Allow caching for preview keys even in development
+    if (this.isDevelopment && !key.startsWith("preview-")) {
+      this.metrics.misses++;
+      this.updateHitRate();
+      return undefined;
+    }
+
+    try {
+      const cached = await this.cache.match(key);
+      if (cached) {
+        const result = (await cached.json()) as {
+          data: unknown;
+          cachedAt: number;
+        };
+        this.metrics.hits++;
+        this.updateHitRate();
+        return result;
+      }
+      this.metrics.misses++;
+      this.updateHitRate();
+      return undefined;
+    } catch (error) {
+      console.error("Cache get error:", error);
+      this.metrics.misses++;
+      this.updateHitRate();
+      return undefined;
+    }
+  }
+
   async delete(key: string): Promise<boolean> {
-    if (this.isDevelopment) {
+    if (this.isDevelopment && !key.startsWith("preview-")) {
       return true;
     }
 
@@ -79,7 +135,7 @@ export class EdgeCache {
   }
 
   async deleteByPattern(pattern: string): Promise<number> {
-    if (this.isDevelopment) {
+    if (this.isDevelopment && !pattern.includes("preview-")) {
       return 0;
     }
 
