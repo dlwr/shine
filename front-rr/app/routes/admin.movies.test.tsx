@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AdminMovies, { loader, meta } from './admin.movies';
+import type { Route } from './+types/admin.movies';
 
 // LocalStorageのモック
 const mockLocalStorage = {
@@ -102,7 +103,7 @@ describe('AdminMovies Component', () => {
       const url = new URL('http://localhost:3000/admin/movies?page=1');
       const request = { url } as Request;
       
-      const result = await loader({ context, request } as unknown as any);
+      const result = await loader({ context, request } as unknown as Route.LoaderArgs);
 
       expect(mockFetch).toHaveBeenCalledWith('http://localhost:8787/admin/movies?page=1&limit=20', {
         headers: { 'Authorization': 'Bearer valid-admin-token' }
@@ -118,7 +119,7 @@ describe('AdminMovies Component', () => {
       const url = new URL('http://localhost:3000/admin/movies');
       const request = { url } as Request;
       
-      const result = await loader({ context, request } as unknown as any);
+      const result = await loader({ context, request } as unknown as Route.LoaderArgs);
 
       expect(result.status).toBe(302);
       expect(result.headers.get('Location')).toBe('/admin/login');
@@ -135,7 +136,7 @@ describe('AdminMovies Component', () => {
       const url = new URL('http://localhost:3000/admin/movies');
       const request = { url } as Request;
       
-      const result = await loader({ context, request } as unknown as any);
+      const result = await loader({ context, request } as unknown as Route.LoaderArgs);
 
       expect(result.status).toBe(302);
       expect(result.headers.get('Location')).toBe('/admin/login');

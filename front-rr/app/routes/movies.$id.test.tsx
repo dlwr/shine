@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import MovieDetail, { loader, meta } from './movies.$id';
+import type { Route } from './+types/movies.$id';
 
 // Cloudflare環境のモック
 const createMockContext = (apiUrl = 'http://localhost:8787') => ({
@@ -94,7 +95,7 @@ describe('MovieDetail Component', () => {
 
       const context = createMockContext();
       const params = { id: 'movie-123' };
-      const result = await loader({ context, params } as unknown as any);
+      const result = await loader({ context, params } as unknown as Route.LoaderArgs);
 
       expect(mockFetch).toHaveBeenCalledWith('http://localhost:8787/movies/movie-123');
       expect(result).toEqual({
@@ -111,7 +112,7 @@ describe('MovieDetail Component', () => {
 
       const context = createMockContext();
       const params = { id: 'non-existent' };
-      const result = await loader({ context, params } as unknown as any);
+      const result = await loader({ context, params } as unknown as Route.LoaderArgs);
 
       expect(result).toEqual({
         error: '映画が見つかりませんでした',
@@ -125,7 +126,7 @@ describe('MovieDetail Component', () => {
 
       const context = createMockContext();
       const params = { id: 'movie-123' };
-      const result = await loader({ context, params } as unknown as any);
+      const result = await loader({ context, params } as unknown as Route.LoaderArgs);
 
       expect(result).toEqual({
         error: 'APIへの接続に失敗しました',
@@ -140,7 +141,7 @@ describe('MovieDetail Component', () => {
         movieDetail: mockMovieDetail
       };
       
-      const result = meta({ data: loaderData } as unknown as any);
+      const result = meta({ data: loaderData } as unknown as Route.MetaArgs);
       
       expect(result).toEqual([
         { title: "パルム・ドール受賞作品 (2023) | SHINE" },
@@ -154,7 +155,7 @@ describe('MovieDetail Component', () => {
         status: 404
       };
       
-      const result = meta({ data: loaderData } as unknown as any);
+      const result = meta({ data: loaderData } as unknown as Route.MetaArgs);
       
       expect(result).toEqual([
         { title: "映画が見つかりません | SHINE" },

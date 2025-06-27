@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Home, { loader, meta } from './home';
+import type { Route } from './+types/home';
 
 // Cloudflare環境のモック
 const createMockContext = (apiUrl = 'http://localhost:8787') => ({
@@ -105,7 +106,7 @@ describe('Home Component', () => {
       } as Response);
 
       const context = createMockContext();
-      const result = await loader({ context } as unknown as any);
+      const result = await loader({ context } as unknown as Route.LoaderArgs);
 
       expect(mockFetch).toHaveBeenCalledWith('http://localhost:8787/');
       expect(result).toEqual({
@@ -118,7 +119,7 @@ describe('Home Component', () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
       const context = createMockContext();
-      const result = await loader({ context } as unknown as any);
+      const result = await loader({ context } as unknown as Route.LoaderArgs);
 
       expect(result).toEqual({
         error: 'APIへの接続に失敗しました'
@@ -133,7 +134,7 @@ describe('Home Component', () => {
       } as Response);
 
       const context = createMockContext();
-      const result = await loader({ context } as unknown as any);
+      const result = await loader({ context } as unknown as Route.LoaderArgs);
 
       expect(result).toEqual({
         error: 'データの取得に失敗しました'

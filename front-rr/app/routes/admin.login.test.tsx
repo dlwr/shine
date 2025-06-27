@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AdminLogin, { action, meta } from './admin.login';
+import type { Route } from './+types/admin.login';
 
 // LocalStorageのモック
 const mockLocalStorage = {
@@ -51,7 +52,7 @@ describe('AdminLogin Component', () => {
       const context = createMockContext();
       const request = { formData: async () => formData } as Request;
       
-      const result = await action({ context, request } as unknown as any);
+      const result = await action({ context, request } as unknown as Route.ActionArgs);
 
       expect(mockFetch).toHaveBeenCalledWith('http://localhost:8787/auth/login', {
         method: 'POST',
@@ -80,7 +81,7 @@ describe('AdminLogin Component', () => {
       const context = createMockContext();
       const request = { formData: async () => formData } as Request;
       
-      const result = await action({ context, request } as unknown as any);
+      const result = await action({ context, request } as unknown as Route.ActionArgs);
 
       expect(result).toEqual({
         error: 'パスワードが正しくありません'
@@ -97,7 +98,7 @@ describe('AdminLogin Component', () => {
       const context = createMockContext();
       const request = { formData: async () => formData } as Request;
       
-      const result = await action({ context, request } as unknown as any);
+      const result = await action({ context, request } as unknown as Route.ActionArgs);
 
       expect(result).toEqual({
         error: 'ログインに失敗しました'

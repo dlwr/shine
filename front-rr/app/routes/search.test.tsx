@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Search, { loader, meta } from './search';
+import type { Route } from './+types/search';
 
 // fetchのモック
 globalThis.fetch = vi.fn();
@@ -79,7 +80,7 @@ describe('Search Component', () => {
       const url = new URL('http://localhost:3000/search?q=test');
       const request = { url } as Request;
       
-      const result = await loader({ context, request } as unknown as any);
+      const result = await loader({ context, request } as unknown as Route.LoaderArgs);
 
       expect(mockFetch).toHaveBeenCalledWith('http://localhost:8787/movies/search?q=test&page=1&limit=20');
       expect(result).toEqual({
@@ -93,7 +94,7 @@ describe('Search Component', () => {
       const url = new URL('http://localhost:3000/search');
       const request = { url } as Request;
       
-      const result = await loader({ context, request } as unknown as any);
+      const result = await loader({ context, request } as unknown as Route.LoaderArgs);
 
       expect(result).toEqual({
         searchQuery: '',
@@ -109,7 +110,7 @@ describe('Search Component', () => {
       const url = new URL('http://localhost:3000/search?q=test');
       const request = { url } as Request;
       
-      const result = await loader({ context, request } as unknown as any);
+      const result = await loader({ context, request } as unknown as Route.LoaderArgs);
 
       expect(result).toEqual({
         searchQuery: 'test',
@@ -125,7 +126,7 @@ describe('Search Component', () => {
         searchResults: mockSearchResults
       };
       
-      const result = meta({ data: loaderData } as unknown as any);
+      const result = meta({ data: loaderData } as unknown as Route.MetaArgs);
       
       expect(result).toEqual([
         { title: "「test movie」の検索結果 | SHINE" },
@@ -139,7 +140,7 @@ describe('Search Component', () => {
         searchResults: null
       };
       
-      const result = meta({ data: loaderData } as unknown as any);
+      const result = meta({ data: loaderData } as unknown as Route.MetaArgs);
       
       expect(result).toEqual([
         { title: "映画検索 | SHINE" },
