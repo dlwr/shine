@@ -89,72 +89,60 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 }
 
 interface MovieData {
-  movieUid: string;
-  movie: {
-    year: number;
-    duration: number;
-  };
-  translations?: {
-    languageCode: string;
-    content: string;
-  }[];
-  posterUrls?: {
-    url: string;
-  }[];
+  uid: string;
+  year: number;
+  title: string;
+  posterUrl?: string;
   nominations?: {
     isWinner: boolean;
+    category: {
+      name: string;
+    };
     ceremony: {
       name: string;
       year: number;
+    };
+    organization: {
+      name: string;
     };
   }[];
 }
 
 function MovieCard({ movie }: { movie: MovieData }) {
-  const title =
-    movie.translations?.find(
-      (t: { languageCode: string }) => t.languageCode === 'ja'
-    )?.content || 'タイトル不明';
-  const posterUrl = movie.posterUrls?.[0]?.url;
   const winningNominations =
-    movie.nominations?.filter((n: { isWinner: boolean }) => n.isWinner) || [];
+    movie.nominations?.filter((n) => n.isWinner) || [];
 
   return (
     <div className="space-y-4">
       <a
-        href={`/movies/${movie.movieUid}`}
+        href={`/movies/${movie.uid}`}
         className="block hover:opacity-80 transition-opacity"
       >
-        {posterUrl && (
+        {movie.posterUrl && (
           <img
-            src={posterUrl}
-            alt={title}
+            src={movie.posterUrl}
+            alt={movie.title}
             className="w-full h-64 object-cover rounded-lg"
           />
         )}
-        <h3 className="text-lg font-medium text-gray-900 mt-2">{title}</h3>
+        <h3 className="text-lg font-medium text-gray-900 mt-2">{movie.title}</h3>
       </a>
 
       <div className="space-y-1">
         <p className="text-sm text-gray-600">
-          {movie.movie.year}年 • {movie.movie.duration}分
+          {movie.year}年
         </p>
 
         {winningNominations.length > 0 && (
           <div className="space-y-1">
-            {winningNominations.map(
-              (
-                nomination: { ceremony: { name: string; year: number } },
-                index: number
-              ) => (
-                <span
-                  key={index}
-                  className="inline-block bg-yellow-400 text-yellow-900 text-xs px-2 py-1 rounded-full"
-                >
-                  🏆 {nomination.ceremony.name} {nomination.ceremony.year} 受賞
-                </span>
-              )
-            )}
+            {winningNominations.map((nomination, index) => (
+              <span
+                key={index}
+                className="inline-block bg-yellow-400 text-yellow-900 text-xs px-2 py-1 rounded-full"
+              >
+                🏆 {nomination.organization.name} {nomination.ceremony.year} 受賞
+              </span>
+            ))}
           </div>
         )}
       </div>
