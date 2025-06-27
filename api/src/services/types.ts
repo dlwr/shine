@@ -45,6 +45,12 @@ export interface MovieSelection {
       shortName: string | null;
     };
   }[];
+  articleLinks: {
+    uid: string;
+    url: string;
+    title: string;
+    description?: string;
+  }[];
 }
 
 export interface DateSeedOptions {

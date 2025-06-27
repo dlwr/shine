@@ -1,4 +1,5 @@
 import { and, eq, sql } from "db";
+import { articleLinks } from "db/schema/article-links";
 import { awardCategories } from "db/schema/award-categories";
 import { awardCeremonies } from "db/schema/award-ceremonies";
 import { awardOrganizations } from "db/schema/award-organizations";
@@ -403,6 +404,25 @@ export class SelectionsService extends BaseService {
       .where(eq(nominations.movieUid, movieId))
       .orderBy(awardCeremonies.year, awardCategories.name);
 
+    // Get article links
+    const topArticles = await this.database
+      .select({
+        uid: articleLinks.uid,
+        url: articleLinks.url,
+        title: articleLinks.title,
+        description: articleLinks.description || undefined,
+      })
+      .from(articleLinks)
+      .where(
+        and(
+          eq(articleLinks.movieUid, movieId),
+          eq(articleLinks.isSpam, false),
+          eq(articleLinks.isFlagged, false),
+        ),
+      )
+      .orderBy(sql`${articleLinks.submittedAt} DESC`)
+      .limit(3);
+
     return {
       uid: movie.uid,
       year: movie.year ?? 0,
@@ -430,6 +450,12 @@ export class SelectionsService extends BaseService {
           name: nom.organizationName,
           shortName: nom.organizationShortName,
         },
+      })),
+      articleLinks: topArticles.map(article => ({
+        uid: article.uid,
+        url: article.url,
+        title: article.title,
+        description: article.description || undefined,
       })),
     };
   }
