@@ -7,7 +7,6 @@ import {
 } from "./utils/error-handlers";
 
 const JWT_ALGORITHM = "HS256";
-const JWT_EXPIRATION = "24h";
 
 export async function createJWT(secret: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -16,7 +15,6 @@ export async function createJWT(secret: string): Promise<string> {
   const jwt = await new SignJWT({ role: "admin" })
     .setProtectedHeader({ alg: JWT_ALGORITHM })
     .setIssuedAt()
-    .setExpirationTime(JWT_EXPIRATION)
     .sign(secretKey);
 
   return jwt;
