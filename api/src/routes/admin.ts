@@ -23,6 +23,26 @@ interface MovieDatabaseTranslation {
 
 export const adminRoutes = new Hono<{ Bindings: Environment }>();
 
+// Get movie details for admin with all translations, posters, and nominations
+adminRoutes.get("/movies/:id", authMiddleware, async c => {
+  try {
+    const adminService = new AdminService(c.env as Environment);
+    const movieId = c.req.param("id");
+
+    const movieDetails = await adminService.getMovieForAdmin(movieId);
+
+    return c.json(movieDetails);
+  } catch (error) {
+    console.error("Error fetching movie details for admin:", error);
+
+    if (error instanceof Error && error.message === "Movie not found") {
+      return c.json({ error: "Movie not found" }, 404);
+    }
+
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
 // Get all movies for admin
 adminRoutes.get("/movies", authMiddleware, async c => {
   try {

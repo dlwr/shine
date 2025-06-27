@@ -1,5 +1,8 @@
 import { and, eq, like, not, sql } from "db";
 import { articleLinks } from "db/schema/article-links";
+import { awardCategories } from "db/schema/award-categories";
+import { awardCeremonies } from "db/schema/award-ceremonies";
+import { awardOrganizations } from "db/schema/award-organizations";
 import { movieSelections } from "db/schema/movie-selections";
 import { movies } from "db/schema/movies";
 import { nominations } from "db/schema/nominations";
@@ -108,6 +111,109 @@ export class AdminService extends BaseService {
       await trx.delete(posterUrls).where(eq(posterUrls.movieUid, movieId));
       await trx.delete(movies).where(eq(movies.uid, movieId));
     });
+  }
+
+  async getMovieForAdmin(movieId: string) {
+    // Get basic movie info
+    const movieResult = await this.database
+      .select({
+        uid: movies.uid,
+        year: movies.year,
+        originalLanguage: movies.originalLanguage,
+        imdbId: movies.imdbId,
+        tmdbId: movies.tmdbId,
+      })
+      .from(movies)
+      .where(eq(movies.uid, movieId))
+      .limit(1);
+
+    if (movieResult.length === 0) {
+      throw new Error("Movie not found");
+    }
+
+    const movie = movieResult[0];
+
+    // Get all translations
+    const translationsResult = await this.database
+      .select({
+        languageCode: translations.languageCode,
+        content: translations.content,
+        isDefault: translations.isDefault,
+      })
+      .from(translations)
+      .where(
+        and(
+          eq(translations.resourceUid, movieId),
+          eq(translations.resourceType, "movie_title"),
+        ),
+      )
+      .orderBy(translations.languageCode);
+
+    // Get all posters
+    const postersResult = await this.database
+      .select({
+        uid: posterUrls.uid,
+        url: posterUrls.url,
+        width: posterUrls.width,
+        height: posterUrls.height,
+        languageCode: posterUrls.languageCode,
+        sourceType: posterUrls.sourceType,
+        isPrimary: posterUrls.isPrimary,
+      })
+      .from(posterUrls)
+      .where(eq(posterUrls.movieUid, movieId))
+      .orderBy(posterUrls.isPrimary, posterUrls.createdAt);
+
+    // Get nominations with full details
+    const nominationsResult = await this.database
+      .select({
+        uid: nominations.uid,
+        isWinner: nominations.isWinner,
+        specialMention: nominations.specialMention,
+        categoryUid: awardCategories.uid,
+        categoryName: awardCategories.name,
+        ceremonyUid: awardCeremonies.uid,
+        ceremonyNumber: awardCeremonies.ceremonyNumber,
+        ceremonyYear: awardCeremonies.year,
+        organizationUid: awardOrganizations.uid,
+        organizationName: awardOrganizations.name,
+        organizationShortName: awardOrganizations.shortName,
+      })
+      .from(nominations)
+      .innerJoin(awardCategories, eq(awardCategories.uid, nominations.categoryUid))
+      .innerJoin(awardCeremonies, eq(awardCeremonies.uid, nominations.ceremonyUid))
+      .innerJoin(awardOrganizations, eq(awardOrganizations.uid, awardCeremonies.organizationUid))
+      .where(eq(nominations.movieUid, movieId))
+      .orderBy(awardCeremonies.year, awardCategories.name);
+
+    return {
+      uid: movie.uid,
+      year: movie.year,
+      originalLanguage: movie.originalLanguage,
+      imdbId: movie.imdbId,
+      tmdbId: movie.tmdbId,
+      translations: translationsResult,
+      posters: postersResult,
+      nominations: nominationsResult.map(nom => ({
+        uid: nom.uid,
+        isWinner: Boolean(nom.isWinner),
+        specialMention: nom.specialMention,
+        category: {
+          uid: nom.categoryUid as string,
+          name: nom.categoryName as string,
+        },
+        ceremony: {
+          uid: nom.ceremonyUid as string,
+          number: nom.ceremonyNumber as number,
+          year: nom.ceremonyYear as number,
+        },
+        organization: {
+          uid: nom.organizationUid as string,
+          name: nom.organizationName as string,
+          shortName: nom.organizationShortName as string,
+        },
+      })),
+    };
   }
 
   async updateIMDbId(
