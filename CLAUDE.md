@@ -12,7 +12,8 @@ The project uses a simplified monorepo structure with pnpm workspaces:
 
 - **api/** - Hono-based REST API running on Cloudflare Workers
 - **scrapers/** - CLI-based data collection tools (Wikipedia, TMDb, Cannes Film Festival, Academy Awards)
-- **front/** - Astro-based frontend (Cloudflare Pages)
+- **front/** - Astro-based frontend (Cloudflare Pages) - Legacy
+- **front-rr/** - React Router v7-based frontend (Cloudflare Workers) - Current
 - **src/** - Shared database schemas, migrations, and utilities
 
 Key design patterns:
@@ -28,13 +29,19 @@ Key design patterns:
 ### Development
 
 ```bash
-# Start both API and frontend development servers
+# Start both API and React Router v7 frontend development servers (recommended)
+pnpm run dev:rr
+
+# Start both API and legacy Astro frontend development servers
 pnpm run dev
 
 # Start API development server with local DB persistence
 pnpm run api:dev
 
-# Start frontend development server
+# Start React Router v7 frontend development server
+pnpm run front-rr:dev
+
+# Start legacy Astro frontend development server
 pnpm run front:dev
 
 # Run scrapers (CLI tools)
@@ -70,7 +77,13 @@ pnpm run api:deploy:dev
 # Deploy API to production environment
 pnpm run api:deploy:prod
 
-# Deploy frontend to Cloudflare Pages
+# Deploy React Router v7 frontend to development environment
+pnpm run front-rr:deploy:dev
+
+# Deploy React Router v7 frontend to production environment
+pnpm run front-rr:deploy:prod
+
+# Deploy legacy Astro frontend to Cloudflare Pages
 pnpm run front:deploy
 
 # Note: Scrapers run locally as CLI tools and are not deployed
@@ -105,7 +118,106 @@ npx eslint .
 
 # Format code
 npx prettier --write .
+
+# Run React Router v7 frontend tests
+pnpm run test:front-rr
 ```
+
+## React Router v7 Frontend (front-rr)
+
+SHINE project includes a modern React Router v7-based frontend built with Test-Driven Development (TDD). This implementation runs on Cloudflare Workers and provides server-side rendering (SSR) with full TypeScript support.
+
+### Architecture
+
+- **Framework**: React Router v7 with TypeScript
+- **Runtime**: Cloudflare Workers with SSR
+- **Styling**: Tailwind CSS v4
+- **Testing**: Vitest with React Testing Library
+- **Type Safety**: Full TypeScript coverage with Cloudflare Workers types
+
+### TDD Implementation Features
+
+All features have been implemented using Test-Driven Development with comprehensive test coverage:
+
+**Pages & Routes:**
+
+- **Home Page (`/`)**: Date-seeded movie selections (daily/weekly/monthly)
+- **Movie Details (`/movies/:id`)**: Individual movie information and nominations
+- **Search (`/search`)**: Movie search functionality with filters
+- **Admin Login (`/admin/login`)**: JWT-based authentication
+- **Admin Movies (`/admin/movies`)**: Movie management interface
+
+**Core Features:**
+
+- Responsive design with mobile-first approach
+- JWT authentication with localStorage persistence
+- Error handling and loading states
+- Accessibility-compliant components
+- SEO-optimized meta tags
+
+### Test Coverage
+
+Complete test suite with **51 tests passing** across all components:
+
+```bash
+✓ front-rr/app/routes/admin.movies.test.tsx (12 tests)
+✓ front-rr/app/routes/movies.$id.test.tsx (10 tests)
+✓ front-rr/app/routes/home.test.tsx (8 tests)
+✓ front-rr/app/routes/admin.login.test.tsx (10 tests)
+✓ front-rr/app/routes/search.test.tsx (11 tests)
+```
+
+**Test Categories:**
+
+- Loader functions (API data fetching)
+- Component rendering and interactions
+- Error state handling
+- Form submissions and validation
+- Authentication flows
+- Meta tag generation
+
+### Authentication System
+
+- **Method**: JWT tokens stored in localStorage
+- **Admin Login**: Password-based authentication with the API
+- **Route Protection**: Client-side auth checks for admin routes
+- **Session Management**: Automatic token validation and renewal
+
+### API Integration
+
+Seamlessly integrates with the Hono-based API:
+
+- Environment-aware API URL configuration
+- Comprehensive error handling for network failures
+- Type-safe API response interfaces
+- Optimistic UI updates for better user experience
+
+### Development Workflow
+
+```bash
+# Start development server
+pnpm run front-rr:dev
+
+# Run tests
+pnpm run test:front-rr
+
+# Build for production
+pnpm run front-rr:build
+
+# Deploy to development
+pnpm run front-rr:deploy:dev
+
+# Deploy to production
+pnpm run front-rr:deploy:prod
+```
+
+### Key Files
+
+- `front-rr/app/routes/` - Page components with loaders and tests
+- `front-rr/app/root.tsx` - Root application component
+- `front-rr/workers/app.ts` - Cloudflare Workers entry point
+- `front-rr/react-router.config.ts` - React Router configuration
+- `front-rr/wrangler.jsonc` - Cloudflare Workers deployment configuration
 
 ## Database Schema
 
@@ -430,6 +542,18 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - **Prevention**: Added comprehensive guidelines for foreign key constraint handling in Development Guidelines
 - **Lesson learned**: Always verify ALL foreign key references across entire schema when implementing delete operations
 - **Key insight**: Most tables lack `onDelete: 'cascade'` configuration, requiring manual cascading delete implementation
+
+### 2025-06-27 (React Router v7 Frontend Implementation)
+
+- Successfully implemented React Router v7-based frontend using Test-Driven Development (TDD):
+  - **Complete TDD Implementation**: All 51 tests passing across 5 test files
+  - **Modern Architecture**: React Router v7 with Cloudflare Workers SSR and Tailwind CSS v4
+  - **Pages Implemented**: Home (`/`), Movie Details (`/movies/:id`), Search (`/search`), Admin Login (`/admin/login`), Admin Movies (`/admin/movies`)
+  - **Authentication**: JWT-based localStorage authentication matching API design
+  - **Comprehensive Testing**: Loader functions, component rendering, error handling, form validation, and authentication flows
+- **Added to CLAUDE.md**: Complete React Router v7 Frontend section with architecture, features, test coverage, and deployment commands
+- **Updated Commands**: Added front-rr deployment and testing commands to relevant sections
+- **Legacy Support**: Maintains compatibility with existing Astro frontend while transitioning to React Router v7
 
 ### Development Guidelines
 

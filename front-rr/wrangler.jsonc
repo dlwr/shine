@@ -1,9 +1,18 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "react-router-app",
-  "compatibility_date": "2025-04-04",
+  "name": "shine-frontend",
+  "compatibility_date": "2025-06-27",
   "main": "./workers/app.ts",
-  "vars": {
-    "VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare"
+  "env": {
+    "development": {
+      "vars": {
+        "PUBLIC_API_URL": "http://localhost:8787"
+      }
+    },
+    "production": {
+      "vars": {
+        "PUBLIC_API_URL": "https://shine-api.dlwr.workers.dev"
+      }
+    }
   }
 }
