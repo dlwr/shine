@@ -9,20 +9,20 @@ interface Props {
     nominations?: Array<{
       uid: string;
       isWinner: boolean;
-      specialMention?: string;
+      specialMention?: string | null;
       category: {
         uid: string;
         name: string;
       };
       ceremony: {
         uid: string;
-        number: number;
+        number: number | null;
         year: number;
       };
       organization: {
         uid: string;
         name: string;
-        shortName: string;
+        shortName: string | null;
       };
     }>;
     articleLinks?: Array<{

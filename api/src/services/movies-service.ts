@@ -226,8 +226,12 @@ export class MoviesService extends BaseService {
         nominationUid: nominations.uid,
         isWinner: nominations.isWinner,
         specialMention: nominations.specialMention,
+        categoryUid: awardCategories.uid,
         categoryName: awardCategories.name,
+        ceremonyUid: awardCeremonies.uid,
+        ceremonyNumber: awardCeremonies.ceremonyNumber,
         ceremonyYear: awardCeremonies.year,
+        organizationUid: awardOrganizations.uid,
         organizationName: awardOrganizations.name,
         organizationShortName: awardOrganizations.shortName,
       })
@@ -256,24 +260,25 @@ export class MoviesService extends BaseService {
       title: movie.title || `Unknown Title (${movie.year})`,
       description: (movie.description as string) || undefined,
       posterUrl: (movie.posterUrl as string) || undefined,
-      nominations: nominationsData.map(
-        (nom: {
-          nominationUid: string;
-          isWinner: number;
-          specialMention: string | null;
-          categoryName: string;
-          ceremonyYear: number;
-          organizationName: string;
-          organizationShortName: string | null;
-        }) => ({
-          uid: nom.nominationUid,
+      nominations: nominationsData.map(nom => ({
+        uid: nom.nominationUid,
+        isWinner: Boolean(nom.isWinner),
+        specialMention: nom.specialMention,
+        category: {
+          uid: nom.categoryUid,
+          name: nom.categoryName,
+        },
+        ceremony: {
+          uid: nom.ceremonyUid,
+          number: nom.ceremonyNumber,
           year: nom.ceremonyYear,
-          isWinner: Boolean(nom.isWinner),
-          category: nom.categoryName,
-          organization: nom.organizationShortName || nom.organizationName,
-          ceremony: `${nom.organizationShortName || nom.organizationName} ${nom.ceremonyYear}`,
-        }),
-      ),
+        },
+        organization: {
+          uid: nom.organizationUid,
+          name: nom.organizationName,
+          shortName: nom.organizationShortName,
+        },
+      })),
     };
 
     // Cache result

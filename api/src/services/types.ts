@@ -28,11 +28,22 @@ export interface MovieSelection {
   posterUrl: string | undefined;
   nominations: {
     uid: string;
-    year: number;
     isWinner: boolean;
-    category: string;
-    organization: string;
-    ceremony: string;
+    specialMention?: string | null;
+    category: {
+      uid: string;
+      name: string;
+    };
+    ceremony: {
+      uid: string;
+      number: number | null;
+      year: number;
+    };
+    organization: {
+      uid: string;
+      name: string;
+      shortName: string | null;
+    };
   }[];
 }
 
