@@ -116,7 +116,7 @@ describe('AdminMovies Component', () => {
     });
 
     it('未認証の場合はログインページにリダイレクト', async () => {
-      mockLocalStorage.getItem.mockReturnValue(undefined);
+      mockLocalStorage.getItem.mockReturnValue(null);
 
       const context = createMockContext();
       const url = new URL('http://localhost:3000/admin/movies');

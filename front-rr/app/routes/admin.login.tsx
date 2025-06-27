@@ -49,11 +49,9 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
 
   // ログイン成功時の処理
   useEffect(() => {
-    if (actionData?.success && actionData?.token) {
-      if (typeof globalThis !== 'undefined' && globalThis.window) {
-        globalThis.localStorage.setItem('adminToken', actionData.token);
-        globalThis.location.href = '/admin/movies';
-      }
+    if (actionData?.success && actionData?.token && typeof globalThis !== 'undefined' && globalThis.window) {
+      globalThis.localStorage.setItem('adminToken', actionData.token);
+      globalThis.location.href = '/admin/movies';
     }
   }, [actionData]);
 
