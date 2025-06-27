@@ -2,6 +2,7 @@ packages:
   - api
   - scrapers
   - front
+  - front-rr
 ignoredBuiltDependencies:
   - esbuild
   - sharp

@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "shine-frontend",
+  "compatibility_date": "2025-06-27",
+  "main": "./workers/app.ts",
+  "env": {
+    "development": {
+      "vars": {
+        "PUBLIC_API_URL": "http://localhost:8787"
+      }
+    },
+    "production": {
+      "vars": {
+        "PUBLIC_API_URL": "https://shine-api.dlwr.workers.dev"
+      }
+    }
+  }
+}
