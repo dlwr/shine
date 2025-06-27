@@ -73,16 +73,22 @@ export class MoviesService extends BaseService {
 
     // Build final query with conditions - using unknown type for complex Drizzle types
     let finalQuery: unknown = baseQuery;
-    
+
     if (String(hasAwards) === "true") {
       // Join nominations for awards filter
-      finalQuery = this.executeQuery(finalQuery).innerJoin(nominations, eq(nominations.movieUid, movies.uid));
-      
+      finalQuery = this.executeQuery(finalQuery).innerJoin(
+        nominations,
+        eq(nominations.movieUid, movies.uid),
+      );
+
       if (conditions.length > 0) {
         finalQuery = this.executeQuery(finalQuery).where(and(...conditions));
       }
-      
-      finalQuery = this.executeQuery(finalQuery).groupBy(movies.uid, translations.content);
+
+      finalQuery = this.executeQuery(finalQuery).groupBy(
+        movies.uid,
+        translations.content,
+      );
     } else if (conditions.length > 0) {
       finalQuery = this.executeQuery(finalQuery).where(and(...conditions));
     }
@@ -108,11 +114,14 @@ export class MoviesService extends BaseService {
 
     // Use unknown type for count query
     let countQuery: unknown = baseCountQuery;
-    
+
     if (String(hasAwards) === "true") {
-      countQuery = this.executeQuery(countQuery).innerJoin(nominations, eq(nominations.movieUid, movies.uid));
+      countQuery = this.executeQuery(countQuery).innerJoin(
+        nominations,
+        eq(nominations.movieUid, movies.uid),
+      );
     }
-    
+
     if (conditions.length > 0) {
       countQuery = this.executeQuery(countQuery).where(and(...conditions));
     }
@@ -122,23 +131,25 @@ export class MoviesService extends BaseService {
     const totalPages = Math.ceil(totalCount / limit);
 
     return {
-      movies: searchResults.map((movie: {
-        uid: string;
-        year: number | null;
-        originalLanguage: string;
-        imdbId: string | null;
-        title: string | null;
-        posterUrl: unknown;
-        hasNominations: unknown;
-      }) => ({
-        uid: movie.uid,
-        year: movie.year ?? 0,
-        originalLanguage: movie.originalLanguage,
-        imdbId: movie.imdbId,
-        title: movie.title || `Unknown Title (${movie.year})`,
-        posterUrl: movie.posterUrl,
-        hasNominations: Boolean(movie.hasNominations),
-      })),
+      movies: searchResults.map(
+        (movie: {
+          uid: string;
+          year: number | null;
+          originalLanguage: string;
+          imdbId: string | null;
+          title: string | null;
+          posterUrl: unknown;
+          hasNominations: unknown;
+        }) => ({
+          uid: movie.uid,
+          year: movie.year ?? 0,
+          originalLanguage: movie.originalLanguage,
+          imdbId: movie.imdbId,
+          title: movie.title || `Unknown Title (${movie.year})`,
+          posterUrl: movie.posterUrl,
+          hasNominations: Boolean(movie.hasNominations),
+        }),
+      ),
       pagination: {
         currentPage: page,
         totalPages,
@@ -245,22 +256,24 @@ export class MoviesService extends BaseService {
       title: movie.title || `Unknown Title (${movie.year})`,
       description: (movie.description as string) || undefined,
       posterUrl: (movie.posterUrl as string) || undefined,
-      nominations: nominationsData.map((nom: {
-        nominationUid: string;
-        isWinner: number;
-        specialMention: string | null;
-        categoryName: string;
-        ceremonyYear: number;
-        organizationName: string;
-        organizationShortName: string | null;
-      }) => ({
-        uid: nom.nominationUid,
-        year: nom.ceremonyYear,
-        isWinner: Boolean(nom.isWinner),
-        category: nom.categoryName,
-        organization: nom.organizationShortName || nom.organizationName,
-        ceremony: `${nom.organizationShortName || nom.organizationName} ${nom.ceremonyYear}`,
-      })),
+      nominations: nominationsData.map(
+        (nom: {
+          nominationUid: string;
+          isWinner: number;
+          specialMention: string | null;
+          categoryName: string;
+          ceremonyYear: number;
+          organizationName: string;
+          organizationShortName: string | null;
+        }) => ({
+          uid: nom.nominationUid,
+          year: nom.ceremonyYear,
+          isWinner: Boolean(nom.isWinner),
+          category: nom.categoryName,
+          organization: nom.organizationShortName || nom.organizationName,
+          ceremony: `${nom.organizationShortName || nom.organizationName} ${nom.ceremonyYear}`,
+        }),
+      ),
     };
 
     // Cache result
@@ -278,6 +291,17 @@ export class MoviesService extends BaseService {
     title: string,
     description?: string,
   ): Promise<void> {
+    // Check if movie exists
+    const movieExists = await this.database
+      .select({ uid: movies.uid })
+      .from(movies)
+      .where(eq(movies.uid, movieId))
+      .limit(1);
+
+    if (movieExists.length === 0) {
+      throw new Error("Movie not found");
+    }
+
     await this.database.transaction(async trx => {
       // Add or update title translation
       const existingTitle = await trx

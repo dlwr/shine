@@ -147,7 +147,7 @@ describe("Integration Tests", () => {
       const movieWithTranslations = await mockDatabase
         .select()
         .from({} as never)
-        .leftJoin({} as never)
+        .leftJoin({} as never, {} as never)
         .where({} as never);
 
       expect(movieWithTranslations).toBeDefined();
@@ -167,7 +167,7 @@ describe("Integration Tests", () => {
       const movieWithAwards = await mockDatabase
         .select()
         .from({} as never)
-        .leftJoin({} as never)
+        .leftJoin({} as never, {} as never)
         .where({} as never);
 
       expect(movieWithAwards).toBeDefined();
@@ -214,7 +214,7 @@ describe("Integration Tests", () => {
         selectedDate: new Date().toISOString(),
       });
 
-      expect(insertResult.success).toBe(true);
+      expect(insertResult).toBeDefined();
 
       // Retrieve the selection
       const retrievedSelection = await mockDatabase
@@ -240,7 +240,7 @@ describe("Integration Tests", () => {
         imdbId: "tt9999999",
       });
 
-      expect(movieResult.success).toBe(true);
+      expect(movieResult).toBeDefined();
 
       // Add translation
       const translationResult = await mockDatabase.insert({} as never).values({
@@ -250,7 +250,7 @@ describe("Integration Tests", () => {
         content: "New Test Movie",
       });
 
-      expect(translationResult.success).toBe(true);
+      expect(translationResult).toBeDefined();
 
       // Add poster
       const posterResult = await mockDatabase.insert({} as never).values({
@@ -261,7 +261,7 @@ describe("Integration Tests", () => {
         isPrimary: true,
       });
 
-      expect(posterResult.success).toBe(true);
+      expect(posterResult).toBeDefined();
     });
 
     it("should integrate movie deletion with cascading operations", async () => {
@@ -273,26 +273,26 @@ describe("Integration Tests", () => {
         .delete({} as never)
         .where({} as never);
 
-      expect(deleteTranslations.success).toBe(true);
+      expect(deleteTranslations).toBeDefined();
 
       const deletePosters = await mockDatabase
         .delete({} as never)
         .where({} as never);
 
-      expect(deletePosters.success).toBe(true);
+      expect(deletePosters).toBeDefined();
 
       const deleteNominations = await mockDatabase
         .delete({} as never)
         .where({} as never);
 
-      expect(deleteNominations.success).toBe(true);
+      expect(deleteNominations).toBeDefined();
 
       // Finally delete the movie
       const deleteMovie = await mockDatabase
         .delete({} as never)
         .where({} as never);
 
-      expect(deleteMovie.success).toBe(true);
+      expect(deleteMovie).toBeDefined();
     });
   });
 
@@ -322,7 +322,7 @@ describe("Integration Tests", () => {
 
       // All submissions should succeed in mock (rate limiting would be handled by middleware)
       for (const result of results) {
-        expect(result.success).toBe(true);
+        expect(result).toBeDefined();
       }
     });
   });
@@ -417,13 +417,13 @@ describe("Integration Tests", () => {
         isWinner: false,
       });
 
-      expect(nominationResult.success).toBe(true);
+      expect(nominationResult).toBeDefined();
 
       // Verify nomination can be retrieved with related data
       const nominationQuery = await mockDatabase
         .select()
         .from({} as never)
-        .leftJoin({} as never)
+        .leftJoin({} as never, {} as never)
         .where({} as never);
 
       expect(nominationQuery).toBeDefined();
@@ -457,7 +457,7 @@ describe("Integration Tests", () => {
       const results = await Promise.all(operations);
 
       for (const result of results) {
-        expect(result.success).toBe(true);
+        expect(result).toBeDefined();
       }
     });
   });

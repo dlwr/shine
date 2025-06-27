@@ -52,8 +52,12 @@ export class AdminService extends BaseService {
         ),
       );
 
-    const searchCondition = search ? like(translations.content, `%${search}%`) : undefined;
-    const query = searchCondition ? baseQuery.where(searchCondition) : baseQuery;
+    const searchCondition = search
+      ? like(translations.content, `%${search}%`)
+      : undefined;
+    const query = searchCondition
+      ? baseQuery.where(searchCondition)
+      : baseQuery;
 
     const allMovies = await query
       .orderBy(sql`${movies.createdAt} DESC`)
@@ -116,20 +120,33 @@ export class AdminService extends BaseService {
   }> {
     const { imdbId, fetchTMDBData = false } = options;
 
-    // Validate IMDb ID format
-    if (!/^tt\d+$/.test(imdbId)) {
+    // Validate IMDb ID format (can be empty for removal)
+    if (imdbId && !/^tt\d+$/.test(imdbId)) {
       throw new Error("Invalid IMDb ID format");
     }
 
-    // Check for duplicate IMDb ID
-    const existingMovie = await this.database
+    // Check if movie exists
+    const movieExists = await this.database
       .select({ uid: movies.uid })
       .from(movies)
-      .where(and(eq(movies.imdbId, imdbId), not(eq(movies.uid, movieId))))
+      .where(eq(movies.uid, movieId))
       .limit(1);
 
-    if (existingMovie.length > 0) {
-      throw new Error("IMDb ID already exists for another movie");
+    if (movieExists.length === 0) {
+      throw new Error("Movie not found");
+    }
+
+    // Check for duplicate IMDb ID if setting one
+    if (imdbId) {
+      const existingMovie = await this.database
+        .select({ uid: movies.uid })
+        .from(movies)
+        .where(and(eq(movies.imdbId, imdbId), not(eq(movies.uid, movieId))))
+        .limit(1);
+
+      if (existingMovie.length > 0) {
+        throw new Error("IMDb ID already exists for another movie");
+      }
     }
 
     let tmdbId: number | undefined;
@@ -217,6 +234,13 @@ export class AdminService extends BaseService {
       );
   }
 
+  async flagArticleAsSpam(articleId: string): Promise<void> {
+    await this.database
+      .update(articleLinks)
+      .set({ isSpam: true })
+      .where(eq(articleLinks.uid, articleId));
+  }
+
   async mergeMovies(options: MergeMoviesOptions): Promise<void> {
     const {
       sourceMovieId,
@@ -233,7 +257,10 @@ export class AdminService extends BaseService {
       // Merge nominations
       await trx
         .update(nominations)
-        .set({ movieUid: targetMovieId, updatedAt: Math.floor(Date.now() / 1000) })
+        .set({
+          movieUid: targetMovieId,
+          updatedAt: Math.floor(Date.now() / 1000),
+        })
         .where(eq(nominations.movieUid, sourceMovieId));
 
       // Merge movie selections
@@ -291,10 +318,13 @@ export class AdminService extends BaseService {
     });
   }
 
-  private async fetchTMDBDataByImdbId(imdbId: string): Promise<{
-    tmdbId: number;
-    movie: TMDBMovieData;
-  } | undefined> {
+  private async fetchTMDBDataByImdbId(imdbId: string): Promise<
+    | {
+        tmdbId: number;
+        movie: TMDBMovieData;
+      }
+    | undefined
+  > {
     const apiKey = this.env.TMDB_API_KEY;
     if (!apiKey) {
       throw new Error("TMDB API key not configured");

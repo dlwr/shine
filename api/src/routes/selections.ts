@@ -10,17 +10,15 @@ import { posterUrls } from "db/schema/poster-urls";
 import { translations } from "db/schema/translations";
 import { Hono } from "hono";
 import { authMiddleware } from "../auth";
+import { SelectionsService } from "../services";
 import {
   checkETag,
   createCachedResponse,
   createETag,
-  EdgeCache,
   getCacheTTL,
 } from "../utils/cache";
 
 export const selectionsRoutes = new Hono<{ Bindings: Environment }>();
-
-const cache = new EdgeCache();
 
 function simpleHash(input: string): number {
   let hash = 0;
@@ -140,6 +138,7 @@ async function getMovieNominations(
   }));
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function getMovieByDateSeedPreview(
   database: ReturnType<typeof getDatabase>,
   date: Date,
@@ -302,6 +301,7 @@ async function getMovieByDateSeedPreview(
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function getMovieByDateSeed(
   database: ReturnType<typeof getDatabase>,
   date: Date,
@@ -513,7 +513,7 @@ function parseAcceptLanguage(acceptLanguage?: string): string[] {
 // Main endpoint for date-seeded movie selections
 selectionsRoutes.get("/", async c => {
   try {
-    const now = new Date();
+    const selectionsService = new SelectionsService(c.env as Environment);
     const localeParameter = c.req.query("locale");
     const acceptLanguage = c.req.header("accept-language");
     const preferredLanguages = localeParameter
@@ -522,35 +522,10 @@ selectionsRoutes.get("/", async c => {
     const locale =
       preferredLanguages.find(lang => ["en", "ja"].includes(lang)) || "en";
 
-    // Generate cache keys for each selection type
-    const dailyDate = getSelectionDate(now, "daily");
-    const weeklyDate = getSelectionDate(now, "weekly");
-    const monthlyDate = getSelectionDate(now, "monthly");
-
-    // Try to get cached response first
-    const cacheKey = `selections:all:${dailyDate}:${weeklyDate}:${monthlyDate}:${locale}:v1`;
-    const cachedResponse = await cache.get(cacheKey);
-
-    if (cachedResponse) {
-      console.log("Cache hit for selections:", cacheKey);
-      return cachedResponse;
-    }
-
-    console.log("Cache miss for selections:", cacheKey);
-
-    // If not cached, fetch from database
-    const database = getDatabase(c.env as Environment);
-    const [dailyMovie, weeklyMovie, monthlyMovie] = await Promise.all([
-      getMovieByDateSeed(database, now, "daily", locale),
-      getMovieByDateSeed(database, now, "weekly", locale),
-      getMovieByDateSeed(database, now, "monthly", locale),
-    ]);
-
-    const result = {
-      daily: dailyMovie,
-      weekly: weeklyMovie,
-      monthly: monthlyMovie,
-    };
+    const result = await selectionsService.getDateSeededSelections({
+      locale,
+      date: new Date(),
+    });
 
     // Create ETag for the response
     const etag = createETag(result);
@@ -572,9 +547,6 @@ selectionsRoutes.get("/", async c => {
       "X-Cache-Status": "MISS",
     });
 
-    // Store in cache
-    await cache.put(cacheKey, response, ttl);
-
     return response;
   } catch (error) {
     console.error("Error fetching feature movies:", error);
@@ -585,9 +557,7 @@ selectionsRoutes.get("/", async c => {
 // Admin: Reselect movie for a specific period
 selectionsRoutes.post("/reselect", authMiddleware, async c => {
   try {
-    const database = getDatabase(c.env as Environment);
-    const now = new Date();
-
+    const selectionsService = new SelectionsService(c.env as Environment);
     const body = await c.req.json();
     const { type, locale = "en" } = body;
 
@@ -595,16 +565,7 @@ selectionsRoutes.post("/reselect", authMiddleware, async c => {
       return c.json({ error: "Invalid selection type" }, 400);
     }
 
-    // Invalidate related caches before reselecting
-    const dateForType = getSelectionDate(now, type);
-    await Promise.all([
-      cache.deleteByPattern(`selections:${type}:${dateForType}`),
-      cache.deleteByPattern(`selections:all:`),
-    ]);
-
-    const movie = await getMovieByDateSeed(database, now, type, locale, true);
-
-    console.log(`Cache invalidated for ${type} selection on ${dateForType}`);
+    const movie = await selectionsService.reselectMovie(type, locale);
 
     return c.json({
       type,
@@ -619,48 +580,13 @@ selectionsRoutes.post("/reselect", authMiddleware, async c => {
 // Admin: Preview next period movie selections
 selectionsRoutes.get("/admin/preview-selections", authMiddleware, async c => {
   try {
-    const database = getDatabase(c.env as Environment);
-    const now = new Date();
-
+    const selectionsService = new SelectionsService(c.env as Environment);
     const localeParameter = c.req.query("locale");
     const locale = localeParameter || "en";
 
-    // Calculate next dates
-    const nextDay = new Date(now);
-    nextDay.setDate(now.getDate() + 1);
+    const previews = await selectionsService.getNextPeriodPreviews(locale);
 
-    const daysSinceFriday = (now.getDay() - 5 + 7) % 7;
-    const fridayDate = new Date(now);
-    fridayDate.setDate(now.getDate() - daysSinceFriday);
-    const nextFriday = new Date(fridayDate);
-    nextFriday.setDate(fridayDate.getDate() + 7);
-
-    const nextMonth = new Date(now);
-    nextMonth.setMonth(now.getMonth() + 1);
-    nextMonth.setDate(1);
-
-    // Get next period selections (preview only - don't save to database)
-    const [nextDailyMovie, nextWeeklyMovie, nextMonthlyMovie] =
-      await Promise.all([
-        getMovieByDateSeedPreview(database, nextDay, "daily", locale),
-        getMovieByDateSeedPreview(database, nextFriday, "weekly", locale),
-        getMovieByDateSeedPreview(database, nextMonth, "monthly", locale),
-      ]);
-
-    return c.json({
-      nextDaily: {
-        date: getSelectionDate(nextDay, "daily"),
-        movie: nextDailyMovie,
-      },
-      nextWeekly: {
-        date: getSelectionDate(nextFriday, "weekly"),
-        movie: nextWeeklyMovie,
-      },
-      nextMonthly: {
-        date: getSelectionDate(nextMonth, "monthly"),
-        movie: nextMonthlyMovie,
-      },
-    });
+    return c.json(previews);
   } catch (error) {
     console.error("Error previewing next selections:", error);
     return c.json({ error: "Internal server error" }, 500);
@@ -899,7 +825,7 @@ selectionsRoutes.post(
 // Admin: Override movie selection for specific date/type
 selectionsRoutes.post("/admin/override-selection", authMiddleware, async c => {
   try {
-    const database = getDatabase(c.env as Environment);
+    const selectionsService = new SelectionsService(c.env as Environment);
     const { type, date, movieId } = await c.req.json();
 
     // Validate inputs
@@ -921,43 +847,19 @@ selectionsRoutes.post("/admin/override-selection", authMiddleware, async c => {
       return c.json({ error: "Date must be in YYYY-MM-DD format" }, 400);
     }
 
-    // Check if movie exists
-    const movieExists = await database
-      .select({ uid: movies.uid })
-      .from(movies)
-      .where(eq(movies.uid, movieId))
-      .limit(1);
-
-    if (movieExists.length === 0) {
-      return c.json({ error: "Movie not found" }, 404);
-    }
-
-    // Delete existing selection if any
-    await database
-      .delete(movieSelections)
-      .where(
-        and(
-          eq(movieSelections.selectionType, type),
-          eq(movieSelections.selectionDate, date),
-        ),
-      );
-
-    // Insert new selection
-    const newSelection = await database
-      .insert(movieSelections)
-      .values({
-        selectionType: type,
-        selectionDate: date,
-        movieId: movieId,
-      })
-      .returning();
+    const targetDate = new Date(date + "T00:00:00.000Z");
+    await selectionsService.overrideSelection(type, movieId, targetDate);
 
     return c.json({
       success: true,
-      selection: newSelection[0],
     });
   } catch (error) {
     console.error("Error overriding selection:", error);
+
+    if (error instanceof Error && error.message === "Movie not found") {
+      return c.json({ error: "Movie not found" }, 404);
+    }
+
     return c.json({ error: "Internal server error" }, 500);
   }
 });

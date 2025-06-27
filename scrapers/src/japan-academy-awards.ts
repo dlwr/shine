@@ -362,9 +362,9 @@ function extractMoviesFromText(text: string, year: number): MovieInfo[] {
   return movies;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractMoviesFromTableWithYear(
   $: cheerio.CheerioAPI,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   $table: any,
   year: number,
 ): MovieInfo[] {
@@ -503,17 +503,19 @@ async function processMovie(movieInfo: MovieInfo) {
     }
 
     // どちらかで既存の映画が見つかった場合
-    const existingMovies =
-      existingMoviesByTitle.length > 0
-        ? existingMoviesByTitle
-        : existingMovieByImdbId
-          ? [
-              {
-                movies: existingMovieByImdbId,
-                translations: existingMoviesByTitle[0]?.translations,
-              },
-            ]
-          : [];
+    let existingMovies: typeof existingMoviesByTitle;
+    if (existingMoviesByTitle.length > 0) {
+      existingMovies = existingMoviesByTitle;
+    } else if (existingMovieByImdbId) {
+      existingMovies = [
+        {
+          movies: existingMovieByImdbId,
+          translations: existingMoviesByTitle[0]?.translations,
+        },
+      ];
+    } else {
+      existingMovies = [];
+    }
 
     let movieUid: string;
 

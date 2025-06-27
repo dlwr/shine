@@ -1,4 +1,4 @@
-import { and, eq, getDatabase, like, not, sql, type Environment } from "db";
+import { and, eq, getDatabase, not, sql, type Environment } from "db";
 import { articleLinks } from "db/schema/article-links";
 import { awardCategories } from "db/schema/award-categories";
 import { awardCeremonies } from "db/schema/award-ceremonies";
@@ -12,6 +12,7 @@ import { translations } from "db/schema/translations";
 import { Hono } from "hono";
 import { authMiddleware } from "../auth";
 import { sanitizeText } from "../middleware/sanitizer";
+import { AdminService } from "../services";
 
 interface MovieDatabaseTranslation {
   iso_639_1: string;
@@ -25,74 +26,16 @@ export const adminRoutes = new Hono<{ Bindings: Environment }>();
 // Get all movies for admin
 adminRoutes.get("/movies", authMiddleware, async c => {
   try {
-    const database = getDatabase(c.env as Environment);
+    const adminService = new AdminService(c.env as Environment);
     const page = Number(c.req.query("page") || 1);
     const limit = Math.min(Number(c.req.query("limit") || 50), 100);
     const rawSearch = c.req.query("search");
     const search = rawSearch ? sanitizeText(rawSearch) : undefined;
-    const offset = (page - 1) * limit;
 
-    // Build base query
-    const baseQuery = database
-      .select({
-        uid: movies.uid,
-        year: movies.year,
-        originalLanguage: movies.originalLanguage,
-        imdbId: movies.imdbId,
-        title: translations.content,
-        posterUrl: sql`
-          (
-                              SELECT url
-                              FROM poster_urls
-                              WHERE poster_urls.movie_uid = movies.uid
-                              LIMIT 1
-                            )
-        `.as("posterUrl"),
-      })
-      .from(movies)
-      .leftJoin(
-        translations,
-        and(
-          eq(movies.uid, translations.resourceUid),
-          eq(translations.resourceType, "movie_title"),
-          eq(translations.isDefault, 1),
-        ),
-      );
-
-    // Apply search filter if provided
-    const query = search
-      ? baseQuery.where(like(translations.content, `%${search}%`))
-      : baseQuery;
-
-    // Build count query
-    const baseCountQuery = database
-      .select({ count: sql`count(*)`.as("count") })
-      .from(movies)
-      .leftJoin(
-        translations,
-        and(
-          eq(movies.uid, translations.resourceUid),
-          eq(translations.resourceType, "movie_title"),
-          eq(translations.isDefault, 1),
-        ),
-      );
-
-    const countQuery = search
-      ? baseCountQuery.where(like(translations.content, `%${search}%`))
-      : baseCountQuery;
-
-    const [countResult, moviesResult] = await Promise.all([
-      countQuery,
-      query
-        .orderBy(sql`${movies.createdAt} DESC`)
-        .limit(limit)
-        .offset(offset),
-    ]);
-
-    const totalCount = Number(countResult[0].count);
+    const result = await adminService.getMovies({ page, limit, search });
 
     return c.json({
-      movies: moviesResult.map((movie: (typeof moviesResult)[0]) => ({
+      movies: result.movies.map(movie => ({
         uid: movie.uid,
         year: movie.year,
         originalLanguage: movie.originalLanguage,
@@ -104,10 +47,10 @@ adminRoutes.get("/movies", authMiddleware, async c => {
           : undefined,
       })),
       pagination: {
-        page,
+        page: result.pagination.currentPage,
         limit,
-        totalCount,
-        totalPages: Math.ceil(totalCount / limit),
+        totalCount: result.pagination.totalCount,
+        totalPages: result.pagination.totalPages,
       },
     });
   } catch (error) {
@@ -119,54 +62,10 @@ adminRoutes.get("/movies", authMiddleware, async c => {
 // Delete movie
 adminRoutes.delete("/movies/:id", authMiddleware, async c => {
   try {
-    const database = getDatabase(c.env as Environment);
+    const adminService = new AdminService(c.env as Environment);
     const movieId = c.req.param("id");
 
-    // Check if movie exists
-    const movieExists = await database
-      .select({ uid: movies.uid })
-      .from(movies)
-      .where(eq(movies.uid, movieId))
-      .limit(1);
-
-    if (movieExists.length === 0) {
-      return c.json({ error: "Movie not found" }, 404);
-    }
-
-    // Delete all related data in proper order
-    // 1. Delete article links
-    await database
-      .delete(articleLinks)
-      .where(eq(articleLinks.movieUid, movieId));
-
-    // 2. Delete movie selections
-    await database
-      .delete(movieSelections)
-      .where(eq(movieSelections.movieId, movieId));
-
-    // 3. Delete nominations
-    await database.delete(nominations).where(eq(nominations.movieUid, movieId));
-
-    // 4. Delete reference URLs
-    await database
-      .delete(referenceUrls)
-      .where(eq(referenceUrls.movieUid, movieId));
-
-    // 5. Delete translations
-    await database
-      .delete(translations)
-      .where(
-        and(
-          eq(translations.resourceUid, movieId),
-          eq(translations.resourceType, "movie_title"),
-        ),
-      );
-
-    // 6. Delete poster URLs
-    await database.delete(posterUrls).where(eq(posterUrls.movieUid, movieId));
-
-    // 7. Finally delete the movie
-    await database.delete(movies).where(eq(movies.uid, movieId));
+    await adminService.deleteMovie(movieId);
 
     return c.json({ success: true });
   } catch (error) {
@@ -178,13 +77,10 @@ adminRoutes.delete("/movies/:id", authMiddleware, async c => {
 // Flag article as spam
 adminRoutes.post("/article-links/:id/spam", authMiddleware, async c => {
   try {
-    const database = getDatabase(c.env as Environment);
+    const adminService = new AdminService(c.env as Environment);
     const articleId = c.req.param("id");
 
-    await database
-      .update(articleLinks)
-      .set({ isSpam: true })
-      .where(eq(articleLinks.uid, articleId));
+    await adminService.flagArticleAsSpam(articleId);
 
     return c.json({ success: true });
   } catch (error) {
@@ -196,7 +92,7 @@ adminRoutes.post("/article-links/:id/spam", authMiddleware, async c => {
 // Add poster URL
 adminRoutes.post("/movies/:id/posters", authMiddleware, async c => {
   try {
-    const database = getDatabase(c.env as Environment);
+    const adminService = new AdminService(c.env as Environment);
     const movieId = c.req.param("id");
     const {
       url,
@@ -218,51 +114,16 @@ adminRoutes.post("/movies/:id/posters", authMiddleware, async c => {
       return c.json({ error: "Invalid URL format" }, 400);
     }
 
-    // Check if movie exists
-    const movieExists = await database
-      .select({ uid: movies.uid })
-      .from(movies)
-      .where(eq(movies.uid, movieId))
-      .limit(1);
+    const newPoster = await adminService.addPoster(movieId, {
+      url,
+      width,
+      height,
+      language: languageCode,
+      source: "manual",
+      isPrimary,
+    });
 
-    if (movieExists.length === 0) {
-      return c.json({ error: "Movie not found" }, 404);
-    }
-
-    // Check if URL already exists for this movie
-    const existingPoster = await database
-      .select({ uid: posterUrls.uid })
-      .from(posterUrls)
-      .where(and(eq(posterUrls.movieUid, movieId), eq(posterUrls.url, url)))
-      .limit(1);
-
-    if (existingPoster.length > 0) {
-      return c.json({ error: "Poster URL already exists for this movie" }, 409);
-    }
-
-    // If setting as primary, unset other primary posters
-    if (isPrimary) {
-      await database
-        .update(posterUrls)
-        .set({ isPrimary: 0 })
-        .where(eq(posterUrls.movieUid, movieId));
-    }
-
-    // Add poster URL
-    const newPoster = await database
-      .insert(posterUrls)
-      .values({
-        movieUid: movieId,
-        url,
-        width: width || undefined,
-        height: height || undefined,
-        languageCode: languageCode || undefined,
-        sourceType: "manual",
-        isPrimary: isPrimary ? 1 : 0,
-      })
-      .returning();
-
-    return c.json(newPoster[0]);
+    return c.json(newPoster);
   } catch (error) {
     console.error("Error adding poster:", error);
     return c.json({ error: "Internal server error" }, 500);
@@ -275,27 +136,11 @@ adminRoutes.delete(
   authMiddleware,
   async c => {
     try {
-      const database = getDatabase(c.env as Environment);
+      const adminService = new AdminService(c.env as Environment);
       const movieId = c.req.param("movieId");
       const posterId = c.req.param("posterId");
 
-      // Check if poster exists and belongs to the movie
-      const posterExists = await database
-        .select({ uid: posterUrls.uid, movieUid: posterUrls.movieUid })
-        .from(posterUrls)
-        .where(eq(posterUrls.uid, posterId))
-        .limit(1);
-
-      if (posterExists.length === 0) {
-        return c.json({ error: "Poster not found" }, 404);
-      }
-
-      if (posterExists[0].movieUid !== movieId) {
-        return c.json({ error: "Poster does not belong to this movie" }, 400);
-      }
-
-      // Delete poster
-      await database.delete(posterUrls).where(eq(posterUrls.uid, posterId));
+      await adminService.deletePoster(movieId, posterId);
 
       return c.json({ success: true });
     } catch (error) {
@@ -308,175 +153,14 @@ adminRoutes.delete(
 // Update movie IMDB ID
 adminRoutes.put("/movies/:id/imdb-id", authMiddleware, async c => {
   try {
-    const database = getDatabase(c.env as Environment);
+    const adminService = new AdminService(c.env as Environment);
     const movieId = c.req.param("id");
     const { imdbId, refreshData = false } = await c.req.json();
 
-    // Validate IMDB ID format (optional field, can be null/empty)
-    if (imdbId && !/^tt\d+$/.test(imdbId)) {
-      return c.json({ error: "IMDB ID must be in format 'tt1234567'" }, 400);
-    }
-
-    // Check if movie exists
-    const movieExists = await database
-      .select({ uid: movies.uid })
-      .from(movies)
-      .where(eq(movies.uid, movieId))
-      .limit(1);
-
-    if (movieExists.length === 0) {
-      return c.json({ error: "Movie not found" }, 404);
-    }
-
-    // Check if IMDB ID is already used by another movie
-    if (imdbId) {
-      const existingMovie = await database
-        .select({ uid: movies.uid })
-        .from(movies)
-        .where(and(eq(movies.imdbId, imdbId), not(eq(movies.uid, movieId))))
-        .limit(1);
-
-      if (existingMovie.length > 0) {
-        return c.json(
-          { error: "IMDB ID is already used by another movie" },
-          409,
-        );
-      }
-    }
-
-    // Update IMDB ID first
-    await database
-      .update(movies)
-      .set({
-        imdbId: imdbId || undefined,
-        updatedAt: sql`(unixepoch())`,
-      })
-      .where(eq(movies.uid, movieId));
-
-    // If refreshData is true and imdbId is provided, fetch additional data from TMDb
-    const refreshResults = {
-      tmdbId: undefined as number | undefined,
-      postersAdded: 0,
-      translationsAdded: 0,
-    };
-
-    if (refreshData && imdbId && c.env.TMDB_API_KEY) {
-      try {
-        // Import TMDb utilities
-        const {
-          findTMDBByImdbId,
-          fetchTMDBMovieImages,
-          fetchTMDBMovieTranslations,
-          savePosterUrls,
-        } = await import("../../../scrapers/src/common/tmdb-utilities");
-
-        // Find TMDb ID
-        const tmdbId = await findTMDBByImdbId(imdbId, c.env.TMDB_API_KEY);
-
-        if (tmdbId) {
-          // Update TMDb ID
-          await database
-            .update(movies)
-            .set({ tmdbId })
-            .where(eq(movies.uid, movieId));
-
-          refreshResults.tmdbId = tmdbId;
-
-          // Fetch and save posters
-          const imagesData = await fetchTMDBMovieImages(
-            imdbId,
-            c.env.TMDB_API_KEY,
-          );
-          if (imagesData) {
-            const savedPosters = await savePosterUrls(
-              movieId,
-              imagesData.images.posters,
-              c.env as Environment,
-            );
-            refreshResults.postersAdded = savedPosters;
-          }
-
-          // Fetch and save translations using TMDb Translations API
-          let translationsAddedForImdb = 0;
-          const { translations } = await import(
-            "../../../src/schema/translations"
-          );
-
-          // Get all translations from TMDb
-          const translationsData = await fetchTMDBMovieTranslations(
-            tmdbId,
-            c.env.TMDB_API_KEY,
-          );
-
-          if (translationsData?.translations) {
-            // Find English title (original language)
-            const englishTranslation = translationsData.translations.find(
-              (t: MovieDatabaseTranslation) =>
-                t.iso_639_1 === "en" && t.data?.title,
-            );
-
-            if (englishTranslation?.data?.title) {
-              await database
-                .insert(translations)
-                .values({
-                  resourceType: "movie_title",
-                  resourceUid: movieId,
-                  languageCode: "en",
-                  content: englishTranslation.data.title,
-                  isDefault: 1,
-                })
-                .onConflictDoUpdate({
-                  target: [
-                    translations.resourceType,
-                    translations.resourceUid,
-                    translations.languageCode,
-                  ],
-                  set: {
-                    content: englishTranslation.data.title,
-                    updatedAt: Math.floor(Date.now() / 1000),
-                  },
-                });
-              translationsAddedForImdb++;
-            }
-
-            // Find Japanese title
-            const japaneseTranslation = translationsData.translations.find(
-              (t: MovieDatabaseTranslation) =>
-                t.iso_639_1 === "ja" && t.data?.title,
-            );
-
-            if (japaneseTranslation?.data?.title) {
-              await database
-                .insert(translations)
-                .values({
-                  resourceType: "movie_title",
-                  resourceUid: movieId,
-                  languageCode: "ja",
-                  content: japaneseTranslation.data.title,
-                  isDefault: 0,
-                })
-                .onConflictDoUpdate({
-                  target: [
-                    translations.resourceType,
-                    translations.resourceUid,
-                    translations.languageCode,
-                  ],
-                  set: {
-                    content: japaneseTranslation.data.title,
-                    updatedAt: Math.floor(Date.now() / 1000),
-                  },
-                });
-              translationsAddedForImdb++;
-            }
-          }
-
-          refreshResults.translationsAdded = translationsAddedForImdb;
-        }
-      } catch (refreshError) {
-        console.warn("Error during data refresh:", refreshError);
-        // Continue without failing the main operation
-      }
-    }
+    const refreshResults = await adminService.updateIMDbId(movieId, {
+      imdbId,
+      fetchTMDBData: refreshData,
+    });
 
     return c.json({
       success: true,
@@ -484,6 +168,22 @@ adminRoutes.put("/movies/:id/imdb-id", authMiddleware, async c => {
     });
   } catch (error) {
     console.error("Error updating IMDB ID:", error);
+
+    if (error instanceof Error) {
+      if (error.message === "Movie not found") {
+        return c.json({ error: "Movie not found" }, 404);
+      }
+      if (error.message === "Invalid IMDb ID format") {
+        return c.json({ error: "IMDB ID must be in format 'tt1234567'" }, 400);
+      }
+      if (error.message === "IMDb ID already exists for another movie") {
+        return c.json(
+          { error: "IMDB ID is already used by another movie" },
+          409,
+        );
+      }
+    }
+
     return c.json({ error: "Internal server error" }, 500);
   }
 });
@@ -1013,7 +713,9 @@ adminRoutes.post(
           .from(posterUrls)
           .where(eq(posterUrls.movieUid, targetId));
 
-        const existingUrls = new Set(existingTargetPosters.map(p => p.url));
+        const existingUrls = new Set(
+          existingTargetPosters.map((p: { url: string }) => p.url),
+        );
 
         for (const poster of sourcePosters) {
           // Only insert if URL doesn't already exist for target movie

@@ -88,12 +88,68 @@ export class SelectionsService extends BaseService {
     return previews;
   }
 
+  async getNextPeriodPreviews(locale: string): Promise<{
+    nextDaily: { date: string; movie?: MovieSelection };
+    nextWeekly: { date: string; movie?: MovieSelection };
+    nextMonthly: { date: string; movie?: MovieSelection };
+  }> {
+    const now = new Date();
+
+    // Calculate next dates
+    const nextDay = new Date(now);
+    nextDay.setDate(now.getDate() + 1);
+
+    const daysSinceFriday = (now.getDay() - 5 + 7) % 7;
+    const fridayDate = new Date(now);
+    fridayDate.setDate(now.getDate() - daysSinceFriday);
+    const nextFriday = new Date(fridayDate);
+    nextFriday.setDate(fridayDate.getDate() + 7);
+
+    const nextMonth = new Date(now);
+    nextMonth.setMonth(now.getMonth() + 1);
+    nextMonth.setDate(1);
+
+    // Get next period selections (preview only - don't save to database)
+    const [nextDailyMovie, nextWeeklyMovie, nextMonthlyMovie] =
+      await Promise.all([
+        this.generateMovieSelection(nextDay, "daily", locale, false),
+        this.generateMovieSelection(nextFriday, "weekly", locale, false),
+        this.generateMovieSelection(nextMonth, "monthly", locale, false),
+      ]);
+
+    return {
+      nextDaily: {
+        date: this.getSelectionDate(nextDay, "daily"),
+        movie: nextDailyMovie,
+      },
+      nextWeekly: {
+        date: this.getSelectionDate(nextFriday, "weekly"),
+        movie: nextWeeklyMovie,
+      },
+      nextMonthly: {
+        date: this.getSelectionDate(nextMonth, "monthly"),
+        movie: nextMonthlyMovie,
+      },
+    };
+  }
+
   async overrideSelection(
     type: "daily" | "weekly" | "monthly",
     movieId: string,
     date = new Date(),
   ): Promise<void> {
     const selectionDate = this.getSelectionDate(date, type);
+
+    // Check if movie exists
+    const movieExists = await this.database
+      .select({ uid: movies.uid })
+      .from(movies)
+      .where(eq(movies.uid, movieId))
+      .limit(1);
+
+    if (movieExists.length === 0) {
+      throw new Error("Movie not found");
+    }
 
     // Delete existing selection
     await this.database
@@ -311,7 +367,7 @@ export class SelectionsService extends BaseService {
       title: movie.title || `Unknown Title (${movie.year})`,
       description: (movie.description as string) || undefined,
       posterUrl: (movie.posterUrl as string) || undefined,
-      nominations: nominationsData.map((nom) => ({
+      nominations: nominationsData.map(nom => ({
         uid: nom.nominationUid,
         year: nom.ceremonyYear,
         isWinner: Boolean(nom.isWinner),

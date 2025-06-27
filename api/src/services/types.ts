@@ -37,7 +37,6 @@ export interface MovieSelection {
 }
 
 export interface DateSeedOptions {
-  type: "daily" | "weekly" | "monthly";
   locale: string;
   date?: Date;
 }

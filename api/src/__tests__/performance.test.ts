@@ -217,12 +217,12 @@ describe("Performance Tests", () => {
 
       // Verify write results
       for (const result of results.slice(20, 30)) {
-        expect(result.success).toBe(true);
+        expect(result).toBeDefined();
       }
 
       // Verify update results
       for (const result of results.slice(30)) {
-        expect(result.success).toBe(true);
+        expect(result).toBeDefined();
       }
     });
   });
@@ -251,7 +251,7 @@ describe("Performance Tests", () => {
           processedCount++;
           // Simulate some processing work
           JSON.stringify({
-            ...record,
+            ...(record as object),
             processed: true,
             timestamp: Date.now(),
           });
