@@ -1,4 +1,4 @@
-import type { Route } from "./+types/admin.movies";
+import type { Route } from './+types/admin.movies';
 
 interface AdminMovieData {
   movieUid: string;
@@ -30,23 +30,23 @@ interface PaginationData {
 
 export function meta(): Route.MetaDescriptor[] {
   return [
-    { title: "映画管理 | SHINE Admin" },
-    { name: "description", content: "映画データベースの管理画面" }
+    { title: '映画管理 | SHINE Admin' },
+    { name: 'description', content: '映画データベースの管理画面' }
   ];
 }
 
 export async function loader({ context, request }: Route.LoaderArgs) {
   // 認証チェック（サーバーサイド用の疑似実装）
-  let token: string | null = null;
-  
-  if (typeof window !== 'undefined') {
-    token = localStorage.getItem('adminToken');
+  let token: string | undefined;
+
+  if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
+    token = globalThis.localStorage.getItem('adminToken');
   }
 
   if (!token) {
-    return new Response(null, {
+    return new Response(undefined, {
       status: 302,
-      headers: { 'Location': '/admin/login' }
+      headers: { Location: '/admin/login' }
     });
   }
 
@@ -55,15 +55,19 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     const page = url.searchParams.get('page') || '1';
     const limit = url.searchParams.get('limit') || '20';
 
-    const apiUrl = context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787';
-    const response = await fetch(`${apiUrl}/admin/movies?page=${page}&limit=${limit}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    const apiUrl =
+      context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787';
+    const response = await fetch(
+      `${apiUrl}/admin/movies?page=${page}&limit=${limit}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
 
     if (response.status === 401) {
-      return new Response(null, {
+      return new Response(undefined, {
         status: 302,
-        headers: { 'Location': '/admin/login' }
+        headers: { Location: '/admin/login' }
       });
     }
 
@@ -74,28 +78,31 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     const data = await response.json();
     return data;
   } catch {
-    return new Response(null, {
+    return new Response(undefined, {
       status: 302,
-      headers: { 'Location': '/admin/login' }
+      headers: { Location: '/admin/login' }
     });
   }
 }
 
+const handleLogout = () => {
+  if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
+    globalThis.localStorage.removeItem('adminToken');
+    globalThis.location.href = '/admin/login';
+  }
+};
+
+const handleDelete = (movieUid: string) => {
+  if (globalThis.confirm?.('この映画を削除しますか？')) {
+    // 削除処理（実装省略）
+    console.log('Delete movie:', movieUid);
+  }
+};
+
 export default function AdminMovies({ loaderData }: Route.ComponentProps) {
-  const { movies, pagination } = loaderData as { movies: AdminMovieData[]; pagination: PaginationData };
-
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('adminToken');
-      window.location.href = '/admin/login';
-    }
-  };
-
-  const handleDelete = (movieUid: string) => {
-    if (confirm('この映画を削除しますか？')) {
-      // 削除処理（実装省略）
-      console.log('Delete movie:', movieUid);
-    }
+  const { movies, pagination } = loaderData as {
+    movies: AdminMovieData[];
+    pagination: PaginationData;
   };
 
   return (
@@ -105,8 +112,8 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900">映画管理</h1>
             <nav className="flex space-x-4">
-              <a 
-                href="/" 
+              <a
+                href="/"
                 className="text-blue-600 hover:text-blue-800 transition-colors"
               >
                 ホーム
@@ -137,8 +144,12 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
             {movies.map((movie) => {
-              const title = movie.translations?.find((t) => t.languageCode === 'ja')?.content || 'タイトル不明';
-              const posterUrl = movie.posterUrls?.find((p) => p.isPrimary)?.url || movie.posterUrls?.[0]?.url;
+              const title =
+                movie.translations?.find((t) => t.languageCode === 'ja')
+                  ?.content || 'タイトル不明';
+              const posterUrl =
+                movie.posterUrls?.find((p) => p.isPrimary)?.url ||
+                movie.posterUrls?.[0]?.url;
 
               return (
                 <li key={movie.movieUid} className="px-6 py-4">
@@ -146,14 +157,16 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
                     {/* ポスター */}
                     <div className="flex-shrink-0 w-16 h-24">
                       {posterUrl ? (
-                        <img 
-                          src={posterUrl} 
+                        <img
+                          src={posterUrl}
                           alt={title}
                           className="w-full h-full object-cover rounded"
                         />
                       ) : (
                         <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                          <span className="text-xs text-gray-500">No Image</span>
+                          <span className="text-xs text-gray-500">
+                            No Image
+                          </span>
                         </div>
                       )}
                     </div>

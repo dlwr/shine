@@ -9,12 +9,12 @@ const mockLocalStorage = {
   getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
-  clear: vi.fn(),
+  clear: vi.fn()
 };
 
-Object.defineProperty(window, 'localStorage', {
+Object.defineProperty(globalThis, 'localStorage', {
   value: mockLocalStorage,
-  writable: true,
+  writable: true
 });
 
 // fetchのモック
@@ -33,14 +33,14 @@ describe('AdminLogin Component', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     // localStorage.getItemが既存トークンなしを返すようにセット
-    mockLocalStorage.getItem.mockReturnValue(null);
+    mockLocalStorage.getItem.mockReturnValue(undefined);
   });
 
   describe('action', () => {
     it('正しいパスワードでログイン成功', async () => {
       const mockFetch = vi.mocked(fetch);
       const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.token';
-      
+
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ token: mockToken })
@@ -51,15 +51,18 @@ describe('AdminLogin Component', () => {
 
       const context = createMockContext();
       const request = { formData: async () => formData } as Request;
-      
-      const result = await action({ context, request } as unknown as Route.ActionArgs);
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8787/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: 'admin123' })
-      });
-      
+      const result = await action({ context, request } as Route.ActionArgs);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:8787/auth/login',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: 'admin123' })
+        }
+      );
+
       expect(result).toEqual({
         success: true,
         token: mockToken
@@ -68,7 +71,7 @@ describe('AdminLogin Component', () => {
 
     it('間違ったパスワードでログイン失敗', async () => {
       const mockFetch = vi.mocked(fetch);
-      
+
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 401,
@@ -80,8 +83,8 @@ describe('AdminLogin Component', () => {
 
       const context = createMockContext();
       const request = { formData: async () => formData } as Request;
-      
-      const result = await action({ context, request } as unknown as Route.ActionArgs);
+
+      const result = await action({ context, request } as Route.ActionArgs);
 
       expect(result).toEqual({
         error: 'パスワードが正しくありません'
@@ -97,8 +100,8 @@ describe('AdminLogin Component', () => {
 
       const context = createMockContext();
       const request = { formData: async () => formData } as Request;
-      
-      const result = await action({ context, request } as unknown as Route.ActionArgs);
+
+      const result = await action({ context, request } as Route.ActionArgs);
 
       expect(result).toEqual({
         error: 'ログインに失敗しました'
@@ -109,10 +112,10 @@ describe('AdminLogin Component', () => {
   describe('meta', () => {
     it('正しいメタデータを返す', () => {
       const result = meta();
-      
+
       expect(result).toEqual([
-        { title: "管理者ログイン | SHINE" },
-        { name: "description", content: "SHINE管理画面へのログイン" }
+        { title: '管理者ログイン | SHINE' },
+        { name: 'description', content: 'SHINE管理画面へのログイン' }
       ]);
     });
   });
@@ -120,22 +123,30 @@ describe('AdminLogin Component', () => {
   describe('Component', () => {
     it('ログインフォームが正常に表示される', () => {
       const actionData = undefined;
-      
-      render(<AdminLogin actionData={actionData} />);
+
+      render(
+        <AdminLogin actionData={actionData as Route.ActionArgs['data']} />
+      );
 
       expect(screen.getByText('管理者ログイン')).toBeInTheDocument();
       expect(screen.getByLabelText('パスワード')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'ログイン' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'ログイン' })
+      ).toBeInTheDocument();
     });
 
     it('エラーメッセージが表示される', () => {
       const actionData = {
         error: 'パスワードが正しくありません'
       };
-      
-      render(<AdminLogin actionData={actionData} />);
 
-      expect(screen.getByText('パスワードが正しくありません')).toBeInTheDocument();
+      render(
+        <AdminLogin actionData={actionData as Route.ActionArgs['data']} />
+      );
+
+      expect(
+        screen.getByText('パスワードが正しくありません')
+      ).toBeInTheDocument();
     });
 
     it('ログイン成功時にlocalStorageにトークンを保存し、リダイレクトする', async () => {
@@ -146,38 +157,47 @@ describe('AdminLogin Component', () => {
 
       // location.hrefのモック
       const mockLocation = { href: '' };
-      Object.defineProperty(window, 'location', {
+      Object.defineProperty(globalThis, 'location', {
         value: mockLocation,
-        writable: true,
+        writable: true
       });
 
-      render(<AdminLogin actionData={actionData} />);
+      render(
+        <AdminLogin actionData={actionData as Route.ActionArgs['data']} />
+      );
 
       await waitFor(() => {
-        expect(mockLocalStorage.setItem).toHaveBeenCalledWith('adminToken', 'test-token');
+        expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+          'adminToken',
+          'test-token'
+        );
         expect(mockLocation.href).toBe('/admin/movies');
       });
     });
 
     it('既にログイン済みの場合は管理画面にリダイレクトする', () => {
       mockLocalStorage.getItem.mockReturnValue('existing-token');
-      
+
       const mockLocation = { href: '' };
-      Object.defineProperty(window, 'location', {
+      Object.defineProperty(globalThis, 'location', {
         value: mockLocation,
-        writable: true,
+        writable: true
       });
 
       const actionData = undefined;
-      render(<AdminLogin actionData={actionData} />);
+      render(
+        <AdminLogin actionData={actionData as Route.ActionArgs['data']} />
+      );
 
       expect(mockLocation.href).toBe('/admin/movies');
     });
 
     it('フォーム送信が正常に動作する', async () => {
       const actionData = undefined;
-      
-      render(<AdminLogin actionData={actionData} />);
+
+      render(
+        <AdminLogin actionData={actionData as Route.ActionArgs['data']} />
+      );
 
       const passwordInput = screen.getByLabelText('パスワード');
       const submitButton = screen.getByRole('button', { name: 'ログイン' });
@@ -190,8 +210,10 @@ describe('AdminLogin Component', () => {
 
     it('ホームページへの戻るリンクが表示される', () => {
       const actionData = undefined;
-      
-      render(<AdminLogin actionData={actionData} />);
+
+      render(
+        <AdminLogin actionData={actionData as Route.ActionArgs['data']} />
+      );
 
       const homeLink = screen.getByRole('link', { name: /ホームに戻る/ });
       expect(homeLink).toBeInTheDocument();

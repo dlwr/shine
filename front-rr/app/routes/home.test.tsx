@@ -106,7 +106,7 @@ describe('Home Component', () => {
       } as Response);
 
       const context = createMockContext();
-      const result = await loader({ context } as unknown as Route.LoaderArgs);
+      const result = await loader({ context } as Route.LoaderArgs);
 
       expect(mockFetch).toHaveBeenCalledWith('http://localhost:8787/');
       expect(result).toEqual({
@@ -119,7 +119,7 @@ describe('Home Component', () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
       const context = createMockContext();
-      const result = await loader({ context } as unknown as Route.LoaderArgs);
+      const result = await loader({ context } as Route.LoaderArgs);
 
       expect(result).toEqual({
         error: 'APIへの接続に失敗しました'
@@ -134,7 +134,7 @@ describe('Home Component', () => {
       } as Response);
 
       const context = createMockContext();
-      const result = await loader({ context } as unknown as Route.LoaderArgs);
+      const result = await loader({ context } as Route.LoaderArgs);
 
       expect(result).toEqual({
         error: 'データの取得に失敗しました'
@@ -145,10 +145,14 @@ describe('Home Component', () => {
   describe('meta', () => {
     it('正しいメタデータを返す', () => {
       const result = meta();
-      
+
       expect(result).toEqual([
-        { title: "SHINE - 世界最高の映画データベース" },
-        { name: "description", content: "日替わり・週替わり・月替わりで厳選された映画をお楽しみください。アカデミー賞、カンヌ国際映画祭、日本アカデミー賞受賞作品を含む包括的な映画データベース。" }
+        { title: 'SHINE - 世界最高の映画データベース' },
+        {
+          name: 'description',
+          content:
+            '日替わり・週替わり・月替わりで厳選された映画をお楽しみください。アカデミー賞、カンヌ国際映画祭、日本アカデミー賞受賞作品を含む包括的な映画データベース。'
+        }
       ]);
     });
   });
@@ -159,7 +163,9 @@ describe('Home Component', () => {
         movieSelections: mockMovieSelections
       };
 
-      render(<Home loaderData={loaderData} />);
+      render(
+        <Home loaderData={loaderData as Route.ComponentProps['loaderData']} />
+      );
 
       // 各セクションのタイトルが表示される
       expect(screen.getByText('今日の映画')).toBeInTheDocument();
@@ -177,7 +183,9 @@ describe('Home Component', () => {
         error: 'APIへの接続に失敗しました'
       };
 
-      render(<Home loaderData={loaderData} />);
+      render(
+        <Home loaderData={loaderData as Route.ComponentProps['loaderData']} />
+      );
 
       expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
       expect(screen.getByText('APIへの接続に失敗しました')).toBeInTheDocument();
@@ -188,9 +196,13 @@ describe('Home Component', () => {
         movieSelections: mockMovieSelections
       };
 
-      render(<Home loaderData={loaderData} />);
+      render(
+        <Home loaderData={loaderData as Route.ComponentProps['loaderData']} />
+      );
 
-      expect(screen.getByText('🏆 Academy Awards 2023 受賞')).toBeInTheDocument();
+      expect(
+        screen.getByText('🏆 Academy Awards 2023 受賞')
+      ).toBeInTheDocument();
     });
 
     it('映画詳細ページへのリンクが正しく設定される', () => {
@@ -198,7 +210,9 @@ describe('Home Component', () => {
         movieSelections: mockMovieSelections
       };
 
-      render(<Home loaderData={loaderData} />);
+      render(
+        <Home loaderData={loaderData as Route.ComponentProps['loaderData']} />
+      );
 
       const dailyMovieLink = screen.getByRole('link', { name: /テスト映画/ });
       expect(dailyMovieLink).toHaveAttribute('href', '/movies/movie-1');

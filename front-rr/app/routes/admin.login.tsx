@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
-import type { Route } from "./+types/admin.login";
+import type { Route } from './+types/admin.login';
 
 export function meta(): Route.MetaDescriptor[] {
   return [
-    { title: "管理者ログイン | SHINE" },
-    { name: "description", content: "SHINE管理画面へのログイン" }
+    { title: '管理者ログイン | SHINE' },
+    { name: 'description', content: 'SHINE管理画面へのログイン' }
   ];
 }
 
@@ -13,7 +13,8 @@ export async function action({ context, request }: Route.ActionArgs) {
     const formData = await request.formData();
     const password = formData.get('password') as string;
 
-    const apiUrl = context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787';
+    const apiUrl =
+      context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787';
     const response = await fetch(`${apiUrl}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -38,10 +39,10 @@ export async function action({ context, request }: Route.ActionArgs) {
 export default function AdminLogin({ actionData }: Route.ComponentProps) {
   // ログイン済みかチェック
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const existingToken = localStorage.getItem('adminToken');
+    if (typeof globalThis !== 'undefined' && globalThis.window) {
+      const existingToken = globalThis.localStorage.getItem('adminToken');
       if (existingToken) {
-        window.location.href = '/admin/movies';
+        globalThis.location.href = '/admin/movies';
       }
     }
   }, []);
@@ -49,9 +50,9 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
   // ログイン成功時の処理
   useEffect(() => {
     if (actionData?.success && actionData?.token) {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('adminToken', actionData.token);
-        window.location.href = '/admin/movies';
+      if (typeof globalThis !== 'undefined' && globalThis.window) {
+        globalThis.localStorage.setItem('adminToken', actionData.token);
+        globalThis.location.href = '/admin/movies';
       }
     }
   }, [actionData]);
@@ -60,14 +61,16 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">管理者ログイン</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            管理者ログイン
+          </h1>
           <p className="text-gray-600">SHINE管理画面</p>
         </div>
 
         <form method="post" className="space-y-6">
           <div>
-            <label 
-              htmlFor="password" 
+            <label
+              htmlFor="password"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
               パスワード
@@ -97,8 +100,8 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
         </form>
 
         <div className="mt-6 text-center">
-          <a 
-            href="/" 
+          <a
+            href="/"
             className="text-blue-600 hover:text-blue-800 text-sm transition-colors"
           >
             ← ホームに戻る

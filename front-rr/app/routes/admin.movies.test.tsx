@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AdminMovies, { loader, meta } from './admin.movies';
 import type { Route } from './+types/admin.movies';
@@ -9,12 +9,12 @@ const mockLocalStorage = {
   getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
-  clear: vi.fn(),
+  clear: vi.fn()
 };
 
-Object.defineProperty(window, 'localStorage', {
+Object.defineProperty(globalThis, 'localStorage', {
   value: mockLocalStorage,
-  writable: true,
+  writable: true
 });
 
 // fetchのモック
@@ -36,7 +36,7 @@ const mockMoviesList = {
       movieUid: 'movie-1',
       movie: {
         imdbId: 'tt1234567',
-        tmdbId: 123456,
+        tmdbId: 123_456,
         year: 2023,
         duration: 120,
         createdAt: '2023-01-01T00:00:00Z',
@@ -60,7 +60,7 @@ const mockMoviesList = {
       movieUid: 'movie-2',
       movie: {
         imdbId: 'tt7654321',
-        tmdbId: 654321,
+        tmdbId: 654_321,
         year: 2022,
         duration: 110,
         createdAt: '2022-01-01T00:00:00Z',
@@ -102,24 +102,27 @@ describe('AdminMovies Component', () => {
       const context = createMockContext();
       const url = new URL('http://localhost:3000/admin/movies?page=1');
       const request = { url } as Request;
-      
-      const result = await loader({ context, request } as unknown as Route.LoaderArgs);
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8787/admin/movies?page=1&limit=20', {
-        headers: { 'Authorization': 'Bearer valid-admin-token' }
-      });
-      
+      const result = await loader({ context, request } as Route.LoaderArgs);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:8787/admin/movies?page=1&limit=20',
+        {
+          headers: { Authorization: 'Bearer valid-admin-token' }
+        }
+      );
+
       expect(result).toEqual(mockMoviesList);
     });
 
     it('未認証の場合はログインページにリダイレクト', async () => {
-      mockLocalStorage.getItem.mockReturnValue(null);
+      mockLocalStorage.getItem.mockReturnValue(undefined);
 
       const context = createMockContext();
       const url = new URL('http://localhost:3000/admin/movies');
       const request = { url } as Request;
-      
-      const result = await loader({ context, request } as unknown as Route.LoaderArgs);
+
+      const result = await loader({ context, request } as Route.LoaderArgs);
 
       expect(result.status).toBe(302);
       expect(result.headers.get('Location')).toBe('/admin/login');
@@ -135,8 +138,8 @@ describe('AdminMovies Component', () => {
       const context = createMockContext();
       const url = new URL('http://localhost:3000/admin/movies');
       const request = { url } as Request;
-      
-      const result = await loader({ context, request } as unknown as Route.LoaderArgs);
+
+      const result = await loader({ context, request } as Route.LoaderArgs);
 
       expect(result.status).toBe(302);
       expect(result.headers.get('Location')).toBe('/admin/login');
@@ -146,10 +149,10 @@ describe('AdminMovies Component', () => {
   describe('meta', () => {
     it('正しいメタデータを返す', () => {
       const result = meta();
-      
+
       expect(result).toEqual([
-        { title: "映画管理 | SHINE Admin" },
-        { name: "description", content: "映画データベースの管理画面" }
+        { title: '映画管理 | SHINE Admin' },
+        { name: 'description', content: '映画データベースの管理画面' }
       ]);
     });
   });
@@ -157,8 +160,12 @@ describe('AdminMovies Component', () => {
   describe('Component', () => {
     it('映画リストが正常に表示される', () => {
       const loaderData = mockMoviesList;
-      
-      render(<AdminMovies loaderData={loaderData} />);
+
+      render(
+        <AdminMovies
+          loaderData={loaderData as Route.ComponentProps['loaderData']}
+        />
+      );
 
       expect(screen.getByText('映画管理')).toBeInTheDocument();
       expect(screen.getByText('テスト映画')).toBeInTheDocument();
@@ -177,8 +184,12 @@ describe('AdminMovies Component', () => {
           totalPages: 3
         }
       };
-      
-      render(<AdminMovies loaderData={loaderData} />);
+
+      render(
+        <AdminMovies
+          loaderData={loaderData as Route.ComponentProps['loaderData']}
+        />
+      );
 
       expect(screen.getByText('2 / 3 ページ')).toBeInTheDocument();
       expect(screen.getByText('合計: 50件')).toBeInTheDocument();
@@ -186,8 +197,12 @@ describe('AdminMovies Component', () => {
 
     it('編集リンクが正しく設定される', () => {
       const loaderData = mockMoviesList;
-      
-      render(<AdminMovies loaderData={loaderData} />);
+
+      render(
+        <AdminMovies
+          loaderData={loaderData as Route.ComponentProps['loaderData']}
+        />
+      );
 
       const editLinks = screen.getAllByText('編集');
       expect(editLinks[0]).toHaveAttribute('href', '/admin/movies/movie-1');
@@ -196,8 +211,12 @@ describe('AdminMovies Component', () => {
 
     it('削除ボタンが表示される', () => {
       const loaderData = mockMoviesList;
-      
-      render(<AdminMovies loaderData={loaderData} />);
+
+      render(
+        <AdminMovies
+          loaderData={loaderData as Route.ComponentProps['loaderData']}
+        />
+      );
 
       const deleteButtons = screen.getAllByText('削除');
       expect(deleteButtons).toHaveLength(2);
@@ -205,26 +224,41 @@ describe('AdminMovies Component', () => {
 
     it('ポスター画像が表示される（プライマリがある場合）', () => {
       const loaderData = mockMoviesList;
-      
-      render(<AdminMovies loaderData={loaderData} />);
+
+      render(
+        <AdminMovies
+          loaderData={loaderData as Route.ComponentProps['loaderData']}
+        />
+      );
 
       const posterImage = screen.getByAltText('テスト映画');
       expect(posterImage).toBeInTheDocument();
-      expect(posterImage).toHaveAttribute('src', 'https://example.com/poster1.jpg');
+      expect(posterImage).toHaveAttribute(
+        'src',
+        'https://example.com/poster1.jpg'
+      );
     });
 
     it('ポスターがない場合はプレースホルダーが表示される', () => {
       const loaderData = mockMoviesList;
-      
-      render(<AdminMovies loaderData={loaderData} />);
+
+      render(
+        <AdminMovies
+          loaderData={loaderData as Route.ComponentProps['loaderData']}
+        />
+      );
 
       expect(screen.getByText('No Image')).toBeInTheDocument();
     });
 
     it('ナビゲーションリンクが表示される', () => {
       const loaderData = mockMoviesList;
-      
-      render(<AdminMovies loaderData={loaderData} />);
+
+      render(
+        <AdminMovies
+          loaderData={loaderData as Route.ComponentProps['loaderData']}
+        />
+      );
 
       expect(screen.getByText('ホーム')).toHaveAttribute('href', '/');
       expect(screen.getByText('ログアウト')).toBeInTheDocument();
@@ -232,14 +266,18 @@ describe('AdminMovies Component', () => {
 
     it('ログアウト機能が動作する', () => {
       const loaderData = mockMoviesList;
-      
+
       const mockLocation = { href: '' };
-      Object.defineProperty(window, 'location', {
+      Object.defineProperty(globalThis, 'location', {
         value: mockLocation,
-        writable: true,
+        writable: true
       });
-      
-      render(<AdminMovies loaderData={loaderData} />);
+
+      render(
+        <AdminMovies
+          loaderData={loaderData as Route.ComponentProps['loaderData']}
+        />
+      );
 
       const logoutButton = screen.getByText('ログアウト');
       fireEvent.click(logoutButton);

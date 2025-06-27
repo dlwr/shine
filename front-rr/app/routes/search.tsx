@@ -1,4 +1,4 @@
-import type { Route } from "./+types/search";
+import type { Route } from './+types/search';
 
 interface SearchMovieData {
   movieUid: string;
@@ -26,17 +26,20 @@ interface SearchPaginationData {
 
 export function meta({ data }: Route.MetaArgs): Route.MetaDescriptor[] {
   const { searchQuery } = data as { searchQuery: string };
-  
+
   if (searchQuery) {
     return [
       { title: `「${searchQuery}」の検索結果 | SHINE` },
-      { name: "description", content: `「${searchQuery}」の検索結果 - SHINE映画データベース` }
+      {
+        name: 'description',
+        content: `「${searchQuery}」の検索結果 - SHINE映画データベース`
+      }
     ];
   }
 
   return [
-    { title: "映画検索 | SHINE" },
-    { name: "description", content: "SHINE映画データベースで映画を検索" }
+    { title: '映画検索 | SHINE' },
+    { name: 'description', content: 'SHINE映画データベースで映画を検索' }
   ];
 }
 
@@ -49,18 +52,21 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   if (!searchQuery) {
     return {
       searchQuery: '',
-      searchResults: null
+      searchResults: undefined
     };
   }
 
   try {
-    const apiUrl = context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787';
-    const response = await fetch(`${apiUrl}/movies/search?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${limit}`);
-    
+    const apiUrl =
+      context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787';
+    const response = await fetch(
+      `${apiUrl}/movies/search?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${limit}`
+    );
+
     if (!response.ok) {
       throw new Error('Search failed');
     }
-    
+
     const searchResults = await response.json();
     return {
       searchQuery,
@@ -77,7 +83,10 @@ export async function loader({ context, request }: Route.LoaderArgs) {
 export default function Search({ loaderData }: Route.ComponentProps) {
   const { searchQuery, searchResults, error } = loaderData as {
     searchQuery: string;
-    searchResults?: { movies: SearchMovieData[]; pagination: SearchPaginationData } | null;
+    searchResults?: {
+      movies: SearchMovieData[];
+      pagination: SearchPaginationData;
+    };
     error?: string;
   };
 
@@ -86,8 +95,8 @@ export default function Search({ loaderData }: Route.ComponentProps) {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <header className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">映画検索</h1>
-          <a 
-            href="/" 
+          <a
+            href="/"
             className="text-blue-600 hover:text-blue-800 transition-colors"
           >
             ← ホームに戻る
@@ -134,36 +143,49 @@ export default function Search({ loaderData }: Route.ComponentProps) {
 
             {searchResults.movies.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-600 text-lg">検索結果が見つかりませんでした</p>
-                <p className="text-gray-500 mt-2">別のキーワードで検索してみてください</p>
+                <p className="text-gray-600 text-lg">
+                  検索結果が見つかりませんでした
+                </p>
+                <p className="text-gray-500 mt-2">
+                  別のキーワードで検索してみてください
+                </p>
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-6">
                 {searchResults.movies.map((movie) => {
-                  const title = movie.translations?.find((t) => t.languageCode === 'ja')?.content || 'タイトル不明';
-                  const posterUrl = movie.posterUrls?.find((p) => p.isPrimary)?.url || movie.posterUrls?.[0]?.url;
+                  const title =
+                    movie.translations?.find((t) => t.languageCode === 'ja')
+                      ?.content || 'タイトル不明';
+                  const posterUrl =
+                    movie.posterUrls?.find((p) => p.isPrimary)?.url ||
+                    movie.posterUrls?.[0]?.url;
 
                   return (
-                    <div key={movie.movieUid} className="bg-white rounded-lg shadow-md p-6">
+                    <div
+                      key={movie.movieUid}
+                      className="bg-white rounded-lg shadow-md p-6"
+                    >
                       <div className="flex space-x-4">
                         {/* ポスター */}
                         <div className="flex-shrink-0 w-20 h-30">
                           {posterUrl ? (
-                            <img 
-                              src={posterUrl} 
+                            <img
+                              src={posterUrl}
                               alt={title}
                               className="w-full h-full object-cover rounded"
                             />
                           ) : (
                             <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                              <span className="text-xs text-gray-500">No Image</span>
+                              <span className="text-xs text-gray-500">
+                                No Image
+                              </span>
                             </div>
                           )}
                         </div>
 
                         {/* 映画情報 */}
                         <div className="flex-1 min-w-0">
-                          <a 
+                          <a
                             href={`/movies/${movie.movieUid}`}
                             className="block hover:text-blue-600 transition-colors"
                           >
@@ -172,7 +194,9 @@ export default function Search({ loaderData }: Route.ComponentProps) {
                             </h3>
                           </a>
                           <div className="space-y-1 text-sm text-gray-600">
-                            <p>{movie.movie.year}年 • {movie.movie.duration}分</p>
+                            <p>
+                              {movie.movie.year}年 • {movie.movie.duration}分
+                            </p>
                             <p>IMDb: {movie.movie.imdbId}</p>
                           </div>
                         </div>
@@ -194,12 +218,14 @@ export default function Search({ loaderData }: Route.ComponentProps) {
                     前のページ
                   </a>
                 )}
-                
+
                 <span className="px-4 py-2 text-gray-600">
-                  {searchResults.pagination.page} / {searchResults.pagination.totalPages}
+                  {searchResults.pagination.page} /{' '}
+                  {searchResults.pagination.totalPages}
                 </span>
-                
-                {searchResults.pagination.page < searchResults.pagination.totalPages && (
+
+                {searchResults.pagination.page <
+                  searchResults.pagination.totalPages && (
                   <a
                     href={`/search?q=${encodeURIComponent(searchQuery)}&page=${searchResults.pagination.page + 1}`}
                     className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"

@@ -1,0 +1,25 @@
+{
+  "extends": [
+    "@eslint/js",
+    "@typescript-eslint/strict",
+    "plugin:unicorn/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint", "unicorn"],
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    "build",
+    ".react-router",
+    "**/.react-router/**"
+  ],
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-unused-vars": "error",
+    "unicorn/prefer-global-this": "error",
+    "unicorn/consistent-function-scoping": "error",
+    "unicorn/prevent-abbreviations": "error",
+    "unicorn/no-null": "error",
+    "@typescript-eslint/consistent-type-definitions": "error"
+  }
+}

@@ -32,8 +32,8 @@ const mockMovieDetail = {
     },
     {
       languageCode: 'en',
-      resourceType: 'movie_title', 
-      content: 'Palme d\'Or Winner'
+      resourceType: 'movie_title',
+      content: "Palme d'Or Winner"
     }
   ],
   posterUrls: [
@@ -53,7 +53,7 @@ const mockMovieDetail = {
       isWinner: true,
       category: {
         categoryUid: 'cat-1',
-        name: 'Palme d\'Or'
+        name: "Palme d'Or"
       },
       ceremony: {
         ceremonyUid: 'cer-1',
@@ -94,10 +94,15 @@ describe('MovieDetail Component', () => {
       } as Response);
 
       const context = createMockContext();
-      const params = { id: 'movie-123' };
-      const result = await loader({ context, params } as unknown as Route.LoaderArgs);
+      const parameters = { id: 'movie-123' };
+      const result = await loader({
+        context,
+        params: parameters
+      } as Route.LoaderArgs);
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8787/movies/movie-123');
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:8787/movies/movie-123'
+      );
       expect(result).toEqual({
         movieDetail: mockMovieDetail
       });
@@ -111,8 +116,11 @@ describe('MovieDetail Component', () => {
       } as Response);
 
       const context = createMockContext();
-      const params = { id: 'non-existent' };
-      const result = await loader({ context, params } as unknown as Route.LoaderArgs);
+      const parameters = { id: 'non-existent' };
+      const result = await loader({
+        context,
+        params: parameters
+      } as Route.LoaderArgs);
 
       expect(result).toEqual({
         error: '映画が見つかりませんでした',
@@ -125,8 +133,11 @@ describe('MovieDetail Component', () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
       const context = createMockContext();
-      const params = { id: 'movie-123' };
-      const result = await loader({ context, params } as unknown as Route.LoaderArgs);
+      const parameters = { id: 'movie-123' };
+      const result = await loader({
+        context,
+        params: parameters
+      } as Route.LoaderArgs);
 
       expect(result).toEqual({
         error: 'APIへの接続に失敗しました',
@@ -140,12 +151,16 @@ describe('MovieDetail Component', () => {
       const loaderData = {
         movieDetail: mockMovieDetail
       };
-      
-      const result = meta({ data: loaderData } as unknown as Route.MetaArgs);
-      
+
+      const result = meta({ data: loaderData } as Route.MetaArgs);
+
       expect(result).toEqual([
-        { title: "パルム・ドール受賞作品 (2023) | SHINE" },
-        { name: "description", content: "パルム・ドール受賞作品 (2023年) の詳細情報。受賞歴、ポスター、その他の情報をご覧いただけます。" }
+        { title: 'パルム・ドール受賞作品 (2023) | SHINE' },
+        {
+          name: 'description',
+          content:
+            'パルム・ドール受賞作品 (2023年) の詳細情報。受賞歴、ポスター、その他の情報をご覧いただけます。'
+        }
       ]);
     });
 
@@ -154,12 +169,15 @@ describe('MovieDetail Component', () => {
         error: '映画が見つかりませんでした',
         status: 404
       };
-      
-      const result = meta({ data: loaderData } as unknown as Route.MetaArgs);
-      
+
+      const result = meta({ data: loaderData } as Route.MetaArgs);
+
       expect(result).toEqual([
-        { title: "映画が見つかりません | SHINE" },
-        { name: "description", content: "指定された映画は見つかりませんでした。" }
+        { title: '映画が見つかりません | SHINE' },
+        {
+          name: 'description',
+          content: '指定された映画は見つかりませんでした。'
+        }
       ]);
     });
   });
@@ -170,11 +188,15 @@ describe('MovieDetail Component', () => {
         movieDetail: mockMovieDetail
       };
 
-      render(<MovieDetail loaderData={loaderData} />);
+      render(
+        <MovieDetail
+          loaderData={loaderData as Route.ComponentProps['loaderData']}
+        />
+      );
 
       // 映画タイトルが表示される
       expect(screen.getByText('パルム・ドール受賞作品')).toBeInTheDocument();
-      
+
       // 基本情報が表示される
       expect(screen.getByText('2023年')).toBeInTheDocument();
       expect(screen.getByText('145分')).toBeInTheDocument();
@@ -183,7 +205,10 @@ describe('MovieDetail Component', () => {
       // ポスター画像が表示される
       const posterImage = screen.getByAltText('パルム・ドール受賞作品');
       expect(posterImage).toBeInTheDocument();
-      expect(posterImage).toHaveAttribute('src', 'https://example.com/poster-large.jpg');
+      expect(posterImage).toHaveAttribute(
+        'src',
+        'https://example.com/poster-large.jpg'
+      );
     });
 
     it('受賞・ノミネート情報が正しく表示される', () => {
@@ -191,13 +216,21 @@ describe('MovieDetail Component', () => {
         movieDetail: mockMovieDetail
       };
 
-      render(<MovieDetail loaderData={loaderData} />);
+      render(
+        <MovieDetail
+          loaderData={loaderData as Route.ComponentProps['loaderData']}
+        />
+      );
 
       // 受賞情報
-      expect(screen.getByText('🏆 Cannes Film Festival 2023 受賞')).toBeInTheDocument();
-      
+      expect(
+        screen.getByText('🏆 Cannes Film Festival 2023 受賞')
+      ).toBeInTheDocument();
+
       // ノミネート情報
-      expect(screen.getByText('🎬 Academy Awards 2024 ノミネート')).toBeInTheDocument();
+      expect(
+        screen.getByText('🎬 Academy Awards 2024 ノミネート')
+      ).toBeInTheDocument();
     });
 
     it('404エラー状態が正常に表示される', () => {
@@ -206,10 +239,16 @@ describe('MovieDetail Component', () => {
         status: 404
       };
 
-      render(<MovieDetail loaderData={loaderData} />);
+      render(
+        <MovieDetail
+          loaderData={loaderData as Route.ComponentProps['loaderData']}
+        />
+      );
 
       expect(screen.getByText('映画が見つかりません')).toBeInTheDocument();
-      expect(screen.getByText('映画が見つかりませんでした')).toBeInTheDocument();
+      expect(
+        screen.getByText('映画が見つかりませんでした')
+      ).toBeInTheDocument();
     });
 
     it('サーバーエラー状態が正常に表示される', () => {
@@ -218,7 +257,11 @@ describe('MovieDetail Component', () => {
         status: 500
       };
 
-      render(<MovieDetail loaderData={loaderData} />);
+      render(
+        <MovieDetail
+          loaderData={loaderData as Route.ComponentProps['loaderData']}
+        />
+      );
 
       expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
       expect(screen.getByText('APIへの接続に失敗しました')).toBeInTheDocument();
@@ -229,7 +272,11 @@ describe('MovieDetail Component', () => {
         movieDetail: mockMovieDetail
       };
 
-      render(<MovieDetail loaderData={loaderData} />);
+      render(
+        <MovieDetail
+          loaderData={loaderData as Route.ComponentProps['loaderData']}
+        />
+      );
 
       const backLink = screen.getByRole('link', { name: /ホームに戻る/ });
       expect(backLink).toBeInTheDocument();
