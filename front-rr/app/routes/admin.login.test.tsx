@@ -1,4 +1,4 @@
-/* eslint-disable unicorn/no-null */
+/* eslint-disable unicorn/no-null, @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -123,12 +123,12 @@ describe('AdminLogin Component', () => {
 
   describe('Component', () => {
     it('ログインフォームが正常に表示される', () => {
-      const actionData = undefined;
+      const actionData = {};
 
       render(
         <AdminLogin
-          actionData={actionData}
-          loaderData={undefined}
+          actionData={actionData as any}
+          loaderData={{}}
           params={{}}
           matches={[
             {
@@ -163,8 +163,8 @@ describe('AdminLogin Component', () => {
 
       render(
         <AdminLogin
-          actionData={actionData}
-          loaderData={undefined}
+          actionData={actionData as any}
+          loaderData={{}}
           params={{}}
           matches={[
             {
@@ -205,8 +205,8 @@ describe('AdminLogin Component', () => {
 
       render(
         <AdminLogin
-          actionData={actionData}
-          loaderData={undefined}
+          actionData={actionData as any}
+          loaderData={{}}
           params={{}}
           matches={[
             {
@@ -245,11 +245,11 @@ describe('AdminLogin Component', () => {
         writable: true
       });
 
-      const actionData = undefined;
+      const actionData = {};
       render(
         <AdminLogin
-          actionData={actionData}
-          loaderData={undefined}
+          actionData={actionData as any}
+          loaderData={{}}
           params={{}}
           matches={[
             {
@@ -274,12 +274,12 @@ describe('AdminLogin Component', () => {
     });
 
     it('フォーム送信が正常に動作する', async () => {
-      const actionData = undefined;
+      const actionData = {};
 
       render(
         <AdminLogin
-          actionData={actionData}
-          loaderData={undefined}
+          actionData={actionData as any}
+          loaderData={{}}
           params={{}}
           matches={[
             {
@@ -310,12 +310,12 @@ describe('AdminLogin Component', () => {
     });
 
     it('ホームページへの戻るリンクが表示される', () => {
-      const actionData = undefined;
+      const actionData = {};
 
       render(
         <AdminLogin
-          actionData={actionData}
-          loaderData={undefined}
+          actionData={actionData as any}
+          loaderData={{}}
           params={{}}
           matches={[
             {

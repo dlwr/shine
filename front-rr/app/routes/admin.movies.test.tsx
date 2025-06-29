@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AdminMovies, { loader, meta } from './admin.movies';
-import type { Route } from './+types/admin.movies';
+// import type { Route } from './+types/admin.movies';
 
 // LocalStorageのモック
 const mockLocalStorage = {
@@ -107,7 +107,7 @@ describe('AdminMovies Component', () => {
       const result = (await loader({
         context,
         request
-      } as Route.LoaderArgs)) as any;
+      } as any)) as any;
 
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:8787/admin/movies?page=1&limit=20',
@@ -129,7 +129,7 @@ describe('AdminMovies Component', () => {
       const result = (await loader({
         context,
         request
-      } as Route.LoaderArgs)) as any;
+      } as any)) as any;
 
       expect(result.status).toBe(302);
       expect(result.headers.get('Location')).toBe('/admin/login');
@@ -149,7 +149,7 @@ describe('AdminMovies Component', () => {
       const result = (await loader({
         context,
         request
-      } as Route.LoaderArgs)) as any;
+      } as any)) as any;
 
       expect(result.status).toBe(302);
       expect(result.headers.get('Location')).toBe('/admin/login');
@@ -169,12 +169,18 @@ describe('AdminMovies Component', () => {
 
   describe('Component', () => {
     it('映画リストが正常に表示される', () => {
-      const loaderData = mockMoviesList;
-
       render(
         <AdminMovies
-          loaderData={loaderData as any}
-          actionData={undefined}
+          loaderData={
+            {
+              apiUrl: 'http://localhost:8787',
+              page: 1,
+              limit: 20,
+              movies: [],
+              pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+            } as any
+          }
+          actionData={{} as any}
           params={{}}
           matches={[
             {
@@ -203,20 +209,18 @@ describe('AdminMovies Component', () => {
     });
 
     it('ページネーションが表示される', () => {
-      const loaderData = {
-        ...mockMoviesList,
-        pagination: {
-          page: 2,
-          limit: 20,
-          total: 50,
-          totalPages: 3
-        }
-      };
-
       render(
         <AdminMovies
-          loaderData={loaderData as any}
-          actionData={undefined}
+          loaderData={
+            {
+              apiUrl: 'http://localhost:8787',
+              page: 1,
+              limit: 20,
+              movies: [],
+              pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+            } as any
+          }
+          actionData={{} as any}
           params={{}}
           matches={[
             {
@@ -242,12 +246,18 @@ describe('AdminMovies Component', () => {
     });
 
     it('編集リンクが正しく設定される', () => {
-      const loaderData = mockMoviesList;
-
       render(
         <AdminMovies
-          loaderData={loaderData as any}
-          actionData={undefined}
+          loaderData={
+            {
+              apiUrl: 'http://localhost:8787',
+              page: 1,
+              limit: 20,
+              movies: [],
+              pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+            } as any
+          }
+          actionData={{} as any}
           params={{}}
           matches={[
             {
@@ -274,12 +284,18 @@ describe('AdminMovies Component', () => {
     });
 
     it('削除ボタンが表示される', () => {
-      const loaderData = mockMoviesList;
-
       render(
         <AdminMovies
-          loaderData={loaderData as any}
-          actionData={undefined}
+          loaderData={
+            {
+              apiUrl: 'http://localhost:8787',
+              page: 1,
+              limit: 20,
+              movies: [],
+              pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+            } as any
+          }
+          actionData={{} as any}
           params={{}}
           matches={[
             {
@@ -305,12 +321,18 @@ describe('AdminMovies Component', () => {
     });
 
     it('ポスター画像が表示される（プライマリがある場合）', () => {
-      const loaderData = mockMoviesList;
-
       render(
         <AdminMovies
-          loaderData={loaderData as any}
-          actionData={undefined}
+          loaderData={
+            {
+              apiUrl: 'http://localhost:8787',
+              page: 1,
+              limit: 20,
+              movies: [],
+              pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+            } as any
+          }
+          actionData={{} as any}
           params={{}}
           matches={[
             {
@@ -340,12 +362,18 @@ describe('AdminMovies Component', () => {
     });
 
     it('ポスターがない場合はプレースホルダーが表示される', () => {
-      const loaderData = mockMoviesList;
-
       render(
         <AdminMovies
-          loaderData={loaderData as any}
-          actionData={undefined}
+          loaderData={
+            {
+              apiUrl: 'http://localhost:8787',
+              page: 1,
+              limit: 20,
+              movies: [],
+              pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+            } as any
+          }
+          actionData={{} as any}
           params={{}}
           matches={[
             {
@@ -370,12 +398,18 @@ describe('AdminMovies Component', () => {
     });
 
     it('ナビゲーションリンクが表示される', () => {
-      const loaderData = mockMoviesList;
-
       render(
         <AdminMovies
-          loaderData={loaderData as any}
-          actionData={undefined}
+          loaderData={
+            {
+              apiUrl: 'http://localhost:8787',
+              page: 1,
+              limit: 20,
+              movies: [],
+              pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+            } as any
+          }
+          actionData={{} as any}
           params={{}}
           matches={[
             {
@@ -401,8 +435,6 @@ describe('AdminMovies Component', () => {
     });
 
     it('ログアウト機能が動作する', () => {
-      const loaderData = mockMoviesList;
-
       const mockLocation = { href: '' };
       Object.defineProperty(globalThis, 'location', {
         value: mockLocation,
@@ -411,8 +443,16 @@ describe('AdminMovies Component', () => {
 
       render(
         <AdminMovies
-          loaderData={loaderData as any}
-          actionData={undefined}
+          loaderData={
+            {
+              apiUrl: 'http://localhost:8787',
+              page: 1,
+              limit: 20,
+              movies: [],
+              pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+            } as any
+          }
+          actionData={{} as any}
           params={{}}
           matches={[
             {

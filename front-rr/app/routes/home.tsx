@@ -131,7 +131,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="m-0 w-full h-full bg-gray-50">
-      <AdminLogin locale={locale} />
+      <AdminLogin locale={locale} apiUrl={apiUrl} />
       <main className="py-8">
         <h1 className="text-center mb-4 text-5xl text-gray-900 font-bold">
           SHINE
@@ -150,7 +150,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   );
 }
 
-function AdminLogin({ locale }: { locale: string }) {
+function AdminLogin({ locale, apiUrl }: { locale: string; apiUrl?: string }) {
   const [showModal, setShowModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [password, setPassword] = useState('');
@@ -191,13 +191,16 @@ function AdminLogin({ locale }: { locale: string }) {
     e.preventDefault();
 
     try {
-      const response = await fetch('/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ password })
-      });
+      const response = await fetch(
+        `${apiUrl || 'http://localhost:8787'}/auth/login`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ password })
+        }
+      );
 
       if (response.ok) {
         const { token } = (await response.json()) as { token: string };

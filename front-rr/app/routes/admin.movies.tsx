@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import type { Route } from './+types/admin.movies';
 
 interface AdminMovieData {
@@ -36,53 +37,18 @@ export function meta(): Route.MetaDescriptors {
 }
 
 export async function loader({ context, request }: Route.LoaderArgs) {
-  // 認証チェック（サーバーサイド用の疑似実装）
-  let token: string | undefined;
+  // 認証チェックはクライアントサイドで行う
+  const url = new URL(request.url);
+  const page = url.searchParams.get('page') || '1';
+  const limit = url.searchParams.get('limit') || '20';
 
-  if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
-    token = globalThis.localStorage.getItem('adminToken') || undefined;
-  }
-
-  if (!token) {
-    return new Response(undefined, {
-      status: 302,
-      headers: { Location: '/admin/login' }
-    });
-  }
-
-  try {
-    const url = new URL(request.url);
-    const page = url.searchParams.get('page') || '1';
-    const limit = url.searchParams.get('limit') || '20';
-
-    const apiUrl =
-      context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787';
-    const response = await fetch(
-      `${apiUrl}/admin/movies?page=${page}&limit=${limit}`,
-      {
-        headers: { Authorization: `Bearer ${token}` }
-      }
-    );
-
-    if (response.status === 401) {
-      return new Response(undefined, {
-        status: 302,
-        headers: { Location: '/admin/login' }
-      });
-    }
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch movies');
-    }
-
-    const data = await response.json();
-    return data;
-  } catch {
-    return new Response(undefined, {
-      status: 302,
-      headers: { Location: '/admin/login' }
-    });
-  }
+  return {
+    apiUrl: context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787',
+    page: Number.parseInt(page),
+    limit: Number.parseInt(limit),
+    movies: [],
+    pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+  };
 }
 
 const handleLogout = () => {
@@ -100,10 +66,80 @@ const handleDelete = (movieUid: string) => {
 };
 
 export default function AdminMovies({ loaderData }: Route.ComponentProps) {
-  const { movies, pagination } = loaderData as unknown as {
+  const { apiUrl, page, limit } = loaderData as {
+    apiUrl: string;
+    page: number;
+    limit: number;
     movies: AdminMovieData[];
     pagination: PaginationData;
   };
+
+  const [movies, setMovies] = useState<AdminMovieData[]>([]);
+  const [pagination, setPagination] = useState<PaginationData>({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  // クライアントサイドでの認証チェックとAPIコール
+  useEffect(() => {
+    const loadMovies = async () => {
+      if (globalThis.window !== undefined) {
+        const token = globalThis.localStorage.getItem('adminToken');
+        if (!token) {
+          globalThis.location.href = '/admin/login';
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `${apiUrl}/admin/movies?page=${page}&limit=${limit}`,
+            {
+              headers: { Authorization: `Bearer ${token}` }
+            }
+          );
+
+          if (response.status === 401) {
+            globalThis.localStorage.removeItem('adminToken');
+            globalThis.location.href = '/admin/login';
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch movies');
+          }
+
+          const data = (await response.json()) as {
+            movies: AdminMovieData[];
+            pagination: PaginationData;
+          };
+          setMovies(data.movies || []);
+          setPagination(
+            data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 }
+          );
+        } catch (error) {
+          console.error('Error loading movies:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadMovies();
+  }, [apiUrl, page, limit]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -177,9 +213,9 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
                         {title}
                       </h3>
                       <div className="mt-1 flex flex-wrap gap-2 text-sm text-gray-600">
-                        <span>{movie.movie.year}年</span>
-                        <span>{movie.movie.duration}分</span>
-                        <span>{movie.movie.imdbId}</span>
+                        <span>{movie.movie?.year || '不明'}年</span>
+                        <span>{movie.movie?.duration || '不明'}分</span>
+                        <span>{movie.movie?.imdbId || '不明'}</span>
                       </div>
                     </div>
 

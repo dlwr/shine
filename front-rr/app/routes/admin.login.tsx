@@ -8,6 +8,12 @@ export function meta(): Route.MetaDescriptors {
   ];
 }
 
+// サーバーサイドでの認証チェックは行わない（React RouterではlocalStorageアクセス不可）
+export async function loader() {
+  // クライアントサイドで認証チェックする
+  return {};
+}
+
 export async function action({ context, request }: Route.ActionArgs) {
   try {
     const formData = await request.formData();
