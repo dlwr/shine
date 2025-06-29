@@ -53,8 +53,16 @@ const handleLogout = () => {
   }
 };
 
-const deleteMovie = async (movieId: string, movieTitle: string, apiUrl: string) => {
-  if (!globalThis.confirm?.(`Are you sure you want to delete "${movieTitle}"? This action cannot be undone.`)) {
+const deleteMovie = async (
+  movieId: string,
+  movieTitle: string,
+  apiUrl: string
+) => {
+  if (
+    !globalThis.confirm?.(
+      `Are you sure you want to delete "${movieTitle}"? This action cannot be undone.`
+    )
+  ) {
     return false;
   }
 
@@ -92,17 +100,17 @@ const showMergeDialog = (sourceId: string, sourceTitle: string) => {
   const targetId = globalThis.prompt?.(
     `映画「${sourceTitle}」を他の映画にマージします。\n\nマージ先の映画IDを入力してください：`
   );
-  
+
   if (targetId && targetId.trim()) {
     const confirmed = globalThis.confirm?.(
       `確認：\n\n` +
-      `マージ元: ${sourceTitle} (${sourceId})\n` +
-      `マージ先: ${targetId.trim()}\n\n` +
-      `マージ元の映画とそのデータは削除されます。\n` +
-      `この操作は取り消せません。\n\n` +
-      `続行しますか？`
+        `マージ元: ${sourceTitle} (${sourceId})\n` +
+        `マージ先: ${targetId.trim()}\n\n` +
+        `マージ元の映画とそのデータは削除されます。\n` +
+        `この操作は取り消せません。\n\n` +
+        `続行しますか？`
     );
-    
+
     if (confirmed) {
       return targetId.trim();
     }
@@ -110,28 +118,40 @@ const showMergeDialog = (sourceId: string, sourceTitle: string) => {
   return null;
 };
 
-const mergeMovies = async (sourceId: string, targetId: string, sourceTitle: string, apiUrl: string) => {
+const mergeMovies = async (
+  sourceId: string,
+  targetId: string,
+  sourceTitle: string,
+  apiUrl: string
+) => {
   const token = globalThis.localStorage?.getItem('adminToken');
   if (!token) return false;
 
   try {
-    const response = await fetch(`${apiUrl}/admin/movies/${sourceId}/merge/${targetId}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await fetch(
+      `${apiUrl}/admin/movies/${sourceId}/merge/${targetId}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
 
     if (!response.ok) {
-      const errorData = await response.json() as { error?: string };
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      const errorData = (await response.json()) as { error?: string };
+      throw new Error(
+        errorData.error || `HTTP error! status: ${response.status}`
+      );
     }
 
     alert(`Movie "${sourceTitle}" has been successfully merged.`);
     return true;
   } catch (error) {
-    alert(`Failed to merge movie: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    alert(
+      `Failed to merge movie: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
     console.error('Merge error:', error);
     return false;
   }
@@ -159,9 +179,12 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
   const [searchTimeout, setSearchTimeout] = useState<number | null>(null);
 
   // Movies fetch function
-  const fetchMovies = async (currentPage = page, currentSearch = searchQuery) => {
+  const fetchMovies = async (
+    currentPage = page,
+    currentSearch = searchQuery
+  ) => {
     if (globalThis.window === undefined) return;
-    
+
     const token = globalThis.localStorage.getItem('adminToken');
     if (!token) {
       globalThis.location.href = '/admin/login';
@@ -171,7 +194,9 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
     setLoading(true);
 
     try {
-      const searchParam = currentSearch ? `&search=${encodeURIComponent(currentSearch)}` : '';
+      const searchParam = currentSearch
+        ? `&search=${encodeURIComponent(currentSearch)}`
+        : '';
       const response = await fetch(
         `${apiUrl}/admin/movies?page=${currentPage}&limit=${limit}${searchParam}`,
         {
@@ -191,7 +216,9 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
 
       const data = (await response.json()) as MoviesResponse;
       setMovies(data.movies || []);
-      setPagination(data.pagination || { page: 1, limit: 20, totalCount: 0, totalPages: 0 });
+      setPagination(
+        data.pagination || { page: 1, limit: 20, totalCount: 0, totalPages: 0 }
+      );
     } catch (error) {
       console.error('Error loading movies:', error);
     } finally {
@@ -207,11 +234,11 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
   // Handle search
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    
+
     if (searchTimeout) {
       clearTimeout(searchTimeout);
     }
-    
+
     const timeout = setTimeout(() => {
       const url = new URL(globalThis.location.href);
       if (query) {
@@ -223,7 +250,7 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
       globalThis.history.pushState({}, '', url.toString());
       fetchMovies(1, query);
     }, 300);
-    
+
     setSearchTimeout(timeout);
   };
 
@@ -239,7 +266,12 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
   const handleMerge = async (sourceId: string, sourceTitle: string) => {
     const targetId = showMergeDialog(sourceId, sourceTitle);
     if (targetId) {
-      const success = await mergeMovies(sourceId, targetId, sourceTitle, apiUrl);
+      const success = await mergeMovies(
+        sourceId,
+        targetId,
+        sourceTitle,
+        apiUrl
+      );
       if (success) {
         fetchMovies(pagination.page, searchQuery);
       }
@@ -248,17 +280,21 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
 
   if (loading) {
     return (
-      <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        padding: '2rem'
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '2rem'
-        }}>
+      <div
+        style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '2rem'
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '2rem'
+          }}
+        >
           <h1 style={{ color: '#333', margin: 0 }}>Movies Management</h1>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <a
@@ -290,17 +326,21 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
             </button>
           </div>
         </div>
-        <div style={{
-          background: 'white',
-          borderRadius: '8px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            textAlign: 'center',
-            padding: '3rem',
-            color: '#666'
-          }}>
+        <div
+          style={{
+            background: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+            overflow: 'hidden'
+          }}
+        >
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '3rem',
+              color: '#666'
+            }}
+          >
             Loading movies...
           </div>
         </div>
@@ -309,18 +349,22 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
   }
 
   return (
-    <div style={{
-      maxWidth: '1200px',
-      margin: '0 auto',
-      padding: '2rem'
-    }}>
+    <div
+      style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '2rem'
+      }}
+    >
       {/* Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '2rem'
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '2rem'
+        }}
+      >
         <h1 style={{ color: '#333', margin: 0 }}>Movies Management</h1>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <a
@@ -334,8 +378,8 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
               fontSize: '0.875rem',
               transition: 'background-color 0.2s'
             }}
-            onMouseOver={(e) => e.currentTarget.style.background = '#4338ca'}
-            onMouseOut={(e) => e.currentTarget.style.background = '#4f46e5'}
+            onMouseOver={(e) => (e.currentTarget.style.background = '#4338ca')}
+            onMouseOut={(e) => (e.currentTarget.style.background = '#4f46e5')}
           >
             Movie Selections
           </a>
@@ -350,14 +394,14 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
               cursor: 'pointer',
               fontSize: '0.875rem'
             }}
-            onMouseOver={(e) => e.currentTarget.style.background = '#b91c1c'}
-            onMouseOut={(e) => e.currentTarget.style.background = '#dc2626'}
+            onMouseOver={(e) => (e.currentTarget.style.background = '#b91c1c')}
+            onMouseOut={(e) => (e.currentTarget.style.background = '#dc2626')}
           >
             Logout
           </button>
         </div>
       </div>
-      
+
       {/* Search */}
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ position: 'relative', maxWidth: '400px' }}>
@@ -405,75 +449,91 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
       </div>
 
       {/* Movies Table */}
-      <div style={{
-        background: 'white',
-        borderRadius: '8px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        overflow: 'hidden'
-      }}>
+      <div
+        style={{
+          background: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+          overflow: 'hidden'
+        }}
+      >
         {movies.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '3rem',
-            color: '#666'
-          }}>
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '3rem',
+              color: '#666'
+            }}
+          >
             No movies found
           </div>
         ) : (
-          <table style={{
-            width: '100%',
-            borderCollapse: 'collapse'
-          }}>
+          <table
+            style={{
+              width: '100%',
+              borderCollapse: 'collapse'
+            }}
+          >
             <thead>
               <tr>
-                <th style={{
-                  background: '#f3f4f6',
-                  padding: '1rem',
-                  textAlign: 'left',
-                  fontWeight: 600,
-                  color: '#374151',
-                  borderBottom: '1px solid #e5e7eb'
-                }}>
+                <th
+                  style={{
+                    background: '#f3f4f6',
+                    padding: '1rem',
+                    textAlign: 'left',
+                    fontWeight: 600,
+                    color: '#374151',
+                    borderBottom: '1px solid #e5e7eb'
+                  }}
+                >
                   Poster
                 </th>
-                <th style={{
-                  background: '#f3f4f6',
-                  padding: '1rem',
-                  textAlign: 'left',
-                  fontWeight: 600,
-                  color: '#374151',
-                  borderBottom: '1px solid #e5e7eb'
-                }}>
+                <th
+                  style={{
+                    background: '#f3f4f6',
+                    padding: '1rem',
+                    textAlign: 'left',
+                    fontWeight: 600,
+                    color: '#374151',
+                    borderBottom: '1px solid #e5e7eb'
+                  }}
+                >
                   Title
                 </th>
-                <th style={{
-                  background: '#f3f4f6',
-                  padding: '1rem',
-                  textAlign: 'left',
-                  fontWeight: 600,
-                  color: '#374151',
-                  borderBottom: '1px solid #e5e7eb'
-                }}>
+                <th
+                  style={{
+                    background: '#f3f4f6',
+                    padding: '1rem',
+                    textAlign: 'left',
+                    fontWeight: 600,
+                    color: '#374151',
+                    borderBottom: '1px solid #e5e7eb'
+                  }}
+                >
                   Year
                 </th>
-                <th style={{
-                  background: '#f3f4f6',
-                  padding: '1rem',
-                  textAlign: 'left',
-                  fontWeight: 600,
-                  color: '#374151',
-                  borderBottom: '1px solid #e5e7eb'
-                }}>
+                <th
+                  style={{
+                    background: '#f3f4f6',
+                    padding: '1rem',
+                    textAlign: 'left',
+                    fontWeight: 600,
+                    color: '#374151',
+                    borderBottom: '1px solid #e5e7eb'
+                  }}
+                >
                   Language
                 </th>
-                <th style={{
-                  background: '#f3f4f6',
-                  padding: '1rem',
-                  textAlign: 'left',
-                  fontWeight: 600,
-                  color: '#374151',
-                  borderBottom: '1px solid #e5e7eb'
-                }}>
+                <th
+                  style={{
+                    background: '#f3f4f6',
+                    padding: '1rem',
+                    textAlign: 'left',
+                    fontWeight: 600,
+                    color: '#374151',
+                    borderBottom: '1px solid #e5e7eb'
+                  }}
+                >
                   Actions
                 </th>
               </tr>
@@ -485,13 +545,19 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
                   style={{
                     transition: 'background-color 0.2s'
                   }}
-                  onMouseOver={(e) => e.currentTarget.style.background = '#f9fafb'}
-                  onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                  onMouseOver={(e) =>
+                    (e.currentTarget.style.background = '#f9fafb')
+                  }
+                  onMouseOut={(e) =>
+                    (e.currentTarget.style.background = 'transparent')
+                  }
                 >
-                  <td style={{
-                    padding: '1rem',
-                    borderBottom: '1px solid #e5e7eb'
-                  }}>
+                  <td
+                    style={{
+                      padding: '1rem',
+                      borderBottom: '1px solid #e5e7eb'
+                    }}
+                  >
                     {movie.posterUrl ? (
                       <img
                         src={movie.posterUrl}
@@ -504,42 +570,54 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
                         }}
                       />
                     ) : (
-                      <div style={{
-                        width: '50px',
-                        height: '75px',
-                        background: '#e5e7eb',
-                        borderRadius: '4px'
-                      }} />
+                      <div
+                        style={{
+                          width: '50px',
+                          height: '75px',
+                          background: '#e5e7eb',
+                          borderRadius: '4px'
+                        }}
+                      />
                     )}
                   </td>
-                  <td style={{
-                    padding: '1rem',
-                    borderBottom: '1px solid #e5e7eb'
-                  }}>
-                    <div style={{
-                      fontWeight: 500,
-                      color: '#111827'
-                    }}>
+                  <td
+                    style={{
+                      padding: '1rem',
+                      borderBottom: '1px solid #e5e7eb'
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontWeight: 500,
+                        color: '#111827'
+                      }}
+                    >
                       {movie.title}
                     </div>
                   </td>
-                  <td style={{
-                    padding: '1rem',
-                    borderBottom: '1px solid #e5e7eb',
-                    color: '#6b7280'
-                  }}>
+                  <td
+                    style={{
+                      padding: '1rem',
+                      borderBottom: '1px solid #e5e7eb',
+                      color: '#6b7280'
+                    }}
+                  >
                     {movie.year || 'N/A'}
                   </td>
-                  <td style={{
-                    padding: '1rem',
-                    borderBottom: '1px solid #e5e7eb'
-                  }}>
+                  <td
+                    style={{
+                      padding: '1rem',
+                      borderBottom: '1px solid #e5e7eb'
+                    }}
+                  >
                     {movie.originalLanguage || 'N/A'}
                   </td>
-                  <td style={{
-                    padding: '1rem',
-                    borderBottom: '1px solid #e5e7eb'
-                  }}>
+                  <td
+                    style={{
+                      padding: '1rem',
+                      borderBottom: '1px solid #e5e7eb'
+                    }}
+                  >
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <a
                         href={`/admin/movies/${movie.uid}`}
@@ -554,8 +632,12 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
                           background: '#2563eb',
                           color: 'white'
                         }}
-                        onMouseOver={(e) => e.currentTarget.style.background = '#1d4ed8'}
-                        onMouseOut={(e) => e.currentTarget.style.background = '#2563eb'}
+                        onMouseOver={(e) =>
+                          (e.currentTarget.style.background = '#1d4ed8')
+                        }
+                        onMouseOut={(e) =>
+                          (e.currentTarget.style.background = '#2563eb')
+                        }
                       >
                         Edit
                       </a>
@@ -575,8 +657,12 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
                             background: '#6b7280',
                             color: 'white'
                           }}
-                          onMouseOver={(e) => e.currentTarget.style.background = '#4b5563'}
-                          onMouseOut={(e) => e.currentTarget.style.background = '#6b7280'}
+                          onMouseOver={(e) =>
+                            (e.currentTarget.style.background = '#4b5563')
+                          }
+                          onMouseOut={(e) =>
+                            (e.currentTarget.style.background = '#6b7280')
+                          }
                         >
                           IMDb
                         </a>
@@ -592,8 +678,12 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
                           background: '#dc2626',
                           color: 'white'
                         }}
-                        onMouseOver={(e) => e.currentTarget.style.background = '#b91c1c'}
-                        onMouseOut={(e) => e.currentTarget.style.background = '#dc2626'}
+                        onMouseOver={(e) =>
+                          (e.currentTarget.style.background = '#b91c1c')
+                        }
+                        onMouseOut={(e) =>
+                          (e.currentTarget.style.background = '#dc2626')
+                        }
                       >
                         Delete
                       </button>
@@ -608,8 +698,12 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
                           background: '#6b7280',
                           color: 'white'
                         }}
-                        onMouseOver={(e) => e.currentTarget.style.background = '#4b5563'}
-                        onMouseOut={(e) => e.currentTarget.style.background = '#6b7280'}
+                        onMouseOver={(e) =>
+                          (e.currentTarget.style.background = '#4b5563')
+                        }
+                        onMouseOut={(e) =>
+                          (e.currentTarget.style.background = '#6b7280')
+                        }
                       >
                         Merge
                       </button>
@@ -624,13 +718,15 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '1rem',
-          marginTop: '2rem'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '1rem',
+            marginTop: '2rem'
+          }}
+        >
           <button
             disabled={pagination.page === 1}
             onClick={() => fetchMovies(pagination.page - 1, searchQuery)}
@@ -655,10 +751,17 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
             style={{
               padding: '0.5rem 1rem',
               border: '1px solid #e5e7eb',
-              background: pagination.page === pagination.totalPages ? '#f3f4f6' : 'white',
-              color: pagination.page === pagination.totalPages ? '#9ca3af' : '#374151',
+              background:
+                pagination.page === pagination.totalPages ? '#f3f4f6' : 'white',
+              color:
+                pagination.page === pagination.totalPages
+                  ? '#9ca3af'
+                  : '#374151',
               borderRadius: '4px',
-              cursor: pagination.page === pagination.totalPages ? 'not-allowed' : 'pointer',
+              cursor:
+                pagination.page === pagination.totalPages
+                  ? 'not-allowed'
+                  : 'pointer',
               opacity: pagination.page === pagination.totalPages ? 0.5 : 1
             }}
           >
