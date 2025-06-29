@@ -1,32 +1,25 @@
 import { useEffect, useState } from 'react';
 import type { Route } from './+types/admin.movies';
 
-interface AdminMovieData {
-  movieUid: string;
-  movie: {
-    imdbId: string;
-    tmdbId: number;
-    year: number;
-    duration: number;
-    createdAt: string;
-    updatedAt: string;
-  };
-  translations?: {
-    languageCode: string;
-    resourceType: string;
-    content: string;
-  }[];
-  posterUrls?: {
-    url: string;
-    isPrimary: boolean;
-  }[];
+interface Movie {
+  uid: string;
+  title: string;
+  year: number | null;
+  originalLanguage: string | null;
+  posterUrl: string | null;
+  imdbUrl?: string;
 }
 
 interface PaginationData {
   page: number;
   limit: number;
-  total: number;
+  totalCount: number;
   totalPages: number;
+}
+
+interface MoviesResponse {
+  movies: Movie[];
+  pagination: PaginationData;
 }
 
 export function meta(): Route.MetaDescriptors {
@@ -41,13 +34,15 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const page = url.searchParams.get('page') || '1';
   const limit = url.searchParams.get('limit') || '20';
+  const search = url.searchParams.get('search') || '';
 
   return {
     apiUrl: context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787',
     page: Number.parseInt(page),
     limit: Number.parseInt(limit),
+    search,
     movies: [],
-    pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+    pagination: { page: 1, limit: 20, totalCount: 0, totalPages: 0 }
   };
 }
 
@@ -58,211 +53,619 @@ const handleLogout = () => {
   }
 };
 
-const handleDelete = (movieUid: string) => {
-  if (globalThis.confirm?.('この映画を削除しますか？')) {
-    // 削除処理（実装省略）
-    console.log('Delete movie:', movieUid);
+const deleteMovie = async (movieId: string, movieTitle: string, apiUrl: string) => {
+  if (!globalThis.confirm?.(`Are you sure you want to delete "${movieTitle}"? This action cannot be undone.`)) {
+    return false;
+  }
+
+  const token = globalThis.localStorage?.getItem('adminToken');
+  if (!token) return false;
+
+  try {
+    const response = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (response.status === 401) {
+      globalThis.localStorage?.removeItem('adminToken');
+      globalThis.location.href = '/admin/login';
+      return false;
+    }
+
+    if (!response.ok) {
+      throw new Error('Failed to delete movie');
+    }
+
+    alert(`Movie "${movieTitle}" has been deleted successfully.`);
+    return true;
+  } catch (error) {
+    alert('Failed to delete movie. Please try again.');
+    console.error('Delete error:', error);
+    return false;
+  }
+};
+
+const showMergeDialog = (sourceId: string, sourceTitle: string) => {
+  const targetId = globalThis.prompt?.(
+    `映画「${sourceTitle}」を他の映画にマージします。\n\nマージ先の映画IDを入力してください：`
+  );
+  
+  if (targetId && targetId.trim()) {
+    const confirmed = globalThis.confirm?.(
+      `確認：\n\n` +
+      `マージ元: ${sourceTitle} (${sourceId})\n` +
+      `マージ先: ${targetId.trim()}\n\n` +
+      `マージ元の映画とそのデータは削除されます。\n` +
+      `この操作は取り消せません。\n\n` +
+      `続行しますか？`
+    );
+    
+    if (confirmed) {
+      return targetId.trim();
+    }
+  }
+  return null;
+};
+
+const mergeMovies = async (sourceId: string, targetId: string, sourceTitle: string, apiUrl: string) => {
+  const token = globalThis.localStorage?.getItem('adminToken');
+  if (!token) return false;
+
+  try {
+    const response = await fetch(`${apiUrl}/admin/movies/${sourceId}/merge/${targetId}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    alert(`Movie "${sourceTitle}" has been successfully merged.`);
+    return true;
+  } catch (error) {
+    alert(`Failed to merge movie: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error('Merge error:', error);
+    return false;
   }
 };
 
 export default function AdminMovies({ loaderData }: Route.ComponentProps) {
-  const { apiUrl, page, limit } = loaderData as {
+  const { apiUrl, page, limit, search } = loaderData as {
     apiUrl: string;
     page: number;
     limit: number;
-    movies: AdminMovieData[];
+    search: string;
+    movies: Movie[];
     pagination: PaginationData;
   };
 
-  const [movies, setMovies] = useState<AdminMovieData[]>([]);
+  const [movies, setMovies] = useState<Movie[]>([]);
   const [pagination, setPagination] = useState<PaginationData>({
     page: 1,
     limit: 20,
-    total: 0,
+    totalCount: 0,
     totalPages: 0
   });
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState(search);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  // クライアントサイドでの認証チェックとAPIコール
-  useEffect(() => {
-    const loadMovies = async () => {
-      if (globalThis.window !== undefined) {
-        const token = globalThis.localStorage.getItem('adminToken');
-        if (!token) {
-          globalThis.location.href = '/admin/login';
-          return;
+  // Movies fetch function
+  const fetchMovies = async (currentPage = page, currentSearch = searchQuery) => {
+    if (globalThis.window === undefined) return;
+    
+    const token = globalThis.localStorage.getItem('adminToken');
+    if (!token) {
+      globalThis.location.href = '/admin/login';
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const searchParam = currentSearch ? `&search=${encodeURIComponent(currentSearch)}` : '';
+      const response = await fetch(
+        `${apiUrl}/admin/movies?page=${currentPage}&limit=${limit}${searchParam}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
         }
+      );
 
-        try {
-          const response = await fetch(
-            `${apiUrl}/admin/movies?page=${page}&limit=${limit}`,
-            {
-              headers: { Authorization: `Bearer ${token}` }
-            }
-          );
-
-          if (response.status === 401) {
-            globalThis.localStorage.removeItem('adminToken');
-            globalThis.location.href = '/admin/login';
-            return;
-          }
-
-          if (!response.ok) {
-            throw new Error('Failed to fetch movies');
-          }
-
-          const data = (await response.json()) as {
-            movies: AdminMovieData[];
-            pagination: PaginationData;
-          };
-          setMovies(data.movies || []);
-          setPagination(
-            data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 }
-          );
-        } catch (error) {
-          console.error('Error loading movies:', error);
-        } finally {
-          setLoading(false);
-        }
+      if (response.status === 401) {
+        globalThis.localStorage.removeItem('adminToken');
+        globalThis.location.href = '/admin/login';
+        return;
       }
-    };
 
-    loadMovies();
+      if (!response.ok) {
+        throw new Error('Failed to fetch movies');
+      }
+
+      const data = (await response.json()) as MoviesResponse;
+      setMovies(data.movies || []);
+      setPagination(data.pagination || { page: 1, limit: 20, totalCount: 0, totalPages: 0 });
+    } catch (error) {
+      console.error('Error loading movies:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    fetchMovies();
   }, [apiUrl, page, limit]);
+
+  // Handle search
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    const timeout = setTimeout(() => {
+      const url = new URL(globalThis.location.href);
+      if (query) {
+        url.searchParams.set('search', query);
+      } else {
+        url.searchParams.delete('search');
+      }
+      url.searchParams.set('page', '1');
+      globalThis.history.pushState({}, '', url.toString());
+      fetchMovies(1, query);
+    }, 300);
+    
+    setSearchTimeout(timeout);
+  };
+
+  // Handle delete
+  const handleDelete = async (movieId: string, movieTitle: string) => {
+    const success = await deleteMovie(movieId, movieTitle, apiUrl);
+    if (success) {
+      fetchMovies(pagination.page, searchQuery);
+    }
+  };
+
+  // Handle merge
+  const handleMerge = async (sourceId: string, sourceTitle: string) => {
+    const targetId = showMergeDialog(sourceId, sourceTitle);
+    if (targetId) {
+      const success = await mergeMovies(sourceId, targetId, sourceTitle, apiUrl);
+      if (success) {
+        fetchMovies(pagination.page, searchQuery);
+      }
+    }
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">読み込み中...</p>
+      <div style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '2rem'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '2rem'
+        }}>
+          <h1 style={{ color: '#333', margin: 0 }}>Movies Management</h1>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <a
+              href="/admin/selections"
+              style={{
+                padding: '0.5rem 1rem',
+                background: '#4f46e5',
+                color: 'white',
+                textDecoration: 'none',
+                borderRadius: '4px',
+                fontSize: '0.875rem'
+              }}
+            >
+              Movie Selections
+            </a>
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: '0.5rem 1rem',
+                background: '#dc2626',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '0.875rem'
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+        <div style={{
+          background: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            textAlign: 'center',
+            padding: '3rem',
+            color: '#666'
+          }}>
+            Loading movies...
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">映画管理</h1>
-            <nav className="flex space-x-4">
-              <a
-                href="/"
-                className="text-blue-600 hover:text-blue-800 transition-colors"
-              >
-                ホーム
-              </a>
-              <button
-                onClick={handleLogout}
-                className="text-red-600 hover:text-red-800 transition-colors"
-              >
-                ログアウト
-              </button>
-            </nav>
-          </div>
+    <div style={{
+      maxWidth: '1200px',
+      margin: '0 auto',
+      padding: '2rem'
+    }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '2rem'
+      }}>
+        <h1 style={{ color: '#333', margin: 0 }}>Movies Management</h1>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <a
+            href="/admin/selections"
+            style={{
+              padding: '0.5rem 1rem',
+              background: '#4f46e5',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '4px',
+              fontSize: '0.875rem',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = '#4338ca'}
+            onMouseOut={(e) => e.currentTarget.style.background = '#4f46e5'}
+          >
+            Movie Selections
+          </a>
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: '0.5rem 1rem',
+              background: '#dc2626',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '0.875rem'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = '#b91c1c'}
+            onMouseOut={(e) => e.currentTarget.style.background = '#dc2626'}
+          >
+            Logout
+          </button>
         </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {/* ページネーション情報 */}
-        <div className="mb-6 flex justify-between items-center">
-          <div className="text-sm text-gray-600">
-            合計: {pagination.total}件
-          </div>
-          <div className="text-sm text-gray-600">
-            {pagination.page} / {pagination.totalPages} ページ
-          </div>
+      </div>
+      
+      {/* Search */}
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ position: 'relative', maxWidth: '400px' }}>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Search movies by title..."
+            style={{
+              width: '100%',
+              padding: '0.75rem 2.5rem 0.75rem 1rem',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              fontSize: '1rem',
+              background: 'white',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+            }}
+          />
+          {searchQuery && (
+            <button
+              onClick={() => handleSearch('')}
+              style={{
+                position: 'absolute',
+                right: '0.75rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: '#6b7280',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                padding: '0.25rem',
+                borderRadius: '50%',
+                width: '1.5rem',
+                height: '1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              ✕
+            </button>
+          )}
         </div>
+      </div>
 
-        {/* 映画リスト */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <ul className="divide-y divide-gray-200">
-            {movies.map((movie) => {
-              const title =
-                movie.translations?.find((t) => t.languageCode === 'ja')
-                  ?.content || 'タイトル不明';
-              const posterUrl =
-                movie.posterUrls?.find((p) => p.isPrimary)?.url ||
-                movie.posterUrls?.[0]?.url;
-
-              return (
-                <li key={movie.movieUid} className="px-6 py-4">
-                  <div className="flex items-center space-x-4">
-                    {/* ポスター */}
-                    <div className="flex-shrink-0 w-16 h-24">
-                      {posterUrl ? (
-                        <img
-                          src={posterUrl}
-                          alt={title}
-                          className="w-full h-full object-cover rounded"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                          <span className="text-xs text-gray-500">
-                            No Image
-                          </span>
-                        </div>
-                      )}
+      {/* Movies Table */}
+      <div style={{
+        background: 'white',
+        borderRadius: '8px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        overflow: 'hidden'
+      }}>
+        {movies.length === 0 ? (
+          <div style={{
+            textAlign: 'center',
+            padding: '3rem',
+            color: '#666'
+          }}>
+            No movies found
+          </div>
+        ) : (
+          <table style={{
+            width: '100%',
+            borderCollapse: 'collapse'
+          }}>
+            <thead>
+              <tr>
+                <th style={{
+                  background: '#f3f4f6',
+                  padding: '1rem',
+                  textAlign: 'left',
+                  fontWeight: 600,
+                  color: '#374151',
+                  borderBottom: '1px solid #e5e7eb'
+                }}>
+                  Poster
+                </th>
+                <th style={{
+                  background: '#f3f4f6',
+                  padding: '1rem',
+                  textAlign: 'left',
+                  fontWeight: 600,
+                  color: '#374151',
+                  borderBottom: '1px solid #e5e7eb'
+                }}>
+                  Title
+                </th>
+                <th style={{
+                  background: '#f3f4f6',
+                  padding: '1rem',
+                  textAlign: 'left',
+                  fontWeight: 600,
+                  color: '#374151',
+                  borderBottom: '1px solid #e5e7eb'
+                }}>
+                  Year
+                </th>
+                <th style={{
+                  background: '#f3f4f6',
+                  padding: '1rem',
+                  textAlign: 'left',
+                  fontWeight: 600,
+                  color: '#374151',
+                  borderBottom: '1px solid #e5e7eb'
+                }}>
+                  Language
+                </th>
+                <th style={{
+                  background: '#f3f4f6',
+                  padding: '1rem',
+                  textAlign: 'left',
+                  fontWeight: 600,
+                  color: '#374151',
+                  borderBottom: '1px solid #e5e7eb'
+                }}>
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {movies.map((movie) => (
+                <tr
+                  key={movie.uid}
+                  style={{
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.background = '#f9fafb'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <td style={{
+                    padding: '1rem',
+                    borderBottom: '1px solid #e5e7eb'
+                  }}>
+                    {movie.posterUrl ? (
+                      <img
+                        src={movie.posterUrl}
+                        alt={movie.title}
+                        style={{
+                          width: '50px',
+                          height: '75px',
+                          objectFit: 'cover',
+                          borderRadius: '4px'
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '50px',
+                        height: '75px',
+                        background: '#e5e7eb',
+                        borderRadius: '4px'
+                      }} />
+                    )}
+                  </td>
+                  <td style={{
+                    padding: '1rem',
+                    borderBottom: '1px solid #e5e7eb'
+                  }}>
+                    <div style={{
+                      fontWeight: 500,
+                      color: '#111827'
+                    }}>
+                      {movie.title}
                     </div>
-
-                    {/* 映画情報 */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-medium text-gray-900 truncate">
-                        {title}
-                      </h3>
-                      <div className="mt-1 flex flex-wrap gap-2 text-sm text-gray-600">
-                        <span>{movie.movie?.year || '不明'}年</span>
-                        <span>{movie.movie?.duration || '不明'}分</span>
-                        <span>{movie.movie?.imdbId || '不明'}</span>
-                      </div>
-                    </div>
-
-                    {/* アクション */}
-                    <div className="flex space-x-2">
+                  </td>
+                  <td style={{
+                    padding: '1rem',
+                    borderBottom: '1px solid #e5e7eb',
+                    color: '#6b7280'
+                  }}>
+                    {movie.year || 'N/A'}
+                  </td>
+                  <td style={{
+                    padding: '1rem',
+                    borderBottom: '1px solid #e5e7eb'
+                  }}>
+                    {movie.originalLanguage || 'N/A'}
+                  </td>
+                  <td style={{
+                    padding: '1rem',
+                    borderBottom: '1px solid #e5e7eb'
+                  }}>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <a
-                        href={`/admin/movies/${movie.movieUid}`}
-                        className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+                        href={`/admin/movies/${movie.uid}`}
+                        style={{
+                          padding: '0.375rem 0.75rem',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.875rem',
+                          textDecoration: 'none',
+                          display: 'inline-block',
+                          background: '#2563eb',
+                          color: 'white'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.background = '#1d4ed8'}
+                        onMouseOut={(e) => e.currentTarget.style.background = '#2563eb'}
                       >
-                        編集
+                        Edit
                       </a>
+                      {movie.imdbUrl && (
+                        <a
+                          href={movie.imdbUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            padding: '0.375rem 0.75rem',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '0.875rem',
+                            textDecoration: 'none',
+                            display: 'inline-block',
+                            background: '#6b7280',
+                            color: 'white'
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.background = '#4b5563'}
+                          onMouseOut={(e) => e.currentTarget.style.background = '#6b7280'}
+                        >
+                          IMDb
+                        </a>
+                      )}
                       <button
-                        onClick={() => handleDelete(movie.movieUid)}
-                        className="inline-flex items-center px-3 py-1 border border-red-300 rounded-md text-sm bg-white text-red-700 hover:bg-red-50 transition-colors"
+                        onClick={() => handleDelete(movie.uid, movie.title)}
+                        style={{
+                          padding: '0.375rem 0.75rem',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.875rem',
+                          background: '#dc2626',
+                          color: 'white'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.background = '#b91c1c'}
+                        onMouseOut={(e) => e.currentTarget.style.background = '#dc2626'}
                       >
-                        削除
+                        Delete
+                      </button>
+                      <button
+                        onClick={() => handleMerge(movie.uid, movie.title)}
+                        style={{
+                          padding: '0.375rem 0.75rem',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.875rem',
+                          background: '#6b7280',
+                          color: 'white'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.background = '#4b5563'}
+                        onMouseOut={(e) => e.currentTarget.style.background = '#6b7280'}
+                      >
+                        Merge
                       </button>
                     </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-
-        {/* ページネーション */}
-        {pagination.totalPages > 1 && (
-          <div className="mt-6 flex justify-center space-x-2">
-            {pagination.page > 1 && (
-              <a
-                href={`/admin/movies?page=${pagination.page - 1}`}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                前のページ
-              </a>
-            )}
-            {pagination.page < pagination.totalPages && (
-              <a
-                href={`/admin/movies?page=${pagination.page + 1}`}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                次のページ
-              </a>
-            )}
-          </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '1rem',
+          marginTop: '2rem'
+        }}>
+          <button
+            disabled={pagination.page === 1}
+            onClick={() => fetchMovies(pagination.page - 1, searchQuery)}
+            style={{
+              padding: '0.5rem 1rem',
+              border: '1px solid #e5e7eb',
+              background: pagination.page === 1 ? '#f3f4f6' : 'white',
+              color: pagination.page === 1 ? '#9ca3af' : '#374151',
+              borderRadius: '4px',
+              cursor: pagination.page === 1 ? 'not-allowed' : 'pointer',
+              opacity: pagination.page === 1 ? 0.5 : 1
+            }}
+          >
+            Previous
+          </button>
+          <span style={{ color: '#6b7280' }}>
+            Page {pagination.page} of {pagination.totalPages}
+          </span>
+          <button
+            disabled={pagination.page === pagination.totalPages}
+            onClick={() => fetchMovies(pagination.page + 1, searchQuery)}
+            style={{
+              padding: '0.5rem 1rem',
+              border: '1px solid #e5e7eb',
+              background: pagination.page === pagination.totalPages ? '#f3f4f6' : 'white',
+              color: pagination.page === pagination.totalPages ? '#9ca3af' : '#374151',
+              borderRadius: '4px',
+              cursor: pagination.page === pagination.totalPages ? 'not-allowed' : 'pointer',
+              opacity: pagination.page === pagination.totalPages ? 0.5 : 1
+            }}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }
