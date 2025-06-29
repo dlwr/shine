@@ -124,7 +124,7 @@ const mergeMovies = async (sourceId: string, targetId: string, sourceTitle: stri
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json() as { error?: string };
       throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
 
@@ -156,7 +156,7 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
   });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(search);
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [searchTimeout, setSearchTimeout] = useState<number | null>(null);
 
   // Movies fetch function
   const fetchMovies = async (currentPage = page, currentSearch = searchQuery) => {
