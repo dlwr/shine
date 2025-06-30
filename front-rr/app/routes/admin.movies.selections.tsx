@@ -27,12 +27,16 @@ interface PreviewSelections {
 interface SearchMovie {
   uid: string;
   year: number | null;
-  translations: {
+  title?: string;
+  translations?: {
     languageCode: string;
     content: string;
     isDefault: number;
   }[];
   nominations: {
+    uid: string;
+    isWinner: boolean;
+    category: { name: string };
     ceremony: { year: number };
     organization: { name: string };
   }[];
@@ -172,8 +176,8 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
       });
 
       if (response.ok) {
-        const data = (await response.json()) as { movie: SearchMovie };
-        setRandomMovie(data.movie);
+        const data = (await response.json()) as SearchMovie;
+        setRandomMovie(data);
       }
     } catch (error) {
       console.error('Random movie error:', error);
@@ -247,7 +251,7 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
 
   const getPrimaryTitle = (movie: SelectionData['movie'] | SearchMovie) => {
     if (!movie) return '無題';
-    if ('title' in movie) return movie.title;
+    if ('title' in movie && movie.title) return movie.title;
     return movie.translations?.find(t => t.isDefault === 1)?.content ||
            movie.translations?.find(t => t.languageCode === 'ja')?.content ||
            movie.translations?.[0]?.content ||
@@ -442,7 +446,7 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
                           <h4 className="font-medium">{getPrimaryTitle(movie)}</h4>
                           <p className="text-sm text-gray-600">
                             {movie.year && `${movie.year}年`}
-                            {movie.nominations.length > 0 && ` • ${movie.nominations.length}件のノミネート`}
+                            {movie.nominations?.length > 0 && ` • ${movie.nominations.length}件のノミネート`}
                           </p>
                         </div>
                       ))}
@@ -469,7 +473,7 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
                         <h4 className="font-medium">{getPrimaryTitle(randomMovie)}</h4>
                         <p className="text-sm text-gray-600">
                           {randomMovie.year && `${randomMovie.year}年`}
-                          {randomMovie.nominations.length > 0 && ` • ${randomMovie.nominations.length}件のノミネート`}
+                          {randomMovie.nominations?.length > 0 && ` • ${randomMovie.nominations.length}件のノミネート`}
                         </p>
                       </div>
                     )}
