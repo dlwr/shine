@@ -1,34 +1,30 @@
 import { useEffect, useState } from 'react';
 import type { Route } from './+types/admin.movies.$id';
 
-interface MovieData {
-  uid: string;
-  year: number | null;
-  originalLanguage: string | null;
-  imdbId: string | null;
-  tmdbId: number | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
 interface Translation {
   uid: string;
   languageCode: string;
   content: string;
-  isDefault: boolean;
+  isDefault: number; // 1 or 0 from database
 }
 
 interface Nomination {
   uid: string;
   isWinner: boolean;
+  specialMention: string | null;
   category: {
+    uid: string;
     name: string;
   };
   ceremony: {
+    uid: string;
+    number: number;
     year: number;
-    organization: {
-      name: string;
-    };
+  };
+  organization: {
+    uid: string;
+    name: string;
+    shortName: string;
   };
 }
 
@@ -43,10 +39,14 @@ interface PosterUrl {
 }
 
 interface MovieDetails {
-  movie: MovieData;
+  uid: string;
+  year: number | null;
+  originalLanguage: string | null;
+  imdbId: string | null;
+  tmdbId: number | null;
   translations: Translation[];
   nominations: Nomination[];
-  posterUrls: PosterUrl[];
+  posters: PosterUrl[]; // Note: API returns 'posters', not 'posterUrls'
 }
 
 export function meta({ params }: Route.MetaArgs): Route.MetaDescriptors {
@@ -151,6 +151,10 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
         }
 
         const data = (await response.json()) as MovieDetails;
+        console.log('Raw API response:', JSON.stringify(data, null, 2));
+        console.log('Translations:', data.translations);
+        console.log('Nominations:', data.nominations);
+        console.log('Posters:', data.posters);
 
         // Ensure required properties exist and normalize structure
         const normalizedData: MovieDetails = {
@@ -164,6 +168,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
           posters: data.posters || [] // API returns 'posters'
         };
 
+        console.log('Normalized data:', normalizedData);
         setMovieData(normalizedData);
       } catch (error) {
         console.error('Error loading movie:', error);
@@ -210,9 +215,9 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
       }
 
       if (!response.ok) {
-        const errorData = await response
+        const errorData = (await response
           .json()
-          .catch(() => ({ error: 'Unknown error' }));
+          .catch(() => ({ error: 'Unknown error' }))) as { error?: string };
         throw new Error(errorData.error || 'Failed to add translation');
       }
 
@@ -278,9 +283,9 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
       }
 
       if (!response.ok) {
-        const errorData = await response
+        const errorData = (await response
           .json()
-          .catch(() => ({ error: 'Unknown error' }));
+          .catch(() => ({ error: 'Unknown error' }))) as { error?: string };
         throw new Error(errorData.error || 'Failed to update translation');
       }
 
@@ -335,9 +340,9 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
       }
 
       if (!response.ok) {
-        const errorData = await response
+        const errorData = (await response
           .json()
-          .catch(() => ({ error: 'Unknown error' }));
+          .catch(() => ({ error: 'Unknown error' }))) as { error?: string };
         throw new Error(errorData.error || 'Failed to delete translation');
       }
 
@@ -391,9 +396,9 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
       }
 
       if (!response.ok) {
-        const errorData = await response
+        const errorData = (await response
           .json()
-          .catch(() => ({ error: 'Unknown error' }));
+          .catch(() => ({ error: 'Unknown error' }))) as { error?: string };
         throw new Error(errorData.error || 'Failed to update IMDb ID');
       }
 
@@ -427,7 +432,10 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
       ? Number.parseInt(newTmdbId.trim())
       : null;
 
-    if (newTmdbId.trim() && (isNaN(tmdbIdNumber) || tmdbIdNumber <= 0)) {
+    if (
+      newTmdbId.trim() &&
+      (tmdbIdNumber === null || isNaN(tmdbIdNumber) || tmdbIdNumber <= 0)
+    ) {
       setTmdbError('TMDb IDは正の整数である必要があります');
       return;
     }
@@ -466,9 +474,9 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
       }
 
       if (!response.ok) {
-        const errorData = await response
+        const errorData = (await response
           .json()
-          .catch(() => ({ error: 'Unknown error' }));
+          .catch(() => ({ error: 'Unknown error' }))) as { error?: string };
         throw new Error(errorData.error || 'Failed to update TMDb ID');
       }
 
@@ -535,9 +543,9 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
       }
 
       if (!response.ok) {
-        const errorData = await response
+        const errorData = (await response
           .json()
-          .catch(() => ({ error: 'Unknown error' }));
+          .catch(() => ({ error: 'Unknown error' }))) as { error?: string };
         throw new Error(errorData.error || 'Failed to add poster');
       }
 
@@ -601,9 +609,9 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
       }
 
       if (!response.ok) {
-        const errorData = await response
+        const errorData = (await response
           .json()
-          .catch(() => ({ error: 'Unknown error' }));
+          .catch(() => ({ error: 'Unknown error' }))) as { error?: string };
         throw new Error(errorData.error || 'Failed to delete poster');
       }
 
@@ -833,11 +841,15 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
     );
   }
 
+  console.log('Component render - movieData:', movieData);
+
   const primaryTitle =
-    movieData.translations?.find((t) => t.isDefault)?.content ||
+    movieData.translations?.find((t) => t.isDefault === 1)?.content ||
     movieData.translations?.find((t) => t.languageCode === 'ja')?.content ||
     movieData.translations?.[0]?.content ||
     '無題';
+
+  console.log('Primary title:', primaryTitle);
 
   return (
     <main
@@ -955,13 +967,13 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
             <div>
               <label style={{ fontWeight: 600, color: '#374151' }}>年:</label>
               <span style={{ marginLeft: '8px', color: '#6b7280' }}>
-                {movieData.movie.year || 'N/A'}
+                {movieData.year || 'N/A'}
               </span>
             </div>
             <div>
               <label style={{ fontWeight: 600, color: '#374151' }}>原語:</label>
               <span style={{ marginLeft: '8px', color: '#6b7280' }}>
-                {movieData.movie.originalLanguage || 'N/A'}
+                {movieData.originalLanguage || 'N/A'}
               </span>
             </div>
             <div>
@@ -1074,11 +1086,11 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
                 </div>
               ) : (
                 <span style={{ marginLeft: '8px', color: '#6b7280' }}>
-                  {movieData.movie.imdbId || 'N/A'}
+                  {movieData.imdbId || 'N/A'}
                   <button
                     onClick={() => {
                       setEditingImdbId(true);
-                      setNewImdbId(movieData.movie.imdbId || '');
+                      setNewImdbId(movieData.imdbId || '');
                       setImdbError(null);
                     }}
                     style={{
@@ -1194,11 +1206,11 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
                 </div>
               ) : (
                 <span style={{ marginLeft: '8px', color: '#6b7280' }}>
-                  {movieData.movie.tmdbId || 'N/A'}
+                  {movieData.tmdbId || 'N/A'}
                   <button
                     onClick={() => {
                       setEditingTmdbId(true);
-                      setNewTmdbId(movieData.movie.tmdbId?.toString() || '');
+                      setNewTmdbId(movieData.tmdbId?.toString() || '');
                       setTmdbError(null);
                     }}
                     style={{
@@ -1858,7 +1870,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
                           borderBottom: '1px solid #e5e7eb'
                         }}
                       >
-                        {nomination.ceremony.organization.name}
+                        {nomination.organization.name}
                       </td>
                       <td
                         style={{
@@ -2259,7 +2271,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
             </div>
           )}
 
-          {!movieData.posterUrls || movieData.posterUrls.length === 0 ? (
+          {!movieData.posters || movieData.posters.length === 0 ? (
             <p style={{ color: '#6b7280', fontStyle: 'italic' }}>
               ポスターがありません
             </p>
@@ -2271,7 +2283,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
                 gap: '16px'
               }}
             >
-              {movieData.posterUrls?.map((poster) => (
+              {movieData.posters?.map((poster: PosterUrl) => (
                 <div
                   key={poster.uid}
                   style={{
