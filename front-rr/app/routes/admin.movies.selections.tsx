@@ -1,48 +1,41 @@
 import { useEffect, useState } from 'react';
 import type { Route } from './+types/admin.movies.selections';
 
-interface MovieSelection {
-  type: 'daily' | 'weekly' | 'monthly';
-  selectedAt: string;
+interface SelectionData {
+  date: string;
   movie: {
     uid: string;
-    year: number | null;
-    originalLanguage: string | null;
-    imdbId: string | null;
-    tmdbId: number | null;
-    translations: Array<{
-      uid: string;
-      languageCode: string;
-      content: string;
-      isDefault: number;
-    }>;
-    nominations: Array<{
+    title: string;
+    year: number;
+    posterUrl?: string;
+    nominations?: {
       uid: string;
       isWinner: boolean;
       category: { name: string };
       ceremony: { year: number };
       organization: { name: string };
-    }>;
-    posters: Array<{
-      uid: string;
-      url: string;
-      isPrimary: boolean;
-    }>;
-  };
+    }[];
+  } | null;
+}
+
+interface PreviewSelections {
+  nextDaily: SelectionData;
+  nextWeekly: SelectionData;
+  nextMonthly: SelectionData;
 }
 
 interface SearchMovie {
   uid: string;
   year: number | null;
-  translations: Array<{
+  translations: {
     languageCode: string;
     content: string;
     isDefault: number;
-  }>;
-  nominations: Array<{
+  }[];
+  nominations: {
     ceremony: { year: number };
     organization: { name: string };
-  }>;
+  }[];
 }
 
 export function meta(): Route.MetaDescriptors {
@@ -68,7 +61,7 @@ const handleLogout = () => {
 export default function AdminMovieSelections({ loaderData }: Route.ComponentProps) {
   const { apiUrl } = loaderData as { apiUrl: string };
   
-  const [selections, setSelections] = useState<MovieSelection[]>([]);
+  const [selections, setSelections] = useState<PreviewSelections | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -118,8 +111,8 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
           throw new Error('Failed to fetch selections');
         }
 
-        const data = (await response.json()) as { selections: MovieSelection[] };
-        setSelections(data.selections || []);
+        const data = (await response.json()) as PreviewSelections;
+        setSelections(data);
       } catch (error) {
         console.error('Error loading selections:', error);
         setError('Failed to load movie selections');
@@ -143,12 +136,12 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
       try {
         const token = globalThis.localStorage.getItem('adminToken');
         const response = await fetch(
-          `${apiUrl}/admin/movies?search=${encodeURIComponent(searchQuery)}&limit=10`,
+          `${apiUrl}/admin/movies?search=${encodeURIComponent(searchQuery)}&limit=20`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
         if (response.ok) {
-          const data = (await response.json()) as { movies: SearchMovie[] };
+          const data = (await response.json()) as { movies: SearchMovie[]; totalCount: number };
           setSearchResults(data.movies || []);
         }
       } catch (error) {
@@ -166,7 +159,16 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
     try {
       const token = globalThis.localStorage.getItem('adminToken');
       const response = await fetch(`${apiUrl}/admin/random-movie-preview`, {
-        headers: { Authorization: `Bearer ${token}` }
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          type: overrideType,
+          date: selections?.[`next${overrideType.charAt(0).toUpperCase() + overrideType.slice(1)}` as keyof PreviewSelections]?.date || new Date().toISOString().split('T')[0],
+          locale: 'en'
+        })
       });
 
       if (response.ok) {
@@ -193,13 +195,14 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
         },
         body: JSON.stringify({
           type: overrideType,
-          movieUid: selectedMovie.uid
+          date: selections?.[`next${overrideType.charAt(0).toUpperCase() + overrideType.slice(1)}` as keyof PreviewSelections]?.date || new Date().toISOString().split('T')[0],
+          movieId: selectedMovie.uid
         })
       });
 
       if (response.ok) {
         // Reload selections
-        window.location.reload();
+        globalThis.location.reload();
       }
     } catch (error) {
       console.error('Override error:', error);
@@ -218,23 +221,33 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case 'daily': return '今日の映画';
-      case 'weekly': return '今週の映画';
-      case 'monthly': return '今月の映画';
-      default: return type;
+      case 'daily': { return '今日の映画';
+      }
+      case 'weekly': { return '今週の映画';
+      }
+      case 'monthly': { return '今月の映画';
+      }
+      default: { return type;
+      }
     }
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'daily': return 'from-blue-500 to-blue-600';
-      case 'weekly': return 'from-green-500 to-green-600';
-      case 'monthly': return 'from-purple-500 to-purple-600';
-      default: return 'from-gray-500 to-gray-600';
+      case 'daily': { return 'from-blue-500 to-blue-600';
+      }
+      case 'weekly': { return 'from-green-500 to-green-600';
+      }
+      case 'monthly': { return 'from-purple-500 to-purple-600';
+      }
+      default: { return 'from-gray-500 to-gray-600';
+      }
     }
   };
 
-  const getPrimaryTitle = (movie: MovieSelection['movie'] | SearchMovie) => {
+  const getPrimaryTitle = (movie: SelectionData['movie'] | SearchMovie) => {
+    if (!movie) return '無題';
+    if ('title' in movie) return movie.title;
     return movie.translations?.find(t => t.isDefault === 1)?.content ||
            movie.translations?.find(t => t.languageCode === 'ja')?.content ||
            movie.translations?.[0]?.content ||
@@ -284,7 +297,7 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
         {/* Selection Cards Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {(['daily', 'weekly', 'monthly'] as const).map((type) => {
-            const selection = selections.find(s => s.type === type);
+            const selection = selections?.[`next${type.charAt(0).toUpperCase() + type.slice(1)}` as keyof PreviewSelections];
             return (
               <div key={type} data-testid={`${type}-selection`} className="bg-white rounded-lg shadow-lg overflow-hidden">
                 {/* Card Header */}
@@ -292,14 +305,14 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
                   <h2 className="text-xl font-bold">{getTypeLabel(type)}</h2>
                   {selection && (
                     <p className="text-sm opacity-90 mt-1">
-                      選択日時: {new Date(selection.selectedAt).toLocaleDateString('ja-JP')}
+                      選択日時: {new Date(selection.date).toLocaleDateString('ja-JP')}
                     </p>
                   )}
                 </div>
 
                 {/* Card Content */}
                 <div className="p-6">
-                  {selection ? (
+                  {selection?.movie ? (
                     <div>
                       {/* Movie Info */}
                       <div className="mb-4">
@@ -308,9 +321,8 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
                         </h3>
                         <p className="text-gray-600">
                           {selection.movie.year && `${selection.movie.year}年`}
-                          {selection.movie.originalLanguage && ` • ${selection.movie.originalLanguage}`}
                         </p>
-                        {selection.movie.nominations.length > 0 && (
+                        {selection.movie.nominations && selection.movie.nominations.length > 0 && (
                           <p className="text-sm text-gray-500 mt-1">
                             ノミネート: {selection.movie.nominations.length}件
                           </p>
@@ -318,9 +330,9 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
                       </div>
 
                       {/* Poster */}
-                      {selection.movie.posters?.find(p => p.isPrimary)?.url && (
+                      {selection.movie.posterUrl && (
                         <img
-                          src={selection.movie.posters.find(p => p.isPrimary)?.url}
+                          src={selection.movie.posterUrl}
                           alt={getPrimaryTitle(selection.movie)}
                           className="w-full h-48 object-cover rounded-lg mb-4"
                         />
@@ -451,7 +463,7 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
                     {randomMovie && (
                       <div 
                         data-testid="random-movie-result"
-                        className="mt-6 p-4 border border-gray-200 rounded-lg"
+                        className="mt-6 p-4 border border-gray-200 rounded-lg cursor-pointer"
                         onClick={() => setSelectedMovie(randomMovie)}
                       >
                         <h4 className="font-medium">{getPrimaryTitle(randomMovie)}</h4>
