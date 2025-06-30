@@ -136,7 +136,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
       setError(null);
 
       try {
-        const response = await fetch(`${apiUrl}/movies/${movieId}`, {
+        const response = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -151,7 +151,20 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
         }
 
         const data = (await response.json()) as MovieDetails;
-        setMovieData(data);
+
+        // Ensure required properties exist and normalize structure
+        const normalizedData: MovieDetails = {
+          uid: data.uid,
+          year: data.year,
+          originalLanguage: data.originalLanguage,
+          imdbId: data.imdbId,
+          tmdbId: data.tmdbId,
+          translations: data.translations || [],
+          nominations: data.nominations || [],
+          posters: data.posters || [] // API returns 'posters'
+        };
+
+        setMovieData(normalizedData);
       } catch (error) {
         console.error('Error loading movie:', error);
         setError('Failed to load movie data');
@@ -204,7 +217,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
       }
 
       // Reload movie data
-      const movieResponse = await fetch(`${apiUrl}/movies/${movieId}`, {
+      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -272,7 +285,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
       }
 
       // Reload movie data
-      const movieResponse = await fetch(`${apiUrl}/movies/${movieId}`, {
+      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -329,7 +342,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
       }
 
       // Reload movie data
-      const movieResponse = await fetch(`${apiUrl}/movies/${movieId}`, {
+      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -385,7 +398,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
       }
 
       // Reload movie data
-      const movieResponse = await fetch(`${apiUrl}/movies/${movieId}`, {
+      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -460,7 +473,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
       }
 
       // Reload movie data
-      const movieResponse = await fetch(`${apiUrl}/movies/${movieId}`, {
+      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -529,7 +542,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
       }
 
       // Reload movie data
-      const movieResponse = await fetch(`${apiUrl}/movies/${movieId}`, {
+      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -595,7 +608,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
       }
 
       // Reload movie data
-      const movieResponse = await fetch(`${apiUrl}/movies/${movieId}`, {
+      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -821,9 +834,9 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
   }
 
   const primaryTitle =
-    movieData.translations.find((t) => t.isDefault)?.content ||
-    movieData.translations.find((t) => t.languageCode === 'ja')?.content ||
-    movieData.translations[0]?.content ||
+    movieData.translations?.find((t) => t.isDefault)?.content ||
+    movieData.translations?.find((t) => t.languageCode === 'ja')?.content ||
+    movieData.translations?.[0]?.content ||
     '無題';
 
   return (
@@ -1460,7 +1473,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
             </div>
           )}
 
-          {movieData.translations.length === 0 ? (
+          {!movieData.translations || movieData.translations.length === 0 ? (
             <p style={{ color: '#6b7280', fontStyle: 'italic' }}>
               翻訳がありません
             </p>
@@ -1527,7 +1540,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {movieData.translations.map((translation) => (
+                  {movieData.translations?.map((translation) => (
                     <tr key={translation.uid}>
                       <td
                         style={{
@@ -1592,14 +1605,14 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
                           >
                             <input
                               type="checkbox"
-                              defaultChecked={translation.isDefault}
+                              defaultChecked={translation.isDefault === 1}
                               id={`default-${translation.uid}`}
                               style={{ marginRight: '6px' }}
                             />
                             デフォルト
                           </label>
                         ) : (
-                          translation.isDefault && (
+                          translation.isDefault === 1 && (
                             <span
                               style={{
                                 background: '#dcfce7',
@@ -1770,7 +1783,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
               ノミネート管理
             </h3>
           </div>
-          {movieData.nominations.length === 0 ? (
+          {!movieData.nominations || movieData.nominations.length === 0 ? (
             <p style={{ color: '#6b7280', fontStyle: 'italic' }}>
               ノミネートがありません
             </p>
@@ -1837,7 +1850,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {movieData.nominations.map((nomination) => (
+                  {movieData.nominations?.map((nomination) => (
                     <tr key={nomination.uid}>
                       <td
                         style={{
@@ -2246,7 +2259,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
             </div>
           )}
 
-          {movieData.posterUrls.length === 0 ? (
+          {!movieData.posterUrls || movieData.posterUrls.length === 0 ? (
             <p style={{ color: '#6b7280', fontStyle: 'italic' }}>
               ポスターがありません
             </p>
@@ -2258,7 +2271,7 @@ export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
                 gap: '16px'
               }}
             >
-              {movieData.posterUrls.map((poster) => (
+              {movieData.posterUrls?.map((poster) => (
                 <div
                   key={poster.uid}
                   style={{
