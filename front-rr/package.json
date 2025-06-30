@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.0.12",
+    "@playwright/test": "^1.53.1",
     "@react-router/dev": "^7.5.3",
     "@tailwindcss/vite": "^4.1.4",
     "@testing-library/jest-dom": "^6.6.3",

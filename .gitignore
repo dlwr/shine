@@ -175,3 +175,6 @@ worker-configuration.d.ts
 tmp
 shine.db
 CLAUDE.local.md
+front-rr/tests/screenshots
+front-rr/playwright-report
+front-rr/test-results/.last-run.json
