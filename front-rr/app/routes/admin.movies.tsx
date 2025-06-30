@@ -251,7 +251,7 @@ export default function AdminMovies({ loaderData }: Route.ComponentProps) {
       fetchMovies(1, query);
     }, 300);
 
-    setSearchTimeout(timeout);
+    setSearchTimeout(timeout as unknown as number);
   };
 
   // Handle delete

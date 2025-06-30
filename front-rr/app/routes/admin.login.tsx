@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import type { Route } from './+types/admin.login';
 
 export function meta(): Route.MetaDescriptors {
@@ -36,6 +37,8 @@ export async function action({ context, request }: Route.ActionArgs) {
     }
 
     const data = (await response.json()) as { token: string };
+    // サーバーサイドではlocalStorageにアクセスできないため、
+    // クライアントサイドでトークンを保存してからリダイレクト
     return { success: true, token: data.token };
   } catch {
     return { error: 'ログインに失敗しました' };
@@ -43,28 +46,34 @@ export async function action({ context, request }: Route.ActionArgs) {
 }
 
 export default function AdminLogin({ actionData }: Route.ComponentProps) {
+  const navigate = useNavigate();
+
   // ログイン済みかチェック
   useEffect(() => {
-    if (typeof globalThis !== 'undefined' && globalThis.window) {
-      const existingToken = globalThis.localStorage.getItem('adminToken');
+    if (typeof window !== 'undefined') {
+      const existingToken = localStorage.getItem('adminToken');
       if (existingToken) {
-        globalThis.location.href = '/admin/movies';
+        navigate('/admin/movies', { replace: true });
       }
     }
-  }, []);
+  }, [navigate]);
 
   // ログイン成功時の処理
   useEffect(() => {
     if (
       actionData?.success &&
       actionData?.token &&
-      typeof globalThis !== 'undefined' &&
-      globalThis.window
+      typeof window !== 'undefined'
     ) {
-      globalThis.localStorage.setItem('adminToken', actionData.token);
-      globalThis.location.href = '/admin/movies';
+      localStorage.setItem('adminToken', actionData.token);
+      console.log('Token saved, redirecting to /admin/movies');
+      
+      // イベント発火でother componentsに通知
+      window.dispatchEvent(new Event('adminLogin'));
+      
+      navigate('/admin/movies', { replace: true });
     }
-  }, [actionData]);
+  }, [actionData, navigate]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">

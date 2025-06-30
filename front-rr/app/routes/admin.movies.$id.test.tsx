@@ -48,7 +48,7 @@ const mockMovieDetails = {
       isDefault: true
     },
     {
-      uid: 'trans-2', 
+      uid: 'trans-2',
       languageCode: 'en',
       content: 'Test Movie',
       isDefault: false
@@ -93,16 +93,16 @@ describe('AdminMovieEdit Route', () => {
     it('映画IDが提供されていない場合は400エラーを返す', async () => {
       const context = createMockContext();
       const params = {}; // IDなし
-      
+
       expect(() => loader({ context, params } as any)).toThrow();
     });
 
     it('映画IDが提供された場合は正しいデータを返す', async () => {
       const context = createMockContext();
       const params = { id: 'movie-123' };
-      
+
       const result = await loader({ context, params } as any);
-      
+
       expect(result).toEqual({
         apiUrl: 'http://localhost:8787',
         movieId: 'movie-123'
