@@ -5,5 +5,6 @@ export default [
   route('search', 'routes/search.tsx'),
   route('movies/:id', 'routes/movies.$id.tsx'),
   route('admin/login', 'routes/admin.login.tsx'),
-  route('admin/movies', 'routes/admin.movies.tsx')
+  route('admin/movies', 'routes/admin.movies.tsx'),
+  route('admin/movies/:id', 'routes/admin.movies.$id.tsx')
 ] satisfies RouteConfig;

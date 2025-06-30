@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-// import type { Route } from './+types/admin.movies.$id';
+import type { Route } from './+types/admin.movies.$id';
 
 interface MovieData {
   uid: string;
@@ -49,14 +49,14 @@ interface MovieDetails {
   posterUrls: PosterUrl[];
 }
 
-export function meta({ params }: any): any {
+export function meta({ params }: Route.MetaArgs): Route.MetaDescriptors {
   return [
     { title: `映画の編集 - SHINE Admin` },
     { name: 'description', content: 'SHINE Admin 映画編集画面' }
   ];
 }
 
-export async function loader({ context, params }: any) {
+export async function loader({ context, params }: Route.LoaderArgs) {
   const { id } = params;
 
   if (!id) {
@@ -76,7 +76,7 @@ const handleLogout = () => {
   }
 };
 
-export default function AdminMovieEdit({ loaderData }: any) {
+export default function AdminMovieEdit({ loaderData }: Route.ComponentProps) {
   const { apiUrl, movieId } = loaderData as {
     apiUrl: string;
     movieId: string;
