@@ -28,6 +28,7 @@ app.use(
         "https://shine-film.com",
         "https://dlwr.github.io",
         "https://shine-front-production.yuta25.workers.dev",
+        "https://shine-front.yuta25.workers.dev",
       ];
       return allowedOrigins.includes(origin || "") ? origin : false;
     },
