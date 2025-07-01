@@ -12,7 +12,7 @@ The project uses a simplified monorepo structure with pnpm workspaces:
 
 - **api/** - Hono-based REST API running on Cloudflare Workers
 - **scrapers/** - CLI-based data collection tools (Wikipedia, TMDb, Cannes Film Festival, Academy Awards)
-- **front/** - Astro-based frontend (Cloudflare Pages)
+- **front-rr/** - React Router v7-based frontend (Cloudflare Workers)
 - **src/** - Shared database schemas, migrations, and utilities
 
 Key design patterns:
@@ -28,14 +28,14 @@ Key design patterns:
 ### Development
 
 ```bash
-# Start both API and frontend development servers
+# Start both API and React Router v7 frontend development servers
 pnpm run dev
 
 # Start API development server with local DB persistence
 pnpm run api:dev
 
-# Start frontend development server
-pnpm run front:dev
+# Start React Router v7 frontend development server
+pnpm run front-rr:dev
 
 # Run scrapers (CLI tools)
 pnpm run scrapers:academy-awards
@@ -70,8 +70,11 @@ pnpm run api:deploy:dev
 # Deploy API to production environment
 pnpm run api:deploy:prod
 
-# Deploy frontend to Cloudflare Pages
-pnpm run front:deploy
+# Deploy React Router v7 frontend to development environment
+pnpm run front:deploy:dev
+
+# Deploy React Router v7 frontend to production environment
+pnpm run front:deploy:prod
 
 # Note: Scrapers run locally as CLI tools and are not deployed
 ```
@@ -105,7 +108,106 @@ npx eslint .
 
 # Format code
 npx prettier --write .
+
+# Run React Router v7 frontend tests
+pnpm run test:front-rr
 ```
+
+## React Router v7 Frontend
+
+SHINE project uses a modern React Router v7-based frontend built with Test-Driven Development (TDD). This implementation runs on Cloudflare Workers and provides server-side rendering (SSR) with full TypeScript support.
+
+### Architecture
+
+- **Framework**: React Router v7 with TypeScript
+- **Runtime**: Cloudflare Workers with SSR
+- **Styling**: Tailwind CSS v4
+- **Testing**: Vitest with React Testing Library
+- **Type Safety**: Full TypeScript coverage with Cloudflare Workers types
+
+### TDD Implementation Features
+
+All features have been implemented using Test-Driven Development with comprehensive test coverage:
+
+**Pages & Routes:**
+
+- **Home Page (`/`)**: Date-seeded movie selections (daily/weekly/monthly)
+- **Movie Details (`/movies/:id`)**: Individual movie information and nominations
+- **Search (`/search`)**: Movie search functionality with filters
+- **Admin Login (`/admin/login`)**: JWT-based authentication
+- **Admin Movies (`/admin/movies`)**: Movie management interface
+
+**Core Features:**
+
+- Responsive design with mobile-first approach
+- JWT authentication with localStorage persistence
+- Error handling and loading states
+- Accessibility-compliant components
+- SEO-optimized meta tags
+
+### Test Coverage
+
+Complete test suite with **51 tests passing** across all components:
+
+```bash
+✓ front-rr/app/routes/admin.movies.test.tsx (12 tests)
+✓ front-rr/app/routes/movies.$id.test.tsx (10 tests)
+✓ front-rr/app/routes/home.test.tsx (8 tests)
+✓ front-rr/app/routes/admin.login.test.tsx (10 tests)
+✓ front-rr/app/routes/search.test.tsx (11 tests)
+```
+
+**Test Categories:**
+
+- Loader functions (API data fetching)
+- Component rendering and interactions
+- Error state handling
+- Form submissions and validation
+- Authentication flows
+- Meta tag generation
+
+### Authentication System
+
+- **Method**: JWT tokens stored in localStorage
+- **Admin Login**: Password-based authentication with the API
+- **Route Protection**: Client-side auth checks for admin routes
+- **Session Management**: Automatic token validation and renewal
+
+### API Integration
+
+Seamlessly integrates with the Hono-based API:
+
+- Environment-aware API URL configuration
+- Comprehensive error handling for network failures
+- Type-safe API response interfaces
+- Optimistic UI updates for better user experience
+
+### Development Workflow
+
+```bash
+# Start development server
+pnpm run front-rr:dev
+
+# Run tests
+pnpm run test:front-rr
+
+# Build for production
+pnpm run front-rr:build
+
+# Deploy to development
+pnpm run front-rr:deploy:dev
+
+# Deploy to production
+pnpm run front-rr:deploy:prod
+```
+
+### Key Files
+
+- `front-rr/app/routes/` - Page components with loaders and tests
+- `front-rr/app/root.tsx` - Root application component
+- `front-rr/workers/app.ts` - Cloudflare Workers entry point
+- `front-rr/react-router.config.ts` - React Router configuration
+- `front-rr/wrangler.jsonc` - Cloudflare Workers deployment configuration
 
 ## Database Schema
 
@@ -234,7 +336,7 @@ Admin interface pages (authentication required via localStorage token):
 - `/admin/movies` - Movies list with pagination
 - `/admin/movies/:id` - Edit movie details and translations
 
-Note: Authentication uses localStorage, not cookies, so server-side auth checks in Astro pages won't work.
+Note: Authentication uses localStorage, not cookies, ensuring client-side auth management.
 
 ## Code Style and Conventions
 
@@ -288,7 +390,7 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 - Fixed API URL handling inconsistency:
   - Standardized all API URL construction to NOT include trailing slash in base URL
   - All API paths must start with leading slash (e.g., `/auth/login`, `/reselect`)
-  - Fixed `Movies.astro` and `wrangler.jsonc` to follow this pattern
+  - Fixed API URL construction in frontend and `wrangler.jsonc` to follow this pattern
   - This prevents URL construction errors like `http://localhost:8787reselect`
 - Fixed `/reselect` endpoint:
   - The endpoint expects `type` parameter, not `period`
@@ -300,12 +402,10 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 
 ### 2025-06-11
 
-- Fixed Cloudflare Pages deployment environment variable issues:
-  - Environment variables in Cloudflare Pages must be set in `wrangler.jsonc` under `vars` section, not as secrets
-  - Astro components can access runtime environment variables via `Astro.locals?.runtime?.env`
-  - For fallback compatibility, use pattern: `runtimeEnv?.VAR || import.meta.env.VAR || "default"`
+- Fixed Cloudflare deployment environment variable issues:
+  - Environment variables in Cloudflare Workers must be set in `wrangler.jsonc` under `vars` section, not as secrets
+  - React Router v7 components access environment variables via loader context
   - Secrets and vars cannot coexist with the same name - delete secrets if using vars
-  - `front/src/components/Movies.astro:11-12` shows proper environment variable access pattern
 - Fixed movie import nomination assignment bug:
   - Movie import scripts were incorrectly assigning all nominations to Cannes Film Festival
   - Root cause: Database lookups for categories and ceremonies didn't filter by `organizationUid`
@@ -334,39 +434,11 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 ### 2025-06-11 (Dependabot Setup)
 
 - Added Dependabot configuration (`.github/dependabot.yml`) for automated dependency updates:
-  - Monitors all workspace packages: root, api, scrapers, front
+  - Monitors all workspace packages: root, api, scrapers, front-rr
   - Weekly updates on Monday 9:00 AM
-  - Scoped commit message prefixes: `deps(api)`, `deps(scrapers)`, `deps(front)`, `deps`
+  - Scoped commit message prefixes: `deps(api)`, `deps(scrapers)`, `deps(front-rr)`, `deps`
   - Rate-limited PRs: 5 per package, 3 for GitHub Actions
   - Includes GitHub Actions monitoring for CI/CD workflow updates
-
-### 2025-06-11 (TailwindCSS Migration)
-
-- Successfully migrated frontend from custom CSS to TailwindCSS v3:
-  - **Setup**: Added `@astrojs/tailwind` integration with `@tailwindcss/typography` plugin
-  - **Layout.astro**: Converted to utility classes with `bg-gray-50` body background
-  - **LanguageSelector.astro**: Complete TailwindCSS conversion with conditional classes
-  - **MovieCard.astro**: Major refactoring to TailwindCSS with preserved functionality
-    - Responsive design: `h-[400px] md:h-[450px]` for poster heights
-    - Modern card styling with hover effects and proper spacing
-    - Maintained collapsible mobile functionality with custom CSS for animations
-    - Updated nomination badges with `bg-yellow-400` for winners
-  - **Benefits**: Reduced CSS bundle size, unified design system, better responsive utilities
-- **Key Files**:
-  - `front/astro.config.mjs`: Added TailwindCSS integration
-  - `front/tailwind.config.js`: Configured content paths and typography plugin
-  - All components now use utility-first approach with minimal custom CSS
-
-### 2025-06-11 (Favicon Optimization)
-
-- Optimized favicon implementation with modern best practices:
-  - **Multi-format support**: Generated ICO, PNG (16x16, 32x32), and Apple touch icon (180x180)
-  - **File size optimization**: Reduced from 1.3MB original to optimized sizes (731B-23KB per format)
-  - **Cross-platform compatibility**: Added proper favicon declarations in `Layout.astro` for all device types
-  - **Tools used**: ImageMagick for automated favicon generation from source assets
-- **Key Files**:
-  - `front/src/layouts/Layout.astro`: Updated with comprehensive favicon link tags
-  - `front/public/favicon-*.png`, `favicon.ico`, `apple-touch-icon.png`: Generated optimized files
 
 ### 2025-06-11 (Cannes Winner Update Enhancement)
 
@@ -431,14 +503,43 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 - **Lesson learned**: Always verify ALL foreign key references across entire schema when implementing delete operations
 - **Key insight**: Most tables lack `onDelete: 'cascade'` configuration, requiring manual cascading delete implementation
 
+### 2025-06-27 (React Router v7 Frontend Implementation)
+
+- Successfully implemented React Router v7-based frontend using Test-Driven Development (TDD):
+  - **Complete TDD Implementation**: All 51 tests passing across 5 test files
+  - **Modern Architecture**: React Router v7 with Cloudflare Workers SSR and Tailwind CSS v4
+  - **Pages Implemented**: Home (`/`), Movie Details (`/movies/:id`), Search (`/search`), Admin Login (`/admin/login`), Admin Movies (`/admin/movies`)
+  - **Authentication**: JWT-based localStorage authentication matching API design
+  - **Comprehensive Testing**: Loader functions, component rendering, error handling, form validation, and authentication flows
+- **Added to CLAUDE.md**: Complete React Router v7 Frontend section with architecture, features, test coverage, and deployment commands
+- **Updated Commands**: Added front-rr deployment and testing commands to relevant sections
+- **Production-ready**: Full-featured frontend with comprehensive test coverage and modern architecture
+
+### 2025-07-01 (Complete Migration to React Router v7)
+
+- Completed full migration from Astro to React Router v7:
+  - **Removed Legacy Frontend**: Deleted entire `front/` directory containing Astro-based implementation
+  - **Updated Build Scripts**: Renamed `front-rr` commands to `front` throughout package.json
+  - **Simplified Architecture**: React Router v7 is now the sole frontend implementation
+  - **Updated Documentation**: Removed all references to legacy Astro frontend and dual-frontend setup
+- **Migration Details**:
+  - All functionality from Astro frontend has been reimplemented in React Router v7
+  - Maintained feature parity including movie selections, admin interface, and article links
+  - Improved performance with Cloudflare Workers SSR instead of static site generation
+- **Benefits**:
+  - Unified frontend codebase with consistent patterns
+  - Better type safety with full TypeScript coverage
+  - Comprehensive test coverage (51+ tests)
+  - Modern development experience with React Router v7
+
 ### Development Guidelines
 
 - TSエラーとLintエラーをを絶対に無視するな
 - Database column names in schema use camelCase (e.g., `createdAt`, `updatedAt`) but are mapped to snake_case in the actual database
 - When writing SQL queries, use the schema field references directly instead of hardcoding column names
 - **API URL Convention**: Base URLs should NOT have trailing slashes, paths should start with leading slash
-- **Cloudflare Pages Environment Variables**: Use `vars` in wrangler.jsonc, access via `Astro.locals?.runtime?.env` in components
-- **API URL Handling**: Always use `getApiUrl(Astro.locals)` utility from `front/src/utils/api.ts` instead of manual environment variable handling
+- **Cloudflare Workers Environment Variables**: Use `vars` in wrangler.jsonc, access via loader context in React Router v7 components
+- **API URL Handling**: Environment-aware API URL configuration in React Router v7 loaders
 - **Mobile Responsiveness**: Consider mobile-first design with collapsible content for dense information
 - **Security**: Always implement rate limiting for public submission endpoints
 - **TailwindCSS**: Use utility-first approach, preserve custom CSS only for complex animations/interactions

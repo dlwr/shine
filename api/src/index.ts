@@ -18,17 +18,20 @@ const app = new Hono<{ Bindings: Environment }>();
 app.use(
   "*",
   cors({
-    origin: [
-      "https://shine-film.com",
-      "https://dlwr.github.io",
-      "https://shine-front-production.yuta25.workers.dev",
-      "http://localhost:3000",
-      "http://localhost:4321",
-      "http://localhost:8787",
-      "http://localhost:8888",
-      "http://localhost:8889",
-      "http://localhost:5173",
-    ],
+    origin: origin => {
+      // Allow all localhost origins in development
+      if (origin?.startsWith("http://localhost:")) {
+        return origin;
+      }
+      // Production origins
+      const allowedOrigins = [
+        "https://shine-film.com",
+        "https://dlwr.github.io",
+        "https://shine-front-production.yuta25.workers.dev",
+        "https://shine-front.yuta25.workers.dev",
+      ];
+      return allowedOrigins.includes(origin || "") ? origin : false;
+    },
     credentials: true,
   }),
 );
