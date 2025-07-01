@@ -4,15 +4,15 @@
     { "path": "./tsconfig.node.json" },
     { "path": "./tsconfig.cloudflare.json" }
   ],
-  "baseUrl": ".",
-  "paths": {
-    "@routes/*": [".react-router/types/app/routes/+types/*"]
-  },
   "compilerOptions": {
     "checkJs": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "strict": true,
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@routes/*": [".react-router/types/app/routes/+types/*"]
+    }
   }
 }
