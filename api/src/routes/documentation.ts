@@ -1,10 +1,10 @@
-import type {Environment} from 'db';
-import {Hono} from 'hono';
+import type { Environment } from "db";
+import { Hono } from "hono";
 
-const documentationRoutes = new Hono<{Bindings: Environment}>();
+const documentationRoutes = new Hono<{ Bindings: Environment }>();
 
-documentationRoutes.get('/openapi.yml', async (c) => {
-	const openapiSpec = `openapi: 3.0.3
+documentationRoutes.get("/openapi.yml", async (c) => {
+  const openapiSpec = `openapi: 3.0.3
 info:
   title: SHINE Movie Database API
   description: |
@@ -197,31 +197,31 @@ tags:
   - name: Authentication
     description: Admin authentication endpoints`;
 
-	return c.text(openapiSpec, 200, {
-		'Content-Type': 'application/x-yaml',
-		'Cache-Control': 'public, max-age=3600',
-	});
+  return c.text(openapiSpec, 200, {
+    "Content-Type": "application/x-yaml",
+    "Cache-Control": "public, max-age=3600",
+  });
 });
 
-documentationRoutes.get('/', async (c) => {
-	// Override CSP for documentation page to allow external CDN resources
-	c.header(
-		'Content-Security-Policy',
-		"default-src 'self'; " +
-			"script-src 'self' 'unsafe-inline' https://unpkg.com; " +
-			"style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; " +
-			"font-src 'self' https://fonts.gstatic.com; " +
-			"img-src 'self' data: https:; " +
-			"connect-src 'self'; " +
-			"object-src 'none'; " +
-			"media-src 'self'; " +
-			"form-action 'self';",
-	);
+documentationRoutes.get("/", async (c) => {
+  // Override CSP for documentation page to allow external CDN resources
+  c.header(
+    "Content-Security-Policy",
+    "default-src 'self'; " +
+      "script-src 'self' 'unsafe-inline' https://unpkg.com; " +
+      "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; " +
+      "font-src 'self' https://fonts.gstatic.com; " +
+      "img-src 'self' data: https:; " +
+      "connect-src 'self'; " +
+      "object-src 'none'; " +
+      "media-src 'self'; " +
+      "form-action 'self';",
+  );
 
-	const baseUrl = new URL(c.req.url).origin;
-	const openapiUrl = `${baseUrl}/docs/openapi.yml`;
+  const baseUrl = new URL(c.req.url).origin;
+  const openapiUrl = `${baseUrl}/docs/openapi.yml`;
 
-	const html = `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -366,30 +366,30 @@ documentationRoutes.get('/', async (c) => {
 </body>
 </html>`;
 
-	return c.html(html, 200, {
-		'Cache-Control': 'public, max-age=3600',
-	});
+  return c.html(html, 200, {
+    "Cache-Control": "public, max-age=3600",
+  });
 });
 
-documentationRoutes.get('/redoc', async (c) => {
-	// Override CSP for ReDoc documentation page
-	c.header(
-		'Content-Security-Policy',
-		"default-src 'self'; " +
-			"script-src 'self' 'unsafe-inline' https://cdn.redoc.ly; " +
-			"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-			"font-src 'self' https://fonts.gstatic.com; " +
-			"img-src 'self' data: https:; " +
-			"connect-src 'self'; " +
-			"object-src 'none'; " +
-			"media-src 'self'; " +
-			"form-action 'self';",
-	);
+documentationRoutes.get("/redoc", async (c) => {
+  // Override CSP for ReDoc documentation page
+  c.header(
+    "Content-Security-Policy",
+    "default-src 'self'; " +
+      "script-src 'self' 'unsafe-inline' https://cdn.redoc.ly; " +
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+      "font-src 'self' https://fonts.gstatic.com; " +
+      "img-src 'self' data: https:; " +
+      "connect-src 'self'; " +
+      "object-src 'none'; " +
+      "media-src 'self'; " +
+      "form-action 'self';",
+  );
 
-	const baseUrl = new URL(c.req.url).origin;
-	const openapiUrl = `${baseUrl}/docs/openapi.yml`;
+  const baseUrl = new URL(c.req.url).origin;
+  const openapiUrl = `${baseUrl}/docs/openapi.yml`;
 
-	const html = `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -465,9 +465,9 @@ documentationRoutes.get('/redoc', async (c) => {
 </body>
 </html>`;
 
-	return c.html(html, 200, {
-		'Cache-Control': 'public, max-age=3600',
-	});
+  return c.html(html, 200, {
+    "Cache-Control": "public, max-age=3600",
+  });
 });
 
-export {documentationRoutes};
+export { documentationRoutes };

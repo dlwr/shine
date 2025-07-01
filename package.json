@@ -87,7 +87,8 @@
       "**/.cache/**",
       "**/tmp/**",
       "**/front/**",
-      "**/scripts/**"
+      "**/scripts/**",
+      "**/package.json"
     ],
     "rules": {
       "unicorn/prefer-module": "off",
