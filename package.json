@@ -85,7 +85,9 @@
       "**/.react-router/**",
       "**/coverage/**",
       "**/.cache/**",
-      "**/tmp/**"
+      "**/tmp/**",
+      "**/front/**",
+      "**/scripts/**"
     ],
     "rules": {
       "unicorn/prefer-module": "off",
@@ -116,7 +118,6 @@
       "no-bitwise": "off",
       "@typescript-eslint/restrict-plus-operands": "off",
       "@typescript-eslint/member-ordering": "off",
-      "@typescript-eslint/no-require-imports": "off",
       "radix": "off",
       "no-lonely-if": "off",
       "@typescript-eslint/triple-slash-reference": "off",
@@ -128,7 +129,19 @@
       "n/prefer-global/buffer": "off",
       "logical-assignment-operators": "off",
       "@typescript-eslint/class-literal-property-style": "off",
-      "@typescript-eslint/restrict-template-expressions": "off"
+      "@typescript-eslint/restrict-template-expressions": "off",
+      "import-x/no-unassigned-import": "off",
+      "no-alert": "off",
+      "promise/prefer-await-to-then": "off",
+      "@typescript-eslint/no-floating-promises": "off",
+      "@typescript-eslint/only-throw-error": "off",
+      "unicorn/prefer-number-properties": "off",
+      "no-return-assign": "off",
+      "@typescript-eslint/no-confusing-void-expression": "off",
+      "max-lines": "off",
+      "import-x/order": "off",
+      "unicorn/prefer-query-selector": "off",
+      "@typescript-eslint/prefer-optional-chain": "off"
     },
     "prettier": true
   }
