@@ -2,8 +2,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { MemoryRouter } from 'react-router-dom';
 import AdminLogin, { action, meta } from './admin.login';
 import type { Route } from './+types/admin.login';
+
+// useNavigateのモック
+const mockNavigate = vi.fn();
+vi.mock('react-router', () => ({
+  useNavigate: () => mockNavigate
+}));
 
 // LocalStorageのモック
 const mockLocalStorage = {
@@ -33,6 +40,7 @@ const createMockContext = (apiUrl = 'http://localhost:8787') => ({
 describe('AdminLogin Component', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    mockNavigate.mockClear();
     // localStorage.getItemが既存トークンなしを返すようにセット
     mockLocalStorage.getItem.mockReturnValue(null);
   });
@@ -126,27 +134,29 @@ describe('AdminLogin Component', () => {
       const actionData = {};
 
       render(
-        <AdminLogin
-          actionData={actionData as any}
-          loaderData={{}}
-          params={{}}
-          matches={[
-            {
-              id: 'root',
-              params: {},
-              pathname: '/',
-              data: undefined,
-              handle: undefined
-            },
-            {
-              id: 'routes/admin.login',
-              params: {},
-              pathname: '/admin/login',
-              data: undefined,
-              handle: undefined
-            }
-          ]}
-        />
+        <MemoryRouter initialEntries={['/admin/login']}>
+          <AdminLogin
+            actionData={actionData as any}
+            loaderData={{}}
+            params={{}}
+            matches={[
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/admin.login',
+                params: {},
+                pathname: '/admin/login',
+                data: undefined,
+                handle: undefined
+              }
+            ]}
+          />
+        </MemoryRouter>
       );
 
       expect(screen.getByText('管理者ログイン')).toBeInTheDocument();
@@ -162,27 +172,29 @@ describe('AdminLogin Component', () => {
       };
 
       render(
-        <AdminLogin
-          actionData={actionData as any}
-          loaderData={{}}
-          params={{}}
-          matches={[
-            {
-              id: 'root',
-              params: {},
-              pathname: '/',
-              data: undefined,
-              handle: undefined
-            },
-            {
-              id: 'routes/admin.login',
-              params: {},
-              pathname: '/admin/login',
-              data: undefined,
-              handle: undefined
-            }
-          ]}
-        />
+        <MemoryRouter initialEntries={['/admin/login']}>
+          <AdminLogin
+            actionData={actionData as any}
+            loaderData={{}}
+            params={{}}
+            matches={[
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/admin.login',
+                params: {},
+                pathname: '/admin/login',
+                data: undefined,
+                handle: undefined
+              }
+            ]}
+          />
+        </MemoryRouter>
       );
 
       expect(
@@ -196,35 +208,30 @@ describe('AdminLogin Component', () => {
         token: 'test-token'
       };
 
-      // location.hrefのモック
-      const mockLocation = { href: '' };
-      Object.defineProperty(globalThis, 'location', {
-        value: mockLocation,
-        writable: true
-      });
-
       render(
-        <AdminLogin
-          actionData={actionData as any}
-          loaderData={{}}
-          params={{}}
-          matches={[
-            {
-              id: 'root',
-              params: {},
-              pathname: '/',
-              data: undefined,
-              handle: undefined
-            },
-            {
-              id: 'routes/admin.login',
-              params: {},
-              pathname: '/admin/login',
-              data: undefined,
-              handle: undefined
-            }
-          ]}
-        />
+        <MemoryRouter initialEntries={['/admin/login']}>
+          <AdminLogin
+            actionData={actionData as any}
+            loaderData={{}}
+            params={{}}
+            matches={[
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/admin.login',
+                params: {},
+                pathname: '/admin/login',
+                data: undefined,
+                handle: undefined
+              }
+            ]}
+          />
+        </MemoryRouter>
       );
 
       await waitFor(() => {
@@ -232,72 +239,74 @@ describe('AdminLogin Component', () => {
           'adminToken',
           'test-token'
         );
-        expect(mockLocation.href).toBe('/admin/movies');
+        expect(mockNavigate).toHaveBeenCalledWith('/admin/movies', {
+          replace: true
+        });
       });
     });
 
     it('既にログイン済みの場合は管理画面にリダイレクトする', () => {
       mockLocalStorage.getItem.mockReturnValue('existing-token');
 
-      const mockLocation = { href: '' };
-      Object.defineProperty(globalThis, 'location', {
-        value: mockLocation,
-        writable: true
-      });
-
       const actionData = {};
       render(
-        <AdminLogin
-          actionData={actionData as any}
-          loaderData={{}}
-          params={{}}
-          matches={[
-            {
-              id: 'root',
-              params: {},
-              pathname: '/',
-              data: undefined,
-              handle: undefined
-            },
-            {
-              id: 'routes/admin.login',
-              params: {},
-              pathname: '/admin/login',
-              data: undefined,
-              handle: undefined
-            }
-          ]}
-        />
+        <MemoryRouter initialEntries={['/admin/login']}>
+          <AdminLogin
+            actionData={actionData as any}
+            loaderData={{}}
+            params={{}}
+            matches={[
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/admin.login',
+                params: {},
+                pathname: '/admin/login',
+                data: undefined,
+                handle: undefined
+              }
+            ]}
+          />
+        </MemoryRouter>
       );
 
-      expect(mockLocation.href).toBe('/admin/movies');
+      expect(mockNavigate).toHaveBeenCalledWith('/admin/movies', {
+        replace: true
+      });
     });
 
     it('フォーム送信が正常に動作する', async () => {
       const actionData = {};
 
       render(
-        <AdminLogin
-          actionData={actionData as any}
-          loaderData={{}}
-          params={{}}
-          matches={[
-            {
-              id: 'root',
-              params: {},
-              pathname: '/',
-              data: undefined,
-              handle: undefined
-            },
-            {
-              id: 'routes/admin.login',
-              params: {},
-              pathname: '/admin/login',
-              data: undefined,
-              handle: undefined
-            }
-          ]}
-        />
+        <MemoryRouter initialEntries={['/admin/login']}>
+          <AdminLogin
+            actionData={actionData as any}
+            loaderData={{}}
+            params={{}}
+            matches={[
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/admin.login',
+                params: {},
+                pathname: '/admin/login',
+                data: undefined,
+                handle: undefined
+              }
+            ]}
+          />
+        </MemoryRouter>
       );
 
       const passwordInput = screen.getByLabelText('パスワード');
@@ -313,27 +322,29 @@ describe('AdminLogin Component', () => {
       const actionData = {};
 
       render(
-        <AdminLogin
-          actionData={actionData as any}
-          loaderData={{}}
-          params={{}}
-          matches={[
-            {
-              id: 'root',
-              params: {},
-              pathname: '/',
-              data: undefined,
-              handle: undefined
-            },
-            {
-              id: 'routes/admin.login',
-              params: {},
-              pathname: '/admin/login',
-              data: undefined,
-              handle: undefined
-            }
-          ]}
-        />
+        <MemoryRouter initialEntries={['/admin/login']}>
+          <AdminLogin
+            actionData={actionData as any}
+            loaderData={{}}
+            params={{}}
+            matches={[
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/admin.login',
+                params: {},
+                pathname: '/admin/login',
+                data: undefined,
+                handle: undefined
+              }
+            ]}
+          />
+        </MemoryRouter>
       );
 
       const homeLink = screen.getByRole('link', { name: /ホームに戻る/ });

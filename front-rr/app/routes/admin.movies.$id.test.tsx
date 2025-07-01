@@ -31,45 +31,47 @@ const createMockContext = (apiUrl = 'http://localhost:8787') => ({
 
 // 映画詳細のモックデータ
 const mockMovieDetails = {
-  movie: {
-    uid: 'movie-123',
-    year: 2023,
-    originalLanguage: 'en',
-    imdbId: 'tt1234567',
-    tmdbId: 123456,
-    createdAt: '2023-01-01T00:00:00Z',
-    updatedAt: '2023-01-01T00:00:00Z'
-  },
+  uid: 'movie-123',
+  year: 2023,
+  originalLanguage: 'en',
+  imdbId: 'tt1234567',
+  tmdbId: 123456,
   translations: [
     {
       uid: 'trans-1',
       languageCode: 'ja',
       content: 'テスト映画',
-      isDefault: true
+      isDefault: 1
     },
     {
       uid: 'trans-2',
       languageCode: 'en',
       content: 'Test Movie',
-      isDefault: false
+      isDefault: 0
     }
   ],
   nominations: [
     {
       uid: 'nom-1',
       isWinner: true,
+      specialMention: null,
       category: {
+        uid: 'cat-1',
         name: '最優秀作品賞'
       },
       ceremony: {
-        year: 2023,
-        organization: {
-          name: 'アカデミー賞'
-        }
+        uid: 'cer-1',
+        number: 96,
+        year: 2023
+      },
+      organization: {
+        uid: 'org-1',
+        name: 'アカデミー賞',
+        shortName: 'AA'
       }
     }
   ],
-  posterUrls: [
+  posters: [
     {
       uid: 'poster-1',
       url: 'https://example.com/poster1.jpg',
@@ -94,7 +96,16 @@ describe('AdminMovieEdit Route', () => {
       const context = createMockContext();
       const params = {}; // IDなし
 
-      expect(() => loader({ context, params } as any)).toThrow();
+      try {
+        await loader({ context, params } as any);
+        // Should not reach here
+        expect(true).toBe(false);
+      } catch (error) {
+        expect(error).toBeInstanceOf(Response);
+        expect((error as Response).status).toBe(400);
+        const text = await (error as Response).text();
+        expect(text).toBe('Movie ID is required');
+      }
     });
 
     it('映画IDが提供された場合は正しいデータを返す', async () => {

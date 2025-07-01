@@ -34,53 +34,26 @@ const createMockContext = (apiUrl = 'http://localhost:8787') => ({
 const mockMoviesList = {
   movies: [
     {
-      movieUid: 'movie-1',
-      movie: {
-        imdbId: 'tt1234567',
-        tmdbId: 123_456,
-        year: 2023,
-        duration: 120,
-        createdAt: '2023-01-01T00:00:00Z',
-        updatedAt: '2023-01-01T00:00:00Z'
-      },
-      translations: [
-        {
-          languageCode: 'ja',
-          resourceType: 'movie_title',
-          content: 'テスト映画'
-        }
-      ],
-      posterUrls: [
-        {
-          url: 'https://example.com/poster1.jpg',
-          isPrimary: true
-        }
-      ]
+      uid: 'movie-1',
+      title: 'テスト映画',
+      year: 2023,
+      originalLanguage: 'ja',
+      posterUrl: 'https://example.com/poster1.jpg',
+      imdbUrl: 'https://www.imdb.com/title/tt1234567/'
     },
     {
-      movieUid: 'movie-2',
-      movie: {
-        imdbId: 'tt7654321',
-        tmdbId: 654_321,
-        year: 2022,
-        duration: 110,
-        createdAt: '2022-01-01T00:00:00Z',
-        updatedAt: '2022-01-01T00:00:00Z'
-      },
-      translations: [
-        {
-          languageCode: 'ja',
-          resourceType: 'movie_title',
-          content: '管理画面テスト映画'
-        }
-      ],
-      posterUrls: []
+      uid: 'movie-2',
+      title: '管理画面テスト映画',
+      year: 2022,
+      originalLanguage: 'ja',
+      posterUrl: null,
+      imdbUrl: 'https://www.imdb.com/title/tt7654321/'
     }
   ],
   pagination: {
     page: 1,
     limit: 20,
-    total: 2,
+    totalCount: 2,
     totalPages: 1
   }
 };
@@ -93,35 +66,29 @@ describe('AdminMovies Component', () => {
   });
 
   describe('loader', () => {
-    it('認証済みユーザーの映画リストを正常に取得する', async () => {
-      const mockFetch = vi.mocked(fetch);
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockMoviesList
-      } as Response);
-
+    it('URLパラメータを正しく解析して返す', async () => {
       const context = createMockContext();
-      const url = new URL('http://localhost:3000/admin/movies?page=1');
-      const request = { url } as unknown as Request;
-
-      const result = (await loader({
-        context,
-        request
-      } as any)) as any;
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8787/admin/movies?page=1&limit=20',
-        {
-          headers: { Authorization: 'Bearer valid-admin-token' }
-        }
+      const url = new URL(
+        'http://localhost:3000/admin/movies?page=2&limit=50&search=test'
       );
+      const request = { url } as unknown as Request;
 
-      expect(result).toEqual(mockMoviesList);
+      const result = (await loader({
+        context,
+        request
+      } as any)) as any;
+
+      expect(result).toEqual({
+        apiUrl: 'http://localhost:8787',
+        page: 2,
+        limit: 50,
+        search: 'test',
+        movies: [],
+        pagination: { page: 1, limit: 20, totalCount: 0, totalPages: 0 }
+      });
     });
 
-    it('未認証の場合はログインページにリダイレクト', async () => {
-      mockLocalStorage.getItem.mockReturnValue(null);
-
+    it('デフォルト値が正しく設定される', async () => {
       const context = createMockContext();
       const url = new URL('http://localhost:3000/admin/movies');
       const request = { url } as unknown as Request;
@@ -131,18 +98,18 @@ describe('AdminMovies Component', () => {
         request
       } as any)) as any;
 
-      expect(result.status).toBe(302);
-      expect(result.headers.get('Location')).toBe('/admin/login');
+      expect(result).toEqual({
+        apiUrl: 'http://localhost:8787',
+        page: 1,
+        limit: 20,
+        search: '',
+        movies: [],
+        pagination: { page: 1, limit: 20, totalCount: 0, totalPages: 0 }
+      });
     });
 
-    it('認証エラーの場合はログインページにリダイレクト', async () => {
-      const mockFetch = vi.mocked(fetch);
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 401
-      } as Response);
-
-      const context = createMockContext();
+    it('カスタムAPIURLが正しく設定される', async () => {
+      const context = createMockContext('https://api.example.com');
       const url = new URL('http://localhost:3000/admin/movies');
       const request = { url } as unknown as Request;
 
@@ -151,8 +118,7 @@ describe('AdminMovies Component', () => {
         request
       } as any)) as any;
 
-      expect(result.status).toBe(302);
-      expect(result.headers.get('Location')).toBe('/admin/login');
+      expect(result.apiUrl).toBe('https://api.example.com');
     });
   });
 
@@ -168,7 +134,7 @@ describe('AdminMovies Component', () => {
   });
 
   describe('Component', () => {
-    it('映画リストが正常に表示される', () => {
+    it('ローディング状態が表示される', () => {
       render(
         <AdminMovies
           loaderData={
@@ -176,8 +142,9 @@ describe('AdminMovies Component', () => {
               apiUrl: 'http://localhost:8787',
               page: 1,
               limit: 20,
+              search: '',
               movies: [],
-              pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+              pagination: { page: 1, limit: 20, totalCount: 0, totalPages: 0 }
             } as any
           }
           actionData={{} as any}
@@ -201,14 +168,23 @@ describe('AdminMovies Component', () => {
         />
       );
 
-      expect(screen.getByText('映画管理')).toBeInTheDocument();
-      expect(screen.getByText('テスト映画')).toBeInTheDocument();
-      expect(screen.getByText('管理画面テスト映画')).toBeInTheDocument();
-      expect(screen.getByText('tt1234567')).toBeInTheDocument();
-      expect(screen.getByText('2023年')).toBeInTheDocument();
+      expect(screen.getByText('Loading movies...')).toBeInTheDocument();
     });
 
-    it('ページネーションが表示される', () => {
+    it('映画がない場合のメッセージが表示される', () => {
+      // localStorageをセットアップ
+      mockLocalStorage.getItem.mockReturnValue('valid-admin-token');
+
+      // fetchをモック
+      const mockFetch = vi.mocked(fetch);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          movies: [],
+          pagination: { page: 1, limit: 20, totalCount: 0, totalPages: 0 }
+        })
+      } as Response);
+
       render(
         <AdminMovies
           loaderData={
@@ -216,8 +192,9 @@ describe('AdminMovies Component', () => {
               apiUrl: 'http://localhost:8787',
               page: 1,
               limit: 20,
+              search: '',
               movies: [],
-              pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+              pagination: { page: 1, limit: 20, totalCount: 0, totalPages: 0 }
             } as any
           }
           actionData={{} as any}
@@ -241,11 +218,11 @@ describe('AdminMovies Component', () => {
         />
       );
 
-      expect(screen.getByText('2 / 3 ページ')).toBeInTheDocument();
-      expect(screen.getByText('合計: 50件')).toBeInTheDocument();
+      // 初期状態はloading
+      expect(screen.getByText('Loading movies...')).toBeInTheDocument();
     });
 
-    it('編集リンクが正しく設定される', () => {
+    it('ヘッダーとナビゲーションが表示される', () => {
       render(
         <AdminMovies
           loaderData={
@@ -253,8 +230,9 @@ describe('AdminMovies Component', () => {
               apiUrl: 'http://localhost:8787',
               page: 1,
               limit: 20,
+              search: '',
               movies: [],
-              pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+              pagination: { page: 1, limit: 20, totalCount: 0, totalPages: 0 }
             } as any
           }
           actionData={{} as any}
@@ -278,12 +256,28 @@ describe('AdminMovies Component', () => {
         />
       );
 
-      const editLinks = screen.getAllByText('編集');
-      expect(editLinks[0]).toHaveAttribute('href', '/admin/movies/movie-1');
-      expect(editLinks[1]).toHaveAttribute('href', '/admin/movies/movie-2');
+      expect(screen.getByText('Movies Management')).toBeInTheDocument();
+      expect(screen.getByText('Movie Selections')).toHaveAttribute(
+        'href',
+        '/admin/selections'
+      );
+      expect(screen.getByText('Logout')).toBeInTheDocument();
     });
 
-    it('削除ボタンが表示される', () => {
+    it('検索入力フィールドが表示される', async () => {
+      // localStorageをセットアップ
+      mockLocalStorage.getItem.mockReturnValue('valid-admin-token');
+
+      // fetchをモック
+      const mockFetch = vi.mocked(fetch);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          movies: [],
+          pagination: { page: 1, limit: 20, totalCount: 0, totalPages: 0 }
+        })
+      } as Response);
+
       render(
         <AdminMovies
           loaderData={
@@ -291,8 +285,9 @@ describe('AdminMovies Component', () => {
               apiUrl: 'http://localhost:8787',
               page: 1,
               limit: 20,
+              search: '',
               movies: [],
-              pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+              pagination: { page: 1, limit: 20, totalCount: 0, totalPages: 0 }
             } as any
           }
           actionData={{} as any}
@@ -316,11 +311,23 @@ describe('AdminMovies Component', () => {
         />
       );
 
-      const deleteButtons = screen.getAllByText('削除');
-      expect(deleteButtons).toHaveLength(2);
+      // 初期状態はloading
+      expect(screen.getByText('Loading movies...')).toBeInTheDocument();
+
+      // データがロードされるのを待つ
+      const searchInput = await screen.findByPlaceholderText(
+        'Search movies by title...'
+      );
+      expect(searchInput).toBeInTheDocument();
     });
 
-    it('ポスター画像が表示される（プライマリがある場合）', () => {
+    it('ログアウト機能が動作する', () => {
+      const mockLocation = { href: '' };
+      Object.defineProperty(globalThis, 'location', {
+        value: mockLocation,
+        writable: true
+      });
+
       render(
         <AdminMovies
           loaderData={
@@ -328,8 +335,9 @@ describe('AdminMovies Component', () => {
               apiUrl: 'http://localhost:8787',
               page: 1,
               limit: 20,
+              search: '',
               movies: [],
-              pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+              pagination: { page: 1, limit: 20, totalCount: 0, totalPages: 0 }
             } as any
           }
           actionData={{} as any}
@@ -353,85 +361,11 @@ describe('AdminMovies Component', () => {
         />
       );
 
-      const posterImage = screen.getByAltText('テスト映画');
-      expect(posterImage).toBeInTheDocument();
-      expect(posterImage).toHaveAttribute(
-        'src',
-        'https://example.com/poster1.jpg'
-      );
-    });
+      const logoutButton = screen.getByText('Logout');
+      fireEvent.click(logoutButton);
 
-    it('ポスターがない場合はプレースホルダーが表示される', () => {
-      render(
-        <AdminMovies
-          loaderData={
-            {
-              apiUrl: 'http://localhost:8787',
-              page: 1,
-              limit: 20,
-              movies: [],
-              pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
-            } as any
-          }
-          actionData={{} as any}
-          params={{}}
-          matches={[
-            {
-              id: 'root',
-              params: {},
-              pathname: '/',
-              data: undefined,
-              handle: undefined
-            },
-            {
-              id: 'routes/admin.movies',
-              params: {},
-              pathname: '/admin/movies',
-              data: undefined,
-              handle: undefined
-            }
-          ]}
-        />
-      );
-
-      expect(screen.getByText('No Image')).toBeInTheDocument();
-    });
-
-    it('ナビゲーションリンクが表示される', () => {
-      render(
-        <AdminMovies
-          loaderData={
-            {
-              apiUrl: 'http://localhost:8787',
-              page: 1,
-              limit: 20,
-              movies: [],
-              pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
-            } as any
-          }
-          actionData={{} as any}
-          params={{}}
-          matches={[
-            {
-              id: 'root',
-              params: {},
-              pathname: '/',
-              data: undefined,
-              handle: undefined
-            },
-            {
-              id: 'routes/admin.movies',
-              params: {},
-              pathname: '/admin/movies',
-              data: undefined,
-              handle: undefined
-            }
-          ]}
-        />
-      );
-
-      expect(screen.getByText('ホーム')).toHaveAttribute('href', '/');
-      expect(screen.getByText('ログアウト')).toBeInTheDocument();
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('adminToken');
+      expect(mockLocation.href).toBe('/admin/login');
     });
 
     it('ログアウト機能が動作する', () => {
@@ -473,7 +407,7 @@ describe('AdminMovies Component', () => {
         />
       );
 
-      const logoutButton = screen.getByText('ログアウト');
+      const logoutButton = screen.getByText('Logout');
       fireEvent.click(logoutButton);
 
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('adminToken');

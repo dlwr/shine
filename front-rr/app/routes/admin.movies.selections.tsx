@@ -62,27 +62,31 @@ const handleLogout = () => {
   }
 };
 
-export default function AdminMovieSelections({ loaderData }: Route.ComponentProps) {
+export default function AdminMovieSelections({
+  loaderData
+}: Route.ComponentProps) {
   const { apiUrl } = loaderData as { apiUrl: string };
-  
+
   const [selections, setSelections] = useState<PreviewSelections | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Override modal states
   const [showOverrideModal, setShowOverrideModal] = useState(false);
-  const [overrideType, setOverrideType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [overrideType, setOverrideType] = useState<
+    'daily' | 'weekly' | 'monthly'
+  >('daily');
   const [activeTab, setActiveTab] = useState<'search' | 'random'>('search');
-  
+
   // Search states
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchMovie[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  
+
   // Random movie states
   const [randomMovie, setRandomMovie] = useState<SearchMovie | null>(null);
   const [randomLoading, setRandomLoading] = useState(false);
-  
+
   // Selected movie for override
   const [selectedMovie, setSelectedMovie] = useState<SearchMovie | null>(null);
 
@@ -145,7 +149,10 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
         );
 
         if (response.ok) {
-          const data = (await response.json()) as { movies: SearchMovie[]; totalCount: number };
+          const data = (await response.json()) as {
+            movies: SearchMovie[];
+            totalCount: number;
+          };
           setSearchResults(data.movies || []);
         }
       } catch (error) {
@@ -170,7 +177,10 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
         },
         body: JSON.stringify({
           type: overrideType,
-          date: selections?.[`next${overrideType.charAt(0).toUpperCase() + overrideType.slice(1)}` as keyof PreviewSelections]?.date || new Date().toISOString().split('T')[0],
+          date:
+            selections?.[
+              `next${overrideType.charAt(0).toUpperCase() + overrideType.slice(1)}` as keyof PreviewSelections
+            ]?.date || new Date().toISOString().split('T')[0],
           locale: 'en'
         })
       });
@@ -199,7 +209,10 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
         },
         body: JSON.stringify({
           type: overrideType,
-          date: selections?.[`next${overrideType.charAt(0).toUpperCase() + overrideType.slice(1)}` as keyof PreviewSelections]?.date || new Date().toISOString().split('T')[0],
+          date:
+            selections?.[
+              `next${overrideType.charAt(0).toUpperCase() + overrideType.slice(1)}` as keyof PreviewSelections
+            ]?.date || new Date().toISOString().split('T')[0],
           movieId: selectedMovie.uid
         })
       });
@@ -225,26 +238,34 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case 'daily': { return '今日の映画';
+      case 'daily': {
+        return '今日の映画';
       }
-      case 'weekly': { return '今週の映画';
+      case 'weekly': {
+        return '今週の映画';
       }
-      case 'monthly': { return '今月の映画';
+      case 'monthly': {
+        return '今月の映画';
       }
-      default: { return type;
+      default: {
+        return type;
       }
     }
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'daily': { return 'from-blue-500 to-blue-600';
+      case 'daily': {
+        return 'from-blue-500 to-blue-600';
       }
-      case 'weekly': { return 'from-green-500 to-green-600';
+      case 'weekly': {
+        return 'from-green-500 to-green-600';
       }
-      case 'monthly': { return 'from-purple-500 to-purple-600';
+      case 'monthly': {
+        return 'from-purple-500 to-purple-600';
       }
-      default: { return 'from-gray-500 to-gray-600';
+      default: {
+        return 'from-gray-500 to-gray-600';
       }
     }
   };
@@ -252,15 +273,24 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
   const getPrimaryTitle = (movie: SelectionData['movie'] | SearchMovie) => {
     if (!movie) return '無題';
     if ('title' in movie && movie.title) return movie.title;
-    return movie.translations?.find(t => t.isDefault === 1)?.content ||
-           movie.translations?.find(t => t.languageCode === 'ja')?.content ||
-           movie.translations?.[0]?.content ||
-           '無題';
+    return (
+      movie.translations?.find((t) => t.isDefault === 1)?.content ||
+      movie.translations?.find((t) => t.languageCode === 'ja')?.content ||
+      movie.translations?.[0]?.content ||
+      '無題'
+    );
   };
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '50vh'
+        }}
+      >
         <div style={{ color: '#6b7280' }}>読み込み中...</div>
       </div>
     );
@@ -268,7 +298,14 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
 
   if (error) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '50vh'
+        }}
+      >
         <div style={{ color: '#ef4444' }}>{error}</div>
       </div>
     );
@@ -283,7 +320,7 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
             <h1 className="text-3xl font-bold text-gray-900">映画選択管理</h1>
           </div>
           <div className="flex items-center space-x-4">
-            <a 
+            <a
               href="/admin/movies"
               className="text-gray-600 hover:text-gray-900 transition-colors"
             >
@@ -301,15 +338,25 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
         {/* Selection Cards Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {(['daily', 'weekly', 'monthly'] as const).map((type) => {
-            const selection = selections?.[`next${type.charAt(0).toUpperCase() + type.slice(1)}` as keyof PreviewSelections];
+            const selection =
+              selections?.[
+                `next${type.charAt(0).toUpperCase() + type.slice(1)}` as keyof PreviewSelections
+              ];
             return (
-              <div key={type} data-testid={`${type}-selection`} className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div
+                key={type}
+                data-testid={`${type}-selection`}
+                className="bg-white rounded-lg shadow-lg overflow-hidden"
+              >
                 {/* Card Header */}
-                <div className={`bg-gradient-to-r ${getTypeColor(type)} p-6 text-white`}>
+                <div
+                  className={`bg-gradient-to-r ${getTypeColor(type)} p-6 text-white`}
+                >
                   <h2 className="text-xl font-bold">{getTypeLabel(type)}</h2>
                   {selection && (
                     <p className="text-sm opacity-90 mt-1">
-                      選択日時: {new Date(selection.date).toLocaleDateString('ja-JP')}
+                      選択日時:{' '}
+                      {new Date(selection.date).toLocaleDateString('ja-JP')}
                     </p>
                   )}
                 </div>
@@ -326,11 +373,12 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
                         <p className="text-gray-600">
                           {selection.movie.year && `${selection.movie.year}年`}
                         </p>
-                        {selection.movie.nominations && selection.movie.nominations.length > 0 && (
-                          <p className="text-sm text-gray-500 mt-1">
-                            ノミネート: {selection.movie.nominations.length}件
-                          </p>
-                        )}
+                        {selection.movie.nominations &&
+                          selection.movie.nominations.length > 0 && (
+                            <p className="text-sm text-gray-500 mt-1">
+                              ノミネート: {selection.movie.nominations.length}件
+                            </p>
+                          )}
                       </div>
 
                       {/* Poster */}
@@ -377,14 +425,16 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
 
         {/* Override Modal */}
         {showOverrideModal && (
-          <div 
+          <div
             data-testid="override-modal"
             className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
           >
             <div className="bg-white rounded-lg w-full max-w-4xl max-h-screen overflow-auto m-4">
               <div className="p-6 border-b">
                 <h3 className="text-xl font-bold">映画選択をオーバーライド</h3>
-                <p className="text-gray-600">{getTypeLabel(overrideType)}の選択</p>
+                <p className="text-gray-600">
+                  {getTypeLabel(overrideType)}の選択
+                </p>
               </div>
 
               {/* Tabs */}
@@ -427,12 +477,15 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full p-3 border border-gray-300 rounded-lg mb-4"
                     />
-                    
+
                     {searchLoading && (
                       <div className="text-center text-gray-600">検索中...</div>
                     )}
-                    
-                    <div data-testid="search-results" className="space-y-2 max-h-96 overflow-y-auto">
+
+                    <div
+                      data-testid="search-results"
+                      className="space-y-2 max-h-96 overflow-y-auto"
+                    >
                       {searchResults.map((movie) => (
                         <div
                           key={movie.uid}
@@ -443,10 +496,13 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
                               : 'border-gray-200 hover:border-gray-300'
                           }`}
                         >
-                          <h4 className="font-medium">{getPrimaryTitle(movie)}</h4>
+                          <h4 className="font-medium">
+                            {getPrimaryTitle(movie)}
+                          </h4>
                           <p className="text-sm text-gray-600">
                             {movie.year && `${movie.year}年`}
-                            {movie.nominations?.length > 0 && ` • ${movie.nominations.length}件のノミネート`}
+                            {movie.nominations?.length > 0 &&
+                              ` • ${movie.nominations.length}件のノミネート`}
                           </p>
                         </div>
                       ))}
@@ -461,19 +517,24 @@ export default function AdminMovieSelections({ loaderData }: Route.ComponentProp
                       disabled={randomLoading}
                       className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                     >
-                      {randomLoading ? 'ランダム映画を生成中...' : 'ランダム映画を生成'}
+                      {randomLoading
+                        ? 'ランダム映画を生成中...'
+                        : 'ランダム映画を生成'}
                     </button>
-                    
+
                     {randomMovie && (
-                      <div 
+                      <div
                         data-testid="random-movie-result"
                         className="mt-6 p-4 border border-gray-200 rounded-lg cursor-pointer"
                         onClick={() => setSelectedMovie(randomMovie)}
                       >
-                        <h4 className="font-medium">{getPrimaryTitle(randomMovie)}</h4>
+                        <h4 className="font-medium">
+                          {getPrimaryTitle(randomMovie)}
+                        </h4>
                         <p className="text-sm text-gray-600">
                           {randomMovie.year && `${randomMovie.year}年`}
-                          {randomMovie.nominations?.length > 0 && ` • ${randomMovie.nominations.length}件のノミネート`}
+                          {randomMovie.nominations?.length > 0 &&
+                            ` • ${randomMovie.nominations.length}件のノミネート`}
                         </p>
                       </div>
                     )}

@@ -4,7 +4,7 @@ export default defineConfig({
   testDir: './tests',
   timeout: 30 * 1000,
   expect: {
-    timeout: 5000,
+    timeout: 5000
   },
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -13,20 +13,20 @@ export default defineConfig({
   reporter: 'html',
   use: {
     baseURL: 'http://localhost:5175',
-    trace: 'on-first-retry',
+    trace: 'on-first-retry'
   },
 
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
+      use: { ...devices['Desktop Chrome'] }
+    }
   ],
 
   webServer: {
     command: 'pnpm run dev --port 5175',
     url: 'http://localhost:5175',
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+    timeout: 120 * 1000
+  }
 });

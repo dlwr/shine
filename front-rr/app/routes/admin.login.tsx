@@ -67,10 +67,10 @@ export default function AdminLogin({ actionData }: Route.ComponentProps) {
     ) {
       localStorage.setItem('adminToken', actionData.token);
       console.log('Token saved, redirecting to /admin/movies');
-      
+
       // イベント発火でother componentsに通知
       window.dispatchEvent(new Event('adminLogin'));
-      
+
       navigate('/admin/movies', { replace: true });
     }
   }, [actionData, navigate]);

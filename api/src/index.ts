@@ -18,7 +18,7 @@ const app = new Hono<{ Bindings: Environment }>();
 app.use(
   "*",
   cors({
-    origin: (origin) => {
+    origin: origin => {
       // Allow all localhost origins in development
       if (origin?.startsWith("http://localhost:")) {
         return origin;

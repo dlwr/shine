@@ -14,78 +14,45 @@ const createMockContext = (apiUrl = 'http://localhost:8787') => ({
 });
 
 // APIレスポンスのモック
-const mockMovieSelections = {
+const mockMovies = {
   daily: {
-    movieUid: 'movie-1',
-    movie: {
-      imdbId: 'tt1234567',
-      tmdbId: 123_456,
-      year: 2023,
-      duration: 120,
-      createdAt: '2023-01-01T00:00:00Z',
-      updatedAt: '2023-01-01T00:00:00Z'
-    },
-    translations: [
-      {
-        languageCode: 'ja',
-        resourceType: 'movie_title',
-        content: 'テスト映画'
-      }
-    ],
-    posterUrls: [
-      {
-        url: 'https://example.com/poster.jpg',
-        width: 300,
-        height: 450
-      }
-    ],
+    uid: 'movie-1',
+    title: 'テスト映画',
+    year: 2023,
+    posterUrl: 'https://example.com/poster.jpg',
+    imdbUrl: 'https://www.imdb.com/title/tt1234567/',
     nominations: [
       {
+        uid: 'nom-1',
         isWinner: true,
         category: { name: 'Best Picture' },
-        ceremony: { name: 'Academy Awards', year: 2023 }
+        ceremony: { uid: 'ceremony-1', name: 'Academy Awards', year: 2023 },
+        organization: {
+          uid: 'org-1',
+          name: 'Academy Awards',
+          shortName: 'Oscars'
+        }
       }
-    ]
+    ],
+    articleLinks: []
   },
   weekly: {
-    movieUid: 'movie-2',
-    movie: {
-      imdbId: 'tt7654321',
-      tmdbId: 654_321,
-      year: 2022,
-      duration: 110,
-      createdAt: '2022-01-01T00:00:00Z',
-      updatedAt: '2022-01-01T00:00:00Z'
-    },
-    translations: [
-      {
-        languageCode: 'ja',
-        resourceType: 'movie_title',
-        content: '週間映画'
-      }
-    ],
-    posterUrls: [],
-    nominations: []
+    uid: 'movie-2',
+    title: '週間映画',
+    year: 2022,
+    posterUrl: undefined,
+    imdbUrl: 'https://www.imdb.com/title/tt7654321/',
+    nominations: [],
+    articleLinks: []
   },
   monthly: {
-    movieUid: 'movie-3',
-    movie: {
-      imdbId: 'tt9876543',
-      tmdbId: 987_654,
-      year: 2021,
-      duration: 95,
-      createdAt: '2021-01-01T00:00:00Z',
-      updatedAt: '2021-01-01T00:00:00Z'
-    },
-    translations: [
-      {
-        languageCode: 'ja',
-        resourceType: 'movie_title',
-        content: '月間映画'
-      }
-    ],
-    posterUrls: [],
-    nominations: []
+    uid: 'movie-3',
+    title: '月間映画',
+    year: 2021,
+    posterUrl: undefined,
+    imdbUrl: 'https://www.imdb.com/title/tt9876543/',
+    nominations: [],
+    articleLinks: []
   }
 };
 
@@ -102,12 +69,14 @@ describe('Home Component', () => {
       const mockFetch = vi.mocked(fetch);
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockMovieSelections
+        json: async () => mockMovies
       } as Response);
 
       const context = createMockContext();
+      const request = new Request('http://localhost:3000/');
       const result = await loader({
         context,
+        request,
         params: {},
         matches: [
           {
@@ -120,9 +89,22 @@ describe('Home Component', () => {
         ]
       } as any);
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8787/');
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /^http:\/\/localhost:8787\/\?cache=.*&locale=en$/
+        ),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Cache-Control': 'no-store',
+            'Accept-Language': 'en'
+          })
+        })
+      );
       expect(result).toEqual({
-        movieSelections: mockMovieSelections
+        movies: mockMovies,
+        error: null,
+        locale: 'en',
+        apiUrl: 'http://localhost:8787'
       });
     });
 
@@ -131,8 +113,10 @@ describe('Home Component', () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
       const context = createMockContext();
+      const request = new Request('http://localhost:3000/');
       const result = await loader({
         context,
+        request,
         params: {},
         matches: [
           {
@@ -146,7 +130,14 @@ describe('Home Component', () => {
       } as any);
 
       expect(result).toEqual({
-        error: 'APIへの接続に失敗しました'
+        movies: {
+          daily: { uid: '1', title: 'The Shawshank Redemption', year: 1994 },
+          weekly: { uid: '1', title: 'The Shawshank Redemption', year: 1994 },
+          monthly: { uid: '1', title: 'The Shawshank Redemption', year: 1994 }
+        },
+        error: 'Network error',
+        locale: 'en',
+        apiUrl: 'http://localhost:8787'
       });
     });
 
@@ -158,8 +149,10 @@ describe('Home Component', () => {
       } as Response);
 
       const context = createMockContext();
+      const request = new Request('http://localhost:3000/');
       const result = await loader({
         context,
+        request,
         params: {},
         matches: [
           {
@@ -173,7 +166,14 @@ describe('Home Component', () => {
       } as any);
 
       expect(result).toEqual({
-        error: 'データの取得に失敗しました'
+        movies: {
+          daily: { uid: '1', title: 'The Shawshank Redemption', year: 1994 },
+          weekly: { uid: '1', title: 'The Shawshank Redemption', year: 1994 },
+          monthly: { uid: '1', title: 'The Shawshank Redemption', year: 1994 }
+        },
+        error: 'API request failed: 500',
+        locale: 'en',
+        apiUrl: 'http://localhost:8787'
       });
     });
   });
@@ -183,11 +183,10 @@ describe('Home Component', () => {
       const result = meta();
 
       expect(result).toEqual([
-        { title: 'SHINE - 世界最高の映画データベース' },
+        { title: 'SHINE' },
         {
           name: 'description',
-          content:
-            '日替わり・週替わり・月替わりで厳選された映画をお楽しみください。アカデミー賞、カンヌ国際映画祭、日本アカデミー賞受賞作品を含む包括的な映画データベース。'
+          content: "The world's most organized movie database"
         }
       ]);
     });
@@ -196,7 +195,10 @@ describe('Home Component', () => {
   describe('Component', () => {
     it('映画選択データが正常に表示される', () => {
       const loaderData = {
-        movieSelections: mockMovieSelections
+        movies: mockMovies,
+        error: null,
+        locale: 'ja',
+        apiUrl: 'http://localhost:8787'
       };
 
       render(
@@ -226,9 +228,9 @@ describe('Home Component', () => {
       );
 
       // 各セクションのタイトルが表示される
-      expect(screen.getByText('今日の映画')).toBeInTheDocument();
-      expect(screen.getByText('今週の映画')).toBeInTheDocument();
-      expect(screen.getByText('今月の映画')).toBeInTheDocument();
+      expect(screen.getByText('日替わり')).toBeInTheDocument();
+      expect(screen.getByText('週替わり')).toBeInTheDocument();
+      expect(screen.getByText('月替わり')).toBeInTheDocument();
 
       // 映画タイトルが表示される
       expect(screen.getByText('テスト映画')).toBeInTheDocument();
@@ -238,42 +240,14 @@ describe('Home Component', () => {
 
     it('エラー状態が正常に表示される', () => {
       const loaderData = {
-        error: 'APIへの接続に失敗しました'
-      };
-
-      render(
-        <Home
-          loaderData={loaderData as any}
-          actionData={undefined}
-          params={{}}
-          matches={
-            [
-              {
-                id: 'root',
-                params: {},
-                pathname: '/',
-                data: undefined,
-                handle: undefined
-              },
-              {
-                id: 'routes/home',
-                params: {},
-                pathname: '/',
-                data: loaderData,
-                handle: undefined
-              }
-            ] as any
-          }
-        />
-      );
-
-      expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
-      expect(screen.getByText('APIへの接続に失敗しました')).toBeInTheDocument();
-    });
-
-    it('受賞情報がバッジとして表示される', () => {
-      const loaderData = {
-        movieSelections: mockMovieSelections
+        movies: {
+          daily: { uid: '1', title: 'The Shawshank Redemption', year: 1994 },
+          weekly: { uid: '1', title: 'The Shawshank Redemption', year: 1994 },
+          monthly: { uid: '1', title: 'The Shawshank Redemption', year: 1994 }
+        },
+        error: 'APIへの接続に失敗しました',
+        locale: 'ja',
+        apiUrl: 'http://localhost:8787'
       };
 
       render(
@@ -303,13 +277,18 @@ describe('Home Component', () => {
       );
 
       expect(
-        screen.getByText('🏆 Academy Awards 2023 受賞')
+        screen.getByText(
+          'APIから映画データを取得できませんでした。フォールバック映画を表示しています。'
+        )
       ).toBeInTheDocument();
     });
 
-    it('映画詳細ページへのリンクが正しく設定される', () => {
+    it('受賞情報がバッジとして表示される', () => {
       const loaderData = {
-        movieSelections: mockMovieSelections
+        movies: mockMovies,
+        error: null,
+        locale: 'ja',
+        apiUrl: 'http://localhost:8787'
       };
 
       render(
@@ -338,8 +317,61 @@ describe('Home Component', () => {
         />
       );
 
-      const dailyMovieLink = screen.getByRole('link', { name: /テスト映画/ });
-      expect(dailyMovieLink).toHaveAttribute('href', '/movies/movie-1');
+      expect(screen.getByText('Oscars')).toBeInTheDocument();
+      // 2023年の年は複数箇所に表示されるため、ceremony contextで確認
+      const ceremonyElement = screen.getByText('Oscars').closest('div');
+      expect(ceremonyElement).toHaveTextContent('2023');
+      expect(screen.getByText('Best Picture')).toBeInTheDocument();
+      expect(screen.getByText('受賞')).toBeInTheDocument();
+    });
+
+    it('映画詳細ページへのリンクが正しく設定される', () => {
+      const loaderData = {
+        movies: mockMovies,
+        error: null,
+        locale: 'ja',
+        apiUrl: 'http://localhost:8787'
+      };
+
+      render(
+        <Home
+          loaderData={loaderData as any}
+          actionData={undefined}
+          params={{}}
+          matches={
+            [
+              {
+                id: 'root',
+                params: {},
+                pathname: '/',
+                data: undefined,
+                handle: undefined
+              },
+              {
+                id: 'routes/home',
+                params: {},
+                pathname: '/',
+                data: loaderData,
+                handle: undefined
+              }
+            ] as any
+          }
+        />
+      );
+
+      const addArticleLinks = screen.getAllByText('+ リンクを追加');
+      expect(addArticleLinks[0].closest('a')).toHaveAttribute(
+        'href',
+        '/movies/movie-1'
+      );
+      expect(addArticleLinks[1].closest('a')).toHaveAttribute(
+        'href',
+        '/movies/movie-2'
+      );
+      expect(addArticleLinks[2].closest('a')).toHaveAttribute(
+        'href',
+        '/movies/movie-3'
+      );
     });
   });
 });
