@@ -24,56 +24,68 @@ if (globalThis.crypto) {
 
 // Mock HTMLFormElement.prototype.requestSubmit for jsdom
 // This mock needs to be available globally for all test environments
-Object.defineProperty(HTMLFormElement.prototype, 'requestSubmit', {
-	value: function () {
-		const form = this as HTMLFormElement;
-		const submitEvent = new Event('submit', {bubbles: true, cancelable: true});
-		form.dispatchEvent(submitEvent);
-	},
-	writable: true,
-	configurable: true,
-});
+if (
+	(globalThis as any).window &&
+	(globalThis as any).HTMLFormElement &&
+	!(globalThis as any).HTMLFormElement.prototype.requestSubmit
+) {
+	Object.defineProperty(
+		(globalThis as any).HTMLFormElement.prototype,
+		'requestSubmit',
+		{
+			value() {
+				const form = this as any;
+				const submitEvent = new Event('submit', {
+					bubbles: true,
+					cancelable: true,
+				});
+				form.dispatchEvent(submitEvent);
+			},
+			writable: true,
+			configurable: true,
+		},
+	);
+}
 
 // Mock HTMLDialogElement for jsdom
-if (typeof HTMLDialogElement === 'undefined') {
-	class MockHTMLDialogElement extends HTMLElement {
+if ((globalThis as any).window && !(globalThis as any).HTMLDialogElement) {
+	class MockHTMLDialogElement {
 		open = false;
 		returnValue = '';
-		
+
 		show() {
 			this.open = true;
 		}
-		
+
 		showModal() {
 			this.open = true;
 		}
-		
+
 		close(returnValue?: string) {
 			this.open = false;
 			if (returnValue !== undefined) {
 				this.returnValue = returnValue;
 			}
-			this.dispatchEvent(new Event('close'));
+
+			// Dispatch close event
+		}
+
+		dispatchEvent(_event: Event) {
+			// Mock implementation
 		}
 	}
-	
+
 	(globalThis as any).HTMLDialogElement = MockHTMLDialogElement;
 }
 
 // Mock ResizeObserver
-if (typeof ResizeObserver === 'undefined') {
+if (!(globalThis as any).ResizeObserver) {
 	class MockResizeObserver {
-		callback: ResizeObserverCallback;
-		
-		constructor(callback: ResizeObserverCallback) {
-			this.callback = callback;
-		}
-		
 		observe() {}
 		unobserve() {}
 		disconnect() {}
 	}
-	
+
 	(globalThis as any).ResizeObserver = MockResizeObserver;
 }
 
