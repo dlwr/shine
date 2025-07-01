@@ -26,7 +26,7 @@ export async function action({ context, request }: Route.ActionArgs) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password }),
-      signal: request.signal, // React Router v7推奨：abortシグナル
+      signal: request.signal // React Router v7推奨：abortシグナル
     });
 
     if (response.status === 401) {

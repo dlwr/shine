@@ -62,7 +62,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     const response = await fetch(
       `${apiUrl}/movies/search?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${limit}`,
       {
-        signal: request.signal, // React Router v7推奨：abortシグナル
+        signal: request.signal // React Router v7推奨：abortシグナル
       }
     );
 

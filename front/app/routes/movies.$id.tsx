@@ -67,7 +67,7 @@ export async function loader({ context, params, request }: Route.LoaderArgs) {
     const apiUrl =
       context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787';
     const response = await fetch(`${apiUrl}/movies/${params.id}`, {
-      signal: request.signal, // React Router v7推奨：abortシグナル
+      signal: request.signal // React Router v7推奨：abortシグナル
     });
 
     if (response.status === 404) {

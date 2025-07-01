@@ -38,7 +38,6 @@
     "docs:bundle": "redocly bundle api/openapi.yml --output api/openapi.json"
   },
   "devDependencies": {
-    "@astrojs/ts-plugin": "^1.10.4",
     "@cloudflare/vitest-pool-workers": "^0.8.44",
     "@cloudflare/workers-types": "^4.20250627.0",
     "@eslint/js": "^9.29.0",

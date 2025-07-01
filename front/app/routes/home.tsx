@@ -36,8 +36,9 @@ function getLocaleFromRequest(request: Request): string {
 
 export async function loader({ context, request }: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
-  const apiUrl = context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787';
-  
+  const apiUrl =
+    context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787';
+
   try {
     // Cloudflare Workers環境ではfetchが利用可能
     // React Router v7公式パターン：loaderでfetchを直接使用
@@ -52,15 +53,15 @@ export async function loader({ context, request }: Route.LoaderArgs) {
 
     const cacheKey = getCacheKey();
     const fetchUrl = `${apiUrl}/?cache=${cacheKey}&locale=${locale}`;
-    
+
     // React Router v7推奨：loaderでfetchを直接使用
     const response = await fetch(fetchUrl, {
       headers: {
         'Cache-Control': 'no-store',
-        'Accept-Language': locale === 'ja' ? 'ja,en;q=0.5' : 'en',
+        'Accept-Language': locale === 'ja' ? 'ja,en;q=0.5' : 'en'
         // Request signal for abort handling
       },
-      signal: request.signal, // React Router v7推奨：abortシグナル
+      signal: request.signal // React Router v7推奨：abortシグナル
     });
 
     if (!response.ok) {
@@ -71,7 +72,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     return { movies, error: null, locale, apiUrl };
   } catch (error) {
     console.error('SSR fetch error:', error);
-    
+
     // フォールバック：エラー時はクライアントサイドで再試行
     return {
       movies: null,
@@ -84,7 +85,13 @@ export async function loader({ context, request }: Route.LoaderArgs) {
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  const { movies: initialMovies, error: initialError, locale, apiUrl, shouldFetchOnClient } = loaderData as {
+  const {
+    movies: initialMovies,
+    error: initialError,
+    locale,
+    apiUrl,
+    shouldFetchOnClient
+  } = loaderData as {
     movies: any;
     error: string | null;
     locale: string;
@@ -122,7 +129,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         try {
           setLoading(true);
           setError(null);
-          
+
           function getCacheKey() {
             const now = new Date();
             const year = now.getFullYear();
@@ -134,7 +141,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
           const cacheKey = getCacheKey();
           const fetchUrl = `${apiUrl}/?cache=${cacheKey}&locale=${locale}`;
-          
+
           const response = await fetch(fetchUrl, {
             headers: {
               'Cache-Control': 'no-store',
@@ -150,7 +157,9 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           setMovies(fetchedMovies);
         } catch (err) {
           console.error('Error fetching movies:', err);
-          setError(err instanceof Error ? err.message : 'Unknown error occurred');
+          setError(
+            err instanceof Error ? err.message : 'Unknown error occurred'
+          );
           setMovies({
             daily: { uid: '1', title: 'The Shawshank Redemption', year: 1994 },
             weekly: { uid: '1', title: 'The Shawshank Redemption', year: 1994 },
@@ -406,7 +415,9 @@ function Movies({
   labels: any;
   loading?: boolean;
 }) {
-  const [reselectLoading, setReselectLoading] = useState<Record<string, boolean>>({});
+  const [reselectLoading, setReselectLoading] = useState<
+    Record<string, boolean>
+  >({});
 
   const handleReselect = async (type: string) => {
     if (!adminToken) {
@@ -488,20 +499,20 @@ function Movies({
                 <MovieCard movie={movies[period]} locale={locale} />
               )}
               {adminToken && (
-              <button
-                onClick={() => handleReselect(period)}
-                disabled={reselectLoading[period]}
-                className="mt-4 px-4 py-2 bg-green-600 text-white border-0 rounded text-sm cursor-pointer transition-colors hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {reselectLoading[period] ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                    {labels.reselect}
-                  </div>
-                ) : (
-                  labels.reselect
-                )}
-              </button>
+                <button
+                  onClick={() => handleReselect(period)}
+                  disabled={reselectLoading[period]}
+                  className="mt-4 px-4 py-2 bg-green-600 text-white border-0 rounded text-sm cursor-pointer transition-colors hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {reselectLoading[period] ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                      {labels.reselect}
+                    </div>
+                  ) : (
+                    labels.reselect
+                  )}
+                </button>
               )}
             </div>
           ))}
