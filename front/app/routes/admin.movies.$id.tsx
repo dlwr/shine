@@ -64,8 +64,9 @@ export async function loader({context, params}: Route.LoaderArgs) {
 	}
 
 	return {
-		apiUrl: (context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
-			.PUBLIC_API_URL || 'http://localhost:8787',
+		apiUrl:
+			(context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
+				.PUBLIC_API_URL || 'http://localhost:8787',
 		movieId: id,
 	};
 }
@@ -83,7 +84,9 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 		movieId: string;
 	};
 
-	const [movieData, setMovieData] = useState<MovieDetails | undefined>(undefined);
+	const [movieData, setMovieData] = useState<MovieDetails | undefined>(
+		undefined,
+	);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | undefined>(undefined);
 
@@ -530,8 +533,12 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 					},
 					body: JSON.stringify({
 						url: newPoster.url.trim(),
-						width: newPoster.width ? Number.parseInt(newPoster.width) : undefined,
-						height: newPoster.height ? Number.parseInt(newPoster.height) : undefined,
+						width: newPoster.width
+							? Number.parseInt(newPoster.width)
+							: undefined,
+						height: newPoster.height
+							? Number.parseInt(newPoster.height)
+							: undefined,
 						languageCode: newPoster.languageCode.trim() || undefined,
 						source: newPoster.source.trim() || undefined,
 						isPrimary: newPoster.isPrimary,

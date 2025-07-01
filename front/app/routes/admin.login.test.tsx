@@ -70,7 +70,11 @@ describe('AdminLogin Component', () => {
 			const context = createMockContext();
 			const request = {formData: async () => formData} as Request;
 
-			const result = await action({context, request} as Route.ActionArgs);
+			const result = await action({
+				context,
+				request,
+				params: {},
+			} as Route.ActionArgs);
 
 			expect(mockFetch).toHaveBeenCalledWith(
 				'http://localhost:8787/auth/login',
@@ -102,7 +106,11 @@ describe('AdminLogin Component', () => {
 			const context = createMockContext();
 			const request = {formData: async () => formData} as Request;
 
-			const result = await action({context, request} as Route.ActionArgs);
+			const result = await action({
+				context,
+				request,
+				params: {},
+			} as Route.ActionArgs);
 
 			expect(result).toEqual({
 				error: 'パスワードが正しくありません',
@@ -119,7 +127,11 @@ describe('AdminLogin Component', () => {
 			const context = createMockContext();
 			const request = {formData: async () => formData} as Request;
 
-			const result = await action({context, request} as Route.ActionArgs);
+			const result = await action({
+				context,
+				request,
+				params: {},
+			} as Route.ActionArgs);
 
 			expect(result).toEqual({
 				error: 'ログインに失敗しました',
@@ -153,14 +165,14 @@ describe('AdminLogin Component', () => {
 								id: 'root',
 								params: {},
 								pathname: '/',
-								data: undefined,
+								data: {} as any,
 								handle: undefined,
 							},
 							{
 								id: 'routes/admin.login',
 								params: {},
 								pathname: '/admin/login',
-								data: undefined,
+								data: {} as any,
 								handle: undefined,
 							},
 						]}
@@ -191,14 +203,14 @@ describe('AdminLogin Component', () => {
 								id: 'root',
 								params: {},
 								pathname: '/',
-								data: undefined,
+								data: {} as any,
 								handle: undefined,
 							},
 							{
 								id: 'routes/admin.login',
 								params: {},
 								pathname: '/admin/login',
-								data: undefined,
+								data: {} as any,
 								handle: undefined,
 							},
 						]}
@@ -228,14 +240,14 @@ describe('AdminLogin Component', () => {
 								id: 'root',
 								params: {},
 								pathname: '/',
-								data: undefined,
+								data: {} as any,
 								handle: undefined,
 							},
 							{
 								id: 'routes/admin.login',
 								params: {},
 								pathname: '/admin/login',
-								data: undefined,
+								data: {} as any,
 								handle: undefined,
 							},
 						]}
@@ -269,14 +281,14 @@ describe('AdminLogin Component', () => {
 								id: 'root',
 								params: {},
 								pathname: '/',
-								data: undefined,
+								data: {} as any,
 								handle: undefined,
 							},
 							{
 								id: 'routes/admin.login',
 								params: {},
 								pathname: '/admin/login',
-								data: undefined,
+								data: {} as any,
 								handle: undefined,
 							},
 						]}
@@ -303,14 +315,14 @@ describe('AdminLogin Component', () => {
 								id: 'root',
 								params: {},
 								pathname: '/',
-								data: undefined,
+								data: {} as any,
 								handle: undefined,
 							},
 							{
 								id: 'routes/admin.login',
 								params: {},
 								pathname: '/admin/login',
-								data: undefined,
+								data: {} as any,
 								handle: undefined,
 							},
 						]}
@@ -343,14 +355,14 @@ describe('AdminLogin Component', () => {
 								id: 'root',
 								params: {},
 								pathname: '/',
-								data: undefined,
+								data: {} as any,
 								handle: undefined,
 							},
 							{
 								id: 'routes/admin.login',
 								params: {},
 								pathname: '/admin/login',
-								data: undefined,
+								data: {} as any,
 								handle: undefined,
 							},
 						]}

@@ -8,7 +8,6 @@
     "workers/**/*",
     "worker-configuration.d.ts"
   ],
-  "exclude": ["app/routes/*.test.tsx"],
   "compilerOptions": {
     "composite": true,
     "strict": true,
