@@ -7,7 +7,7 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
-    include: ["front-rr/app/**/*.test.{ts,tsx}"],
+    include: ["front/app/**/*.test.{ts,tsx}"],
     exclude: ["node_modules/**"],
   },
 });

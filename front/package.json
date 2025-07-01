@@ -1,11 +1,12 @@
 {
-  "name": "front-rr",
+  "name": "front",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "react-router build",
     "cf-typegen": "wrangler types",
     "deploy": "npm run build && wrangler deploy",
+    "deploy:prod": "npm run build && wrangler deploy --env production --minify",
     "dev": "react-router dev",
     "postinstall": "npm run cf-typegen",
     "preview": "npm run build && vite preview",
