@@ -11,38 +11,38 @@
  * @returns レスポンスのテキスト
  */
 export async function fetchWithRetry(
-  url: string,
-  options: RequestInit = {},
-  retries = 3,
-  delay = 1000,
+	url: string,
+	options: RequestInit = {},
+	retries = 3,
+	delay = 1000,
 ): Promise<string> {
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-        ...options.headers,
-      },
-    });
+	try {
+		const response = await fetch(url, {
+			...options,
+			headers: {
+				'User-Agent':
+					'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+				...options.headers,
+			},
+		});
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
+		if (!response.ok) {
+			throw new Error(`HTTP error! Status: ${response.status}`);
+		}
 
-    return await response.text();
-  } catch (error) {
-    if (retries <= 0) {
-      throw error;
-    }
+		return await response.text();
+	} catch (error) {
+		if (retries <= 0) {
+			throw error;
+		}
 
-    console.warn(
-      `Fetch failed, retrying in ${delay}ms... (${retries} retries left)`,
-    );
-    await new Promise(resolve => setTimeout(resolve, delay));
+		console.warn(
+			`Fetch failed, retrying in ${delay}ms... (${retries} retries left)`,
+		);
+		await new Promise((resolve) => setTimeout(resolve, delay));
 
-    return fetchWithRetry(url, options, retries - 1, delay * 1.5);
-  }
+		return fetchWithRetry(url, options, retries - 1, delay * 1.5);
+	}
 }
 
 /**
@@ -52,14 +52,14 @@ export async function fetchWithRetry(
  * @returns 完全なURL
  */
 export function buildUrl(
-  baseUrl: string,
-  parameters: Record<string, string>,
+	baseUrl: string,
+	parameters: Record<string, string>,
 ): string {
-  const url = new URL(baseUrl);
+	const url = new URL(baseUrl);
 
-  for (const [key, value] of Object.entries(parameters)) {
-    url.searchParams.append(key, value);
-  }
+	for (const [key, value] of Object.entries(parameters)) {
+		url.searchParams.append(key, value);
+	}
 
-  return url.toString();
+	return url.toString();
 }
