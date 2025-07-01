@@ -7,4 +7,9 @@ ignoredBuiltDependencies:
   - sharp
   - workerd
 onlyBuiltDependencies:
+  - '@tailwindcss/oxide'
   - better-sqlite3
+  - core-js
+  - msw
+  - protobufjs
+  - unrs-resolver
