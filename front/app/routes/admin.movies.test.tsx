@@ -107,7 +107,7 @@ describe('AdminMovies Component', () => {
 			});
 		});
 
-		it('カスタムAPIURLが正しく設定される', async () => {
+		it('カスタムAPI URLが正しく設定される', async () => {
 			const context = createMockContext('https://api.example.com');
 			const url = new URL('http://localhost:3000/admin/movies');
 			const request = {url} as unknown as Request;
@@ -337,52 +337,6 @@ describe('AdminMovies Component', () => {
 							search: '',
 							movies: [],
 							pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
-						} as any
-					}
-					actionData={{} as any}
-					params={{}}
-					matches={[
-						{
-							id: 'root',
-							params: {},
-							pathname: '/',
-							data: undefined,
-							handle: undefined,
-						},
-						{
-							id: 'routes/admin.movies',
-							params: {},
-							pathname: '/admin/movies',
-							data: undefined,
-							handle: undefined,
-						},
-					]}
-				/>,
-			);
-
-			const logoutButton = screen.getByText('Logout');
-			fireEvent.click(logoutButton);
-
-			expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('adminToken');
-			expect(mockLocation.href).toBe('/admin/login');
-		});
-
-		it('ログアウト機能が動作する', () => {
-			const mockLocation = {href: ''};
-			Object.defineProperty(globalThis, 'location', {
-				value: mockLocation,
-				writable: true,
-			});
-
-			render(
-				<AdminMovies
-					loaderData={
-						{
-							apiUrl: 'http://localhost:8787',
-							page: 1,
-							limit: 20,
-							movies: [],
-							pagination: {page: 1, limit: 20, total: 0, totalPages: 0},
 						} as any
 					}
 					actionData={{} as any}

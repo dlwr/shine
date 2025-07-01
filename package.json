@@ -93,7 +93,6 @@
       "**/package.json"
     ],
     "rules": {
-      "unicorn/prefer-module": "off",
       "unicorn/prevent-abbreviations": "off",
       "import-x/no-extraneous-dependencies": "off",
       "n/no-extraneous-import": "off",

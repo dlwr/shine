@@ -1,7 +1,11 @@
 import {webcrypto} from 'node:crypto';
 import {TextDecoder, TextEncoder} from 'node:util';
-import '@testing-library/jest-dom';
 import {vi} from 'vitest';
+import React from 'react';
+import '@testing-library/jest-dom';
+
+// Ensure React is available globally for JSX
+globalThis.React = React;
 
 // Polyfill Web Crypto API for Node.js environment
 if (globalThis.crypto) {
@@ -20,10 +24,57 @@ if (globalThis.crypto) {
 
 // Mock HTMLFormElement.prototype.requestSubmit for jsdom
 // This mock needs to be available globally for all test environments
-if (typeof globalThis !== 'undefined' && (globalThis as any).HTMLFormElement) {
-	(globalThis as any).HTMLFormElement.prototype.requestSubmit = function () {
-		this.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true}));
-	};
+Object.defineProperty(HTMLFormElement.prototype, 'requestSubmit', {
+	value: function () {
+		const form = this as HTMLFormElement;
+		const submitEvent = new Event('submit', {bubbles: true, cancelable: true});
+		form.dispatchEvent(submitEvent);
+	},
+	writable: true,
+	configurable: true,
+});
+
+// Mock HTMLDialogElement for jsdom
+if (typeof HTMLDialogElement === 'undefined') {
+	class MockHTMLDialogElement extends HTMLElement {
+		open = false;
+		returnValue = '';
+		
+		show() {
+			this.open = true;
+		}
+		
+		showModal() {
+			this.open = true;
+		}
+		
+		close(returnValue?: string) {
+			this.open = false;
+			if (returnValue !== undefined) {
+				this.returnValue = returnValue;
+			}
+			this.dispatchEvent(new Event('close'));
+		}
+	}
+	
+	(globalThis as any).HTMLDialogElement = MockHTMLDialogElement;
+}
+
+// Mock ResizeObserver
+if (typeof ResizeObserver === 'undefined') {
+	class MockResizeObserver {
+		callback: ResizeObserverCallback;
+		
+		constructor(callback: ResizeObserverCallback) {
+			this.callback = callback;
+		}
+		
+		observe() {}
+		unobserve() {}
+		disconnect() {}
+	}
+	
+	(globalThis as any).ResizeObserver = MockResizeObserver;
 }
 
 // Window.locationのモック（テスト環境用）
