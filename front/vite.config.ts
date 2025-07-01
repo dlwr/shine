@@ -6,10 +6,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
   plugins: [
-    cloudflare({ 
-      viteEnvironment: { name: "ssr" },
-      env: process.env.NODE_ENV === 'production' ? 'production' : 'development'
-    }),
+    cloudflare({ viteEnvironment: { name: "ssr" } }),
     tailwindcss(),
     reactRouter(),
     tsconfigPaths()
