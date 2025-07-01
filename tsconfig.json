@@ -33,5 +33,12 @@
       "@shine/api": ["api"],
       "@shine/api/*": ["api/*"]
     }
-  }
+  },
+  "exclude": [
+    "front/**/*",
+    "coverage/**/*",
+    "**/node_modules/**/*",
+    "**/dist/**/*",
+    "**/build/**/*"
+  ]
 }

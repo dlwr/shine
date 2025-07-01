@@ -101,7 +101,9 @@ async function main() {
 
 			try {
 				console.log(
-					`${progress} 処理中: ${movie.englishTitle} (${movie.year || '年不明'}) - IMDb: ${movie.imdbId}`,
+					`${progress} 処理中: ${movie.englishTitle} (${
+						movie.year || '年不明'
+					}) - IMDb: ${movie.imdbId}`,
 				);
 
 				// TMDBから日本語タイトルを取得
@@ -136,7 +138,9 @@ async function main() {
 				}
 			} catch (error) {
 				console.error(
-					`💥 ${progress} エラー: ${movie.englishTitle} - ${error instanceof Error ? error.message : String(error)}`,
+					`💥 ${progress} エラー: ${movie.englishTitle} - ${
+						error instanceof Error ? error.message : String(error)
+					}`,
 				);
 				errorCount++;
 			}

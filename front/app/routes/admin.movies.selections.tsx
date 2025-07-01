@@ -150,7 +150,9 @@ export default function AdminMovieSelections({
 			try {
 				const token = globalThis.localStorage.getItem('adminToken');
 				const response = await fetch(
-					`${apiUrl}/admin/movies?search=${encodeURIComponent(searchQuery)}&limit=20`,
+					`${apiUrl}/admin/movies?search=${encodeURIComponent(
+						searchQuery,
+					)}&limit=20`,
 					{headers: {Authorization: `Bearer ${token}`}},
 				);
 
@@ -187,7 +189,9 @@ export default function AdminMovieSelections({
 					type: overrideType,
 					date:
 						selections?.[
-							`next${overrideType.charAt(0).toUpperCase() + overrideType.slice(1)}` as keyof PreviewSelections
+							`next${
+								overrideType.charAt(0).toUpperCase() + overrideType.slice(1)
+							}` as keyof PreviewSelections
 						]?.date || new Date().toISOString().split('T')[0],
 					locale: 'en',
 				}),
@@ -219,7 +223,9 @@ export default function AdminMovieSelections({
 					type: overrideType,
 					date:
 						selections?.[
-							`next${overrideType.charAt(0).toUpperCase() + overrideType.slice(1)}` as keyof PreviewSelections
+							`next${
+								overrideType.charAt(0).toUpperCase() + overrideType.slice(1)
+							}` as keyof PreviewSelections
 						]?.date || new Date().toISOString().split('T')[0],
 					movieId: selectedMovie.uid,
 				}),
@@ -354,7 +360,9 @@ export default function AdminMovieSelections({
 					{(['daily', 'weekly', 'monthly'] as const).map((type) => {
 						const selection =
 							selections?.[
-								`next${type.charAt(0).toUpperCase() + type.slice(1)}` as keyof PreviewSelections
+								`next${
+									type.charAt(0).toUpperCase() + type.slice(1)
+								}` as keyof PreviewSelections
 							];
 						return (
 							<div
@@ -364,7 +372,9 @@ export default function AdminMovieSelections({
 							>
 								{/* Card Header */}
 								<div
-									className={`bg-gradient-to-r ${getTypeColor(type)} p-6 text-white`}
+									className={`bg-gradient-to-r ${getTypeColor(
+										type,
+									)} p-6 text-white`}
 								>
 									<h2 className="text-xl font-bold">{getTypeLabel(type)}</h2>
 									{selection && (

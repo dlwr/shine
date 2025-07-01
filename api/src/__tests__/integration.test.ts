@@ -336,8 +336,8 @@ describe('Integration Tests', () => {
 			const data = await response.json();
 
 			expect(data).toEqual(mockTmdbResponse);
-			expect(data.title).toBe('Test Movie');
-			expect(data.poster_path).toBe('/test-poster.jpg');
+			expect((data as any).title).toBe('Test Movie');
+			expect((data as any).poster_path).toBe('/test-poster.jpg');
 		});
 
 		it('should handle TMDb API errors gracefully', async () => {

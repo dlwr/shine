@@ -459,7 +459,7 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 - **IMDb ID Manual Update with TMDb Integration**:
   - Added `PUT /admin/movies/:id/imdb-id` API endpoint with optional TMDb data refresh
   - Includes TMDb ID auto-detection, poster fetching, and Japanese translation retrieval
-  - Frontend modal with checkbox for "TMDbから追加データを取得" option
+  - Frontend modal with checkbox for "TMDb から追加データを取得" option
   - Comprehensive validation: IMDb ID format, duplicate prevention, API error handling
   - Fixed missing `tmdbId` field in movie details API response (`/movies/:id`)
 - **Poster Management System**:
@@ -534,7 +534,7 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 
 ### Development Guidelines
 
-- TSエラーとLintエラーをを絶対に無視するな
+- TS エラーと Lint エラーをを絶対に無視するな
 - Database column names in schema use camelCase (e.g., `createdAt`, `updatedAt`) but are mapped to snake_case in the actual database
 - When writing SQL queries, use the schema field references directly instead of hardcoding column names
 - **API URL Convention**: Base URLs should NOT have trailing slashes, paths should start with leading slash

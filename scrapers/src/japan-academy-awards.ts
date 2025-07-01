@@ -14,6 +14,7 @@ import {
 	fetchTMDBMovieImages,
 	savePosterUrls,
 	saveTMDBId,
+	type TMDBFindResponse,
 } from './common/tmdb-utilities';
 
 const WIKIPEDIA_BASE_URL = 'https://ja.wikipedia.org';
@@ -455,9 +456,11 @@ async function processMovie(movieInfo: MovieInfo) {
 	try {
 		if (isDryRun) {
 			console.log(
-				`[DRY RUN] Would process movie: ${movieInfo.title} (${movieInfo.year}) - ${
-					movieInfo.isWinner ? 'Winner' : 'Nominee'
-				} [${movieInfo.categoryType}]`,
+				`[DRY RUN] Would process movie: ${movieInfo.title} (${
+					movieInfo.year
+				}) - ${movieInfo.isWinner ? 'Winner' : 'Nominee'} [${
+					movieInfo.categoryType
+				}]`,
 			);
 			return;
 		}
@@ -658,9 +661,11 @@ async function processMovie(movieInfo: MovieInfo) {
 			});
 
 		console.log(
-			`Processed ${existingMovies.length > 0 ? 'updated' : 'new'} movie: ${movieInfo.title} (${movieInfo.year}) - ${
-				movieInfo.isWinner ? 'Winner' : 'Nominee'
-			} [${movieInfo.categoryType}] ${imdbId ? `IMDb: ${imdbId}` : ''}`,
+			`Processed ${existingMovies.length > 0 ? 'updated' : 'new'} movie: ${
+				movieInfo.title
+			} (${movieInfo.year}) - ${movieInfo.isWinner ? 'Winner' : 'Nominee'} [${
+				movieInfo.categoryType
+			}] ${imdbId ? `IMDb: ${imdbId}` : ''}`,
 		);
 	} catch (error) {
 		console.error(`Error processing movie ${movieInfo.title}:`, error);
@@ -686,7 +691,7 @@ async function fetchEnglishTitleFromTMDB(
 			return undefined;
 		}
 
-		const data = await response.json();
+		const data = (await response.json()) as TMDBFindResponse;
 		const movieResults = data.movie_results;
 
 		if (!movieResults || movieResults.length === 0) {

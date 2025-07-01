@@ -60,7 +60,9 @@ export async function loader({context, request}: Route.LoaderArgs) {
 		const apiUrl =
 			context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787';
 		const response = await fetch(
-			`${apiUrl}/movies/search?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${limit}`,
+			`${apiUrl}/movies/search?q=${encodeURIComponent(
+				searchQuery,
+			)}&page=${page}&limit=${limit}`,
 			{
 				signal: request.signal, // React Router v7推奨：abortシグナル
 			},
@@ -215,7 +217,9 @@ export default function Search({loaderData}: Route.ComponentProps) {
 							<div className="mt-8 flex justify-center space-x-2">
 								{searchResults.pagination.page > 1 && (
 									<a
-										href={`/search?q=${encodeURIComponent(searchQuery)}&page=${searchResults.pagination.page - 1}`}
+										href={`/search?q=${encodeURIComponent(searchQuery)}&page=${
+											searchResults.pagination.page - 1
+										}`}
 										className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
 									>
 										前のページ
@@ -230,7 +234,9 @@ export default function Search({loaderData}: Route.ComponentProps) {
 								{searchResults.pagination.page <
 									searchResults.pagination.totalPages && (
 									<a
-										href={`/search?q=${encodeURIComponent(searchQuery)}&page=${searchResults.pagination.page + 1}`}
+										href={`/search?q=${encodeURIComponent(searchQuery)}&page=${
+											searchResults.pagination.page + 1
+										}`}
 										className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
 									>
 										次のページ

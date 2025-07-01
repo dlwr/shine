@@ -20,14 +20,14 @@ if (globalThis.crypto) {
 
 // Mock HTMLFormElement.prototype.requestSubmit for jsdom
 // This mock needs to be available globally for all test environments
-if (typeof globalThis !== 'undefined' && globalThis.HTMLFormElement) {
-	globalThis.HTMLFormElement.prototype.requestSubmit = function () {
+if (typeof globalThis !== 'undefined' && (globalThis as any).HTMLFormElement) {
+	(globalThis as any).HTMLFormElement.prototype.requestSubmit = function () {
 		this.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true}));
 	};
 }
 
 // Window.locationのモック（テスト環境用）
-if (globalThis.window !== undefined) {
+if ((globalThis as any).window !== undefined) {
 	Object.defineProperty(globalThis, 'location', {
 		value: {
 			href: 'http://localhost:3000/',

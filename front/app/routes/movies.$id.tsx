@@ -57,7 +57,9 @@ export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
 		{title: `${title} (${movieDetail?.year || ''}) | SHINE`},
 		{
 			name: 'description',
-			content: `${title} (${movieDetail?.year || ''}年) の詳細情報。受賞歴、ポスター、その他の情報をご覧いただけます。`,
+			content: `${title} (${
+				movieDetail?.year || ''
+			}年) の詳細情報。受賞歴、ポスター、その他の情報をご覧いただけます。`,
 		},
 	];
 }

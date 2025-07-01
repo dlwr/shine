@@ -66,7 +66,9 @@ export async function importMoviesFromList(
 	const movieTitles = limit ? allMovieTitles.slice(0, limit) : allMovieTitles;
 
 	console.log(
-		`Importing ${movieTitles.length}${limit ? ` (limited from ${allMovieTitles.length})` : ''} movies from ${filePath}`,
+		`Importing ${movieTitles.length}${
+			limit ? ` (limited from ${allMovieTitles.length})` : ''
+		} movies from ${filePath}`,
 	);
 
 	// アワード組織とカテゴリーを作成
@@ -250,7 +252,7 @@ async function searchMovieOnTMDB(
 			throw new Error(`TMDB API error: ${response.statusText}`);
 		}
 
-		const data = await response.json();
+		const data = (await response.json()) as TMDBSearchResponse;
 
 		if (data.results.length === 0) {
 			return undefined;
@@ -259,7 +261,9 @@ async function searchMovieOnTMDB(
 		// 最初の結果を返す（最も関連性が高いとされる）
 		const movie = data.results[0];
 		console.log(
-			`  Found on TMDB: ${movie.title} (${movie.release_date?.split('-')[0] || 'Unknown'})`,
+			`  Found on TMDB: ${movie.title} (${
+				movie.release_date?.split('-')[0] || 'Unknown'
+			})`,
 		);
 
 		return movie;
@@ -483,7 +487,7 @@ async function fetchTMDBConfiguration(): Promise<void> {
 			throw new Error(`TMDB configuration API error: ${response.statusText}`);
 		}
 
-		tmdbConfiguration = await response.json();
+		tmdbConfiguration = (await response.json()) as TMDBConfiguration;
 		console.log('TMDB configuration loaded');
 	} catch (error) {
 		console.error('Error fetching TMDB configuration:', error);

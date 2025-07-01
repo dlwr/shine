@@ -10,6 +10,11 @@ import {nominations} from '../../src/schema/nominations';
 import {posterUrls} from '../../src/schema/poster-urls';
 import {referenceUrls} from '../../src/schema/reference-urls';
 import {translations} from '../../src/schema/translations';
+import type {
+	TMDBSearchResponse,
+	TMDBTranslationsResponse,
+	TMDBMovieData,
+} from './common/tmdb-utilities';
 
 const WIKIPEDIA_BASE_URL = 'https://en.wikipedia.org';
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
@@ -881,7 +886,7 @@ async function fetchTMDatabaseConfiguration(): Promise<
 			throw new Error(`TMDb API error: ${response.statusText}`);
 		}
 
-		tmdbConfiguration = await response.json();
+		tmdbConfiguration = (await response.json()) as TMDatabaseConfiguration;
 		return tmdbConfiguration;
 	} catch (error) {
 		console.error('Error fetching TMDb configuration:', error);
@@ -910,7 +915,7 @@ async function searchTMDatabaseMovie(
 			throw new Error(`TMDb API error: ${response.statusText}`);
 		}
 
-		const data = await response.json();
+		const data = (await response.json()) as TMDatabaseSearchResponse;
 
 		// 結果をフィルタリング
 		const matches = data.results.filter((movie) => {
@@ -951,7 +956,7 @@ async function fetchTMDatabaseMovieDetails(
 			throw new Error(`TMDb API error: ${responseEn.statusText}`);
 		}
 
-		const dataEn = await responseEn.json();
+		const dataEn = (await responseEn.json()) as TMDatabaseMovieDetails;
 
 		// 日本語版の詳細情報を取得
 		const detailsUrlJa = new URL(`${TMDB_API_BASE_URL}/movie/${movieId}`);
@@ -963,7 +968,7 @@ async function fetchTMDatabaseMovieDetails(
 			throw new Error(`TMDb API error: ${responseJa.statusText}`);
 		}
 
-		const dataJa = await responseJa.json();
+		const dataJa = (await responseJa.json()) as TMDatabaseMovieDetails;
 
 		// 日本語タイトルが英語タイトルと異なる場合のみ保存
 		const japaneseTitle =
@@ -1214,9 +1219,13 @@ async function processMovie(
 		}
 
 		console.log(
-			`Processed ${existingMovies.length > 0 ? 'updated' : 'new'} movie: ${movieInfo.title} (${movieInfo.year}) - ${
+			`Processed ${existingMovies.length > 0 ? 'updated' : 'new'} movie: ${
+				movieInfo.title
+			} (${movieInfo.year}) - ${
 				movieInfo.isWinner ? "Palme d'Or Winner" : 'In Competition'
-			} ${movieDetails.imdbId ? `IMDb: ${movieDetails.imdbId}` : ''} ${movieDetails.japaneseTitle ? `JA: ${movieDetails.japaneseTitle}` : ''} ${movieDetails.posterPath ? 'Poster: ✓' : ''}`,
+			} ${movieDetails.imdbId ? `IMDb: ${movieDetails.imdbId}` : ''} ${
+				movieDetails.japaneseTitle ? `JA: ${movieDetails.japaneseTitle}` : ''
+			} ${movieDetails.posterPath ? 'Poster: ✓' : ''}`,
 		);
 	} catch (error) {
 		console.error(`Error processing movie ${movieInfo.title}:`, error);

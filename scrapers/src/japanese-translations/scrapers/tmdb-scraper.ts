@@ -50,7 +50,7 @@ export async function fetchJapaneseTitleFromTMDB(
 				throw new Error(`TMDb API error: ${findResponse.statusText}`);
 			}
 
-			const findData = await findResponse.json();
+			const findData = (await findResponse.json()) as TMDBFindResponse;
 			const movieResults = findData.movie_results;
 
 			if (!movieResults || movieResults.length === 0) {
@@ -65,6 +65,11 @@ export async function fetchJapaneseTitleFromTMDB(
 			await saveTMDBId(imdbId, movieTmdbId, environment);
 		}
 
+		if (!movieTmdbId) {
+			console.log(`  No TMDB ID available for IMDb ID: ${imdbId}`);
+			return undefined;
+		}
+
 		// 日本語の映画情報を取得
 		const movieUrl = new URL(`${TMDB_API_BASE_URL}/movie/${movieTmdbId}`);
 		movieUrl.searchParams.append('api_key', TMDB_API_KEY);
@@ -75,7 +80,7 @@ export async function fetchJapaneseTitleFromTMDB(
 			throw new Error(`TMDb API error: ${movieResponse.statusText}`);
 		}
 
-		const movieData = await movieResponse.json();
+		const movieData = (await movieResponse.json()) as TMDBMovieData;
 
 		// 日本語タイトルが取得できたか確認
 		if (movieData.title && movieData.title !== movieData.original_title) {

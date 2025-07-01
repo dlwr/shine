@@ -575,7 +575,9 @@ function MovieCard({movie, locale = 'en'}: {movie: any; locale?: string}) {
 			name: 'Amazon Prime',
 			color: 'bg-blue-600 text-white',
 			url: (title: string) =>
-				`https://www.amazon.co.jp/s?k=${encodeURIComponent(title)}&i=prime-instant-video`,
+				`https://www.amazon.co.jp/s?k=${encodeURIComponent(
+					title,
+				)}&i=prime-instant-video`,
 		},
 		{
 			name: 'TMDb',
@@ -675,7 +677,13 @@ function MovieCard({movie, locale = 'en'}: {movie: any; locale?: string}) {
 									</a>
 								)}
 								<a
-									href={`https://www.google.com/search?q=${encodeURIComponent(movie.title + ' ' + movie.year + ' ' + (locale === 'ja' ? '映画' : 'movie'))}`}
+									href={`https://www.google.com/search?q=${encodeURIComponent(
+										movie.title +
+											' ' +
+											movie.year +
+											' ' +
+											(locale === 'ja' ? '映画' : 'movie'),
+									)}`}
 									target="_blank"
 									rel="noopener noreferrer"
 									className="block px-4 py-3 mt-3 bg-gray-600 text-white rounded-md text-center text-sm font-medium"
@@ -696,7 +704,11 @@ function MovieCard({movie, locale = 'en'}: {movie: any; locale?: string}) {
 					</h3>
 					<p className="m-0 mb-4 text-gray-600 text-lg">{movie.year}</p>
 					<div
-						className={`${isMobile && !showDetails ? 'max-h-0 overflow-hidden' : 'max-h-none'} transition-all duration-300`}
+						className={`${
+							isMobile && !showDetails
+								? 'max-h-0 overflow-hidden'
+								: 'max-h-none'
+						} transition-all duration-300`}
 					>
 						{movie.nominations && movie.nominations.length > 0 && (
 							<div className="mt-auto pt-4 border-t border-gray-200">
@@ -782,7 +794,9 @@ function MovieCard({movie, locale = 'en'}: {movie: any; locale?: string}) {
 						>
 							<span>{showDetails ? t.showLess : t.showMore}</span>
 							<span
-								className={`text-xs transition-transform duration-200 ${showDetails ? 'rotate-180' : ''}`}
+								className={`text-xs transition-transform duration-200 ${
+									showDetails ? 'rotate-180' : ''
+								}`}
 							>
 								▼
 							</span>

@@ -273,28 +273,28 @@ export class MoviesService extends BaseService {
 			uid: movie.uid,
 			year: movie.year ?? 0,
 			originalLanguage: movie.originalLanguage,
-			imdbId: movie.imdbId,
-			tmdbId: movie.tmdbId,
+			imdbId: movie.imdbId ?? undefined,
+			tmdbId: movie.tmdbId ?? undefined,
 			title: movie.title || `Unknown Title (${movie.year})`,
 			description: (movie.description as string) || undefined,
 			posterUrl: (movie.posterUrl as string) || undefined,
 			nominations: nominationsData.map((nom) => ({
 				uid: nom.nominationUid,
 				isWinner: Boolean(nom.isWinner),
-				specialMention: nom.specialMention,
+				specialMention: nom.specialMention ?? undefined,
 				category: {
 					uid: nom.categoryUid,
 					name: nom.categoryName,
 				},
 				ceremony: {
 					uid: nom.ceremonyUid,
-					number: nom.ceremonyNumber,
+					number: nom.ceremonyNumber ?? undefined,
 					year: nom.ceremonyYear,
 				},
 				organization: {
 					uid: nom.organizationUid,
 					name: nom.organizationName,
-					shortName: nom.organizationShortName,
+					shortName: nom.organizationShortName ?? undefined,
 				},
 			})),
 			articleLinks: topArticles.map((article) => ({
