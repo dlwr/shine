@@ -53,7 +53,7 @@ const mockMovieDetails = {
 		{
 			uid: 'nom-1',
 			isWinner: true,
-			specialMention: null,
+			specialMention: undefined,
 			category: {
 				uid: 'cat-1',
 				name: '最優秀作品賞',

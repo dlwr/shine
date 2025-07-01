@@ -64,7 +64,8 @@ export async function loader({context, params}: Route.LoaderArgs) {
 	}
 
 	return {
-		apiUrl: context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787',
+		apiUrl: (context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
+			.PUBLIC_API_URL || 'http://localhost:8787',
 		movieId: id,
 	};
 }
@@ -82,14 +83,14 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 		movieId: string;
 	};
 
-	const [movieData, setMovieData] = useState<MovieDetails | undefined>(null);
+	const [movieData, setMovieData] = useState<MovieDetails | undefined>(undefined);
 	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | undefined>(null);
+	const [error, setError] = useState<string | undefined>(undefined);
 
 	// Translation editing states
 	const [editingTranslation, setEditingTranslation] = useState<
 		string | undefined
-	>(null);
+	>(undefined);
 	const [newTranslation, setNewTranslation] = useState({
 		languageCode: '',
 		content: '',
@@ -97,19 +98,19 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 	});
 	const [showAddTranslation, setShowAddTranslation] = useState(false);
 	const [translationError, setTranslationError] = useState<string | undefined>(
-		null,
+		undefined,
 	);
 
 	// IMDb ID editing states
 	const [editingImdbId, setEditingImdbId] = useState(false);
 	const [newImdbId, setNewImdbId] = useState('');
-	const [imdbError, setImdbError] = useState<string | undefined>(null);
+	const [imdbError, setImdbError] = useState<string | undefined>(undefined);
 	const [fetchTmdbData, setFetchTmdbData] = useState(false);
 
 	// TMDb ID editing states
 	const [editingTmdbId, setEditingTmdbId] = useState(false);
 	const [newTmdbId, setNewTmdbId] = useState('');
-	const [tmdbError, setTmdbError] = useState<string | undefined>(null);
+	const [tmdbError, setTmdbError] = useState<string | undefined>(undefined);
 
 	// Poster management states
 	const [showAddPoster, setShowAddPoster] = useState(false);
@@ -121,7 +122,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 		source: '',
 		isPrimary: false,
 	});
-	const [posterError, setPosterError] = useState<string | undefined>(null);
+	const [posterError, setPosterError] = useState<string | undefined>(undefined);
 
 	// Load movie data
 	useEffect(() => {
@@ -135,7 +136,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			}
 
 			setLoading(true);
-			setError(null);
+			setError(undefined);
 
 			try {
 				const response = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
@@ -153,7 +154,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 				}
 
 				const data = (await response.json()) as MovieDetails;
-				console.log('Raw API response:', JSON.stringify(data, null, 2));
+				console.log('Raw API response:', JSON.stringify(data, undefined, 2));
 				console.log('Translations:', data.translations);
 				console.log('Nominations:', data.nominations);
 				console.log('Posters:', data.posters);
@@ -236,7 +237,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			// Reset form
 			setNewTranslation({languageCode: '', content: '', isDefault: false});
 			setShowAddTranslation(false);
-			setTranslationError(null);
+			setTranslationError(undefined);
 
 			globalThis.alert?.('翻訳を追加しました');
 		} catch (error) {
@@ -301,8 +302,8 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 				setMovieData(data);
 			}
 
-			setEditingTranslation(null);
-			setTranslationError(null);
+			setEditingTranslation(undefined);
+			setTranslationError(undefined);
 
 			globalThis.alert?.('翻訳を更新しました');
 		} catch (error) {
@@ -385,7 +386,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({
-						imdbId: newImdbId.trim() || null,
+						imdbId: newImdbId.trim() || undefined,
 						fetchTmdbData,
 					}),
 				},
@@ -416,7 +417,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 
 			setEditingImdbId(false);
 			setNewImdbId('');
-			setImdbError(null);
+			setImdbError(undefined);
 			setFetchTmdbData(false);
 
 			globalThis.alert?.('IMDb IDを更新しました');
@@ -432,11 +433,11 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 	const updateTmdbId = async () => {
 		const tmdbIdNumber = newTmdbId.trim()
 			? Number.parseInt(newTmdbId.trim())
-			: null;
+			: undefined;
 
 		if (
 			newTmdbId.trim() &&
-			(tmdbIdNumber === null || isNaN(tmdbIdNumber) || tmdbIdNumber <= 0)
+			(tmdbIdNumber === undefined || isNaN(tmdbIdNumber) || tmdbIdNumber <= 0)
 		) {
 			setTmdbError('TMDb IDは正の整数である必要があります');
 			return;
@@ -494,7 +495,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 
 			setEditingTmdbId(false);
 			setNewTmdbId('');
-			setTmdbError(null);
+			setTmdbError(undefined);
 
 			globalThis.alert?.('TMDb IDを更新しました');
 		} catch (error) {
@@ -529,10 +530,10 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 					},
 					body: JSON.stringify({
 						url: newPoster.url.trim(),
-						width: newPoster.width ? Number.parseInt(newPoster.width) : null,
-						height: newPoster.height ? Number.parseInt(newPoster.height) : null,
-						languageCode: newPoster.languageCode.trim() || null,
-						source: newPoster.source.trim() || null,
+						width: newPoster.width ? Number.parseInt(newPoster.width) : undefined,
+						height: newPoster.height ? Number.parseInt(newPoster.height) : undefined,
+						languageCode: newPoster.languageCode.trim() || undefined,
+						source: newPoster.source.trim() || undefined,
 						isPrimary: newPoster.isPrimary,
 					}),
 				},
@@ -571,7 +572,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 				isPrimary: false,
 			});
 			setShowAddPoster(false);
-			setPosterError(null);
+			setPosterError(undefined);
 
 			globalThis.alert?.('ポスターを追加しました');
 		} catch (error) {
@@ -1032,7 +1033,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 											onClick={() => {
 												setEditingImdbId(false);
 												setNewImdbId('');
-												setImdbError(null);
+												setImdbError(undefined);
 												setFetchTmdbData(false);
 											}}
 											style={{
@@ -1097,7 +1098,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 										onClick={() => {
 											setEditingImdbId(true);
 											setNewImdbId(movieData.imdbId || '');
-											setImdbError(null);
+											setImdbError(undefined);
 										}}
 										style={{
 											marginLeft: '8px',
@@ -1175,7 +1176,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 											onClick={() => {
 												setEditingTmdbId(false);
 												setNewTmdbId('');
-												setTmdbError(null);
+												setTmdbError(undefined);
 											}}
 											style={{
 												padding: '6px 12px',
@@ -1219,7 +1220,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 										onClick={() => {
 											setEditingTmdbId(true);
 											setNewTmdbId(movieData.tmdbId?.toString() || '');
-											setTmdbError(null);
+											setTmdbError(undefined);
 										}}
 										style={{
 											marginLeft: '8px',
@@ -1277,7 +1278,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 						<button
 							onClick={() => {
 								setShowAddTranslation(!showAddTranslation);
-								setTranslationError(null);
+								setTranslationError(undefined);
 							}}
 							style={{
 								padding: '8px 16px',
@@ -1468,7 +1469,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 											content: '',
 											isDefault: false,
 										});
-										setTranslationError(null);
+										setTranslationError(undefined);
 									}}
 									style={{
 										padding: '8px 16px',
@@ -1694,8 +1695,8 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 														</button>
 														<button
 															onClick={() => {
-																setEditingTranslation(null);
-																setTranslationError(null);
+																setEditingTranslation(undefined);
+																setTranslationError(undefined);
 															}}
 															style={{
 																padding: '4px 8px',
@@ -1721,7 +1722,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 														<button
 															onClick={() => {
 																setEditingTranslation(translation.uid);
-																setTranslationError(null);
+																setTranslationError(undefined);
 															}}
 															style={{
 																padding: '4px 8px',
@@ -1967,7 +1968,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 						<button
 							onClick={() => {
 								setShowAddPoster(!showAddPoster);
-								setPosterError(null);
+								setPosterError(undefined);
 							}}
 							style={{
 								padding: '8px 16px',
@@ -2257,7 +2258,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 											source: '',
 											isPrimary: false,
 										});
-										setPosterError(null);
+										setPosterError(undefined);
 									}}
 									style={{
 										padding: '8px 16px',

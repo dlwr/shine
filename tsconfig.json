@@ -1,4 +1,10 @@
 {
+  "files": [],
+  "references": [
+    {"path": "./front"},
+    {"path": "./api"},
+    {"path": "./scrapers"}
+  ],
   "compilerOptions": {
     // Enable latest features
     "lib": ["ES2022", "WebWorker", "ES2021"],
@@ -35,7 +41,6 @@
     }
   },
   "exclude": [
-    "front/**/*",
     "coverage/**/*",
     "**/node_modules/**/*",
     "**/dist/**/*",

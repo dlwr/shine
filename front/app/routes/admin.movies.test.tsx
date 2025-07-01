@@ -45,7 +45,7 @@ const mockMoviesList = {
 			title: '管理画面テスト映画',
 			year: 2022,
 			originalLanguage: 'ja',
-			posterUrl: null,
+			posterUrl: undefined,
 			imdbUrl: 'https://www.imdb.com/title/tt7654321/',
 		},
 	],

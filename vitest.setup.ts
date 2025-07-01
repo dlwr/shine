@@ -25,7 +25,7 @@ if (globalThis.crypto) {
 // Mock HTMLFormElement.prototype.requestSubmit for jsdom
 // This mock needs to be available globally for all test environments
 if (
-	(globalThis as any).window &&
+	(globalThis as any).window !== undefined &&
 	(globalThis as any).HTMLFormElement &&
 	!(globalThis as any).HTMLFormElement.prototype.requestSubmit
 ) {
@@ -33,12 +33,16 @@ if (
 		(globalThis as any).HTMLFormElement.prototype,
 		'requestSubmit',
 		{
-			value() {
+			value(submitter?: any) {
 				const form = this as any;
 				const submitEvent = new Event('submit', {
 					bubbles: true,
 					cancelable: true,
 				});
+				if (submitter) {
+					(submitEvent as any).submitter = submitter;
+				}
+
 				form.dispatchEvent(submitEvent);
 			},
 			writable: true,

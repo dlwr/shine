@@ -101,7 +101,7 @@ describe('Home Component', () => {
 			);
 			expect(result).toEqual({
 				movies: mockMovies,
-				error: null,
+				error: undefined,
 				locale: 'en',
 				apiUrl: 'http://localhost:8787',
 			});
@@ -129,7 +129,7 @@ describe('Home Component', () => {
 			} as any);
 
 			expect(result).toEqual({
-				movies: null,
+				movies: undefined,
 				error: 'Network error',
 				locale: 'en',
 				apiUrl: 'http://localhost:8787',
@@ -162,7 +162,7 @@ describe('Home Component', () => {
 			} as any);
 
 			expect(result).toEqual({
-				movies: null,
+				movies: undefined,
 				error: 'API request failed: 500',
 				locale: 'en',
 				apiUrl: 'http://localhost:8787',
@@ -189,7 +189,7 @@ describe('Home Component', () => {
 		it('映画選択データが正常に表示される', () => {
 			const loaderData = {
 				movies: mockMovies,
-				error: null,
+				error: undefined,
 				locale: 'ja',
 				apiUrl: 'http://localhost:8787',
 			};
@@ -279,7 +279,7 @@ describe('Home Component', () => {
 		it('受賞情報がバッジとして表示される', () => {
 			const loaderData = {
 				movies: mockMovies,
-				error: null,
+				error: undefined,
 				locale: 'ja',
 				apiUrl: 'http://localhost:8787',
 			};
@@ -327,7 +327,7 @@ describe('Home Component', () => {
 		it('映画詳細ページへのリンクが正しく設定される', () => {
 			const loaderData = {
 				movies: mockMovies,
-				error: null,
+				error: undefined,
 				locale: 'ja',
 				apiUrl: 'http://localhost:8787',
 			};

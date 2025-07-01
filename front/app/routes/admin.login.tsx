@@ -21,7 +21,8 @@ export async function action({context, request}: Route.ActionArgs) {
 		const password = formData.get('password') as string;
 
 		const apiUrl =
-			context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787';
+			(context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
+				.PUBLIC_API_URL || 'http://localhost:8787';
 		const response = await fetch(`${apiUrl}/auth/login`, {
 			method: 'POST',
 			headers: {'Content-Type': 'application/json'},

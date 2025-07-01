@@ -37,7 +37,8 @@ function getLocaleFromRequest(request: Request): string {
 export async function loader({context, request}: Route.LoaderArgs) {
 	const locale = getLocaleFromRequest(request);
 	const apiUrl =
-		context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787';
+		(context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
+			.PUBLIC_API_URL || 'http://localhost:8787';
 
 	try {
 		// Cloudflare Workers環境ではfetchが利用可能
@@ -69,13 +70,13 @@ export async function loader({context, request}: Route.LoaderArgs) {
 		}
 
 		const movies = await response.json();
-		return {movies, error: null, locale, apiUrl};
+		return {movies, error: undefined, locale, apiUrl};
 	} catch (error) {
 		console.error('SSR fetch error:', error);
 
 		// フォールバック：エラー時はクライアントサイドで再試行
 		return {
-			movies: null,
+			movies: undefined,
 			error: error instanceof Error ? error.message : 'Unknown error occurred',
 			locale,
 			apiUrl,
@@ -102,18 +103,18 @@ export default function Home({loaderData}: Route.ComponentProps) {
 	const [movies, setMovies] = useState(initialMovies);
 	const [error, setError] = useState<string | undefined>(initialError);
 	const [loading, setLoading] = useState(shouldFetchOnClient);
-	const [adminToken, setAdminToken] = useState<string | undefined>(null);
+	const [adminToken, setAdminToken] = useState<string | undefined>(undefined);
 
 	useEffect(() => {
 		if (typeof window !== 'undefined') {
-			setAdminToken(localStorage.getItem('adminToken'));
+			setAdminToken(localStorage.getItem('adminToken') || undefined);
 
 			const handleAdminLogin = () => {
-				setAdminToken(localStorage.getItem('adminToken'));
+				setAdminToken(localStorage.getItem('adminToken') || undefined);
 			};
 
 			const handleAdminLogout = () => {
-				setAdminToken(null);
+				setAdminToken(undefined);
 			};
 
 			window.addEventListener('adminLogin', handleAdminLogin);
@@ -132,7 +133,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
 			const fetchMovies = async () => {
 				try {
 					setLoading(true);
-					setError(null);
+					setError(undefined);
 
 					function getCacheKey() {
 						const now = new Date();
@@ -231,7 +232,7 @@ function AdminLogin({locale, apiUrl}: {locale: string; apiUrl?: string}) {
 
 	useEffect(() => {
 		if (typeof window !== 'undefined') {
-			const token = localStorage.getItem('adminToken');
+			const token = localStorage.getItem('adminToken') || undefined;
 			setIsLoggedIn(Boolean(token));
 		}
 	}, []);

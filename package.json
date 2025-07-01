@@ -39,7 +39,8 @@
     "lint": "xo",
     "lint:fix": "xo --fix",
     "type-check": "tsc --noEmit",
-    "check": "concurrently -n \"lint,types\" -c \"yellow,green\" \"xo\" \"tsc --noEmit\""
+    "check": "concurrently -n \"lint,types\" -c \"yellow,green\" \"xo\" \"tsc --noEmit\"",
+    "typegen": "cd front && npx react-router typegen"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.44",

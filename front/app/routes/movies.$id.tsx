@@ -134,7 +134,7 @@ export async function action({context, params, request}: Route.ActionArgs) {
 		const errorData = await response.json();
 		return {
 			success: false,
-			error: errorData.error || '投稿に失敗しました。',
+			error: (errorData as {error?: string}).error || '投稿に失敗しました。',
 		};
 	} catch {
 		return {

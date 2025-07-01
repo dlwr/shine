@@ -4,6 +4,10 @@
     { "path": "./tsconfig.node.json" },
     { "path": "./tsconfig.cloudflare.json" }
   ],
+  "baseUrl": ".",
+  "paths": {
+    "@routes/*": [".react-router/types/app/routes/+types/*"]
+  },
   "compilerOptions": {
     "checkJs": true,
     "verbatimModuleSyntax": true,

@@ -1,9 +1,9 @@
-import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {render, screen, fireEvent, waitFor} from '@testing-library/react';
 import '@testing-library/jest-dom';
+import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import type {Route} from '../../.react-router/types/app/routes/+types/admin.login';
 import AdminLogin, {action, meta} from './admin.login';
-import type {Route} from './+types/admin.login';
 
 // UseNavigateのモック
 const mockNavigate = vi.fn();
@@ -51,7 +51,7 @@ describe('AdminLogin Component', () => {
 		vi.resetAllMocks();
 		mockNavigate.mockClear();
 		// LocalStorage.getItemが既存トークンなしを返すようにセット
-		mockLocalStorage.getItem.mockReturnValue(null);
+		mockLocalStorage.getItem.mockReturnValue(undefined);
 	});
 
 	describe('action', () => {

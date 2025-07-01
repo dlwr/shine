@@ -58,7 +58,8 @@ export async function loader({context, request}: Route.LoaderArgs) {
 
 	try {
 		const apiUrl =
-			context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787';
+			(context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
+				.PUBLIC_API_URL || 'http://localhost:8787';
 		const response = await fetch(
 			`${apiUrl}/movies/search?q=${encodeURIComponent(
 				searchQuery,

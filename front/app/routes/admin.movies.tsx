@@ -118,7 +118,7 @@ const showMergeDialog = (sourceId: string, sourceTitle: string) => {
 		}
 	}
 
-	return null;
+	return undefined;
 };
 
 const mergeMovies = async (
