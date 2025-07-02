@@ -1,6 +1,7 @@
 /* eslint-disable unicorn/prefer-global-this, unicorn/catch-error-name */
 import {useEffect, useState} from 'react';
 import type {Route} from './+types/home';
+import {Button} from '@routes/components/ui/button';
 
 export function meta(): Route.MetaDescriptors {
 	return [
@@ -309,16 +310,13 @@ function AdminLogin({locale, apiUrl}: {locale: string; apiUrl?: string}) {
 
 	return (
 		<div className="fixed top-4 right-4 z-50">
-			<button
+			<Button
 				onClick={handleButtonClick}
-				className={`px-4 py-2 text-white border-0 rounded text-sm cursor-pointer ${
-					isLoggedIn
-						? 'bg-blue-600 hover:bg-blue-700'
-						: 'bg-gray-800 hover:bg-gray-600'
-				}`}
+				variant={isLoggedIn ? 'default' : 'secondary'}
+				size="sm"
 			>
 				{isLoggedIn ? t.logoutButton : t.adminButton}
-			</button>
+			</Button>
 
 			{showModal && (
 				<div
@@ -346,23 +344,18 @@ function AdminLogin({locale, apiUrl}: {locale: string; apiUrl?: string}) {
 								autoFocus
 							/>
 							<div className="flex gap-4 justify-end">
-								<button
-									type="submit"
-									className="px-6 py-3 bg-blue-600 text-white border-0 rounded cursor-pointer text-base hover:bg-blue-700"
-								>
-									{t.loginButton}
-								</button>
-								<button
+								<Button type="submit">{t.loginButton}</Button>
+								<Button
 									type="button"
 									onClick={() => {
 										setShowModal(false);
 										setPassword('');
 										setError(false);
 									}}
-									className="px-6 py-3 bg-gray-200 text-gray-700 border-0 rounded cursor-pointer text-base hover:bg-gray-300"
+									variant="secondary"
 								>
 									{t.cancelButton}
-								</button>
+								</Button>
 							</div>
 						</form>
 						{error && (
@@ -511,10 +504,11 @@ function Movies({
 								<MovieCard movie={movies[period]} locale={locale} />
 							)}
 							{adminToken && (
-								<button
+								<Button
 									onClick={async () => handleReselect(period)}
 									disabled={reselectLoading[period]}
-									className="mt-4 px-4 py-2 bg-green-600 text-white border-0 rounded text-sm cursor-pointer transition-colors hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+									className="mt-4 bg-green-600 hover:bg-green-700"
+									size="sm"
 								>
 									{reselectLoading[period] ? (
 										<div className="flex items-center justify-center">
@@ -524,7 +518,7 @@ function Movies({
 									) : (
 										labels.reselect
 									)}
-								</button>
+								</Button>
 							)}
 						</div>
 					))}
@@ -787,11 +781,13 @@ function MovieCard({movie, locale = 'en'}: {movie: any; locale?: string}) {
 						</a>
 					</div>
 					{isMobile && (
-						<button
+						<Button
 							onClick={() => {
 								setShowDetails(!showDetails);
 							}}
-							className="w-full px-3 py-2 mt-3 bg-transparent border border-gray-200 rounded-md text-gray-500 text-sm cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-50 hover:border-gray-300"
+							variant="outline"
+							className="w-full mt-3 text-gray-500"
+							size="sm"
 						>
 							<span>{showDetails ? t.showLess : t.showMore}</span>
 							<span
@@ -801,7 +797,7 @@ function MovieCard({movie, locale = 'en'}: {movie: any; locale?: string}) {
 							>
 								▼
 							</span>
-						</button>
+						</Button>
 					)}
 				</div>
 			</div>

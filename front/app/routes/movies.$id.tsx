@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {Form} from 'react-router';
 import type {Route} from './+types/movies.$id';
+import {Button} from '@routes/components/ui/button';
 
 type MovieDetailData = {
 	uid: string;
@@ -386,12 +387,7 @@ export default function MovieDetail({
 											/>
 										</div>
 
-										<button
-											type="submit"
-											className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-										>
-											投稿する
-										</button>
+										<Button type="submit">投稿する</Button>
 									</form>
 								) : (
 									<Form method="post" className="space-y-4">
@@ -448,12 +444,7 @@ export default function MovieDetail({
 											/>
 										</div>
 
-										<button
-											type="submit"
-											className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-										>
-											投稿する
-										</button>
+										<Button type="submit">投稿する</Button>
 									</Form>
 								)}
 							</div>
