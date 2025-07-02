@@ -321,15 +321,7 @@ function AdminLogin({locale, apiUrl}: {locale: string; apiUrl?: string}) {
 						{t.logoutButton}
 					</Button>
 				</div>
-			) : (
-				<Button
-					onClick={() => setShowModal(true)}
-					variant="secondary"
-					size="sm"
-				>
-					{t.adminButton}
-				</Button>
-			)}
+			) : undefined}
 
 			{showModal && (
 				<div
