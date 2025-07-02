@@ -349,6 +349,12 @@ export default function AdminMovieSelections({
 					</div>
 					<div className="flex items-center space-x-4">
 						<a
+							href="/"
+							className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+						>
+							トップページ
+						</a>
+						<a
 							href="/admin/movies"
 							className="text-gray-600 hover:text-gray-900 transition-colors"
 						>

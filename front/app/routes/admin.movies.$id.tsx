@@ -674,6 +674,23 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 					</h1>
 					<div style={{display: 'flex', gap: '12px'}}>
 						<a
+							href="/"
+							style={{
+								padding: '8px 16px',
+								border: 'none',
+								borderRadius: '4px',
+								textDecoration: 'none',
+								fontSize: '0.875rem',
+								fontWeight: 500,
+								cursor: 'pointer',
+								display: 'inline-block',
+								background: '#16a34a',
+								color: 'white',
+							}}
+						>
+							トップページ
+						</a>
+						<a
 							href="/admin/movies"
 							style={{
 								padding: '8px 16px',
@@ -760,6 +777,23 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 						映画の編集
 					</h1>
 					<div style={{display: 'flex', gap: '12px'}}>
+						<a
+							href="/"
+							style={{
+								padding: '8px 16px',
+								border: 'none',
+								borderRadius: '4px',
+								textDecoration: 'none',
+								fontSize: '0.875rem',
+								fontWeight: 500,
+								cursor: 'pointer',
+								display: 'inline-block',
+								background: '#16a34a',
+								color: 'white',
+							}}
+						>
+							トップページ
+						</a>
 						<a
 							href="/admin/movies"
 							style={{

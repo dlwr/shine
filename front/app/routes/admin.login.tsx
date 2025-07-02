@@ -86,6 +86,12 @@ export default function AdminLogin({actionData}: Route.ComponentProps) {
 						管理者ログイン
 					</h1>
 					<p className="text-gray-600">SHINE管理画面</p>
+					<a
+						href="/"
+						className="inline-block mt-4 px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors"
+					>
+						トップページに戻る
+					</a>
 				</div>
 
 				<form method="post" className="space-y-6">

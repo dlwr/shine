@@ -306,6 +306,19 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 					<h1 style={{color: '#333', margin: 0}}>Movies Management</h1>
 					<div style={{display: 'flex', gap: '1rem', alignItems: 'center'}}>
 						<a
+							href="/"
+							style={{
+								padding: '0.5rem 1rem',
+								background: '#16a34a',
+								color: 'white',
+								textDecoration: 'none',
+								borderRadius: '4px',
+								fontSize: '0.875rem',
+							}}
+						>
+							トップページ
+						</a>
+						<a
 							href="/admin/movies/selections"
 							style={{
 								padding: '0.5rem 1rem',
@@ -375,6 +388,22 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 			>
 				<h1 style={{color: '#333', margin: 0}}>Movies Management</h1>
 				<div style={{display: 'flex', gap: '1rem', alignItems: 'center'}}>
+					<a
+						href="/"
+						style={{
+							padding: '0.5rem 1rem',
+							background: '#16a34a',
+							color: 'white',
+							textDecoration: 'none',
+							borderRadius: '4px',
+							fontSize: '0.875rem',
+							transition: 'background-color 0.2s',
+						}}
+						onMouseOver={(e) => (e.currentTarget.style.background = '#15803d')}
+						onMouseOut={(e) => (e.currentTarget.style.background = '#16a34a')}
+					>
+						トップページ
+					</a>
 					<a
 						href="/admin/movies/selections"
 						style={{
