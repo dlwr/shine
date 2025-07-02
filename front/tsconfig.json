@@ -12,7 +12,7 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@routes/*": [".react-router/types/app/routes/+types/*"]
+      "@routes/*": ["./app/routes/*"]
     }
   }
 }

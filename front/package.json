@@ -13,10 +13,15 @@
     "typecheck": "pnpm run cf-typegen && react-router typegen && tsc -b"
   },
   "dependencies": {
+    "@radix-ui/react-slot": "^1.2.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "isbot": "^5.1.27",
+    "lucide-react": "^0.525.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router": "^7.6.3"
+    "react-router": "^7.6.3",
+    "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.0.12",
@@ -31,6 +36,7 @@
     "@vitejs/plugin-react": "^4.6.0",
     "react-router-dom": "^7.6.3",
     "tailwindcss": "^4.1.4",
+    "tw-animate-css": "^1.3.4",
     "vite": "^6.3.3",
     "vite-tsconfig-paths": "^5.1.4"
   }
