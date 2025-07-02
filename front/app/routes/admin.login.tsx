@@ -1,7 +1,7 @@
 import {useEffect} from 'react';
 import {useNavigate} from 'react-router';
 import type {Route} from './+types/admin.login';
-import {Button} from '@routes/components/ui/button';
+import {Button} from '@/components/ui/button';
 
 export function meta(): Route.MetaDescriptors {
 	return [
