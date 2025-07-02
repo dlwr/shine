@@ -1,4 +1,5 @@
 import type {Route} from './+types/search';
+import {Button} from '@routes/components/ui/button';
 
 type SearchMovieData = {
 	movieUid: string;
@@ -58,9 +59,12 @@ export async function loader({context, request}: Route.LoaderArgs) {
 
 	try {
 		const apiUrl =
-			context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787';
+			(context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
+				.PUBLIC_API_URL || 'http://localhost:8787';
 		const response = await fetch(
-			`${apiUrl}/movies/search?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${limit}`,
+			`${apiUrl}/movies/search?q=${encodeURIComponent(
+				searchQuery,
+			)}&page=${page}&limit=${limit}`,
 			{
 				signal: request.signal, // React Router v7推奨：abortシグナル
 			},
@@ -116,12 +120,9 @@ export default function Search({loaderData}: Route.ComponentProps) {
 							placeholder="映画タイトルを入力..."
 							className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 						/>
-						<button
-							type="submit"
-							className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-						>
+						<Button type="submit" size="lg">
 							検索
-						</button>
+						</Button>
 					</div>
 				</form>
 
@@ -215,7 +216,9 @@ export default function Search({loaderData}: Route.ComponentProps) {
 							<div className="mt-8 flex justify-center space-x-2">
 								{searchResults.pagination.page > 1 && (
 									<a
-										href={`/search?q=${encodeURIComponent(searchQuery)}&page=${searchResults.pagination.page - 1}`}
+										href={`/search?q=${encodeURIComponent(searchQuery)}&page=${
+											searchResults.pagination.page - 1
+										}`}
 										className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
 									>
 										前のページ
@@ -230,7 +233,9 @@ export default function Search({loaderData}: Route.ComponentProps) {
 								{searchResults.pagination.page <
 									searchResults.pagination.totalPages && (
 									<a
-										href={`/search?q=${encodeURIComponent(searchQuery)}&page=${searchResults.pagination.page + 1}`}
+										href={`/search?q=${encodeURIComponent(searchQuery)}&page=${
+											searchResults.pagination.page + 1
+										}`}
 										className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
 									>
 										次のページ

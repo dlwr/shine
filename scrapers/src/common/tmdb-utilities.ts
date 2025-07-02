@@ -16,6 +16,19 @@ export type TMDBMovieData = {
 	original_title: string;
 	release_date: string;
 	imdb_id?: string;
+	poster_path?: string;
+	translations?: {
+		translations: Array<{
+			iso_3166_1: string;
+			iso_639_1: string;
+			name: string;
+			english_name: string;
+			data: {
+				title?: string;
+				overview?: string;
+			};
+		}>;
+	};
 };
 
 export type TMDBFindResponse = {
@@ -75,7 +88,7 @@ export async function fetchTMDBMovieTranslations(
 			throw new Error(`TMDb API error: ${response.statusText}`);
 		}
 
-		const data = await response.json();
+		const data = (await response.json()) as TMDBTranslationsResponse;
 		return data;
 	} catch (error) {
 		console.error(
@@ -106,7 +119,7 @@ export async function searchTMDBMovie(
 			throw new Error(`TMDb API error: ${response.statusText}`);
 		}
 
-		const data = await response.json();
+		const data = (await response.json()) as TMDBSearchResponse;
 
 		// 結果をフィルタリング
 		const matches = data.results.filter((movie) => {
@@ -140,7 +153,7 @@ export async function fetchTMDBMovieDetails(
 			throw new Error(`TMDb API error: ${response.statusText}`);
 		}
 
-		const data = await response.json();
+		const data = (await response.json()) as TMDBMovieData;
 		return data;
 	} catch (error) {
 		console.error(
@@ -168,7 +181,7 @@ export async function findTMDBByImdbId(
 			throw new Error(`TMDb API error: ${response.statusText}`);
 		}
 
-		const data = await response.json();
+		const data = (await response.json()) as TMDBFindResponse;
 		const movieResults = data.movie_results;
 
 		if (!movieResults || movieResults.length === 0) {
@@ -266,7 +279,7 @@ export async function fetchTMDBMovieImages(
 			throw new Error(`TMDb API error: ${imagesResponse.statusText}`);
 		}
 
-		const images = await imagesResponse.json();
+		const images = (await imagesResponse.json()) as TMDBMovieImages;
 		return {images, tmdbId};
 	} catch (error) {
 		console.error(`Error fetching TMDb images for IMDb ID ${imdbId}:`, error);

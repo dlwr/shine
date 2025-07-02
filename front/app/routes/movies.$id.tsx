@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {Form} from 'react-router';
 import type {Route} from './+types/movies.$id';
+import {Button} from '@routes/components/ui/button';
 
 type MovieDetailData = {
 	uid: string;
@@ -57,7 +58,9 @@ export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
 		{title: `${title} (${movieDetail?.year || ''}) | SHINE`},
 		{
 			name: 'description',
-			content: `${title} (${movieDetail?.year || ''}年) の詳細情報。受賞歴、ポスター、その他の情報をご覧いただけます。`,
+			content: `${title} (${
+				movieDetail?.year || ''
+			}年) の詳細情報。受賞歴、ポスター、その他の情報をご覧いただけます。`,
 		},
 	];
 }
@@ -132,7 +135,7 @@ export async function action({context, params, request}: Route.ActionArgs) {
 		const errorData = await response.json();
 		return {
 			success: false,
-			error: errorData.error || '投稿に失敗しました。',
+			error: (errorData as {error?: string}).error || '投稿に失敗しました。',
 		};
 	} catch {
 		return {
@@ -384,12 +387,7 @@ export default function MovieDetail({
 											/>
 										</div>
 
-										<button
-											type="submit"
-											className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-										>
-											投稿する
-										</button>
+										<Button type="submit">投稿する</Button>
 									</form>
 								) : (
 									<Form method="post" className="space-y-4">
@@ -446,12 +444,7 @@ export default function MovieDetail({
 											/>
 										</div>
 
-										<button
-											type="submit"
-											className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-										>
-											投稿する
-										</button>
+										<Button type="submit">投稿する</Button>
 									</Form>
 								)}
 							</div>

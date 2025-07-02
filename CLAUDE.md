@@ -12,7 +12,7 @@ The project uses a simplified monorepo structure with pnpm workspaces:
 
 - **api/** - Hono-based REST API running on Cloudflare Workers
 - **scrapers/** - CLI-based data collection tools (Wikipedia, TMDb, Cannes Film Festival, Academy Awards)
-- **front-rr/** - React Router v7-based frontend (Cloudflare Workers)
+- **front/** - React Router v7-based frontend (Cloudflare Workers)
 - **src/** - Shared database schemas, migrations, and utilities
 
 Key design patterns:
@@ -35,7 +35,7 @@ pnpm run dev
 pnpm run api:dev
 
 # Start React Router v7 frontend development server
-pnpm run front-rr:dev
+pnpm run front:dev
 
 # Run scrapers (CLI tools)
 pnpm run scrapers:academy-awards
@@ -110,7 +110,7 @@ npx eslint .
 npx prettier --write .
 
 # Run React Router v7 frontend tests
-pnpm run test:front-rr
+pnpm run test:front
 ```
 
 ## React Router v7 Frontend
@@ -150,11 +150,11 @@ All features have been implemented using Test-Driven Development with comprehens
 Complete test suite with **51 tests passing** across all components:
 
 ```bash
-✓ front-rr/app/routes/admin.movies.test.tsx (12 tests)
-✓ front-rr/app/routes/movies.$id.test.tsx (10 tests)
-✓ front-rr/app/routes/home.test.tsx (8 tests)
-✓ front-rr/app/routes/admin.login.test.tsx (10 tests)
-✓ front-rr/app/routes/search.test.tsx (11 tests)
+✓ front/app/routes/admin.movies.test.tsx (12 tests)
+✓ front/app/routes/movies.$id.test.tsx (10 tests)
+✓ front/app/routes/home.test.tsx (8 tests)
+✓ front/app/routes/admin.login.test.tsx (10 tests)
+✓ front/app/routes/search.test.tsx (11 tests)
 ```
 
 **Test Categories:**
@@ -186,28 +186,28 @@ Seamlessly integrates with the Hono-based API:
 
 ```bash
 # Start development server
-pnpm run front-rr:dev
+pnpm run front:dev
 
 # Run tests
-pnpm run test:front-rr
+pnpm run test:front
 
 # Build for production
-pnpm run front-rr:build
+pnpm run front:build
 
 # Deploy to development
-pnpm run front-rr:deploy:dev
+pnpm run front:deploy:dev
 
 # Deploy to production
-pnpm run front-rr:deploy:prod
+pnpm run front:deploy:prod
 ```
 
 ### Key Files
 
-- `front-rr/app/routes/` - Page components with loaders and tests
-- `front-rr/app/root.tsx` - Root application component
-- `front-rr/workers/app.ts` - Cloudflare Workers entry point
-- `front-rr/react-router.config.ts` - React Router configuration
-- `front-rr/wrangler.jsonc` - Cloudflare Workers deployment configuration
+- `front/app/routes/` - Page components with loaders and tests
+- `front/app/root.tsx` - Root application component
+- `front/workers/app.ts` - Cloudflare Workers entry point
+- `front/react-router.config.ts` - React Router configuration
+- `front/wrangler.jsonc` - Cloudflare Workers deployment configuration
 
 ## Database Schema
 
@@ -434,9 +434,9 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 ### 2025-06-11 (Dependabot Setup)
 
 - Added Dependabot configuration (`.github/dependabot.yml`) for automated dependency updates:
-  - Monitors all workspace packages: root, api, scrapers, front-rr
+  - Monitors all workspace packages: root, api, scrapers, front
   - Weekly updates on Monday 9:00 AM
-  - Scoped commit message prefixes: `deps(api)`, `deps(scrapers)`, `deps(front-rr)`, `deps`
+  - Scoped commit message prefixes: `deps(api)`, `deps(scrapers)`, `deps(front)`, `deps`
   - Rate-limited PRs: 5 per package, 3 for GitHub Actions
   - Includes GitHub Actions monitoring for CI/CD workflow updates
 
@@ -459,7 +459,7 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 - **IMDb ID Manual Update with TMDb Integration**:
   - Added `PUT /admin/movies/:id/imdb-id` API endpoint with optional TMDb data refresh
   - Includes TMDb ID auto-detection, poster fetching, and Japanese translation retrieval
-  - Frontend modal with checkbox for "TMDbから追加データを取得" option
+  - Frontend modal with checkbox for "TMDb から追加データを取得" option
   - Comprehensive validation: IMDb ID format, duplicate prevention, API error handling
   - Fixed missing `tmdbId` field in movie details API response (`/movies/:id`)
 - **Poster Management System**:
@@ -512,14 +512,14 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - **Authentication**: JWT-based localStorage authentication matching API design
   - **Comprehensive Testing**: Loader functions, component rendering, error handling, form validation, and authentication flows
 - **Added to CLAUDE.md**: Complete React Router v7 Frontend section with architecture, features, test coverage, and deployment commands
-- **Updated Commands**: Added front-rr deployment and testing commands to relevant sections
+- **Updated Commands**: Added front deployment and testing commands to relevant sections
 - **Production-ready**: Full-featured frontend with comprehensive test coverage and modern architecture
 
 ### 2025-07-01 (Complete Migration to React Router v7)
 
 - Completed full migration from Astro to React Router v7:
   - **Removed Legacy Frontend**: Deleted entire `front/` directory containing Astro-based implementation
-  - **Updated Build Scripts**: Renamed `front-rr` commands to `front` throughout package.json
+  - **Updated Build Scripts**: Renamed front commands throughout package.json
   - **Simplified Architecture**: React Router v7 is now the sole frontend implementation
   - **Updated Documentation**: Removed all references to legacy Astro frontend and dual-frontend setup
 - **Migration Details**:
@@ -534,7 +534,7 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 
 ### Development Guidelines
 
-- TSエラーとLintエラーをを絶対に無視するな
+- TS エラーと Lint エラーをを絶対に無視するな
 - Database column names in schema use camelCase (e.g., `createdAt`, `updatedAt`) but are mapped to snake_case in the actual database
 - When writing SQL queries, use the schema field references directly instead of hardcoding column names
 - **API URL Convention**: Base URLs should NOT have trailing slashes, paths should start with leading slash

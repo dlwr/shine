@@ -1,7 +1,11 @@
 import {webcrypto} from 'node:crypto';
 import {TextDecoder, TextEncoder} from 'node:util';
-import '@testing-library/jest-dom';
 import {vi} from 'vitest';
+import React from 'react';
+import '@testing-library/jest-dom';
+
+// Ensure React is available globally for JSX
+globalThis.React = React;
 
 // Polyfill Web Crypto API for Node.js environment
 if (globalThis.crypto) {
@@ -20,14 +24,77 @@ if (globalThis.crypto) {
 
 // Mock HTMLFormElement.prototype.requestSubmit for jsdom
 // This mock needs to be available globally for all test environments
-if (typeof globalThis !== 'undefined' && globalThis.HTMLFormElement) {
-	globalThis.HTMLFormElement.prototype.requestSubmit = function () {
-		this.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true}));
-	};
+if (
+	(globalThis as any).window !== undefined &&
+	(globalThis as any).HTMLFormElement &&
+	!(globalThis as any).HTMLFormElement.prototype.requestSubmit
+) {
+	Object.defineProperty(
+		(globalThis as any).HTMLFormElement.prototype,
+		'requestSubmit',
+		{
+			value(submitter?: any) {
+				const form = this as any;
+				const submitEvent = new Event('submit', {
+					bubbles: true,
+					cancelable: true,
+				});
+				if (submitter) {
+					(submitEvent as any).submitter = submitter;
+				}
+
+				form.dispatchEvent(submitEvent);
+			},
+			writable: true,
+			configurable: true,
+		},
+	);
+}
+
+// Mock HTMLDialogElement for jsdom
+if ((globalThis as any).window && !(globalThis as any).HTMLDialogElement) {
+	class MockHTMLDialogElement {
+		open = false;
+		returnValue = '';
+
+		show() {
+			this.open = true;
+		}
+
+		showModal() {
+			this.open = true;
+		}
+
+		close(returnValue?: string) {
+			this.open = false;
+			if (returnValue !== undefined) {
+				this.returnValue = returnValue;
+			}
+
+			// Dispatch close event
+		}
+
+		dispatchEvent(_event: Event) {
+			// Mock implementation
+		}
+	}
+
+	(globalThis as any).HTMLDialogElement = MockHTMLDialogElement;
+}
+
+// Mock ResizeObserver
+if (!(globalThis as any).ResizeObserver) {
+	class MockResizeObserver {
+		observe() {}
+		unobserve() {}
+		disconnect() {}
+	}
+
+	(globalThis as any).ResizeObserver = MockResizeObserver;
 }
 
 // Window.locationのモック（テスト環境用）
-if (globalThis.window !== undefined) {
+if ((globalThis as any).window !== undefined) {
 	Object.defineProperty(globalThis, 'location', {
 		value: {
 			href: 'http://localhost:3000/',

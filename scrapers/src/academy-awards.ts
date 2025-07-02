@@ -595,9 +595,11 @@ async function processMovie(
 			});
 
 		console.log(
-			`Processed ${existingMovies.length > 0 ? 'updated' : 'new'} movie: ${title} (${year}) - ${
-				isWinner ? 'Winner' : 'Nominee'
-			} ${imdbId ? `IMDb: ${imdbId}` : ''}`,
+			`Processed ${
+				existingMovies.length > 0 ? 'updated' : 'new'
+			} movie: ${title} (${year}) - ${isWinner ? 'Winner' : 'Nominee'} ${
+				imdbId ? `IMDb: ${imdbId}` : ''
+			}`,
 		);
 	} catch (error) {
 		console.error(`Error processing movie ${title}:`, error);

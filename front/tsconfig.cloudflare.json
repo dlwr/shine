@@ -8,7 +8,6 @@
     "workers/**/*",
     "worker-configuration.d.ts"
   ],
-  "exclude": ["app/routes/*.test.tsx"],
   "compilerOptions": {
     "composite": true,
     "strict": true,
@@ -21,7 +20,8 @@
     "baseUrl": ".",
     "rootDirs": [".", "./.react-router/types"],
     "paths": {
-      "~/*": ["./app/*"]
+      "~/*": ["./app/*"],
+      "@routes/*": ["./app/routes/*"]
     },
     "esModuleInterop": true,
     "resolveJsonModule": true

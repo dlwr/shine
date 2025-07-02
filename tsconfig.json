@@ -1,4 +1,10 @@
 {
+  "files": [],
+  "references": [
+    {"path": "./front"},
+    {"path": "./api"},
+    {"path": "./scrapers"}
+  ],
   "compilerOptions": {
     // Enable latest features
     "lib": ["ES2022", "WebWorker", "ES2021"],
@@ -33,5 +39,11 @@
       "@shine/api": ["api"],
       "@shine/api/*": ["api/*"]
     }
-  }
+  },
+  "exclude": [
+    "coverage/**/*",
+    "**/node_modules/**/*",
+    "**/dist/**/*",
+    "**/build/**/*"
+  ]
 }

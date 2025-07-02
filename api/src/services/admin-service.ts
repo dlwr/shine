@@ -11,9 +11,12 @@ import {referenceUrls} from 'db/schema/reference-urls';
 import {translations} from 'db/schema/translations';
 import {BaseService} from './base-service';
 import type {
+	TMDBFindResponse,
+	TMDBMovieData,
+} from '../../../scrapers/src/common/tmdb-utilities';
+import type {
 	MergeMoviesOptions,
 	PaginationOptions,
-	TMDBMovieData,
 	UpdateIMDBIdOptions,
 } from './types';
 
@@ -454,7 +457,7 @@ export class AdminService extends BaseService {
 			throw new Error(`TMDB API error: ${findResponse.statusText}`);
 		}
 
-		const findData = await findResponse.json();
+		const findData = (await findResponse.json()) as TMDBFindResponse;
 		if (!findData.movie_results || findData.movie_results.length === 0) {
 			return undefined;
 		}
@@ -470,7 +473,7 @@ export class AdminService extends BaseService {
 			throw new Error(`TMDB API error: ${movieResponse.statusText}`);
 		}
 
-		const movieData = await movieResponse.json();
+		const movieData = (await movieResponse.json()) as TMDBMovieData;
 
 		return {
 			tmdbId,

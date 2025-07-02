@@ -1,6 +1,7 @@
 import {useEffect} from 'react';
 import {useNavigate} from 'react-router';
 import type {Route} from './+types/admin.login';
+import {Button} from '@routes/components/ui/button';
 
 export function meta(): Route.MetaDescriptors {
 	return [
@@ -21,7 +22,8 @@ export async function action({context, request}: Route.ActionArgs) {
 		const password = formData.get('password') as string;
 
 		const apiUrl =
-			context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787';
+			(context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
+				.PUBLIC_API_URL || 'http://localhost:8787';
 		const response = await fetch(`${apiUrl}/auth/login`, {
 			method: 'POST',
 			headers: {'Content-Type': 'application/json'},
@@ -110,12 +112,9 @@ export default function AdminLogin({actionData}: Route.ComponentProps) {
 						</div>
 					)}
 
-					<button
-						type="submit"
-						className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-					>
+					<Button type="submit" className="w-full" size="lg">
 						ログイン
-					</button>
+					</Button>
 				</form>
 
 				<div className="mt-6 text-center">

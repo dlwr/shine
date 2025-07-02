@@ -175,7 +175,9 @@ async function main() {
 
 		for (const movie of moviesWithImdbId) {
 			console.log(
-				`[${processed + 1}/${moviesWithImdbId.length}] 処理開始: IMDb ID ${movie.imdbId}`,
+				`[${processed + 1}/${moviesWithImdbId.length}] 処理開始: IMDb ID ${
+					movie.imdbId
+				}`,
 			);
 			processed++;
 
@@ -225,7 +227,9 @@ async function main() {
 				100
 			).toFixed(1);
 			console.log(
-				`進捗: ${progressPercent}% (残り: ${moviesWithImdbId.length - processed}件)`,
+				`進捗: ${progressPercent}% (残り: ${
+					moviesWithImdbId.length - processed
+				}件)`,
 			);
 			console.log(`------------------------------`);
 

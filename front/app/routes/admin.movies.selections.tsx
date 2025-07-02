@@ -53,7 +53,9 @@ export function meta(): Route.MetaDescriptors {
 
 export async function loader({context}: Route.LoaderArgs) {
 	return {
-		apiUrl: context.cloudflare.env.PUBLIC_API_URL || 'http://localhost:8787',
+		apiUrl:
+			(context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
+				.PUBLIC_API_URL || 'http://localhost:8787',
 	};
 }
 
@@ -70,10 +72,10 @@ export default function AdminMovieSelections({
 	const {apiUrl} = loaderData as {apiUrl: string};
 
 	const [selections, setSelections] = useState<PreviewSelections | undefined>(
-		null,
+		undefined,
 	);
 	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | undefined>(null);
+	const [error, setError] = useState<string | undefined>(undefined);
 
 	// Override modal states
 	const [showOverrideModal, setShowOverrideModal] = useState(false);
@@ -88,12 +90,14 @@ export default function AdminMovieSelections({
 	const [searchLoading, setSearchLoading] = useState(false);
 
 	// Random movie states
-	const [randomMovie, setRandomMovie] = useState<SearchMovie | undefined>(null);
+	const [randomMovie, setRandomMovie] = useState<SearchMovie | undefined>(
+		undefined,
+	);
 	const [randomLoading, setRandomLoading] = useState(false);
 
 	// Selected movie for override
 	const [selectedMovie, setSelectedMovie] = useState<SearchMovie | undefined>(
-		null,
+		undefined,
 	);
 
 	// Load movie selections
@@ -108,7 +112,7 @@ export default function AdminMovieSelections({
 			}
 
 			setLoading(true);
-			setError(null);
+			setError(undefined);
 
 			try {
 				const response = await fetch(`${apiUrl}/admin/preview-selections`, {
@@ -150,7 +154,9 @@ export default function AdminMovieSelections({
 			try {
 				const token = globalThis.localStorage.getItem('adminToken');
 				const response = await fetch(
-					`${apiUrl}/admin/movies?search=${encodeURIComponent(searchQuery)}&limit=20`,
+					`${apiUrl}/admin/movies?search=${encodeURIComponent(
+						searchQuery,
+					)}&limit=20`,
 					{headers: {Authorization: `Bearer ${token}`}},
 				);
 
@@ -187,7 +193,9 @@ export default function AdminMovieSelections({
 					type: overrideType,
 					date:
 						selections?.[
-							`next${overrideType.charAt(0).toUpperCase() + overrideType.slice(1)}` as keyof PreviewSelections
+							`next${
+								overrideType.charAt(0).toUpperCase() + overrideType.slice(1)
+							}` as keyof PreviewSelections
 						]?.date || new Date().toISOString().split('T')[0],
 					locale: 'en',
 				}),
@@ -219,7 +227,9 @@ export default function AdminMovieSelections({
 					type: overrideType,
 					date:
 						selections?.[
-							`next${overrideType.charAt(0).toUpperCase() + overrideType.slice(1)}` as keyof PreviewSelections
+							`next${
+								overrideType.charAt(0).toUpperCase() + overrideType.slice(1)
+							}` as keyof PreviewSelections
 						]?.date || new Date().toISOString().split('T')[0],
 					movieId: selectedMovie.uid,
 				}),
@@ -240,8 +250,8 @@ export default function AdminMovieSelections({
 		setActiveTab('search');
 		setSearchQuery('');
 		setSearchResults([]);
-		setRandomMovie(null);
-		setSelectedMovie(null);
+		setRandomMovie(undefined);
+		setSelectedMovie(undefined);
 	};
 
 	const getTypeLabel = (type: string) => {
@@ -287,12 +297,16 @@ export default function AdminMovieSelections({
 	const getPrimaryTitle = (movie: SelectionData['movie'] | SearchMovie) => {
 		if (!movie) return '無題';
 		if ('title' in movie && movie.title) return movie.title;
-		return (
-			movie.translations?.find((t) => t.isDefault === 1)?.content ||
-			movie.translations?.find((t) => t.languageCode === 'ja')?.content ||
-			movie.translations?.[0]?.content ||
-			'無題'
-		);
+		if ('translations' in movie && movie.translations) {
+			return (
+				movie.translations.find((t: any) => t.isDefault === 1)?.content ||
+				movie.translations.find((t: any) => t.languageCode === 'ja')?.content ||
+				movie.translations[0]?.content ||
+				'無題'
+			);
+		}
+
+		return '無題';
 	};
 
 	if (loading) {
@@ -354,7 +368,9 @@ export default function AdminMovieSelections({
 					{(['daily', 'weekly', 'monthly'] as const).map((type) => {
 						const selection =
 							selections?.[
-								`next${type.charAt(0).toUpperCase() + type.slice(1)}` as keyof PreviewSelections
+								`next${
+									type.charAt(0).toUpperCase() + type.slice(1)
+								}` as keyof PreviewSelections
 							];
 						return (
 							<div
@@ -364,7 +380,9 @@ export default function AdminMovieSelections({
 							>
 								{/* Card Header */}
 								<div
-									className={`bg-gradient-to-r ${getTypeColor(type)} p-6 text-white`}
+									className={`bg-gradient-to-r ${getTypeColor(
+										type,
+									)} p-6 text-white`}
 								>
 									<h2 className="text-xl font-bold">{getTypeLabel(type)}</h2>
 									{selection && (

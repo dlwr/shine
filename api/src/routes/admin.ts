@@ -13,6 +13,7 @@ import {Hono} from 'hono';
 import {authMiddleware} from '../auth';
 import {sanitizeText} from '../middleware/sanitizer';
 import {AdminService} from '../services';
+import type {TMDBMovieImages} from '../../../scrapers/src/common/tmdb-utilities';
 
 type MovieDatabaseTranslation = {
 	iso_639_1: string;
@@ -287,7 +288,7 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async (c) => {
 
 				const imagesResponse = await fetch(imagesUrl.toString());
 				if (imagesResponse.ok) {
-					const images = await imagesResponse.json();
+					const images = (await imagesResponse.json()) as TMDBMovieImages;
 					if (images.posters && images.posters.length > 0) {
 						const savedPosters = await savePosterUrls(
 							movieId,

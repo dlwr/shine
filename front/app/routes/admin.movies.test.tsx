@@ -45,7 +45,7 @@ const mockMoviesList = {
 			title: '管理画面テスト映画',
 			year: 2022,
 			originalLanguage: 'ja',
-			posterUrl: null,
+			posterUrl: undefined,
 			imdbUrl: 'https://www.imdb.com/title/tt7654321/',
 		},
 	],
@@ -107,7 +107,7 @@ describe('AdminMovies Component', () => {
 			});
 		});
 
-		it('カスタムAPIURLが正しく設定される', async () => {
+		it('カスタムAPI URLが正しく設定される', async () => {
 			const context = createMockContext('https://api.example.com');
 			const url = new URL('http://localhost:3000/admin/movies');
 			const request = {url} as unknown as Request;
@@ -153,14 +153,14 @@ describe('AdminMovies Component', () => {
 							id: 'root',
 							params: {},
 							pathname: '/',
-							data: undefined,
+							data: {} as any,
 							handle: undefined,
 						},
 						{
 							id: 'routes/admin.movies',
 							params: {},
 							pathname: '/admin/movies',
-							data: undefined,
+							data: {} as any,
 							handle: undefined,
 						},
 					]}
@@ -203,14 +203,14 @@ describe('AdminMovies Component', () => {
 							id: 'root',
 							params: {},
 							pathname: '/',
-							data: undefined,
+							data: {} as any,
 							handle: undefined,
 						},
 						{
 							id: 'routes/admin.movies',
 							params: {},
 							pathname: '/admin/movies',
-							data: undefined,
+							data: {} as any,
 							handle: undefined,
 						},
 					]}
@@ -241,14 +241,14 @@ describe('AdminMovies Component', () => {
 							id: 'root',
 							params: {},
 							pathname: '/',
-							data: undefined,
+							data: {} as any,
 							handle: undefined,
 						},
 						{
 							id: 'routes/admin.movies',
 							params: {},
 							pathname: '/admin/movies',
-							data: undefined,
+							data: {} as any,
 							handle: undefined,
 						},
 					]}
@@ -296,14 +296,14 @@ describe('AdminMovies Component', () => {
 							id: 'root',
 							params: {},
 							pathname: '/',
-							data: undefined,
+							data: {} as any,
 							handle: undefined,
 						},
 						{
 							id: 'routes/admin.movies',
 							params: {},
 							pathname: '/admin/movies',
-							data: undefined,
+							data: {} as any,
 							handle: undefined,
 						},
 					]}
@@ -346,60 +346,14 @@ describe('AdminMovies Component', () => {
 							id: 'root',
 							params: {},
 							pathname: '/',
-							data: undefined,
+							data: {} as any,
 							handle: undefined,
 						},
 						{
 							id: 'routes/admin.movies',
 							params: {},
 							pathname: '/admin/movies',
-							data: undefined,
-							handle: undefined,
-						},
-					]}
-				/>,
-			);
-
-			const logoutButton = screen.getByText('Logout');
-			fireEvent.click(logoutButton);
-
-			expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('adminToken');
-			expect(mockLocation.href).toBe('/admin/login');
-		});
-
-		it('ログアウト機能が動作する', () => {
-			const mockLocation = {href: ''};
-			Object.defineProperty(globalThis, 'location', {
-				value: mockLocation,
-				writable: true,
-			});
-
-			render(
-				<AdminMovies
-					loaderData={
-						{
-							apiUrl: 'http://localhost:8787',
-							page: 1,
-							limit: 20,
-							movies: [],
-							pagination: {page: 1, limit: 20, total: 0, totalPages: 0},
-						} as any
-					}
-					actionData={{} as any}
-					params={{}}
-					matches={[
-						{
-							id: 'root',
-							params: {},
-							pathname: '/',
-							data: undefined,
-							handle: undefined,
-						},
-						{
-							id: 'routes/admin.movies',
-							params: {},
-							pathname: '/admin/movies',
-							data: undefined,
+							data: {} as any,
 							handle: undefined,
 						},
 					]}

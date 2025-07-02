@@ -16,8 +16,8 @@
     "api:deploy:prod": "pnpm wrangler deploy --config api/wrangler.toml --env production --minify",
     "front:dev": "pnpm --filter front run dev",
     "front:build": "pnpm --filter front run build",
-    "front:deploy:dev": "pnpm run front:build && pnpm wrangler deploy --config front/wrangler.jsonc --env development",
-    "front:deploy:prod": "pnpm run front:build && pnpm wrangler deploy --config front/wrangler.jsonc --env production --minify",
+    "front:deploy:dev": "pnpm run front:build && cd front && pnpm wrangler deploy --config build/server/wrangler.json --name shine-front-dev",
+    "front:deploy:prod": "pnpm run front:build && cd front && pnpm wrangler deploy --config build/server/wrangler.json --name shine-front --minify",
     "scrapers:academy-awards": "pnpm --filter scrapers tsx src/academy-awards-cli.ts",
     "scrapers:japan-academy-awards": "pnpm --filter scrapers tsx src/japan-academy-awards-cli.ts",
     "scrapers:movie-posters": "pnpm --filter scrapers tsx src/movie-posters-cli.ts",
@@ -37,7 +37,10 @@
     "docs:serve": "redocly preview-docs api/openapi.yml",
     "docs:bundle": "redocly bundle api/openapi.yml --output api/openapi.json",
     "lint": "xo",
-    "lint:fix": "xo --fix"
+    "lint:fix": "xo --fix",
+    "type-check": "tsc --noEmit",
+    "check": "concurrently -n \"lint,types\" -c \"yellow,green\" \"xo\" \"tsc --noEmit\"",
+    "typegen": "cd front && npx react-router typegen"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.44",
@@ -91,15 +94,23 @@
       "**/package.json"
     ],
     "rules": {
-      "unicorn/prefer-module": "off",
       "unicorn/prevent-abbreviations": "off",
       "import-x/no-extraneous-dependencies": "off",
       "n/no-extraneous-import": "off",
       "import-x/extensions": "off",
       "@typescript-eslint/naming-convention": "off",
-      "complexity": ["warn", 40],
-      "max-depth": ["warn", 8],
-      "max-nested-callbacks": ["warn", 8],
+      "complexity": [
+        "warn",
+        40
+      ],
+      "max-depth": [
+        "warn",
+        8
+      ],
+      "max-nested-callbacks": [
+        "warn",
+        8
+      ],
       "no-promise-executor-return": "off",
       "@typescript-eslint/prefer-nullish-coalescing": "off",
       "@typescript-eslint/no-unsafe-assignment": "off",
@@ -122,8 +133,12 @@
       "radix": "off",
       "no-lonely-if": "off",
       "@typescript-eslint/triple-slash-reference": "off",
-      "max-params": ["warn", 6],
+      "max-params": [
+        "warn",
+        6
+      ],
       "@typescript-eslint/consistent-type-assertions": "off",
+      "@typescript-eslint/no-unnecessary-type-assertion": "off",
       "no-script-url": "off",
       "n/prefer-global/text-decoder": "off",
       "n/prefer-global/text-encoder": "off",

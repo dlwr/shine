@@ -53,7 +53,7 @@ const mockMovieDetails = {
 		{
 			uid: 'nom-1',
 			isWinner: true,
-			specialMention: null,
+			specialMention: undefined,
 			category: {
 				uid: 'cat-1',
 				name: '最優秀作品賞',
@@ -147,14 +147,14 @@ describe('AdminMovieEdit Route', () => {
 							id: 'root',
 							params: {},
 							pathname: '/',
-							data: undefined,
+							data: {} as any,
 							handle: undefined,
 						},
 						{
 							id: 'routes/admin.movies.$id',
 							params: {id: 'movie-123'},
 							pathname: '/admin/movies/movie-123',
-							data: undefined,
+							data: {} as any,
 							handle: undefined,
 						},
 					]}
@@ -182,7 +182,27 @@ describe('AdminMovieEdit Route', () => {
 					}}
 					actionData={{} as any}
 					params={{id: 'movie-123'}}
-					matches={[]}
+					matches={
+						[
+							{
+								id: 'root',
+								params: {},
+								pathname: '/admin/movies/movie-123',
+								data: undefined,
+								handle: undefined,
+							},
+							{
+								id: 'routes/admin.movies.$id',
+								params: {id: 'movie-123'},
+								pathname: '/admin/movies/movie-123',
+								data: {
+									apiUrl: 'http://localhost:8787',
+									movieId: 'movie-123',
+								},
+								handle: undefined,
+							},
+						] as any
+					}
 				/>,
 			);
 
@@ -208,7 +228,27 @@ describe('AdminMovieEdit Route', () => {
 					}}
 					actionData={{} as any}
 					params={{id: 'movie-123'}}
-					matches={[]}
+					matches={
+						[
+							{
+								id: 'root',
+								params: {},
+								pathname: '/admin/movies/movie-123',
+								data: undefined,
+								handle: undefined,
+							},
+							{
+								id: 'routes/admin.movies.$id',
+								params: {id: 'movie-123'},
+								pathname: '/admin/movies/movie-123',
+								data: {
+									apiUrl: 'http://localhost:8787',
+									movieId: 'movie-123',
+								},
+								handle: undefined,
+							},
+						] as any
+					}
 				/>,
 			);
 

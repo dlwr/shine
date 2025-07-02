@@ -22,14 +22,18 @@ function getSelectionDate(
 
 	switch (type) {
 		case 'daily': {
-			return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+			return `${year}-${month.toString().padStart(2, '0')}-${day
+				.toString()
+				.padStart(2, '0')}`;
 		}
 
 		case 'weekly': {
 			const daysSinceFriday = (date.getDay() - 5 + 7) % 7;
 			const fridayDate = new Date(date);
 			fridayDate.setDate(day - daysSinceFriday);
-			return `${fridayDate.getFullYear()}-${(fridayDate.getMonth() + 1).toString().padStart(2, '0')}-${fridayDate.getDate().toString().padStart(2, '0')}`;
+			return `${fridayDate.getFullYear()}-${(fridayDate.getMonth() + 1)
+				.toString()
+				.padStart(2, '0')}-${fridayDate.getDate().toString().padStart(2, '0')}`;
 		}
 
 		case 'monthly': {
