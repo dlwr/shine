@@ -508,7 +508,7 @@ function Movies({
 								{labels[period]}
 							</div>
 							{movies[period] && (
-								<MovieCard movie={movies[period]} locale={locale} />
+								<MovieCard movie={movies[period]} locale={locale} adminToken={adminToken} />
 							)}
 							{adminToken && (
 								<Button
@@ -535,7 +535,7 @@ function Movies({
 	);
 }
 
-function MovieCard({movie, locale = 'en'}: {movie: any; locale?: string}) {
+function MovieCard({movie, locale = 'en', adminToken}: {movie: any; locale?: string; adminToken?: string}) {
 	const [showStreamingMenu, setShowStreamingMenu] = useState(false);
 	const [showDetails, setShowDetails] = useState(false);
 	const cardRef = useRef<HTMLDivElement>(null);
@@ -567,6 +567,7 @@ function MovieCard({movie, locale = 'en'}: {movie: any; locale?: string}) {
 			showMore: 'Show details',
 			showLess: 'Hide details',
 			searchOn: 'Search on',
+			adminEdit: 'Edit Movie',
 		},
 		ja: {
 			noPoster: 'ポスターなし',
@@ -578,6 +579,7 @@ function MovieCard({movie, locale = 'en'}: {movie: any; locale?: string}) {
 			showMore: '詳細を表示',
 			showLess: '詳細を隠す',
 			searchOn: '検索する',
+			adminEdit: '映画を編集',
 		},
 	};
 
@@ -800,6 +802,14 @@ function MovieCard({movie, locale = 'en'}: {movie: any; locale?: string}) {
 					>
 						+ {t.addArticle}
 					</a>
+					{adminToken && (
+						<a
+							href={`/admin/movies/${movie.uid}`}
+							className="inline-block mx-6 my-1 px-2 py-1 bg-blue-600 text-white no-underline rounded text-xs font-medium transition-all duration-200 hover:bg-blue-700"
+						>
+							{t.adminEdit}
+						</a>
+					)}
 				</div>
 				{isMobile && (
 					<Button
