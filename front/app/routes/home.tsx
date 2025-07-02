@@ -307,23 +307,29 @@ function AdminLogin({locale, apiUrl}: {locale: string; apiUrl?: string}) {
 		window.dispatchEvent(new Event('adminLogout'));
 	};
 
-	const handleButtonClick = () => {
-		if (isLoggedIn) {
-			handleLogout();
-		} else {
-			setShowModal(true);
-		}
-	};
-
 	return (
 		<div className="fixed top-4 right-4 z-50">
-			<Button
-				onClick={handleButtonClick}
-				variant={isLoggedIn ? 'default' : 'secondary'}
-				size="sm"
-			>
-				{isLoggedIn ? t.logoutButton : t.adminButton}
-			</Button>
+			{isLoggedIn ? (
+				<div className="flex gap-2">
+					<a
+						href="/admin/movies"
+						className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-8 px-3 py-2"
+					>
+						{t.adminButton}
+					</a>
+					<Button onClick={handleLogout} variant="secondary" size="sm">
+						{t.logoutButton}
+					</Button>
+				</div>
+			) : (
+				<Button
+					onClick={() => setShowModal(true)}
+					variant="secondary"
+					size="sm"
+				>
+					{t.adminButton}
+				</Button>
+			)}
 
 			{showModal && (
 				<div
