@@ -1,5 +1,5 @@
 /* eslint-disable unicorn/prefer-global-this, unicorn/catch-error-name */
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import type {Route} from './+types/home';
 import {Button} from '@routes/components/ui/button';
 import {
@@ -538,6 +538,23 @@ function Movies({
 function MovieCard({movie, locale = 'en'}: {movie: any; locale?: string}) {
 	const [showStreamingMenu, setShowStreamingMenu] = useState(false);
 	const [showDetails, setShowDetails] = useState(false);
+	const cardRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
+				setShowStreamingMenu(false);
+			}
+		};
+
+		if (showStreamingMenu) {
+			document.addEventListener('mousedown', handleClickOutside);
+		}
+
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, [showStreamingMenu]);
 
 	const labels = {
 		en: {
@@ -624,7 +641,7 @@ function MovieCard({movie, locale = 'en'}: {movie: any; locale?: string}) {
 	const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
 	return (
-		<Card className="relative h-full w-80 overflow-hidden">
+		<Card ref={cardRef} className="relative h-full w-80 overflow-hidden">
 			<div
 				className="h-[400px] md:h-[450px] bg-gray-100 flex items-center justify-center relative cursor-pointer"
 				onMouseEnter={() => !isMobile && setShowStreamingMenu(true)}
