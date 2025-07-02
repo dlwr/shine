@@ -1,8 +1,8 @@
-import {useTheme} from 'next-themes';
 import {Toaster as Sonner, ToasterProps} from 'sonner';
 
 const Toaster = ({...props}: ToasterProps) => {
-	const {theme = 'system'} = useTheme();
+	// React Router v7では独自のテーマ管理を使用
+	const theme = 'system';
 
 	return (
 		<Sonner

@@ -1,15 +1,5 @@
 import {useEffect, useState} from 'react';
 import {Button} from '@/components/ui/button';
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from '@/components/ui/dialog';
-import {Input} from '@/components/ui/input';
-import {Label} from '@/components/ui/label';
 
 type AdminLoginProps = {
 	locale: string;
@@ -113,9 +103,12 @@ export function AdminLogin({locale, apiUrl}: AdminLoginProps) {
 		<div className="fixed top-4 right-4 z-50">
 			{isLoggedIn ? (
 				<div className="flex gap-2">
-					<Button asChild>
-						<a href="/admin/movies">{t.adminButton}</a>
-					</Button>
+					<a
+						href="/admin/movies"
+						className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"
+					>
+						{t.adminButton}
+					</a>
 					<Button onClick={handleLogout} variant="secondary">
 						{t.logoutButton}
 					</Button>
@@ -126,54 +119,55 @@ export function AdminLogin({locale, apiUrl}: AdminLoginProps) {
 				</Button>
 			)}
 
-			<Dialog open={showModal} onOpenChange={handleOpenChange}>
-				<DialogContent className="sm:max-w-[425px]">
-					<DialogHeader>
-						<DialogTitle>{t.loginTitle}</DialogTitle>
-						<DialogDescription>{t.loginDescription}</DialogDescription>
-					</DialogHeader>
-					<form onSubmit={handleLogin}>
-						<div className="grid gap-4 py-4">
-							<div className="grid gap-2">
-								<Label htmlFor="password">{t.passwordLabel}</Label>
-								<Input
-									id="password"
-									type="password"
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
-									placeholder={t.passwordPlaceholder}
-									required
-									autoFocus
-									disabled={loading}
-								/>
-							</div>
-							{error && (
-								<p className="text-sm text-destructive">{t.loginError}</p>
-							)}
-						</div>
-						<DialogFooter>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => handleOpenChange(false)}
+			{showModal && (
+				<div
+					className="fixed top-0 left-0 w-full h-full bg-black/50 flex items-center justify-center z-50"
+					onClick={(e) => {
+						if (e.target === e.currentTarget) {
+							handleOpenChange(false);
+						}
+					}}
+				>
+					<div className="bg-white p-8 rounded-lg w-full max-w-md mx-4">
+						<h2 className="mb-6 text-xl">{t.loginTitle}</h2>
+						<form onSubmit={handleLogin}>
+							<input
+								type="password"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								placeholder={t.passwordPlaceholder}
+								className="w-full p-3 border border-gray-300 rounded text-base mb-4"
+								required
+								autoFocus
 								disabled={loading}
-							>
-								{t.cancelButton}
-							</Button>
-							<Button type="submit" disabled={loading}>
-								{loading ? (
-									<div className="flex items-center">
-										<div className="animate-spin h-4 w-4 border-2 border-background border-t-transparent rounded-full mr-2" />
-										{t.loginButton}
-									</div>
-								) : (
-									t.loginButton
-								)}
-							</Button>
-						</DialogFooter>
-					</form>
-				</DialogContent>
-			</Dialog>
+							/>
+							<div className="flex gap-4 justify-end">
+								<Button type="submit" disabled={loading}>
+									{loading ? (
+										<div className="flex items-center">
+											<div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+											{t.loginButton}
+										</div>
+									) : (
+										t.loginButton
+									)}
+								</Button>
+								<Button
+									type="button"
+									onClick={() => handleOpenChange(false)}
+									variant="secondary"
+									disabled={loading}
+								>
+									{t.cancelButton}
+								</Button>
+							</div>
+						</form>
+						{error && (
+							<div className="text-red-600 text-sm mt-4">{t.loginError}</div>
+						)}
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
