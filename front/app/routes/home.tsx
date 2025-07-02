@@ -681,19 +681,22 @@ function MovieCard({movie, locale = 'en'}: {movie: any; locale?: string}) {
 									</a>
 								))}
 							</div>
-							{movie.imdbUrl && (
-								<a
-									href={movie.imdbUrl}
-									target="_blank"
-									rel="noopener noreferrer"
-									className="block px-4 py-3 mt-3 bg-yellow-500 text-gray-900 rounded-md text-center text-sm font-medium"
-									onClick={(e) => {
-										e.stopPropagation();
-									}}
-								>
-									IMDb
-								</a>
-							)}
+							<a
+								href={
+									movie.imdbUrl ||
+									`https://www.imdb.com/find?q=${encodeURIComponent(
+										movie.title + ' ' + movie.year,
+									)}`
+								}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="block px-4 py-3 mt-3 bg-yellow-500 text-gray-900 rounded-md text-center text-sm font-medium"
+								onClick={(e) => {
+									e.stopPropagation();
+								}}
+							>
+								IMDb
+							</a>
 							<a
 								href={`https://www.google.com/search?q=${encodeURIComponent(
 									movie.title +
