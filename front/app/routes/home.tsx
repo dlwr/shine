@@ -508,7 +508,11 @@ function Movies({
 								{labels[period]}
 							</div>
 							{movies[period] && (
-								<MovieCard movie={movies[period]} locale={locale} adminToken={adminToken} />
+								<MovieCard
+									movie={movies[period]}
+									locale={locale}
+									adminToken={adminToken}
+								/>
 							)}
 							{adminToken && (
 								<Button
@@ -535,7 +539,15 @@ function Movies({
 	);
 }
 
-function MovieCard({movie, locale = 'en', adminToken}: {movie: any; locale?: string; adminToken?: string}) {
+function MovieCard({
+	movie,
+	locale = 'en',
+	adminToken,
+}: {
+	movie: any;
+	locale?: string;
+	adminToken?: string;
+}) {
 	const [showStreamingMenu, setShowStreamingMenu] = useState(false);
 	const [showDetails, setShowDetails] = useState(false);
 	const cardRef = useRef<HTMLDivElement>(null);
