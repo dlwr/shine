@@ -26,6 +26,7 @@ export type MovieSelection = {
 	title: string;
 	description: string | undefined;
 	posterUrl: string | undefined;
+	imdbUrl: string | undefined;
 	nominations: Array<{
 		uid: string;
 		isWinner: boolean;

@@ -424,6 +424,11 @@ export class SelectionsService extends BaseService {
 			.orderBy(sql`${articleLinks.submittedAt} DESC`)
 			.limit(3);
 
+		// Generate IMDb URL if IMDb ID exists
+		const imdbUrl = movie.imdbId
+			? `https://www.imdb.com/title/${movie.imdbId}/`
+			: undefined;
+
 		return {
 			uid: movie.uid,
 			year: movie.year ?? 0,
@@ -433,6 +438,7 @@ export class SelectionsService extends BaseService {
 			title: movie.title || `Unknown Title (${movie.year})`,
 			description: (movie.description as string) || undefined,
 			posterUrl: (movie.posterUrl as string) || undefined,
+			imdbUrl,
 			nominations: nominationsData.map((nom) => ({
 				uid: nom.nominationUid,
 				isWinner: Boolean(nom.isWinner),
