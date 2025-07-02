@@ -2,6 +2,13 @@
 import {useEffect, useState} from 'react';
 import type {Route} from './+types/home';
 import {Button} from '@routes/components/ui/button';
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from '@routes/components/ui/card';
 
 export function meta(): Route.MetaDescriptors {
 	return [
@@ -617,190 +624,183 @@ function MovieCard({movie, locale = 'en'}: {movie: any; locale?: string}) {
 	const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
 	return (
-		<div className="relative h-full w-80">
-			<div className="rounded-xl overflow-hidden shadow-lg bg-white h-full flex flex-col w-full">
-				<div
-					className="h-[400px] md:h-[450px] bg-gray-100 flex items-center justify-center relative cursor-pointer"
-					onMouseEnter={() => !isMobile && setShowStreamingMenu(true)}
-					onMouseLeave={() => !isMobile && setShowStreamingMenu(false)}
-					onClick={() => isMobile && setShowStreamingMenu(!showStreamingMenu)}
-				>
-					{movie.posterUrl ? (
-						<img
-							src={movie.posterUrl}
-							alt={`${movie.title} poster`}
-							className="w-full h-full object-cover"
-						/>
-					) : (
-						<div className="text-gray-500 text-xl">{t.noPoster}</div>
-					)}
+		<Card className="relative h-full w-80 overflow-hidden">
+			<div
+				className="h-[400px] md:h-[450px] bg-gray-100 flex items-center justify-center relative cursor-pointer"
+				onMouseEnter={() => !isMobile && setShowStreamingMenu(true)}
+				onMouseLeave={() => !isMobile && setShowStreamingMenu(false)}
+				onClick={() => isMobile && setShowStreamingMenu(!showStreamingMenu)}
+			>
+				{movie.posterUrl ? (
+					<img
+						src={movie.posterUrl}
+						alt={`${movie.title} poster`}
+						className="w-full h-full object-cover"
+					/>
+				) : (
+					<div className="text-gray-500 text-xl">{t.noPoster}</div>
+				)}
 
-					{/* Streaming services hover menu */}
-					{showStreamingMenu && (
-						<div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20">
-							<div className="bg-white rounded-lg p-6 max-w-xs w-full mx-4">
-								<h4 className="text-lg font-semibold text-gray-900 mb-4 text-center">
-									{t.searchOn}
-								</h4>
-								<div className="grid grid-cols-1 gap-3">
-									{streamingServices.map((service) => (
-										<a
-											key={service.name}
-											href={service.url(movie.title)}
-											target="_blank"
-											rel="noopener noreferrer"
-											className={`block px-4 py-3 rounded-md text-center text-sm font-medium ${service.color}`}
-											onClick={(e) => {
-												e.stopPropagation();
-											}}
-										>
-											{service.name}
-										</a>
-									))}
-								</div>
-								{movie.imdbUrl && (
+				{/* Streaming services hover menu */}
+				{showStreamingMenu && (
+					<div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20">
+						<div className="bg-white rounded-lg p-6 max-w-xs w-full mx-4">
+							<h4 className="text-lg font-semibold text-gray-900 mb-4 text-center">
+								{t.searchOn}
+							</h4>
+							<div className="grid grid-cols-1 gap-3">
+								{streamingServices.map((service) => (
 									<a
-										href={movie.imdbUrl}
+										key={service.name}
+										href={service.url(movie.title)}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="block px-4 py-3 mt-3 bg-yellow-500 text-gray-900 rounded-md text-center text-sm font-medium"
+										className={`block px-4 py-3 rounded-md text-center text-sm font-medium ${service.color}`}
 										onClick={(e) => {
 											e.stopPropagation();
 										}}
 									>
-										IMDb
+										{service.name}
 									</a>
-								)}
+								))}
+							</div>
+							{movie.imdbUrl && (
 								<a
-									href={`https://www.google.com/search?q=${encodeURIComponent(
-										movie.title +
-											' ' +
-											movie.year +
-											' ' +
-											(locale === 'ja' ? '映画' : 'movie'),
-									)}`}
+									href={movie.imdbUrl}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="block px-4 py-3 mt-3 bg-gray-600 text-white rounded-md text-center text-sm font-medium"
+									className="block px-4 py-3 mt-3 bg-yellow-500 text-gray-900 rounded-md text-center text-sm font-medium"
 									onClick={(e) => {
 										e.stopPropagation();
 									}}
 								>
-									Google
+									IMDb
 								</a>
-							</div>
+							)}
+							<a
+								href={`https://www.google.com/search?q=${encodeURIComponent(
+									movie.title +
+										' ' +
+										movie.year +
+										' ' +
+										(locale === 'ja' ? '映画' : 'movie'),
+								)}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="block px-4 py-3 mt-3 bg-gray-600 text-white rounded-md text-center text-sm font-medium"
+								onClick={(e) => {
+									e.stopPropagation();
+								}}
+							>
+								Google
+							</a>
+						</div>
+					</div>
+				)}
+			</div>
+
+			<CardHeader>
+				<CardTitle className="text-xl md:text-2xl">{movie.title}</CardTitle>
+				<CardDescription className="text-lg">{movie.year}</CardDescription>
+			</CardHeader>
+			<CardContent className="flex-grow flex flex-col">
+				<div
+					className={`${
+						isMobile && !showDetails ? 'max-h-0 overflow-hidden' : 'max-h-none'
+					} transition-all duration-300`}
+				>
+					{movie.nominations && movie.nominations.length > 0 && (
+						<div className="mt-auto pt-4 border-t border-gray-200">
+							{Object.values(nominationsByOrg).map((orgData: any) => (
+								<div key={orgData.organization.uid} className="mb-4 last:mb-0">
+									<h4 className="text-sm font-semibold text-gray-700 mb-2">
+										{orgData.organization.shortName ||
+											orgData.organization.name}
+									</h4>
+									{Object.values(orgData.ceremonies).map(
+										(ceremonyData: any) => (
+											<div key={ceremonyData.ceremony.uid} className="mb-2">
+												<span className="text-xs text-gray-600 font-medium">
+													{ceremonyData.ceremony.year}
+												</span>
+												<ul className="list-none p-0 mt-1">
+													{ceremonyData.nominations.map((nom: any) => (
+														<li
+															key={nom.uid}
+															className="text-xs py-1 flex items-center justify-between"
+														>
+															<span className="text-gray-700">
+																{nom.category.name}
+															</span>
+															<span
+																className={`text-xs px-2 py-1 rounded font-medium ml-2 ${
+																	nom.isWinner
+																		? 'bg-yellow-400 text-gray-900'
+																		: 'bg-gray-200 text-gray-700'
+																}`}
+															>
+																{nom.isWinner ? t.winner : t.nominee}
+															</span>
+														</li>
+													))}
+												</ul>
+											</div>
+										),
+									)}
+								</div>
+							))}
 						</div>
 					)}
-				</div>
-
-				<div className="p-5 md:p-6 flex-grow flex flex-col">
-					<h3 className="m-0 mb-3 text-xl md:text-2xl font-semibold">
-						{movie.title}
-					</h3>
-					<p className="m-0 mb-4 text-gray-600 text-lg">{movie.year}</p>
-					<div
-						className={`${
-							isMobile && !showDetails
-								? 'max-h-0 overflow-hidden'
-								: 'max-h-none'
-						} transition-all duration-300`}
-					>
-						{movie.nominations && movie.nominations.length > 0 && (
-							<div className="mt-auto pt-4 border-t border-gray-200">
-								{Object.values(nominationsByOrg).map((orgData: any) => (
-									<div
-										key={orgData.organization.uid}
-										className="mb-4 last:mb-0"
-									>
-										<h4 className="text-sm font-semibold text-gray-700 mb-2">
-											{orgData.organization.shortName ||
-												orgData.organization.name}
-										</h4>
-										{Object.values(orgData.ceremonies).map(
-											(ceremonyData: any) => (
-												<div key={ceremonyData.ceremony.uid} className="mb-2">
-													<span className="text-xs text-gray-600 font-medium">
-														{ceremonyData.ceremony.year}
-													</span>
-													<ul className="list-none p-0 mt-1">
-														{ceremonyData.nominations.map((nom: any) => (
-															<li
-																key={nom.uid}
-																className="text-xs py-1 flex items-center justify-between"
-															>
-																<span className="text-gray-700">
-																	{nom.category.name}
-																</span>
-																<span
-																	className={`text-xs px-2 py-1 rounded font-medium ml-2 ${
-																		nom.isWinner
-																			? 'bg-yellow-400 text-gray-900'
-																			: 'bg-gray-200 text-gray-700'
-																	}`}
-																>
-																	{nom.isWinner ? t.winner : t.nominee}
-																</span>
-															</li>
-														))}
-													</ul>
-												</div>
-											),
-										)}
-									</div>
+					{movie.articleLinks && movie.articleLinks.length > 0 && (
+						<div className="px-6 pb-2 border-t border-gray-200">
+							<h4 className="text-sm font-semibold text-gray-700 mt-4 mb-3">
+								{t.relatedArticles}
+							</h4>
+							<ul className="list-none p-0 m-0">
+								{movie.articleLinks.map((article: any) => (
+									<li key={article.uid} className="mb-1.5 last:mb-0">
+										<a
+											href={article.url}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="block px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-md no-underline text-inherit transition-all duration-200 hover:bg-gray-100 hover:border-gray-300 hover:translate-x-0.5"
+										>
+											<span className="text-xs text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap block leading-snug">
+												{article.title}
+											</span>
+										</a>
+									</li>
 								))}
-							</div>
-						)}
-						{movie.articleLinks && movie.articleLinks.length > 0 && (
-							<div className="px-6 pb-2 border-t border-gray-200">
-								<h4 className="text-sm font-semibold text-gray-700 mt-4 mb-3">
-									{t.relatedArticles}
-								</h4>
-								<ul className="list-none p-0 m-0">
-									{movie.articleLinks.map((article: any) => (
-										<li key={article.uid} className="mb-1.5 last:mb-0">
-											<a
-												href={article.url}
-												target="_blank"
-												rel="noopener noreferrer"
-												className="block px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-md no-underline text-inherit transition-all duration-200 hover:bg-gray-100 hover:border-gray-300 hover:translate-x-0.5"
-											>
-												<span className="text-xs text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap block leading-snug">
-													{article.title}
-												</span>
-											</a>
-										</li>
-									))}
-								</ul>
-							</div>
-						)}
-						<a
-							href={`/movies/${movie.uid}`}
-							className="inline-block mx-6 my-3 px-2 py-1 text-gray-500 no-underline rounded text-xs font-normal transition-all duration-200 border border-transparent hover:text-gray-700 hover:bg-gray-100 hover:border-gray-200"
-						>
-							+ {t.addArticle}
-						</a>
-					</div>
-					{isMobile && (
-						<Button
-							onClick={() => {
-								setShowDetails(!showDetails);
-							}}
-							variant="outline"
-							className="w-full mt-3 text-gray-500"
-							size="sm"
-						>
-							<span>{showDetails ? t.showLess : t.showMore}</span>
-							<span
-								className={`text-xs transition-transform duration-200 ${
-									showDetails ? 'rotate-180' : ''
-								}`}
-							>
-								▼
-							</span>
-						</Button>
+							</ul>
+						</div>
 					)}
+					<a
+						href={`/movies/${movie.uid}`}
+						className="inline-block mx-6 my-3 px-2 py-1 text-gray-500 no-underline rounded text-xs font-normal transition-all duration-200 border border-transparent hover:text-gray-700 hover:bg-gray-100 hover:border-gray-200"
+					>
+						+ {t.addArticle}
+					</a>
 				</div>
-			</div>
-		</div>
+				{isMobile && (
+					<Button
+						onClick={() => {
+							setShowDetails(!showDetails);
+						}}
+						variant="outline"
+						className="w-full mt-3 text-gray-500"
+						size="sm"
+					>
+						<span>{showDetails ? t.showLess : t.showMore}</span>
+						<span
+							className={`text-xs transition-transform duration-200 ${
+								showDetails ? 'rotate-180' : ''
+							}`}
+						>
+							▼
+						</span>
+					</Button>
+				)}
+			</CardContent>
+		</Card>
 	);
 }
