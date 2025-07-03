@@ -9,6 +9,7 @@
   "dependencies": {
     "@types/dompurify": "^3.2.0",
     "dompurify": "^3.2.6",
-    "zod": "^3.25.67"
+    "hono": "^4.8.3",
+    "jose": "^6.0.11"
   }
 }

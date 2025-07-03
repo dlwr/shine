@@ -17,12 +17,9 @@ importers:
       drizzle-orm:
         specifier: ^0.44.2
         version: 0.44.2(@cloudflare/workers-types@4.20250702.0)(@libsql/client@0.15.9)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.2.0)(gel@2.1.0)
-      hono:
-        specifier: ^4.8.3
-        version: 4.8.3
-      jose:
-        specifier: ^6.0.11
-        version: 6.0.11
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.67
     devDependencies:
       '@cloudflare/vitest-pool-workers':
         specifier: ^0.8.44
@@ -84,9 +81,12 @@ importers:
       dompurify:
         specifier: ^3.2.6
         version: 3.2.6
-      zod:
-        specifier: ^3.25.67
-        version: 3.25.67
+      hono:
+        specifier: ^4.8.3
+        version: 4.8.3
+      jose:
+        specifier: ^6.0.11
+        version: 6.0.11
 
   front:
     dependencies:
@@ -135,9 +135,6 @@ importers:
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
-      zod:
-        specifier: ^3.25.67
-        version: 3.25.67
     devDependencies:
       '@cloudflare/vite-plugin':
         specifier: ^1.0.12
