@@ -89,7 +89,7 @@
       "**/coverage/**",
       "**/.cache/**",
       "**/tmp/**",
-      "**/front/**",
+      "**/front/worker-configuration.d.ts",
       "**/scripts/**",
       "**/package.json"
     ],

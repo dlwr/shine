@@ -1,5 +1,5 @@
 import type {Route} from './+types/search';
-import {Button} from '@routes/components/ui/button';
+import {Button} from '@/components/ui/button';
 
 type SearchMovieData = {
 	movieUid: string;

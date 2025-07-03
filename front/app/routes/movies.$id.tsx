@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import {Form} from 'react-router';
 import type {Route} from './+types/movies.$id';
-import {Button} from '@routes/components/ui/button';
+import {Button} from '@/components/ui/button';
 
 type MovieDetailData = {
 	uid: string;

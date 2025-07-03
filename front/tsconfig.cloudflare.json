@@ -21,7 +21,11 @@
     "rootDirs": [".", "./.react-router/types"],
     "paths": {
       "~/*": ["./app/*"],
-      "@routes/*": ["./app/routes/*"]
+      "@routes/*": ["./app/routes/*"],
+      "@/*": ["./app/*"],
+      "@/components/*": ["./app/components/*"],
+      "@/lib/*": ["./app/lib/*"],
+      "@/hooks/*": ["./app/hooks/*"]
     },
     "esModuleInterop": true,
     "resolveJsonModule": true
