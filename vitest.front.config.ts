@@ -9,6 +9,10 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'@routes': `${dirname}/front/app/routes`,
+			'@': `${dirname}/front/app`,
+			'@/components': `${dirname}/front/app/components`,
+			'@/lib': `${dirname}/front/app/lib`,
+			'@/hooks': `${dirname}/front/app/hooks`,
 		},
 	},
 	test: {
