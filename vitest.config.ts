@@ -1,15 +1,15 @@
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {defineConfig} from 'vitest/config';
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
 	plugins: [react()],
 	resolve: {
 		alias: {
-			db: path.resolve(
-				path.dirname(new URL('./', import.meta.url).pathname),
-				'./src/index.ts',
-			),
+			db: path.resolve(dirname, './src/index.ts'),
 		},
 	},
 	test: {
@@ -40,6 +40,15 @@ export default defineConfig({
 				},
 			},
 			{
+				resolve: {
+					alias: {
+						'@routes': path.resolve(dirname, 'front/app/routes'),
+						'@': path.resolve(dirname, 'front/app'),
+						'@/components': path.resolve(dirname, 'front/app/components'),
+						'@/lib': path.resolve(dirname, 'front/app/lib'),
+						'@/hooks': path.resolve(dirname, 'front/app/hooks'),
+					},
+				},
 				test: {
 					name: 'jsdom',
 					include: ['front/app/**/*.test.{ts,tsx}'],
