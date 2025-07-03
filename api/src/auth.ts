@@ -1,6 +1,6 @@
 import type {Context} from 'hono';
 import {SignJWT, jwtVerify} from 'jose';
-import type {Environment} from '../../src';
+import type {Environment} from 'db';
 import {
 	createAuthenticationError,
 	createInternalServerError,

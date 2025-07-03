@@ -1,6 +1,6 @@
 import type {Context} from 'hono';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import type {Environment} from '../../../src';
+import type {Environment} from 'db';
 import {authMiddleware, createJWT, verifyJWT} from '../auth';
 
 describe('JWT Authentication', () => {
