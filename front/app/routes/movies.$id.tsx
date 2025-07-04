@@ -51,7 +51,7 @@ export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
 		];
 	}
 
-	const movieDetail = data?.movieDetail as unknown as MovieDetailData;
+	const movieDetail = data?.movieDetail as MovieDetailData;
 	const title = movieDetail?.title || '映画詳細';
 
 	return [
@@ -68,7 +68,7 @@ export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
 export async function loader({context, params, request}: Route.LoaderArgs) {
 	try {
 		const apiUrl =
-			(context.cloudflare as any)?.env?.PUBLIC_API_URL ||
+			(context.cloudflare as any)?.env?.PUBLIC_API_URL ??
 			'http://localhost:8787';
 		const response = await fetch(`${apiUrl}/movies/${params.id}`, {
 			signal: request.signal, // React Router v7推奨：abortシグナル
@@ -101,7 +101,7 @@ export async function loader({context, params, request}: Route.LoaderArgs) {
 export async function action({context, params, request}: Route.ActionArgs) {
 	try {
 		const apiUrl =
-			(context.cloudflare as any)?.env?.PUBLIC_API_URL ||
+			(context.cloudflare as any)?.env?.PUBLIC_API_URL ??
 			'http://localhost:8787';
 		const formData = await request.formData();
 
@@ -184,8 +184,9 @@ export default function MovieDetail({
 		setTitleError('');
 
 		try {
-			const apiUrl = 
-				typeof window !== 'undefined' && window.location.hostname === 'localhost'
+			const apiUrl =
+				globalThis.window !== undefined &&
+				globalThis.location.hostname === 'localhost'
 					? 'http://localhost:8787'
 					: 'https://shine-api.yuta25.workers.dev';
 
@@ -199,7 +200,7 @@ export default function MovieDetail({
 
 			if (response.ok) {
 				const data = await response.json();
-				setFormData(prev => ({
+				setFormData((prev) => ({
 					...prev,
 					title: data.title || '',
 				}));
@@ -214,9 +215,11 @@ export default function MovieDetail({
 	};
 
 	// フォームフィールドの変更処理
-	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+	const handleInputChange = (
+		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+	) => {
 		const {name, value} = e.target;
-		setFormData(prev => ({
+		setFormData((prev) => ({
 			...prev,
 			[name]: value,
 		}));
@@ -226,6 +229,7 @@ export default function MovieDetail({
 			fetchTitleFromUrl(value);
 		}
 	};
+
 	if ('error' in loaderData) {
 		const title =
 			loaderData.status === 404
@@ -426,7 +430,9 @@ export default function MovieDetail({
 											>
 												記事タイトル
 												{isLoadingTitle && (
-													<span className="ml-2 text-sm text-blue-600">取得中...</span>
+													<span className="ml-2 text-sm text-blue-600">
+														取得中...
+													</span>
 												)}
 											</label>
 											<input
@@ -441,7 +447,9 @@ export default function MovieDetail({
 												placeholder="記事のタイトルを入力"
 											/>
 											{titleError && (
-												<p className="mt-1 text-sm text-red-600">{titleError}</p>
+												<p className="mt-1 text-sm text-red-600">
+													{titleError}
+												</p>
 											)}
 										</div>
 
@@ -494,7 +502,9 @@ export default function MovieDetail({
 											>
 												記事タイトル
 												{isLoadingTitle && (
-													<span className="ml-2 text-sm text-blue-600">取得中...</span>
+													<span className="ml-2 text-sm text-blue-600">
+														取得中...
+													</span>
 												)}
 											</label>
 											<input
@@ -509,7 +519,9 @@ export default function MovieDetail({
 												placeholder="記事のタイトルを入力"
 											/>
 											{titleError && (
-												<p className="mt-1 text-sm text-red-600">{titleError}</p>
+												<p className="mt-1 text-sm text-red-600">
+													{titleError}
+												</p>
 											)}
 										</div>
 

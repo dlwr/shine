@@ -24,8 +24,8 @@ export function LanguageSelector({locale}: LanguageSelectorProps) {
 	};
 
 	return (
-		<div className="flex gap-2 my-4 justify-center">
-			{languages.map((lang) => (
+		<div className='flex gap-2 my-4 justify-center'>
+			{languages.map(lang => (
 				<a
 					key={lang.code}
 					href={getCurrentUrl(lang.code)}
