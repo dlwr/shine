@@ -127,6 +127,10 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 	});
 	const [posterError, setPosterError] = useState<string | undefined>(undefined);
 
+	// TMDb refresh states
+	const [tmdbRefreshing, setTmdbRefreshing] = useState(false);
+	const [tmdbRefreshError, setTmdbRefreshError] = useState<string | undefined>(undefined);
+
 	// Load movie data
 	useEffect(() => {
 		const loadMovie = async () => {
@@ -506,6 +510,67 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 				error instanceof Error ? error.message : 'Failed to update TMDb ID';
 			setTmdbError(message);
 			console.error('Update TMDb ID error:', error);
+		}
+	};
+
+	// TMDb refresh function
+	const refreshTMDbData = async () => {
+		if (!movieData?.tmdbId) {
+			setTmdbRefreshError('TMDb IDが設定されていません');
+			return;
+		}
+
+		const token = globalThis.localStorage?.getItem('adminToken');
+		if (!token) {
+			globalThis.location.href = '/admin/login';
+			return;
+		}
+
+		setTmdbRefreshing(true);
+		setTmdbRefreshError(undefined);
+
+		try {
+			const response = await fetch(
+				`${apiUrl}/admin/movies/${movieId}/refresh-tmdb`,
+				{
+					method: 'POST',
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+				},
+			);
+
+			if (response.status === 401) {
+				globalThis.localStorage?.removeItem('adminToken');
+				globalThis.location.href = '/admin/login';
+				return;
+			}
+
+			if (!response.ok) {
+				const errorData = (await response
+					.json()
+					.catch(() => ({error: 'Unknown error'}))) as {error?: string};
+				throw new Error(errorData.error || 'Failed to refresh TMDb data');
+			}
+
+			// Reload movie data
+			const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
+				headers: {Authorization: `Bearer ${token}`},
+			});
+
+			if (movieResponse.ok) {
+				const data = (await movieResponse.json()) as MovieDetails;
+				setMovieData(data);
+			}
+
+			globalThis.alert?.('TMDb情報を更新しました');
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : 'Failed to refresh TMDb data';
+			setTmdbRefreshError(message);
+			console.error('Refresh TMDb data error:', error);
+		} finally {
+			setTmdbRefreshing(false);
 		}
 	};
 
@@ -1282,10 +1347,57 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 									>
 										編集
 									</button>
+									{movieData.tmdbId && (
+										<button
+											onClick={() => {
+												setTmdbRefreshError(undefined);
+												refreshTMDbData();
+											}}
+											disabled={tmdbRefreshing}
+											style={{
+												marginLeft: '4px',
+												padding: '2px 6px',
+												border: 'none',
+												borderRadius: '4px',
+												fontSize: '0.75rem',
+												cursor: tmdbRefreshing ? 'not-allowed' : 'pointer',
+												background: tmdbRefreshing ? '#9ca3af' : '#059669',
+												color: 'white',
+											}}
+											onMouseOver={(e) => {
+												if (!tmdbRefreshing) {
+													e.currentTarget.style.background = '#047857';
+												}
+											}}
+											onMouseOut={(e) => {
+												if (!tmdbRefreshing) {
+													e.currentTarget.style.background = '#059669';
+												}
+											}}
+										>
+											{tmdbRefreshing ? '更新中...' : 'TMDb更新'}
+										</button>
+									)}
 								</span>
 							)}
 						</div>
 					</div>
+					{/* TMDb refresh error display */}
+					{tmdbRefreshError && (
+						<div
+							style={{
+								marginTop: '16px',
+								padding: '12px',
+								background: '#fef2f2',
+								border: '1px solid #fecaca',
+								borderRadius: '4px',
+								color: '#dc2626',
+								fontSize: '0.875rem',
+							}}
+						>
+							{tmdbRefreshError}
+						</div>
+					)}
 				</div>
 
 				{/* Translations */}

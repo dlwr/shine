@@ -612,6 +612,160 @@ adminRoutes.delete('/nominations/:nominationId', authMiddleware, async (c) => {
 	}
 });
 
+// Refresh TMDb data (posters and translations)
+adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async (c) => {
+	try {
+		const database = getDatabase(c.env);
+		const movieId = c.req.param('id');
+
+		// Check if movie exists and has TMDb ID
+		const movie = await database
+			.select({uid: movies.uid, tmdbId: movies.tmdbId})
+			.from(movies)
+			.where(eq(movies.uid, movieId))
+			.limit(1);
+
+		if (movie.length === 0) {
+			return c.json({error: 'Movie not found'}, 404);
+		}
+
+		const tmdbId = movie[0].tmdbId;
+		if (!tmdbId) {
+			return c.json({error: 'Movie does not have a TMDb ID'}, 400);
+		}
+
+		if (!c.env.TMDB_API_KEY) {
+			return c.json({error: 'TMDb API key not configured'}, 500);
+		}
+
+		const refreshResults = {
+			postersAdded: 0,
+			translationsAdded: 0,
+		};
+
+		try {
+			// Import TMDb utilities
+			const {fetchTMDBMovieTranslations, savePosterUrls} = await import(
+				'../../../scrapers/src/common/tmdb-utilities'
+			);
+
+			type TMDBMovieImages = {
+				id: number;
+				posters: Array<{
+					file_path: string;
+					width: number;
+					height: number;
+					iso_639_1: string | undefined;
+				}>;
+			};
+
+			// Fetch and save posters using TMDb ID
+			const imagesUrl = new URL(
+				`https://api.themoviedb.org/3/movie/${tmdbId}/images`,
+			);
+			imagesUrl.searchParams.append('api_key', c.env.TMDB_API_KEY);
+
+			const imagesResponse = await fetch(imagesUrl.toString());
+			if (imagesResponse.ok) {
+				const images = (await imagesResponse.json()) as TMDBMovieImages;
+				if (images.posters && images.posters.length > 0) {
+					const savedPosters = await savePosterUrls(
+						movieId,
+						images.posters,
+						c.env,
+					);
+					refreshResults.postersAdded = savedPosters;
+				}
+			}
+
+			// Fetch and save translations using TMDb Translations API
+			let translationsAdded = 0;
+			const {translations} = await import('../../../src/schema/translations');
+
+			// Get all translations from TMDb
+			const translationsData = await fetchTMDBMovieTranslations(
+				tmdbId,
+				c.env.TMDB_API_KEY,
+			);
+
+			if (translationsData?.translations) {
+				// Find English title (original language)
+				const englishTranslation = translationsData.translations.find(
+					(t: MovieDatabaseTranslation) =>
+						t.iso_639_1 === 'en' && t.data?.title,
+				);
+
+				if (englishTranslation?.data?.title) {
+					await database
+						.insert(translations)
+						.values({
+							resourceType: 'movie_title',
+							resourceUid: movieId,
+							languageCode: 'en',
+							content: englishTranslation.data.title,
+							isDefault: 1,
+						})
+						.onConflictDoUpdate({
+							target: [
+								translations.resourceType,
+								translations.resourceUid,
+								translations.languageCode,
+							],
+							set: {
+								content: englishTranslation.data.title,
+								updatedAt: Math.floor(Date.now() / 1000),
+							},
+						});
+					translationsAdded++;
+				}
+
+				// Find Japanese title
+				const japaneseTranslation = translationsData.translations.find(
+					(t: MovieDatabaseTranslation) =>
+						t.iso_639_1 === 'ja' && t.data?.title,
+				);
+
+				if (japaneseTranslation?.data?.title) {
+					await database
+						.insert(translations)
+						.values({
+							resourceType: 'movie_title',
+							resourceUid: movieId,
+							languageCode: 'ja',
+							content: japaneseTranslation.data.title,
+							isDefault: 0,
+						})
+						.onConflictDoUpdate({
+							target: [
+								translations.resourceType,
+								translations.resourceUid,
+								translations.languageCode,
+							],
+							set: {
+								content: japaneseTranslation.data.title,
+								updatedAt: Math.floor(Date.now() / 1000),
+							},
+						});
+					translationsAdded++;
+				}
+			}
+
+			refreshResults.translationsAdded = translationsAdded;
+
+			return c.json({
+				success: true,
+				refreshResults,
+			});
+		} catch (refreshError) {
+			console.error('Error during TMDb data refresh:', refreshError);
+			return c.json({error: 'Failed to refresh TMDb data'}, 500);
+		}
+	} catch (error) {
+		console.error('Error refreshing TMDb data:', error);
+		return c.json({error: 'Internal server error'}, 500);
+	}
+});
+
 // Merge movies - combines source movie data into target movie and deletes source
 adminRoutes.post(
 	'/movies/:sourceId/merge/:targetId',
