@@ -51,7 +51,7 @@ export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
 		];
 	}
 
-	const movieDetail = data?.movieDetail as MovieDetailData;
+	const movieDetail = data?.movieDetail as MovieDetailData | undefined;
 	const title = movieDetail?.title || '映画詳細';
 
 	return [
@@ -199,7 +199,7 @@ export default function MovieDetail({
 			});
 
 			if (response.ok) {
-				const data = await response.json();
+				const data = (await response.json()) as {title?: string};
 				setFormData((previous) => ({
 					...previous,
 					title: data.title || '',

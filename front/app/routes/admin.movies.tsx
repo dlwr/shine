@@ -143,7 +143,7 @@ const mergeMovies = async (
 		);
 
 		if (!response.ok) {
-			const errorData = await response.json();
+			const errorData = (await response.json()) as {error?: string};
 			throw new Error(
 				errorData.error || `HTTP error! status: ${response.status}`,
 			);
@@ -221,7 +221,7 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 				throw new Error('Failed to fetch movies');
 			}
 
-			const data = await response.json();
+			const data = (await response.json()) as MoviesResponse;
 			setMovies(data.movies || []);
 			setPagination(
 				data.pagination || {page: 1, limit: 20, totalCount: 0, totalPages: 0},

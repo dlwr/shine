@@ -156,7 +156,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 					throw new Error('Failed to fetch movie data');
 				}
 
-				const data = await response.json();
+				const data = (await response.json()) as MovieDetails;
 				console.log('Raw API response:', JSON.stringify(data, undefined, 2));
 				console.log('Translations:', data.translations);
 				console.log('Nominations:', data.nominations);
@@ -233,7 +233,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			});
 
 			if (movieResponse.ok) {
-				const data = await movieResponse.json();
+				const data = (await movieResponse.json()) as MovieDetails;
 				setMovieData(data);
 			}
 
@@ -301,7 +301,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			});
 
 			if (movieResponse.ok) {
-				const data = await movieResponse.json();
+				const data = (await movieResponse.json()) as MovieDetails;
 				setMovieData(data);
 			}
 
@@ -358,7 +358,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			});
 
 			if (movieResponse.ok) {
-				const data = await movieResponse.json();
+				const data = (await movieResponse.json()) as MovieDetails;
 				setMovieData(data);
 			}
 
@@ -414,7 +414,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			});
 
 			if (movieResponse.ok) {
-				const data = await movieResponse.json();
+				const data = (await movieResponse.json()) as MovieDetails;
 				setMovieData(data);
 			}
 
@@ -492,7 +492,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			});
 
 			if (movieResponse.ok) {
-				const data = await movieResponse.json();
+				const data = (await movieResponse.json()) as MovieDetails;
 				setMovieData(data);
 			}
 
@@ -565,7 +565,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			});
 
 			if (movieResponse.ok) {
-				const data = await movieResponse.json();
+				const data = (await movieResponse.json()) as MovieDetails;
 				setMovieData(data);
 			}
 
@@ -631,7 +631,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			});
 
 			if (movieResponse.ok) {
-				const data = await movieResponse.json();
+				const data = (await movieResponse.json()) as MovieDetails;
 				setMovieData(data);
 			}
 

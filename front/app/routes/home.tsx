@@ -278,7 +278,7 @@ function Movies({
 				throw new Error(`API request failed: ${response.status}`);
 			}
 
-			const result = await response.json();
+			const result = (await response.json()) as {movie?: any};
 
 			if (result.movie) {
 				window.location.reload();

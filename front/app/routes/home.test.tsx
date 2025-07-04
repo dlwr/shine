@@ -173,7 +173,7 @@ describe('Home Component', () => {
 
 	describe('meta', () => {
 		it('正しいメタデータを返す', () => {
-			const result = meta();
+			const result = meta({data: undefined} as any);
 
 			expect(result).toEqual([
 				{title: 'SHINE'},

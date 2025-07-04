@@ -129,7 +129,7 @@ export default function AdminMovieSelections({
 					throw new Error('Failed to fetch selections');
 				}
 
-				const data = await response.json();
+				const data = (await response.json()) as PreviewSelections;
 				setSelections(data);
 			} catch (error) {
 				console.error('Error loading selections:', error);
@@ -161,7 +161,7 @@ export default function AdminMovieSelections({
 				);
 
 				if (response.ok) {
-					const data = await response.json();
+					const data = (await response.json()) as {movies: SearchMovie[]};
 					setSearchResults(data.movies || []);
 				}
 			} catch (error) {
@@ -199,7 +199,7 @@ export default function AdminMovieSelections({
 			});
 
 			if (response.ok) {
-				const data = await response.json();
+				const data = (await response.json()) as SearchMovie;
 				setRandomMovie(data);
 			}
 		} catch (error) {

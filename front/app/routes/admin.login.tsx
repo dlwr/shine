@@ -39,7 +39,7 @@ export async function action({context, request}: Route.ActionArgs) {
 			return {error: 'ログインに失敗しました'};
 		}
 
-		const data = await response.json();
+		const data = (await response.json()) as {token: string};
 		// サーバーサイドではlocalStorageにアクセスできないため、
 		// クライアントサイドでトークンを保存してからリダイレクト
 		return {success: true, token: data.token};

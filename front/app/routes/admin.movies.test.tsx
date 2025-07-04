@@ -123,7 +123,7 @@ describe('AdminMovies Component', () => {
 
 	describe('meta', () => {
 		it('正しいメタデータを返す', () => {
-			const result = meta();
+			const result = meta({data: undefined} as any);
 
 			expect(result).toEqual([
 				{title: '映画管理 | SHINE Admin'},

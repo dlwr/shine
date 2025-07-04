@@ -68,7 +68,7 @@ export function AdminLogin({locale, apiUrl}: AdminLoginProps) {
 			);
 
 			if (response.ok) {
-				const {token} = await response.json();
+				const {token} = (await response.json()) as {token: string};
 				localStorage.setItem('adminToken', token);
 				setIsLoggedIn(true);
 				setShowModal(false);
