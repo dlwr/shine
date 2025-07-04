@@ -1,12 +1,13 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
+    "composite": true,
     "types": ["@cloudflare/workers-types", "node"],
     "jsxImportSource": "hono/jsx",
     "baseUrl": "..",
     "paths": {
-      "db": ["./src"],
-      "db/*": ["./src/*"],
+      "db": ["src"],
+      "db/*": ["src/*"],
       "@shine/db": ["src"],
       "@shine/db/*": ["src/*"],
       "@shine/scrapers": ["scrapers"],
@@ -14,5 +15,7 @@
       "@shine/api": ["api"],
       "@shine/api/*": ["api/*"]
     }
-  }
+  },
+  "include": ["src/**/*", "../src/**/*", "../scrapers/src/common/tmdb-utilities.ts"],
+  "exclude": ["node_modules", "dist"]
 }

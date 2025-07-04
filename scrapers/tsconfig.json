@@ -1,12 +1,26 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
+    "composite": true,
     "types": ["@cloudflare/workers-types", "node"],
     "module": "ESNext",
     "moduleResolution": "node",
     "allowImportingTsExtensions": false,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "baseUrl": "..",
+    "paths": {
+      "db": ["src"],
+      "db/*": ["src/*"],
+      "@shine/db": ["src"],
+      "@shine/db/*": ["src/*"],
+      "@shine/scrapers": ["scrapers"],
+      "@shine/scrapers/*": ["scrapers/*"],
+      "@shine/api": ["api"],
+      "@shine/api/*": ["api/*"]
+    }
   },
+  "include": ["src/**/*", "../src/**/*"],
+  "exclude": ["node_modules", "dist"],
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node",

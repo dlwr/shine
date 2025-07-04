@@ -277,6 +277,9 @@ export class MoviesService extends BaseService {
 			tmdbId: movie.tmdbId ?? undefined,
 			title: movie.title || `Unknown Title (${movie.year})`,
 			description: (movie.description as string) || undefined,
+			imdbUrl: movie.imdbId
+				? `https://www.imdb.com/title/${movie.imdbId}/`
+				: undefined,
 			posterUrl: (movie.posterUrl as string) || undefined,
 			nominations: nominationsData.map((nom) => ({
 				uid: nom.nominationUid,

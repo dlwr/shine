@@ -6,6 +6,7 @@
     {"path": "./scrapers"}
   ],
   "compilerOptions": {
+    "composite": true,
     // Enable latest features
     "lib": ["ES2022", "WebWorker", "ES2021"],
     "target": "ES2022",
