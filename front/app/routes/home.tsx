@@ -6,7 +6,7 @@ import {MovieCard} from '@/components/molecules/movie-card';
 import {AdminLogin} from '@/components/molecules/admin-login';
 import {LanguageSelector} from '@/components/molecules/language-selector';
 
-export function meta(): Route.MetaDescriptors {
+export function meta({data: _data}: Route.MetaArgs): Route.MetaDescriptors {
 	return [
 		{title: 'SHINE'},
 		{

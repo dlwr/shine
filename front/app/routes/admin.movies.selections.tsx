@@ -44,7 +44,7 @@ type SearchMovie = {
 	}>;
 };
 
-export function meta(): Route.MetaDescriptors {
+export function meta({data: _data}: Route.MetaArgs): Route.MetaDescriptors {
 	return [
 		{title: '映画選択管理 - SHINE Admin'},
 		{name: 'description', content: 'SHINE Admin 映画選択管理画面'},

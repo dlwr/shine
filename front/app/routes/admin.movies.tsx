@@ -22,7 +22,7 @@ type MoviesResponse = {
 	pagination: PaginationData;
 };
 
-export function meta(): Route.MetaDescriptors {
+export function meta({data: _data}: Route.MetaArgs): Route.MetaDescriptors {
 	return [
 		{title: '映画管理 | SHINE Admin'},
 		{name: 'description', content: '映画データベースの管理画面'},

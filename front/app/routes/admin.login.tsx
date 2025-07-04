@@ -3,7 +3,7 @@ import {useNavigate} from 'react-router';
 import type {Route} from './+types/admin.login';
 import {Button} from '@/components/ui/button';
 
-export function meta(): Route.MetaDescriptors {
+export function meta({data: _data}: Route.MetaArgs): Route.MetaDescriptors {
 	return [
 		{title: '管理者ログイン | SHINE'},
 		{name: 'description', content: 'SHINE管理画面へのログイン'},
