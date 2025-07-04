@@ -450,18 +450,17 @@ export default function MovieDetail({
 												htmlFor="description"
 												className="block text-sm font-medium text-gray-700 mb-1"
 											>
-												記事の説明
+												記事の説明（任意）
 											</label>
 											<textarea
 												id="description"
 												name="description"
 												value={formData.description}
 												onChange={handleInputChange}
-												required
 												maxLength={500}
 												rows={3}
 												className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-												placeholder="記事の簡単な説明を入力"
+												placeholder="記事の簡単な説明を入力（任意）"
 											/>
 										</div>
 
@@ -519,18 +518,17 @@ export default function MovieDetail({
 												htmlFor="description"
 												className="block text-sm font-medium text-gray-700 mb-1"
 											>
-												記事の説明
+												記事の説明（任意）
 											</label>
 											<textarea
 												id="description"
 												name="description"
 												value={formData.description}
 												onChange={handleInputChange}
-												required
 												maxLength={500}
 												rows={3}
 												className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-												placeholder="記事の簡単な説明を入力"
+												placeholder="記事の簡単な説明を入力（任意）"
 											/>
 										</div>
 
