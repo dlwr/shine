@@ -156,7 +156,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 					throw new Error('Failed to fetch movie data');
 				}
 
-				const data = (await response.json()) as MovieDetails;
+				const data = await response.json();
 				console.log('Raw API response:', JSON.stringify(data, undefined, 2));
 				console.log('Translations:', data.translations);
 				console.log('Nominations:', data.nominations);
@@ -233,7 +233,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			});
 
 			if (movieResponse.ok) {
-				const data = (await movieResponse.json()) as MovieDetails;
+				const data = await movieResponse.json();
 				setMovieData(data);
 			}
 
@@ -301,7 +301,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			});
 
 			if (movieResponse.ok) {
-				const data = (await movieResponse.json()) as MovieDetails;
+				const data = await movieResponse.json();
 				setMovieData(data);
 			}
 
@@ -358,7 +358,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			});
 
 			if (movieResponse.ok) {
-				const data = (await movieResponse.json()) as MovieDetails;
+				const data = await movieResponse.json();
 				setMovieData(data);
 			}
 
@@ -414,7 +414,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			});
 
 			if (movieResponse.ok) {
-				const data = (await movieResponse.json()) as MovieDetails;
+				const data = await movieResponse.json();
 				setMovieData(data);
 			}
 
@@ -492,7 +492,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			});
 
 			if (movieResponse.ok) {
-				const data = (await movieResponse.json()) as MovieDetails;
+				const data = await movieResponse.json();
 				setMovieData(data);
 			}
 
@@ -565,7 +565,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			});
 
 			if (movieResponse.ok) {
-				const data = (await movieResponse.json()) as MovieDetails;
+				const data = await movieResponse.json();
 				setMovieData(data);
 			}
 
@@ -631,7 +631,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			});
 
 			if (movieResponse.ok) {
-				const data = (await movieResponse.json()) as MovieDetails;
+				const data = await movieResponse.json();
 				setMovieData(data);
 			}
 
@@ -1401,8 +1401,8 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 										type="text"
 										value={newTranslation.languageCode}
 										onChange={(e) => {
-											setNewTranslation((prev) => ({
-												...prev,
+											setNewTranslation((previous) => ({
+												...previous,
 												languageCode: e.target.value,
 											}));
 										}}
@@ -1432,8 +1432,8 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 										type="text"
 										value={newTranslation.content}
 										onChange={(e) => {
-											setNewTranslation((prev) => ({
-												...prev,
+											setNewTranslation((previous) => ({
+												...previous,
 												content: e.target.value,
 											}));
 										}}
@@ -1461,8 +1461,8 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 											type="checkbox"
 											checked={newTranslation.isDefault}
 											onChange={(e) => {
-												setNewTranslation((prev) => ({
-													...prev,
+												setNewTranslation((previous) => ({
+													...previous,
 													isDefault: e.target.checked,
 												}));
 											}}
@@ -2091,8 +2091,8 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 										type="url"
 										value={newPoster.url}
 										onChange={(e) => {
-											setNewPoster((prev) => ({
-												...prev,
+											setNewPoster((previous) => ({
+												...previous,
 												url: e.target.value,
 											}));
 										}}
@@ -2122,8 +2122,8 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 										type="number"
 										value={newPoster.width}
 										onChange={(e) => {
-											setNewPoster((prev) => ({
-												...prev,
+											setNewPoster((previous) => ({
+												...previous,
 												width: e.target.value,
 											}));
 										}}
@@ -2153,8 +2153,8 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 										type="number"
 										value={newPoster.height}
 										onChange={(e) => {
-											setNewPoster((prev) => ({
-												...prev,
+											setNewPoster((previous) => ({
+												...previous,
 												height: e.target.value,
 											}));
 										}}
@@ -2184,8 +2184,8 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 										type="text"
 										value={newPoster.languageCode}
 										onChange={(e) => {
-											setNewPoster((prev) => ({
-												...prev,
+											setNewPoster((previous) => ({
+												...previous,
 												languageCode: e.target.value,
 											}));
 										}}
@@ -2215,8 +2215,8 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 										type="text"
 										value={newPoster.source}
 										onChange={(e) => {
-											setNewPoster((prev) => ({
-												...prev,
+											setNewPoster((previous) => ({
+												...previous,
 												source: e.target.value,
 											}));
 										}}
@@ -2251,8 +2251,8 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 										type="checkbox"
 										checked={newPoster.isPrimary}
 										onChange={(e) => {
-											setNewPoster((prev) => ({
-												...prev,
+											setNewPoster((previous) => ({
+												...previous,
 												isPrimary: e.target.checked,
 											}));
 										}}

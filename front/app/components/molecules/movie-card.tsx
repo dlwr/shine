@@ -98,12 +98,10 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 		movie.nominations?.reduce(
 			(acc: any, nom: any) => {
 				const orgKey = nom.organization.uid;
-				if (!acc[orgKey]) {
-					acc[orgKey] = {
-						organization: nom.organization,
-						ceremonies: {},
-					};
-				}
+				acc[orgKey] ||= {
+					organization: nom.organization,
+					ceremonies: {},
+				};
 
 				const ceremonyKey = nom.ceremony.uid;
 				if (!acc[orgKey].ceremonies[ceremonyKey]) {

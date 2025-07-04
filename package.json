@@ -38,6 +38,8 @@
     "docs:bundle": "redocly bundle api/openapi.yml --output api/openapi.json",
     "lint": "xo",
     "lint:fix": "xo --fix",
+    "lint:front": "cd front && npx eslint --ext .ts,.tsx .",
+    "lint:front:fix": "cd front && npx eslint --ext .ts,.tsx . --fix",
     "type-check": "tsc --noEmit",
     "check": "concurrently -n \"lint,types\" -c \"yellow,green\" \"xo\" \"tsc --noEmit\"",
     "typegen": "cd front && npx react-router typegen"
@@ -90,7 +92,8 @@
       "**/tmp/**",
       "**/front/worker-configuration.d.ts",
       "**/scripts/**",
-      "**/package.json"
+      "**/package.json",
+      "**/front/**"
     ],
     "rules": {
       "unicorn/prevent-abbreviations": "off",

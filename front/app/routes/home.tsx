@@ -1,4 +1,4 @@
-/* eslint-disable unicorn/prefer-global-this, unicorn/catch-error-name */
+/* eslint-disable unicorn/prefer-global-this */
 import {useEffect, useState} from 'react';
 import type {Route} from './+types/home';
 import {Button} from '@/components/ui/button';
@@ -18,9 +18,9 @@ export function meta({data: _data}: Route.MetaArgs): Route.MetaDescriptors {
 
 function getLocaleFromRequest(request: Request): string {
 	const url = new URL(request.url);
-	const localeParam = url.searchParams.get('locale');
-	if (localeParam && ['en', 'ja'].includes(localeParam)) {
-		return localeParam;
+	const localeParameter = url.searchParams.get('locale');
+	if (localeParameter && ['en', 'ja'].includes(localeParameter)) {
+		return localeParameter;
 	}
 
 	const acceptLanguage = request.headers.get('accept-language');
@@ -164,10 +164,10 @@ export default function Home({loaderData}: Route.ComponentProps) {
 
 					const fetchedMovies = await response.json();
 					setMovies(fetchedMovies);
-				} catch (err) {
-					console.error('Error fetching movies:', err);
+				} catch (error_) {
+					console.error('Error fetching movies:', error_);
 					setError(
-						err instanceof Error ? err.message : 'Unknown error occurred',
+						error_ instanceof Error ? error_.message : 'Unknown error occurred',
 					);
 					setMovies({
 						daily: {uid: '1', title: 'The Shawshank Redemption', year: 1994},
@@ -259,7 +259,7 @@ function Movies({
 			return;
 		}
 
-		setReselectLoading((prev) => ({...prev, [type]: true}));
+		setReselectLoading((previous) => ({...previous, [type]: true}));
 
 		try {
 			const response = await fetch(`${apiUrl}/reselect`, {
@@ -278,7 +278,7 @@ function Movies({
 				throw new Error(`API request failed: ${response.status}`);
 			}
 
-			const result = (await response.json()) as {movie?: any};
+			const result = await response.json();
 
 			if (result.movie) {
 				window.location.reload();
@@ -291,7 +291,7 @@ function Movies({
 					: 'An error occurred. Please try again.',
 			);
 		} finally {
-			setReselectLoading((prev) => ({...prev, [type]: false}));
+			setReselectLoading((previous) => ({...previous, [type]: false}));
 		}
 	};
 

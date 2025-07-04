@@ -47,8 +47,8 @@ export function AdminLogin({locale, apiUrl}: AdminLoginProps) {
 		},
 	};
 
-	const t
-		= translations[locale as keyof typeof translations] ?? translations.en;
+	const t =
+		translations[locale as keyof typeof translations] ?? translations.en;
 
 	const handleLogin = async (event: React.FormEvent) => {
 		event.preventDefault();
@@ -68,7 +68,7 @@ export function AdminLogin({locale, apiUrl}: AdminLoginProps) {
 			);
 
 			if (response.ok) {
-				const {token} = (await response.json()) as {token: string};
+				const {token} = await response.json();
 				localStorage.setItem('adminToken', token);
 				setIsLoggedIn(true);
 				setShowModal(false);
@@ -100,76 +100,75 @@ export function AdminLogin({locale, apiUrl}: AdminLoginProps) {
 	};
 
 	return (
-		<div className='fixed top-4 right-4 z-50'>
-			{isLoggedIn
-				? (
-					<div className='flex gap-2'>
-						<a
-							href='/admin/movies'
-							className={
-								'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors ' +
-								'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none ' +
-								'disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2'
-							}
-						>
-							{t.adminButton}
-						</a>
-						<Button onClick={handleLogout} variant='secondary'>
-							{t.logoutButton}
-						</Button>
-					</div>
-				)
-				: (
-					<Button onClick={() => {
-						setShowModal(true);
-					}} variant='outline'>
+		<div className="fixed top-4 right-4 z-50">
+			{isLoggedIn ? (
+				<div className="flex gap-2">
+					<a
+						href="/admin/movies"
+						className={
+							'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors ' +
+							'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none ' +
+							'disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2'
+						}
+					>
 						{t.adminButton}
+					</a>
+					<Button onClick={handleLogout} variant="secondary">
+						{t.logoutButton}
 					</Button>
-				)}
+				</div>
+			) : (
+				<Button
+					onClick={() => {
+						setShowModal(true);
+					}}
+					variant="outline"
+				>
+					{t.adminButton}
+				</Button>
+			)}
 
 			{showModal && (
 				<div
-					className='fixed top-0 left-0 w-full h-full bg-black/50 flex items-center justify-center z-50'
-					onClick={event => {
+					className="fixed top-0 left-0 w-full h-full bg-black/50 flex items-center justify-center z-50"
+					onClick={(event) => {
 						if (event.target === event.currentTarget) {
 							handleOpenChange(false);
 						}
 					}}
 				>
-					<div className='bg-white p-8 rounded-lg w-full max-w-md mx-4'>
-						<h2 className='mb-6 text-xl'>{t.loginTitle}</h2>
+					<div className="bg-white p-8 rounded-lg w-full max-w-md mx-4">
+						<h2 className="mb-6 text-xl">{t.loginTitle}</h2>
 						<form onSubmit={handleLogin}>
 							<input
-								type='password'
+								type="password"
 								value={password}
-								onChange={event => {
+								onChange={(event) => {
 									setPassword(event.target.value);
 								}}
 								placeholder={t.passwordPlaceholder}
-								className='w-full p-3 border border-gray-300 rounded text-base mb-4'
+								className="w-full p-3 border border-gray-300 rounded text-base mb-4"
 								required
 								autoFocus
 								disabled={loading}
 							/>
-							<div className='flex gap-4 justify-end'>
-								<Button type='submit' disabled={loading}>
-									{loading
-										? (
-											<div className='flex items-center'>
-												<div className='animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2' />
-												{t.loginButton}
-											</div>
-										)
-										: (
-											t.loginButton
-										)}
+							<div className="flex gap-4 justify-end">
+								<Button type="submit" disabled={loading}>
+									{loading ? (
+										<div className="flex items-center">
+											<div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+											{t.loginButton}
+										</div>
+									) : (
+										t.loginButton
+									)}
 								</Button>
 								<Button
-									type='button'
+									type="button"
 									onClick={() => {
 										handleOpenChange(false);
 									}}
-									variant='secondary'
+									variant="secondary"
 									disabled={loading}
 								>
 									{t.cancelButton}
@@ -177,7 +176,7 @@ export function AdminLogin({locale, apiUrl}: AdminLoginProps) {
 							</div>
 						</form>
 						{error && (
-							<div className='text-red-600 text-sm mt-4'>{t.loginError}</div>
+							<div className="text-red-600 text-sm mt-4">{t.loginError}</div>
 						)}
 					</div>
 				</div>

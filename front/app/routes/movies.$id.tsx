@@ -200,8 +200,8 @@ export default function MovieDetail({
 
 			if (response.ok) {
 				const data = await response.json();
-				setFormData((prev) => ({
-					...prev,
+				setFormData((previous) => ({
+					...previous,
 					title: data.title || '',
 				}));
 			} else {
@@ -219,8 +219,8 @@ export default function MovieDetail({
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
 	) => {
 		const {name, value} = e.target;
-		setFormData((prev) => ({
-			...prev,
+		setFormData((previous) => ({
+			...previous,
 			[name]: value,
 		}));
 

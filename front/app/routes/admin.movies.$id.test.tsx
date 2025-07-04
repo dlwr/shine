@@ -93,10 +93,10 @@ describe('AdminMovieEdit Route', () => {
 	describe('loader', () => {
 		it('映画IDが提供されていない場合は400エラーを返す', async () => {
 			const context = createMockContext();
-			const params = {}; // IDなし
+			const parameters = {}; // IDなし
 
 			try {
-				await loader({context, params} as any);
+				await loader({context, params: parameters} as any);
 				// Should not reach here
 				expect(true).toBe(false);
 			} catch (error) {
@@ -109,9 +109,9 @@ describe('AdminMovieEdit Route', () => {
 
 		it('映画IDが提供された場合は正しいデータを返す', async () => {
 			const context = createMockContext();
-			const params = {id: 'movie-123'};
+			const parameters = {id: 'movie-123'};
 
-			const result = await loader({context, params} as any);
+			const result = await loader({context, params: parameters} as any);
 
 			expect(result).toEqual({
 				apiUrl: 'http://localhost:8787',
@@ -122,8 +122,8 @@ describe('AdminMovieEdit Route', () => {
 
 	describe('meta', () => {
 		it('正しいメタデータを返す', () => {
-			const params = {id: 'movie-123'};
-			const result = meta({params} as any);
+			const parameters = {id: 'movie-123'};
+			const result = meta({params: parameters} as any);
 
 			expect(result).toEqual([
 				{title: '映画の編集 - SHINE Admin'},

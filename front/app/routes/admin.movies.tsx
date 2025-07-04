@@ -143,7 +143,7 @@ const mergeMovies = async (
 		);
 
 		if (!response.ok) {
-			const errorData = (await response.json()) as {error?: string};
+			const errorData = await response.json();
 			throw new Error(
 				errorData.error || `HTTP error! status: ${response.status}`,
 			);
@@ -201,11 +201,11 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 		setLoading(true);
 
 		try {
-			const searchParam = currentSearch
+			const searchParameter = currentSearch
 				? `&search=${encodeURIComponent(currentSearch)}`
 				: '';
 			const response = await fetch(
-				`${apiUrl}/admin/movies?page=${currentPage}&limit=${limit}${searchParam}`,
+				`${apiUrl}/admin/movies?page=${currentPage}&limit=${limit}${searchParameter}`,
 				{
 					headers: {Authorization: `Bearer ${token}`},
 				},
@@ -221,7 +221,7 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 				throw new Error('Failed to fetch movies');
 			}
 
-			const data = (await response.json()) as MoviesResponse;
+			const data = await response.json();
 			setMovies(data.movies || []);
 			setPagination(
 				data.pagination || {page: 1, limit: 20, totalCount: 0, totalPages: 0},
