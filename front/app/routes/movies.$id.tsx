@@ -160,6 +160,72 @@ export default function MovieDetail({
 			return true; // テスト環境ではtrueにする
 		}
 	});
+
+	// フォームの状態管理
+	const [formData, setFormData] = useState({
+		url: '',
+		title: '',
+		description: '',
+	});
+	const [isLoadingTitle, setIsLoadingTitle] = useState(false);
+	const [titleError, setTitleError] = useState('');
+
+	// URLからタイトルを取得
+	const fetchTitleFromUrl = async (url: string) => {
+		if (!url) return;
+
+		try {
+			new URL(url); // URL形式をチェック
+		} catch {
+			return;
+		}
+
+		setIsLoadingTitle(true);
+		setTitleError('');
+
+		try {
+			const apiUrl = 
+				typeof window !== 'undefined' && window.location.hostname === 'localhost'
+					? 'http://localhost:8787'
+					: 'https://shine-api.yuta25.workers.dev';
+
+			const response = await fetch(`${apiUrl}/fetch-url-title`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({url}),
+			});
+
+			if (response.ok) {
+				const data = await response.json();
+				setFormData(prev => ({
+					...prev,
+					title: data.title || '',
+				}));
+			} else {
+				setTitleError('タイトルの取得に失敗しました');
+			}
+		} catch {
+			setTitleError('タイトルの取得中にエラーが発生しました');
+		} finally {
+			setIsLoadingTitle(false);
+		}
+	};
+
+	// フォームフィールドの変更処理
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+		const {name, value} = e.target;
+		setFormData(prev => ({
+			...prev,
+			[name]: value,
+		}));
+
+		// URL変更時にタイトルを自動取得
+		if (name === 'url') {
+			fetchTitleFromUrl(value);
+		}
+	};
 	if ('error' in loaderData) {
 		const title =
 			loaderData.status === 404
@@ -345,6 +411,8 @@ export default function MovieDetail({
 												type="url"
 												id="url"
 												name="url"
+												value={formData.url}
+												onChange={handleInputChange}
 												required
 												className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 												placeholder="https://example.com/article"
@@ -357,16 +425,24 @@ export default function MovieDetail({
 												className="block text-sm font-medium text-gray-700 mb-1"
 											>
 												記事タイトル
+												{isLoadingTitle && (
+													<span className="ml-2 text-sm text-blue-600">取得中...</span>
+												)}
 											</label>
 											<input
 												type="text"
 												id="title"
 												name="title"
+												value={formData.title}
+												onChange={handleInputChange}
 												required
 												maxLength={200}
 												className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 												placeholder="記事のタイトルを入力"
 											/>
+											{titleError && (
+												<p className="mt-1 text-sm text-red-600">{titleError}</p>
+											)}
 										</div>
 
 										<div>
@@ -379,6 +455,8 @@ export default function MovieDetail({
 											<textarea
 												id="description"
 												name="description"
+												value={formData.description}
+												onChange={handleInputChange}
 												required
 												maxLength={500}
 												rows={3}
@@ -402,6 +480,8 @@ export default function MovieDetail({
 												type="url"
 												id="url"
 												name="url"
+												value={formData.url}
+												onChange={handleInputChange}
 												required
 												className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 												placeholder="https://example.com/article"
@@ -414,16 +494,24 @@ export default function MovieDetail({
 												className="block text-sm font-medium text-gray-700 mb-1"
 											>
 												記事タイトル
+												{isLoadingTitle && (
+													<span className="ml-2 text-sm text-blue-600">取得中...</span>
+												)}
 											</label>
 											<input
 												type="text"
 												id="title"
 												name="title"
+												value={formData.title}
+												onChange={handleInputChange}
 												required
 												maxLength={200}
 												className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 												placeholder="記事のタイトルを入力"
 											/>
+											{titleError && (
+												<p className="mt-1 text-sm text-red-600">{titleError}</p>
+											)}
 										</div>
 
 										<div>
@@ -436,6 +524,8 @@ export default function MovieDetail({
 											<textarea
 												id="description"
 												name="description"
+												value={formData.description}
+												onChange={handleInputChange}
 												required
 												maxLength={500}
 												rows={3}
