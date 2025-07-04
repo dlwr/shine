@@ -629,7 +629,7 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async (c) => {
 			return c.json({error: 'Movie not found'}, 404);
 		}
 
-		const tmdbId = movie[0].tmdbId;
+		const {tmdbId} = movie[0];
 		if (!tmdbId) {
 			return c.json({error: 'Movie does not have a TMDb ID'}, 400);
 		}

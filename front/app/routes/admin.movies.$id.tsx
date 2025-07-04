@@ -129,7 +129,9 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 
 	// TMDb refresh states
 	const [tmdbRefreshing, setTmdbRefreshing] = useState(false);
-	const [tmdbRefreshError, setTmdbRefreshError] = useState<string | undefined>(undefined);
+	const [tmdbRefreshError, setTmdbRefreshError] = useState<string | undefined>(
+		undefined,
+	);
 
 	// Load movie data
 	useEffect(() => {
