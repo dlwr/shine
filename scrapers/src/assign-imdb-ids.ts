@@ -38,17 +38,12 @@ async function assignImdbIds() {
 			TMDB_API_KEY: process.env.TMDB_API_KEY,
 		});
 
-		// Build query conditions
-		let whereConditions = isNull(movies.imdbId);
-		if (options.year) {
-			whereConditions = and(
-				isNull(movies.imdbId),
-				eq(movies.year, options.year),
-			);
-		}
+		// Build complete query with all conditions
+		const whereClause = options.year
+			? and(isNull(movies.imdbId), eq(movies.year, options.year))
+			: isNull(movies.imdbId);
 
-		// Build base query
-		let queryBuilder = database
+		const baseQuery = database
 			.select({
 				uid: movies.uid,
 				year: movies.year,
@@ -56,14 +51,12 @@ async function assignImdbIds() {
 				createdAt: movies.createdAt,
 			})
 			.from(movies)
-			.where(whereConditions)
+			.where(whereClause)
 			.orderBy(movies.createdAt);
 
-		if (options.limit) {
-			queryBuilder = queryBuilder.limit(options.limit);
-		}
-
-		const moviesWithoutImdbId = await queryBuilder;
+		const moviesWithoutImdbId = options.limit
+			? await baseQuery.limit(options.limit)
+			: await baseQuery;
 
 		console.log(`Found ${moviesWithoutImdbId.length} movies without IMDb IDs`);
 
