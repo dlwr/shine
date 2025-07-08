@@ -1,3 +1,4 @@
+import {config} from 'dotenv';
 import {Command} from 'commander';
 import {getDatabase} from '../../src/index.js';
 import {movies, translations} from '../../src/schema/index.js';
@@ -6,6 +7,9 @@ import {
 	searchTMDBMovie,
 	fetchTMDBMovieDetails,
 } from './common/tmdb-utilities.js';
+
+// Load environment variables
+config({path: '../.dev.vars'});
 
 const program = new Command();
 
@@ -70,6 +74,8 @@ async function assignImdbIds() {
 			console.error('TMDB_API_KEY is not set');
 			return;
 		}
+
+		console.log(`Using TMDb API key: ${tmdbApiKey.substring(0, 8)}...`);
 
 		let successCount = 0;
 		let skipCount = 0;
