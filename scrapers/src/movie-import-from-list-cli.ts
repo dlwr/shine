@@ -51,6 +51,8 @@ async function main(): Promise<void> {
 		TURSO_DATABASE_URL: tursoUrl,
 		TURSO_AUTH_TOKEN: tursoToken,
 		TMDB_API_KEY: tmdbKey,
+		TMDB_LEAD_ACCESS_TOKEN: process.env.TMDB_LEAD_ACCESS_TOKEN || '',
+		OMDB_API_KEY: process.env.OMDB_API_KEY || '',
 	};
 
 	try {

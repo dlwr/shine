@@ -21,6 +21,8 @@ const environment: Environment = {
 	TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL_DEV || '',
 	TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN_DEV || '',
 	TMDB_API_KEY: process.env.TMDB_API_KEY || '',
+	TMDB_LEAD_ACCESS_TOKEN: process.env.TMDB_LEAD_ACCESS_TOKEN || '',
+	OMDB_API_KEY: process.env.OMDB_API_KEY || '',
 	ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || '',
 	JWT_SECRET: process.env.JWT_SECRET || '',
 };

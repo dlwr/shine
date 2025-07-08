@@ -39,7 +39,9 @@ async function assignImdbIds() {
 		const database = getDatabase({
 			TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL!,
 			TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN!,
-			TMDB_API_KEY: process.env.TMDB_API_KEY,
+			TMDB_API_KEY: process.env.TMDB_API_KEY || '',
+			TMDB_LEAD_ACCESS_TOKEN: process.env.TMDB_LEAD_ACCESS_TOKEN || '',
+			OMDB_API_KEY: process.env.OMDB_API_KEY || '',
 		});
 
 		// Build complete query with all conditions
@@ -75,7 +77,7 @@ async function assignImdbIds() {
 			return;
 		}
 
-		console.log(`Using TMDb API key: ${tmdbApiKey.substring(0, 8)}...`);
+		console.log(`Using TMDb API key: ${tmdbApiKey.slice(0, 8)}...`);
 
 		let successCount = 0;
 		let skipCount = 0;

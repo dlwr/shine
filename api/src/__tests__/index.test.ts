@@ -41,7 +41,9 @@ describe('API Module Tests', () => {
 		it('should mock database connection', async () => {
 			const {getDatabase} = await import('db');
 			const mockEnvironment = {
-				TMDB_API_KEY: undefined,
+				TMDB_API_KEY: 'test-key',
+				TMDB_LEAD_ACCESS_TOKEN: 'test-token',
+				OMDB_API_KEY: 'test-key',
 				TURSO_DATABASE_URL: 'test-url',
 				TURSO_AUTH_TOKEN: 'test-token',
 			};
