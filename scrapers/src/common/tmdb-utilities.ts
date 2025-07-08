@@ -108,27 +108,62 @@ export async function searchTMDBMovie(
 	tmdbApiKey: string,
 ): Promise<number | undefined> {
 	try {
-		const searchUrl = new URL(`${TMDB_API_BASE_URL}/search/movie`);
-		searchUrl.searchParams.append('api_key', tmdbApiKey);
-		searchUrl.searchParams.append('query', title);
-		searchUrl.searchParams.append('year', year.toString());
-		searchUrl.searchParams.append('language', 'en-US');
+		// 1. 年パラメータ付きで検索
+		const searchUrlWithYear = new URL(`${TMDB_API_BASE_URL}/search/movie`);
+		searchUrlWithYear.searchParams.append('api_key', tmdbApiKey);
+		searchUrlWithYear.searchParams.append('query', title);
+		searchUrlWithYear.searchParams.append('year', year.toString());
+		searchUrlWithYear.searchParams.append('language', 'en-US');
 
-		const response = await fetch(searchUrl.toString());
-		if (!response.ok) {
-			throw new Error(`TMDb API error: ${response.statusText}`);
+		const responseWithYear = await fetch(searchUrlWithYear.toString());
+		if (!responseWithYear.ok) {
+			throw new Error(`TMDb API error: ${responseWithYear.statusText}`);
 		}
 
-		const data = (await response.json()) as TMDBSearchResponse;
+		const dataWithYear = (await responseWithYear.json()) as TMDBSearchResponse;
 
-		// 結果をフィルタリング
-		const matches = data.results.filter((movie) => {
+		// 年パラメータ付きで結果があった場合
+		if (dataWithYear.results.length > 0) {
+			const matches = dataWithYear.results.filter((movie) => {
+				const movieYear = new Date(movie.release_date).getFullYear();
+				return Math.abs(movieYear - year) <= 1; // 1年の誤差を許容
+			});
+
+			if (matches.length > 0) {
+				return matches[0].id;
+			}
+		}
+
+		// 2. 年パラメータなしで検索（フォールバック）
+		const searchUrlNoYear = new URL(`${TMDB_API_BASE_URL}/search/movie`);
+		searchUrlNoYear.searchParams.append('api_key', tmdbApiKey);
+		searchUrlNoYear.searchParams.append('query', title);
+		searchUrlNoYear.searchParams.append('language', 'en-US');
+
+		const responseNoYear = await fetch(searchUrlNoYear.toString());
+		if (!responseNoYear.ok) {
+			throw new Error(`TMDb API error: ${responseNoYear.statusText}`);
+		}
+
+		const dataNoYear = (await responseNoYear.json()) as TMDBSearchResponse;
+
+		// 年パラメータなしでも結果をフィルタリング
+		const matches = dataNoYear.results.filter((movie) => {
 			const movieYear = new Date(movie.release_date).getFullYear();
-			return Math.abs(movieYear - year) <= 1; // 1年の誤差を許容
+			return Math.abs(movieYear - year) <= 2; // 2年の誤差を許容
 		});
 
-		// 最も関連性の高い結果を返す
-		return matches.length > 0 ? matches[0].id : undefined;
+		// 最も関連性の高い結果を返す（年に最も近い）
+		if (matches.length > 0) {
+			matches.sort((a, b) => {
+				const aYear = new Date(a.release_date).getFullYear();
+				const bYear = new Date(b.release_date).getFullYear();
+				return Math.abs(aYear - year) - Math.abs(bYear - year);
+			});
+			return matches[0].id;
+		}
+
+		return undefined;
 	} catch (error) {
 		console.error(`Error searching TMDb for ${title} (${year}):`, error);
 		return undefined;
