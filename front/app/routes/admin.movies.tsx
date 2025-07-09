@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react';
+import {useNavigate, useSearchParams} from 'react-router';
 import type {Route} from './+types/admin.movies';
 
 type Movie = {
@@ -163,7 +164,7 @@ const mergeMovies = async (
 };
 
 export default function AdminMovies({loaderData}: Route.ComponentProps) {
-	const {apiUrl, page, limit, search} = loaderData as {
+	const {apiUrl} = loaderData as {
 		apiUrl: string;
 		page: number;
 		limit: number;
@@ -171,6 +172,14 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 		movies: Movie[];
 		pagination: PaginationData;
 	};
+
+	const navigate = useNavigate();
+	const [searchParams] = useSearchParams();
+
+	// Get current search and page from URL params
+	const currentSearch = searchParams.get('search') || '';
+	const currentPage = Number(searchParams.get('page') || 1);
+	const limit = Number(searchParams.get('limit') || 20);
 
 	const [movies, setMovies] = useState<Movie[]>([]);
 	const [pagination, setPagination] = useState<PaginationData>({
@@ -180,15 +189,15 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 		totalPages: 0,
 	});
 	const [loading, setLoading] = useState(true);
-	const [searchQuery, setSearchQuery] = useState(search);
+	const [searchQuery, setSearchQuery] = useState(currentSearch);
 	const [searchTimeout, setSearchTimeout] = useState<number | undefined>(
 		undefined,
 	);
 
 	// Movies fetch function
 	const fetchMovies = async (
-		currentPage = page,
-		currentSearch = searchQuery,
+		targetPage = currentPage,
+		targetSearch = searchQuery,
 	) => {
 		if (globalThis.window === undefined) return;
 
@@ -201,11 +210,11 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 		setLoading(true);
 
 		try {
-			const searchParameter = currentSearch
-				? `&search=${encodeURIComponent(currentSearch)}`
+			const searchParameter = targetSearch
+				? `&search=${encodeURIComponent(targetSearch)}`
 				: '';
 			const response = await fetch(
-				`${apiUrl}/admin/movies?page=${currentPage}&limit=${limit}${searchParameter}`,
+				`${apiUrl}/admin/movies?page=${targetPage}&limit=${limit}${searchParameter}`,
 				{
 					headers: {Authorization: `Bearer ${token}`},
 				},
@@ -233,10 +242,15 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 		}
 	};
 
-	// Initial load
+	// Sync search query with URL params
 	useEffect(() => {
-		fetchMovies();
-	}, [apiUrl, page, limit]);
+		setSearchQuery(currentSearch);
+	}, [currentSearch]);
+
+	// Initial load and URL param changes
+	useEffect(() => {
+		fetchMovies(currentPage, currentSearch);
+	}, [apiUrl, currentPage, currentSearch, limit]);
 
 	// Handle search
 	const handleSearch = (query: string) => {
@@ -247,16 +261,17 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 		}
 
 		const timeout = setTimeout(() => {
-			const url = new URL(globalThis.location.href);
+			// Update URL using React Router's navigate instead of history.pushState
+			const newSearchParams = new URLSearchParams();
 			if (query) {
-				url.searchParams.set('search', query);
-			} else {
-				url.searchParams.delete('search');
+				newSearchParams.set('search', query);
 			}
 
-			url.searchParams.set('page', '1');
-			globalThis.history.pushState({}, '', url.toString());
-			fetchMovies(1, query);
+			newSearchParams.set('page', '1');
+			newSearchParams.set('limit', limit.toString());
+
+			// Use replace: true to avoid adding to browser history on every keystroke
+			navigate(`?${newSearchParams.toString()}`, {replace: true});
 		}, 300);
 
 		setSearchTimeout(timeout as unknown as number);
@@ -266,7 +281,7 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 	const handleDelete = async (movieId: string, movieTitle: string) => {
 		const success = await deleteMovie(movieId, movieTitle, apiUrl);
 		if (success) {
-			fetchMovies(pagination.page, searchQuery);
+			fetchMovies(currentPage, currentSearch);
 		}
 	};
 
@@ -281,7 +296,7 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 				apiUrl,
 			);
 			if (success) {
-				fetchMovies(pagination.page, searchQuery);
+				fetchMovies(currentPage, currentSearch);
 			}
 		}
 	};
@@ -774,7 +789,18 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 				>
 					<button
 						disabled={pagination.page === 1}
-						onClick={async () => fetchMovies(pagination.page - 1, searchQuery)}
+						onClick={() => {
+							if (pagination.page > 1) {
+								const newSearchParams = new URLSearchParams();
+								if (currentSearch) {
+									newSearchParams.set('search', currentSearch);
+								}
+
+								newSearchParams.set('page', (pagination.page - 1).toString());
+								newSearchParams.set('limit', limit.toString());
+								navigate(`?${newSearchParams.toString()}`);
+							}
+						}}
 						style={{
 							padding: '0.5rem 1rem',
 							border: '1px solid #e5e7eb',
@@ -792,7 +818,18 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 					</span>
 					<button
 						disabled={pagination.page === pagination.totalPages}
-						onClick={async () => fetchMovies(pagination.page + 1, searchQuery)}
+						onClick={() => {
+							if (pagination.page < pagination.totalPages) {
+								const newSearchParams = new URLSearchParams();
+								if (currentSearch) {
+									newSearchParams.set('search', currentSearch);
+								}
+
+								newSearchParams.set('page', (pagination.page + 1).toString());
+								newSearchParams.set('limit', limit.toString());
+								navigate(`?${newSearchParams.toString()}`);
+							}
+						}}
 						style={{
 							padding: '0.5rem 1rem',
 							border: '1px solid #e5e7eb',
