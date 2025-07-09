@@ -1,7 +1,7 @@
 import {config} from 'dotenv';
 import {getDatabase} from '../src/index';
 import {movies} from '../src/schema/movies';
-import {isNotNull, count, desc} from 'drizzle-orm';
+import {isNotNull, count, desc, eq, sql} from 'drizzle-orm';
 
 config({path: '.dev.vars'});
 
@@ -24,7 +24,7 @@ async function cleanDuplicateTmdbIds() {
 		.from(movies)
 		.where(isNotNull(movies.tmdbId))
 		.groupBy(movies.tmdbId)
-		.having(count(movies.uid) > 1);
+		.having(sql`count(${movies.uid}) > 1`);
 
 	console.log(`Found ${duplicates.length} duplicate TMDb IDs`);
 
@@ -43,7 +43,7 @@ async function cleanDuplicateTmdbIds() {
 				createdAt: movies.createdAt,
 			})
 			.from(movies)
-			.where(movies.tmdbId === duplicate.tmdbId)
+			.where(eq(movies.tmdbId, duplicate.tmdbId))
 			.orderBy(desc(movies.createdAt)); // 最新作成順
 
 		// 最初の映画（最新作成）以外のTMDb IDをnullに設定
@@ -58,7 +58,7 @@ async function cleanDuplicateTmdbIds() {
 			await db
 				.update(movies)
 				.set({tmdbId: null})
-				.where(movies.uid === movie.uid);
+				.where(eq(movies.uid, movie.uid));
 
 			console.log(
 				`  Cleaned: ${movie.uid} (IMDb: ${movie.imdbId}, Year: ${movie.year})`,
@@ -78,7 +78,7 @@ async function cleanDuplicateTmdbIds() {
 		.from(movies)
 		.where(isNotNull(movies.tmdbId))
 		.groupBy(movies.tmdbId)
-		.having(count(movies.uid) > 1);
+		.having(sql`count(${movies.uid}) > 1`);
 
 	console.log(
 		`\n📊 Final check: ${remainingDuplicates.length} remaining duplicates`,

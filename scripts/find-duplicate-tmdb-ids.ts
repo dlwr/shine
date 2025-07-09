@@ -1,7 +1,7 @@
 import {config} from 'dotenv';
 import {getDatabase} from '../src/index';
 import {movies} from '../src/schema/movies';
-import {isNotNull, count} from 'drizzle-orm';
+import {isNotNull, count, sql, eq} from 'drizzle-orm';
 
 config({path: '.dev.vars'});
 
@@ -24,7 +24,7 @@ async function findDuplicateTmdbIds() {
 		.from(movies)
 		.where(isNotNull(movies.tmdbId))
 		.groupBy(movies.tmdbId)
-		.having(count(movies.uid) > 1);
+		.having(sql`count(${movies.uid}) > 1`);
 
 	console.log(`Found ${duplicates.length} duplicate TMDb IDs`);
 
@@ -41,7 +41,7 @@ async function findDuplicateTmdbIds() {
 				createdAt: movies.createdAt,
 			})
 			.from(movies)
-			.where(movies.tmdbId === duplicate.tmdbId)
+			.where(eq(movies.tmdbId, duplicate.tmdbId))
 			.orderBy(movies.createdAt);
 
 		for (const movie of conflictingMovies) {
