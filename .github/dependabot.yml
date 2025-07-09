@@ -4,52 +4,12 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
       time: "09:00"
     open-pull-requests-limit: 5
     commit-message:
       prefix: "deps"
       prefix-development: "deps-dev"
-      include: "scope"
-
-  # API package (Cloudflare Workers)
-  - package-ecosystem: "npm"
-    directory: "/api"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "deps(api)"
-      prefix-development: "deps-dev(api)"
-      include: "scope"
-
-  # Scrapers package
-  - package-ecosystem: "npm"
-    directory: "/scrapers"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "deps(scrapers)"
-      prefix-development: "deps-dev(scrapers)"
-      include: "scope"
-
-  # Frontend package (Astro)
-  - package-ecosystem: "npm"
-    directory: "/front"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "deps(front)"
-      prefix-development: "deps-dev(front)"
       include: "scope"
 
   # GitHub Actions (if you add any workflows)
