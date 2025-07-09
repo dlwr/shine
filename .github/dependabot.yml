@@ -7,8 +7,6 @@ updates:
       interval: "daily"
       time: "09:00"
     open-pull-requests-limit: 5
-    commit-message:
-      include: "scope"
 
   # GitHub Actions (if you add any workflows)
   - package-ecosystem: "github-actions"
