@@ -13,7 +13,6 @@ import {Hono} from 'hono';
 import {authMiddleware} from '../auth';
 import {sanitizeText} from '../middleware/sanitizer';
 import {AdminService} from '../services';
-import type {TMDBMovieImages} from '../../../scrapers/src/common/tmdb-utilities';
 
 type MovieDatabaseTranslation = {
 	iso_639_1: string;
@@ -608,6 +607,198 @@ adminRoutes.delete('/nominations/:nominationId', authMiddleware, async (c) => {
 		return c.json({success: true});
 	} catch (error) {
 		console.error('Error deleting nomination:', error);
+		return c.json({error: 'Internal server error'}, 500);
+	}
+});
+
+// Auto-fetch TMDb data using IMDb ID
+adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
+	try {
+		const database = getDatabase(c.env);
+		const movieId = c.req.param('id');
+
+		// Check if movie exists and has IMDb ID
+		const movie = await database
+			.select({uid: movies.uid, imdbId: movies.imdbId, tmdbId: movies.tmdbId})
+			.from(movies)
+			.where(eq(movies.uid, movieId))
+			.limit(1);
+
+		if (movie.length === 0) {
+			return c.json({error: 'Movie not found'}, 404);
+		}
+
+		const {imdbId, tmdbId} = movie[0];
+		if (!imdbId) {
+			return c.json({error: 'Movie does not have an IMDb ID'}, 400);
+		}
+
+		if (!c.env.TMDB_API_KEY) {
+			return c.json({error: 'TMDb API key not configured'}, 500);
+		}
+
+		const fetchResults = {
+			tmdbIdSet: false,
+			postersAdded: 0,
+			translationsAdded: 0,
+		};
+
+		try {
+			// Import TMDb utilities
+			const {findTMDBByImdbId, fetchTMDBMovieTranslations, savePosterUrls} =
+				await import('../../../scrapers/src/common/tmdb-utilities');
+
+			let movieTmdbId: number | undefined = tmdbId ?? undefined;
+
+			// Find TMDb ID if not already set
+			if (!movieTmdbId) {
+				movieTmdbId = await findTMDBByImdbId(imdbId, c.env.TMDB_API_KEY);
+
+				if (!movieTmdbId) {
+					return c.json({error: 'TMDb映画が見つかりませんでした'}, 404);
+				}
+
+				// Check if TMDb ID is already used by another movie
+				const existingMovie = await database
+					.select({uid: movies.uid})
+					.from(movies)
+					.where(
+						and(eq(movies.tmdbId, movieTmdbId), not(eq(movies.uid, movieId))),
+					)
+					.limit(1);
+
+				if (existingMovie.length > 0) {
+					return c.json(
+						{error: 'このTMDb IDは既に他の映画で使用されています'},
+						409,
+					);
+				}
+
+				// Save TMDb ID to database
+				await database
+					.update(movies)
+					.set({
+						tmdbId: movieTmdbId,
+						updatedAt: sql`(unixepoch())`,
+					})
+					.where(eq(movies.uid, movieId));
+
+				fetchResults.tmdbIdSet = true;
+			}
+
+			type TMDBMovieImages = {
+				id: number;
+				posters: Array<{
+					file_path: string;
+					width: number;
+					height: number;
+					iso_639_1: string | undefined;
+				}>;
+			};
+
+			// Fetch and save posters using TMDb ID
+			const imagesUrl = new URL(
+				`https://api.themoviedb.org/3/movie/${movieTmdbId}/images`,
+			);
+			imagesUrl.searchParams.append('api_key', c.env.TMDB_API_KEY);
+
+			const imagesResponse = await fetch(imagesUrl.toString());
+			if (imagesResponse.ok) {
+				const images = (await imagesResponse.json()) as TMDBMovieImages;
+				if (images.posters && images.posters.length > 0) {
+					const savedPosters = await savePosterUrls(
+						movieId,
+						images.posters,
+						c.env,
+					);
+					fetchResults.postersAdded = savedPosters;
+				}
+			}
+
+			// Fetch and save translations using TMDb Translations API
+			let translationsAdded = 0;
+			const {translations} = await import('../../../src/schema/translations');
+
+			// Get all translations from TMDb
+			const translationsData = await fetchTMDBMovieTranslations(
+				movieTmdbId,
+				c.env.TMDB_API_KEY,
+			);
+
+			if (translationsData?.translations) {
+				// Find English title (original language)
+				const englishTranslation = translationsData.translations.find(
+					(t: MovieDatabaseTranslation) =>
+						t.iso_639_1 === 'en' && t.data?.title,
+				);
+
+				if (englishTranslation?.data?.title) {
+					await database
+						.insert(translations)
+						.values({
+							resourceType: 'movie_title',
+							resourceUid: movieId,
+							languageCode: 'en',
+							content: englishTranslation.data.title,
+							isDefault: 1,
+						})
+						.onConflictDoUpdate({
+							target: [
+								translations.resourceType,
+								translations.resourceUid,
+								translations.languageCode,
+							],
+							set: {
+								content: englishTranslation.data.title,
+								updatedAt: Math.floor(Date.now() / 1000),
+							},
+						});
+					translationsAdded++;
+				}
+
+				// Find Japanese title
+				const japaneseTranslation = translationsData.translations.find(
+					(t: MovieDatabaseTranslation) =>
+						t.iso_639_1 === 'ja' && t.data?.title,
+				);
+
+				if (japaneseTranslation?.data?.title) {
+					await database
+						.insert(translations)
+						.values({
+							resourceType: 'movie_title',
+							resourceUid: movieId,
+							languageCode: 'ja',
+							content: japaneseTranslation.data.title,
+							isDefault: 0,
+						})
+						.onConflictDoUpdate({
+							target: [
+								translations.resourceType,
+								translations.resourceUid,
+								translations.languageCode,
+							],
+							set: {
+								content: japaneseTranslation.data.title,
+								updatedAt: Math.floor(Date.now() / 1000),
+							},
+						});
+					translationsAdded++;
+				}
+			}
+
+			fetchResults.translationsAdded = translationsAdded;
+
+			return c.json({
+				success: true,
+				fetchResults,
+			});
+		} catch (fetchError) {
+			console.error('Error during TMDb auto-fetch:', fetchError);
+			return c.json({error: 'TMDbデータの自動取得に失敗しました'}, 500);
+		}
+	} catch (error) {
+		console.error('Error auto-fetching TMDb data:', error);
 		return c.json({error: 'Internal server error'}, 500);
 	}
 });
