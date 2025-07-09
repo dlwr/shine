@@ -676,13 +676,23 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 				}
 
 				// Save TMDb ID to database
-				await database
-					.update(movies)
-					.set({
+				try {
+					await database
+						.update(movies)
+						.set({
+							tmdbId: movieTmdbId,
+							updatedAt: Math.floor(Date.now() / 1000),
+						})
+						.where(eq(movies.uid, movieId));
+				} catch (dbError) {
+					console.error('Database update error:', {
+						error: dbError,
+						movieId,
 						tmdbId: movieTmdbId,
 						updatedAt: Math.floor(Date.now() / 1000),
-					})
-					.where(eq(movies.uid, movieId));
+					});
+					throw dbError;
+				}
 
 				fetchResults.tmdbIdSet = true;
 			}
