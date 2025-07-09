@@ -60,12 +60,16 @@ type LoaderData = {
 
 export function meta({data: _data}: Route.MetaArgs): Route.MetaDescriptors {
 	return [
-		{title: '映画編集 - SHINE Admin'},
-		{name: 'description', content: 'SHINE管理画面 - 映画情報編集'},
+		{title: '映画の編集 - SHINE Admin'},
+		{name: 'description', content: 'SHINE Admin 映画編集画面'},
 	];
 }
 
 export async function loader({context, params}: Route.LoaderArgs) {
+	if (!params.id) {
+		throw new Response('Movie ID is required', {status: 400});
+	}
+
 	const apiUrl =
 		(context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
 			.PUBLIC_API_URL || 'http://localhost:8787';
@@ -140,8 +144,32 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 
 	if (loading) {
 		return (
-			<div className="min-h-screen bg-gray-100 flex items-center justify-center">
-				<div className="text-lg">読み込み中...</div>
+			<div className="min-h-screen bg-gray-100">
+				<header className="bg-white shadow">
+					<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+						<div className="flex justify-between items-center py-6">
+							<h1 className="text-3xl font-bold text-gray-900">映画の編集</h1>
+							<div className="flex space-x-4">
+								<a
+									href="/admin/movies"
+									className="bg-gray-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-gray-700"
+								>
+									← 一覧に戻る
+								</a>
+								<button
+									type="button"
+									onClick={handleLogout}
+									className="bg-red-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-red-700"
+								>
+									ログアウト
+								</button>
+							</div>
+						</div>
+					</div>
+				</header>
+				<div className="flex items-center justify-center py-12">
+					<div className="text-lg">データを読み込み中...</div>
+				</div>
 			</div>
 		);
 	}

@@ -1,8 +1,16 @@
 import '@testing-library/jest-dom';
 import {fireEvent, render, screen} from '@testing-library/react';
+import {MemoryRouter} from 'react-router-dom';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import AdminMovies, {loader, meta} from './admin.movies';
 // Import type { Route } from './+types/admin.movies';
+
+// UseSearchParamsのモック
+const mockSearchParams = new URLSearchParams();
+const mockSetSearchParams = vi.fn();
+vi.mock('react-router', () => ({
+	useSearchParams: () => [mockSearchParams, mockSetSearchParams],
+}));
 
 // LocalStorageのモック
 const mockLocalStorage = {
@@ -135,36 +143,38 @@ describe('AdminMovies Component', () => {
 	describe('Component', () => {
 		it('ローディング状態が表示される', () => {
 			render(
-				<AdminMovies
-					loaderData={
-						{
-							apiUrl: 'http://localhost:8787',
-							page: 1,
-							limit: 20,
-							search: '',
-							movies: [],
-							pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
-						} as any
-					}
-					actionData={{} as any}
-					params={{}}
-					matches={[
-						{
-							id: 'root',
-							params: {},
-							pathname: '/',
-							data: {} as any,
-							handle: undefined,
-						},
-						{
-							id: 'routes/admin.movies',
-							params: {},
-							pathname: '/admin/movies',
-							data: {} as any,
-							handle: undefined,
-						},
-					]}
-				/>,
+				<MemoryRouter initialEntries={['/admin/movies']}>
+					<AdminMovies
+						loaderData={
+							{
+								apiUrl: 'http://localhost:8787',
+								page: 1,
+								limit: 20,
+								search: '',
+								movies: [],
+								pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
+							} as any
+						}
+						actionData={{} as any}
+						params={{}}
+						matches={[
+							{
+								id: 'root',
+								params: {},
+								pathname: '/',
+								data: {} as any,
+								handle: undefined,
+							},
+							{
+								id: 'routes/admin.movies',
+								params: {},
+								pathname: '/admin/movies',
+								data: {} as any,
+								handle: undefined,
+							},
+						]}
+					/>
+				</MemoryRouter>,
 			);
 
 			expect(screen.getByText('Loading movies...')).toBeInTheDocument();
@@ -185,36 +195,38 @@ describe('AdminMovies Component', () => {
 			} as Response);
 
 			render(
-				<AdminMovies
-					loaderData={
-						{
-							apiUrl: 'http://localhost:8787',
-							page: 1,
-							limit: 20,
-							search: '',
-							movies: [],
-							pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
-						} as any
-					}
-					actionData={{} as any}
-					params={{}}
-					matches={[
-						{
-							id: 'root',
-							params: {},
-							pathname: '/',
-							data: {} as any,
-							handle: undefined,
-						},
-						{
-							id: 'routes/admin.movies',
-							params: {},
-							pathname: '/admin/movies',
-							data: {} as any,
-							handle: undefined,
-						},
-					]}
-				/>,
+				<MemoryRouter initialEntries={['/admin/movies']}>
+					<AdminMovies
+						loaderData={
+							{
+								apiUrl: 'http://localhost:8787',
+								page: 1,
+								limit: 20,
+								search: '',
+								movies: [],
+								pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
+							} as any
+						}
+						actionData={{} as any}
+						params={{}}
+						matches={[
+							{
+								id: 'root',
+								params: {},
+								pathname: '/',
+								data: {} as any,
+								handle: undefined,
+							},
+							{
+								id: 'routes/admin.movies',
+								params: {},
+								pathname: '/admin/movies',
+								data: {} as any,
+								handle: undefined,
+							},
+						]}
+					/>
+				</MemoryRouter>,
 			);
 
 			// 初期状態はloading
@@ -223,36 +235,38 @@ describe('AdminMovies Component', () => {
 
 		it('ヘッダーとナビゲーションが表示される', () => {
 			render(
-				<AdminMovies
-					loaderData={
-						{
-							apiUrl: 'http://localhost:8787',
-							page: 1,
-							limit: 20,
-							search: '',
-							movies: [],
-							pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
-						} as any
-					}
-					actionData={{} as any}
-					params={{}}
-					matches={[
-						{
-							id: 'root',
-							params: {},
-							pathname: '/',
-							data: {} as any,
-							handle: undefined,
-						},
-						{
-							id: 'routes/admin.movies',
-							params: {},
-							pathname: '/admin/movies',
-							data: {} as any,
-							handle: undefined,
-						},
-					]}
-				/>,
+				<MemoryRouter initialEntries={['/admin/movies']}>
+					<AdminMovies
+						loaderData={
+							{
+								apiUrl: 'http://localhost:8787',
+								page: 1,
+								limit: 20,
+								search: '',
+								movies: [],
+								pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
+							} as any
+						}
+						actionData={{} as any}
+						params={{}}
+						matches={[
+							{
+								id: 'root',
+								params: {},
+								pathname: '/',
+								data: {} as any,
+								handle: undefined,
+							},
+							{
+								id: 'routes/admin.movies',
+								params: {},
+								pathname: '/admin/movies',
+								data: {} as any,
+								handle: undefined,
+							},
+						]}
+					/>
+				</MemoryRouter>,
 			);
 
 			expect(screen.getByText('Movies Management')).toBeInTheDocument();
@@ -278,36 +292,38 @@ describe('AdminMovies Component', () => {
 			} as Response);
 
 			render(
-				<AdminMovies
-					loaderData={
-						{
-							apiUrl: 'http://localhost:8787',
-							page: 1,
-							limit: 20,
-							search: '',
-							movies: [],
-							pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
-						} as any
-					}
-					actionData={{} as any}
-					params={{}}
-					matches={[
-						{
-							id: 'root',
-							params: {},
-							pathname: '/',
-							data: {} as any,
-							handle: undefined,
-						},
-						{
-							id: 'routes/admin.movies',
-							params: {},
-							pathname: '/admin/movies',
-							data: {} as any,
-							handle: undefined,
-						},
-					]}
-				/>,
+				<MemoryRouter initialEntries={['/admin/movies']}>
+					<AdminMovies
+						loaderData={
+							{
+								apiUrl: 'http://localhost:8787',
+								page: 1,
+								limit: 20,
+								search: '',
+								movies: [],
+								pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
+							} as any
+						}
+						actionData={{} as any}
+						params={{}}
+						matches={[
+							{
+								id: 'root',
+								params: {},
+								pathname: '/',
+								data: {} as any,
+								handle: undefined,
+							},
+							{
+								id: 'routes/admin.movies',
+								params: {},
+								pathname: '/admin/movies',
+								data: {} as any,
+								handle: undefined,
+							},
+						]}
+					/>
+				</MemoryRouter>,
 			);
 
 			// 初期状態はloading
@@ -328,36 +344,38 @@ describe('AdminMovies Component', () => {
 			});
 
 			render(
-				<AdminMovies
-					loaderData={
-						{
-							apiUrl: 'http://localhost:8787',
-							page: 1,
-							limit: 20,
-							search: '',
-							movies: [],
-							pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
-						} as any
-					}
-					actionData={{} as any}
-					params={{}}
-					matches={[
-						{
-							id: 'root',
-							params: {},
-							pathname: '/',
-							data: {} as any,
-							handle: undefined,
-						},
-						{
-							id: 'routes/admin.movies',
-							params: {},
-							pathname: '/admin/movies',
-							data: {} as any,
-							handle: undefined,
-						},
-					]}
-				/>,
+				<MemoryRouter initialEntries={['/admin/movies']}>
+					<AdminMovies
+						loaderData={
+							{
+								apiUrl: 'http://localhost:8787',
+								page: 1,
+								limit: 20,
+								search: '',
+								movies: [],
+								pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
+							} as any
+						}
+						actionData={{} as any}
+						params={{}}
+						matches={[
+							{
+								id: 'root',
+								params: {},
+								pathname: '/',
+								data: {} as any,
+								handle: undefined,
+							},
+							{
+								id: 'routes/admin.movies',
+								params: {},
+								pathname: '/admin/movies',
+								data: {} as any,
+								handle: undefined,
+							},
+						]}
+					/>
+				</MemoryRouter>,
 			);
 
 			const logoutButton = screen.getByText('Logout');

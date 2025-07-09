@@ -604,7 +604,7 @@ describe('MovieDetail Component', () => {
 			// フォームの各フィールドが存在する
 			expect(screen.getByLabelText('記事URL')).toBeInTheDocument();
 			expect(screen.getByLabelText('記事タイトル')).toBeInTheDocument();
-			expect(screen.getByLabelText('記事の説明')).toBeInTheDocument();
+			expect(screen.getByLabelText('記事の説明（任意）')).toBeInTheDocument();
 
 			// 投稿ボタンが存在する
 			expect(
