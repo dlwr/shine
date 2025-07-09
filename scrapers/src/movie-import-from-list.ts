@@ -75,15 +75,64 @@ export async function importMoviesFromList(
 	const {organizationUid, categoryUid, ceremonyUid} =
 		await createAwardStructure(awardName, categoryName);
 
+	// バッチ処理用の配列
+	const translationsBatch: Array<typeof translations.$inferInsert> = [];
+	const posterUrlsBatch: Array<typeof posterUrls.$inferInsert> = [];
+	const nominationsBatch: Array<typeof nominations.$inferInsert> = [];
+
 	// 各映画を処理
 	for (const [index, title] of movieTitles.entries()) {
 		console.log(`\n[${index + 1}/${movieTitles.length}] Processing: ${title}`);
 
 		try {
-			await processMovie(title, organizationUid, categoryUid, ceremonyUid);
+			const batchData = await processMovieForBatch(
+				title,
+				organizationUid,
+				categoryUid,
+				ceremonyUid,
+			);
+			if (batchData) {
+				translationsBatch.push(...batchData.translations);
+				if (batchData.posterUrl) {
+					posterUrlsBatch.push(batchData.posterUrl);
+				}
+
+				if (batchData.nomination) {
+					nominationsBatch.push(batchData.nomination);
+				}
+			}
 		} catch (error) {
 			console.error(`Error processing ${title}:`, error);
 		}
+	}
+
+	// バッチでデータを挿入
+	const database = getDatabase(environment_);
+
+	if (translationsBatch.length > 0) {
+		console.log(
+			`\nInserting ${translationsBatch.length} translations in batch...`,
+		);
+		await database
+			.insert(translations)
+			.values(translationsBatch)
+			.onConflictDoNothing();
+	}
+
+	if (posterUrlsBatch.length > 0) {
+		console.log(`Inserting ${posterUrlsBatch.length} poster URLs in batch...`);
+		await database
+			.insert(posterUrls)
+			.values(posterUrlsBatch)
+			.onConflictDoNothing();
+	}
+
+	if (nominationsBatch.length > 0) {
+		console.log(`Inserting ${nominationsBatch.length} nominations in batch...`);
+		await database
+			.insert(nominations)
+			.values(nominationsBatch)
+			.onConflictDoNothing();
 	}
 
 	console.log('\nImport completed!');
@@ -178,14 +227,21 @@ async function createAwardStructure(
 }
 
 /**
- * 単一の映画を処理
+ * バッチ処理用に映画を処理
  */
-async function processMovie(
+async function processMovieForBatch(
 	title: string,
 	_organizationUid: string,
 	categoryUid: string,
 	ceremonyUid: string,
-): Promise<void> {
+): Promise<
+	| {
+			translations: Array<typeof translations.$inferInsert>;
+			posterUrl?: typeof posterUrls.$inferInsert;
+			nomination?: typeof nominations.$inferInsert;
+	  }
+	| undefined
+> {
 	const database = getDatabase(environment_);
 
 	// TMDBで映画を検索
@@ -193,7 +249,7 @@ async function processMovie(
 
 	if (!tmdbMovie) {
 		console.log(`  TMDB search failed for: ${title}`);
-		return;
+		return undefined;
 	}
 
 	// 既存の映画をチェック（TMDB IDまたはIMDb IDで）
@@ -219,6 +275,8 @@ async function processMovie(
 	}
 
 	let movieUid: string;
+	const translationsBatch: Array<typeof translations.$inferInsert> = [];
+	let posterUrlData: typeof posterUrls.$inferInsert | undefined;
 
 	if (existingMovie) {
 		console.log(`  Found existing movie (UID: ${existingMovie.uid})`);
@@ -228,11 +286,43 @@ async function processMovie(
 		await updateExistingMovie(existingMovie.uid, tmdbMovie);
 	} else {
 		console.log(`  Creating new movie: ${tmdbMovie.title}`);
-		movieUid = await createNewMovie(tmdbMovie);
+		const result = await createNewMovieForBatch(tmdbMovie);
+		movieUid = result.movieUid;
+		translationsBatch.push(...result.translations);
+		posterUrlData = result.posterUrl;
 	}
 
-	// ノミネーションを追加
-	await addNomination(movieUid, categoryUid, ceremonyUid);
+	// 既存のノミネーションをチェック
+	const [existingNomination] = await database
+		.select()
+		.from(nominations)
+		.where(
+			and(
+				eq(nominations.movieUid, movieUid),
+				eq(nominations.categoryUid, categoryUid),
+				eq(nominations.ceremonyUid, ceremonyUid),
+			),
+		)
+		.limit(1);
+
+	let nominationData: typeof nominations.$inferInsert | undefined;
+	if (existingNomination) {
+		console.log(`  Nomination already exists`);
+	} else {
+		nominationData = {
+			movieUid,
+			categoryUid,
+			ceremonyUid,
+			isWinner: 0,
+		};
+		console.log(`  Added nomination to batch`);
+	}
+
+	return {
+		translations: translationsBatch,
+		posterUrl: posterUrlData,
+		nomination: nominationData,
+	};
 }
 
 /**
@@ -274,9 +364,13 @@ async function searchMovieOnTMDB(
 }
 
 /**
- * 新しい映画を作成
+ * バッチ処理用に新しい映画を作成
  */
-async function createNewMovie(tmdbMovie: TMDBMovieData): Promise<string> {
+async function createNewMovieForBatch(tmdbMovie: TMDBMovieData): Promise<{
+	movieUid: string;
+	translations: Array<typeof translations.$inferInsert>;
+	posterUrl?: typeof posterUrls.$inferInsert;
+}> {
 	const database = getDatabase(environment_);
 	const movieUid = generateUUID();
 
@@ -285,7 +379,7 @@ async function createNewMovie(tmdbMovie: TMDBMovieData): Promise<string> {
 		? Number.parseInt(tmdbMovie.release_date.split('-')[0], 10)
 		: undefined;
 
-	// 映画を作成
+	// 映画を作成（これは即座に実行する必要がある）
 	await database.insert(movies).values({
 		uid: movieUid,
 		originalLanguage: 'en', // Default to English for TMDB movies
@@ -294,89 +388,54 @@ async function createNewMovie(tmdbMovie: TMDBMovieData): Promise<string> {
 		imdbId: tmdbMovie.imdb_id,
 	});
 
+	const translationsBatch: Array<typeof translations.$inferInsert> = [];
+
 	// 英語原題翻訳を追加（デフォルト）
 	if (tmdbMovie.original_title) {
 		console.log(`  Saving EN title: "${tmdbMovie.original_title}"`);
-		const insertResult = await database
-			.insert(translations)
-			.values({
-				resourceType: 'movie_title',
-				resourceUid: movieUid,
-				languageCode: 'en',
-				content: tmdbMovie.original_title,
-				isDefault: 1,
-			})
-			.onConflictDoNothing();
-		console.log(`  EN translation insert result:`, insertResult);
+		translationsBatch.push({
+			resourceType: 'movie_title',
+			resourceUid: movieUid,
+			languageCode: 'en',
+			content: tmdbMovie.original_title,
+			isDefault: 1,
+		});
 	} else {
 		console.log(`  WARN: tmdbMovie.original_title is undefined!`);
 	}
 
 	// 日本語翻訳を追加
-	if (tmdbMovie.title !== tmdbMovie.original_title || tmdbMovie.overview) {
-		// 既存の翻訳をチェック
-		const [existingTranslation] = await database
-			.select()
-			.from(translations)
-			.where(
-				and(
-					eq(translations.resourceType, 'movie_title'),
-					eq(translations.resourceUid, movieUid),
-					eq(translations.languageCode, 'ja'),
-				),
-			)
-			.limit(1);
-
-		let content = '';
-
-		// 日本語タイトルのみを保存（overviewは別途処理が必要）
-		if (tmdbMovie.title !== tmdbMovie.original_title) {
-			console.log(`  Adding JA title: "${tmdbMovie.title}"`);
-			content = tmdbMovie.title;
-		}
-
-		if (content) {
-			console.log(`  Final JA content: "${content}"`);
-			if (existingTranslation) {
-				// 既存の翻訳を更新
-				console.log(`  Updating existing JA translation`);
-				await database
-					.update(translations)
-					.set({
-						content,
-						updatedAt: Math.floor(Date.now() / 1000),
-					})
-					.where(eq(translations.uid, existingTranslation.uid));
-			} else {
-				// 新しい翻訳を挿入
-				console.log(`  Inserting new JA translation`);
-				await database.insert(translations).values({
-					resourceType: 'movie_title',
-					resourceUid: movieUid,
-					languageCode: 'ja',
-					content,
-				});
-			}
-		} else {
-			console.log(`  No JA content to save`);
-		}
-	}
-
-	// ポスターURLを追加
-	if (tmdbMovie.poster_path && tmdbConfiguration) {
-		const posterUrl = `${tmdbConfiguration.images.secure_base_url}w500${tmdbMovie.poster_path}`;
-		await database.insert(posterUrls).values({
-			movieUid,
-			url: posterUrl,
-			sourceType: 'tmdb',
+	if (tmdbMovie.title !== tmdbMovie.original_title) {
+		console.log(`  Adding JA title: "${tmdbMovie.title}"`);
+		translationsBatch.push({
+			resourceType: 'movie_title',
+			resourceUid: movieUid,
+			languageCode: 'ja',
+			content: tmdbMovie.title,
+			isDefault: 0,
 		});
 	}
 
-	return movieUid;
+	// ポスターURL
+	let posterUrlData: typeof posterUrls.$inferInsert | undefined;
+	if (tmdbMovie.poster_path && tmdbConfiguration) {
+		const posterUrl = `${tmdbConfiguration.images.secure_base_url}w500${tmdbMovie.poster_path}`;
+		posterUrlData = {
+			movieUid,
+			url: posterUrl,
+			sourceType: 'tmdb',
+		};
+	}
+
+	return {
+		movieUid,
+		translations: translationsBatch,
+		posterUrl: posterUrlData,
+	};
 }
 
 /**
- * 既存の映画を更新
+ * 既存の映画を更新（差分チェック付き）
  */
 async function updateExistingMovie(
 	movieUid: string,
@@ -384,18 +443,30 @@ async function updateExistingMovie(
 ): Promise<void> {
 	const database = getDatabase(environment_);
 
-	// TMDBデータで更新
+	// 既存の映画データを取得
+	const [existingMovie] = await database
+		.select()
+		.from(movies)
+		.where(eq(movies.uid, movieUid))
+		.limit(1);
+
+	if (!existingMovie) {
+		return;
+	}
+
+	// 差分チェックして更新が必要な場合のみ更新
 	const updates: Partial<typeof movies.$inferInsert> = {};
 
-	if (!(await hasValue(movieUid, 'tmdbId'))) {
+	if (!existingMovie.tmdbId && tmdbMovie.id) {
 		updates.tmdbId = tmdbMovie.id;
 	}
 
-	if (!(await hasValue(movieUid, 'imdbId')) && tmdbMovie.imdb_id) {
+	if (!existingMovie.imdbId && tmdbMovie.imdb_id) {
 		updates.imdbId = tmdbMovie.imdb_id;
 	}
 
 	if (Object.keys(updates).length > 0) {
+		console.log(`  Updating movie with: ${JSON.stringify(updates)}`);
 		await database.update(movies).set(updates).where(eq(movies.uid, movieUid));
 	}
 
@@ -416,62 +487,6 @@ async function updateExistingMovie(
 			});
 		}
 	}
-}
-
-/**
- * 指定フィールドに値があるかチェック
- */
-async function hasValue(
-	movieUid: string,
-	field: keyof typeof movies.$inferSelect,
-): Promise<boolean> {
-	const database = getDatabase(environment_);
-	const [movie] = await database
-		.select({[field]: movies[field]})
-		.from(movies)
-		.where(eq(movies.uid, movieUid))
-		.limit(1);
-
-	return movie && movie[field] !== undefined;
-}
-
-/**
- * ノミネーションを追加
- */
-async function addNomination(
-	movieUid: string,
-	categoryUid: string,
-	ceremonyUid: string,
-): Promise<void> {
-	const database = getDatabase(environment_);
-
-	// 既存のノミネーションをチェック
-	const [existingNomination] = await database
-		.select()
-		.from(nominations)
-		.where(
-			and(
-				eq(nominations.movieUid, movieUid),
-				eq(nominations.categoryUid, categoryUid),
-				eq(nominations.ceremonyUid, ceremonyUid),
-			),
-		)
-		.limit(1);
-
-	if (existingNomination) {
-		console.log(`  Nomination already exists`);
-		return;
-	}
-
-	// ノミネーションを追加
-	await database.insert(nominations).values({
-		movieUid,
-		categoryUid,
-		ceremonyUid,
-		isWinner: 0, // デフォルトはノミネートのみ
-	});
-
-	console.log(`  Added nomination`);
 }
 
 /**
