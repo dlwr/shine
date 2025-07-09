@@ -645,26 +645,29 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 		fetchMovies(currentPage, currentSearch);
 	}, [apiUrl, currentPage, currentSearch, limit]);
 
-	// Handle search - update URL and fetch data
+	// Handle search - fetch data and update URL without React Router navigation
 	const handleSearch = useCallback(
 		(query: string) => {
-			// Update URL with search parameter
-			const newParams = new URLSearchParams(searchParams);
-			if (query) {
-				newParams.set('search', query);
-			} else {
-				newParams.delete('search');
+			// Directly fetch movies
+			fetchMovies(1, query);
+
+			// Update URL using history API directly to avoid React Router re-renders
+			if (globalThis.window !== undefined) {
+				const newParams = new URLSearchParams(globalThis.location.search);
+				if (query) {
+					newParams.set('search', query);
+				} else {
+					newParams.delete('search');
+				}
+
+				newParams.set('page', '1');
+
+				// Use history API directly to avoid React Router re-render
+				const newUrl = `${globalThis.location.pathname}?${newParams.toString()}`;
+				globalThis.history.replaceState({}, '', newUrl);
 			}
-
-			newParams.set('page', '1'); // Reset to first page on search
-
-			// Use replace to update URL without adding to history
-			navigate(`?${newParams.toString()}`, {
-				replace: true,
-				preventScrollReset: true,
-			});
 		},
-		[navigate, searchParams],
+		[fetchMovies],
 	);
 
 	// Handle delete
