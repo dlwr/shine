@@ -195,3 +195,74 @@ export async function saveJapaneseTranslation(
 					),
 				);
 }
+
+/**
+ * 日本語翻訳をバッチでデータベースに保存する
+ * @param database D1データベース
+ * @param translationsBatch 翻訳データの配列
+ * @returns 挿入結果
+ */
+export async function saveJapaneseTranslationsBatch(
+	database: ReturnType<typeof getDatabase>,
+	translationsBatch: Translation[],
+): Promise<void> {
+	if (translationsBatch.length === 0) {
+		return;
+	}
+
+	const now = Math.floor(Date.now() / 1000);
+	const translationsToInsert = [];
+
+	// 既存の翻訳をチェック
+	for (const translation of translationsBatch) {
+		const existingTranslation = await database
+			.select()
+			.from(translations)
+			.where(
+				and(
+					eq(translations.resourceType, translation.resourceType),
+					eq(translations.resourceUid, translation.resourceUid),
+					eq(translations.languageCode, translation.languageCode),
+				),
+			)
+			.limit(1);
+
+		// 翻訳が存在しない場合のみ挿入対象に追加
+		if (existingTranslation.length === 0) {
+			const uid = crypto.randomUUID();
+			translationsToInsert.push({
+				uid,
+				resourceType: translation.resourceType,
+				resourceUid: translation.resourceUid,
+				languageCode: translation.languageCode,
+				content: translation.content,
+				isDefault: translation.isDefault || 0,
+				createdAt: now,
+				updatedAt: now,
+			});
+		} else {
+			// 既存の場合は更新（バッチ更新は複雑なので個別に実行）
+			await database
+				.update(translations)
+				.set({
+					content: translation.content,
+					updatedAt: now,
+				})
+				.where(
+					and(
+						eq(translations.resourceType, translation.resourceType),
+						eq(translations.resourceUid, translation.resourceUid),
+						eq(translations.languageCode, translation.languageCode),
+					),
+				);
+		}
+	}
+
+	// バッチ挿入
+	if (translationsToInsert.length > 0) {
+		await database.insert(translations).values(translationsToInsert);
+		console.log(
+			`Batch inserted ${translationsToInsert.length} new translations`,
+		);
+	}
+}

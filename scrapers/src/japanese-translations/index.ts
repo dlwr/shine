@@ -5,6 +5,7 @@ import {getDatabase, type Environment} from '../../../src/index';
 import {
 	getMoviesWithoutJapaneseTranslation,
 	saveJapaneseTranslation,
+	saveJapaneseTranslationsBatch,
 } from './repository';
 import {fetchJapaneseTitleFromTMDB} from './scrapers/tmdb-scraper';
 
@@ -82,6 +83,15 @@ export default {
 			const results = [];
 			let successCount = 0;
 
+			// バッチ処理用の配列
+			const translationsBatch: Array<{
+				resourceType: string;
+				resourceUid: string;
+				languageCode: string;
+				content: string;
+				isDefault?: number;
+			}> = [];
+
 			// 各映画に対して処理を実行
 			for (const movie of movies) {
 				try {
@@ -103,12 +113,13 @@ export default {
 					// }
 
 					if (japaneseTitle) {
-						// 日本語翻訳をデータベースに保存
-						await saveJapaneseTranslation(database, {
+						// バッチに追加
+						translationsBatch.push({
 							resourceType: 'movie_title',
 							resourceUid: movie.uid,
 							languageCode: 'ja',
 							content: japaneseTitle,
+							isDefault: 0,
 						});
 
 						successCount++;
@@ -140,6 +151,14 @@ export default {
 
 				// 連続リクエストを避けるための待機
 				await new Promise((resolve) => setTimeout(resolve, 1000));
+			}
+
+			// バッチで翻訳データを保存
+			if (translationsBatch.length > 0) {
+				await saveJapaneseTranslationsBatch(database, translationsBatch);
+				console.log(
+					`Saved ${translationsBatch.length} Japanese translations in batch`,
+				);
 			}
 
 			return new Response(
