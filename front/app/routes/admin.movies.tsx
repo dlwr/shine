@@ -49,13 +49,28 @@ export async function loader({context, request}: Route.LoaderArgs) {
 	};
 }
 
-// Completely isolated search input component
+// Optimized search input component
 const SearchInput = memo(
-	({onSearchChange}: {onSearchChange: (query: string) => void}) => {
+	({
+		initialValue,
+		onSearchChange,
+	}: {
+		initialValue: string;
+		onSearchChange: (query: string) => void;
+	}) => {
 		const inputRef = useRef<HTMLInputElement>(null);
-		const [localValue, setLocalValue] = useState('');
+		const [localValue, setLocalValue] = useState(initialValue);
 		const timeoutRef = useRef<number | undefined>(undefined);
 		const focusTimeoutRef = useRef<number | undefined>(undefined);
+		const hasInitialized = useRef(false);
+
+		// Only update from initialValue once on mount
+		useEffect(() => {
+			if (!hasInitialized.current) {
+				setLocalValue(initialValue);
+				hasInitialized.current = true;
+			}
+		}, [initialValue]);
 
 		// Cleanup timeouts on unmount
 		useEffect(() => {
@@ -571,11 +586,10 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 		totalPages: 0,
 	});
 	const [loading, setLoading] = useState(true);
-	const [searchQuery, setSearchQuery] = useState(currentSearch);
 
 	// Movies fetch function
 	const fetchMovies = useCallback(
-		async (targetPage = currentPage, targetSearch = searchQuery) => {
+		async (targetPage = currentPage, targetSearch = currentSearch) => {
 			if (globalThis.window === undefined) return;
 
 			const token = globalThis.localStorage.getItem('adminToken');
@@ -623,27 +637,34 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 				setLoading(false);
 			}
 		},
-		[apiUrl, currentPage, searchQuery, limit],
+		[apiUrl, currentPage, currentSearch, limit],
 	);
-
-	// Sync search query with URL params
-	useEffect(() => {
-		setSearchQuery(currentSearch);
-	}, [currentSearch]);
 
 	// Initial load and URL param changes
 	useEffect(() => {
 		fetchMovies(currentPage, currentSearch);
 	}, [apiUrl, currentPage, currentSearch, limit]);
 
-	// Handle search - only fetch data without updating searchQuery state
+	// Handle search - update URL and fetch data
 	const handleSearch = useCallback(
 		(query: string) => {
-			// Don't update searchQuery state here to prevent re-renders
-			// Only fetch movies directly without changing URL to prevent page refresh
-			fetchMovies(1, query);
+			// Update URL with search parameter
+			const newParams = new URLSearchParams(searchParams);
+			if (query) {
+				newParams.set('search', query);
+			} else {
+				newParams.delete('search');
+			}
+
+			newParams.set('page', '1'); // Reset to first page on search
+
+			// Use replace to update URL without adding to history
+			navigate(`?${newParams.toString()}`, {
+				replace: true,
+				preventScrollReset: true,
+			});
 		},
-		[fetchMovies],
+		[navigate, searchParams],
 	);
 
 	// Handle delete
@@ -824,7 +845,7 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 			</div>
 
 			{/* Search */}
-			<SearchInput onSearchChange={handleSearch} />
+			<SearchInput initialValue={currentSearch} onSearchChange={handleSearch} />
 
 			{/* Movies Table */}
 			<div
