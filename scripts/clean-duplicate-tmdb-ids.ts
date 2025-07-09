@@ -43,7 +43,7 @@ async function cleanDuplicateTmdbIds() {
 				createdAt: movies.createdAt,
 			})
 			.from(movies)
-			.where(eq(movies.tmdbId, duplicate.tmdbId))
+			.where(eq(movies.tmdbId, duplicate.tmdbId!))
 			.orderBy(desc(movies.createdAt)); // 最新作成順
 
 		// 最初の映画（最新作成）以外のTMDb IDをnullに設定
