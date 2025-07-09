@@ -633,7 +633,8 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 			return c.json({error: 'Movie does not have an IMDb ID'}, 400);
 		}
 
-		if (!c.env.TMDB_API_KEY) {
+		const tmdbApiKey = c.env.TMDB_API_KEY;
+		if (!tmdbApiKey || tmdbApiKey === '') {
 			return c.json({error: 'TMDb API key not configured'}, 500);
 		}
 
@@ -652,7 +653,7 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 
 			// Find TMDb ID if not already set
 			if (!movieTmdbId) {
-				movieTmdbId = await findTMDBByImdbId(imdbId, c.env.TMDB_API_KEY);
+				movieTmdbId = await findTMDBByImdbId(imdbId, tmdbApiKey);
 
 				if (!movieTmdbId) {
 					return c.json({error: 'TMDb映画が見つかりませんでした'}, 404);
@@ -700,7 +701,7 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 			const imagesUrl = new URL(
 				`https://api.themoviedb.org/3/movie/${movieTmdbId}/images`,
 			);
-			imagesUrl.searchParams.append('api_key', c.env.TMDB_API_KEY);
+			imagesUrl.searchParams.append('api_key', tmdbApiKey);
 
 			const imagesResponse = await fetch(imagesUrl.toString());
 			if (imagesResponse.ok) {
@@ -722,7 +723,7 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 			// Get all translations from TMDb
 			const translationsData = await fetchTMDBMovieTranslations(
 				movieTmdbId,
-				c.env.TMDB_API_KEY,
+				tmdbApiKey,
 			);
 
 			if (translationsData?.translations) {
