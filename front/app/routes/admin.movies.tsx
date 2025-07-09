@@ -49,7 +49,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
 	};
 }
 
-// Completely isolated search input component
+// Simple search input component
 const SearchInput = memo(
 	({
 		initialValue,
@@ -58,30 +58,14 @@ const SearchInput = memo(
 		initialValue: string;
 		onSearchChange: (query: string) => void;
 	}) => {
-		const inputRef = useRef<HTMLInputElement>(null);
 		const [localValue, setLocalValue] = useState(initialValue);
 		const timeoutRef = useRef<number | undefined>(undefined);
-		const focusTimeoutRef = useRef<number | undefined>(undefined);
-		const hasInitialized = useRef(false);
-		const initialValueRef = useRef(initialValue);
 
-		// Only update from initialValue once on mount
-		useEffect(() => {
-			if (!hasInitialized.current && initialValueRef.current !== localValue) {
-				setLocalValue(initialValueRef.current);
-				hasInitialized.current = true;
-			}
-		}, [localValue]);
-
-		// Cleanup timeouts on unmount
+		// Cleanup timeout on unmount
 		useEffect(() => {
 			return () => {
 				if (timeoutRef.current) {
 					clearTimeout(timeoutRef.current);
-				}
-
-				if (focusTimeoutRef.current) {
-					clearTimeout(focusTimeoutRef.current);
 				}
 			};
 		}, []);
@@ -111,18 +95,12 @@ const SearchInput = memo(
 			}
 
 			onSearchChange('');
-
-			// Restore focus after clearing
-			if (inputRef.current) {
-				inputRef.current.focus();
-			}
 		}, [onSearchChange]);
 
 		return (
 			<div style={{marginBottom: '2rem'}}>
 				<div style={{position: 'relative', maxWidth: '400px'}}>
 					<input
-						ref={inputRef}
 						type="text"
 						value={localValue}
 						onChange={handleChange}
@@ -165,11 +143,6 @@ const SearchInput = memo(
 				</div>
 			</div>
 		);
-	},
-	// Custom comparison to prevent re-renders
-	(prevProps, nextProps) => {
-		// Only re-render if onSearchChange function changes
-		return prevProps.onSearchChange === nextProps.onSearchChange;
 	},
 );
 
@@ -651,18 +624,15 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 		fetchMovies(currentPage, currentSearch);
 	}, [fetchMovies, currentPage, currentSearch]);
 
-	// Create stable reference for handleSearch to prevent SearchInput re-renders
-	const handleSearchRef = useRef<(query: string) => void>(undefined);
-
-	// Update the ref when dependencies change, but not the callback itself
-	useEffect(() => {
-		handleSearchRef.current = (query: string) => {
-			// Directly fetch movies
+	// Handle search - simple and direct
+	const handleSearch = useCallback(
+		(query: string) => {
+			// Fetch movies with new search
 			fetchMovies(1, query);
 
-			// Update URL using history API directly to avoid React Router re-renders
+			// Update URL without causing React Router re-render
 			if (globalThis.window !== undefined) {
-				const newParams = new URLSearchParams(globalThis.location.search);
+				const newParams = new URLSearchParams(searchParams);
 				if (query) {
 					newParams.set('search', query);
 				} else {
@@ -671,17 +641,12 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 
 				newParams.set('page', '1');
 
-				// Use history API directly to avoid React Router re-render
 				const newUrl = `${globalThis.location.pathname}?${newParams.toString()}`;
 				globalThis.history.replaceState({}, '', newUrl);
 			}
-		};
-	}, [fetchMovies]);
-
-	// Stable callback that won't cause re-renders
-	const handleSearch = useCallback((query: string) => {
-		handleSearchRef.current?.(query);
-	}, []);
+		},
+		[fetchMovies, searchParams],
+	);
 
 	// Handle delete
 	const handleDelete = async (movieId: string, movieTitle: string) => {
