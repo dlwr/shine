@@ -154,6 +154,11 @@ export async function scrapeAcademyAwards() {
 		let moviesProcessed = 0;
 		let winnersProcessed = 0;
 
+		// バッチ処理用の配列
+		const translationsBatch: Array<typeof translations.$inferInsert> = [];
+		const referenceUrlsBatch: Array<typeof referenceUrls.$inferInsert> = [];
+		const nominationsBatch: Array<typeof nominations.$inferInsert> = [];
+
 		for (const [tableIndex, table] of allTables.entries()) {
 			const tableInfo = analyzeTableStructure($, $(table), tableIndex);
 
@@ -162,19 +167,63 @@ export async function scrapeAcademyAwards() {
 			const movies = processTableRows($, $(table));
 
 			for (const movie of movies) {
-				await processMovie(
+				const batchData = await processMovieForBatch(
 					movie.title,
 					movie.year,
 					movie.isWinner,
 					movie.referenceUrl,
 				);
+				if (batchData) {
+					translationsBatch.push(...batchData.translations);
+					if (batchData.referenceUrl) {
+						referenceUrlsBatch.push(batchData.referenceUrl);
+					}
+
+					if (batchData.nomination) {
+						nominationsBatch.push(batchData.nomination);
+					}
+				}
+
 				moviesProcessed++;
 				if (movie.isWinner) winnersProcessed++;
 			}
 		}
 
+		// バッチでデータを挿入
+		const database = getDatabase(environment_);
+
+		if (translationsBatch.length > 0) {
+			console.log(
+				`\nInserting ${translationsBatch.length} translations in batch...`,
+			);
+			await database
+				.insert(translations)
+				.values(translationsBatch)
+				.onConflictDoNothing();
+		}
+
+		if (referenceUrlsBatch.length > 0) {
+			console.log(
+				`Inserting ${referenceUrlsBatch.length} reference URLs in batch...`,
+			);
+			await database
+				.insert(referenceUrls)
+				.values(referenceUrlsBatch)
+				.onConflictDoNothing();
+		}
+
+		if (nominationsBatch.length > 0) {
+			console.log(
+				`Inserting ${nominationsBatch.length} nominations in batch...`,
+			);
+			await database
+				.insert(nominations)
+				.values(nominationsBatch)
+				.onConflictDoNothing();
+		}
+
 		console.log(
-			`Scraping completed successfully: ${moviesProcessed} movies processed, ${winnersProcessed} winners`,
+			`\nScraping completed successfully: ${moviesProcessed} movies processed, ${winnersProcessed} winners`,
 		);
 	} catch (error) {
 		console.error('Error scraping Academy Awards:', error);
@@ -426,6 +475,166 @@ function cleanupTitle(title: string): string {
 		.replaceAll(/\s*\[[^\]]*]/g, '')
 		.replaceAll('*', '')
 		.trim();
+}
+
+async function processMovieForBatch(
+	title: string,
+	year: number,
+	isWinner: boolean,
+	referenceUrl?: string,
+): Promise<
+	| {
+			translations: Array<typeof translations.$inferInsert>;
+			referenceUrl?: typeof referenceUrls.$inferInsert;
+			nomination?: typeof nominations.$inferInsert;
+	  }
+	| undefined
+> {
+	try {
+		const master = await fetchMasterData();
+		const database = getDatabase(environment_);
+		// IMDb IDを取得
+		let imdbId: string | undefined;
+		if (TMDB_API_KEY) {
+			imdbId = await fetchImdbId(title, year, TMDB_API_KEY);
+		}
+
+		// 既存の映画を検索
+		const existingMovies = await database
+			.select({
+				movies,
+				translations,
+			})
+			.from(movies)
+			.innerJoin(
+				translations,
+				and(
+					eq(translations.resourceUid, movies.uid),
+					eq(translations.resourceType, 'movie_title'),
+					eq(translations.languageCode, 'en'),
+					eq(translations.isDefault, 1),
+				),
+			)
+			.where(eq(translations.content, title));
+
+		let movieUid: string;
+		const translationsBatch: Array<typeof translations.$inferInsert> = [];
+
+		if (existingMovies.length > 0) {
+			// 既存の映画が見つかった場合は更新
+			const existingMovie = existingMovies[0].movies;
+			movieUid = existingMovie.uid;
+			// IMDb IDが新しく取得できた場合は更新（差分チェック付き）
+			if (imdbId && !existingMovie.imdbId) {
+				await database
+					.update(movies)
+					.set({
+						imdbId,
+						updatedAt: Math.floor(Date.now() / 1000),
+					})
+					.where(eq(movies.uid, movieUid));
+				console.log(`Updated IMDb ID for ${title}: ${imdbId}`);
+			}
+		} else {
+			// 新規映画の作成
+			const [newMovie] = await database
+				.insert(movies)
+				.values({
+					originalLanguage: 'en',
+					year,
+					imdbId: imdbId || undefined,
+				})
+				.returning();
+			if (!newMovie) {
+				throw new Error(`Failed to create movie: ${title}`);
+			}
+
+			movieUid = newMovie.uid;
+			// 英語タイトルをバッチに追加
+			translationsBatch.push({
+				resourceType: 'movie_title',
+				resourceUid: movieUid,
+				languageCode: 'en',
+				content: title,
+				isDefault: 1,
+			});
+		}
+
+		// 参照URL
+		let referenceUrlData: typeof referenceUrls.$inferInsert | undefined;
+		if (referenceUrl) {
+			referenceUrlData = {
+				movieUid,
+				url: referenceUrl,
+				sourceType: 'wikipedia',
+				languageCode: 'en',
+				isPrimary: 1,
+			};
+		}
+
+		// ノミネーション
+		const ceremonyUid = await getOrCreateCeremony(year, master.organizationUid);
+		const nominationData: typeof nominations.$inferInsert = {
+			movieUid,
+			ceremonyUid,
+			categoryUid: master.categoryUid,
+			isWinner: isWinner ? 1 : 0,
+		};
+
+		// 日本語タイトルとポスターの処理（新規映画の場合のみ）
+		if (existingMovies.length === 0 && imdbId && TMDB_API_KEY) {
+			// 日本語タイトルの取得・保存
+			const japaneseTitle = await fetchJapaneseTitleFromTMDB(
+				imdbId,
+				undefined,
+				environment_,
+			);
+			if (japaneseTitle) {
+				await saveJapaneseTranslation(movieUid, japaneseTitle, environment_);
+			}
+
+			// ポスターの取得・保存
+			const movieImages = await fetchTMDBMovieImages(imdbId, TMDB_API_KEY);
+			if (movieImages) {
+				// TMDB IDを保存（まだ保存されていない場合）
+				const currentMovie = await database
+					.select({tmdbId: movies.tmdbId})
+					.from(movies)
+					.where(eq(movies.uid, movieUid))
+					.limit(1);
+				if (currentMovie.length > 0 && !currentMovie[0].tmdbId) {
+					await saveTMDBId(imdbId, movieImages.tmdbId, environment_);
+				}
+
+				// ポスターを保存
+				const posterCount = await savePosterUrls(
+					movieUid,
+					movieImages.images.posters,
+					environment_,
+				);
+				if (posterCount > 0) {
+					console.log(`  Saved ${posterCount} posters for ${title}`);
+				}
+			}
+		}
+
+		console.log(
+			`Processed ${
+				existingMovies.length > 0 ? 'updated' : 'new'
+			} movie: ${title} (${year}) - ${isWinner ? 'Winner' : 'Nominee'} ${
+				imdbId ? `IMDb: ${imdbId}` : ''
+			}`,
+		);
+
+		return {
+			translations: translationsBatch,
+			referenceUrl: referenceUrlData,
+			nomination: nominationData,
+		};
+	} catch (error) {
+		console.error(`Error processing movie ${title}:`, error);
+		return undefined;
+	}
 }
 
 async function processMovie(
