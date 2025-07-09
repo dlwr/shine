@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useState, memo} from 'react';
-import {useSearchParams, useLocation} from 'react-router';
+import {useSearchParams} from 'react-router';
 import type {Route} from './+types/admin.movies';
 
 type Movie = {
@@ -51,7 +51,6 @@ export async function loader({context, request}: Route.LoaderArgs) {
 
 // Movies list component that reads directly from URL
 const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
-	const location = useLocation();
 	const [movies, setMovies] = useState<Movie[]>([]);
 	const [pagination, setPagination] = useState<PaginationData>({
 		page: 1,
@@ -63,7 +62,7 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 
 	// Get params directly from URL
 	const getUrlParams = () => {
-		const params = new URLSearchParams(location.search);
+		const params = new URLSearchParams(globalThis.location.search);
 		return {
 			search: params.get('search') || '',
 			page: Number(params.get('page') || 1),
@@ -125,11 +124,11 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 
 		fetchMovies();
 
-		// Listen for popstate events to re-fetch when URL changes
-		const handlePopState = async () => fetchMovies();
-		globalThis.addEventListener('popstate', handlePopState);
-		return () => globalThis.removeEventListener('popstate', handlePopState);
-	}, [apiUrl]); // Only depend on apiUrl
+		// Listen for URL changes
+		const handleUrlChange = () => fetchMovies();
+		globalThis.addEventListener('urlchange', handleUrlChange);
+		return () => globalThis.removeEventListener('urlchange', handleUrlChange);
+	}, [apiUrl]); // Only depend on apiUrl, use custom event for URL changes
 
 	const handleDelete = async (movieId: string, movieTitle: string) => {
 		const success = await deleteMovie(movieId, movieTitle, apiUrl);
@@ -449,12 +448,12 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 						disabled={pagination.page === 1}
 						onClick={() => {
 							if (pagination.page > 1 && globalThis.window !== undefined) {
-								const params = new URLSearchParams(location.search);
+								const params = new URLSearchParams(globalThis.location.search);
 								params.set('page', String(pagination.page - 1));
-								const newUrl = `${location.pathname}?${params.toString()}`;
+								const newUrl = `${globalThis.location.pathname}?${params.toString()}`;
 								globalThis.history.replaceState({}, '', newUrl);
 								// Force re-fetch by updating location
-								globalThis.dispatchEvent(new PopStateEvent('popstate'));
+								globalThis.dispatchEvent(new Event('urlchange'));
 							}
 						}}
 						style={{
@@ -479,12 +478,12 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 								pagination.page < pagination.totalPages &&
 								globalThis.window !== undefined
 							) {
-								const params = new URLSearchParams(location.search);
+								const params = new URLSearchParams(globalThis.location.search);
 								params.set('page', String(pagination.page + 1));
-								const newUrl = `${location.pathname}?${params.toString()}`;
+								const newUrl = `${globalThis.location.pathname}?${params.toString()}`;
 								globalThis.history.replaceState({}, '', newUrl);
 								// Force re-fetch by updating location
-								globalThis.dispatchEvent(new PopStateEvent('popstate'));
+								globalThis.dispatchEvent(new Event('urlchange'));
 							}
 						}}
 						style={{
@@ -659,8 +658,8 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 
 				const newUrl = `${globalThis.location.pathname}?${newParams.toString()}`;
 				globalThis.history.replaceState({}, '', newUrl);
-				// Trigger popstate to update MoviesList
-				globalThis.dispatchEvent(new PopStateEvent('popstate'));
+				// Trigger custom event to update MoviesList
+				globalThis.dispatchEvent(new Event('urlchange'));
 			}
 		},
 		[searchParams],
