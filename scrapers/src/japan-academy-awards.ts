@@ -884,7 +884,7 @@ async function processMovie(movieInfo: MovieInfo) {
 			}
 		}
 
-		// 参照URLの更新または追加
+		// 参照URLの追加（重複の場合は無視）
 		if (movieInfo.referenceUrl) {
 			await database
 				.insert(referenceUrls)
@@ -895,17 +895,7 @@ async function processMovie(movieInfo: MovieInfo) {
 					languageCode: 'ja',
 					isPrimary: 1,
 				})
-				.onConflictDoUpdate({
-					target: [
-						referenceUrls.movieUid,
-						referenceUrls.sourceType,
-						referenceUrls.languageCode,
-					],
-					set: {
-						url: movieInfo.referenceUrl,
-						updatedAt: Math.floor(Date.now() / 1000),
-					},
-				});
+				.onConflictDoNothing();
 		}
 
 		// ポスターの取得・保存

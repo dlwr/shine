@@ -715,7 +715,7 @@ async function processMovie(
 			});
 		}
 
-		// 参照URLの更新または追加
+		// 参照URLの追加（重複の場合は無視）
 		if (referenceUrl) {
 			await database
 				.insert(referenceUrls)
@@ -726,17 +726,7 @@ async function processMovie(
 					languageCode: 'en',
 					isPrimary: 1,
 				})
-				.onConflictDoUpdate({
-					target: [
-						referenceUrls.movieUid,
-						referenceUrls.sourceType,
-						referenceUrls.languageCode,
-					],
-					set: {
-						url: referenceUrl,
-						updatedAt: Math.floor(Date.now() / 1000),
-					},
-				});
+				.onConflictDoNothing();
 		}
 
 		// 日本語翻訳の取得・保存
