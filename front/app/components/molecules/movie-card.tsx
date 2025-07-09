@@ -79,12 +79,16 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 					title,
 				)}&i=prime-instant-video`,
 		},
-		{
-			name: 'TMDb',
-			color: 'bg-green-600 text-white',
-			url: (title: string) =>
-				`https://www.themoviedb.org/search?query=${encodeURIComponent(title)}`,
-		},
+		...(movie.tmdbId
+			? [
+					{
+						name: 'TMDb',
+						color: 'bg-green-600 text-white',
+						url: (_title: string) =>
+							`https://www.themoviedb.org/movie/${movie.tmdbId}`,
+					},
+				]
+			: []),
 		{
 			name: 'Filmarks',
 			color: 'bg-purple-600 text-white',
