@@ -49,7 +49,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
 	};
 }
 
-// Optimized search input component
+// Completely isolated search input component
 const SearchInput = memo(
 	({
 		initialValue,
@@ -63,14 +63,15 @@ const SearchInput = memo(
 		const timeoutRef = useRef<number | undefined>(undefined);
 		const focusTimeoutRef = useRef<number | undefined>(undefined);
 		const hasInitialized = useRef(false);
+		const initialValueRef = useRef(initialValue);
 
 		// Only update from initialValue once on mount
 		useEffect(() => {
-			if (!hasInitialized.current) {
-				setLocalValue(initialValue);
+			if (!hasInitialized.current && initialValueRef.current !== localValue) {
+				setLocalValue(initialValueRef.current);
 				hasInitialized.current = true;
 			}
-		}, [initialValue]);
+		}, [localValue]);
 
 		// Cleanup timeouts on unmount
 		useEffect(() => {
@@ -164,6 +165,11 @@ const SearchInput = memo(
 				</div>
 			</div>
 		);
+	},
+	// Custom comparison to prevent re-renders
+	(prevProps, nextProps) => {
+		// Only re-render if onSearchChange function changes
+		return prevProps.onSearchChange === nextProps.onSearchChange;
 	},
 );
 
@@ -645,9 +651,12 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 		fetchMovies(currentPage, currentSearch);
 	}, [apiUrl, currentPage, currentSearch, limit]);
 
-	// Handle search - fetch data and update URL without React Router navigation
-	const handleSearch = useCallback(
-		(query: string) => {
+	// Create stable reference for handleSearch to prevent SearchInput re-renders
+	const handleSearchRef = useRef<(query: string) => void>(undefined);
+
+	// Update the ref when dependencies change, but not the callback itself
+	useEffect(() => {
+		handleSearchRef.current = (query: string) => {
 			// Directly fetch movies
 			fetchMovies(1, query);
 
@@ -666,9 +675,13 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 				const newUrl = `${globalThis.location.pathname}?${newParams.toString()}`;
 				globalThis.history.replaceState({}, '', newUrl);
 			}
-		},
-		[fetchMovies],
-	);
+		};
+	}, [fetchMovies]);
+
+	// Stable callback that won't cause re-renders
+	const handleSearch = useCallback((query: string) => {
+		handleSearchRef.current?.(query);
+	}, []);
 
 	// Handle delete
 	const handleDelete = async (movieId: string, movieTitle: string) => {
