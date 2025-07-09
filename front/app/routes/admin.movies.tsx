@@ -1,5 +1,5 @@
-import {useCallback, useEffect, useState, useRef, memo} from 'react';
-import {useNavigate, useSearchParams} from 'react-router';
+import {useCallback, useEffect, useState, memo} from 'react';
+import {useSearchParams, useLocation} from 'react-router';
 import type {Route} from './+types/admin.movies';
 
 type Movie = {
@@ -49,131 +49,144 @@ export async function loader({context, request}: Route.LoaderArgs) {
 	};
 }
 
-// Simple search input component
-const SearchInput = memo(
-	({
-		initialValue,
-		onSearchChange,
-	}: {
-		initialValue: string;
-		onSearchChange: (query: string) => void;
-	}) => {
-		const [localValue, setLocalValue] = useState(initialValue);
-		const timeoutRef = useRef<number | undefined>(undefined);
+// Movies list component that reads directly from URL
+const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
+	const location = useLocation();
+	const [movies, setMovies] = useState<Movie[]>([]);
+	const [pagination, setPagination] = useState<PaginationData>({
+		page: 1,
+		limit: 20,
+		totalCount: 0,
+		totalPages: 0,
+	});
+	const [loading, setLoading] = useState(true);
 
-		// Cleanup timeout on unmount
-		useEffect(() => {
-			return () => {
-				if (timeoutRef.current) {
-					clearTimeout(timeoutRef.current);
-				}
-			};
-		}, []);
+	// Get params directly from URL
+	const getUrlParams = () => {
+		const params = new URLSearchParams(location.search);
+		return {
+			search: params.get('search') || '',
+			page: Number(params.get('page') || 1),
+			limit: Number(params.get('limit') || 20),
+		};
+	};
 
-		const handleChange = useCallback(
-			(e: React.ChangeEvent<HTMLInputElement>) => {
-				const newValue = e.target.value;
-				setLocalValue(newValue);
+	// Fetch movies based on URL params
+	useEffect(() => {
+		const fetchMovies = async () => {
+			if (globalThis.window === undefined) return;
 
-				// Clear existing timeout
-				if (timeoutRef.current) {
-					clearTimeout(timeoutRef.current);
-				}
-
-				// Set new timeout for debounced search
-				timeoutRef.current = setTimeout(() => {
-					onSearchChange(newValue);
-				}, 300) as unknown as number;
-			},
-			[onSearchChange],
-		);
-
-		const handleClear = useCallback(() => {
-			setLocalValue('');
-			if (timeoutRef.current) {
-				clearTimeout(timeoutRef.current);
+			const token = globalThis.localStorage.getItem('adminToken');
+			if (!token) {
+				globalThis.location.href = '/admin/login';
+				return;
 			}
 
-			onSearchChange('');
-		}, [onSearchChange]);
+			setLoading(true);
+			const {search, page, limit} = getUrlParams();
 
+			try {
+				const searchParameter = search
+					? `&search=${encodeURIComponent(search)}`
+					: '';
+				const response = await fetch(
+					`${apiUrl}/admin/movies?page=${page}&limit=${limit}${searchParameter}`,
+					{
+						headers: {Authorization: `Bearer ${token}`},
+					},
+				);
+
+				if (response.status === 401) {
+					globalThis.localStorage.removeItem('adminToken');
+					globalThis.location.href = '/admin/login';
+					return;
+				}
+
+				if (!response.ok) {
+					throw new Error('Failed to fetch movies');
+				}
+
+				const data = (await response.json()) as MoviesResponse;
+				setMovies(data.movies || []);
+				setPagination(
+					data.pagination || {
+						page: 1,
+						limit: 20,
+						totalCount: 0,
+						totalPages: 0,
+					},
+				);
+			} catch (error) {
+				console.error('Error loading movies:', error);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchMovies();
+
+		// Listen for popstate events to re-fetch when URL changes
+		const handlePopState = async () => fetchMovies();
+		globalThis.addEventListener('popstate', handlePopState);
+		return () => globalThis.removeEventListener('popstate', handlePopState);
+	}, [apiUrl]); // Only depend on apiUrl
+
+	const handleDelete = async (movieId: string, movieTitle: string) => {
+		const success = await deleteMovie(movieId, movieTitle, apiUrl);
+		if (success) {
+			// Re-fetch movies
+			const event = new CustomEvent('refetchMovies');
+			globalThis.dispatchEvent(event);
+		}
+	};
+
+	const handleMerge = async (sourceId: string, sourceTitle: string) => {
+		const targetId = showMergeDialog(sourceId, sourceTitle);
+		if (targetId) {
+			const success = await mergeMovies(
+				sourceId,
+				targetId,
+				sourceTitle,
+				apiUrl,
+			);
+			if (success) {
+				// Re-fetch movies
+				const event = new CustomEvent('refetchMovies');
+				globalThis.dispatchEvent(event);
+			}
+		}
+	};
+
+	if (loading) {
 		return (
-			<div style={{marginBottom: '2rem'}}>
-				<div style={{position: 'relative', maxWidth: '400px'}}>
-					<input
-						type="text"
-						value={localValue}
-						onChange={handleChange}
-						placeholder="Search movies by title..."
-						style={{
-							width: '100%',
-							padding: '0.75rem 2.5rem 0.75rem 1rem',
-							border: '1px solid #e5e7eb',
-							borderRadius: '8px',
-							fontSize: '1rem',
-							background: 'white',
-							boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-						}}
-					/>
-					{localValue && (
-						<button
-							onClick={handleClear}
-							style={{
-								position: 'absolute',
-								right: '0.75rem',
-								top: '50%',
-								transform: 'translateY(-50%)',
-								background: 'none',
-								border: 'none',
-								color: '#6b7280',
-								cursor: 'pointer',
-								fontSize: '1rem',
-								padding: '0.25rem',
-								borderRadius: '50%',
-								width: '1.5rem',
-								height: '1.5rem',
-								display: 'flex',
-								alignItems: 'center',
-								justifyContent: 'center',
-							}}
-						>
-							✕
-						</button>
-					)}
-				</div>
+			<div
+				style={{
+					textAlign: 'center',
+					padding: '3rem',
+					color: '#666',
+				}}
+			>
+				Loading movies...
 			</div>
 		);
-	},
-);
+	}
 
-SearchInput.displayName = 'SearchInput';
-
-// Memoized movies list component to prevent re-renders
-const MoviesList = memo(
-	({
-		movies,
-		onDelete,
-		onMerge,
-	}: {
-		movies: Movie[];
-		onDelete: (movieId: string, movieTitle: string) => void;
-		onMerge: (sourceId: string, sourceTitle: string) => void;
-	}) => {
-		if (movies.length === 0) {
-			return (
-				<div
-					style={{
-						textAlign: 'center',
-						padding: '3rem',
-						color: '#666',
-					}}
-				>
-					No movies found
-				</div>
-			);
-		}
-
+	if (movies.length === 0) {
 		return (
+			<div
+				style={{
+					textAlign: 'center',
+					padding: '3rem',
+					color: '#666',
+				}}
+			>
+				No movies found
+			</div>
+		);
+	}
+
+	return (
+		<>
 			<table
 				style={{
 					width: '100%',
@@ -374,7 +387,7 @@ const MoviesList = memo(
 										</a>
 									)}
 									<button
-										onClick={() => onDelete(movie.uid, movie.title)}
+										onClick={async () => handleDelete(movie.uid, movie.title)}
 										style={{
 											padding: '0.375rem 0.75rem',
 											border: 'none',
@@ -394,7 +407,7 @@ const MoviesList = memo(
 										Delete
 									</button>
 									<button
-										onClick={() => onMerge(movie.uid, movie.title)}
+										onClick={async () => handleMerge(movie.uid, movie.title)}
 										style={{
 											padding: '0.375rem 0.75rem',
 											border: 'none',
@@ -419,9 +432,85 @@ const MoviesList = memo(
 					))}
 				</tbody>
 			</table>
-		);
-	},
-);
+
+			{/* Pagination */}
+			{pagination.totalPages > 1 && (
+				<div
+					style={{
+						display: 'flex',
+						justifyContent: 'center',
+						alignItems: 'center',
+						gap: '1rem',
+						marginTop: '2rem',
+						padding: '1rem',
+					}}
+				>
+					<button
+						disabled={pagination.page === 1}
+						onClick={() => {
+							if (pagination.page > 1 && globalThis.window !== undefined) {
+								const params = new URLSearchParams(location.search);
+								params.set('page', String(pagination.page - 1));
+								const newUrl = `${location.pathname}?${params.toString()}`;
+								globalThis.history.replaceState({}, '', newUrl);
+								// Force re-fetch by updating location
+								globalThis.dispatchEvent(new PopStateEvent('popstate'));
+							}
+						}}
+						style={{
+							padding: '0.5rem 1rem',
+							border: '1px solid #e5e7eb',
+							background: pagination.page === 1 ? '#f3f4f6' : 'white',
+							color: pagination.page === 1 ? '#9ca3af' : '#374151',
+							borderRadius: '4px',
+							cursor: pagination.page === 1 ? 'not-allowed' : 'pointer',
+							opacity: pagination.page === 1 ? 0.5 : 1,
+						}}
+					>
+						Previous
+					</button>
+					<span style={{color: '#6b7280'}}>
+						Page {pagination.page} of {pagination.totalPages}
+					</span>
+					<button
+						disabled={pagination.page === pagination.totalPages}
+						onClick={() => {
+							if (
+								pagination.page < pagination.totalPages &&
+								globalThis.window !== undefined
+							) {
+								const params = new URLSearchParams(location.search);
+								params.set('page', String(pagination.page + 1));
+								const newUrl = `${location.pathname}?${params.toString()}`;
+								globalThis.history.replaceState({}, '', newUrl);
+								// Force re-fetch by updating location
+								globalThis.dispatchEvent(new PopStateEvent('popstate'));
+							}
+						}}
+						style={{
+							padding: '0.5rem 1rem',
+							border: '1px solid #e5e7eb',
+							background:
+								pagination.page === pagination.totalPages ? '#f3f4f6' : 'white',
+							color:
+								pagination.page === pagination.totalPages
+									? '#9ca3af'
+									: '#374151',
+							borderRadius: '4px',
+							cursor:
+								pagination.page === pagination.totalPages
+									? 'not-allowed'
+									: 'pointer',
+							opacity: pagination.page === pagination.totalPages ? 0.5 : 1,
+						}}
+					>
+						Next
+					</button>
+				</div>
+			)}
+		</>
+	);
+});
 
 MoviesList.displayName = 'MoviesList';
 
@@ -549,87 +638,14 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 		pagination: PaginationData;
 	};
 
-	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
 
-	// Get current search and page from URL params
+	// Get current search from URL params
 	const currentSearch = searchParams.get('search') || '';
-	const currentPage = Number(searchParams.get('page') || 1);
-	const limit = Number(searchParams.get('limit') || 20);
 
-	const [movies, setMovies] = useState<Movie[]>([]);
-	const [pagination, setPagination] = useState<PaginationData>({
-		page: 1,
-		limit: 20,
-		totalCount: 0,
-		totalPages: 0,
-	});
-	const [loading, setLoading] = useState(true);
-
-	// Movies fetch function
-	const fetchMovies = useCallback(
-		async (targetPage = currentPage, targetSearch = currentSearch) => {
-			if (globalThis.window === undefined) return;
-
-			const token = globalThis.localStorage.getItem('adminToken');
-			if (!token) {
-				globalThis.location.href = '/admin/login';
-				return;
-			}
-
-			setLoading(true);
-
-			try {
-				const searchParameter = targetSearch
-					? `&search=${encodeURIComponent(targetSearch)}`
-					: '';
-				const response = await fetch(
-					`${apiUrl}/admin/movies?page=${targetPage}&limit=${limit}${searchParameter}`,
-					{
-						headers: {Authorization: `Bearer ${token}`},
-					},
-				);
-
-				if (response.status === 401) {
-					globalThis.localStorage.removeItem('adminToken');
-					globalThis.location.href = '/admin/login';
-					return;
-				}
-
-				if (!response.ok) {
-					throw new Error('Failed to fetch movies');
-				}
-
-				const data = (await response.json()) as MoviesResponse;
-				setMovies(data.movies || []);
-				setPagination(
-					data.pagination || {
-						page: 1,
-						limit: 20,
-						totalCount: 0,
-						totalPages: 0,
-					},
-				);
-			} catch (error) {
-				console.error('Error loading movies:', error);
-			} finally {
-				setLoading(false);
-			}
-		},
-		[apiUrl, currentPage, currentSearch, limit],
-	);
-
-	// Initial load and URL param changes
-	useEffect(() => {
-		fetchMovies(currentPage, currentSearch);
-	}, [fetchMovies, currentPage, currentSearch]);
-
-	// Handle search - simple and direct
+	// Handle search - only update URL
 	const handleSearch = useCallback(
 		(query: string) => {
-			// Fetch movies with new search
-			fetchMovies(1, query);
-
 			// Update URL without causing React Router re-render
 			if (globalThis.window !== undefined) {
 				const newParams = new URLSearchParams(searchParams);
@@ -643,117 +659,12 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 
 				const newUrl = `${globalThis.location.pathname}?${newParams.toString()}`;
 				globalThis.history.replaceState({}, '', newUrl);
+				// Trigger popstate to update MoviesList
+				globalThis.dispatchEvent(new PopStateEvent('popstate'));
 			}
 		},
-		[fetchMovies, searchParams],
+		[searchParams],
 	);
-
-	// Handle delete
-	const handleDelete = async (movieId: string, movieTitle: string) => {
-		const success = await deleteMovie(movieId, movieTitle, apiUrl);
-		if (success) {
-			fetchMovies(currentPage, currentSearch);
-		}
-	};
-
-	// Handle merge
-	const handleMerge = async (sourceId: string, sourceTitle: string) => {
-		const targetId = showMergeDialog(sourceId, sourceTitle);
-		if (targetId) {
-			const success = await mergeMovies(
-				sourceId,
-				targetId,
-				sourceTitle,
-				apiUrl,
-			);
-			if (success) {
-				fetchMovies(currentPage, currentSearch);
-			}
-		}
-	};
-
-	if (loading) {
-		return (
-			<div
-				style={{
-					maxWidth: '1200px',
-					margin: '0 auto',
-					padding: '2rem',
-				}}
-			>
-				<div
-					style={{
-						display: 'flex',
-						justifyContent: 'space-between',
-						alignItems: 'center',
-						marginBottom: '2rem',
-					}}
-				>
-					<h1 style={{color: '#333', margin: 0}}>Movies Management</h1>
-					<div style={{display: 'flex', gap: '1rem', alignItems: 'center'}}>
-						<a
-							href="/"
-							style={{
-								padding: '0.5rem 1rem',
-								background: '#16a34a',
-								color: 'white',
-								textDecoration: 'none',
-								borderRadius: '4px',
-								fontSize: '0.875rem',
-							}}
-						>
-							トップページ
-						</a>
-						<a
-							href="/admin/movies/selections"
-							style={{
-								padding: '0.5rem 1rem',
-								background: '#4f46e5',
-								color: 'white',
-								textDecoration: 'none',
-								borderRadius: '4px',
-								fontSize: '0.875rem',
-							}}
-						>
-							Movie Selections
-						</a>
-						<button
-							onClick={handleLogout}
-							style={{
-								padding: '0.5rem 1rem',
-								background: '#dc2626',
-								color: 'white',
-								border: 'none',
-								borderRadius: '4px',
-								cursor: 'pointer',
-								fontSize: '0.875rem',
-							}}
-						>
-							Logout
-						</button>
-					</div>
-				</div>
-				<div
-					style={{
-						background: 'white',
-						borderRadius: '8px',
-						boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-						overflow: 'hidden',
-					}}
-				>
-					<div
-						style={{
-							textAlign: 'center',
-							padding: '3rem',
-							color: '#666',
-						}}
-					>
-						Loading movies...
-					</div>
-				</div>
-			</div>
-		);
-	}
 
 	return (
 		<div
@@ -825,8 +736,37 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 				</div>
 			</div>
 
-			{/* Search */}
-			<SearchInput initialValue={currentSearch} onSearchChange={handleSearch} />
+			{/* Search - Uncontrolled input to prevent re-render issues */}
+			<div style={{marginBottom: '2rem'}}>
+				<div style={{position: 'relative', maxWidth: '400px'}}>
+					<input
+						type="text"
+						defaultValue={currentSearch}
+						onChange={(e) => {
+							const {value} = e.target;
+							// Clear existing timeout
+							if ((globalThis as any).searchTimeout) {
+								clearTimeout((globalThis as any).searchTimeout);
+							}
+
+							// Set new timeout for debounced search
+							(globalThis as any).searchTimeout = setTimeout(() => {
+								handleSearch(value);
+							}, 300);
+						}}
+						placeholder="Search movies by title..."
+						style={{
+							width: '100%',
+							padding: '0.75rem 2.5rem 0.75rem 1rem',
+							border: '1px solid #e5e7eb',
+							borderRadius: '8px',
+							fontSize: '1rem',
+							background: 'white',
+							boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+						}}
+					/>
+				</div>
+			</div>
 
 			{/* Movies Table */}
 			<div
@@ -837,88 +777,10 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 					overflow: 'hidden',
 				}}
 			>
-				<MoviesList
-					movies={movies}
-					onDelete={handleDelete}
-					onMerge={handleMerge}
-				/>
+				<MoviesList apiUrl={apiUrl} />
 			</div>
 
-			{/* Pagination */}
-			{pagination.totalPages > 1 && (
-				<div
-					style={{
-						display: 'flex',
-						justifyContent: 'center',
-						alignItems: 'center',
-						gap: '1rem',
-						marginTop: '2rem',
-					}}
-				>
-					<button
-						disabled={pagination.page === 1}
-						onClick={() => {
-							if (pagination.page > 1) {
-								const newSearchParams = new URLSearchParams();
-								if (currentSearch) {
-									newSearchParams.set('search', currentSearch);
-								}
-
-								newSearchParams.set('page', (pagination.page - 1).toString());
-								newSearchParams.set('limit', limit.toString());
-								navigate(`?${newSearchParams.toString()}`);
-							}
-						}}
-						style={{
-							padding: '0.5rem 1rem',
-							border: '1px solid #e5e7eb',
-							background: pagination.page === 1 ? '#f3f4f6' : 'white',
-							color: pagination.page === 1 ? '#9ca3af' : '#374151',
-							borderRadius: '4px',
-							cursor: pagination.page === 1 ? 'not-allowed' : 'pointer',
-							opacity: pagination.page === 1 ? 0.5 : 1,
-						}}
-					>
-						Previous
-					</button>
-					<span style={{color: '#6b7280'}}>
-						Page {pagination.page} of {pagination.totalPages}
-					</span>
-					<button
-						disabled={pagination.page === pagination.totalPages}
-						onClick={() => {
-							if (pagination.page < pagination.totalPages) {
-								const newSearchParams = new URLSearchParams();
-								if (currentSearch) {
-									newSearchParams.set('search', currentSearch);
-								}
-
-								newSearchParams.set('page', (pagination.page + 1).toString());
-								newSearchParams.set('limit', limit.toString());
-								navigate(`?${newSearchParams.toString()}`);
-							}
-						}}
-						style={{
-							padding: '0.5rem 1rem',
-							border: '1px solid #e5e7eb',
-							background:
-								pagination.page === pagination.totalPages ? '#f3f4f6' : 'white',
-							color:
-								pagination.page === pagination.totalPages
-									? '#9ca3af'
-									: '#374151',
-							borderRadius: '4px',
-							cursor:
-								pagination.page === pagination.totalPages
-									? 'not-allowed'
-									: 'pointer',
-							opacity: pagination.page === pagination.totalPages ? 0.5 : 1,
-						}}
-					>
-						Next
-					</button>
-				</div>
-			)}
+			{/* Pagination is now handled inside MoviesList */}
 		</div>
 	);
 }
