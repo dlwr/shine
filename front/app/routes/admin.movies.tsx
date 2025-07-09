@@ -125,7 +125,7 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 		fetchMovies();
 
 		// Listen for URL changes
-		const handleUrlChange = () => fetchMovies();
+		const handleUrlChange = async () => fetchMovies();
 		globalThis.addEventListener('urlchange', handleUrlChange);
 		return () => globalThis.removeEventListener('urlchange', handleUrlChange);
 	}, [apiUrl]); // Only depend on apiUrl, use custom event for URL changes
