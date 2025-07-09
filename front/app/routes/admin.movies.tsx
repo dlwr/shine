@@ -649,7 +649,7 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 	// Initial load and URL param changes
 	useEffect(() => {
 		fetchMovies(currentPage, currentSearch);
-	}, [apiUrl, currentPage, currentSearch, limit]);
+	}, [fetchMovies, currentPage, currentSearch]);
 
 	// Create stable reference for handleSearch to prevent SearchInput re-renders
 	const handleSearchRef = useRef<(query: string) => void>(undefined);
