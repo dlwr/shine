@@ -32,6 +32,7 @@ async function main() {
 		const arguments_ = process.argv.slice(2);
 		const yearIndex = arguments_.indexOf('--year');
 		const winnersOnlyFlag = arguments_.includes('--winners-only');
+		const dryRunFlag = arguments_.includes('--dry-run');
 		let targetYear: number | undefined;
 
 		if (yearIndex !== -1 && arguments_[yearIndex + 1]) {
@@ -90,6 +91,10 @@ async function main() {
 			searchParameters.append('winners-only', 'true');
 		}
 
+		if (dryRunFlag) {
+			searchParameters.append('dry-run', 'true');
+		}
+
 		if (searchParameters.toString()) {
 			url += `?${searchParameters.toString()}`;
 		}
@@ -122,6 +127,7 @@ function showUsage() {
 	console.log('オプション:');
 	console.log('  --year <年>      特定の年のみ処理 (例: --year 2024)');
 	console.log('  --winners-only   受賞作品のisWinnerのみを更新（軽量モード）');
+	console.log('  --dry-run        実際の書き込みは行わず、処理内容のみ表示');
 	console.log('  --help, -h       このヘルプを表示');
 	console.log('');
 	console.log('説明:');
@@ -144,6 +150,7 @@ function showUsage() {
 	console.log(
 		'  pnpm run scrapers:cannes-film-festival --year 2024 --winners-only',
 	);
+	console.log('  pnpm run scrapers:cannes-film-festival --dry-run');
 }
 
 // ヘルプオプションの処理

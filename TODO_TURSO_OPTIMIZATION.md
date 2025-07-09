@@ -11,20 +11,24 @@ Tursoの月次書き込み制限に達したため、データベース書き込
 ## TODO リスト
 
 ### 優先度: 高
-- [ ] movie-import-from-list.ts: バッチ挿入の実装（translations, posterUrls）
-- [ ] movie-import-from-list.ts: 更新前の差分チェック実装（既存データと同じなら更新しない）
-- [ ] cannes-film-festival.ts: バッチ挿入の実装（translations, posterUrls, referenceUrls）
-- [ ] academy-awards.ts: バッチ挿入の実装
-- [ ] japan-academy-awards.ts: バッチ挿入の実装
+- [x] movie-import-from-list.ts: バッチ挿入の実装（translations, posterUrls）
+- [x] movie-import-from-list.ts: 更新前の差分チェック実装（既存データと同じなら更新しない）
+- [x] cannes-film-festival.ts: バッチ挿入の実装（translations, posterUrls, referenceUrls）
+- [x] academy-awards.ts: バッチ挿入の実装
+- [x] japan-academy-awards.ts: バッチ挿入の実装
 
 ### 優先度: 中
-- [ ] cannes-film-festival.ts: ポスターサイズを1つに削減（w342のみ保存）
-- [ ] japanese-translations.ts: バッチ更新の実装
-- [ ] movie-posters.ts: バッチ挿入の実装
-- [ ] 全スクレイパー: onConflictDoUpdateの使用を最小限に（必要な場合のみ）
+- [x] cannes-film-festival.ts: ポスターサイズを1つに削減（w342のみ保存）
+- [x] japanese-translations.ts: バッチ更新の実装
+- [x] movie-posters.ts: バッチ挿入の実装
+- [x] 全スクレイパー: onConflictDoUpdateの使用を最小限に（必要な場合のみ）
 
 ### 優先度: 低
-- [ ] 全スクレイパー: --dry-runオプションの実装（書き込みせずに処理内容を確認）
+- [x] 全スクレイパー: --dry-runオプションの実装（書き込みせずに処理内容を確認）
+  - movie-import-from-list.ts: 実装済み
+  - cannes-film-festival.ts: 実装済み
+  - japan-academy-awards.ts: 既に実装済み
+  - その他のスクレイパー: 未実装（必要に応じて追加）
 
 ## 実装例
 
@@ -56,3 +60,9 @@ if (needsUpdate) {
 - 書き込み回数を1/5～1/7に削減
 - Tursoの月次制限内での運用が可能に
 - スクレイパーの実行時間も短縮
+
+## 実装完了の成果
+- すべてのスクレイパーでバッチ挿入を実装
+- 差分チェックにより不要な更新を削除
+- onConflictDoUpdateの使用を最小限に（nominations、translations、ceremoniesのみ）
+- --dry-runオプションで事前確認が可能に

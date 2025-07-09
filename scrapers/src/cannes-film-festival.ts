@@ -39,6 +39,7 @@ let masterData: MasterData | undefined;
 let environment_: Environment;
 let TMDB_API_KEY: string | undefined;
 let tmdbConfiguration: TMDatabaseConfiguration | undefined;
+let isDryRun = false;
 
 export default {
 	async fetch(request: Request, environment: Environment): Promise<Response> {
@@ -48,8 +49,16 @@ export default {
 		const url = new URL(request.url);
 		const yearParameter = url.searchParams.get('year');
 		const winnersOnlyParameter = url.searchParams.get('winners-only');
+		const dryRunParameter = url.searchParams.get('dry-run');
+		isDryRun = dryRunParameter === 'true';
 
 		try {
+			if (isDryRun) {
+				console.log(
+					'[DRY RUN MODE] No actual database operations will be performed',
+				);
+			}
+
 			if (winnersOnlyParameter === 'true') {
 				// 受賞作品のみ更新
 				if (yearParameter) {
@@ -123,6 +132,17 @@ async function seedCannesOrganization(): Promise<void> {
 
 async function fetchMasterData(): Promise<MasterData> {
 	if (masterData) return masterData;
+
+	if (isDryRun) {
+		// Dry run mode - return mock data
+		masterData = {
+			organizationUid: 'mock-cannes-uid',
+			palmeDOrCategoryUid: 'mock-palme-dor-uid',
+			grandPrixCategoryUid: 'mock-grand-prix-uid',
+			ceremonies: new Map(),
+		};
+		return masterData;
+	}
 
 	// 組織が存在しない場合は作成
 	await seedCannesOrganization();
@@ -235,46 +255,54 @@ export async function scrapeCannesFilmFestival() {
 				}
 
 				// バッチでデータを挿入
-				const database = getDatabase(environment_);
+				if (!isDryRun) {
+					const database = getDatabase(environment_);
 
-				if (translationsBatch.length > 0) {
-					console.log(
-						`Inserting ${translationsBatch.length} translations in batch...`,
-					);
-					await database
-						.insert(translations)
-						.values(translationsBatch)
-						.onConflictDoNothing();
-				}
+					if (translationsBatch.length > 0) {
+						console.log(
+							`Inserting ${translationsBatch.length} translations in batch...`,
+						);
+						await database
+							.insert(translations)
+							.values(translationsBatch)
+							.onConflictDoNothing();
+					}
 
-				if (posterUrlsBatch.length > 0) {
-					console.log(
-						`Inserting ${posterUrlsBatch.length} poster URLs in batch...`,
-					);
-					await database
-						.insert(posterUrls)
-						.values(posterUrlsBatch)
-						.onConflictDoNothing();
-				}
+					if (posterUrlsBatch.length > 0) {
+						console.log(
+							`Inserting ${posterUrlsBatch.length} poster URLs in batch...`,
+						);
+						await database
+							.insert(posterUrls)
+							.values(posterUrlsBatch)
+							.onConflictDoNothing();
+					}
 
-				if (referenceUrlsBatch.length > 0) {
-					console.log(
-						`Inserting ${referenceUrlsBatch.length} reference URLs in batch...`,
-					);
-					await database
-						.insert(referenceUrls)
-						.values(referenceUrlsBatch)
-						.onConflictDoNothing();
-				}
+					if (referenceUrlsBatch.length > 0) {
+						console.log(
+							`Inserting ${referenceUrlsBatch.length} reference URLs in batch...`,
+						);
+						await database
+							.insert(referenceUrls)
+							.values(referenceUrlsBatch)
+							.onConflictDoNothing();
+					}
 
-				if (nominationsBatch.length > 0) {
-					console.log(
-						`Inserting ${nominationsBatch.length} nominations in batch...`,
-					);
-					await database
-						.insert(nominations)
-						.values(nominationsBatch)
-						.onConflictDoNothing();
+					if (nominationsBatch.length > 0) {
+						console.log(
+							`Inserting ${nominationsBatch.length} nominations in batch...`,
+						);
+						await database
+							.insert(nominations)
+							.values(nominationsBatch)
+							.onConflictDoNothing();
+					}
+				} else {
+					console.log(`\n[DRY RUN] Would insert for ${year}:`);
+					console.log(`  - ${translationsBatch.length} translations`);
+					console.log(`  - ${posterUrlsBatch.length} poster URLs`);
+					console.log(`  - ${referenceUrlsBatch.length} reference URLs`);
+					console.log(`  - ${nominationsBatch.length} nominations`);
 				}
 
 				console.log(`Processed ${movies.length} movies for ${year}`);
@@ -325,46 +353,54 @@ export async function scrapeCannesFilmFestivalYear(year: number) {
 		}
 
 		// バッチでデータを挿入
-		const database = getDatabase(environment_);
+		if (isDryRun) {
+			console.log(`\n[DRY RUN] Would insert for year ${year}:`);
+			console.log(`  - ${translationsBatch.length} translations`);
+			console.log(`  - ${posterUrlsBatch.length} poster URLs`);
+			console.log(`  - ${referenceUrlsBatch.length} reference URLs`);
+			console.log(`  - ${nominationsBatch.length} nominations`);
+		} else {
+			const database = getDatabase(environment_);
 
-		if (translationsBatch.length > 0) {
-			console.log(
-				`Inserting ${translationsBatch.length} translations in batch...`,
-			);
-			await database
-				.insert(translations)
-				.values(translationsBatch)
-				.onConflictDoNothing();
-		}
+			if (translationsBatch.length > 0) {
+				console.log(
+					`Inserting ${translationsBatch.length} translations in batch...`,
+				);
+				await database
+					.insert(translations)
+					.values(translationsBatch)
+					.onConflictDoNothing();
+			}
 
-		if (posterUrlsBatch.length > 0) {
-			console.log(
-				`Inserting ${posterUrlsBatch.length} poster URLs in batch...`,
-			);
-			await database
-				.insert(posterUrls)
-				.values(posterUrlsBatch)
-				.onConflictDoNothing();
-		}
+			if (posterUrlsBatch.length > 0) {
+				console.log(
+					`Inserting ${posterUrlsBatch.length} poster URLs in batch...`,
+				);
+				await database
+					.insert(posterUrls)
+					.values(posterUrlsBatch)
+					.onConflictDoNothing();
+			}
 
-		if (referenceUrlsBatch.length > 0) {
-			console.log(
-				`Inserting ${referenceUrlsBatch.length} reference URLs in batch...`,
-			);
-			await database
-				.insert(referenceUrls)
-				.values(referenceUrlsBatch)
-				.onConflictDoNothing();
-		}
+			if (referenceUrlsBatch.length > 0) {
+				console.log(
+					`Inserting ${referenceUrlsBatch.length} reference URLs in batch...`,
+				);
+				await database
+					.insert(referenceUrls)
+					.values(referenceUrlsBatch)
+					.onConflictDoNothing();
+			}
 
-		if (nominationsBatch.length > 0) {
-			console.log(
-				`Inserting ${nominationsBatch.length} nominations in batch...`,
-			);
-			await database
-				.insert(nominations)
-				.values(nominationsBatch)
-				.onConflictDoNothing();
+			if (nominationsBatch.length > 0) {
+				console.log(
+					`Inserting ${nominationsBatch.length} nominations in batch...`,
+				);
+				await database
+					.insert(nominations)
+					.values(nominationsBatch)
+					.onConflictDoNothing();
+			}
 		}
 
 		console.log(`Processed ${movies.length} movies for ${year}`);
@@ -1163,6 +1199,15 @@ async function processMovieForBatch(
 	| undefined
 > {
 	try {
+		if (isDryRun) {
+			console.log(
+				`[DRY RUN] Would process movie: ${movieInfo.title} (${
+					movieInfo.year
+				}) - ${movieInfo.isWinner ? 'Winner' : 'Nominee'}`,
+			);
+			return undefined;
+		}
+
 		const database = getDatabase(environment_);
 		// 映画の詳細情報を取得
 		const movieDetails = await fetchMovieDetails(
@@ -1314,6 +1359,15 @@ async function processMovie(
 	master: MasterData,
 ) {
 	try {
+		if (isDryRun) {
+			console.log(
+				`[DRY RUN] Would process movie: ${movieInfo.title} (${
+					movieInfo.year
+				}) - ${movieInfo.isWinner ? 'Winner' : 'Nominee'}`,
+			);
+			return;
+		}
+
 		const database = getDatabase(environment_);
 
 		// 映画の詳細情報を取得

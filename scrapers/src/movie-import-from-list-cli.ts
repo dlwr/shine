@@ -9,15 +9,25 @@ config({path: '../.dev.vars'});
 async function main(): Promise<void> {
 	const arguments_ = process.argv.slice(2);
 
+	// --dry-runオプションをチェック
+	const dryRunIndex = arguments_.indexOf('--dry-run');
+	const isDryRun = dryRunIndex !== -1;
+	if (isDryRun) {
+		arguments_.splice(dryRunIndex, 1);
+	}
+
 	if (arguments_.length < 2) {
 		console.log(
-			'Usage: movie-import-from-list-cli <json-file-path> <award-name> [limit]',
+			'Usage: movie-import-from-list-cli <json-file-path> <award-name> [limit] [--dry-run]',
 		);
 		console.log(
 			'Example: movie-import-from-list-cli ./tmp/1000_movies.json "Best 1000 Movies"',
 		);
 		console.log(
 			'Example: movie-import-from-list-cli ./tmp/1000_movies.json "Best 1000 Movies" 5',
+		);
+		console.log(
+			'Example: movie-import-from-list-cli ./tmp/1000_movies.json "Best 1000 Movies" --dry-run',
 		);
 		process.exit(1);
 	}
@@ -70,6 +80,7 @@ async function main(): Promise<void> {
 			'Selected Films',
 			environment,
 			limit,
+			isDryRun,
 		);
 
 		console.log('---');

@@ -37,6 +37,7 @@ type TMDBConfiguration = {
 let environment_: Environment;
 let TMDB_API_KEY: string;
 let tmdbConfiguration: TMDBConfiguration | undefined;
+let isDryRun = false;
 
 /**
  * Movie-list.jsonから映画をインポートする
@@ -47,7 +48,9 @@ export async function importMoviesFromList(
 	categoryName: string,
 	environment: Environment,
 	limit?: number,
+	dryRun = false,
 ): Promise<void> {
+	isDryRun = dryRun;
 	environment_ = environment;
 	TMDB_API_KEY = environment.TMDB_API_KEY || '';
 
@@ -65,8 +68,14 @@ export async function importMoviesFromList(
 	// Limitが指定されている場合は制限
 	const movieTitles = limit ? allMovieTitles.slice(0, limit) : allMovieTitles;
 
+	if (isDryRun) {
+		console.log(
+			'[DRY RUN MODE] No actual database operations will be performed',
+		);
+	}
+
 	console.log(
-		`Importing ${movieTitles.length}${
+		`${isDryRun ? '[DRY RUN] Would import' : 'Importing'} ${movieTitles.length}${
 			limit ? ` (limited from ${allMovieTitles.length})` : ''
 		} movies from ${filePath}`,
 	);
@@ -107,35 +116,42 @@ export async function importMoviesFromList(
 	}
 
 	// バッチでデータを挿入
-	const database = getDatabase(environment_);
+	if (!isDryRun) {
+		const database = getDatabase(environment_);
 
-	if (translationsBatch.length > 0) {
-		console.log(
-			`\nInserting ${translationsBatch.length} translations in batch...`,
-		);
-		await database
-			.insert(translations)
-			.values(translationsBatch)
-			.onConflictDoNothing();
+		if (translationsBatch.length > 0) {
+			console.log(
+				`\nInserting ${translationsBatch.length} translations in batch...`,
+			);
+			await database
+				.insert(translations)
+				.values(translationsBatch)
+				.onConflictDoNothing();
+		}
+
+		if (posterUrlsBatch.length > 0) {
+			console.log(`Inserting ${posterUrlsBatch.length} poster URLs in batch...`);
+			await database
+				.insert(posterUrls)
+				.values(posterUrlsBatch)
+				.onConflictDoNothing();
+		}
+
+		if (nominationsBatch.length > 0) {
+			console.log(`Inserting ${nominationsBatch.length} nominations in batch...`);
+			await database
+				.insert(nominations)
+				.values(nominationsBatch)
+				.onConflictDoNothing();
+		}
+	} else {
+		console.log(`\n[DRY RUN] Would insert:`);
+		console.log(`  - ${translationsBatch.length} translations`);
+		console.log(`  - ${posterUrlsBatch.length} poster URLs`);
+		console.log(`  - ${nominationsBatch.length} nominations`);
 	}
 
-	if (posterUrlsBatch.length > 0) {
-		console.log(`Inserting ${posterUrlsBatch.length} poster URLs in batch...`);
-		await database
-			.insert(posterUrls)
-			.values(posterUrlsBatch)
-			.onConflictDoNothing();
-	}
-
-	if (nominationsBatch.length > 0) {
-		console.log(`Inserting ${nominationsBatch.length} nominations in batch...`);
-		await database
-			.insert(nominations)
-			.values(nominationsBatch)
-			.onConflictDoNothing();
-	}
-
-	console.log('\nImport completed!');
+	console.log(`\n${isDryRun ? '[DRY RUN] ' : ''}Import completed!`);
 }
 
 /**
@@ -149,6 +165,17 @@ async function createAwardStructure(
 	categoryUid: string;
 	ceremonyUid: string;
 }> {
+	if (isDryRun) {
+		console.log(
+			`[DRY RUN] Would create award structure for: ${awardName} - ${categoryName}`,
+		);
+		return {
+			organizationUid: 'dry-run-org-uid',
+			categoryUid: 'dry-run-category-uid',
+			ceremonyUid: 'dry-run-ceremony-uid',
+		};
+	}
+
 	const database = getDatabase(environment_);
 
 	// 組織を作成/取得
@@ -242,8 +269,6 @@ async function processMovieForBatch(
 	  }
 	| undefined
 > {
-	const database = getDatabase(environment_);
-
 	// TMDBで映画を検索
 	const tmdbMovie = await searchMovieOnTMDB(title);
 
@@ -251,6 +276,17 @@ async function processMovieForBatch(
 		console.log(`  TMDB search failed for: ${title}`);
 		return undefined;
 	}
+
+	if (isDryRun) {
+		console.log(
+			`[DRY RUN] Would process movie: ${tmdbMovie.title} (${tmdbMovie.release_date?.split('-')[0]}) ${
+				tmdbMovie.imdb_id ? `IMDb: ${tmdbMovie.imdb_id}` : ''
+			}`,
+		);
+		return undefined;
+	}
+
+	const database = getDatabase(environment_);
 
 	// 既存の映画をチェック（TMDB IDまたはIMDb IDで）
 	let existingMovie: typeof movies.$inferSelect | undefined;
