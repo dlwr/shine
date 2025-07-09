@@ -252,7 +252,7 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async (c) => {
 			.update(movies)
 			.set({
 				tmdbId: tmdbId || undefined,
-				updatedAt: sql`(unixepoch())`,
+				updatedAt: Math.floor(Date.now() / 1000),
 			})
 			.where(eq(movies.uid, movieId));
 
@@ -573,7 +573,7 @@ adminRoutes.put('/nominations/:nominationId', authMiddleware, async (c) => {
 			.set({
 				isWinner: isWinner ? 1 : 0,
 				specialMention: specialMention || undefined,
-				updatedAt: sql`(unixepoch())`,
+				updatedAt: Math.floor(Date.now() / 1000),
 			})
 			.where(eq(nominations.uid, nominationId));
 
@@ -680,7 +680,7 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 					.update(movies)
 					.set({
 						tmdbId: movieTmdbId,
-						updatedAt: sql`(unixepoch())`,
+						updatedAt: Math.floor(Date.now() / 1000),
 					})
 					.where(eq(movies.uid, movieId));
 
@@ -796,11 +796,15 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 			});
 		} catch (fetchError) {
 			console.error('Error during TMDb auto-fetch:', fetchError);
-			const errorMessage = fetchError instanceof Error ? fetchError.message : 'Unknown error';
-			return c.json({
-				error: 'TMDbデータの自動取得に失敗しました',
-				details: errorMessage,
-			}, 500);
+			const errorMessage =
+				fetchError instanceof Error ? fetchError.message : 'Unknown error';
+			return c.json(
+				{
+					error: 'TMDbデータの自動取得に失敗しました',
+					details: errorMessage,
+				},
+				500,
+			);
 		}
 	} catch (error) {
 		console.error('Error auto-fetching TMDb data:', error);
@@ -1104,7 +1108,7 @@ adminRoutes.post(
 				// Update target movie with merged metadata (preserve existing if target has data)
 
 				const updateData: any = {
-					updatedAt: sql`(unixepoch())`,
+					updatedAt: Math.floor(Date.now() / 1000),
 				};
 
 				if (!targetMovie.imdbId && sourceMovie.imdbId) {
