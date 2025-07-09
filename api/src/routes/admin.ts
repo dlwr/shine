@@ -796,7 +796,11 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 			});
 		} catch (fetchError) {
 			console.error('Error during TMDb auto-fetch:', fetchError);
-			return c.json({error: 'TMDbデータの自動取得に失敗しました'}, 500);
+			const errorMessage = fetchError instanceof Error ? fetchError.message : 'Unknown error';
+			return c.json({
+				error: 'TMDbデータの自動取得に失敗しました',
+				details: errorMessage,
+			}, 500);
 		}
 	} catch (error) {
 		console.error('Error auto-fetching TMDb data:', error);
