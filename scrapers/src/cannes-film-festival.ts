@@ -204,13 +204,77 @@ export async function scrapeCannesFilmFestival() {
 
 			try {
 				const movies = await scrapeYearPage(year);
+				const ceremonyUid = await getOrCreateCeremony(
+					year,
+					master.organizationUid,
+				);
+
+				// バッチ処理のためのデータを収集
+				const translationsBatch: Array<typeof translations.$inferInsert> = [];
+				const posterUrlsBatch: Array<typeof posterUrls.$inferInsert> = [];
+				const referenceUrlsBatch: Array<typeof referenceUrls.$inferInsert> = [];
+				const nominationsBatch: Array<typeof nominations.$inferInsert> = [];
 
 				for (const movie of movies) {
-					await processMovie(
+					const batchData = await processMovieForBatch(
 						movie,
-						await getOrCreateCeremony(year, master.organizationUid),
+						ceremonyUid,
 						master,
 					);
+					if (batchData) {
+						translationsBatch.push(...batchData.translations);
+						posterUrlsBatch.push(...batchData.posterUrls);
+						if (batchData.referenceUrl) {
+							referenceUrlsBatch.push(batchData.referenceUrl);
+						}
+
+						if (batchData.nomination) {
+							nominationsBatch.push(batchData.nomination);
+						}
+					}
+				}
+
+				// バッチでデータを挿入
+				const database = getDatabase(environment_);
+
+				if (translationsBatch.length > 0) {
+					console.log(
+						`Inserting ${translationsBatch.length} translations in batch...`,
+					);
+					await database
+						.insert(translations)
+						.values(translationsBatch)
+						.onConflictDoNothing();
+				}
+
+				if (posterUrlsBatch.length > 0) {
+					console.log(
+						`Inserting ${posterUrlsBatch.length} poster URLs in batch...`,
+					);
+					await database
+						.insert(posterUrls)
+						.values(posterUrlsBatch)
+						.onConflictDoNothing();
+				}
+
+				if (referenceUrlsBatch.length > 0) {
+					console.log(
+						`Inserting ${referenceUrlsBatch.length} reference URLs in batch...`,
+					);
+					await database
+						.insert(referenceUrls)
+						.values(referenceUrlsBatch)
+						.onConflictDoNothing();
+				}
+
+				if (nominationsBatch.length > 0) {
+					console.log(
+						`Inserting ${nominationsBatch.length} nominations in batch...`,
+					);
+					await database
+						.insert(nominations)
+						.values(nominationsBatch)
+						.onConflictDoNothing();
 				}
 
 				console.log(`Processed ${movies.length} movies for ${year}`);
@@ -237,13 +301,70 @@ export async function scrapeCannesFilmFestivalYear(year: number) {
 		console.log(`Processing Cannes ${year}...`);
 
 		const movies = await scrapeYearPage(year);
+		const ceremonyUid = await getOrCreateCeremony(year, master.organizationUid);
+
+		// バッチ処理のためのデータを収集
+		const translationsBatch: Array<typeof translations.$inferInsert> = [];
+		const posterUrlsBatch: Array<typeof posterUrls.$inferInsert> = [];
+		const referenceUrlsBatch: Array<typeof referenceUrls.$inferInsert> = [];
+		const nominationsBatch: Array<typeof nominations.$inferInsert> = [];
 
 		for (const movie of movies) {
-			await processMovie(
-				movie,
-				await getOrCreateCeremony(year, master.organizationUid),
-				master,
+			const batchData = await processMovieForBatch(movie, ceremonyUid, master);
+			if (batchData) {
+				translationsBatch.push(...batchData.translations);
+				posterUrlsBatch.push(...batchData.posterUrls);
+				if (batchData.referenceUrl) {
+					referenceUrlsBatch.push(batchData.referenceUrl);
+				}
+
+				if (batchData.nomination) {
+					nominationsBatch.push(batchData.nomination);
+				}
+			}
+		}
+
+		// バッチでデータを挿入
+		const database = getDatabase(environment_);
+
+		if (translationsBatch.length > 0) {
+			console.log(
+				`Inserting ${translationsBatch.length} translations in batch...`,
 			);
+			await database
+				.insert(translations)
+				.values(translationsBatch)
+				.onConflictDoNothing();
+		}
+
+		if (posterUrlsBatch.length > 0) {
+			console.log(
+				`Inserting ${posterUrlsBatch.length} poster URLs in batch...`,
+			);
+			await database
+				.insert(posterUrls)
+				.values(posterUrlsBatch)
+				.onConflictDoNothing();
+		}
+
+		if (referenceUrlsBatch.length > 0) {
+			console.log(
+				`Inserting ${referenceUrlsBatch.length} reference URLs in batch...`,
+			);
+			await database
+				.insert(referenceUrls)
+				.values(referenceUrlsBatch)
+				.onConflictDoNothing();
+		}
+
+		if (nominationsBatch.length > 0) {
+			console.log(
+				`Inserting ${nominationsBatch.length} nominations in batch...`,
+			);
+			await database
+				.insert(nominations)
+				.values(nominationsBatch)
+				.onConflictDoNothing();
 		}
 
 		console.log(`Processed ${movies.length} movies for ${year}`);
@@ -1025,6 +1146,165 @@ async function fetchMovieDetails(
 			error,
 		);
 		return {};
+	}
+}
+
+async function processMovieForBatch(
+	movieInfo: MovieInfo,
+	ceremonyUid: string,
+	master: MasterData,
+): Promise<
+	| {
+			translations: Array<typeof translations.$inferInsert>;
+			posterUrls: Array<typeof posterUrls.$inferInsert>;
+			referenceUrl?: typeof referenceUrls.$inferInsert;
+			nomination?: typeof nominations.$inferInsert;
+	  }
+	| undefined
+> {
+	try {
+		const database = getDatabase(environment_);
+		// 映画の詳細情報を取得
+		const movieDetails = await fetchMovieDetails(
+			movieInfo.title,
+			movieInfo.year,
+		);
+		// 既存の映画を検索
+		const existingMovies = await database
+			.select({
+				movies,
+				translations,
+			})
+			.from(movies)
+			.innerJoin(
+				translations,
+				and(
+					eq(translations.resourceUid, movies.uid),
+					eq(translations.resourceType, 'movie_title'),
+					eq(translations.languageCode, 'en'),
+					eq(translations.isDefault, 1),
+				),
+			)
+			.where(eq(translations.content, movieInfo.title));
+
+		let movieUid: string;
+		const translationsBatch: Array<typeof translations.$inferInsert> = [];
+		const posterUrlsBatch: Array<typeof posterUrls.$inferInsert> = [];
+
+		if (existingMovies.length > 0) {
+			// 既存の映画が見つかった場合は更新
+			const existingMovie = existingMovies[0].movies;
+			movieUid = existingMovie.uid;
+			// IMDb IDが新しく取得できた場合は更新（差分チェック付き）
+			if (movieDetails.imdbId && !existingMovie.imdbId) {
+				await database
+					.update(movies)
+					.set({
+						imdbId: movieDetails.imdbId,
+						updatedAt: Math.floor(Date.now() / 1000),
+					})
+					.where(eq(movies.uid, movieUid));
+				console.log(
+					`Updated IMDb ID for ${movieInfo.title}: ${movieDetails.imdbId}`,
+				);
+			}
+		} else {
+			// 新規映画の作成
+			const [newMovie] = await database
+				.insert(movies)
+				.values({
+					originalLanguage: 'en',
+					year: movieInfo.year,
+					imdbId: movieDetails.imdbId || undefined,
+				})
+				.returning();
+			if (!newMovie) {
+				throw new Error(`Failed to create movie: ${movieInfo.title}`);
+			}
+
+			movieUid = newMovie.uid;
+			// 英語タイトルをバッチに追加
+			translationsBatch.push({
+				resourceType: 'movie_title',
+				resourceUid: movieUid,
+				languageCode: 'en',
+				content: movieInfo.title,
+				isDefault: 1,
+			});
+		}
+
+		// 日本語タイトルがある場合はバッチに追加
+		if (movieDetails.japaneseTitle) {
+			translationsBatch.push({
+				resourceType: 'movie_title',
+				resourceUid: movieUid,
+				languageCode: 'ja',
+				content: movieDetails.japaneseTitle,
+				isDefault: 0,
+			});
+		}
+
+		// ポスターURLがある場合はバッチに追加（w342のみに削減）
+		if (movieDetails.posterPath) {
+			const config = await fetchTMDatabaseConfiguration();
+			if (config) {
+				const size = 'w342';
+				if (config.images.poster_sizes.includes(size)) {
+					const posterUrl = `${config.images.secure_base_url}${size}${movieDetails.posterPath}`;
+					const width = Number.parseInt(size.slice(1), 10);
+					posterUrlsBatch.push({
+						movieUid,
+						url: posterUrl,
+						width,
+						sourceType: 'tmdb',
+						isPrimary: 1,
+					});
+				}
+			}
+		}
+
+		// 参照URL
+		let referenceUrlData: typeof referenceUrls.$inferInsert | undefined;
+		if (movieInfo.referenceUrl) {
+			referenceUrlData = {
+				movieUid,
+				url: movieInfo.referenceUrl,
+				sourceType: 'wikipedia',
+				languageCode: 'en',
+				isPrimary: 1,
+			};
+		}
+
+		// ノミネーション
+		const categoryUid = movieInfo.isWinner
+			? master.palmeDOrCategoryUid
+			: master.palmeDOrCategoryUid; // コンペティション参加作品もPalme d'Orカテゴリーに登録
+		const nominationData: typeof nominations.$inferInsert = {
+			movieUid,
+			ceremonyUid,
+			categoryUid,
+			isWinner: movieInfo.isWinner ? 1 : 0,
+		};
+
+		console.log(
+			`Processed ${existingMovies.length > 0 ? 'updated' : 'new'} movie: ${
+				movieInfo.title
+			} (${movieInfo.year}) - ${
+				movieInfo.isWinner ? "Palme d'Or Winner" : 'In Competition'
+			} ${movieDetails.imdbId ? `IMDb: ${movieDetails.imdbId}` : ''} ${
+				movieDetails.japaneseTitle ? `JA: ${movieDetails.japaneseTitle}` : ''
+			} ${movieDetails.posterPath ? 'Poster: ✓' : ''}`,
+		);
+
+		return {
+			translations: translationsBatch,
+			posterUrls: posterUrlsBatch,
+			referenceUrl: referenceUrlData,
+			nomination: nominationData,
+		};
+	} catch (error) {
+		console.error(`Error processing movie ${movieInfo.title}:`, error);
+		return undefined;
 	}
 }
 
