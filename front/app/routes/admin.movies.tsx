@@ -252,7 +252,7 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 		fetchMovies(currentPage, currentSearch);
 	}, [apiUrl, currentPage, currentSearch, limit]);
 
-	// Handle search
+	// Handle search - only update local state and fetch data without URL changes
 	const handleSearch = (query: string) => {
 		setSearchQuery(query);
 
@@ -261,17 +261,8 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 		}
 
 		const timeout = setTimeout(() => {
-			// Update URL using React Router's navigate instead of history.pushState
-			const newSearchParams = new URLSearchParams();
-			if (query) {
-				newSearchParams.set('search', query);
-			}
-
-			newSearchParams.set('page', '1');
-			newSearchParams.set('limit', limit.toString());
-
-			// Use replace: true to avoid adding to browser history on every keystroke
-			navigate(`?${newSearchParams.toString()}`, {replace: true});
+			// Fetch movies directly without changing URL to prevent page refresh
+			fetchMovies(1, query);
 		}, 300);
 
 		setSearchTimeout(timeout as unknown as number);
