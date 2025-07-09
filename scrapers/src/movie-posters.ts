@@ -182,7 +182,8 @@ async function saveTMDBId(movieUid: string, tmdbId: number): Promise<void> {
 			.where(eq(movies.uid, movieUid))
 			.limit(1);
 
-		if (existingMovie.length > 0 && existingMovie[0].tmdbId !== null) {
+		// 既にTMDB IDが設定されている場合は何もしない（差分チェック）
+		if (existingMovie.length > 0 && existingMovie[0].tmdbId === tmdbId) {
 			console.log(`  ! TMDB ID は既に存在します: ${existingMovie[0].tmdbId}`);
 			return;
 		}
@@ -201,7 +202,7 @@ async function saveTMDBId(movieUid: string, tmdbId: number): Promise<void> {
 			return;
 		}
 
-		// TMDB IDを更新
+		// TMDB IDを更新（実際に更新が必要な場合のみ）
 		await database.update(movies).set({tmdbId}).where(eq(movies.uid, movieUid));
 
 		console.log(`  ✓ TMDB ID を保存しました: ${tmdbId}`);
@@ -219,7 +220,6 @@ async function savePosterUrls(
 	}
 
 	const database = getDatabase(environment_);
-	let savedCount = 0;
 
 	try {
 		const existingPosters = await database
@@ -229,6 +229,10 @@ async function savePosterUrls(
 
 		const existingUrls = new Set(existingPosters.map((p) => p.url));
 
+		// バッチ挿入用の配列
+		const posterUrlsBatch: Array<typeof posterUrls.$inferInsert> = [];
+		let savedCount = 0;
+
 		for (const poster of posters) {
 			const url = `https://image.tmdb.org/t/p/original${poster.file_path}`;
 
@@ -236,7 +240,7 @@ async function savePosterUrls(
 				continue;
 			}
 
-			await database.insert(posterUrls).values({
+			posterUrlsBatch.push({
 				movieUid,
 				url,
 				width: poster.width,
@@ -247,6 +251,11 @@ async function savePosterUrls(
 			});
 
 			savedCount++;
+		}
+
+		// バッチ挿入
+		if (posterUrlsBatch.length > 0) {
+			await database.insert(posterUrls).values(posterUrlsBatch);
 		}
 
 		return savedCount;
