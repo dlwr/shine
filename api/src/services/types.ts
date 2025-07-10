@@ -25,7 +25,12 @@ export type MovieSelection = {
 	tmdbId: number | undefined;
 	title: string;
 	description: string | undefined;
-	posterUrl: string | undefined;
+	posterUrl?: string | undefined;
+	posterUrls?: Array<{
+		url: string;
+		languageCode: string | undefined;
+		isPrimary: number;
+	}>;
 	imdbUrl: string | undefined;
 	nominations: Array<{
 		uid: string;

@@ -6,6 +6,7 @@ import {awardOrganizations} from 'db/schema/award-organizations';
 import {movieSelections} from 'db/schema/movie-selections';
 import {movies} from 'db/schema/movies';
 import {nominations} from 'db/schema/nominations';
+import {posterUrls} from 'db/schema/poster-urls';
 import {translations} from 'db/schema/translations';
 import {EdgeCache} from '../utils/cache';
 import {BaseService} from './base-service';
@@ -346,15 +347,7 @@ export class SelectionsService extends BaseService {
             LIMIT 1
           )
         `.as('description'),
-				posterUrl: sql`
-          (
-            SELECT url
-            FROM poster_urls
-            WHERE poster_urls.movie_uid = movies.uid
-            ORDER BY poster_urls.is_primary DESC, poster_urls.created_at ASC
-            LIMIT 1
-          )
-        `.as('posterUrl'),
+				// We'll fetch posters separately
 			})
 			.from(movies)
 			.leftJoin(
@@ -405,6 +398,17 @@ export class SelectionsService extends BaseService {
 			.where(eq(nominations.movieUid, movieId))
 			.orderBy(awardCeremonies.year, awardCategories.name);
 
+		// Get all posters for this movie
+		const posters = await this.database
+			.select({
+				url: posterUrls.url,
+				languageCode: posterUrls.languageCode,
+				isPrimary: posterUrls.isPrimary,
+			})
+			.from(posterUrls)
+			.where(eq(posterUrls.movieUid, movieId))
+			.orderBy(sql`${posterUrls.isPrimary} DESC, ${posterUrls.createdAt} ASC`);
+
 		// Get article links
 		const topArticles = await this.database
 			.select({
@@ -437,7 +441,11 @@ export class SelectionsService extends BaseService {
 			tmdbId: movie.tmdbId ?? undefined,
 			title: movie.title || `Unknown Title (${movie.year})`,
 			description: (movie.description as string) || undefined,
-			posterUrl: (movie.posterUrl as string) || undefined,
+			posterUrls: posters.map((p) => ({
+				url: p.url,
+				languageCode: p.languageCode ?? undefined,
+				isPrimary: p.isPrimary ?? 0,
+			})),
 			imdbUrl,
 			nominations: nominationsData.map((nom) => ({
 				uid: nom.nominationUid,
