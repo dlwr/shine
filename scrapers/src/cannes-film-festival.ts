@@ -255,7 +255,13 @@ export async function scrapeCannesFilmFestival() {
 				}
 
 				// バッチでデータを挿入
-				if (!isDryRun) {
+				if (isDryRun) {
+					console.log(`\n[DRY RUN] Would insert for ${year}:`);
+					console.log(`  - ${translationsBatch.length} translations`);
+					console.log(`  - ${posterUrlsBatch.length} poster URLs`);
+					console.log(`  - ${referenceUrlsBatch.length} reference URLs`);
+					console.log(`  - ${nominationsBatch.length} nominations`);
+				} else {
 					const database = getDatabase(environment_);
 
 					if (translationsBatch.length > 0) {
@@ -297,12 +303,6 @@ export async function scrapeCannesFilmFestival() {
 							.values(nominationsBatch)
 							.onConflictDoNothing();
 					}
-				} else {
-					console.log(`\n[DRY RUN] Would insert for ${year}:`);
-					console.log(`  - ${translationsBatch.length} translations`);
-					console.log(`  - ${posterUrlsBatch.length} poster URLs`);
-					console.log(`  - ${referenceUrlsBatch.length} reference URLs`);
-					console.log(`  - ${nominationsBatch.length} nominations`);
 				}
 
 				console.log(`Processed ${movies.length} movies for ${year}`);

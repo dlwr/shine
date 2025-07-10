@@ -116,7 +116,12 @@ export async function importMoviesFromList(
 	}
 
 	// バッチでデータを挿入
-	if (!isDryRun) {
+	if (isDryRun) {
+		console.log(`\n[DRY RUN] Would insert:`);
+		console.log(`  - ${translationsBatch.length} translations`);
+		console.log(`  - ${posterUrlsBatch.length} poster URLs`);
+		console.log(`  - ${nominationsBatch.length} nominations`);
+	} else {
 		const database = getDatabase(environment_);
 
 		if (translationsBatch.length > 0) {
@@ -130,7 +135,9 @@ export async function importMoviesFromList(
 		}
 
 		if (posterUrlsBatch.length > 0) {
-			console.log(`Inserting ${posterUrlsBatch.length} poster URLs in batch...`);
+			console.log(
+				`Inserting ${posterUrlsBatch.length} poster URLs in batch...`,
+			);
 			await database
 				.insert(posterUrls)
 				.values(posterUrlsBatch)
@@ -138,17 +145,14 @@ export async function importMoviesFromList(
 		}
 
 		if (nominationsBatch.length > 0) {
-			console.log(`Inserting ${nominationsBatch.length} nominations in batch...`);
+			console.log(
+				`Inserting ${nominationsBatch.length} nominations in batch...`,
+			);
 			await database
 				.insert(nominations)
 				.values(nominationsBatch)
 				.onConflictDoNothing();
 		}
-	} else {
-		console.log(`\n[DRY RUN] Would insert:`);
-		console.log(`  - ${translationsBatch.length} translations`);
-		console.log(`  - ${posterUrlsBatch.length} poster URLs`);
-		console.log(`  - ${nominationsBatch.length} nominations`);
 	}
 
 	console.log(`\n${isDryRun ? '[DRY RUN] ' : ''}Import completed!`);
