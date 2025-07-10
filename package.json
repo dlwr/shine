@@ -68,7 +68,7 @@
     "@libsql/client": "^0.15.9",
     "dotenv": "^17.1.0",
     "drizzle-orm": "^0.44.2",
-    "zod": "^3.25.76"
+    "zod": "^4.0.2"
   },
   "workspaces": [
     "api",
