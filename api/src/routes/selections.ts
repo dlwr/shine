@@ -208,7 +208,7 @@ async function getMovieByDateSeedPreview(
 		// NOTE: We do NOT save this to the database for preview
 	}
 
-	// Now fetch the full movie details with translations and poster
+	// Now fetch the full movie details with translations
 	const results = await database
 		.select()
 		.from(movies)
@@ -220,7 +220,6 @@ async function getMovieByDateSeedPreview(
 				eq(translations.languageCode, preferredLanguage),
 			),
 		)
-		.leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
 		.where(eq(movies.uid, movieId))
 		.limit(1);
 
@@ -237,16 +236,11 @@ async function getMovieByDateSeedPreview(
 					eq(translations.isDefault, 1),
 				),
 			)
-			.leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
 			.where(eq(movies.uid, movieId))
 			.limit(1);
 
 		if (fallbackResults.length > 0) {
-			const {
-				movies: movie,
-				translations: translation,
-				poster_urls: poster,
-			} = fallbackResults[0];
+			const {movies: movie, translations: translation} = fallbackResults[0];
 
 			const imdbUrl = movie.imdbId
 				? `https://www.imdb.com/title/${movie.imdbId}/`
@@ -255,12 +249,25 @@ async function getMovieByDateSeedPreview(
 			// Get nominations for this movie
 			const movieNominations = await getMovieNominations(database, movie.uid);
 
+			// Get all posters for this movie
+			const posters = await database
+				.select({
+					url: posterUrls.url,
+					languageCode: posterUrls.languageCode,
+					isPrimary: posterUrls.isPrimary,
+				})
+				.from(posterUrls)
+				.where(eq(posterUrls.movieUid, movie.uid))
+				.orderBy(
+					sql`${posterUrls.isPrimary} DESC, ${posterUrls.createdAt} ASC`,
+				);
+
 			return {
 				uid: movie.uid,
 				year: movie.year,
 				originalLanguage: movie.originalLanguage,
 				title: translation?.content,
-				posterUrl: poster?.url,
+				posterUrls: posters,
 				imdbUrl,
 				nominations: movieNominations,
 			};
@@ -271,11 +278,7 @@ async function getMovieByDateSeedPreview(
 		return;
 	}
 
-	const {
-		movies: movie,
-		translations: translation,
-		poster_urls: poster,
-	} = results[0];
+	const {movies: movie, translations: translation} = results[0];
 
 	const imdbUrl = movie.imdbId
 		? `https://www.imdb.com/title/${movie.imdbId}/`
@@ -283,6 +286,17 @@ async function getMovieByDateSeedPreview(
 
 	// Get nominations for this movie
 	const movieNominations = await getMovieNominations(database, movie.uid);
+
+	// Get all posters for this movie
+	const posters = await database
+		.select({
+			url: posterUrls.url,
+			languageCode: posterUrls.languageCode,
+			isPrimary: posterUrls.isPrimary,
+		})
+		.from(posterUrls)
+		.where(eq(posterUrls.movieUid, movie.uid))
+		.orderBy(sql`${posterUrls.isPrimary} DESC, ${posterUrls.createdAt} ASC`);
 
 	// Get article links for this movie
 	const topArticles = await database
@@ -308,7 +322,7 @@ async function getMovieByDateSeedPreview(
 		year: movie.year,
 		originalLanguage: movie.originalLanguage,
 		title: translation?.content,
-		posterUrl: poster?.url,
+		posterUrls: posters,
 		imdbUrl,
 		nominations: movieNominations,
 		articleLinks: topArticles,
@@ -400,7 +414,7 @@ async function getMovieByDateSeed(
 		}
 	}
 
-	// Now fetch the full movie details with translations and poster
+	// Now fetch the full movie details with translations
 	const results = await database
 		.select()
 		.from(movies)
@@ -412,7 +426,6 @@ async function getMovieByDateSeed(
 				eq(translations.languageCode, preferredLanguage),
 			),
 		)
-		.leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
 		.where(eq(movies.uid, movieId))
 		.limit(1);
 
@@ -429,16 +442,11 @@ async function getMovieByDateSeed(
 					eq(translations.isDefault, 1),
 				),
 			)
-			.leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
 			.where(eq(movies.uid, movieId))
 			.limit(1);
 
 		if (fallbackResults.length > 0) {
-			const {
-				movies: movie,
-				translations: translation,
-				poster_urls: poster,
-			} = fallbackResults[0];
+			const {movies: movie, translations: translation} = fallbackResults[0];
 
 			const imdbUrl = movie.imdbId
 				? `https://www.imdb.com/title/${movie.imdbId}/`
@@ -447,12 +455,25 @@ async function getMovieByDateSeed(
 			// Get nominations for this movie
 			const movieNominations = await getMovieNominations(database, movie.uid);
 
+			// Get all posters for this movie
+			const posters = await database
+				.select({
+					url: posterUrls.url,
+					languageCode: posterUrls.languageCode,
+					isPrimary: posterUrls.isPrimary,
+				})
+				.from(posterUrls)
+				.where(eq(posterUrls.movieUid, movie.uid))
+				.orderBy(
+					sql`${posterUrls.isPrimary} DESC, ${posterUrls.createdAt} ASC`,
+				);
+
 			return {
 				uid: movie.uid,
 				year: movie.year,
 				originalLanguage: movie.originalLanguage,
 				title: translation?.content,
-				posterUrl: poster?.url,
+				posterUrls: posters,
 				imdbUrl,
 				nominations: movieNominations,
 			};
@@ -463,11 +484,7 @@ async function getMovieByDateSeed(
 		return;
 	}
 
-	const {
-		movies: movie,
-		translations: translation,
-		poster_urls: poster,
-	} = results[0];
+	const {movies: movie, translations: translation} = results[0];
 
 	const imdbUrl = movie.imdbId
 		? `https://www.imdb.com/title/${movie.imdbId}/`
@@ -475,6 +492,17 @@ async function getMovieByDateSeed(
 
 	// Get nominations for this movie
 	const movieNominations = await getMovieNominations(database, movie.uid);
+
+	// Get all posters for this movie
+	const posters = await database
+		.select({
+			url: posterUrls.url,
+			languageCode: posterUrls.languageCode,
+			isPrimary: posterUrls.isPrimary,
+		})
+		.from(posterUrls)
+		.where(eq(posterUrls.movieUid, movie.uid))
+		.orderBy(sql`${posterUrls.isPrimary} DESC, ${posterUrls.createdAt} ASC`);
 
 	// Get article links for this movie
 	const topArticles = await database
@@ -500,7 +528,7 @@ async function getMovieByDateSeed(
 		year: movie.year,
 		originalLanguage: movie.originalLanguage,
 		title: translation?.content,
-		posterUrl: poster?.url,
+		posterUrls: posters,
 		imdbUrl,
 		nominations: movieNominations,
 		articleLinks: topArticles,

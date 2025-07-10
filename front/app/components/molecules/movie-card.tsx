@@ -14,6 +14,54 @@ type MovieCardProps = {
 	adminToken?: string;
 };
 
+type PosterInfo = {
+	url: string;
+	languageCode: string | undefined;
+	isPrimary: number;
+};
+
+function selectBestPoster(
+	posters: PosterInfo[] | undefined,
+	locale: string,
+): string | undefined {
+	if (!posters || posters.length === 0) {
+		return undefined;
+	}
+
+	// Convert locale to language code (e.g., 'ja' from 'ja-JP')
+	const languageCode = locale.split('-')[0];
+
+	// Priority:
+	// 1. Primary poster with matching language
+	// 2. Non-primary poster with matching language
+	// 3. Primary poster with no language (international)
+	// 4. Any primary poster
+	// 5. First poster
+
+	// Find poster with matching language and primary flag
+	const primaryLocaleMatch = posters.find(
+		(p) => p.isPrimary === 1 && p.languageCode === languageCode,
+	);
+	if (primaryLocaleMatch) return primaryLocaleMatch.url;
+
+	// Find any poster with matching language
+	const localeMatch = posters.find((p) => p.languageCode === languageCode);
+	if (localeMatch) return localeMatch.url;
+
+	// Find primary poster with no language (international)
+	const primaryInternational = posters.find(
+		(p) => p.isPrimary === 1 && !p.languageCode,
+	);
+	if (primaryInternational) return primaryInternational.url;
+
+	// Find any primary poster
+	const primaryAny = posters.find((p) => p.isPrimary === 1);
+	if (primaryAny) return primaryAny.url;
+
+	// Return first poster
+	return posters[0].url;
+}
+
 export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 	const [showStreamingMenu, setShowStreamingMenu] = useState(false);
 	const [showDetails, setShowDetails] = useState(false);
@@ -129,15 +177,21 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 				onMouseLeave={() => !isMobile && setShowStreamingMenu(false)}
 				onClick={() => isMobile && setShowStreamingMenu(!showStreamingMenu)}
 			>
-				{movie.posterUrl ? (
-					<img
-						src={movie.posterUrl}
-						alt={`${movie.title} poster`}
-						className="w-full h-full object-cover"
-					/>
-				) : (
-					<div className="text-gray-500 text-xl">{t.noPoster}</div>
-				)}
+				{(() => {
+					const posterUrl =
+						movie.posterUrls && movie.posterUrls.length > 0
+							? selectBestPoster(movie.posterUrls, locale)
+							: movie.posterUrl;
+					return posterUrl ? (
+						<img
+							src={posterUrl}
+							alt={`${movie.title} poster`}
+							className="w-full h-full object-cover"
+						/>
+					) : (
+						<div className="text-gray-500 text-xl">{t.noPoster}</div>
+					);
+				})()}
 
 				{/* Streaming services hover menu */}
 				{showStreamingMenu && (
