@@ -41,6 +41,11 @@ async function assignTmdbIds() {
 		console.log(`  IMDb ID: ${movie.imdbId}, Year: ${movie.year}`);
 
 		try {
+			if (!environment.TMDB_API_KEY) {
+				console.log('  ❌ TMDB_API_KEY is not set');
+				continue;
+			}
+
 			const tmdbId = await findTMDBByImdbId(
 				movie.imdbId!,
 				environment.TMDB_API_KEY,
