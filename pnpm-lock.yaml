@@ -12,8 +12,8 @@ importers:
         specifier: ^0.15.9
         version: 0.15.9
       dotenv:
-        specifier: ^17.1.0
-        version: 17.1.0
+        specifier: ^17.2.0
+        version: 17.2.0
       drizzle-orm:
         specifier: ^0.44.2
         version: 0.44.2(@cloudflare/workers-types@4.20250709.0)(@libsql/client@0.15.9)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.2.0)(gel@2.1.0)
@@ -194,8 +194,8 @@ importers:
         specifier: ^5.0.3
         version: 5.0.3
       dotenv:
-        specifier: ^17.1.0
-        version: 17.1.0
+        specifier: ^17.2.0
+        version: 17.2.0
     devDependencies:
       tsx:
         specifier: ^4.20.3
@@ -3118,8 +3118,8 @@ packages:
     resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
     engines: {node: '>=12'}
 
-  dotenv@17.1.0:
-    resolution: {integrity: sha512-tG9VUTJTuju6GcXgbdsOuRhupE8cb4mRgY5JLRCh4MtGoVo3/gfGUtOMwmProM6d0ba2mCFvv+WrpYJV6qgJXQ==}
+  dotenv@17.2.0:
+    resolution: {integrity: sha512-Q4sgBT60gzd0BB0lSyYD3xM4YxrXA9y4uBDof1JNYGzOXrQdQ6yX+7XIAqoFOGQFOTK1D3Hts5OllpxMDZFONQ==}
     engines: {node: '>=12'}
 
   drizzle-kit@0.31.4:
@@ -8742,7 +8742,7 @@ snapshots:
 
   dotenv@16.4.7: {}
 
-  dotenv@17.1.0: {}
+  dotenv@17.2.0: {}
 
   drizzle-kit@0.31.4:
     dependencies:
