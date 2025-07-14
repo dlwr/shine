@@ -53,8 +53,28 @@ export class SelectionsService extends BaseService {
 		// Clear cache
 		await this.cache.delete(`selection-${type}-${selectionDate}`);
 
-		// Generate new selection
-		return this.getMovieByDateSeed(date, type, locale);
+		// Generate new selection with randomness
+		const selectedMovie = await this.generateRandomMovieSelection(
+			date,
+			type,
+			locale,
+			true,
+		);
+		if (!selectedMovie) {
+			throw new Error('No movies available for selection');
+		}
+
+		// Get complete movie data and cache it
+		const movie = await this.getCompleteMovieData(selectedMovie.uid, locale);
+
+		// Cache result
+		const cacheKey = `selection-${type}-${selectionDate}`;
+		const response = new Response(JSON.stringify(movie), {
+			headers: {'Content-Type': 'application/json'},
+		});
+		await this.cache.put(cacheKey, response);
+
+		return movie;
 	}
 
 	async previewSelections(
@@ -555,5 +575,47 @@ export class SelectionsService extends BaseService {
 				return this.simpleHash(`monthly-${monthString}`);
 			}
 		}
+	}
+
+	private async generateRandomMovieSelection(
+		date: Date,
+		type: 'daily' | 'weekly' | 'monthly',
+		_locale: string,
+		persistSelection: boolean,
+	): Promise<{uid: string} | undefined> {
+		// Get all movies with basic data for selection
+		const availableMovies = await this.database
+			.select({
+				uid: movies.uid,
+			})
+			.from(movies)
+			.orderBy(movies.createdAt);
+
+		if (availableMovies.length === 0) {
+			return undefined;
+		}
+
+		// Use random selection instead of seed-based
+		const randomIndex = Math.floor(Math.random() * availableMovies.length);
+		const selectedMovieData = availableMovies[randomIndex];
+
+		// Persist selection if requested
+		if (persistSelection) {
+			const selectionDate = this.getSelectionDate(date, type);
+
+			try {
+				await this.database.insert(movieSelections).values({
+					movieId: selectedMovieData.uid,
+					selectionType: type,
+					selectionDate,
+					createdAt: Math.floor(Date.now() / 1000),
+					updatedAt: Math.floor(Date.now() / 1000),
+				});
+			} catch {
+				// Selection might already exist due to race condition, ignore
+			}
+		}
+
+		return selectedMovieData;
 	}
 }
