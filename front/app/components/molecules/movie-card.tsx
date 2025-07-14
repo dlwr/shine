@@ -62,6 +62,63 @@ function selectBestPoster(
 	return posters[0].url;
 }
 
+type TranslationInfo = {
+	languageCode: string;
+	content: string;
+	isDefault: number;
+};
+
+function selectBestTitle(movie: any, locale: string): string {
+	// If movie.title is already provided (from public API), use it with fallback
+	if (movie.title) {
+		return movie.title;
+	}
+
+	// If movie.translations is available (from admin API), find the best translation
+	if (movie.translations && Array.isArray(movie.translations)) {
+		const languageCode = locale.split('-')[0];
+
+		// Priority:
+		// 1. Translation with matching language
+		// 2. Default translation (isDefault = 1)
+		// 3. Japanese translation ('ja')
+		// 4. English translation ('en')
+		// 5. First available translation
+
+		// Find translation with matching language
+		const localeMatch = movie.translations.find(
+			(t: TranslationInfo) => t.languageCode === languageCode,
+		);
+		if (localeMatch) return localeMatch.content;
+
+		// Find default translation
+		const defaultTranslation = movie.translations.find(
+			(t: TranslationInfo) => t.isDefault === 1,
+		);
+		if (defaultTranslation) return defaultTranslation.content;
+
+		// Find Japanese translation
+		const jaTranslation = movie.translations.find(
+			(t: TranslationInfo) => t.languageCode === 'ja',
+		);
+		if (jaTranslation) return jaTranslation.content;
+
+		// Find English translation
+		const enTranslation = movie.translations.find(
+			(t: TranslationInfo) => t.languageCode === 'en',
+		);
+		if (enTranslation) return enTranslation.content;
+
+		// Return first available translation
+		if (movie.translations.length > 0) {
+			return movie.translations[0].content;
+		}
+	}
+
+	// Fallback to "Unknown Title (year)"
+	return `Unknown Title (${movie.year})`;
+}
+
 export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 	const [showStreamingMenu, setShowStreamingMenu] = useState(false);
 	const [showDetails, setShowDetails] = useState(false);
@@ -111,6 +168,8 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 	};
 
 	const t = labels[locale as keyof typeof labels] || labels.en;
+
+	const movieTitle = selectBestTitle(movie, locale);
 
 	const streamingServices = [
 		{
@@ -185,7 +244,7 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 					return posterUrl ? (
 						<img
 							src={posterUrl}
-							alt={`${movie.title} poster`}
+							alt={`${movieTitle} poster`}
 							className="w-full h-full object-cover"
 						/>
 					) : (
@@ -204,7 +263,7 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 								{streamingServices.map((service) => (
 									<a
 										key={service.name}
-										href={service.url(movie.title)}
+										href={service.url(movieTitle)}
 										target="_blank"
 										rel="noopener noreferrer"
 										className={`block px-4 py-3 rounded-md text-center text-sm font-medium ${service.color}`}
@@ -220,7 +279,7 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 								href={
 									movie.imdbUrl ||
 									`https://www.imdb.com/find?q=${encodeURIComponent(
-										movie.title + ' ' + movie.year,
+										movieTitle + ' ' + movie.year,
 									)}`
 								}
 								target="_blank"
@@ -234,7 +293,7 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 							</a>
 							<a
 								href={`https://www.google.com/search?q=${encodeURIComponent(
-									movie.title +
+									movieTitle +
 										' ' +
 										movie.year +
 										' ' +
@@ -255,7 +314,9 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 			</div>
 
 			<CardHeader>
-				<CardTitle className="text-xl md:text-2xl">{movie.title}</CardTitle>
+				<CardTitle className="text-xl md:text-2xl">
+					{selectBestTitle(movie, locale)}
+				</CardTitle>
 				<CardDescription className="text-lg">{movie.year}</CardDescription>
 			</CardHeader>
 			<CardContent className="flex-grow flex flex-col">
