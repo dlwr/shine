@@ -348,7 +348,7 @@ export class SelectionsService extends BaseService {
 		movieId: string,
 		locale: string,
 	): Promise<MovieSelection> {
-		// Get movie with title and description
+		// Get movie basic data
 		const movieResult = await this.database
 			.select({
 				uid: movies.uid,
@@ -356,28 +356,8 @@ export class SelectionsService extends BaseService {
 				originalLanguage: movies.originalLanguage,
 				imdbId: movies.imdbId,
 				tmdbId: movies.tmdbId,
-				title: translations.content,
-				description: sql`
-          (
-            SELECT content
-            FROM translations
-            WHERE translations.resource_uid = movies.uid
-              AND translations.resource_type = 'movie_description'
-              AND translations.language_code = ${locale}
-            LIMIT 1
-          )
-        `.as('description'),
-				// We'll fetch posters separately
 			})
 			.from(movies)
-			.leftJoin(
-				translations,
-				and(
-					eq(translations.resourceUid, movies.uid),
-					eq(translations.resourceType, 'movie_title'),
-					eq(translations.languageCode, locale),
-				),
-			)
 			.where(eq(movies.uid, movieId))
 			.limit(1);
 
@@ -386,6 +366,76 @@ export class SelectionsService extends BaseService {
 		}
 
 		const movie = movieResult[0];
+
+		// Get all translations for the movie
+		const allTranslations = await this.database
+			.select({
+				languageCode: translations.languageCode,
+				content: translations.content,
+				isDefault: translations.isDefault,
+				resourceType: translations.resourceType,
+			})
+			.from(translations)
+			.where(
+				and(
+					eq(translations.resourceUid, movieId),
+					eq(translations.resourceType, 'movie_title'),
+				),
+			);
+
+		// Select best title based on locale with fallback
+		const languageCode = locale.split('-')[0];
+		let selectedTitle: string | undefined;
+
+		// Priority 1: Translation with matching language
+		const localeMatch = allTranslations.find(
+			(t) => t.languageCode === languageCode,
+		);
+		if (localeMatch) {
+			selectedTitle = localeMatch.content;
+		} else {
+			// Priority 2: Default translation
+			const defaultTranslation = allTranslations.find((t) => t.isDefault === 1);
+			if (defaultTranslation) {
+				selectedTitle = defaultTranslation.content;
+			} else {
+				// Priority 3: Japanese translation
+				const jaTranslation = allTranslations.find(
+					(t) => t.languageCode === 'ja',
+				);
+				if (jaTranslation) {
+					selectedTitle = jaTranslation.content;
+				} else {
+					// Priority 4: English translation
+					const enTranslation = allTranslations.find(
+						(t) => t.languageCode === 'en',
+					);
+					if (enTranslation) {
+						selectedTitle = enTranslation.content;
+					} else if (allTranslations.length > 0) {
+						// Priority 5: First available translation
+						selectedTitle = allTranslations[0].content;
+					}
+				}
+			}
+		}
+
+		// Get description for the locale
+		const descriptionResult = await this.database
+			.select({
+				content: translations.content,
+			})
+			.from(translations)
+			.where(
+				and(
+					eq(translations.resourceUid, movieId),
+					eq(translations.resourceType, 'movie_description'),
+					eq(translations.languageCode, locale),
+				),
+			)
+			.limit(1);
+
+		const description = descriptionResult[0]?.content || undefined;
 
 		// Get nominations
 		const nominationsData = await this.database
@@ -459,8 +509,8 @@ export class SelectionsService extends BaseService {
 			originalLanguage: movie.originalLanguage,
 			imdbId: movie.imdbId ?? undefined,
 			tmdbId: movie.tmdbId ?? undefined,
-			title: movie.title || `Unknown Title (${movie.year})`,
-			description: (movie.description as string) || undefined,
+			title: selectedTitle || `Unknown Title (${movie.year})`,
+			description: description || undefined,
 			posterUrls: posters.map((p) => ({
 				url: p.url,
 				languageCode: p.languageCode ?? undefined,
