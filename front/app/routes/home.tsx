@@ -334,7 +334,9 @@ function Movies({
 							)}
 							{adminToken && (
 								<Button
-									onClick={async () => handleReselect(period)}
+									onClick={() => {
+										void handleReselect(period);
+									}}
 									disabled={reselectLoading[period]}
 									className="mt-4 bg-green-600 hover:bg-green-700"
 									size="sm"
