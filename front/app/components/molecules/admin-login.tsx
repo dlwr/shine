@@ -101,7 +101,7 @@ export function AdminLogin({locale, apiUrl}: AdminLoginProps) {
 
 	return (
 		<div className="fixed top-4 right-4 z-50">
-			{isLoggedIn ? (
+			{isLoggedIn && (
 				<div className="flex gap-2">
 					<a
 						href="/admin/movies"
@@ -117,15 +117,6 @@ export function AdminLogin({locale, apiUrl}: AdminLoginProps) {
 						{t.logoutButton}
 					</Button>
 				</div>
-			) : (
-				<Button
-					onClick={() => {
-						setShowModal(true);
-					}}
-					variant="outline"
-				>
-					{t.adminButton}
-				</Button>
 			)}
 
 			{showModal && (
