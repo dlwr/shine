@@ -63,6 +63,79 @@ export default function MovieInfoEditor({
 		undefined,
 	);
 
+	const [editingYear, setEditingYear] = useState(false);
+	const [newYear, setNewYear] = useState('');
+	const [yearError, setYearError] = useState<string | undefined>(undefined);
+
+	const updateYear = async () => {
+		const yearNumber = newYear.trim()
+			? Number.parseInt(newYear.trim(), 10)
+			: undefined;
+
+		if (
+			newYear.trim() &&
+			(yearNumber === undefined ||
+				Number.isNaN(yearNumber) ||
+				yearNumber < 1888 ||
+				yearNumber > 2100)
+		) {
+			setYearError('年は1888から2100の間で入力してください');
+			return;
+		}
+
+		const token = globalThis.localStorage?.getItem('adminToken');
+		if (!token) {
+			globalThis.location.href = '/admin/login';
+			return;
+		}
+
+		try {
+			const response = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
+				method: 'PUT',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					year: yearNumber,
+				}),
+			});
+
+			if (response.status === 401) {
+				globalThis.localStorage?.removeItem('adminToken');
+				globalThis.location.href = '/admin/login';
+				return;
+			}
+
+			if (!response.ok) {
+				const errorData = (await response
+					.json()
+					.catch(() => ({error: 'Unknown error'}))) as {error?: string};
+				throw new Error(errorData.error || 'Failed to update year');
+			}
+
+			const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
+				headers: {Authorization: `Bearer ${token}`},
+			});
+
+			if (movieResponse.ok) {
+				const data = (await movieResponse.json()) as MovieDetails;
+				onMovieDataUpdate(data);
+			}
+
+			setEditingYear(false);
+			setNewYear('');
+			setYearError(undefined);
+
+			globalThis.alert?.('公開年を更新しました');
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : 'Failed to update year';
+			setYearError(message);
+			console.error('Update year error:', error);
+		}
+	};
+
 	const updateImdbId = async () => {
 		const token = globalThis.localStorage?.getItem('adminToken');
 		if (!token) {
@@ -348,9 +421,60 @@ export default function MovieInfoEditor({
 				<div>
 					<strong className="text-gray-700">映画ID:</strong> {movieData.uid}
 				</div>
+
+				{/* 公開年 */}
 				<div>
-					<strong className="text-gray-700">公開年:</strong> {movieData.year}
+					<div className="flex items-center space-x-2 mb-2">
+						<strong className="text-gray-700">公開年:</strong>
+						{editingYear ? (
+							<div className="flex items-center space-x-2">
+								<input
+									type="number"
+									value={newYear}
+									onChange={(e) => setNewYear(e.target.value)}
+									className="px-2 py-1 border border-gray-300 rounded text-sm w-24"
+									placeholder="2024"
+									min="1888"
+									max="2100"
+								/>
+								<button
+									type="button"
+									onClick={updateYear}
+									className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700"
+								>
+									保存
+								</button>
+								<button
+									type="button"
+									onClick={() => {
+										setEditingYear(false);
+										setNewYear('');
+										setYearError(undefined);
+									}}
+									className="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600"
+								>
+									キャンセル
+								</button>
+							</div>
+						) : (
+							<div className="flex items-center space-x-2">
+								<span>{movieData.year || '未設定'}</span>
+								<button
+									type="button"
+									onClick={() => {
+										setEditingYear(true);
+										setNewYear(movieData.year?.toString() || '');
+									}}
+									className="text-blue-600 hover:text-blue-800 text-sm"
+								>
+									編集
+								</button>
+							</div>
+						)}
+					</div>
+					{yearError && <p className="text-red-600 text-sm">{yearError}</p>}
 				</div>
+
 				<div>
 					<strong className="text-gray-700">原語:</strong>{' '}
 					{movieData.originalLanguage}

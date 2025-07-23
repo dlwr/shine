@@ -170,6 +170,72 @@ adminRoutes.delete(
 	},
 );
 
+// Update movie basic info (year, original language)
+adminRoutes.put('/movies/:id', authMiddleware, async (c) => {
+	try {
+		const database = getDatabase(c.env);
+		const movieId = c.req.param('id');
+		const {year, originalLanguage} = await c.req.json();
+
+		// Check if movie exists
+		const movieExists = await database
+			.select({uid: movies.uid})
+			.from(movies)
+			.where(eq(movies.uid, movieId))
+			.limit(1);
+
+		if (movieExists.length === 0) {
+			return c.json({error: 'Movie not found'}, 404);
+		}
+
+		const updateData: any = {
+			updatedAt: Math.floor(Date.now() / 1000),
+		};
+
+		// Validate year if provided
+		if (year !== undefined) {
+			if (
+				year !== null &&
+				(!Number.isInteger(year) || year < 1888 || year > 2100)
+			) {
+				return c.json(
+					{error: 'Year must be a valid integer between 1888 and 2100'},
+					400,
+				);
+			}
+
+			updateData.year = year;
+		}
+
+		// Validate original language if provided
+		if (originalLanguage !== undefined) {
+			if (originalLanguage && typeof originalLanguage !== 'string') {
+				return c.json({error: 'Original language must be a string'}, 400);
+			}
+
+			if (originalLanguage && originalLanguage.length !== 2) {
+				return c.json(
+					{error: 'Original language must be a 2-letter ISO 639-1 code'},
+					400,
+				);
+			}
+
+			updateData.originalLanguage = originalLanguage || 'en';
+		}
+
+		// Update movie
+		await database
+			.update(movies)
+			.set(updateData)
+			.where(eq(movies.uid, movieId));
+
+		return c.json({success: true});
+	} catch (error) {
+		console.error('Error updating movie:', error);
+		return c.json({error: 'Internal server error'}, 500);
+	}
+});
+
 // Update movie IMDB ID
 adminRoutes.put('/movies/:id/imdb-id', authMiddleware, async (c) => {
 	try {
