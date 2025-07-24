@@ -381,8 +381,8 @@ function extractYear($row: cheerio.Cheerio<Element>): number | undefined {
 
 		const yearRangeMatch = /(\d{4})[/-](\d{2})/.exec(yearText);
 		if (yearRangeMatch) {
-			const startYear = Number.parseInt(yearRangeMatch[1]);
-			const endYear = Number.parseInt(yearRangeMatch[2]);
+			const startYear = Number.parseInt(yearRangeMatch[1], 10);
+			const endYear = Number.parseInt(yearRangeMatch[2], 10);
 			const fullEndYear = startYear - (startYear % 100) + endYear;
 			console.log(`Extracted year range: ${startYear}-${fullEndYear}`);
 			return fullEndYear;
@@ -390,7 +390,7 @@ function extractYear($row: cheerio.Cheerio<Element>): number | undefined {
 
 		const singleYearMatch = /(\d{4})/.exec(yearText);
 		if (singleYearMatch) {
-			const year = Number.parseInt(singleYearMatch[1]);
+			const year = Number.parseInt(singleYearMatch[1], 10);
 			console.log(`Extracted single year: ${year}`);
 			return year;
 		}

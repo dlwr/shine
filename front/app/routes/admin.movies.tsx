@@ -41,8 +41,8 @@ export async function loader({context, request}: Route.LoaderArgs) {
 		apiUrl:
 			(context.cloudflare as any)?.env?.PUBLIC_API_URL ||
 			'http://localhost:8787',
-		page: Number.parseInt(page),
-		limit: Number.parseInt(limit),
+		page: Number.parseInt(page, 10),
+		limit: Number.parseInt(limit, 10),
 		search,
 		movies: [],
 		pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
