@@ -205,6 +205,7 @@ describe('Error Cases and Edge Cases', () => {
 		});
 
 		it('should handle javascript: protocol URLs', () => {
+			// eslint-disable-next-line no-script-url
 			expect(() => sanitizeUrl('javascript:alert("xss")')).toThrow(
 				'Invalid URL',
 			);

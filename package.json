@@ -135,7 +135,6 @@
       ],
       "@typescript-eslint/consistent-type-assertions": "off",
       "@typescript-eslint/no-unnecessary-type-assertion": "off",
-      "no-script-url": "off",
       "n/prefer-global/text-decoder": "off",
       "n/prefer-global/text-encoder": "off",
       "n/prefer-global/buffer": "off",
