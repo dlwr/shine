@@ -277,7 +277,7 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 								href={
 									movie.imdbUrl ||
 									`https://www.imdb.com/find?q=${encodeURIComponent(
-										movieTitle + ' ' + movie.year,
+										movieTitle + ' ' + String(movie.year),
 									)}`
 								}
 								target="_blank"
@@ -293,7 +293,7 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 								href={`https://www.google.com/search?q=${encodeURIComponent(
 									movieTitle +
 										' ' +
-										movie.year +
+										String(movie.year) +
 										' ' +
 										(locale === 'ja' ? '映画' : 'movie'),
 								)}`}

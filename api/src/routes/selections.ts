@@ -700,7 +700,15 @@ selectionsRoutes.post(
 	async (c) => {
 		try {
 			const database = getDatabase(c.env);
-			const {type, date, locale = 'en'} = await c.req.json();
+			const {
+				type,
+				date,
+				locale = 'en',
+			} = (await c.req.json()) as {
+				type: 'daily' | 'weekly' | 'monthly';
+				date: string;
+				locale?: string;
+			};
 
 			// Validate inputs
 			if (!type || !['daily', 'weekly', 'monthly'].includes(type)) {
@@ -870,7 +878,11 @@ selectionsRoutes.post(
 	async (c) => {
 		try {
 			const selectionsService = new SelectionsService(c.env);
-			const {type, date, movieId} = await c.req.json();
+			const {type, date, movieId} = (await c.req.json()) as {
+				type: 'daily' | 'weekly' | 'monthly';
+				date: string;
+				movieId: string;
+			};
 
 			// Validate inputs
 			if (!type || !['daily', 'weekly', 'monthly'].includes(type)) {

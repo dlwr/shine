@@ -135,7 +135,6 @@
       "n/prefer-global/process": "off",
       "unicorn/no-process-exit": "off",
       "no-bitwise": "off",
-      "@typescript-eslint/restrict-plus-operands": "off",
       "@typescript-eslint/member-ordering": "off",
       "max-params": [
         "warn",
