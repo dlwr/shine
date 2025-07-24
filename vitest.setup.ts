@@ -1,5 +1,4 @@
 import {webcrypto} from 'node:crypto';
-import {TextDecoder, TextEncoder} from 'node:util';
 import {vi} from 'vitest';
 import React from 'react';
 import '@testing-library/jest-dom';
@@ -119,11 +118,7 @@ if ((globalThis as any).window !== undefined) {
 	});
 }
 
-// Polyfill TextEncoder and TextDecoder for jsdom environment
-globalThis.TextEncoder ||= TextEncoder;
-
-globalThis.TextDecoder ||=
-	TextDecoder as unknown as typeof globalThis.TextDecoder;
+// TextEncoder and TextDecoder are already global in Node.js 18+
 
 // Mock Cloudflare Workers Cache API
 const mockCache = {

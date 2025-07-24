@@ -1,5 +1,4 @@
 import {webcrypto} from 'node:crypto';
-import {TextDecoder, TextEncoder} from 'node:util';
 import {vi} from 'vitest';
 
 // Polyfill Web Crypto API for Node.js environment
@@ -17,11 +16,7 @@ if (globalThis.crypto) {
 	globalThis.crypto = webcrypto;
 }
 
-// Polyfill TextEncoder and TextDecoder for Node.js environment
-globalThis.TextEncoder ||= TextEncoder;
-
-globalThis.TextDecoder ||=
-	TextDecoder as unknown as typeof globalThis.TextDecoder;
+// TextEncoder and TextDecoder are already global in Node.js 18+
 
 // Mock Cloudflare Workers Cache API for Node.js tests
 const mockCache = {
