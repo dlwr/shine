@@ -61,12 +61,12 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 	const [loading, setLoading] = useState(true);
 
 	// Get params directly from URL
-	const getUrlParams = () => {
-		const params = new URLSearchParams(globalThis.location.search);
+	const getUrlParameters = () => {
+		const parameters = new URLSearchParams(globalThis.location.search);
 		return {
-			search: params.get('search') || '',
-			page: Number(params.get('page') || 1),
-			limit: Number(params.get('limit') || 20),
+			search: parameters.get('search') || '',
+			page: Number(parameters.get('page') || 1),
+			limit: Number(parameters.get('limit') || 20),
 		};
 	};
 
@@ -82,7 +82,7 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 			}
 
 			setLoading(true);
-			const {search, page, limit} = getUrlParams();
+			const {search, page, limit} = getUrlParameters();
 
 			try {
 				const searchParameter = search
@@ -263,11 +263,11 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 							style={{
 								transition: 'background-color 0.2s',
 							}}
-							onMouseOver={(e) =>
-								(e.currentTarget.style.background = '#f9fafb')
+							onMouseOver={(event) =>
+								(event.currentTarget.style.background = '#f9fafb')
 							}
-							onMouseOut={(e) =>
-								(e.currentTarget.style.background = 'transparent')
+							onMouseOut={(event) =>
+								(event.currentTarget.style.background = 'transparent')
 							}
 						>
 							<td
@@ -350,11 +350,11 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 											background: '#2563eb',
 											color: 'white',
 										}}
-										onMouseOver={(e) =>
-											(e.currentTarget.style.background = '#1d4ed8')
+										onMouseOver={(event) =>
+											(event.currentTarget.style.background = '#1d4ed8')
 										}
-										onMouseOut={(e) =>
-											(e.currentTarget.style.background = '#2563eb')
+										onMouseOut={(event) =>
+											(event.currentTarget.style.background = '#2563eb')
 										}
 									>
 										Edit
@@ -375,11 +375,11 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 												background: '#6b7280',
 												color: 'white',
 											}}
-											onMouseOver={(e) =>
-												(e.currentTarget.style.background = '#4b5563')
+											onMouseOver={(event) =>
+												(event.currentTarget.style.background = '#4b5563')
 											}
-											onMouseOut={(e) =>
-												(e.currentTarget.style.background = '#6b7280')
+											onMouseOut={(event) =>
+												(event.currentTarget.style.background = '#6b7280')
 											}
 										>
 											IMDb
@@ -396,11 +396,11 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 											background: '#dc2626',
 											color: 'white',
 										}}
-										onMouseOver={(e) =>
-											(e.currentTarget.style.background = '#b91c1c')
+										onMouseOver={(event) =>
+											(event.currentTarget.style.background = '#b91c1c')
 										}
-										onMouseOut={(e) =>
-											(e.currentTarget.style.background = '#dc2626')
+										onMouseOut={(event) =>
+											(event.currentTarget.style.background = '#dc2626')
 										}
 									>
 										Delete
@@ -416,11 +416,11 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 											background: '#6b7280',
 											color: 'white',
 										}}
-										onMouseOver={(e) =>
-											(e.currentTarget.style.background = '#4b5563')
+										onMouseOver={(event) =>
+											(event.currentTarget.style.background = '#4b5563')
 										}
-										onMouseOut={(e) =>
-											(e.currentTarget.style.background = '#6b7280')
+										onMouseOut={(event) =>
+											(event.currentTarget.style.background = '#6b7280')
 										}
 									>
 										Merge
@@ -448,9 +448,11 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 						disabled={pagination.page === 1}
 						onClick={() => {
 							if (pagination.page > 1 && globalThis.window !== undefined) {
-								const params = new URLSearchParams(globalThis.location.search);
-								params.set('page', String(pagination.page - 1));
-								const newUrl = `${globalThis.location.pathname}?${params.toString()}`;
+								const parameters = new URLSearchParams(
+									globalThis.location.search,
+								);
+								parameters.set('page', String(pagination.page - 1));
+								const newUrl = `${globalThis.location.pathname}?${parameters.toString()}`;
 								globalThis.history.replaceState({}, '', newUrl);
 								// Force re-fetch by updating location
 								globalThis.dispatchEvent(new Event('urlchange'));
@@ -478,9 +480,11 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 								pagination.page < pagination.totalPages &&
 								globalThis.window !== undefined
 							) {
-								const params = new URLSearchParams(globalThis.location.search);
-								params.set('page', String(pagination.page + 1));
-								const newUrl = `${globalThis.location.pathname}?${params.toString()}`;
+								const parameters = new URLSearchParams(
+									globalThis.location.search,
+								);
+								parameters.set('page', String(pagination.page + 1));
+								const newUrl = `${globalThis.location.pathname}?${parameters.toString()}`;
 								globalThis.history.replaceState({}, '', newUrl);
 								// Force re-fetch by updating location
 								globalThis.dispatchEvent(new Event('urlchange'));
@@ -637,32 +641,32 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 		pagination: PaginationData;
 	};
 
-	const [searchParams] = useSearchParams();
+	const [searchParameters] = useSearchParams();
 
 	// Get current search from URL params
-	const currentSearch = searchParams.get('search') || '';
+	const currentSearch = searchParameters.get('search') || '';
 
 	// Handle search - only update URL
 	const handleSearch = useCallback(
 		(query: string) => {
 			// Update URL without causing React Router re-render
 			if (globalThis.window !== undefined) {
-				const newParams = new URLSearchParams(searchParams);
+				const newParameters = new URLSearchParams(searchParameters);
 				if (query) {
-					newParams.set('search', query);
+					newParameters.set('search', query);
 				} else {
-					newParams.delete('search');
+					newParameters.delete('search');
 				}
 
-				newParams.set('page', '1');
+				newParameters.set('page', '1');
 
-				const newUrl = `${globalThis.location.pathname}?${newParams.toString()}`;
+				const newUrl = `${globalThis.location.pathname}?${newParameters.toString()}`;
 				globalThis.history.replaceState({}, '', newUrl);
 				// Trigger custom event to update MoviesList
 				globalThis.dispatchEvent(new Event('urlchange'));
 			}
 		},
-		[searchParams],
+		[searchParameters],
 	);
 
 	return (
@@ -695,8 +699,12 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 							fontSize: '0.875rem',
 							transition: 'background-color 0.2s',
 						}}
-						onMouseOver={(e) => (e.currentTarget.style.background = '#15803d')}
-						onMouseOut={(e) => (e.currentTarget.style.background = '#16a34a')}
+						onMouseOver={(event) =>
+							(event.currentTarget.style.background = '#15803d')
+						}
+						onMouseOut={(event) =>
+							(event.currentTarget.style.background = '#16a34a')
+						}
 					>
 						トップページ
 					</a>
@@ -711,8 +719,12 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 							fontSize: '0.875rem',
 							transition: 'background-color 0.2s',
 						}}
-						onMouseOver={(e) => (e.currentTarget.style.background = '#4338ca')}
-						onMouseOut={(e) => (e.currentTarget.style.background = '#4f46e5')}
+						onMouseOver={(event) =>
+							(event.currentTarget.style.background = '#4338ca')
+						}
+						onMouseOut={(event) =>
+							(event.currentTarget.style.background = '#4f46e5')
+						}
 					>
 						Movie Selections
 					</a>
@@ -727,8 +739,12 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 							cursor: 'pointer',
 							fontSize: '0.875rem',
 						}}
-						onMouseOver={(e) => (e.currentTarget.style.background = '#b91c1c')}
-						onMouseOut={(e) => (e.currentTarget.style.background = '#dc2626')}
+						onMouseOver={(event) =>
+							(event.currentTarget.style.background = '#b91c1c')
+						}
+						onMouseOut={(event) =>
+							(event.currentTarget.style.background = '#dc2626')
+						}
 					>
 						Logout
 					</button>
@@ -741,8 +757,8 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 					<input
 						type="text"
 						defaultValue={currentSearch}
-						onChange={(e) => {
-							const {value} = e.target;
+						onChange={(event) => {
+							const {value} = event.target;
 							// Clear existing timeout
 							if ((globalThis as any).searchTimeout) {
 								clearTimeout((globalThis as any).searchTimeout);

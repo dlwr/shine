@@ -33,13 +33,13 @@ type MovieInfo = {
 	imdbId?: string;
 };
 
-type MasterData = {
+type MainData = {
 	organizationUid: string;
 	categories: Map<string, string>;
 	ceremonies: Map<number, string>;
 };
 
-let masterData: MasterData | undefined;
+let mainData: MainData | undefined;
 let environment_: Environment;
 let TMDB_API_KEY: string | undefined;
 let isDryRun = false;
@@ -91,12 +91,12 @@ export default {
 	},
 };
 
-async function fetchMasterData(): Promise<MasterData> {
-	if (masterData) return masterData;
+async function fetchMainData(): Promise<MainData> {
+	if (mainData) return mainData;
 
 	if (isDryRun) {
 		// Dry run mode - return mock data
-		masterData = {
+		mainData = {
 			organizationUid: 'mock-japan-academy-uid',
 			categories: new Map([
 				['Best Picture', 'mock-best-picture-uid'],
@@ -106,7 +106,7 @@ async function fetchMasterData(): Promise<MasterData> {
 			]),
 			ceremonies: new Map(),
 		};
-		return masterData;
+		return mainData;
 	}
 
 	const [organization] = await getDatabase(environment_)
@@ -139,13 +139,13 @@ async function fetchMasterData(): Promise<MasterData> {
 		ceremoniesData.map((ceremony) => [ceremony.year, ceremony.uid]),
 	);
 
-	masterData = {
+	mainData = {
 		organizationUid: organization.uid,
 		categories,
 		ceremonies,
 	};
 
-	return masterData;
+	return mainData;
 }
 
 async function getOrCreateCeremony(
@@ -169,7 +169,7 @@ async function getOrCreateCeremony(
 		})
 		.returning();
 
-	masterData?.ceremonies.set(year, ceremony.uid);
+	mainData?.ceremonies.set(year, ceremony.uid);
 
 	return ceremony.uid;
 }
@@ -564,11 +564,11 @@ async function processMovieForBatch(movieInfo: MovieInfo): Promise<
 			return undefined;
 		}
 
-		const master = await fetchMasterData();
+		const main = await fetchMainData();
 		const database = getDatabase(environment_);
 
 		// カテゴリーUIDを取得
-		const categoryUid = master.categories.get(movieInfo.categoryType);
+		const categoryUid = main.categories.get(movieInfo.categoryType);
 		if (!categoryUid) {
 			throw new Error(`Category not found: ${movieInfo.categoryType}`);
 		}
@@ -724,7 +724,7 @@ async function processMovieForBatch(movieInfo: MovieInfo): Promise<
 
 		const ceremonyUid = await getOrCreateCeremony(
 			movieInfo.year,
-			master.organizationUid,
+			main.organizationUid,
 		);
 
 		// ノミネーション
@@ -767,11 +767,11 @@ async function processMovie(movieInfo: MovieInfo) {
 			return;
 		}
 
-		const master = await fetchMasterData();
+		const main = await fetchMainData();
 		const database = getDatabase(environment_);
 
 		// カテゴリーUIDを取得
-		const categoryUid = master.categories.get(movieInfo.categoryType);
+		const categoryUid = main.categories.get(movieInfo.categoryType);
 		if (!categoryUid) {
 			throw new Error(`Category not found: ${movieInfo.categoryType}`);
 		}
@@ -928,7 +928,7 @@ async function processMovie(movieInfo: MovieInfo) {
 
 		const ceremonyUid = await getOrCreateCeremony(
 			movieInfo.year,
-			master.organizationUid,
+			main.organizationUid,
 		);
 
 		// ノミネーション情報の更新または追加

@@ -37,13 +37,13 @@ type MovieInfo = {
 	imdbId?: string;
 };
 
-type MasterData = {
+type MainData = {
 	organizationUid: string;
 	categoryUid: string;
 	ceremonies: Map<number, string>;
 };
 
-let masterData: MasterData | undefined;
+let mainData: MainData | undefined;
 let environment_: Environment;
 let TMDB_API_KEY: string | undefined;
 
@@ -71,8 +71,8 @@ export default {
 	},
 };
 
-async function fetchMasterData(): Promise<MasterData> {
-	if (masterData) return masterData;
+async function fetchMainData(): Promise<MainData> {
+	if (mainData) return mainData;
 
 	const [organization] = await getDatabase(environment_)
 		.select()
@@ -106,13 +106,13 @@ async function fetchMasterData(): Promise<MasterData> {
 		ceremoniesData.map((ceremony) => [ceremony.year, ceremony.uid]),
 	);
 
-	masterData = {
+	mainData = {
 		organizationUid: organization.uid,
 		categoryUid: category.uid,
 		ceremonies,
 	};
 
-	return masterData;
+	return mainData;
 }
 
 async function getOrCreateCeremony(
@@ -136,7 +136,7 @@ async function getOrCreateCeremony(
 		})
 		.returning();
 
-	masterData?.ceremonies.set(year, ceremony.uid);
+	mainData?.ceremonies.set(year, ceremony.uid);
 
 	return ceremony.uid;
 }
@@ -491,7 +491,7 @@ async function processMovieForBatch(
 	| undefined
 > {
 	try {
-		const master = await fetchMasterData();
+		const main = await fetchMainData();
 		const database = getDatabase(environment_);
 		// IMDb IDを取得
 		let imdbId: string | undefined;
@@ -573,11 +573,11 @@ async function processMovieForBatch(
 		}
 
 		// ノミネーション
-		const ceremonyUid = await getOrCreateCeremony(year, master.organizationUid);
+		const ceremonyUid = await getOrCreateCeremony(year, main.organizationUid);
 		const nominationData: typeof nominations.$inferInsert = {
 			movieUid,
 			ceremonyUid,
-			categoryUid: master.categoryUid,
+			categoryUid: main.categoryUid,
 			isWinner: isWinner ? 1 : 0,
 		};
 
@@ -644,7 +644,7 @@ async function processMovie(
 	referenceUrl?: string,
 ) {
 	try {
-		const master = await fetchMasterData();
+		const main = await fetchMainData();
 		const database = getDatabase(environment_);
 
 		// IMDb IDを取得
@@ -770,7 +770,7 @@ async function processMovie(
 			}
 		}
 
-		const ceremonyUid = await getOrCreateCeremony(year, master.organizationUid);
+		const ceremonyUid = await getOrCreateCeremony(year, main.organizationUid);
 
 		// ノミネーション情報の更新または追加
 		await database
@@ -778,7 +778,7 @@ async function processMovie(
 			.values({
 				movieUid,
 				ceremonyUid,
-				categoryUid: master.categoryUid,
+				categoryUid: main.categoryUid,
 				isWinner: isWinner ? 1 : 0,
 			})
 			.onConflictDoUpdate({

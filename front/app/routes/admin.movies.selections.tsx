@@ -517,8 +517,8 @@ export default function AdminMovieSelections({
 											type="text"
 											placeholder="映画タイトルを検索..."
 											value={searchQuery}
-											onChange={(e) => {
-												setSearchQuery(e.target.value);
+											onChange={(event) => {
+												setSearchQuery(event.target.value);
 											}}
 											className="w-full p-3 border border-gray-300 rounded-lg mb-4"
 										/>

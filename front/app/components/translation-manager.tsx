@@ -261,10 +261,10 @@ export default function TranslationManager({
 							<input
 								type="text"
 								value={newTranslation.languageCode}
-								onChange={(e) =>
+								onChange={(event) =>
 									setNewTranslation({
 										...newTranslation,
-										languageCode: e.target.value,
+										languageCode: event.target.value,
 									})
 								}
 								className="w-full px-3 py-2 border border-gray-300 rounded-md"
@@ -278,10 +278,10 @@ export default function TranslationManager({
 							<input
 								type="text"
 								value={newTranslation.content}
-								onChange={(e) =>
+								onChange={(event) =>
 									setNewTranslation({
 										...newTranslation,
-										content: e.target.value,
+										content: event.target.value,
 									})
 								}
 								className="w-full px-3 py-2 border border-gray-300 rounded-md"
@@ -293,10 +293,10 @@ export default function TranslationManager({
 								type="checkbox"
 								id="isDefault"
 								checked={newTranslation.isDefault}
-								onChange={(e) =>
+								onChange={(event) =>
 									setNewTranslation({
 										...newTranslation,
-										isDefault: e.target.checked,
+										isDefault: event.target.checked,
 									})
 								}
 								className="mr-2"
@@ -416,14 +416,14 @@ function EditTranslationForm({
 				<input
 					type="text"
 					value={languageCode}
-					onChange={(e) => setLanguageCode(e.target.value)}
+					onChange={(event) => setLanguageCode(event.target.value)}
 					className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
 					placeholder="言語"
 				/>
 				<input
 					type="text"
 					value={content}
-					onChange={(e) => setContent(e.target.value)}
+					onChange={(event) => setContent(event.target.value)}
 					className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
 					placeholder="タイトル"
 				/>
@@ -434,7 +434,7 @@ function EditTranslationForm({
 						type="checkbox"
 						id={`default-${translation.uid}`}
 						checked={isDefault}
-						onChange={(e) => setIsDefault(e.target.checked)}
+						onChange={(event) => setIsDefault(event.target.checked)}
 						className="mr-1"
 					/>
 					<label htmlFor={`default-${translation.uid}`} className="text-xs">

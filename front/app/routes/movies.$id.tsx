@@ -216,9 +216,9 @@ export default function MovieDetail({
 
 	// フォームフィールドの変更処理
 	const handleInputChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+		event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
 	) => {
-		const {name, value} = e.target;
+		const {name, value} = event.target;
 		setFormData((previous) => ({
 			...previous,
 			[name]: value,

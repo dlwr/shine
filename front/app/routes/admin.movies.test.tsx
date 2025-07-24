@@ -6,10 +6,10 @@ import AdminMovies, {loader, meta} from './admin.movies';
 // Import type { Route } from './+types/admin.movies';
 
 // UseSearchParamsのモック
-const mockSearchParams = new URLSearchParams();
-const mockSetSearchParams = vi.fn();
+const mockSearchParameters = new URLSearchParams();
+const mockSetSearchParameters = vi.fn();
 vi.mock('react-router', () => ({
-	useSearchParams: () => [mockSearchParams, mockSetSearchParams],
+	useSearchParams: () => [mockSearchParameters, mockSetSearchParameters],
 }));
 
 // LocalStorageのモック

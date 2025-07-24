@@ -267,8 +267,8 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 										target="_blank"
 										rel="noopener noreferrer"
 										className={`block px-4 py-3 rounded-md text-center text-sm font-medium ${service.color}`}
-										onClick={(e) => {
-											e.stopPropagation();
+										onClick={(event) => {
+											event.stopPropagation();
 										}}
 									>
 										{service.name}
@@ -285,8 +285,8 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 								target="_blank"
 								rel="noopener noreferrer"
 								className="block px-4 py-3 mt-3 bg-yellow-500 text-gray-900 rounded-md text-center text-sm font-medium"
-								onClick={(e) => {
-									e.stopPropagation();
+								onClick={(event) => {
+									event.stopPropagation();
 								}}
 							>
 								IMDb
@@ -302,8 +302,8 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 								target="_blank"
 								rel="noopener noreferrer"
 								className="block px-4 py-3 mt-3 bg-gray-600 text-white rounded-md text-center text-sm font-medium"
-								onClick={(e) => {
-									e.stopPropagation();
+								onClick={(event) => {
+									event.stopPropagation();
 								}}
 							>
 								Google

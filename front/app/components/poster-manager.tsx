@@ -219,8 +219,8 @@ export default function PosterManager({
 						<input
 							type="url"
 							value={newPoster.url}
-							onChange={(e) =>
-								setNewPoster({...newPoster, url: e.target.value})
+							onChange={(event) =>
+								setNewPoster({...newPoster, url: event.target.value})
 							}
 							className="col-span-5 px-3 py-2 border border-gray-300 rounded text-sm"
 							placeholder="ポスターURL（必須）"
@@ -228,8 +228,8 @@ export default function PosterManager({
 						<input
 							type="number"
 							value={newPoster.width}
-							onChange={(e) =>
-								setNewPoster({...newPoster, width: e.target.value})
+							onChange={(event) =>
+								setNewPoster({...newPoster, width: event.target.value})
 							}
 							className="px-3 py-2 border border-gray-300 rounded text-sm"
 							placeholder="幅"
@@ -237,8 +237,8 @@ export default function PosterManager({
 						<input
 							type="number"
 							value={newPoster.height}
-							onChange={(e) =>
-								setNewPoster({...newPoster, height: e.target.value})
+							onChange={(event) =>
+								setNewPoster({...newPoster, height: event.target.value})
 							}
 							className="px-3 py-2 border border-gray-300 rounded text-sm"
 							placeholder="高さ"
@@ -246,8 +246,8 @@ export default function PosterManager({
 						<input
 							type="text"
 							value={newPoster.languageCode}
-							onChange={(e) =>
-								setNewPoster({...newPoster, languageCode: e.target.value})
+							onChange={(event) =>
+								setNewPoster({...newPoster, languageCode: event.target.value})
 							}
 							className="px-3 py-2 border border-gray-300 rounded text-sm"
 							placeholder="言語（例: ja）"
@@ -255,8 +255,8 @@ export default function PosterManager({
 						<input
 							type="text"
 							value={newPoster.source}
-							onChange={(e) =>
-								setNewPoster({...newPoster, source: e.target.value})
+							onChange={(event) =>
+								setNewPoster({...newPoster, source: event.target.value})
 							}
 							className="px-3 py-2 border border-gray-300 rounded text-sm"
 							placeholder="ソース（例: TMDb）"
@@ -266,8 +266,8 @@ export default function PosterManager({
 								type="checkbox"
 								id="isPrimary"
 								checked={newPoster.isPrimary}
-								onChange={(e) =>
-									setNewPoster({...newPoster, isPrimary: e.target.checked})
+								onChange={(event) =>
+									setNewPoster({...newPoster, isPrimary: event.target.checked})
 								}
 								className="mr-1"
 							/>

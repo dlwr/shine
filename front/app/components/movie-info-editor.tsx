@@ -431,7 +431,7 @@ export default function MovieInfoEditor({
 								<input
 									type="number"
 									value={newYear}
-									onChange={(e) => setNewYear(e.target.value)}
+									onChange={(event) => setNewYear(event.target.value)}
 									className="px-2 py-1 border border-gray-300 rounded text-sm w-24"
 									placeholder="2024"
 									min="1888"
@@ -489,7 +489,7 @@ export default function MovieInfoEditor({
 								<input
 									type="text"
 									value={newImdbId}
-									onChange={(e) => setNewImdbId(e.target.value)}
+									onChange={(event) => setNewImdbId(event.target.value)}
 									className="px-2 py-1 border border-gray-300 rounded text-sm"
 									placeholder="tt1234567"
 								/>
@@ -498,7 +498,7 @@ export default function MovieInfoEditor({
 										type="checkbox"
 										id="fetchTmdbData"
 										checked={fetchTmdbData}
-										onChange={(e) => setFetchTmdbData(e.target.checked)}
+										onChange={(event) => setFetchTmdbData(event.target.checked)}
 										className="mr-1"
 									/>
 									<label htmlFor="fetchTmdbData" className="text-sm">
@@ -553,7 +553,7 @@ export default function MovieInfoEditor({
 								<input
 									type="number"
 									value={newTmdbId}
-									onChange={(e) => setNewTmdbId(e.target.value)}
+									onChange={(event) => setNewTmdbId(event.target.value)}
 									className="px-2 py-1 border border-gray-300 rounded text-sm w-24"
 									placeholder="12345"
 								/>

@@ -28,14 +28,14 @@ type MovieInfo = {
 	country?: string;
 };
 
-type MasterData = {
+type MainData = {
 	organizationUid: string;
 	palmeDOrCategoryUid: string;
 	grandPrixCategoryUid: string;
 	ceremonies: Map<number, string>;
 };
 
-let masterData: MasterData | undefined;
+let mainData: MainData | undefined;
 let environment_: Environment;
 let TMDB_API_KEY: string | undefined;
 let tmdbConfiguration: TMDatabaseConfiguration | undefined;
@@ -130,18 +130,18 @@ async function seedCannesOrganization(): Promise<void> {
 		.onConflictDoNothing();
 }
 
-async function fetchMasterData(): Promise<MasterData> {
-	if (masterData) return masterData;
+async function fetchMainData(): Promise<MainData> {
+	if (mainData) return mainData;
 
 	if (isDryRun) {
 		// Dry run mode - return mock data
-		masterData = {
+		mainData = {
 			organizationUid: 'mock-cannes-uid',
 			palmeDOrCategoryUid: 'mock-palme-dor-uid',
 			grandPrixCategoryUid: 'mock-grand-prix-uid',
 			ceremonies: new Map(),
 		};
-		return masterData;
+		return mainData;
 	}
 
 	// 組織が存在しない場合は作成
@@ -177,14 +177,14 @@ async function fetchMasterData(): Promise<MasterData> {
 		ceremoniesData.map((ceremony) => [ceremony.year, ceremony.uid]),
 	);
 
-	masterData = {
+	mainData = {
 		organizationUid: organization.uid,
 		palmeDOrCategoryUid: palmeDOr.uid,
 		grandPrixCategoryUid: grandPrix.uid,
 		ceremonies,
 	};
 
-	return masterData;
+	return mainData;
 }
 
 async function getOrCreateCeremony(
@@ -208,14 +208,14 @@ async function getOrCreateCeremony(
 		})
 		.returning();
 
-	masterData?.ceremonies.set(year, ceremony.uid);
+	mainData?.ceremonies.set(year, ceremony.uid);
 
 	return ceremony.uid;
 }
 
 export async function scrapeCannesFilmFestival() {
 	try {
-		const master = await fetchMasterData();
+		const main = await fetchMainData();
 
 		// 各年のカンヌ映画祭をスクレイピング
 		const currentYear = new Date().getFullYear();
@@ -226,7 +226,7 @@ export async function scrapeCannesFilmFestival() {
 				const movies = await scrapeYearPage(year);
 				const ceremonyUid = await getOrCreateCeremony(
 					year,
-					master.organizationUid,
+					main.organizationUid,
 				);
 
 				// バッチ処理のためのデータを収集
@@ -239,7 +239,7 @@ export async function scrapeCannesFilmFestival() {
 					const batchData = await processMovieForBatch(
 						movie,
 						ceremonyUid,
-						master,
+						main,
 					);
 					if (batchData) {
 						translationsBatch.push(...batchData.translations);
@@ -324,12 +324,12 @@ export async function scrapeCannesFilmFestival() {
 
 export async function scrapeCannesFilmFestivalYear(year: number) {
 	try {
-		const master = await fetchMasterData();
+		const main = await fetchMainData();
 
 		console.log(`Processing Cannes ${year}...`);
 
 		const movies = await scrapeYearPage(year);
-		const ceremonyUid = await getOrCreateCeremony(year, master.organizationUid);
+		const ceremonyUid = await getOrCreateCeremony(year, main.organizationUid);
 
 		// バッチ処理のためのデータを収集
 		const translationsBatch: Array<typeof translations.$inferInsert> = [];
@@ -338,7 +338,7 @@ export async function scrapeCannesFilmFestivalYear(year: number) {
 		const nominationsBatch: Array<typeof nominations.$inferInsert> = [];
 
 		for (const movie of movies) {
-			const batchData = await processMovieForBatch(movie, ceremonyUid, master);
+			const batchData = await processMovieForBatch(movie, ceremonyUid, main);
 			if (batchData) {
 				translationsBatch.push(...batchData.translations);
 				posterUrlsBatch.push(...batchData.posterUrls);
@@ -861,7 +861,7 @@ function findPalmeDOrWinner(
 
 export async function updateAllCannesWinnersOnly() {
 	try {
-		await fetchMasterData();
+		await fetchMainData();
 
 		const currentYear = new Date().getFullYear();
 		for (let year = currentYear; year >= 1946; year--) {
@@ -885,7 +885,7 @@ export async function updateAllCannesWinnersOnly() {
 
 export async function updateCannesWinnersOnly(year: number) {
 	try {
-		const master = await fetchMasterData();
+		const main = await fetchMainData();
 
 		console.log(`Processing Cannes ${year} winners...`);
 
@@ -894,8 +894,8 @@ export async function updateCannesWinnersOnly(year: number) {
 		if (winner) {
 			await updateWinnerStatus(
 				winner,
-				await getOrCreateCeremony(year, master.organizationUid),
-				master,
+				await getOrCreateCeremony(year, main.organizationUid),
+				main,
 			);
 			console.log(`Updated winner for ${year}: ${winner.title}`);
 		} else {
@@ -931,7 +931,7 @@ async function fetchPalmeDOrWinner(
 async function updateWinnerStatus(
 	movieInfo: MovieInfo,
 	ceremonyUid: string,
-	master: MasterData,
+	main: MainData,
 ) {
 	try {
 		const database = getDatabase(environment_);
@@ -972,7 +972,7 @@ async function updateWinnerStatus(
 				and(
 					eq(nominations.movieUid, movieUid),
 					eq(nominations.ceremonyUid, ceremonyUid),
-					eq(nominations.categoryUid, master.palmeDOrCategoryUid),
+					eq(nominations.categoryUid, main.palmeDOrCategoryUid),
 				),
 			);
 
@@ -1188,7 +1188,7 @@ async function fetchMovieDetails(
 async function processMovieForBatch(
 	movieInfo: MovieInfo,
 	ceremonyUid: string,
-	master: MasterData,
+	main: MainData,
 ): Promise<
 	| {
 			translations: Array<typeof translations.$inferInsert>;
@@ -1322,8 +1322,8 @@ async function processMovieForBatch(
 
 		// ノミネーション
 		const categoryUid = movieInfo.isWinner
-			? master.palmeDOrCategoryUid
-			: master.palmeDOrCategoryUid; // コンペティション参加作品もPalme d'Orカテゴリーに登録
+			? main.palmeDOrCategoryUid
+			: main.palmeDOrCategoryUid; // コンペティション参加作品もPalme d'Orカテゴリーに登録
 		const nominationData: typeof nominations.$inferInsert = {
 			movieUid,
 			ceremonyUid,
@@ -1356,7 +1356,7 @@ async function processMovieForBatch(
 async function processMovie(
 	movieInfo: MovieInfo,
 	ceremonyUid: string,
-	master: MasterData,
+	main: MainData,
 ) {
 	try {
 		if (isDryRun) {
@@ -1456,8 +1456,8 @@ async function processMovie(
 
 		// ノミネーション情報の更新または追加
 		const categoryUid = movieInfo.isWinner
-			? master.palmeDOrCategoryUid
-			: master.palmeDOrCategoryUid; // コンペティション参加作品もPalme d'Orカテゴリーに登録
+			? main.palmeDOrCategoryUid
+			: main.palmeDOrCategoryUid; // コンペティション参加作品もPalme d'Orカテゴリーに登録
 
 		await database
 			.insert(nominations)
