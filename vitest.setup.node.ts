@@ -18,14 +18,10 @@ if (globalThis.crypto) {
 }
 
 // Polyfill TextEncoder and TextDecoder for Node.js environment
-if (!globalThis.TextEncoder) {
-	globalThis.TextEncoder = TextEncoder;
-}
+globalThis.TextEncoder ||= TextEncoder;
 
-if (!globalThis.TextDecoder) {
-	globalThis.TextDecoder =
-		TextDecoder as unknown as typeof globalThis.TextDecoder;
-}
+globalThis.TextDecoder ||=
+	TextDecoder as unknown as typeof globalThis.TextDecoder;
 
 // Mock Cloudflare Workers Cache API for Node.js tests
 const mockCache = {
@@ -57,12 +53,8 @@ globalThis.console = {
 globalThis.fetch = vi.fn();
 
 // Mock btoa/atob for base64 encoding in Node.js environment
-if (!globalThis.btoa) {
-	globalThis.btoa = (input: string) =>
-		Buffer.from(input, 'binary').toString('base64');
-}
+globalThis.btoa ||= (input: string) =>
+	Buffer.from(input, 'binary').toString('base64');
 
-if (!globalThis.atob) {
-	globalThis.atob = (input: string) =>
-		Buffer.from(input, 'base64').toString('binary');
-}
+globalThis.atob ||= (input: string) =>
+	Buffer.from(input, 'base64').toString('binary');

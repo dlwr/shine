@@ -213,12 +213,10 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 				};
 
 				const ceremonyKey = nom.ceremony.uid;
-				if (!acc[orgKey].ceremonies[ceremonyKey]) {
-					acc[orgKey].ceremonies[ceremonyKey] = {
-						ceremony: nom.ceremony,
-						nominations: [],
-					};
-				}
+				acc[orgKey].ceremonies[ceremonyKey] ||= {
+					ceremony: nom.ceremony,
+					nominations: [],
+				};
 
 				acc[orgKey].ceremonies[ceremonyKey].nominations.push(nom);
 				return acc;
