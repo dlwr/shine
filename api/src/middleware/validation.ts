@@ -3,7 +3,7 @@ import {HTTPException} from 'hono/http-exception';
 import {z} from 'zod';
 import {sanitizeText, sanitizeUrl} from './sanitizer';
 
-const createValidationMiddleware = <T>(schema: z.ZodSchema<T>) => {
+const createValidationMiddleware = <T>(schema: z.ZodType<T>) => {
 	return async (c: Context, next: Next) => {
 		try {
 			const body = await c.req.json();
@@ -14,7 +14,7 @@ const createValidationMiddleware = <T>(schema: z.ZodSchema<T>) => {
 			if (error instanceof z.ZodError) {
 				throw new HTTPException(400, {
 					message: 'Validation error',
-					cause: error.errors,
+					cause: error.issues,
 				});
 			}
 
