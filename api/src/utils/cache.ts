@@ -13,7 +13,9 @@ export type CacheMetrics = {
 export class EdgeCache {
 	private readonly cache = (caches as unknown as {default: Cache}).default;
 	private readonly metrics: CacheMetrics = {hits: 0, misses: 0, hitRate: 0};
-	private readonly isDevelopment = true; // Always disable cache in development
+	private get isDevelopment() {
+		return true; // Always disable cache in development
+	}
 
 	async getResponse(key: string): Promise<Response | undefined> {
 		// Allow caching for preview keys even in development

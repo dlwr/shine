@@ -136,7 +136,6 @@
       "n/prefer-global/text-decoder": "off",
       "n/prefer-global/text-encoder": "off",
       "n/prefer-global/buffer": "off",
-      "@typescript-eslint/class-literal-property-style": "off",
       "@typescript-eslint/restrict-template-expressions": "off",
       "import-x/no-unassigned-import": "off",
       "no-alert": "off",
