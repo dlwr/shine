@@ -144,14 +144,13 @@ export class EdgeCache {
 		}
 
 		try {
-			let deleted = 0;
 			const keys = await this.cache.keys();
-			for (const request of keys) {
-				if (request.url.includes(pattern)) {
-					const success = await this.cache.delete(request);
-					if (success) deleted++;
-				}
-			}
+			const deletePromises = keys
+				.filter((request) => request.url.includes(pattern))
+				.map(async (request) => this.cache.delete(request));
+
+			const results = await Promise.all(deletePromises);
+			const deleted = results.filter(Boolean).length;
 
 			return deleted;
 		} catch (error) {

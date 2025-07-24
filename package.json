@@ -118,7 +118,6 @@
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-return": "off",
       "@typescript-eslint/consistent-type-imports": "off",
-      "no-await-in-loop": "off",
       "import-x/no-anonymous-default-export": "off",
       "n/prefer-global/process": "off",
       "unicorn/no-process-exit": "off",

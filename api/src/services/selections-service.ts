@@ -82,8 +82,8 @@ export class SelectionsService extends BaseService {
 		locale: string,
 		futureDate: Date,
 	): Promise<MovieSelection[]> {
-		const previews: MovieSelection[] = [];
 		const baseDate = new Date(futureDate);
+		const promises: Array<Promise<MovieSelection | undefined>> = [];
 
 		for (let index = 0; index < 7; index++) {
 			const previewDate = new Date(baseDate);
@@ -96,18 +96,15 @@ export class SelectionsService extends BaseService {
 				previewDate.setMonth(baseDate.getMonth() + index);
 			}
 
-			const movie = await this.generateMovieSelection(
-				previewDate,
-				type,
-				locale,
-				false,
+			promises.push(
+				this.generateMovieSelection(previewDate, type, locale, false),
 			);
-			if (movie) {
-				previews.push(movie);
-			}
 		}
 
-		return previews;
+		const results = await Promise.all(promises);
+		return results.filter(
+			(movie): movie is MovieSelection => movie !== undefined,
+		);
 	}
 
 	async getNextPeriodPreviews(locale: string): Promise<{
