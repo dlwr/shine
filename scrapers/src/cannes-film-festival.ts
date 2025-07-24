@@ -67,14 +67,12 @@ export default {
 				} else {
 					await updateAllCannesWinnersOnly();
 				}
-			} else {
+			} else if (yearParameter) {
 				// 通常のスクレイピング
-				if (yearParameter) {
-					const targetYear = Number.parseInt(yearParameter, 10);
-					await scrapeCannesFilmFestivalYear(targetYear);
-				} else {
-					await scrapeCannesFilmFestival();
-				}
+				const targetYear = Number.parseInt(yearParameter, 10);
+				await scrapeCannesFilmFestivalYear(targetYear);
+			} else {
+				await scrapeCannesFilmFestival();
 			}
 
 			return new Response('Scraping completed successfully', {status: 200});

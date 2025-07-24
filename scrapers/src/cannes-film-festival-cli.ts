@@ -56,12 +56,10 @@ async function main() {
 					`カンヌ映画祭スクレイピングを開始します (対象年: ${targetYear})`,
 				);
 			}
+		} else if (winnersOnlyFlag) {
+			console.log('カンヌ映画祭受賞作品の更新を開始します');
 		} else {
-			if (winnersOnlyFlag) {
-				console.log('カンヌ映画祭受賞作品の更新を開始します');
-			} else {
-				console.log('カンヌ映画祭スクレイピングを開始します');
-			}
+			console.log('カンヌ映画祭スクレイピングを開始します');
 		}
 
 		// 環境変数の確認

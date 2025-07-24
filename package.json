@@ -129,7 +129,6 @@
       "no-bitwise": "off",
       "@typescript-eslint/restrict-plus-operands": "off",
       "@typescript-eslint/member-ordering": "off",
-      "no-lonely-if": "off",
       "@typescript-eslint/triple-slash-reference": "off",
       "max-params": [
         "warn",
