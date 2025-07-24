@@ -52,4 +52,4 @@ async function findDuplicateTmdbIds() {
 	}
 }
 
-findDuplicateTmdbIds().catch(console.error);
+await findDuplicateTmdbIds();

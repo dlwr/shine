@@ -85,4 +85,4 @@ async function cleanDuplicateTmdbIds() {
 	);
 }
 
-cleanDuplicateTmdbIds().catch(console.error);
+await cleanDuplicateTmdbIds();

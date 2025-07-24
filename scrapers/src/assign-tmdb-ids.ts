@@ -99,4 +99,4 @@ async function assignTmdbIds() {
 	);
 }
 
-assignTmdbIds().catch(console.error);
+await assignTmdbIds();

@@ -53,4 +53,4 @@ async function checkMissingTmdbIds() {
 	}
 }
 
-checkMissingTmdbIds().catch(console.error);
+await checkMissingTmdbIds();
