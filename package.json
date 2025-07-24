@@ -144,8 +144,7 @@
       "@typescript-eslint/only-throw-error": "off",
       "no-return-assign": "off",
       "@typescript-eslint/no-confusing-void-expression": "off",
-      "import-x/order": "off",
-      "@typescript-eslint/prefer-optional-chain": "off"
+      "import-x/order": "off"
     },
     "prettier": true
   }

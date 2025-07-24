@@ -572,7 +572,7 @@ const showMergeDialog = (sourceId: string, sourceTitle: string) => {
 		`映画「${sourceTitle}」を他の映画にマージします。\n\nマージ先の映画IDを入力してください：`,
 	);
 
-	if (targetId && targetId.trim()) {
+	if (targetId?.trim()) {
 		const confirmed = globalThis.confirm?.(
 			`確認：\n\n` +
 				`マージ元: ${sourceTitle} (${sourceId})\n` +
