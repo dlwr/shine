@@ -133,7 +133,6 @@
       "@typescript-eslint/no-unnecessary-type-assertion": "off",
       "n/prefer-global/buffer": "off",
       "@typescript-eslint/restrict-template-expressions": "off",
-      "import-x/no-unassigned-import": "off",
       "no-alert": "off",
       "promise/prefer-await-to-then": "off",
       "@typescript-eslint/no-floating-promises": "off",

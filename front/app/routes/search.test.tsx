@@ -1,3 +1,4 @@
+// eslint-disable-next-line import-x/no-unassigned-import -- Test setup requires side effects
 import '@testing-library/jest-dom';
 import {render, screen} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
