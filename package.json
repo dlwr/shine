@@ -147,7 +147,6 @@
       "@typescript-eslint/no-confusing-void-expression": "off",
       "max-lines": "off",
       "import-x/order": "off",
-      "unicorn/prefer-query-selector": "off",
       "@typescript-eslint/prefer-optional-chain": "off"
     },
     "prettier": true
