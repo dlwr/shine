@@ -141,7 +141,6 @@
         6
       ],
       "@typescript-eslint/consistent-type-assertions": "off",
-      "@typescript-eslint/no-unnecessary-type-assertion": "off",
       "n/prefer-global/buffer": "off",
       "@typescript-eslint/restrict-template-expressions": "off",
       "no-alert": "off",

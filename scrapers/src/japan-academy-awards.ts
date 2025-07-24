@@ -983,7 +983,7 @@ async function fetchEnglishTitleFromTMDB(
 			return undefined;
 		}
 
-		const data = (await response.json()) as TMDBFindResponse;
+		const data = await response.json();
 		const movieResults = data.movie_results;
 
 		if (!movieResults || movieResults.length === 0) {

@@ -382,7 +382,7 @@ async function searchMovieOnTMDB(
 			throw new Error(`TMDB API error: ${response.statusText}`);
 		}
 
-		const data = (await response.json()) as TMDBSearchResponse;
+		const data = await response.json();
 
 		if (data.results.length === 0) {
 			return undefined;
@@ -542,7 +542,7 @@ async function fetchTMDBConfiguration(): Promise<void> {
 			throw new Error(`TMDB configuration API error: ${response.statusText}`);
 		}
 
-		tmdbConfiguration = (await response.json()) as TMDBConfiguration;
+		tmdbConfiguration = await response.json();
 		console.log('TMDB configuration loaded');
 	} catch (error) {
 		console.error('Error fetching TMDB configuration:', error);

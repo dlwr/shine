@@ -555,7 +555,7 @@ export class AdminService extends BaseService {
 			throw new Error(`TMDB API error: ${findResponse.statusText}`);
 		}
 
-		const findData = (await findResponse.json()) as TMDBFindResponse;
+		const findData = await findResponse.json();
 		if (!findData.movie_results || findData.movie_results.length === 0) {
 			return undefined;
 		}
@@ -571,7 +571,7 @@ export class AdminService extends BaseService {
 			throw new Error(`TMDB API error: ${movieResponse.statusText}`);
 		}
 
-		const movieData = (await movieResponse.json()) as TMDBMovieData;
+		const movieData = await movieResponse.json();
 
 		return {
 			tmdbId,

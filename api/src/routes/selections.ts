@@ -700,15 +700,7 @@ selectionsRoutes.post(
 	async (c) => {
 		try {
 			const database = getDatabase(c.env);
-			const {
-				type,
-				date,
-				locale = 'en',
-			} = (await c.req.json()) as {
-				type: 'daily' | 'weekly' | 'monthly';
-				date: string;
-				locale?: string;
-			};
+			const {type, date, locale = 'en'} = await c.req.json();
 
 			// Validate inputs
 			if (!type || !['daily', 'weekly', 'monthly'].includes(type)) {
@@ -726,7 +718,7 @@ selectionsRoutes.post(
 			}
 
 			// Parse the date and generate a preview (no DB write)
-			const targetDate = new Date(date + 'T00:00:00.000Z');
+			const targetDate = new Date(String(date) + 'T00:00:00.000Z');
 
 			// Generate a random seed based on date + current timestamp for randomness
 			const baseSeed = getDateSeed(targetDate, type);
@@ -878,11 +870,7 @@ selectionsRoutes.post(
 	async (c) => {
 		try {
 			const selectionsService = new SelectionsService(c.env);
-			const {type, date, movieId} = (await c.req.json()) as {
-				type: 'daily' | 'weekly' | 'monthly';
-				date: string;
-				movieId: string;
-			};
+			const {type, date, movieId} = await c.req.json();
 
 			// Validate inputs
 			if (!type || !['daily', 'weekly', 'monthly'].includes(type)) {
@@ -903,7 +891,7 @@ selectionsRoutes.post(
 				return c.json({error: 'Date must be in YYYY-MM-DD format'}, 400);
 			}
 
-			const targetDate = new Date(date + 'T00:00:00.000Z');
+			const targetDate = new Date(String(date) + 'T00:00:00.000Z');
 			await selectionsService.overrideSelection(type, movieId, targetDate);
 
 			return c.json({

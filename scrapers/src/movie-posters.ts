@@ -145,7 +145,7 @@ async function fetchMovieImages(
 			throw new Error(`TMDb API error: ${findResponse.statusText}`);
 		}
 
-		const findData = (await findResponse.json()) as TMDBFindResponse;
+		const findData = await findResponse.json();
 		const movieResults = findData.movie_results;
 
 		if (!movieResults || movieResults.length === 0) {
@@ -163,7 +163,7 @@ async function fetchMovieImages(
 			throw new Error(`TMDb API error: ${imagesResponse.statusText}`);
 		}
 
-		const images = (await imagesResponse.json()) as TMDBMovieImages;
+		const images = await imagesResponse.json();
 		return {images, tmdbId};
 	} catch (error) {
 		console.error(`Error fetching TMDb images for IMDb ID ${imdbId}:`, error);
@@ -372,7 +372,7 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
 					throw new Error(`TMDb API error: ${imagesResponse.statusText}`);
 				}
 
-				const images = (await imagesResponse.json()) as TMDBMovieImages;
+				const images = await imagesResponse.json();
 
 				if (!images.posters || images.posters.length === 0) {
 					result.error = 'No posters found';

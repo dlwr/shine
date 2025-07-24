@@ -32,7 +32,7 @@ async function cleanDuplicateTmdbIds() {
 
 	for (const duplicate of duplicates) {
 		console.log(
-			`\nProcessing TMDb ID ${duplicate.tmdbId} (${duplicate.count} movies)`,
+			`\nProcessing TMDb ID ${String(duplicate.tmdbId)} (${duplicate.count} movies)`,
 		);
 
 		const conflictingMovies = await db
@@ -43,7 +43,7 @@ async function cleanDuplicateTmdbIds() {
 				createdAt: movies.createdAt,
 			})
 			.from(movies)
-			.where(eq(movies.tmdbId, duplicate.tmdbId!))
+			.where(eq(movies.tmdbId, duplicate.tmdbId))
 			.orderBy(desc(movies.createdAt)); // 最新作成順
 
 		// 最初の映画（最新作成）以外のTMDb IDをnullに設定
@@ -51,7 +51,7 @@ async function cleanDuplicateTmdbIds() {
 		const toClean = conflictingMovies.slice(1);
 
 		console.log(
-			`  Keeping: ${toKeep.uid} (IMDb: ${toKeep.imdbId}, Year: ${toKeep.year})`,
+			`  Keeping: ${toKeep.uid} (IMDb: ${toKeep.imdbId ?? 'N/A'}, Year: ${toKeep.year})`,
 		);
 
 		for (const movie of toClean) {
@@ -61,7 +61,7 @@ async function cleanDuplicateTmdbIds() {
 				.where(eq(movies.uid, movie.uid));
 
 			console.log(
-				`  Cleaned: ${movie.uid} (IMDb: ${movie.imdbId}, Year: ${movie.year})`,
+				`  Cleaned: ${movie.uid} (IMDb: ${movie.imdbId ?? 'N/A'}, Year: ${movie.year})`,
 			);
 			cleaned++;
 		}

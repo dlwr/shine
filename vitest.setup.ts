@@ -33,8 +33,7 @@ if (
 		(globalThis as any).HTMLFormElement.prototype,
 		'requestSubmit',
 		{
-			value(submitter?: any) {
-				const form = this as any;
+			value(this: HTMLFormElement, submitter?: any) {
 				const submitEvent = new Event('submit', {
 					bubbles: true,
 					cancelable: true,
@@ -43,7 +42,7 @@ if (
 					(submitEvent as any).submitter = submitter;
 				}
 
-				form.dispatchEvent(submitEvent);
+				this.dispatchEvent(submitEvent);
 			},
 			writable: true,
 			configurable: true,

@@ -353,7 +353,7 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async (c) => {
 
 				const imagesResponse = await fetch(imagesUrl.toString());
 				if (imagesResponse.ok) {
-					const images = (await imagesResponse.json()) as TMDBMovieImages;
+					const images = await imagesResponse.json();
 					if (images.posters && images.posters.length > 0) {
 						const savedPosters = await savePosterUrls(
 							movieId,
@@ -781,7 +781,7 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 
 			const imagesResponse = await fetch(imagesUrl.toString());
 			if (imagesResponse.ok) {
-				const images = (await imagesResponse.json()) as TMDBMovieImages;
+				const images = await imagesResponse.json();
 				if (images.posters && images.posters.length > 0) {
 					const savedPosters = await savePosterUrls(
 						movieId,
@@ -943,7 +943,7 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async (c) => {
 
 			const imagesResponse = await fetch(imagesUrl.toString());
 			if (imagesResponse.ok) {
-				const images = (await imagesResponse.json()) as TMDBMovieImages;
+				const images = await imagesResponse.json();
 				if (images.posters && images.posters.length > 0) {
 					const savedPosters = await savePosterUrls(
 						movieId,

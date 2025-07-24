@@ -105,10 +105,7 @@ export class EdgeCache {
 		try {
 			const cached = await this.cache.match(key);
 			if (cached) {
-				const result = (await cached.json()) as {
-					data: unknown;
-					cachedAt: number;
-				};
+				const result = await cached.json();
 				this.metrics.hits++;
 				this.updateHitRate();
 				return result;
