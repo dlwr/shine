@@ -111,13 +111,26 @@
         "warn",
         8
       ],
-      "@typescript-eslint/prefer-nullish-coalescing": "off",
+      "@typescript-eslint/prefer-nullish-coalescing": [
+        "error",
+        {
+          "ignoreTernaryTests": true,
+          "ignoreConditionalTests": true,
+          "ignorePrimitives": {
+            "string": true,
+            "number": true,
+            "bigint": true,
+            "boolean": true
+          }
+        }
+      ],
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-return": "off",
       "@typescript-eslint/consistent-type-imports": "off",
+      "no-await-in-loop": "off",
       "import-x/no-anonymous-default-export": "off",
       "n/prefer-global/process": "off",
       "unicorn/no-process-exit": "off",

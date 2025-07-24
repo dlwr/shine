@@ -262,7 +262,7 @@ describe('Error Cases and Edge Cases', () => {
 			// Navigate to the deep value
 			let navigation = parsed;
 			for (let index = 0; index < 1000; index++) {
-				navigation = navigation.next || {value: undefined};
+				navigation = navigation.next ?? {value: undefined};
 			}
 
 			expect(navigation.value).toBe('deep');
