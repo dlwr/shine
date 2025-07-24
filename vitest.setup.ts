@@ -85,9 +85,17 @@ if ((globalThis as any).window && !(globalThis as any).HTMLDialogElement) {
 // Mock ResizeObserver
 if (!(globalThis as any).ResizeObserver) {
 	class MockResizeObserver {
-		observe() {}
-		unobserve() {}
-		disconnect() {}
+		observe() {
+			// Mock implementation
+		}
+
+		unobserve() {
+			// Mock implementation
+		}
+
+		disconnect() {
+			// Mock implementation
+		}
 	}
 
 	(globalThis as any).ResizeObserver = MockResizeObserver;

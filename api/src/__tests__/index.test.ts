@@ -12,7 +12,9 @@ vi.mock('db', () => ({
 			})),
 		})),
 		insert: vi.fn(() => ({
-			values: vi.fn(async () => {}),
+			values: vi.fn(async () => {
+				// Mock implementation
+			}),
 		})),
 	})),
 	eq: vi.fn(),

@@ -45,7 +45,9 @@ const mockDatabase = {
 		})),
 	})),
 	delete: vi.fn(() => ({
-		where: vi.fn(async () => {}),
+		where: vi.fn(async () => {
+			// Mock implementation
+		}),
 	})),
 };
 
