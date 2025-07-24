@@ -183,7 +183,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
 				}
 			};
 
-			fetchMovies();
+			void fetchMovies();
 		}
 	}, [shouldFetchOnClient, apiUrl, locale]);
 

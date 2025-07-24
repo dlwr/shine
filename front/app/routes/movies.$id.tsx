@@ -226,7 +226,7 @@ export default function MovieDetail({
 
 		// URL変更時にタイトルを自動取得
 		if (name === 'url') {
-			fetchTitleFromUrl(value);
+			void fetchTitleFromUrl(value);
 		}
 	};
 

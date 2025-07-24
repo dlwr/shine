@@ -140,7 +140,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 			}
 		};
 
-		loadMovie();
+		void loadMovie();
 	}, [apiUrl, movieId]);
 
 	if (loading) {

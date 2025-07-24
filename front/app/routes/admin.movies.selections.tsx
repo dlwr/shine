@@ -139,7 +139,7 @@ export default function AdminMovieSelections({
 			}
 		};
 
-		loadSelections();
+		void loadSelections();
 	}, [apiUrl]);
 
 	// Search movies with debounce

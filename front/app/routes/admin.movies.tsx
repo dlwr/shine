@@ -122,7 +122,7 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 			}
 		};
 
-		fetchMovies();
+		void fetchMovies();
 
 		// Listen for URL changes
 		const handleUrlChange = async () => fetchMovies();

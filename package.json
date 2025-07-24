@@ -95,10 +95,10 @@
       "**/package.json"
     ],
     "rules": {
+      "@typescript-eslint/naming-convention": "off",
       "import-x/no-extraneous-dependencies": "off",
       "n/no-extraneous-import": "off",
       "import-x/extensions": "off",
-      "@typescript-eslint/naming-convention": "off",
       "complexity": [
         "warn",
         40
@@ -144,7 +144,6 @@
       "@typescript-eslint/restrict-template-expressions": "off",
       "no-alert": "off",
       "promise/prefer-await-to-then": "off",
-      "@typescript-eslint/no-floating-promises": "off",
       "no-return-assign": "off",
       "@typescript-eslint/no-confusing-void-expression": "off"
     },
