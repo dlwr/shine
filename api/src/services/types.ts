@@ -1,8 +1,8 @@
-import type {Environment} from 'db';
+import type {Environment, getDatabase} from 'db';
 
 export type ServiceContext = {
 	env: Environment;
-	database: ReturnType<typeof import('db').getDatabase>;
+	database: ReturnType<typeof getDatabase>;
 };
 
 export type PaginationOptions = {

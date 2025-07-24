@@ -52,7 +52,7 @@ const mockDatabase = {
 };
 
 vi.mock('db', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('db')>();
+	const actual = await importOriginal();
 	return {
 		...actual,
 		getDatabase: vi.fn(() => mockDatabase),
