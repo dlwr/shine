@@ -175,7 +175,7 @@ export default function MovieDetail({
 		if (!url) return;
 
 		try {
-			new URL(url); // URL形式をチェック
+			const _ = new URL(url); // URL形式をチェック
 		} catch {
 			return;
 		}

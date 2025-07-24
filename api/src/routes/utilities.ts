@@ -14,7 +14,7 @@ utilitiesRoutes.post('/fetch-url-title', async (c) => {
 		}
 
 		try {
-			new URL(url);
+			const _ = new URL(url);
 		} catch {
 			return c.json({error: 'Invalid URL format'}, 400);
 		}
