@@ -1,7 +1,7 @@
 /**
  * Wikipedia日本語版から映画タイトルをスクレイピングするモジュール
  */
-import * as cheerio from 'cheerio';
+import type * as cheerio from 'cheerio';
 import {fetchWithRetry} from '../../common/fetch-utilities';
 import {
 	extractMainTitle,

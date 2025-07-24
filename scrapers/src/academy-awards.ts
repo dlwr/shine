@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import {Element} from 'domhandler';
+import {type Element} from 'domhandler';
 import {and, eq} from 'drizzle-orm';
 import {getDatabase, type Environment} from '../../src/index';
 import {awardCategories} from '../../src/schema/award-categories';
