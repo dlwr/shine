@@ -141,7 +141,6 @@
       ],
       "@typescript-eslint/consistent-type-assertions": "off",
       "n/prefer-global/buffer": "off",
-      "@typescript-eslint/restrict-template-expressions": "off",
       "no-alert": "off",
       "promise/prefer-await-to-then": "off",
       "no-return-assign": "off",

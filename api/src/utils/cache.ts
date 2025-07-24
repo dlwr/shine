@@ -192,7 +192,7 @@ export const getCacheKeyForSearch = (
 		.filter(
 			([, value]) => value !== undefined && value !== null && value !== '',
 		)
-		.map(([key, value]) => `${key}:${value}`)
+		.map(([key, value]) => `${key}:${String(value)}`)
 		.sort()
 		.join('|');
 

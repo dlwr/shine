@@ -163,7 +163,7 @@ async function assignImdbIds() {
 					skipCount++;
 				}
 			} catch (error) {
-				console.error(`✗ Error processing movie: ${error}`);
+				console.error(`✗ Error processing movie: ${String(error)}`);
 				errorCount++;
 			}
 
