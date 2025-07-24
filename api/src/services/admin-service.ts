@@ -9,11 +9,11 @@ import {nominations} from 'db/schema/nominations';
 import {posterUrls} from 'db/schema/poster-urls';
 import {referenceUrls} from 'db/schema/reference-urls';
 import {translations} from 'db/schema/translations';
-import {BaseService} from './base-service';
 import type {
 	TMDBFindResponse,
 	TMDBMovieData,
 } from '../../../scrapers/src/common/tmdb-utilities';
+import {BaseService} from './base-service';
 import type {
 	MergeMoviesOptions,
 	PaginationOptions,

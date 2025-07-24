@@ -1,9 +1,9 @@
 import {useEffect, useState} from 'react';
-import type {Route} from './+types/admin.movies.$id';
 import TranslationManager from '../components/translation-manager';
 import PosterManager from '../components/poster-manager';
 import MovieInfoEditor from '../components/movie-info-editor';
 import NominationList from '../components/nomination-list';
+import type {Route} from './+types/admin.movies.$id';
 
 type Translation = {
 	uid: string;

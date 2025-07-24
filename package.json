@@ -143,8 +143,7 @@
       "@typescript-eslint/no-floating-promises": "off",
       "@typescript-eslint/only-throw-error": "off",
       "no-return-assign": "off",
-      "@typescript-eslint/no-confusing-void-expression": "off",
-      "import-x/order": "off"
+      "@typescript-eslint/no-confusing-void-expression": "off"
     },
     "prettier": true
   }

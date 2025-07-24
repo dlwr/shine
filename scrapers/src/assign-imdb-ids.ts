@@ -1,8 +1,8 @@
 import {config} from 'dotenv';
 import {Command} from 'commander';
+import {and, eq, isNull} from 'drizzle-orm';
 import {getDatabase} from '../../src/index.js';
 import {movies, translations} from '../../src/schema/index.js';
-import {and, eq, isNull} from 'drizzle-orm';
 import {
 	searchTMDBMovie,
 	fetchTMDBMovieDetails,
