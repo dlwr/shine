@@ -132,7 +132,6 @@
       ],
       "@typescript-eslint/consistent-type-assertions": "off",
       "@typescript-eslint/no-unnecessary-type-assertion": "off",
-      "n/prefer-global/text-encoder": "off",
       "n/prefer-global/buffer": "off",
       "@typescript-eslint/restrict-template-expressions": "off",
       "import-x/no-unassigned-import": "off",
