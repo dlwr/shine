@@ -84,7 +84,9 @@ async function assignTmdbIds() {
 		// Rate limiting: 40 requests per 10 seconds
 		if (processed % 40 === 0) {
 			console.log('  ⏱️  Rate limiting: waiting 10 seconds...');
-			await new Promise((resolve) => setTimeout(resolve, 10_000));
+			await new Promise((resolve) => {
+				setTimeout(resolve, 10_000);
+			});
 		}
 	}
 

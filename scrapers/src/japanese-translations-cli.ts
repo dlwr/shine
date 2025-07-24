@@ -149,7 +149,9 @@ async function main() {
 
 			// 連続リクエストを避けるための待機（最後の処理以外）
 			if (index < movies.length - 1) {
-				await new Promise((resolve) => setTimeout(resolve, 1000));
+				await new Promise((resolve) => {
+					setTimeout(resolve, 1000);
+				});
 			}
 		}
 

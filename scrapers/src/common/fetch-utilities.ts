@@ -39,7 +39,9 @@ export async function fetchWithRetry(
 		console.warn(
 			`Fetch failed, retrying in ${delay}ms... (${retries} retries left)`,
 		);
-		await new Promise((resolve) => setTimeout(resolve, delay));
+		await new Promise((resolve) => {
+			setTimeout(resolve, delay);
+		});
 
 		return fetchWithRetry(url, options, retries - 1, delay * 1.5);
 	}

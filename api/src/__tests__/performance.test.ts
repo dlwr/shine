@@ -256,7 +256,9 @@ describe('Performance Tests', () => {
 
 				// Force garbage collection opportunity
 				if (chunk % 5 === 0) {
-					await new Promise((resolve) => setTimeout(resolve, 1));
+					await new Promise((resolve) => {
+						setTimeout(resolve, 1);
+					});
 				}
 			}
 

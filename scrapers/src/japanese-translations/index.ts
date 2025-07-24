@@ -150,7 +150,9 @@ export default {
 				}
 
 				// 連続リクエストを避けるための待機
-				await new Promise((resolve) => setTimeout(resolve, 1000));
+				await new Promise((resolve) => {
+					setTimeout(resolve, 1000);
+				});
 			}
 
 			// バッチで翻訳データを保存

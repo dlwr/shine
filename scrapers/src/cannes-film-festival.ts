@@ -312,7 +312,9 @@ export async function scrapeCannesFilmFestival() {
 			}
 
 			// 短い遅延を入れてサーバーに負荷をかけないようにする
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			await new Promise((resolve) => {
+				setTimeout(resolve, 1000);
+			});
 		}
 
 		console.log('Cannes Film Festival scraping completed successfully');
@@ -873,7 +875,9 @@ export async function updateAllCannesWinnersOnly() {
 				console.error(`Error updating winners for year ${year}:`, error);
 			}
 
-			await new Promise((resolve) => setTimeout(resolve, 500));
+			await new Promise((resolve) => {
+				setTimeout(resolve, 500);
+			});
 		}
 
 		console.log('Cannes winners update completed successfully');

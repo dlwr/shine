@@ -234,7 +234,9 @@ async function main() {
 			console.log(`------------------------------`);
 
 			// APIレート制限を考慮して少し待機（TMDBは40リクエスト/10秒の制限）
-			await new Promise((resolve) => setTimeout(resolve, 300));
+			await new Promise((resolve) => {
+				setTimeout(resolve, 300);
+			});
 		}
 
 		console.log('\n=== 最終結果 ===');
