@@ -296,6 +296,19 @@ export class AdminService extends BaseService {
 			.where(eq(nominations.movieUid, movieId))
 			.orderBy(awardCeremonies.year, awardCategories.name);
 
+		// Get article links
+		const articleLinksResult = await this.database
+			.select({
+				uid: articleLinks.uid,
+				url: articleLinks.url,
+				title: articleLinks.title,
+				description: articleLinks.description,
+				isSpam: articleLinks.isSpam,
+			})
+			.from(articleLinks)
+			.where(eq(articleLinks.movieUid, movieId))
+			.orderBy(sql`${articleLinks.submittedAt} DESC`);
+
 		return {
 			uid: movie.uid,
 			year: movie.year,
@@ -323,6 +336,7 @@ export class AdminService extends BaseService {
 					shortName: nom.organizationShortName!,
 				},
 			})),
+			articleLinks: articleLinksResult,
 		};
 	}
 
@@ -454,6 +468,12 @@ export class AdminService extends BaseService {
 		await this.database
 			.update(articleLinks)
 			.set({isSpam: true})
+			.where(eq(articleLinks.uid, articleId));
+	}
+
+	async deleteArticleLink(articleId: string): Promise<void> {
+		await this.database
+			.delete(articleLinks)
 			.where(eq(articleLinks.uid, articleId));
 	}
 

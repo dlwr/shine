@@ -109,6 +109,21 @@ adminRoutes.post('/article-links/:id/spam', authMiddleware, async (c) => {
 	}
 });
 
+// Delete article link
+adminRoutes.delete('/article-links/:id', authMiddleware, async (c) => {
+	try {
+		const adminService = new AdminService(c.env);
+		const articleId = c.req.param('id');
+
+		await adminService.deleteArticleLink(articleId);
+
+		return c.json({success: true});
+	} catch (error) {
+		console.error('Error deleting article link:', error);
+		return c.json({error: 'Internal server error'}, 500);
+	}
+});
+
 // Add poster URL
 adminRoutes.post('/movies/:id/posters', authMiddleware, async (c) => {
 	try {

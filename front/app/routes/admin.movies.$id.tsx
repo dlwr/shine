@@ -3,6 +3,7 @@ import TranslationManager from '../components/translation-manager';
 import PosterManager from '../components/poster-manager';
 import MovieInfoEditor from '../components/movie-info-editor';
 import NominationList from '../components/nomination-list';
+import ArticleLinkManager from '../components/article-link-manager';
 import type {Route} from './+types/admin.movies.$id';
 
 type Translation = {
@@ -42,6 +43,14 @@ type PosterUrl = {
 	isPrimary: number;
 };
 
+type ArticleLink = {
+	uid: string;
+	url: string;
+	title: string;
+	description?: string;
+	isSpam: boolean;
+};
+
 type MovieDetails = {
 	uid: string;
 	year: number;
@@ -51,6 +60,7 @@ type MovieDetails = {
 	translations: Translation[];
 	nominations: Nomination[];
 	posters: PosterUrl[];
+	articleLinks?: ArticleLink[];
 };
 
 type LoaderData = {
@@ -131,6 +141,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 					translations: data.translations || [],
 					nominations: data.nominations || [],
 					posters: data.posters || [],
+					articleLinks: data.articleLinks ?? [],
 				});
 			} catch (error) {
 				console.error('Error loading movie:', error);
@@ -245,6 +256,13 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 						apiUrl={apiUrl}
 						posters={movieData.posters}
 						onPostersUpdate={setMovieData}
+					/>
+
+					<ArticleLinkManager
+						movieId={movieId}
+						apiUrl={apiUrl}
+						articleLinks={movieData.articleLinks ?? []}
+						onArticleLinksUpdate={setMovieData}
 					/>
 				</div>
 			</main>
