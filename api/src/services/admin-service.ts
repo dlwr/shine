@@ -572,7 +572,7 @@ export class AdminService extends BaseService {
 			throw new Error(`TMDB API error: ${findResponse.statusText}`);
 		}
 
-		const findData = (await findResponse.json()) as {
+		const findData = await findResponse.json() as {
 			movie_results?: Array<{id: number}>;
 		};
 		if (!findData.movie_results || findData.movie_results.length === 0) {
@@ -590,7 +590,7 @@ export class AdminService extends BaseService {
 			throw new Error(`TMDB API error: ${movieResponse.statusText}`);
 		}
 
-		const movieData = (await movieResponse.json()) as TMDBMovieData;
+		const movieData = await movieResponse.json() as TMDBMovieData;
 
 		return {
 			tmdbId,
@@ -682,7 +682,8 @@ export class AdminService extends BaseService {
 						.limit(1);
 
 					if (existingTranslation.length === 0) {
-						const isOriginalLanguage = translation.iso_639_1 === tmdbData.original_language;
+						const isOriginalLanguage =
+							translation.iso_639_1 === tmdbData.original_language;
 						await this.database.insert(translations).values({
 							resourceType: 'movie_title',
 							resourceUid: movieId,

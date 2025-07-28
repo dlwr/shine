@@ -828,7 +828,6 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 			};
 
 			if (translationsData?.translations) {
-				
 				// If the movie's original language is Japanese, add the original title as Japanese translation
 				if (movieData.original_language === 'ja' && movieData.original_title) {
 					await database
@@ -853,11 +852,12 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 						});
 					translationsAdded++;
 				}
-				
+
 				// Add all translations
 				for (const translation of translationsData.translations) {
 					if (translation.iso_639_1 && translation.data?.title) {
-						const isOriginalLanguage = translation.iso_639_1 === movieData.original_language;
+						const isOriginalLanguage =
+							translation.iso_639_1 === movieData.original_language;
 						await database
 							.insert(translations)
 							.values({
@@ -1022,7 +1022,8 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async (c) => {
 				// Add all translations
 				for (const translation of translationsData.translations) {
 					if (translation.iso_639_1 && translation.data?.title) {
-						const isOriginalLanguage = translation.iso_639_1 === movieData.original_language;
+						const isOriginalLanguage =
+							translation.iso_639_1 === movieData.original_language;
 						await database
 							.insert(translations)
 							.values({
