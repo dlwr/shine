@@ -636,16 +636,37 @@ export class AdminService extends BaseService {
 	): Promise<number> {
 		let addedCount = 0;
 
-		// console.log('TMDb data received:', JSON.stringify(tmdbData, null, 2));
-		console.log('Translations object exists:', !!tmdbData.translations);
-		console.log('Translations.translations exists:', !!tmdbData.translations?.translations);
-		console.log('Number of translations:', tmdbData.translations?.translations?.length || 0);
-
 		if (tmdbData.translations?.translations) {
-			console.log(`Found ${tmdbData.translations.translations.length} translations`);
+			// If the movie's original language is Japanese, add the original title as Japanese translation
+			if (tmdbData.original_language === 'ja' && tmdbData.original_title) {
+				const existingTranslation = await this.database
+					.select({uid: translations.uid})
+					.from(translations)
+					.where(
+						and(
+							eq(translations.resourceUid, movieId),
+							eq(translations.resourceType, 'movie_title'),
+							eq(translations.languageCode, 'ja'),
+						),
+					)
+					.limit(1);
+
+				if (existingTranslation.length === 0) {
+					await this.database.insert(translations).values({
+						resourceType: 'movie_title',
+						resourceUid: movieId,
+						languageCode: 'ja',
+						content: tmdbData.original_title,
+						isDefault: 1, // Original language is default
+						createdAt: Math.floor(Date.now() / 1000),
+						updatedAt: Math.floor(Date.now() / 1000),
+					});
+					addedCount++;
+				}
+			}
+
+			// Add all translations
 			for (const translation of tmdbData.translations.translations) {
-				// Log all translations to debug
-				console.log(`Processing translation: ${translation.iso_639_1}, title: ${translation.data?.title}, has title: ${!!translation.data?.title}`);
 				if (translation.iso_639_1 && translation.data?.title) {
 					// Check if translation already exists for this language
 					const existingTranslation = await this.database
@@ -661,28 +682,22 @@ export class AdminService extends BaseService {
 						.limit(1);
 
 					if (existingTranslation.length === 0) {
-						if (addedCount < 3) {
-							console.log(`Adding translation for ${translation.iso_639_1}: ${translation.data.title}`);
-						}
+						const isOriginalLanguage = translation.iso_639_1 === tmdbData.original_language;
 						await this.database.insert(translations).values({
 							resourceType: 'movie_title',
 							resourceUid: movieId,
 							languageCode: translation.iso_639_1,
 							content: translation.data.title,
+							isDefault: isOriginalLanguage ? 1 : 0,
 							createdAt: Math.floor(Date.now() / 1000),
 							updatedAt: Math.floor(Date.now() / 1000),
 						});
 						addedCount++;
-					} else {
-						// console.log(`Translation already exists for ${translation.iso_639_1}`);
 					}
 				}
 			}
-		} else {
-			console.log('No translations found in TMDb data');
 		}
 
-		console.log(`Total translations added: ${addedCount}`);
 		return addedCount;
 	}
 }

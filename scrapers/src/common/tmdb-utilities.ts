@@ -14,6 +14,7 @@ export type TMDBMovieData = {
 	id: number;
 	title: string;
 	original_title: string;
+	original_language?: string;
 	release_date: string;
 	imdb_id?: string;
 	poster_path?: string;

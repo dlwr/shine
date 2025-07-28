@@ -826,14 +826,11 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 				original_language?: string;
 				title?: string;
 			};
-			console.log(`Movie original_title: "${movieData.original_title}", original_language: "${movieData.original_language}", title: "${movieData.title}"`);
 
 			if (translationsData?.translations) {
-				console.log(`Found ${translationsData.translations.length} translations from TMDb`);
 				
 				// If the movie's original language is Japanese, add the original title as Japanese translation
 				if (movieData.original_language === 'ja' && movieData.original_title) {
-					console.log(`Adding original Japanese title: "${movieData.original_title}"`);
 					await database
 						.insert(translations)
 						.values({
@@ -841,7 +838,7 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 							resourceUid: movieId,
 							languageCode: 'ja',
 							content: movieData.original_title,
-							isDefault: 0,
+							isDefault: 1, // Original language is default
 						})
 						.onConflictDoUpdate({
 							target: [
@@ -859,13 +856,8 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 				
 				// Add all translations
 				for (const translation of translationsData.translations) {
-					if (translation.iso_639_1 === 'ja') {
-						console.log(`Japanese translation data:`, JSON.stringify(translation, null, 2));
-					}
-					console.log(`Processing: ${translation.iso_639_1}, has title: ${!!translation.data?.title}, title: "${translation.data?.title}"`);
 					if (translation.iso_639_1 && translation.data?.title) {
-						const isEnglish = translation.iso_639_1 === 'en';
-						console.log(`Adding translation for ${translation.iso_639_1}: "${translation.data.title}"`);
+						const isOriginalLanguage = translation.iso_639_1 === movieData.original_language;
 						await database
 							.insert(translations)
 							.values({
@@ -873,7 +865,7 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 								resourceUid: movieId,
 								languageCode: translation.iso_639_1,
 								content: translation.data.title,
-								isDefault: isEnglish ? 1 : 0,
+								isDefault: isOriginalLanguage ? 1 : 0,
 							})
 							.onConflictDoUpdate({
 								target: [
@@ -889,8 +881,6 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 						translationsAdded++;
 					}
 				}
-			} else {
-				console.log('No translations data from TMDb');
 			}
 
 			fetchResults.translationsAdded = translationsAdded;
@@ -993,11 +983,46 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async (c) => {
 				c.env.TMDB_API_KEY,
 			);
 
+			// Also get basic movie info for original language
+			const movieResponse = await fetch(
+				`https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${c.env.TMDB_API_KEY}`,
+			);
+			const movieData = await movieResponse.json() as {
+				original_title?: string;
+				original_language?: string;
+				title?: string;
+			};
+
 			if (translationsData?.translations) {
+				// If the movie's original language is Japanese, add the original title as Japanese translation
+				if (movieData.original_language === 'ja' && movieData.original_title) {
+					await database
+						.insert(translations)
+						.values({
+							resourceType: 'movie_title',
+							resourceUid: movieId,
+							languageCode: 'ja',
+							content: movieData.original_title,
+							isDefault: 1, // Original language is default
+						})
+						.onConflictDoUpdate({
+							target: [
+								translations.resourceType,
+								translations.resourceUid,
+								translations.languageCode,
+							],
+							set: {
+								content: movieData.original_title,
+								updatedAt: Math.floor(Date.now() / 1000),
+							},
+						});
+					translationsAdded++;
+				}
+
 				// Add all translations
 				for (const translation of translationsData.translations) {
 					if (translation.iso_639_1 && translation.data?.title) {
-						const isEnglish = translation.iso_639_1 === 'en';
+						const isOriginalLanguage = translation.iso_639_1 === movieData.original_language;
 						await database
 							.insert(translations)
 							.values({
@@ -1005,7 +1030,7 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async (c) => {
 								resourceUid: movieId,
 								languageCode: translation.iso_639_1,
 								content: translation.data.title,
-								isDefault: isEnglish ? 1 : 0,
+								isDefault: isOriginalLanguage ? 1 : 0,
 							})
 							.onConflictDoUpdate({
 								target: [

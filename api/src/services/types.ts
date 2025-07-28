@@ -66,6 +66,8 @@ export type DateSeedOptions = {
 
 export type TMDBMovieData = {
 	title?: string;
+	original_title?: string;
+	original_language?: string;
 	overview?: string;
 	poster_path?: string;
 	translations?: {
