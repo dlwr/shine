@@ -390,6 +390,17 @@ export class AdminService extends BaseService {
 						movieId,
 						tmdbData.movie,
 					);
+					
+					// Update originalLanguage if available
+					if (tmdbData.movie.original_language) {
+						await this.database
+							.update(movies)
+							.set({
+								originalLanguage: tmdbData.movie.original_language,
+								updatedAt: Math.floor(Date.now() / 1000),
+							})
+							.where(eq(movies.uid, movieId));
+					}
 				}
 			} catch (error) {
 				console.error('Failed to fetch TMDB data:', error);

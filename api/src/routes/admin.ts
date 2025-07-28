@@ -713,7 +713,12 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 
 		// Check if movie exists and has IMDb ID
 		const movie = await database
-			.select({uid: movies.uid, imdbId: movies.imdbId, tmdbId: movies.tmdbId})
+			.select({
+				uid: movies.uid,
+				imdbId: movies.imdbId,
+				tmdbId: movies.tmdbId,
+				originalLanguage: movies.originalLanguage,
+			})
 			.from(movies)
 			.where(eq(movies.uid, movieId))
 			.limit(1);
@@ -769,12 +774,13 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 					);
 				}
 
-				// Save TMDb ID to database
+				// Save TMDb ID and language to database
 				try {
 					await database
 						.update(movies)
 						.set({
 							tmdbId: movieTmdbId,
+							...(movieData.original_language && {originalLanguage: movieData.original_language}),
 							updatedAt: Math.floor(Date.now() / 1000),
 						})
 						.where(eq(movies.uid, movieId));
@@ -839,6 +845,17 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 				original_language?: string;
 				title?: string;
 			};
+			
+			// Update original language if not already set
+			if (movieData.original_language && !movie[0].originalLanguage) {
+				await database
+					.update(movies)
+					.set({
+						originalLanguage: movieData.original_language,
+						updatedAt: Math.floor(Date.now() / 1000),
+					})
+					.where(eq(movies.uid, movieId));
+			}
 
 			if (translationsData?.translations) {
 				// First, reset all isDefault flags for this movie
@@ -1020,6 +1037,17 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async (c) => {
 				original_language?: string;
 				title?: string;
 			};
+			
+			// Always update original language from TMDb
+			if (movieData.original_language) {
+				await database
+					.update(movies)
+					.set({
+						originalLanguage: movieData.original_language,
+						updatedAt: Math.floor(Date.now() / 1000),
+					})
+					.where(eq(movies.uid, movieId));
+			}
 
 			if (translationsData?.translations) {
 				// First, reset all isDefault flags for this movie
