@@ -774,13 +774,12 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 					);
 				}
 
-				// Save TMDb ID and language to database
+				// Save TMDb ID to database
 				try {
 					await database
 						.update(movies)
 						.set({
 							tmdbId: movieTmdbId,
-							...(movieData.original_language && {originalLanguage: movieData.original_language}),
 							updatedAt: Math.floor(Date.now() / 1000),
 						})
 						.where(eq(movies.uid, movieId));
@@ -846,8 +845,8 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 				title?: string;
 			};
 			
-			// Update original language if not already set
-			if (movieData.original_language && !movie[0].originalLanguage) {
+			// Always update original language from TMDb
+			if (movieData.original_language) {
 				await database
 					.update(movies)
 					.set({
