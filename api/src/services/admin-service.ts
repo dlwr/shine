@@ -9,10 +9,7 @@ import {nominations} from 'db/schema/nominations';
 import {posterUrls} from 'db/schema/poster-urls';
 import {referenceUrls} from 'db/schema/reference-urls';
 import {translations} from 'db/schema/translations';
-import type {
-	TMDBFindResponse,
-	TMDBMovieData,
-} from '../../../scrapers/src/common/tmdb-utilities';
+import type {TMDBMovieData} from '../../../scrapers/src/common/tmdb-utilities';
 import {BaseService} from './base-service';
 import type {
 	MergeMoviesOptions,
@@ -575,7 +572,9 @@ export class AdminService extends BaseService {
 			throw new Error(`TMDB API error: ${findResponse.statusText}`);
 		}
 
-		const findData = await findResponse.json();
+		const findData = (await findResponse.json()) as {
+			movie_results?: Array<{id: number}>;
+		};
 		if (!findData.movie_results || findData.movie_results.length === 0) {
 			return undefined;
 		}
@@ -591,7 +590,7 @@ export class AdminService extends BaseService {
 			throw new Error(`TMDB API error: ${movieResponse.statusText}`);
 		}
 
-		const movieData = await movieResponse.json();
+		const movieData = (await movieResponse.json()) as TMDBMovieData;
 
 		return {
 			tmdbId,
@@ -639,8 +638,8 @@ export class AdminService extends BaseService {
 
 		if (tmdbData.translations?.translations) {
 			for (const translation of tmdbData.translations.translations) {
-				if (translation.iso_639_1 === 'ja' && translation.data?.title) {
-					// Check if Japanese translation already exists
+				if (translation.iso_639_1 && translation.data?.title) {
+					// Check if translation already exists for this language
 					const existingTranslation = await this.database
 						.select({uid: translations.uid})
 						.from(translations)
@@ -648,7 +647,7 @@ export class AdminService extends BaseService {
 							and(
 								eq(translations.resourceUid, movieId),
 								eq(translations.resourceType, 'movie_title'),
-								eq(translations.languageCode, 'ja'),
+								eq(translations.languageCode, translation.iso_639_1),
 							),
 						)
 						.limit(1);
@@ -657,7 +656,7 @@ export class AdminService extends BaseService {
 						await this.database.insert(translations).values({
 							resourceType: 'movie_title',
 							resourceUid: movieId,
-							languageCode: 'ja',
+							languageCode: translation.iso_639_1,
 							content: translation.data.title,
 							createdAt: Math.floor(Date.now() / 1000),
 							updatedAt: Math.floor(Date.now() / 1000),
