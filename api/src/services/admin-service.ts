@@ -644,10 +644,8 @@ export class AdminService extends BaseService {
 		if (tmdbData.translations?.translations) {
 			console.log(`Found ${tmdbData.translations.translations.length} translations`);
 			for (const translation of tmdbData.translations.translations) {
-				// Only log first few translations to avoid spam
-				if (addedCount < 3) {
-					console.log(`Processing translation: ${translation.iso_639_1}, title: ${translation.data?.title}`);
-				}
+				// Log all translations to debug
+				console.log(`Processing translation: ${translation.iso_639_1}, title: ${translation.data?.title}, has title: ${!!translation.data?.title}`);
 				if (translation.iso_639_1 && translation.data?.title) {
 					// Check if translation already exists for this language
 					const existingTranslation = await this.database
