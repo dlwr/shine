@@ -636,13 +636,18 @@ export class AdminService extends BaseService {
 	): Promise<number> {
 		let addedCount = 0;
 
-		console.log('TMDb data received:', JSON.stringify(tmdbData, null, 2));
-		console.log('Translations:', tmdbData.translations);
+		// console.log('TMDb data received:', JSON.stringify(tmdbData, null, 2));
+		console.log('Translations object exists:', !!tmdbData.translations);
+		console.log('Translations.translations exists:', !!tmdbData.translations?.translations);
+		console.log('Number of translations:', tmdbData.translations?.translations?.length || 0);
 
 		if (tmdbData.translations?.translations) {
 			console.log(`Found ${tmdbData.translations.translations.length} translations`);
 			for (const translation of tmdbData.translations.translations) {
-				console.log(`Processing translation: ${translation.iso_639_1}, title: ${translation.data?.title}`);
+				// Only log first few translations to avoid spam
+				if (addedCount < 3) {
+					console.log(`Processing translation: ${translation.iso_639_1}, title: ${translation.data?.title}`);
+				}
 				if (translation.iso_639_1 && translation.data?.title) {
 					// Check if translation already exists for this language
 					const existingTranslation = await this.database
@@ -658,7 +663,9 @@ export class AdminService extends BaseService {
 						.limit(1);
 
 					if (existingTranslation.length === 0) {
-						console.log(`Adding translation for ${translation.iso_639_1}: ${translation.data.title}`);
+						if (addedCount < 3) {
+							console.log(`Adding translation for ${translation.iso_639_1}: ${translation.data.title}`);
+						}
 						await this.database.insert(translations).values({
 							resourceType: 'movie_title',
 							resourceUid: movieId,
@@ -669,7 +676,7 @@ export class AdminService extends BaseService {
 						});
 						addedCount++;
 					} else {
-						console.log(`Translation already exists for ${translation.iso_639_1}`);
+						// console.log(`Translation already exists for ${translation.iso_639_1}`);
 					}
 				}
 			}
