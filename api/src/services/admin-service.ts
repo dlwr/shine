@@ -637,6 +637,20 @@ export class AdminService extends BaseService {
 		let addedCount = 0;
 
 		if (tmdbData.translations?.translations) {
+			// First, reset all isDefault flags for this movie
+			await this.database
+				.update(translations)
+				.set({
+					isDefault: 0,
+					updatedAt: Math.floor(Date.now() / 1000),
+				})
+				.where(
+					and(
+						eq(translations.resourceUid, movieId),
+						eq(translations.resourceType, 'movie_title'),
+					),
+				);
+
 			// If the movie's original language is Japanese, add the original title as Japanese translation
 			if (tmdbData.original_language === 'ja' && tmdbData.original_title) {
 				const existingTranslation = await this.database
@@ -694,6 +708,25 @@ export class AdminService extends BaseService {
 							updatedAt: Math.floor(Date.now() / 1000),
 						});
 						addedCount++;
+					} else {
+						// Update isDefault if this is the original language
+						const isOriginalLanguage =
+							translation.iso_639_1 === tmdbData.original_language;
+						if (isOriginalLanguage) {
+							await this.database
+								.update(translations)
+								.set({
+									isDefault: 1,
+									updatedAt: Math.floor(Date.now() / 1000),
+								})
+								.where(
+									and(
+										eq(translations.resourceUid, movieId),
+										eq(translations.resourceType, 'movie_title'),
+										eq(translations.languageCode, translation.iso_639_1),
+									),
+								);
+						}
 					}
 				}
 			}

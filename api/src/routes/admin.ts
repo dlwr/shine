@@ -397,6 +397,19 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async (c) => {
 				);
 
 				if (translationsData?.translations) {
+				// First, reset all isDefault flags for this movie
+				await database
+					.update(translations)
+					.set({
+						isDefault: 0,
+						updatedAt: Math.floor(Date.now() / 1000),
+					})
+					.where(
+						and(
+							eq(translations.resourceUid, movieId),
+							eq(translations.resourceType, 'movie_title'),
+						),
+					);
 					// Find English title (original language)
 					const englishTranslation = translationsData.translations.find(
 						(t: MovieDatabaseTranslation) =>
@@ -828,6 +841,19 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 			};
 
 			if (translationsData?.translations) {
+				// First, reset all isDefault flags for this movie
+				await database
+					.update(translations)
+					.set({
+						isDefault: 0,
+						updatedAt: Math.floor(Date.now() / 1000),
+					})
+					.where(
+						and(
+							eq(translations.resourceUid, movieId),
+							eq(translations.resourceType, 'movie_title'),
+						),
+					);
 				// If the movie's original language is Japanese, add the original title as Japanese translation
 				if (movieData.original_language === 'ja' && movieData.original_title) {
 					await database
@@ -847,6 +873,7 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 							],
 							set: {
 								content: movieData.original_title,
+								isDefault: 1,
 								updatedAt: Math.floor(Date.now() / 1000),
 							},
 						});
@@ -875,6 +902,7 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 								],
 								set: {
 									content: translation.data.title,
+									isDefault: isOriginalLanguage ? 1 : 0,
 									updatedAt: Math.floor(Date.now() / 1000),
 								},
 							});
@@ -994,6 +1022,19 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async (c) => {
 			};
 
 			if (translationsData?.translations) {
+				// First, reset all isDefault flags for this movie
+				await database
+					.update(translations)
+					.set({
+						isDefault: 0,
+						updatedAt: Math.floor(Date.now() / 1000),
+					})
+					.where(
+						and(
+							eq(translations.resourceUid, movieId),
+							eq(translations.resourceType, 'movie_title'),
+						),
+					);
 				// If the movie's original language is Japanese, add the original title as Japanese translation
 				if (movieData.original_language === 'ja' && movieData.original_title) {
 					await database
@@ -1013,6 +1054,7 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async (c) => {
 							],
 							set: {
 								content: movieData.original_title,
+								isDefault: 1,
 								updatedAt: Math.floor(Date.now() / 1000),
 							},
 						});
@@ -1041,6 +1083,7 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async (c) => {
 								],
 								set: {
 									content: translation.data.title,
+									isDefault: isOriginalLanguage ? 1 : 0,
 									updatedAt: Math.floor(Date.now() / 1000),
 								},
 							});
