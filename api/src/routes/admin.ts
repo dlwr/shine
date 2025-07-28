@@ -818,10 +818,13 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 			);
 
 			if (translationsData?.translations) {
+				console.log(`Found ${translationsData.translations.length} translations from TMDb`);
 				// Add all translations
 				for (const translation of translationsData.translations) {
+					console.log(`Processing: ${translation.iso_639_1}, has title: ${!!translation.data?.title}, title: "${translation.data?.title}"`);
 					if (translation.iso_639_1 && translation.data?.title) {
 						const isEnglish = translation.iso_639_1 === 'en';
+						console.log(`Adding translation for ${translation.iso_639_1}: "${translation.data.title}"`);
 						await database
 							.insert(translations)
 							.values({
@@ -845,6 +848,8 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 						translationsAdded++;
 					}
 				}
+			} else {
+				console.log('No translations data from TMDb');
 			}
 
 			fetchResults.translationsAdded = translationsAdded;
