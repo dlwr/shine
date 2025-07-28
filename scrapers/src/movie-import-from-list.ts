@@ -382,7 +382,14 @@ async function searchMovieOnTMDB(
 			throw new Error(`TMDB API error: ${response.statusText}`);
 		}
 
-		const data = await response.json();
+		const data = (await response.json()) as {
+			results: Array<{
+				title: string;
+				release_date?: string;
+				id: number;
+				imdb_id?: string;
+			}>;
+		};
 
 		if (data.results.length === 0) {
 			return undefined;
