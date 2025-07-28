@@ -818,64 +818,32 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 			);
 
 			if (translationsData?.translations) {
-				// Find English title (original language)
-				const englishTranslation = translationsData.translations.find(
-					(t: MovieDatabaseTranslation) =>
-						t.iso_639_1 === 'en' && t.data?.title,
-				);
-
-				if (englishTranslation?.data?.title) {
-					await database
-						.insert(translations)
-						.values({
-							resourceType: 'movie_title',
-							resourceUid: movieId,
-							languageCode: 'en',
-							content: englishTranslation.data.title,
-							isDefault: 1,
-						})
-						.onConflictDoUpdate({
-							target: [
-								translations.resourceType,
-								translations.resourceUid,
-								translations.languageCode,
-							],
-							set: {
-								content: englishTranslation.data.title,
-								updatedAt: Math.floor(Date.now() / 1000),
-							},
-						});
-					translationsAdded++;
-				}
-
-				// Find Japanese title
-				const japaneseTranslation = translationsData.translations.find(
-					(t: MovieDatabaseTranslation) =>
-						t.iso_639_1 === 'ja' && t.data?.title,
-				);
-
-				if (japaneseTranslation?.data?.title) {
-					await database
-						.insert(translations)
-						.values({
-							resourceType: 'movie_title',
-							resourceUid: movieId,
-							languageCode: 'ja',
-							content: japaneseTranslation.data.title,
-							isDefault: 0,
-						})
-						.onConflictDoUpdate({
-							target: [
-								translations.resourceType,
-								translations.resourceUid,
-								translations.languageCode,
-							],
-							set: {
-								content: japaneseTranslation.data.title,
-								updatedAt: Math.floor(Date.now() / 1000),
-							},
-						});
-					translationsAdded++;
+				// Add all translations
+				for (const translation of translationsData.translations) {
+					if (translation.iso_639_1 && translation.data?.title) {
+						const isEnglish = translation.iso_639_1 === 'en';
+						await database
+							.insert(translations)
+							.values({
+								resourceType: 'movie_title',
+								resourceUid: movieId,
+								languageCode: translation.iso_639_1,
+								content: translation.data.title,
+								isDefault: isEnglish ? 1 : 0,
+							})
+							.onConflictDoUpdate({
+								target: [
+									translations.resourceType,
+									translations.resourceUid,
+									translations.languageCode,
+								],
+								set: {
+									content: translation.data.title,
+									updatedAt: Math.floor(Date.now() / 1000),
+								},
+							});
+						translationsAdded++;
+					}
 				}
 			}
 
@@ -980,64 +948,32 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async (c) => {
 			);
 
 			if (translationsData?.translations) {
-				// Find English title (original language)
-				const englishTranslation = translationsData.translations.find(
-					(t: MovieDatabaseTranslation) =>
-						t.iso_639_1 === 'en' && t.data?.title,
-				);
-
-				if (englishTranslation?.data?.title) {
-					await database
-						.insert(translations)
-						.values({
-							resourceType: 'movie_title',
-							resourceUid: movieId,
-							languageCode: 'en',
-							content: englishTranslation.data.title,
-							isDefault: 1,
-						})
-						.onConflictDoUpdate({
-							target: [
-								translations.resourceType,
-								translations.resourceUid,
-								translations.languageCode,
-							],
-							set: {
-								content: englishTranslation.data.title,
-								updatedAt: Math.floor(Date.now() / 1000),
-							},
-						});
-					translationsAdded++;
-				}
-
-				// Find Japanese title
-				const japaneseTranslation = translationsData.translations.find(
-					(t: MovieDatabaseTranslation) =>
-						t.iso_639_1 === 'ja' && t.data?.title,
-				);
-
-				if (japaneseTranslation?.data?.title) {
-					await database
-						.insert(translations)
-						.values({
-							resourceType: 'movie_title',
-							resourceUid: movieId,
-							languageCode: 'ja',
-							content: japaneseTranslation.data.title,
-							isDefault: 0,
-						})
-						.onConflictDoUpdate({
-							target: [
-								translations.resourceType,
-								translations.resourceUid,
-								translations.languageCode,
-							],
-							set: {
-								content: japaneseTranslation.data.title,
-								updatedAt: Math.floor(Date.now() / 1000),
-							},
-						});
-					translationsAdded++;
+				// Add all translations
+				for (const translation of translationsData.translations) {
+					if (translation.iso_639_1 && translation.data?.title) {
+						const isEnglish = translation.iso_639_1 === 'en';
+						await database
+							.insert(translations)
+							.values({
+								resourceType: 'movie_title',
+								resourceUid: movieId,
+								languageCode: translation.iso_639_1,
+								content: translation.data.title,
+								isDefault: isEnglish ? 1 : 0,
+							})
+							.onConflictDoUpdate({
+								target: [
+									translations.resourceType,
+									translations.resourceUid,
+									translations.languageCode,
+								],
+								set: {
+									content: translation.data.title,
+									updatedAt: Math.floor(Date.now() / 1000),
+								},
+							});
+						translationsAdded++;
+					}
 				}
 			}
 
