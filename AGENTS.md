@@ -35,3 +35,4 @@
 ## Environment & Configuration Notes
 - Cloudflare credentials and LibSQL URLs are loaded via `.env` variables consumed by `scripts/setup-database-environment.cjs`; never commit secrets.
 - When using the scrapers, populate `tmp/` instead of `data/` until outputs are vetted, and clean transient artifacts before submitting PRs.
+- Always use context7 when I need code generation, setup or configuration steps, or library/API documentation. This means you should automatically use the Context7 MCP tools to resolve library id and get library docs without me having to explicitly ask.
