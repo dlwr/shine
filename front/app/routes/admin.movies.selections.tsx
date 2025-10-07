@@ -70,6 +70,7 @@ export default function AdminMovieSelections({
 	loaderData,
 }: Route.ComponentProps) {
 	const {apiUrl} = loaderData as {apiUrl: string};
+	const locale = 'ja';
 
 	const [selections, setSelections] = useState<PreviewSelections | undefined>(
 		undefined,
@@ -115,9 +116,12 @@ export default function AdminMovieSelections({
 			setError(undefined);
 
 			try {
-				const response = await fetch(`${apiUrl}/admin/preview-selections`, {
-					headers: {Authorization: `Bearer ${token}`},
-				});
+				const response = await fetch(
+					`${apiUrl}/admin/preview-selections?locale=${locale}`,
+					{
+						headers: {Authorization: `Bearer ${token}`},
+					},
+				);
 
 				if (response.status === 401) {
 					globalThis.localStorage.removeItem('adminToken');
@@ -140,7 +144,7 @@ export default function AdminMovieSelections({
 		};
 
 		void loadSelections();
-	}, [apiUrl]);
+	}, [apiUrl, locale]);
 
 	// Search movies with debounce
 	useEffect(() => {
@@ -194,7 +198,7 @@ export default function AdminMovieSelections({
 								overrideType.charAt(0).toUpperCase() + overrideType.slice(1)
 							}` as keyof PreviewSelections
 						]?.date || new Date().toISOString().split('T')[0],
-					locale: 'en',
+					locale,
 				}),
 			});
 
