@@ -94,6 +94,17 @@
       "**/scripts/**",
       "**/package.json"
     ],
+    "languageOptions": {
+      "parserOptions": {
+        "project": [
+          "./tsconfig.json",
+          "./api/tsconfig.json",
+          "./front/tsconfig.json",
+          "./scrapers/tsconfig.json",
+          "./scripts/tsconfig.json"
+        ]
+      }
+    },
     "rules": {
       "@typescript-eslint/naming-convention": "off",
       "import-x/no-extraneous-dependencies": "off",
