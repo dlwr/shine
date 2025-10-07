@@ -189,7 +189,7 @@ export async function fetchTMDBMovieDetails(
 			throw new Error(`TMDb API error: ${response.statusText}`);
 		}
 
-		const data: TMDBTranslationsResponse = await response.json();
+		const data: TMDBMovieData = await response.json();
 		return data;
 	} catch (error) {
 		console.error(
