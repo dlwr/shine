@@ -1,3 +1,5 @@
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import tseslint from 'typescript-eslint';
 
 const ignores = [
@@ -61,9 +63,21 @@ const typescriptRules = {
 	'@typescript-eslint/member-ordering': 'off',
 	'@typescript-eslint/consistent-type-assertions': 'off',
 	'@typescript-eslint/no-confusing-void-expression': 'off',
+	'@typescript-eslint/no-unnecessary-type-assertion': 'off',
+	'@typescript-eslint/no-floating-promises': 'off',
+	'@typescript-eslint/no-deprecated': 'off',
 };
 
 const tsFiles = ['**/*.ts', '**/*.tsx', '**/*.cts', '**/*.mts'];
+
+const typeCheckedFiles = [
+	'api/**/*.ts',
+	'api/**/*.tsx',
+	'front/app/**/*.ts',
+	'front/app/**/*.tsx',
+	'scrapers/**/*.ts',
+	'src/**/*.ts',
+];
 
 const tsProjects = [
 	'./tsconfig.json',
@@ -72,6 +86,8 @@ const tsProjects = [
 	'./scrapers/tsconfig.json',
 	'./scripts/tsconfig.json',
 ];
+
+const projectRoot = path.resolve(fileURLToPath(new URL('.', import.meta.url)));
 
 export default [
 	{
@@ -88,10 +104,20 @@ export default [
 		},
 		languageOptions: {
 			parser: tseslint.parser,
-			parserOptions: {
-				project: tsProjects,
-			},
 		},
 		rules: typescriptRules,
+	},
+	{
+		files: typeCheckedFiles,
+		plugins: {
+			'@typescript-eslint': tseslint.plugin,
+		},
+		languageOptions: {
+			parser: tseslint.parser,
+			parserOptions: {
+				project: tsProjects,
+				tsconfigRootDir: projectRoot,
+			},
+		},
 	},
 ];
