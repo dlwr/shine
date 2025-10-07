@@ -153,14 +153,15 @@ adminRoutes.post('/movies/:id/posters', authMiddleware, async (c) => {
 		}
 
 		// Basic URL validation
+		let normalizedUrl: string;
 		try {
-			new URL(url);
+			normalizedUrl = new URL(url).toString();
 		} catch {
 			return c.json({error: 'Invalid URL format'}, 400);
 		}
 
 		const newPoster = await adminService.addPoster(movieId, {
-			url,
+			url: normalizedUrl,
 			width,
 			height,
 			language: languageCode,
@@ -402,9 +403,9 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async (c) => {
 						`https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${c.env.TMDB_API_KEY}`,
 					);
 					const movieData = (await movieResponse.json()) as {
-					original_language?: string;
-					original_title?: string;
-				};
+						original_language?: string;
+						original_title?: string;
+					};
 
 					// Always update original language from TMDb
 					if (movieData.original_language) {
