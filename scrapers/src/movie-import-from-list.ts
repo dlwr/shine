@@ -22,8 +22,18 @@ type TMDBMovieData = {
 	overview: string;
 };
 
+type TMDBMovieSearchResult = {
+	id: number;
+	title: string;
+	original_title?: string;
+	release_date?: string;
+	poster_path?: string;
+	imdb_id?: string;
+	overview?: string;
+};
+
 type TMDBSearchResponse = {
-	results: TMDBMovieData[];
+	results: TMDBMovieSearchResult[];
 	total_results: number;
 };
 
@@ -382,14 +392,7 @@ async function searchMovieOnTMDB(
 			throw new Error(`TMDB API error: ${response.statusText}`);
 		}
 
-		const data = (await response.json()) as {
-			results: Array<{
-				title: string;
-				release_date?: string;
-				id: number;
-				imdb_id?: string;
-			}>;
-		};
+		const data: TMDBSearchResponse = await response.json();
 
 		if (data.results.length === 0) {
 			return undefined;
@@ -397,13 +400,22 @@ async function searchMovieOnTMDB(
 
 		// 最初の結果を返す（最も関連性が高いとされる）
 		const movie = data.results[0];
+		const sanitizedMovie: TMDBMovieData = {
+			id: movie.id,
+			title: movie.title,
+			original_title: movie.original_title ?? movie.title,
+			release_date: movie.release_date ?? '',
+			poster_path: movie.poster_path ?? undefined,
+			imdb_id: movie.imdb_id ?? undefined,
+			overview: movie.overview ?? '',
+		};
 		console.log(
-			`  Found on TMDB: ${movie.title} (${
-				movie.release_date?.split('-')[0] || 'Unknown'
+			`  Found on TMDB: ${sanitizedMovie.title} (${
+				sanitizedMovie.release_date.split('-')[0] || 'Unknown'
 			})`,
 		);
 
-		return movie;
+		return sanitizedMovie;
 	} catch (error) {
 		console.error(`Error searching TMDB for ${title}:`, error);
 		return undefined;

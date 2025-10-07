@@ -1074,13 +1074,13 @@ async function searchTMDatabaseMovie(
 			throw new Error(`TMDb API error: ${response.statusText}`);
 		}
 
-		const data = (await response.json()) as {
+		const data: {
 			results: Array<{
 				id: number;
 				title: string;
 				release_date: string;
 			}>;
-		};
+		} = await response.json();
 
 		// 結果をフィルタリング
 		const matches = data.results.filter((movie) => {
@@ -1121,10 +1121,10 @@ async function fetchTMDatabaseMovieDetails(
 			throw new Error(`TMDb API error: ${responseEn.statusText}`);
 		}
 
-		const dataEn = (await responseEn.json()) as {
+		const dataEn: {
 			imdb_id?: string;
 			poster_path?: string;
-		};
+		} = await responseEn.json();
 
 		// 日本語版の詳細情報を取得
 		const detailsUrlJa = new URL(`${TMDB_API_BASE_URL}/movie/${movieId}`);
@@ -1136,10 +1136,10 @@ async function fetchTMDatabaseMovieDetails(
 			throw new Error(`TMDb API error: ${responseJa.statusText}`);
 		}
 
-		const dataJa = (await responseJa.json()) as {
+		const dataJa: {
 			title?: string;
 			original_title?: string;
-		};
+		} = await responseJa.json();
 
 		// 日本語タイトルが英語タイトルと異なる場合のみ保存
 		const japaneseTitle =
@@ -1148,8 +1148,8 @@ async function fetchTMDatabaseMovieDetails(
 				: undefined;
 
 		return {
-			imdbId: (dataEn as any).imdb_id || undefined,
-			posterPath: (dataEn as any).poster_path || undefined,
+			imdbId: dataEn.imdb_id || undefined,
+			posterPath: dataEn.poster_path || undefined,
 			japaneseTitle,
 		};
 	} catch (error) {

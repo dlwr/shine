@@ -1,0 +1,12 @@
+diff --git a/wrangler-dist/cli.js b/wrangler-dist/cli.js
+index b6fb8f25bbd3ebf943397d391b781acfc96ac5a7..21278fc458cf079e89b1f12cc41eb3dfe0ed1ed3 100644
+--- a/wrangler-dist/cli.js
++++ b/wrangler-dist/cli.js
+@@ -257712,6 +257712,7 @@ __export(cli_exports2, {
+   experimental_patchConfig: () => experimental_patchConfig,
+   experimental_readRawConfig: () => experimental_readRawConfig,
+   getPlatformProxy: () => getPlatformProxy,
++  experimental_maybeStartOrUpdateRemoteProxySession: () => maybeStartOrUpdateRemoteProxySession,
+   maybeStartOrUpdateRemoteProxySession: () => maybeStartOrUpdateRemoteProxySession,
+   startRemoteProxySession: () => startRemoteProxySession,
+   unstable_DevEnv: () => DevEnv,

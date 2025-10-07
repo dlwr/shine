@@ -983,9 +983,9 @@ async function fetchEnglishTitleFromTMDB(
 			return undefined;
 		}
 
-		const data = (await response.json()) as {
+		const data: {
 			movie_results?: Array<{title: string}>;
-		};
+		} = await response.json();
 		const movieResults = data.movie_results;
 
 		if (!movieResults || movieResults.length === 0) {

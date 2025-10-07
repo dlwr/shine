@@ -153,14 +153,15 @@ adminRoutes.post('/movies/:id/posters', authMiddleware, async (c) => {
 		}
 
 		// Basic URL validation
+		let normalizedUrl: string;
 		try {
-			new URL(url);
+			normalizedUrl = new URL(url).toString();
 		} catch {
 			return c.json({error: 'Invalid URL format'}, 400);
 		}
 
 		const newPoster = await adminService.addPoster(movieId, {
-			url,
+			url: normalizedUrl,
 			width,
 			height,
 			language: languageCode,
@@ -368,7 +369,7 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async (c) => {
 
 				const imagesResponse = await fetch(imagesUrl.toString());
 				if (imagesResponse.ok) {
-					const images = (await imagesResponse.json()) as TMDBMovieImages;
+					const images: TMDBMovieImages = await imagesResponse.json();
 					if (images.posters && images.posters.length > 0) {
 						const savedPosters = await savePosterUrls(
 							movieId,
@@ -401,10 +402,10 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async (c) => {
 					const movieResponse = await fetch(
 						`https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${c.env.TMDB_API_KEY}`,
 					);
-					const movieData = (await movieResponse.json()) as {
-					original_language?: string;
-					original_title?: string;
-				};
+					const movieData: {
+						original_language?: string;
+						original_title?: string;
+					} = await movieResponse.json();
 
 					// Always update original language from TMDb
 					if (movieData.original_language) {
@@ -818,7 +819,7 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 
 			const imagesResponse = await fetch(imagesUrl.toString());
 			if (imagesResponse.ok) {
-				const images = (await imagesResponse.json()) as TMDBMovieImages;
+				const images: TMDBMovieImages = await imagesResponse.json();
 				if (images.posters && images.posters.length > 0) {
 					const savedPosters = await savePosterUrls(
 						movieId,
@@ -843,10 +844,10 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async (c) => {
 			const movieResponse = await fetch(
 				`https://api.themoviedb.org/3/movie/${movieTmdbId}?api_key=${tmdbApiKey}`,
 			);
-			const movieData = (await movieResponse.json()) as {
+			const movieData: {
 				original_language?: string;
 				original_title?: string;
-			};
+			} = await movieResponse.json();
 
 			// Always update original language from TMDb
 			if (movieData.original_language) {
@@ -999,7 +1000,7 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async (c) => {
 
 			const imagesResponse = await fetch(imagesUrl.toString());
 			if (imagesResponse.ok) {
-				const images = (await imagesResponse.json()) as TMDBMovieImages;
+				const images: TMDBMovieImages = await imagesResponse.json();
 				if (images.posters && images.posters.length > 0) {
 					const savedPosters = await savePosterUrls(
 						movieId,
@@ -1024,10 +1025,10 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async (c) => {
 			const movieResponse = await fetch(
 				`https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${c.env.TMDB_API_KEY}`,
 			);
-			const movieData = (await movieResponse.json()) as {
+			const movieData: {
 				original_language?: string;
 				original_title?: string;
-			};
+			} = await movieResponse.json();
 
 			// Always update original language from TMDb
 			if (movieData.original_language) {

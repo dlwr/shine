@@ -50,9 +50,9 @@ export async function fetchJapaneseTitleFromTMDB(
 				throw new Error(`TMDb API error: ${findResponse.statusText}`);
 			}
 
-			const findData = (await findResponse.json()) as {
+			const findData: {
 				movie_results?: Array<{id: number}>;
-			};
+			} = await findResponse.json();
 			const movieResults = findData.movie_results;
 
 			if (!movieResults || movieResults.length === 0) {
@@ -77,10 +77,10 @@ export async function fetchJapaneseTitleFromTMDB(
 			throw new Error(`TMDb API error: ${movieResponse.statusText}`);
 		}
 
-		const movieData = (await movieResponse.json()) as {
+		const movieData: {
 			title?: string;
 			original_title?: string;
-		};
+		} = await movieResponse.json();
 
 		// 日本語タイトルが取得できたか確認
 		if (movieData.title && movieData.title !== movieData.original_title) {
