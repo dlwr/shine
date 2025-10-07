@@ -122,7 +122,6 @@
         "warn",
         8
       ],
-      "@typescript-eslint/no-unnecessary-type-assertion": "off",
       "@typescript-eslint/prefer-nullish-coalescing": [
         "error",
         {

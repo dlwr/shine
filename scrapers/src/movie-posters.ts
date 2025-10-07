@@ -81,10 +81,10 @@ async function getMoviesWithImdbId(limit = 10): Promise<MovieWithImdbId[]> {
 
 	const filteredMoviesWithoutPosters = moviesWithoutPosters
 		.filter((movie) => movie.imdbId !== null)
-		.map((movie) => ({
+		.map<MovieWithImdbId>((movie) => ({
 			...movie,
 			tmdbId: movie.tmdbId ?? undefined,
-		})) as MovieWithImdbId[];
+		}));
 
 	if (filteredMoviesWithoutPosters.length > 0) {
 		return filteredMoviesWithoutPosters;
@@ -103,10 +103,10 @@ async function getMoviesWithImdbId(limit = 10): Promise<MovieWithImdbId[]> {
 	const filteredMoviesWithoutPostersButWithTmdb =
 		moviesWithoutPostersButWithTmdb
 			.filter((movie) => movie.imdbId !== null)
-			.map((movie) => ({
+			.map<MovieWithImdbId>((movie) => ({
 				...movie,
 				tmdbId: movie.tmdbId ?? undefined,
-			})) as MovieWithImdbId[];
+			}));
 
 	if (filteredMoviesWithoutPostersButWithTmdb.length > 0) {
 		return filteredMoviesWithoutPostersButWithTmdb;
@@ -121,10 +121,10 @@ async function getMoviesWithImdbId(limit = 10): Promise<MovieWithImdbId[]> {
 
 	return moviesWithImdbIdNoTmdb
 		.filter((movie) => movie.imdbId !== null)
-		.map((movie) => ({
+		.map<MovieWithImdbId>((movie) => ({
 			...movie,
 			tmdbId: movie.tmdbId ?? undefined,
-		})) as MovieWithImdbId[];
+		}));
 }
 
 async function fetchMovieImages(
@@ -145,9 +145,9 @@ async function fetchMovieImages(
 			throw new Error(`TMDb API error: ${findResponse.statusText}`);
 		}
 
-		const findData = (await findResponse.json()) as {
+		const findData: {
 			movie_results?: Array<{id: number}>;
-		};
+		} = await findResponse.json();
 		const movieResults = findData.movie_results;
 
 		if (!movieResults || movieResults.length === 0) {
@@ -165,7 +165,7 @@ async function fetchMovieImages(
 			throw new Error(`TMDb API error: ${imagesResponse.statusText}`);
 		}
 
-		const images = (await imagesResponse.json()) as TMDBMovieImages;
+		const images: TMDBMovieImages = await imagesResponse.json();
 		return {images, tmdbId};
 	} catch (error) {
 		console.error(`Error fetching TMDb images for IMDb ID ${imdbId}:`, error);
@@ -374,7 +374,7 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
 					throw new Error(`TMDb API error: ${imagesResponse.statusText}`);
 				}
 
-				const images = (await imagesResponse.json()) as TMDBMovieImages;
+				const images: TMDBMovieImages = await imagesResponse.json();
 
 				if (!images.posters || images.posters.length === 0) {
 					result.error = 'No posters found';

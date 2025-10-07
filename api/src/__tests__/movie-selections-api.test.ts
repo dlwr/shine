@@ -52,7 +52,7 @@ const mockDatabase = {
 };
 
 vi.mock('db', async (importOriginal) => {
-	const actual = (await importOriginal()) as Record<string, unknown>;
+	const actual: Record<string, unknown> = await importOriginal();
 	return {
 		...actual,
 		getDatabase: vi.fn(() => mockDatabase),

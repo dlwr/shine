@@ -89,7 +89,7 @@ export async function fetchTMDBMovieTranslations(
 			throw new Error(`TMDb API error: ${response.statusText}`);
 		}
 
-		const data = (await response.json()) as TMDBTranslationsResponse;
+		const data: TMDBTranslationsResponse = await response.json();
 		return data;
 	} catch (error) {
 		console.error(
@@ -121,7 +121,7 @@ export async function searchTMDBMovie(
 			throw new Error(`TMDb API error: ${responseWithYear.statusText}`);
 		}
 
-		const dataWithYear = (await responseWithYear.json()) as TMDBSearchResponse;
+		const dataWithYear: TMDBSearchResponse = await responseWithYear.json();
 
 		// 年パラメータ付きで結果があった場合
 		if (dataWithYear.results.length > 0) {
@@ -146,7 +146,7 @@ export async function searchTMDBMovie(
 			throw new Error(`TMDb API error: ${responseNoYear.statusText}`);
 		}
 
-		const dataNoYear = (await responseNoYear.json()) as TMDBSearchResponse;
+		const dataNoYear: TMDBSearchResponse = await responseNoYear.json();
 
 		// 年パラメータなしでも結果をフィルタリング
 		const matches = dataNoYear.results.filter((movie) => {
@@ -189,7 +189,7 @@ export async function fetchTMDBMovieDetails(
 			throw new Error(`TMDb API error: ${response.statusText}`);
 		}
 
-		const data = (await response.json()) as TMDBTranslationsResponse;
+		const data: TMDBTranslationsResponse = await response.json();
 		return data;
 	} catch (error) {
 		console.error(
@@ -217,7 +217,7 @@ export async function findTMDBByImdbId(
 			throw new Error(`TMDb API error: ${response.statusText}`);
 		}
 
-		const data = (await response.json()) as TMDBFindResponse;
+		const data: TMDBFindResponse = await response.json();
 		const movieResults = data.movie_results;
 
 		if (!movieResults || movieResults.length === 0) {
@@ -315,7 +315,7 @@ export async function fetchTMDBMovieImages(
 			throw new Error(`TMDb API error: ${imagesResponse.statusText}`);
 		}
 
-		const images = (await imagesResponse.json()) as TMDBMovieImages;
+		const images: TMDBMovieImages = await imagesResponse.json();
 		return {images, tmdbId};
 	} catch (error) {
 		console.error(`Error fetching TMDb images for IMDb ID ${imdbId}:`, error);
