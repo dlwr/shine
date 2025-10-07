@@ -41,7 +41,7 @@
     "lint:fix": "xo --fix",
     "lint:front": "cd front && npx eslint --ext .ts,.tsx .",
     "lint:front:fix": "cd front && npx eslint --ext .ts,.tsx . --fix",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc -b",
     "check": "concurrently -n \"lint,types\" -c \"yellow,green\" \"xo\" \"tsc --build --noEmit\"",
     "typegen": "cd front && npx react-router typegen"
   },
