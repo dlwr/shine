@@ -22,6 +22,7 @@ const ignores = [
 ];
 
 const generalRules = {
+	// pnpm workspaceで共通依存をルートに集約しているためオフのままにする
 	'import-x/no-extraneous-dependencies': 'off',
 	'n/no-extraneous-import': 'off',
 	'import-x/extensions': 'off',
@@ -38,7 +39,7 @@ const generalRules = {
 	'no-alert': 'off',
 	'promise/prefer-await-to-then': 'off',
 	'no-return-assign': 'off',
-};
+};;
 
 const typescriptRules = {
 	'@typescript-eslint/naming-convention': 'off',
