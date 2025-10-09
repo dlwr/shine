@@ -99,262 +99,234 @@ vi.mock('db', () => ({
 // Mock external dependencies
 globalThis.fetch = vi.fn();
 
-describe('Integration Tests', () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
+const createMockDatabase = async () => {
+	const {getDatabase} = await import('db');
+	return getDatabase({} as never);
+};
+
+beforeEach(() => {
+	vi.clearAllMocks();
+});
+
+describe('Movie Search Integration', () => {
+	it('should integrate search with pagination and filtering', async () => {
+		const database = await createMockDatabase();
+
+		const searchResult = await database
+			.select()
+			.from({} as never)
+			.where({} as never);
+
+		expect(searchResult).toBeDefined();
+		expect(Array.isArray(searchResult)).toBe(true);
+		expect(searchResult.length).toBeGreaterThan(0);
+
+		const movie = searchResult[0];
+		expect(movie).toHaveProperty('uid');
+		expect(movie).toHaveProperty('year');
+		expect(movie).toHaveProperty('originalLanguage');
 	});
 
-	describe('Movie Search Integration', () => {
-		it('should integrate search with pagination and filtering', async () => {
-			const {getDatabase} = await import('db');
-			const mockDatabase = getDatabase({} as never);
+	it('should handle search with multiple language translations', async () => {
+		const database = await createMockDatabase();
 
-			// Simulate a complex search query with multiple filters
-			const searchResult = await mockDatabase
-				.select()
-				.from({} as never)
-				.where({} as never);
+		const movieWithTranslations = await database
+			.select()
+			.from({} as never)
+			.leftJoin({} as never, {} as never)
+			.where({} as never);
 
-			expect(searchResult).toBeDefined();
-			expect(Array.isArray(searchResult)).toBe(true);
-			expect(searchResult.length).toBeGreaterThan(0);
+		expect(movieWithTranslations).toBeDefined();
+		expect(Array.isArray(movieWithTranslations)).toBe(true);
 
-			// Verify the structure matches expected movie data
-			const movie = searchResult[0];
+		if (movieWithTranslations.length > 0) {
+			const movie = movieWithTranslations[0];
+			expect(movie).toHaveProperty('translations');
+			expect(Array.isArray(movie.translations)).toBe(true);
+		}
+	});
+
+	it('should integrate awards data with movie search', async () => {
+		const database = await createMockDatabase();
+
+		const movieWithAwards = await database
+			.select()
+			.from({} as never)
+			.leftJoin({} as never, {} as never)
+			.where({} as never);
+
+		expect(movieWithAwards).toBeDefined();
+		expect(Array.isArray(movieWithAwards)).toBe(true);
+
+		if (movieWithAwards.length > 0) {
+			const movie = movieWithAwards[0];
+			expect(movie).toHaveProperty('nominations');
+			expect(Array.isArray(movie.nominations)).toBe(true);
+		}
+	});
+});
+
+describe('Movie Selection Algorithm Integration', () => {
+	it('should integrate date-based selection with database queries', async () => {
+		const database = await createMockDatabase();
+
+		const dailySelection = await database
+			.select()
+			.from({} as never)
+			.where({} as never);
+
+		expect(dailySelection).toBeDefined();
+		expect(Array.isArray(dailySelection)).toBe(true);
+
+		if (dailySelection.length > 0) {
+			const movie = dailySelection[0];
 			expect(movie).toHaveProperty('uid');
 			expect(movie).toHaveProperty('year');
-			expect(movie).toHaveProperty('originalLanguage');
-		});
-
-		it('should handle search with multiple language translations', async () => {
-			const {getDatabase} = await import('db');
-			const mockDatabase = getDatabase({} as never);
-
-			const movieWithTranslations = await mockDatabase
-				.select()
-				.from({} as never)
-				.leftJoin({} as never, {} as never)
-				.where({} as never);
-
-			expect(movieWithTranslations).toBeDefined();
-			expect(Array.isArray(movieWithTranslations)).toBe(true);
-
-			if (movieWithTranslations.length > 0) {
-				const movie = movieWithTranslations[0];
-				expect(movie).toHaveProperty('translations');
-				expect(Array.isArray(movie.translations)).toBe(true);
-			}
-		});
-
-		it('should integrate awards data with movie search', async () => {
-			const {getDatabase} = await import('db');
-			const mockDatabase = getDatabase({} as never);
-
-			const movieWithAwards = await mockDatabase
-				.select()
-				.from({} as never)
-				.leftJoin({} as never, {} as never)
-				.where({} as never);
-
-			expect(movieWithAwards).toBeDefined();
-			expect(Array.isArray(movieWithAwards)).toBe(true);
-
-			if (movieWithAwards.length > 0) {
-				const movie = movieWithAwards[0];
-				expect(movie).toHaveProperty('nominations');
-				expect(Array.isArray(movie.nominations)).toBe(true);
-			}
-		});
+		}
 	});
 
-	describe('Movie Selection Algorithm Integration', () => {
-		it('should integrate date-based selection with database queries', async () => {
-			const {getDatabase} = await import('db');
-			const mockDatabase = getDatabase({} as never);
+	it('should handle selection persistence and retrieval', async () => {
+		const database = await createMockDatabase();
 
-			// Simulate daily selection query
-			const dailySelection = await mockDatabase
-				.select()
-				.from({} as never)
-				.where({} as never);
-
-			expect(dailySelection).toBeDefined();
-			expect(Array.isArray(dailySelection)).toBe(true);
-
-			if (dailySelection.length > 0) {
-				const movie = dailySelection[0];
-				expect(movie).toHaveProperty('uid');
-				expect(movie).toHaveProperty('year');
-			}
+		const insertResult = await database.insert({} as never).values({
+			type: 'daily',
+			movieUid: 'test-movie-1',
+			locale: 'en',
+			selectedDate: new Date().toISOString(),
 		});
 
-		it('should handle selection persistence and retrieval', async () => {
-			const {getDatabase} = await import('db');
-			const mockDatabase = getDatabase({} as never);
+		expect(insertResult).toBeDefined();
 
-			// Insert a selection
-			const insertResult = await mockDatabase.insert({} as never).values({
-				type: 'daily',
-				movieUid: 'test-movie-1',
-				locale: 'en',
-				selectedDate: new Date().toISOString(),
-			});
+		const retrievedSelection = await database
+			.select()
+			.from({} as never)
+			.where({} as never);
 
-			expect(insertResult).toBeDefined();
+		expect(retrievedSelection).toBeDefined();
+		expect(Array.isArray(retrievedSelection)).toBe(true);
+	});
+});
 
-			// Retrieve the selection
-			const retrievedSelection = await mockDatabase
-				.select()
-				.from({} as never)
-				.where({} as never);
+describe('Admin Operations Integration', () => {
+	it('should integrate movie creation with all related data', async () => {
+		const database = await createMockDatabase();
 
-			expect(retrievedSelection).toBeDefined();
-			expect(Array.isArray(retrievedSelection)).toBe(true);
+		const movieResult = await database.insert({} as never).values({
+			uid: 'new-movie-1',
+			year: 2024,
+			originalLanguage: 'en',
+			imdbId: 'tt9999999',
 		});
+
+		expect(movieResult).toBeDefined();
+
+		const translationResult = await database.insert({} as never).values({
+			resourceType: 'movie_title',
+			resourceUid: 'new-movie-1',
+			languageCode: 'en',
+			content: 'New Test Movie',
+		});
+
+		expect(translationResult).toBeDefined();
+
+		const posterResult = await database.insert({} as never).values({
+			movieUid: 'new-movie-1',
+			url: 'https://example.com/new-poster.jpg',
+			width: 500,
+			height: 750,
+			isPrimary: true,
+		});
+
+		expect(posterResult).toBeDefined();
 	});
 
-	describe('Admin Operations Integration', () => {
-		it('should integrate movie creation with all related data', async () => {
-			const {getDatabase} = await import('db');
-			const mockDatabase = getDatabase({} as never);
+	it('should integrate movie deletion with cascading operations', async () => {
+		const database = await createMockDatabase();
 
-			// Create movie
-			const movieResult = await mockDatabase.insert({} as never).values({
-				uid: 'new-movie-1',
-				year: 2024,
-				originalLanguage: 'en',
-				imdbId: 'tt9999999',
-			});
+		const deleteTranslations = await database
+			.delete({} as never)
+			.where({} as never);
+		expect(deleteTranslations).toBeDefined();
 
-			expect(movieResult).toBeDefined();
+		const deletePosters = await database.delete({} as never).where({} as never);
+		expect(deletePosters).toBeDefined();
 
-			// Add translation
-			const translationResult = await mockDatabase.insert({} as never).values({
-				resourceType: 'movie_title',
-				resourceUid: 'new-movie-1',
-				languageCode: 'en',
-				content: 'New Test Movie',
-			});
+		const deleteNominations = await database
+			.delete({} as never)
+			.where({} as never);
+		expect(deleteNominations).toBeDefined();
 
-			expect(translationResult).toBeDefined();
-
-			// Add poster
-			const posterResult = await mockDatabase.insert({} as never).values({
-				movieUid: 'new-movie-1',
-				url: 'https://example.com/new-poster.jpg',
-				width: 500,
-				height: 750,
-				isPrimary: true,
-			});
-
-			expect(posterResult).toBeDefined();
-		});
-
-		it('should integrate movie deletion with cascading operations', async () => {
-			const {getDatabase} = await import('db');
-			const mockDatabase = getDatabase({} as never);
-
-			// Delete related data (simulating cascading delete)
-			const deleteTranslations = await mockDatabase
-				.delete({} as never)
-				.where({} as never);
-
-			expect(deleteTranslations).toBeDefined();
-
-			const deletePosters = await mockDatabase
-				.delete({} as never)
-				.where({} as never);
-
-			expect(deletePosters).toBeDefined();
-
-			const deleteNominations = await mockDatabase
-				.delete({} as never)
-				.where({} as never);
-
-			expect(deleteNominations).toBeDefined();
-
-			// Finally delete the movie
-			const deleteMovie = await mockDatabase
-				.delete({} as never)
-				.where({} as never);
-
-			expect(deleteMovie).toBeDefined();
-		});
+		const deleteMovie = await database.delete({} as never).where({} as never);
+		expect(deleteMovie).toBeDefined();
 	});
+});
 
-	describe('Rate Limiting Integration', () => {
-		it('should integrate rate limiting with article link submissions', async () => {
-			const {getDatabase} = await import('db');
-			const mockDatabase = getDatabase({} as never);
+describe('Rate Limiting Integration', () => {
+	it('should integrate rate limiting with article link submissions', async () => {
+		const database = await createMockDatabase();
 
-			const clientIP = '192.168.1.1';
-			const _movieUid = 'test-movie-1';
+		const clientIP = '192.168.1.1';
+		const movieUid = 'test-movie-1';
 
-			// Simulate multiple requests from the same IP
-			const submissions = [];
-			for (let index = 0; index < 15; index++) {
-				submissions.push(
-					mockDatabase.insert({} as never).values({
-						movieUid: _movieUid,
-						title: `Article ${index}`,
-						url: `https://example.com/article-${index}`,
-						submitterIp: clientIP,
-						submittedAt: new Date().toISOString(),
-					}),
-				);
-			}
-
-			const results = await Promise.all(submissions);
-
-			// All submissions should succeed in mock (rate limiting would be handled by middleware)
-			for (const result of results) {
-				expect(result).toBeDefined();
-			}
-		});
-	});
-
-	describe('External API Integration', () => {
-		it('should integrate with TMDb API for movie data enrichment', async () => {
-			const mockTmdbResponse = {
-				id: 12_345,
-				title: 'Test Movie',
-				original_title: 'Test Movie',
-				release_date: '2023-01-01',
-				poster_path: '/test-poster.jpg',
-				overview: 'A test movie for integration testing',
-				original_language: 'en',
-			};
-
-			vi.mocked(globalThis.fetch).mockResolvedValueOnce(
-				new Response(JSON.stringify(mockTmdbResponse), {
-					status: 200,
-					headers: {'Content-Type': 'application/json'},
+		const submissions = [];
+		for (let index = 0; index < 15; index++) {
+			submissions.push(
+				database.insert({} as never).values({
+					movieUid,
+					title: `Article ${index}`,
+					url: `https://example.com/article-${index}`,
+					submitterIp: clientIP,
+					submittedAt: new Date().toISOString(),
 				}),
 			);
+		}
 
-			const response = await fetch('https://api.themoviedb.org/3/movie/12345');
-			const data = await response.json();
+		const results = await Promise.all(submissions);
+		for (const result of results) {
+			expect(result).toBeDefined();
+		}
+	});
+});
 
-			expect(data).toEqual(mockTmdbResponse);
-			expect((data as any).title).toBe('Test Movie');
-			expect((data as any).poster_path).toBe('/test-poster.jpg');
-		});
+describe('External API Integration', () => {
+	it('should integrate with TMDb API for movie data enrichment', async () => {
+		const mockTmdbResponse = {
+			id: 12_345,
+			title: 'Test Movie',
+			original_title: 'Test Movie',
+			release_date: '2023-01-01',
+			poster_path: '/test-poster.jpg',
+			overview: 'A test movie for integration testing',
+			original_language: 'en',
+		};
 
-		it('should handle TMDb API errors gracefully', async () => {
-			vi.mocked(globalThis.fetch).mockRejectedValueOnce(
-				new Error('TMDb API unavailable'),
-			);
+		vi.mocked(globalThis.fetch).mockResolvedValueOnce(
+			new Response(JSON.stringify(mockTmdbResponse), {
+				status: 200,
+				headers: {'Content-Type': 'application/json'},
+			}),
+		);
 
-			try {
-				await fetch('https://api.themoviedb.org/3/movie/invalid');
-				expect.fail('Should have thrown an error');
-			} catch (error) {
-				expect((error as Error).message).toBe('TMDb API unavailable');
-			}
-		});
+		const response = await fetch('https://api.themoviedb.org/3/movie/12345');
+		const data = await response.json();
 
-		it('should integrate URL title fetching', async () => {
-			const mockHtmlResponse = `
+		expect(data).toEqual(mockTmdbResponse);
+		expect((data as any).title).toBe('Test Movie');
+		expect((data as any).poster_path).toBe('/test-poster.jpg');
+	});
+
+	it('should handle TMDb API errors gracefully', async () => {
+		vi.mocked(globalThis.fetch).mockRejectedValueOnce(
+			new Error('TMDb API unavailable'),
+		);
+
+		await expect(
+			fetch('https://api.themoviedb.org/3/movie/invalid'),
+		).rejects.toThrow('TMDb API unavailable');
+	});
+
+	it('should integrate URL title fetching', async () => {
+		const mockHtmlResponse = `
         <!DOCTYPE html>
         <html>
           <head>
@@ -366,85 +338,75 @@ describe('Integration Tests', () => {
         </html>
       `;
 
-			vi.mocked(globalThis.fetch).mockResolvedValueOnce(
-				new Response(mockHtmlResponse, {
-					status: 200,
-					headers: {'Content-Type': 'text/html'},
-				}),
-			);
+		vi.mocked(globalThis.fetch).mockResolvedValueOnce(
+			new Response(mockHtmlResponse, {
+				status: 200,
+				headers: {'Content-Type': 'text/html'},
+			}),
+		);
 
-			const response = await fetch('https://example.com/article');
-			const html = await response.text();
+		const response = await fetch('https://example.com/article');
+		const html = await response.text();
 
-			expect(html).toContain('<title>Test Article Title</title>');
+		expect(html).toContain('<title>Test Article Title</title>');
 
-			// Simulate title extraction
-			const titleMatch = /<title>(.*?)<\/title>/.exec(html);
-			const title = titleMatch ? titleMatch[1] : '';
+		const titleMatch = /<title>(.*?)<\/title>/.exec(html);
+		const title = titleMatch ? titleMatch[1] : '';
 
-			expect(title).toBe('Test Article Title');
+		expect(title).toBe('Test Article Title');
+	});
+});
+
+describe('Data Consistency Integration', () => {
+	it('should maintain referential integrity across operations', async () => {
+		const database = await createMockDatabase();
+
+		const movieUid = 'consistency-test-movie';
+		const categoryUid = 'best-picture-category';
+		const ceremonyUid = 'academy-awards-2023';
+
+		const nominationResult = await database.insert({} as never).values({
+			movieUid,
+			categoryUid,
+			ceremonyUid,
+			isWinner: false,
 		});
+
+		expect(nominationResult).toBeDefined();
+
+		const nominationQuery = await database
+			.select()
+			.from({} as never)
+			.leftJoin({} as never, {} as never)
+			.where({} as never);
+
+		expect(nominationQuery).toBeDefined();
+		expect(Array.isArray(nominationQuery)).toBe(true);
 	});
 
-	describe('Data Consistency Integration', () => {
-		it('should maintain referential integrity across operations', async () => {
-			const {getDatabase} = await import('db');
-			const mockDatabase = getDatabase({} as never);
+	it('should handle concurrent operations safely', async () => {
+		const database = await createMockDatabase();
 
-			const _movieUid = 'consistency-test-movie';
-			const categoryUid = 'best-picture-category';
-			const ceremonyUid = 'academy-awards-2023';
+		const movieUid = 'concurrent-test-movie';
 
-			// Create nomination (should reference existing movie, category, ceremony)
-			const nominationResult = await mockDatabase.insert({} as never).values({
-				movieUid: _movieUid,
-				categoryUid,
-				ceremonyUid,
-				isWinner: false,
-			});
+		const operations = [
+			database
+				.update({} as never)
+				.set({imdbId: 'tt1111111'})
+				.where({} as never),
+			database.insert({} as never).values({movieUid, url: 'poster1.jpg'}),
+			database
+				.insert({} as never)
+				.values({resourceUid: movieUid, content: 'Title'}),
+			database
+				.update({} as never)
+				.set({year: 2024})
+				.where({} as never),
+		];
 
-			expect(nominationResult).toBeDefined();
-
-			// Verify nomination can be retrieved with related data
-			const nominationQuery = await mockDatabase
-				.select()
-				.from({} as never)
-				.leftJoin({} as never, {} as never)
-				.where({} as never);
-
-			expect(nominationQuery).toBeDefined();
-			expect(Array.isArray(nominationQuery)).toBe(true);
-		});
-
-		it('should handle concurrent operations safely', async () => {
-			const {getDatabase} = await import('db');
-			const mockDatabase = getDatabase({} as never);
-
-			const _movieUid = 'concurrent-test-movie';
-
-			// Simulate concurrent operations on the same movie
-			const operations = [
-				mockDatabase
-					.update({} as never)
-					.set({imdbId: 'tt1111111'})
-					.where({} as never),
-				mockDatabase
-					.insert({} as never)
-					.values({movieUid: _movieUid, url: 'poster1.jpg'}),
-				mockDatabase
-					.insert({} as never)
-					.values({resourceUid: _movieUid, content: 'Title'}),
-				mockDatabase
-					.update({} as never)
-					.set({year: 2024})
-					.where({} as never),
-			];
-
-			const results = await Promise.all(operations);
-
-			for (const result of results) {
-				expect(result).toBeDefined();
-			}
-		});
+		const results = await Promise.all(operations);
+		for (const result of results) {
+			expect(result).toBeDefined();
+		}
 	});
 });
