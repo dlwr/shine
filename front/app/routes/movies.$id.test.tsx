@@ -685,10 +685,10 @@ describe('MovieDetail Component', () => {
 				params: parameters,
 			} as any);
 
-			expect(mockFetch).toHaveBeenCalledWith(
-				'http://localhost:8787/movies/movie-123/article-links',
-				{
-					method: 'POST',
+		expect(mockFetch).toHaveBeenCalledWith(
+			'http://localhost:8787/movies/movie-123/article-links',
+			{
+				method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
 					},
@@ -699,13 +699,15 @@ describe('MovieDetail Component', () => {
 					}),
 					signal: undefined,
 				},
-			);
+		);
 
-			expect(result).toEqual({
-				success: true,
-				message: '記事リンクが投稿されました。',
-			});
-		});
+		expect(result).toBeInstanceOf(Response);
+		if (!(result instanceof Response)) {
+			throw new Error('Expected redirect Response');
+		}
+		expect(result.status).toBe(303);
+		expect(result.headers.get('Location')).toBe('/');
+	});
 
 		it('記事リンク投稿でバリデーションエラーが発生する', async () => {
 			const mockFetch = vi.mocked(fetch);
@@ -727,17 +729,17 @@ describe('MovieDetail Component', () => {
 				signal: undefined,
 			} as unknown as Request;
 
-			const result = await action({
-				context,
-				request,
-				params: parameters,
-			} as any);
+		const result = await action({
+			context,
+			request,
+			params: parameters,
+		} as any);
 
-			expect(result).toEqual({
-				success: false,
-				error: 'URLが無効です',
-			});
+		expect(result).toEqual({
+			success: false,
+			error: 'URLが無効です',
 		});
+	});
 
 		it('記事リンク投稿でレート制限エラーが発生する', async () => {
 			const mockFetch = vi.mocked(fetch);
@@ -759,16 +761,16 @@ describe('MovieDetail Component', () => {
 				signal: undefined,
 			} as unknown as Request;
 
-			const result = await action({
-				context,
-				request,
-				params: parameters,
-			} as any);
+		const result = await action({
+			context,
+			request,
+			params: parameters,
+		} as any);
 
-			expect(result).toEqual({
-				success: false,
-				error: '投稿制限に達しました',
-			});
+		expect(result).toEqual({
+			success: false,
+			error: '投稿制限に達しました',
 		});
+	});
 	});
 });

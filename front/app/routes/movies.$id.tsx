@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {Form} from 'react-router';
+import {Form, redirect} from 'react-router';
 import type {Route} from './+types/movies.$id';
 import {Button} from '@/components/ui/button';
 
@@ -126,16 +126,19 @@ export async function action({context, params, request}: Route.ActionArgs) {
 		);
 
 		if (response.ok) {
-			return {
-				success: true,
-				message: '記事リンクが投稿されました。',
-			};
+			return redirect('/', {status: 303});
 		}
 
-		const errorData = await response.json();
+		let errorMessage = '投稿に失敗しました。';
+
+		try {
+			const errorData = (await response.json()) as {error?: string};
+			errorMessage = errorData.error || errorMessage;
+		} catch {}
+
 		return {
 			success: false,
-			error: (errorData as {error?: string}).error || '投稿に失敗しました。',
+			error: errorMessage,
 		};
 	} catch {
 		return {
@@ -169,6 +172,7 @@ export default function MovieDetail({
 	});
 	const [isLoadingTitle, setIsLoadingTitle] = useState(false);
 	const [titleError, setTitleError] = useState('');
+	const submissionResult = actionData as {error?: string} | undefined;
 
 	// URLからタイトルを取得
 	const fetchTitleFromUrl = async (url: string) => {
@@ -390,17 +394,11 @@ export default function MovieDetail({
 									記事を投稿する
 								</h3>
 
-								{actionData?.success && (
-									<div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-										{actionData.message}
-									</div>
-								)}
-
-								{actionData?.error && (
-									<div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-										{actionData.error}
-									</div>
-								)}
+				{submissionResult?.error && (
+					<div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+						{submissionResult.error}
+					</div>
+				)}
 
 								{isTestMode ? (
 									<form method="post" className="space-y-4">
