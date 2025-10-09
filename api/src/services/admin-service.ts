@@ -645,102 +645,101 @@ export class AdminService extends BaseService {
 		movieId: string,
 		tmdbData: TMDBMovieData,
 	): Promise<number> {
+		const tmdbTranslations = tmdbData.translations?.translations ?? [];
+		if (tmdbTranslations.length === 0) {
+			return 0;
+		}
+
+		const now = Math.floor(Date.now() / 1000);
 		let addedCount = 0;
 
-		if (tmdbData.translations?.translations) {
-			// First, reset all isDefault flags for this movie
-			await this.database
-				.update(translations)
-				.set({
-					isDefault: 0,
-					updatedAt: Math.floor(Date.now() / 1000),
-				})
+		await this.database
+			.update(translations)
+			.set({
+				isDefault: 0,
+				updatedAt: now,
+			})
+			.where(
+				and(
+					eq(translations.resourceUid, movieId),
+					eq(translations.resourceType, 'movie_title'),
+				),
+			);
+
+		if (tmdbData.original_language === 'ja' && tmdbData.original_title) {
+			const existingJapaneseTranslation = await this.database
+				.select({uid: translations.uid})
+				.from(translations)
 				.where(
 					and(
 						eq(translations.resourceUid, movieId),
 						eq(translations.resourceType, 'movie_title'),
+						eq(translations.languageCode, 'ja'),
 					),
-				);
+				)
+				.limit(1);
 
-			// If the movie's original language is Japanese, add the original title as Japanese translation
-			if (tmdbData.original_language === 'ja' && tmdbData.original_title) {
-				const existingTranslation = await this.database
-					.select({uid: translations.uid})
-					.from(translations)
-					.where(
-						and(
-							eq(translations.resourceUid, movieId),
-							eq(translations.resourceType, 'movie_title'),
-							eq(translations.languageCode, 'ja'),
-						),
-					)
-					.limit(1);
+			if (existingJapaneseTranslation.length === 0) {
+				await this.database.insert(translations).values({
+					resourceType: 'movie_title',
+					resourceUid: movieId,
+					languageCode: 'ja',
+					content: tmdbData.original_title,
+					isDefault: 1,
+					createdAt: now,
+					updatedAt: now,
+				});
+				addedCount++;
+			}
+		}
 
-				if (existingTranslation.length === 0) {
-					await this.database.insert(translations).values({
-						resourceType: 'movie_title',
-						resourceUid: movieId,
-						languageCode: 'ja',
-						content: tmdbData.original_title,
-						isDefault: 1, // Original language is default
-						createdAt: Math.floor(Date.now() / 1000),
-						updatedAt: Math.floor(Date.now() / 1000),
-					});
-					addedCount++;
-				}
+		for (const translation of tmdbTranslations) {
+			const languageCode = translation.iso_639_1;
+			const title = translation.data?.title;
+
+			if (!languageCode || !title) {
+				continue;
 			}
 
-			// Add all translations
-			for (const translation of tmdbData.translations.translations) {
-				if (translation.iso_639_1 && translation.data?.title) {
-					// Check if translation already exists for this language
-					const existingTranslation = await this.database
-						.select({uid: translations.uid})
-						.from(translations)
-						.where(
-							and(
-								eq(translations.resourceUid, movieId),
-								eq(translations.resourceType, 'movie_title'),
-								eq(translations.languageCode, translation.iso_639_1),
-							),
-						)
-						.limit(1);
+			const translationQuery = and(
+				eq(translations.resourceUid, movieId),
+				eq(translations.resourceType, 'movie_title'),
+				eq(translations.languageCode, languageCode),
+			);
 
-					if (existingTranslation.length === 0) {
-						const isOriginalLanguage =
-							translation.iso_639_1 === tmdbData.original_language;
-						await this.database.insert(translations).values({
-							resourceType: 'movie_title',
-							resourceUid: movieId,
-							languageCode: translation.iso_639_1,
-							content: translation.data.title,
-							isDefault: isOriginalLanguage ? 1 : 0,
-							createdAt: Math.floor(Date.now() / 1000),
-							updatedAt: Math.floor(Date.now() / 1000),
-						});
-						addedCount++;
-					} else {
-						// Update isDefault if this is the original language
-						const isOriginalLanguage =
-							translation.iso_639_1 === tmdbData.original_language;
-						if (isOriginalLanguage) {
-							await this.database
-								.update(translations)
-								.set({
-									isDefault: 1,
-									updatedAt: Math.floor(Date.now() / 1000),
-								})
-								.where(
-									and(
-										eq(translations.resourceUid, movieId),
-										eq(translations.resourceType, 'movie_title'),
-										eq(translations.languageCode, translation.iso_639_1),
-									),
-								);
-						}
-					}
-				}
+			const existingTranslation = await this.database
+				.select({uid: translations.uid})
+				.from(translations)
+				.where(translationQuery)
+				.limit(1);
+
+			const isOriginalLanguage = languageCode === tmdbData.original_language;
+
+			if (existingTranslation.length === 0) {
+				await this.database.insert(translations).values({
+					resourceType: 'movie_title',
+					resourceUid: movieId,
+					languageCode,
+					content: title,
+					isDefault: isOriginalLanguage ? 1 : 0,
+					createdAt: now,
+					updatedAt: now,
+				});
+				addedCount++;
+				continue;
 			}
+
+			if (!isOriginalLanguage) {
+				continue;
+			}
+
+			await this.database
+				.update(translations)
+				.set({
+					isDefault: 1,
+					updatedAt: now,
+				})
+				.where(translationQuery);
 		}
 
 		return addedCount;

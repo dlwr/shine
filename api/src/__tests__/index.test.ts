@@ -2,26 +2,41 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {createJWT} from '../auth';
 
 // Mock the db module
-vi.mock('db', () => ({
-	getDatabase: vi.fn(() => ({
-		select: vi.fn(() => ({
-			from: vi.fn(() => ({
-				where: vi.fn(async () => []),
-				limit: vi.fn(async () => []),
-				orderBy: vi.fn(async () => []),
-			})),
+const createAsyncEmptyFn = () => vi.fn(async () => []);
+
+const createSelectFromStub = () => ({
+	where: createAsyncEmptyFn(),
+	limit: createAsyncEmptyFn(),
+	orderBy: createAsyncEmptyFn(),
+});
+
+const createSelectStub = () =>
+	vi.fn(() => ({
+		from: vi.fn(() => createSelectFromStub()),
+	}));
+
+const createInsertStub = () =>
+	vi.fn(() => ({
+		values: vi.fn(async () => {
+			// Mock implementation
+		}),
+	}));
+
+vi.mock('db', () => {
+	const select = createSelectStub();
+	const insert = createInsertStub();
+
+	return {
+		getDatabase: vi.fn(() => ({
+			select,
+			insert,
 		})),
-		insert: vi.fn(() => ({
-			values: vi.fn(async () => {
-				// Mock implementation
-			}),
-		})),
-	})),
-	eq: vi.fn(),
-	and: vi.fn(),
-	not: vi.fn(),
-	sql: vi.fn(),
-}));
+		eq: vi.fn(),
+		and: vi.fn(),
+		not: vi.fn(),
+		sql: vi.fn(),
+	};
+});
 
 describe('API Module Tests', () => {
 	const testSecret = 'test-secret-key';

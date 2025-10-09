@@ -73,15 +73,15 @@ export default function AdminMovieSelections({
 	const {apiUrl} = loaderData as {apiUrl: string};
 	const locale = 'ja';
 
-const [selections, setSelections] = useState<PreviewSelections | undefined>(
-	undefined,
-);
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState<string | undefined>(undefined);
-const [adminToken, setAdminToken] = useState<string | undefined>(undefined);
+	const [selections, setSelections] = useState<PreviewSelections | undefined>(
+		undefined,
+	);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | undefined>(undefined);
+	const [adminToken, setAdminToken] = useState<string | undefined>(undefined);
 
-// Override modal states
-const [showOverrideModal, setShowOverrideModal] = useState(false);
+	// Override modal states
+	const [showOverrideModal, setShowOverrideModal] = useState(false);
 	const [overrideType, setOverrideType] = useState<
 		'daily' | 'weekly' | 'monthly'
 	>('daily');
@@ -405,34 +405,34 @@ const [showOverrideModal, setShowOverrideModal] = useState(false);
 
 								{/* Card Content */}
 								<div className="p-6">
-			{selection?.movie ? (
-				<div className="flex flex-col items-center gap-6">
-					<div className="flex justify-center">
-						<MovieCard
-							movie={selection.movie}
-							locale={locale}
-							adminToken={adminToken}
-						/>
-					</div>
+									{selection?.movie ? (
+										<div className="flex flex-col items-center gap-6">
+											<div className="flex justify-center">
+												<MovieCard
+													movie={selection.movie}
+													locale={locale}
+													adminToken={adminToken}
+												/>
+											</div>
 
-					<div className="flex w-full flex-col gap-2 sm:flex-row">
-						<button
-							onClick={() => {
-								openOverrideModal(type);
-							}}
-							className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
-						>
-							Override Selection
-						</button>
-						<a
-							href={`/admin/movies/${selection.movie.uid}`}
-							className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-center text-white transition-colors hover:bg-gray-700"
-						>
-							Edit Movie
-						</a>
-					</div>
-				</div>
-			) : (
+											<div className="flex w-full flex-col gap-2 sm:flex-row">
+												<button
+													onClick={() => {
+														openOverrideModal(type);
+													}}
+													className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+												>
+													Override Selection
+												</button>
+												<a
+													href={`/admin/movies/${selection.movie.uid}`}
+													className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-center text-white transition-colors hover:bg-gray-700"
+												>
+													Edit Movie
+												</a>
+											</div>
+										</div>
+									) : (
 										<div className="text-center text-gray-500">
 											<p className="mb-4">選択された映画がありません</p>
 											<button

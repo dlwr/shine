@@ -1,5 +1,5 @@
 import path from 'node:path';
-import {fileURLToPath} from 'node:url';
+import { fileURLToPath } from 'node:url';
 import tseslint from 'typescript-eslint';
 
 const ignores = [
@@ -26,15 +26,11 @@ const generalRules = {
 	'import-x/no-extraneous-dependencies': 'off',
 	'n/no-extraneous-import': 'off',
 	'import-x/extensions': 'off',
-	complexity: ['warn', 40],
-	'max-depth': ['warn', 8],
-	'max-nested-callbacks': ['warn', 8],
 	'no-await-in-loop': 'off',
 	'import-x/no-anonymous-default-export': 'off',
 	'n/prefer-global/process': 'off',
 	'unicorn/no-process-exit': 'off',
 	'no-bitwise': 'off',
-	'max-params': ['warn', 6],
 	'n/prefer-global/buffer': 'off',
 	'no-alert': 'off',
 	'promise/prefer-await-to-then': 'off',

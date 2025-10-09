@@ -394,11 +394,11 @@ export default function MovieDetail({
 									記事を投稿する
 								</h3>
 
-				{submissionResult?.error && (
-					<div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-						{submissionResult.error}
-					</div>
-				)}
+								{submissionResult?.error && (
+									<div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+										{submissionResult.error}
+									</div>
+								)}
 
 								{isTestMode ? (
 									<form method="post" className="space-y-4">
