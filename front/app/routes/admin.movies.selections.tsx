@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import type {Route} from './+types/admin.movies.selections';
+import {MovieCard} from '@/components/molecules/movie-card';
 
 type SelectionData = {
 	date: string;
@@ -72,14 +73,15 @@ export default function AdminMovieSelections({
 	const {apiUrl} = loaderData as {apiUrl: string};
 	const locale = 'ja';
 
-	const [selections, setSelections] = useState<PreviewSelections | undefined>(
-		undefined,
-	);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | undefined>(undefined);
+const [selections, setSelections] = useState<PreviewSelections | undefined>(
+	undefined,
+);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState<string | undefined>(undefined);
+const [adminToken, setAdminToken] = useState<string | undefined>(undefined);
 
-	// Override modal states
-	const [showOverrideModal, setShowOverrideModal] = useState(false);
+// Override modal states
+const [showOverrideModal, setShowOverrideModal] = useState(false);
 	const [overrideType, setOverrideType] = useState<
 		'daily' | 'weekly' | 'monthly'
 	>('daily');
@@ -112,6 +114,7 @@ export default function AdminMovieSelections({
 				return;
 			}
 
+			setAdminToken(token);
 			setLoading(true);
 			setError(undefined);
 
@@ -402,52 +405,34 @@ export default function AdminMovieSelections({
 
 								{/* Card Content */}
 								<div className="p-6">
-									{selection?.movie ? (
-										<div>
-											{/* Movie Info */}
-											<div className="mb-4">
-												<h3 className="text-lg font-semibold text-gray-900 mb-2">
-													{getPrimaryTitle(selection.movie)}
-												</h3>
-												<p className="text-gray-600">
-													{selection.movie.year && `${selection.movie.year}年`}
-												</p>
-												{selection.movie.nominations &&
-													selection.movie.nominations.length > 0 && (
-														<p className="text-sm text-gray-500 mt-1">
-															ノミネート: {selection.movie.nominations.length}件
-														</p>
-													)}
-											</div>
+			{selection?.movie ? (
+				<div className="flex flex-col items-center gap-6">
+					<div className="flex justify-center">
+						<MovieCard
+							movie={selection.movie}
+							locale={locale}
+							adminToken={adminToken}
+						/>
+					</div>
 
-											{/* Poster */}
-											{selection.movie.posterUrl && (
-												<img
-													src={selection.movie.posterUrl}
-													alt={getPrimaryTitle(selection.movie)}
-													className="w-full h-48 object-cover rounded-lg mb-4"
-												/>
-											)}
-
-											{/* Actions */}
-											<div className="flex space-x-2">
-												<button
-													onClick={() => {
-														openOverrideModal(type);
-													}}
-													className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-												>
-													Override Selection
-												</button>
-												<a
-													href={`/admin/movies/${selection.movie.uid}`}
-													className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-center"
-												>
-													Edit Movie
-												</a>
-											</div>
-										</div>
-									) : (
+					<div className="flex w-full flex-col gap-2 sm:flex-row">
+						<button
+							onClick={() => {
+								openOverrideModal(type);
+							}}
+							className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+						>
+							Override Selection
+						</button>
+						<a
+							href={`/admin/movies/${selection.movie.uid}`}
+							className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-center text-white transition-colors hover:bg-gray-700"
+						>
+							Edit Movie
+						</a>
+					</div>
+				</div>
+			) : (
 										<div className="text-center text-gray-500">
 											<p className="mb-4">選択された映画がありません</p>
 											<button
