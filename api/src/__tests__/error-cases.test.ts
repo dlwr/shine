@@ -1,40 +1,89 @@
+import type {Context} from 'hono';
+import type {Environment} from 'db';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {authMiddleware} from '../auth';
 import {sanitizeText, sanitizeUrl} from '../middleware/sanitizer';
 
 // Mock the db module
-vi.mock('db', () => ({
-	getDatabase: vi.fn(() => ({
-		select: vi.fn(() => ({
-			from: vi.fn(() => ({
-				where: vi.fn(async () => []),
-				limit: vi.fn(async () => []),
-				orderBy: vi.fn(async () => []),
-				leftJoin: vi.fn(() => ({
-					where: vi.fn(async () => []),
-					limit: vi.fn(async () => []),
-					orderBy: vi.fn(async () => []),
-				})),
-			})),
+const createAsyncArrayFn = () => vi.fn(async () => []);
+
+const createAsyncSuccessFn = () => vi.fn(async () => ({success: true}));
+
+const createJoinChainStub = () => ({
+	where: createAsyncArrayFn(),
+	limit: createAsyncArrayFn(),
+	orderBy: createAsyncArrayFn(),
+});
+
+const createFromStub = () => ({
+	...createJoinChainStub(),
+	leftJoin: vi.fn(() => createJoinChainStub()),
+});
+
+const createSelectStub = () =>
+	vi.fn(() => ({
+		from: vi.fn(() => createFromStub()),
+	}));
+
+const createInsertStub = () =>
+	vi.fn(() => ({
+		values: vi.fn(async () => ({success: true})),
+	}));
+
+const createUpdateStub = () =>
+	vi.fn(() => ({
+		set: vi.fn(() => ({
+			where: createAsyncSuccessFn(),
 		})),
-		insert: vi.fn(() => ({
-			values: vi.fn(async () => ({success: true})),
+	}));
+
+const createDeleteStub = () =>
+	vi.fn(() => ({
+		where: createAsyncSuccessFn(),
+	}));
+
+vi.mock('db', () => {
+	const select = createSelectStub();
+	const insert = createInsertStub();
+	const update = createUpdateStub();
+	const remove = createDeleteStub();
+
+	return {
+		getDatabase: vi.fn(() => ({
+			select,
+			insert,
+			update,
+			delete: remove,
 		})),
-		update: vi.fn(() => ({
-			set: vi.fn(() => ({
-				where: vi.fn(async () => ({success: true})),
-			})),
-		})),
-		delete: vi.fn(() => ({
-			where: vi.fn(async () => ({success: true})),
-		})),
-	})),
-	eq: vi.fn(),
-	and: vi.fn(),
-	not: vi.fn(),
-	like: vi.fn(),
-	sql: vi.fn(),
-}));
+		eq: vi.fn(),
+		and: vi.fn(),
+		not: vi.fn(),
+		like: vi.fn(),
+		sql: vi.fn(),
+	};
+});
+
+const createAuthContext = (
+	headerValue: string | undefined,
+	envOverrides: Partial<Environment> = {},
+) => {
+	const header = vi.fn();
+	if (headerValue !== undefined) {
+		header.mockReturnValue(headerValue);
+	}
+
+	return {
+		req: {header},
+		env: {
+			TMDB_API_KEY: 'test-api-key',
+			TURSO_DATABASE_URL: 'test-url',
+			TURSO_AUTH_TOKEN: 'test-token',
+			JWT_SECRET: 'test-secret',
+			...envOverrides,
+		},
+		json: vi.fn(),
+	} as unknown as Context<{Bindings: Environment}>;
+};
 
 describe('Error Cases and Edge Cases', () => {
 	beforeEach(() => {
@@ -42,121 +91,39 @@ describe('Error Cases and Edge Cases', () => {
 	});
 
 	describe('Authentication Middleware Edge Cases', () => {
+		const expectAuthFailure = async (
+			context: Context<{Bindings: Environment}>,
+		) => {
+			const next = vi.fn();
+			await expect(authMiddleware(context, next)).rejects.toBeDefined();
+			expect(next).not.toHaveBeenCalled();
+		};
+
 		it('should handle missing Authorization header', async () => {
-			const mockContext = {
-				req: {
-					header: vi.fn(),
-				},
-				env: {
-					TMDB_API_KEY: 'test-api-key',
-					TURSO_DATABASE_URL: 'test-url',
-					TURSO_AUTH_TOKEN: 'test-token',
-					JWT_SECRET: 'test-secret',
-				},
-			} as never;
-
-			const mockNext = vi.fn();
-
-			try {
-				await authMiddleware(mockContext, mockNext);
-				expect.fail('Should have thrown an error');
-			} catch (error) {
-				expect(error).toBeDefined();
-			}
+			const context = createAuthContext(undefined);
+			await expectAuthFailure(context);
 		});
 
 		it('should handle malformed Bearer token', async () => {
-			const mockContext = {
-				req: {
-					header: vi.fn(() => 'InvalidTokenFormat'),
-				},
-				env: {
-					TMDB_API_KEY: 'test-api-key',
-					TURSO_DATABASE_URL: 'test-url',
-					TURSO_AUTH_TOKEN: 'test-token',
-					JWT_SECRET: 'test-secret',
-				},
-			} as never;
-
-			const mockNext = vi.fn();
-
-			try {
-				await authMiddleware(mockContext, mockNext);
-				expect.fail('Should have thrown an error');
-			} catch (error) {
-				expect(error).toBeDefined();
-			}
+			const context = createAuthContext('InvalidTokenFormat');
+			await expectAuthFailure(context);
 		});
 
 		it('should handle empty Bearer token', async () => {
-			const mockContext = {
-				req: {
-					header: vi.fn(() => 'Bearer '),
-				},
-				env: {
-					TMDB_API_KEY: 'test-api-key',
-					TURSO_DATABASE_URL: 'test-url',
-					TURSO_AUTH_TOKEN: 'test-token',
-					JWT_SECRET: 'test-secret',
-				},
-			} as never;
-
-			const mockNext = vi.fn();
-
-			try {
-				await authMiddleware(mockContext, mockNext);
-				expect.fail('Should have thrown an error');
-			} catch (error) {
-				expect(error).toBeDefined();
-			}
+			const context = createAuthContext('Bearer ');
+			await expectAuthFailure(context);
 		});
 
 		it('should handle invalid JWT format', async () => {
-			const mockContext = {
-				req: {
-					header: vi.fn(() => 'Bearer invalid.jwt.token'),
-				},
-				env: {
-					TMDB_API_KEY: 'test-api-key',
-					TURSO_DATABASE_URL: 'test-url',
-					TURSO_AUTH_TOKEN: 'test-token',
-					JWT_SECRET: 'test-secret',
-				},
-			} as never;
-
-			const mockNext = vi.fn();
-
-			try {
-				await authMiddleware(mockContext, mockNext);
-				expect.fail('Should have thrown an error');
-			} catch (error) {
-				expect(error).toBeDefined();
-			}
+			const context = createAuthContext('Bearer invalid.jwt.token');
+			await expectAuthFailure(context);
 		});
 
 		it('should handle missing JWT_SECRET in environment', async () => {
-			const mockContext = {
-				req: {
-					header: vi.fn(() => 'Bearer some.valid.token'),
-				},
-				env: {
-					TMDB_API_KEY: 'test-api-key',
-					TURSO_DATABASE_URL: 'test-url',
-					TURSO_AUTH_TOKEN: 'test-token',
-					// No JWT_SECRET
-				},
-			} as never;
-
-			const mockNext = vi.fn();
-
-			try {
-				await authMiddleware(mockContext, mockNext);
-				expect.fail('Should have thrown an error');
-			} catch (error) {
-				expect(error).toBeDefined();
-				// The error might be about JWT format or JWT_SECRET depending on implementation
-				expect(typeof (error as Error).message).toBe('string');
-			}
+			const context = createAuthContext('Bearer some.valid.token', {
+				JWT_SECRET: undefined,
+			});
+			await expectAuthFailure(context);
 		});
 	});
 

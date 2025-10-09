@@ -211,108 +211,129 @@ async function getOrCreateCeremony(
 	return ceremony.uid;
 }
 
+type YearBatchData = {
+	translations: Array<typeof translations.$inferInsert>;
+	posterUrls: Array<typeof posterUrls.$inferInsert>;
+	referenceUrls: Array<typeof referenceUrls.$inferInsert>;
+	nominations: Array<typeof nominations.$inferInsert>;
+	movieCount: number;
+};
+
+async function processCannesYear(year: number, main: MainData) {
+	console.log(`\nProcessing Cannes ${year}...`);
+
+	try {
+		const batches = await gatherYearBatches(year, main);
+		await persistYearBatches(year, batches);
+		console.log(`Processed ${batches.movieCount} movies for ${year}`);
+	} catch (error) {
+		console.error(`Error processing year ${year}:`, error);
+	}
+
+	await delay(1000);
+}
+
+async function gatherYearBatches(
+	year: number,
+	main: MainData,
+): Promise<YearBatchData> {
+	const movies = await scrapeYearPage(year);
+	const ceremonyUid = await getOrCreateCeremony(year, main.organizationUid);
+	const batches: YearBatchData = {
+		translations: [],
+		posterUrls: [],
+		referenceUrls: [],
+		nominations: [],
+		movieCount: movies.length,
+	};
+
+	for (const movie of movies) {
+		const batchData = await processMovieForBatch(movie, ceremonyUid, main);
+		if (!batchData) {
+			continue;
+		}
+
+		batches.translations.push(...batchData.translations);
+		batches.posterUrls.push(...batchData.posterUrls);
+
+		if (batchData.referenceUrl) {
+			batches.referenceUrls.push(batchData.referenceUrl);
+		}
+
+		if (batchData.nomination) {
+			batches.nominations.push(batchData.nomination);
+		}
+	}
+
+	return batches;
+}
+
+async function persistYearBatches(year: number, batches: YearBatchData) {
+	if (isDryRun) {
+		console.log(`\n[DRY RUN] Would insert for ${year}:`);
+		console.log(`  - ${batches.translations.length} translations`);
+		console.log(`  - ${batches.posterUrls.length} poster URLs`);
+		console.log(`  - ${batches.referenceUrls.length} reference URLs`);
+		console.log(`  - ${batches.nominations.length} nominations`);
+		return;
+	}
+
+	const database = getDatabase(environment_);
+
+	if (batches.translations.length > 0) {
+		console.log(
+			`Inserting ${batches.translations.length} translations in batch...`,
+		);
+		await database
+			.insert(translations)
+			.values(batches.translations)
+			.onConflictDoNothing();
+	}
+
+	if (batches.posterUrls.length > 0) {
+		console.log(
+			`Inserting ${batches.posterUrls.length} poster URLs in batch...`,
+		);
+		await database
+			.insert(posterUrls)
+			.values(batches.posterUrls)
+			.onConflictDoNothing();
+	}
+
+	if (batches.referenceUrls.length > 0) {
+		console.log(
+			`Inserting ${batches.referenceUrls.length} reference URLs in batch...`,
+		);
+		await database
+			.insert(referenceUrls)
+			.values(batches.referenceUrls)
+			.onConflictDoNothing();
+	}
+
+	if (batches.nominations.length > 0) {
+		console.log(
+			`Inserting ${batches.nominations.length} nominations in batch...`,
+		);
+		await database
+			.insert(nominations)
+			.values(batches.nominations)
+			.onConflictDoNothing();
+	}
+}
+
+async function delay(ms: number) {
+	return new Promise<void>((resolve) => {
+		setTimeout(resolve, ms);
+	});
+}
+
 export async function scrapeCannesFilmFestival() {
 	try {
 		const main = await fetchMainData();
-
-		// 各年のカンヌ映画祭をスクレイピング
 		const currentYear = new Date().getFullYear();
+
 		for (let year = currentYear; year >= 1946; year--) {
-			console.log(`\nProcessing Cannes ${year}...`);
-
-			try {
-				const movies = await scrapeYearPage(year);
-				const ceremonyUid = await getOrCreateCeremony(
-					year,
-					main.organizationUid,
-				);
-
-				// バッチ処理のためのデータを収集
-				const translationsBatch: Array<typeof translations.$inferInsert> = [];
-				const posterUrlsBatch: Array<typeof posterUrls.$inferInsert> = [];
-				const referenceUrlsBatch: Array<typeof referenceUrls.$inferInsert> = [];
-				const nominationsBatch: Array<typeof nominations.$inferInsert> = [];
-
-				for (const movie of movies) {
-					const batchData = await processMovieForBatch(
-						movie,
-						ceremonyUid,
-						main,
-					);
-					if (batchData) {
-						translationsBatch.push(...batchData.translations);
-						posterUrlsBatch.push(...batchData.posterUrls);
-						if (batchData.referenceUrl) {
-							referenceUrlsBatch.push(batchData.referenceUrl);
-						}
-
-						if (batchData.nomination) {
-							nominationsBatch.push(batchData.nomination);
-						}
-					}
-				}
-
-				// バッチでデータを挿入
-				if (isDryRun) {
-					console.log(`\n[DRY RUN] Would insert for ${year}:`);
-					console.log(`  - ${translationsBatch.length} translations`);
-					console.log(`  - ${posterUrlsBatch.length} poster URLs`);
-					console.log(`  - ${referenceUrlsBatch.length} reference URLs`);
-					console.log(`  - ${nominationsBatch.length} nominations`);
-				} else {
-					const database = getDatabase(environment_);
-
-					if (translationsBatch.length > 0) {
-						console.log(
-							`Inserting ${translationsBatch.length} translations in batch...`,
-						);
-						await database
-							.insert(translations)
-							.values(translationsBatch)
-							.onConflictDoNothing();
-					}
-
-					if (posterUrlsBatch.length > 0) {
-						console.log(
-							`Inserting ${posterUrlsBatch.length} poster URLs in batch...`,
-						);
-						await database
-							.insert(posterUrls)
-							.values(posterUrlsBatch)
-							.onConflictDoNothing();
-					}
-
-					if (referenceUrlsBatch.length > 0) {
-						console.log(
-							`Inserting ${referenceUrlsBatch.length} reference URLs in batch...`,
-						);
-						await database
-							.insert(referenceUrls)
-							.values(referenceUrlsBatch)
-							.onConflictDoNothing();
-					}
-
-					if (nominationsBatch.length > 0) {
-						console.log(
-							`Inserting ${nominationsBatch.length} nominations in batch...`,
-						);
-						await database
-							.insert(nominations)
-							.values(nominationsBatch)
-							.onConflictDoNothing();
-					}
-				}
-
-				console.log(`Processed ${movies.length} movies for ${year}`);
-			} catch (error) {
-				console.error(`Error processing year ${year}:`, error);
-				// Continue with next year
-			}
-
-			// 短い遅延を入れてサーバーに負荷をかけないようにする
-			await new Promise((resolve) => {
-				setTimeout(resolve, 1000);
-			});
+			await processCannesYear(year, main);
 		}
 
 		console.log('Cannes Film Festival scraping completed successfully');
@@ -454,99 +475,119 @@ async function scrapeYearPage(year: number): Promise<MovieInfo[]> {
 	return movies;
 }
 
+type FilmTableMatch = {
+	table: cheerio.Cheerio<Element>;
+	source: 'self' | 'child';
+};
+
+function extractHeaderTexts(
+	$: cheerio.CheerioAPI,
+	table: cheerio.Cheerio<Element>,
+): string[] {
+	return table
+		.find('tr')
+		.first()
+		.find('th')
+		.map((_, element) => $(element).text().toLowerCase())
+		.get();
+}
+
+function hasFilmHeaders(headerTexts: string[]): boolean {
+	return headerTexts.some(
+		(header) =>
+			header.includes('title') ||
+			header.includes('film') ||
+			header.includes('director'),
+	);
+}
+
+function hasPersonHeaders(headerTexts: string[]): boolean {
+	return headerTexts.some(
+		(header) =>
+			header.includes('jury') ||
+			header.includes('member') ||
+			header.includes('president'),
+	);
+}
+
+function locateFilmTable(
+	$: cheerio.CheerioAPI,
+	element: cheerio.Cheerio<Element>,
+): FilmTableMatch | undefined {
+	if (element.is('table')) {
+		const headers = extractHeaderTexts($, element);
+		if (hasFilmHeaders(headers) && !hasPersonHeaders(headers)) {
+			return {table: element, source: 'self'};
+		}
+	}
+
+	const childTable = element.find('table').first();
+	if (childTable.length > 0) {
+		const headers = extractHeaderTexts($, childTable);
+		if (hasFilmHeaders(headers) && !hasPersonHeaders(headers)) {
+			return {table: childTable, source: 'child'};
+		}
+	}
+
+	return undefined;
+}
+
+function isPotentialFilmsHeading(text: string): boolean {
+	const lower = text.toLowerCase();
+	return lower.includes('film') || lower.includes('official selection');
+}
+
 function findCompetitionSection(
 	$: cheerio.CheerioAPI,
 ): cheerio.Cheerio<Element> | undefined {
-	// すべてのテーブルをチェック
 	const tables = $('table.wikitable');
 	console.log(`Found ${tables.length} wikitable(s)`);
 
 	for (const [index, tableElement] of tables.toArray().entries()) {
 		const table = $(tableElement);
-		const headers = table.find('tr').first().find('th');
-		const headerTexts = headers
-			.map((_, element) => $(element).text().toLowerCase())
-			.get();
+		const headerTexts = extractHeaderTexts($, table);
 
 		console.log(`Table ${index} headers: ${headerTexts.join(' | ')}`);
 
-		// 映画のテーブルかどうかを判定
-		const hasFilmHeaders = headerTexts.some(
-			(header) =>
-				header.includes('title') ||
-				header.includes('film') ||
-				header.includes('director'),
-		);
-
-		const hasPersonHeaders = headerTexts.some(
-			(header) =>
-				header.includes('jury') ||
-				header.includes('member') ||
-				header.includes('president'),
-		);
-
-		if (hasFilmHeaders && !hasPersonHeaders) {
+		if (hasFilmHeaders(headerTexts) && !hasPersonHeaders(headerTexts)) {
 			console.log(`Found films table at index ${index}`);
 			return table;
 		}
 	}
 
-	// テーブルが見つからない場合、セクションヘッダーの後を探す
 	const headings = $('h2, h3, h4');
 
 	for (const heading of headings.toArray()) {
 		const $heading = $(heading);
-		const text = $heading.text().toLowerCase();
+		const text = $heading.text();
 
-		if (text.includes('film') || text.includes('official selection')) {
-			console.log(`Found potential films heading: "${$heading.text()}"`);
+		if (!isPotentialFilmsHeading(text)) {
+			continue;
+		}
 
-			// ヘッダーの後にある要素を探す
-			let nextElement = $heading.parent().next();
+		console.log(`Found potential films heading: "${text}"`);
 
-			let attempts = 0;
-			while (nextElement.length > 0 && attempts < 15) {
-				if (nextElement.is('table')) {
-					const headers = nextElement.find('tr').first().find('th');
-					const headerTexts = headers
-						.map((_, element) => $(element).text().toLowerCase())
-						.get();
+		let nextElement = $heading.parent().next();
+		let attempts = 0;
 
-					const hasFilmHeaders = headerTexts.some(
-						(header) => header.includes('title') || header.includes('director'),
-					);
-
-					if (hasFilmHeaders) {
-						console.log('Found films table after heading');
-						return nextElement;
-					}
-				}
-
-				const childTable = nextElement.find('table').first();
-				if (childTable.length > 0) {
-					const headers = childTable.find('tr').first().find('th');
-					const headerTexts = headers
-						.map((_, element) => $(element).text().toLowerCase())
-						.get();
-
-					const hasFilmHeaders = headerTexts.some(
-						(header) => header.includes('title') || header.includes('director'),
-					);
-
-					if (hasFilmHeaders) {
-						console.log('Found films table inside element');
-						return childTable;
-					}
-				}
-
-				if (nextElement.is('h2, h3, h4')) {
-					console.log('Reached next heading, stopping search');
-					break;
-				}
-
-				nextElement = nextElement.next();
-				attempts++;
+		while (nextElement.length > 0 && attempts < 15) {
+			const filmTableMatch = locateFilmTable($, nextElement);
+			if (filmTableMatch) {
+				const message =
+					filmTableMatch.source === 'self'
+						? 'Found films table after heading'
+						: 'Found films table inside element';
+				console.log(message);
+				return filmTableMatch.table;
 			}
+
+			if (nextElement.is('h2, h3, h4')) {
+				console.log('Reached next heading, stopping search');
+				break;
+			}
+
+			nextElement = nextElement.next();
+			attempts++;
 		}
 	}
 
@@ -675,185 +716,228 @@ function parseMovieTableRow(
 	};
 }
 
-function findPalmeDOrWinner(
-	$: cheerio.CheerioAPI,
-	year: number,
-): MovieInfo | undefined {
-	// まずinfoboxでPalme d'Orを探す
-	const infoBox = $('.infobox');
+type WinnerCandidate = {
+	title: string;
+	referenceUrl?: string;
+};
 
-	if (infoBox.length > 0) {
-		const rows = infoBox.find('tr');
+const PALME_KEYWORDS = ["palme d'or", "palm d'or", 'golden palm'];
 
-		for (const row of rows.toArray()) {
-			const $row = $(row);
-			const header = $row.find('th').text().toLowerCase();
+function containsPalmeKeyword(text: string): boolean {
+	const lower = text.toLowerCase();
+	return PALME_KEYWORDS.some((keyword) => lower.includes(keyword));
+}
 
-			if (header.includes("palme d'or")) {
-				const valueCell = $row.find('td');
-				const titleElement = valueCell.find('i').first();
-				const linkElement = valueCell.find('a').first();
+const TITLE_PATTERNS = [
+	/palme d'or[:\s-]+([^,\n(]+)/i,
+	/palm d'or[:\s-]+([^,\n(]+)/i,
+	/golden palm[:\s-]+([^,\n(]+)/i,
+];
 
-				let title = '';
-				let referenceUrl: string | undefined;
-
-				if (titleElement.length > 0) {
-					title = titleElement.text().trim();
-				} else if (linkElement.length > 0) {
-					title = linkElement.text().trim();
-					const href = linkElement.attr('href');
-					if (href) {
-						referenceUrl = `${WIKIPEDIA_BASE_URL}${href}`;
-					}
-				}
-
-				if (title) {
-					return {
-						title: cleanupTitle(title),
-						year,
-						isWinner: true,
-						referenceUrl,
-					};
-				}
-			}
+function extractWinnerFromText(text: string): string | undefined {
+	for (const pattern of TITLE_PATTERNS) {
+		const match = text.match(pattern);
+		if (match) {
+			return match[1].trim();
 		}
 	}
 
-	// Infoboxで見つからない場合、Awardsセクションを探す
+	return undefined;
+}
+
+function extractWinnerFromElement(
+	$: cheerio.CheerioAPI,
+	scope: cheerio.Cheerio<Element>,
+): WinnerCandidate | undefined {
+	const italicElement = scope.find('i').first();
+	if (italicElement.length > 0) {
+		const title = italicElement.text().trim();
+		if (title) {
+			return {title};
+		}
+	}
+
+	const linkElement = scope.find('a').first();
+	if (linkElement.length > 0) {
+		const linkText = linkElement.text().trim();
+		if (linkText && !containsPalmeKeyword(linkText)) {
+			const href = linkElement.attr('href');
+			return {
+				title: linkText,
+				referenceUrl: href ? `${WIKIPEDIA_BASE_URL}${href}` : undefined,
+			};
+		}
+	}
+
+	const fullText = scope.text().trim();
+	const extractedTitle = extractWinnerFromText(fullText);
+	if (extractedTitle) {
+		return {title: extractedTitle};
+	}
+
+	return undefined;
+}
+
+function buildWinner(candidate: WinnerCandidate, year: number): MovieInfo {
+	return {
+		title: cleanupTitle(candidate.title),
+		year,
+		isWinner: true,
+		referenceUrl: candidate.referenceUrl,
+	};
+}
+
+function findWinnerInInfobox(
+	$: cheerio.CheerioAPI,
+): WinnerCandidate | undefined {
+	const infoBox = $('.infobox');
+	if (infoBox.length === 0) {
+		return undefined;
+	}
+
+	for (const row of infoBox.find('tr').toArray()) {
+		const $row = $(row);
+		const header = $row.find('th').text();
+		if (!containsPalmeKeyword(header)) {
+			continue;
+		}
+
+		const valueCell = $row.find('td').first();
+		if (valueCell.length === 0) {
+			continue;
+		}
+
+		const candidate = extractWinnerFromElement($, valueCell);
+		if (candidate) {
+			return candidate;
+		}
+	}
+
+	return undefined;
+}
+
+function findWinnerInAwardsSections(
+	$: cheerio.CheerioAPI,
+): WinnerCandidate | undefined {
 	const headings = $('h2, h3, h4');
 
 	for (const heading of headings.toArray()) {
 		const $heading = $(heading);
 		const text = $heading.text().toLowerCase();
+		if (!text.includes('award') && !text.includes('prize')) {
+			continue;
+		}
 
-		if (text.includes('award') || text.includes('prize')) {
-			// Awards セクションの後のコンテンツを探す
-			let nextElement = $heading.parent().next();
-			let attempts = 0;
+		const candidate = searchAwardSection($, $heading);
+		if (candidate) {
+			return candidate;
+		}
+	}
 
-			while (nextElement.length > 0 && attempts < 10) {
-				// リスト形式の受賞作品を探す
-				const listItems = nextElement.find('li');
+	return undefined;
+}
 
-				for (const item of listItems.toArray()) {
-					const $item = $(item);
-					const itemText = $item.text().toLowerCase();
+function searchAwardSection(
+	$: cheerio.CheerioAPI,
+	heading: cheerio.Cheerio<Element>,
+): WinnerCandidate | undefined {
+	let nextElement = heading.parent().next();
+	let attempts = 0;
 
-					if (
-						itemText.includes("palme d'or") ||
-						itemText.includes("palm d'or")
-					) {
-						// Palme d'Or を見つけた場合、映画タイトルを抽出
-						const titleElement = $item.find('i').first();
-						const linkElement = $item.find('a').first();
+	while (nextElement.length > 0 && attempts < 10) {
+		const listWinner = findWinnerInLists($, nextElement);
+		if (listWinner) {
+			return listWinner;
+		}
 
-						let title = '';
-						let referenceUrl: string | undefined;
+		const tableWinner = findWinnerInTables($, nextElement);
+		if (tableWinner) {
+			return tableWinner;
+		}
 
-						if (titleElement.length > 0) {
-							title = titleElement.text().trim();
-						} else if (linkElement.length > 0) {
-							// リンクテキストがPalme d'Orではなく映画タイトルかチェック
-							const linkText = linkElement.text().trim();
-							if (
-								!linkText.toLowerCase().includes('palme') &&
-								!linkText.toLowerCase().includes('palm')
-							) {
-								title = linkText;
-								const href = linkElement.attr('href');
-								if (href) {
-									referenceUrl = `${WIKIPEDIA_BASE_URL}${href}`;
-								}
-							}
-						}
+		if (nextElement.is('h2, h3, h4')) {
+			break;
+		}
 
-						if (!title) {
-							// タイトルを抽出するために、テキストをパース
-							const fullText = $item.text();
-							// "Palme d'Or:" の後または映画タイトルを示すパターンを探す
-							const patterns = [
-								/palme d'or[:\s-]+([^,\n(]+)/i,
-								/palm d'or[:\s-]+([^,\n(]+)/i,
-								/golden palm[:\s-]+([^,\n(]+)/i,
-							];
+		nextElement = nextElement.next();
+		attempts++;
+	}
 
-							for (const pattern of patterns) {
-								const match = fullText.match(pattern);
-								if (match) {
-									title = match[1].trim();
-									break;
-								}
-							}
-						}
+	return undefined;
+}
 
-						if (title) {
-							return {
-								title: cleanupTitle(title),
-								year,
-								isWinner: true,
-								referenceUrl,
-							};
-						}
-					}
-				}
+function findWinnerInLists(
+	$: cheerio.CheerioAPI,
+	container: cheerio.Cheerio<Element>,
+): WinnerCandidate | undefined {
+	const listItems = container.find('li');
 
-				// テーブル形式の受賞作品も探す
-				const tables = nextElement.find('table');
-				for (const table of tables.toArray()) {
-					const $table = $(table);
-					const rows = $table.find('tr');
+	for (const item of listItems.toArray()) {
+		const $item = $(item);
+		if (!containsPalmeKeyword($item.text())) {
+			continue;
+		}
 
-					for (const row of rows.toArray()) {
-						const $row = $(row);
-						const rowText = $row.text().toLowerCase();
+		const candidate = extractWinnerFromElement($, $item);
+		if (candidate) {
+			return candidate;
+		}
+	}
 
-						if (
-							rowText.includes("palme d'or") ||
-							rowText.includes("palm d'or")
-						) {
-							const cells = $row.find('td');
-							if (cells.length > 1) {
-								// 2番目のセルに映画タイトルがある場合が多い
-								const titleCell = cells.eq(1);
-								const titleElement = titleCell.find('i').first();
-								const linkElement = titleCell.find('a').first();
+	return undefined;
+}
 
-								let title = '';
-								let referenceUrl: string | undefined;
+function findWinnerInTables(
+	$: cheerio.CheerioAPI,
+	container: cheerio.Cheerio<Element>,
+): WinnerCandidate | undefined {
+	const tables = container.find('table');
 
-								if (titleElement.length > 0) {
-									title = titleElement.text().trim();
-								} else if (linkElement.length > 0) {
-									title = linkElement.text().trim();
-									const href = linkElement.attr('href');
-									if (href) {
-										referenceUrl = `${WIKIPEDIA_BASE_URL}${href}`;
-									}
-								} else {
-									title = titleCell.text().trim();
-								}
+	for (const table of tables.toArray()) {
+		const $table = $(table);
+		const rows = $table.find('tr');
 
-								if (title) {
-									return {
-										title: cleanupTitle(title),
-										year,
-										isWinner: true,
-										referenceUrl,
-									};
-								}
-							}
-						}
-					}
-				}
+		for (const row of rows.toArray()) {
+			const $row = $(row);
+			if (!containsPalmeKeyword($row.text())) {
+				continue;
+			}
 
-				if (nextElement.is('h2, h3, h4')) {
-					break;
-				}
-
-				nextElement = nextElement.next();
-				attempts++;
+			const candidate = extractWinnerFromAwardRow($, $row);
+			if (candidate) {
+				return candidate;
 			}
 		}
+	}
+
+	return undefined;
+}
+
+function extractWinnerFromAwardRow(
+	$: cheerio.CheerioAPI,
+	row: cheerio.Cheerio<Element>,
+): WinnerCandidate | undefined {
+	const cells = row.find('td');
+	if (cells.length === 0) {
+		return undefined;
+	}
+
+	const titleCell = cells.length > 1 ? cells.eq(1) : cells.first();
+	return extractWinnerFromElement($, titleCell);
+}
+
+function findPalmeDOrWinner(
+	$: cheerio.CheerioAPI,
+	year: number,
+): MovieInfo | undefined {
+	const infoboxWinner = findWinnerInInfobox($);
+	if (infoboxWinner) {
+		return buildWinner(infoboxWinner, year);
+	}
+
+	const sectionWinner = findWinnerInAwardsSections($);
+	if (sectionWinner) {
+		return buildWinner(sectionWinner, year);
 	}
 
 	return undefined;
@@ -1199,6 +1283,277 @@ async function fetchMovieDetails(
 	}
 }
 
+type DatabaseClient = ReturnType<typeof getDatabase>;
+
+type MovieDetails = Awaited<ReturnType<typeof fetchMovieDetails>>;
+
+async function resolveMovieUid(
+	database: DatabaseClient,
+	movieInfo: MovieInfo,
+	movieDetails: MovieDetails,
+): Promise<{
+	movieUid: string;
+	translations: Array<typeof translations.$inferInsert>;
+	wasExisting: boolean;
+}> {
+	const existingMovies = await database
+		.select({
+			movies,
+			translations,
+		})
+		.from(movies)
+		.innerJoin(
+			translations,
+			and(
+				eq(translations.resourceUid, movies.uid),
+				eq(translations.resourceType, 'movie_title'),
+				eq(translations.languageCode, 'en'),
+				eq(translations.isDefault, 1),
+			),
+		)
+		.where(eq(translations.content, movieInfo.title));
+
+	if (existingMovies.length > 0) {
+		const existingMovie = existingMovies[0].movies;
+		if (movieDetails.imdbId && !existingMovie.imdbId) {
+			await database
+				.update(movies)
+				.set({
+					imdbId: movieDetails.imdbId,
+					updatedAt: Math.floor(Date.now() / 1000),
+				})
+				.where(eq(movies.uid, existingMovie.uid));
+			console.log(
+				`Updated IMDb ID for ${movieInfo.title}: ${movieDetails.imdbId}`,
+			);
+		}
+
+		return {
+			movieUid: existingMovie.uid,
+			translations: [],
+			wasExisting: true,
+		};
+	}
+
+	const [newMovie] = await database
+		.insert(movies)
+		.values({
+			originalLanguage: 'en',
+			year: movieInfo.year,
+			imdbId: movieDetails.imdbId || undefined,
+		})
+		.returning();
+
+	if (!newMovie) {
+		throw new Error(`Failed to create movie: ${movieInfo.title}`);
+	}
+
+	const translationsBatch: Array<typeof translations.$inferInsert> = [
+		{
+			resourceType: 'movie_title',
+			resourceUid: newMovie.uid,
+			languageCode: 'en',
+			content: movieInfo.title,
+			isDefault: 1,
+		},
+	];
+
+	return {
+		movieUid: newMovie.uid,
+		translations: translationsBatch,
+		wasExisting: false,
+	};
+}
+
+function appendJapaneseTitle(
+	translationsBatch: Array<typeof translations.$inferInsert>,
+	movieDetails: MovieDetails,
+	movieUid: string,
+) {
+	if (!movieDetails.japaneseTitle) {
+		return;
+	}
+
+	translationsBatch.push({
+		resourceType: 'movie_title',
+		resourceUid: movieUid,
+		languageCode: 'ja',
+		content: movieDetails.japaneseTitle,
+		isDefault: 0,
+	});
+}
+
+async function collectPosterUrls(
+	movieDetails: MovieDetails,
+	movieUid: string,
+	sizes: string[] = ['w342'],
+): Promise<Array<typeof posterUrls.$inferInsert>> {
+	if (!movieDetails.posterPath) {
+		return [];
+	}
+
+	const config = await fetchTMDatabaseConfiguration();
+	if (!config) {
+		return [];
+	}
+
+	const results: Array<typeof posterUrls.$inferInsert> = [];
+
+	for (const [index, size] of sizes.entries()) {
+		if (!config.images.poster_sizes.includes(size)) {
+			continue;
+		}
+
+		const posterUrl = `${config.images.secure_base_url}${size}${movieDetails.posterPath}`;
+		const width = Number.parseInt(size.slice(1), 10);
+
+		results.push({
+			movieUid,
+			url: posterUrl,
+			width,
+			sourceType: 'tmdb',
+			isPrimary: index === 0 ? 1 : 0,
+		});
+	}
+
+	return results;
+}
+
+async function saveTranslations(
+	database: DatabaseClient,
+	translationsBatch: Array<typeof translations.$inferInsert>,
+) {
+	if (translationsBatch.length === 0) {
+		return;
+	}
+
+	await database
+		.insert(translations)
+		.values(translationsBatch)
+		.onConflictDoNothing();
+}
+
+async function upsertJapaneseTitleTranslation(
+	database: DatabaseClient,
+	movieUid: string,
+	japaneseTitle: string,
+) {
+	await database
+		.insert(translations)
+		.values({
+			resourceType: 'movie_title',
+			resourceUid: movieUid,
+			languageCode: 'ja',
+			content: japaneseTitle,
+			isDefault: 0,
+		})
+		.onConflictDoUpdate({
+			target: [
+				translations.resourceType,
+				translations.resourceUid,
+				translations.languageCode,
+			],
+			set: {
+				content: japaneseTitle,
+				updatedAt: Math.floor(Date.now() / 1000),
+			},
+		});
+}
+
+async function saveReferenceUrl(
+	database: DatabaseClient,
+	referenceUrlData: typeof referenceUrls.$inferInsert,
+) {
+	await database
+		.insert(referenceUrls)
+		.values(referenceUrlData)
+		.onConflictDoNothing();
+}
+
+async function upsertNominationEntry(
+	database: DatabaseClient,
+	nominationData: typeof nominations.$inferInsert,
+) {
+	await database
+		.insert(nominations)
+		.values(nominationData)
+		.onConflictDoUpdate({
+			target: [
+				nominations.movieUid,
+				nominations.ceremonyUid,
+				nominations.categoryUid,
+			],
+			set: {
+				isWinner: nominationData.isWinner,
+				updatedAt: Math.floor(Date.now() / 1000),
+			},
+		});
+}
+
+async function savePosterUrls(
+	database: DatabaseClient,
+	posterUrlsBatch: Array<typeof posterUrls.$inferInsert>,
+) {
+	if (posterUrlsBatch.length === 0) {
+		return;
+	}
+
+	await database
+		.insert(posterUrls)
+		.values(posterUrlsBatch)
+		.onConflictDoNothing();
+}
+
+function buildReferenceUrlData(
+	movieInfo: MovieInfo,
+	movieUid: string,
+): typeof referenceUrls.$inferInsert | undefined {
+	if (!movieInfo.referenceUrl) {
+		return undefined;
+	}
+
+	return {
+		movieUid,
+		url: movieInfo.referenceUrl,
+		sourceType: 'wikipedia',
+		languageCode: 'en',
+		isPrimary: 1,
+	};
+}
+
+function buildNominationData(
+	movieInfo: MovieInfo,
+	movieUid: string,
+	ceremonyUid: string,
+	main: MainData,
+): typeof nominations.$inferInsert {
+	return {
+		movieUid,
+		ceremonyUid,
+		categoryUid: main.palmeDOrCategoryUid,
+		isWinner: movieInfo.isWinner ? 1 : 0,
+	};
+}
+
+function logProcessedMovie(
+	movieInfo: MovieInfo,
+	movieDetails: MovieDetails,
+	wasExisting: boolean,
+) {
+	const extras = [
+		movieDetails.imdbId ? `IMDb: ${movieDetails.imdbId}` : '',
+		movieDetails.japaneseTitle ? `JA: ${movieDetails.japaneseTitle}` : '',
+		movieDetails.posterPath ? 'Poster: ✓' : '',
+	].filter(Boolean);
+	const postfix = extras.length > 0 ? ` ${extras.join(' ')}` : '';
+
+	console.log(
+		`Processed ${wasExisting ? 'updated' : 'new'} movie: ${movieInfo.title} (${movieInfo.year}) - ${
+			movieInfo.isWinner ? "Palme d'Or Winner" : 'In Competition'
+		}${postfix}`,
+	);
+}
+
 async function processMovieForBatch(
 	movieInfo: MovieInfo,
 	ceremonyUid: string,
@@ -1215,145 +1570,46 @@ async function processMovieForBatch(
 	try {
 		if (isDryRun) {
 			console.log(
-				`[DRY RUN] Would process movie: ${movieInfo.title} (${
-					movieInfo.year
-				}) - ${movieInfo.isWinner ? 'Winner' : 'Nominee'}`,
+				`[DRY RUN] Would process movie: ${movieInfo.title} (${movieInfo.year}) - ${
+					movieInfo.isWinner ? 'Winner' : 'Nominee'
+				}`,
 			);
 			return undefined;
 		}
 
 		const database = getDatabase(environment_);
-		// 映画の詳細情報を取得
 		const movieDetails = await fetchMovieDetails(
 			movieInfo.title,
 			movieInfo.year,
 		);
-		// 既存の映画を検索
-		const existingMovies = await database
-			.select({
-				movies,
-				translations,
-			})
-			.from(movies)
-			.innerJoin(
-				translations,
-				and(
-					eq(translations.resourceUid, movies.uid),
-					eq(translations.resourceType, 'movie_title'),
-					eq(translations.languageCode, 'en'),
-					eq(translations.isDefault, 1),
-				),
-			)
-			.where(eq(translations.content, movieInfo.title));
-
-		let movieUid: string;
-		const translationsBatch: Array<typeof translations.$inferInsert> = [];
-		const posterUrlsBatch: Array<typeof posterUrls.$inferInsert> = [];
-
-		if (existingMovies.length > 0) {
-			// 既存の映画が見つかった場合は更新
-			const existingMovie = existingMovies[0].movies;
-			movieUid = existingMovie.uid;
-			// IMDb IDが新しく取得できた場合は更新（差分チェック付き）
-			if (movieDetails.imdbId && !existingMovie.imdbId) {
-				await database
-					.update(movies)
-					.set({
-						imdbId: movieDetails.imdbId,
-						updatedAt: Math.floor(Date.now() / 1000),
-					})
-					.where(eq(movies.uid, movieUid));
-				console.log(
-					`Updated IMDb ID for ${movieInfo.title}: ${movieDetails.imdbId}`,
-				);
-			}
-		} else {
-			// 新規映画の作成
-			const [newMovie] = await database
-				.insert(movies)
-				.values({
-					originalLanguage: 'en',
-					year: movieInfo.year,
-					imdbId: movieDetails.imdbId || undefined,
-				})
-				.returning();
-			if (!newMovie) {
-				throw new Error(`Failed to create movie: ${movieInfo.title}`);
-			}
-
-			movieUid = newMovie.uid;
-			// 英語タイトルをバッチに追加
-			translationsBatch.push({
-				resourceType: 'movie_title',
-				resourceUid: movieUid,
-				languageCode: 'en',
-				content: movieInfo.title,
-				isDefault: 1,
-			});
-		}
-
-		// 日本語タイトルがある場合はバッチに追加
-		if (movieDetails.japaneseTitle) {
-			translationsBatch.push({
-				resourceType: 'movie_title',
-				resourceUid: movieUid,
-				languageCode: 'ja',
-				content: movieDetails.japaneseTitle,
-				isDefault: 0,
-			});
-		}
-
-		// ポスターURLがある場合はバッチに追加（w342のみに削減）
-		if (movieDetails.posterPath) {
-			const config = await fetchTMDatabaseConfiguration();
-			if (config) {
-				const size = 'w342';
-				if (config.images.poster_sizes.includes(size)) {
-					const posterUrl = `${config.images.secure_base_url}${size}${movieDetails.posterPath}`;
-					const width = Number.parseInt(size.slice(1), 10);
-					posterUrlsBatch.push({
-						movieUid,
-						url: posterUrl,
-						width,
-						sourceType: 'tmdb',
-						isPrimary: 1,
-					});
-				}
-			}
-		}
-
-		// 参照URL
-		let referenceUrlData: typeof referenceUrls.$inferInsert | undefined;
-		if (movieInfo.referenceUrl) {
-			referenceUrlData = {
-				movieUid,
-				url: movieInfo.referenceUrl,
-				sourceType: 'wikipedia',
-				languageCode: 'en',
-				isPrimary: 1,
-			};
-		}
-
-		// ノミネーション
-		const categoryUid = movieInfo.isWinner
-			? main.palmeDOrCategoryUid
-			: main.palmeDOrCategoryUid; // コンペティション参加作品もPalme d'Orカテゴリーに登録
-		const nominationData: typeof nominations.$inferInsert = {
-			movieUid,
-			ceremonyUid,
-			categoryUid,
-			isWinner: movieInfo.isWinner ? 1 : 0,
-		};
-
-		console.log(
-			`Processed ${existingMovies.length > 0 ? 'updated' : 'new'} movie: ${
-				movieInfo.title
-			} (${movieInfo.year}) - ${
-				movieInfo.isWinner ? "Palme d'Or Winner" : 'In Competition'
-			} ${movieDetails.imdbId ? `IMDb: ${movieDetails.imdbId}` : ''} ${
-				movieDetails.japaneseTitle ? `JA: ${movieDetails.japaneseTitle}` : ''
-			} ${movieDetails.posterPath ? 'Poster: ✓' : ''}`,
+		const movieResolution = await resolveMovieUid(
+			database,
+			movieInfo,
+			movieDetails,
 		);
+		const translationsBatch = [...movieResolution.translations];
+
+		appendJapaneseTitle(
+			translationsBatch,
+			movieDetails,
+			movieResolution.movieUid,
+		);
+		const posterUrlsBatch = await collectPosterUrls(
+			movieDetails,
+			movieResolution.movieUid,
+		);
+		const referenceUrlData = buildReferenceUrlData(
+			movieInfo,
+			movieResolution.movieUid,
+		);
+		const nominationData = buildNominationData(
+			movieInfo,
+			movieResolution.movieUid,
+			ceremonyUid,
+			main,
+		);
+
+		logProcessedMovie(movieInfo, movieDetails, movieResolution.wasExisting);
 
 		return {
 			translations: translationsBatch,
@@ -1375,183 +1631,58 @@ async function processMovie(
 	try {
 		if (isDryRun) {
 			console.log(
-				`[DRY RUN] Would process movie: ${movieInfo.title} (${
-					movieInfo.year
-				}) - ${movieInfo.isWinner ? 'Winner' : 'Nominee'}`,
+				`[DRY RUN] Would process movie: ${movieInfo.title} (${movieInfo.year}) - ${
+					movieInfo.isWinner ? 'Winner' : 'Nominee'
+				}`,
 			);
 			return;
 		}
 
 		const database = getDatabase(environment_);
-
-		// 映画の詳細情報を取得
 		const movieDetails = await fetchMovieDetails(
 			movieInfo.title,
 			movieInfo.year,
 		);
-
-		// 既存の映画を検索
-		const existingMovies = await database
-			.select({
-				movies,
-				translations,
-			})
-			.from(movies)
-			.innerJoin(
-				translations,
-				and(
-					eq(translations.resourceUid, movies.uid),
-					eq(translations.resourceType, 'movie_title'),
-					eq(translations.languageCode, 'en'),
-					eq(translations.isDefault, 1),
-				),
-			)
-			.where(eq(translations.content, movieInfo.title));
-
-		let movieUid: string;
-
-		if (existingMovies.length > 0) {
-			// 既存の映画が見つかった場合は更新
-			const existingMovie = existingMovies[0].movies;
-			movieUid = existingMovie.uid;
-
-			// IMDb IDが新しく取得できた場合は更新
-			if (movieDetails.imdbId && !existingMovie.imdbId) {
-				await database
-					.update(movies)
-					.set({
-						imdbId: movieDetails.imdbId,
-						updatedAt: Math.floor(Date.now() / 1000),
-					})
-					.where(eq(movies.uid, movieUid));
-				console.log(
-					`Updated IMDb ID for ${movieInfo.title}: ${movieDetails.imdbId}`,
-				);
-			}
-		} else {
-			// 新規映画の作成
-			const [newMovie] = await database
-				.insert(movies)
-				.values({
-					originalLanguage: 'en',
-					year: movieInfo.year,
-					imdbId: movieDetails.imdbId || undefined,
-				})
-				.returning();
-
-			if (!newMovie) {
-				throw new Error(`Failed to create movie: ${movieInfo.title}`);
-			}
-
-			movieUid = newMovie.uid;
-
-			await database.insert(translations).values({
-				resourceType: 'movie_title',
-				resourceUid: movieUid,
-				languageCode: 'en',
-				content: movieInfo.title,
-				isDefault: 1,
-			});
-		}
-
-		// 参照URLの追加（重複の場合は無視）
-		if (movieInfo.referenceUrl) {
-			await database
-				.insert(referenceUrls)
-				.values({
-					movieUid,
-					url: movieInfo.referenceUrl,
-					sourceType: 'wikipedia',
-					languageCode: 'en',
-					isPrimary: 1,
-				})
-				.onConflictDoNothing();
-		}
-
-		// ノミネーション情報の更新または追加
-		const categoryUid = movieInfo.isWinner
-			? main.palmeDOrCategoryUid
-			: main.palmeDOrCategoryUid; // コンペティション参加作品もPalme d'Orカテゴリーに登録
-
-		await database
-			.insert(nominations)
-			.values({
-				movieUid,
-				ceremonyUid,
-				categoryUid,
-				isWinner: movieInfo.isWinner ? 1 : 0,
-			})
-			.onConflictDoUpdate({
-				target: [
-					nominations.movieUid,
-					nominations.ceremonyUid,
-					nominations.categoryUid,
-				],
-				set: {
-					isWinner: movieInfo.isWinner ? 1 : 0,
-					updatedAt: Math.floor(Date.now() / 1000),
-				},
-			});
-
-		// 日本語タイトルの保存
-		if (movieDetails.japaneseTitle) {
-			await database
-				.insert(translations)
-				.values({
-					resourceType: 'movie_title',
-					resourceUid: movieUid,
-					languageCode: 'ja',
-					content: movieDetails.japaneseTitle,
-					isDefault: 0,
-				})
-				.onConflictDoUpdate({
-					target: [
-						translations.resourceType,
-						translations.resourceUid,
-						translations.languageCode,
-					],
-					set: {
-						content: movieDetails.japaneseTitle,
-						updatedAt: Math.floor(Date.now() / 1000),
-					},
-				});
-		}
-
-		// ポスターURLの保存
-		if (movieDetails.posterPath) {
-			const config = await fetchTMDatabaseConfiguration();
-			if (config) {
-				// 複数のサイズを保存（w342とw780）
-				const posterSizes = ['w342', 'w780'];
-				for (const size of posterSizes) {
-					if (config.images.poster_sizes.includes(size)) {
-						const posterUrl = `${config.images.secure_base_url}${size}${movieDetails.posterPath}`;
-						const width = Number.parseInt(size.slice(1), 10);
-
-						await database
-							.insert(posterUrls)
-							.values({
-								movieUid,
-								url: posterUrl,
-								width,
-								sourceType: 'tmdb',
-								isPrimary: size === 'w342' ? 1 : 0,
-							})
-							.onConflictDoNothing();
-					}
-				}
-			}
-		}
-
-		console.log(
-			`Processed ${existingMovies.length > 0 ? 'updated' : 'new'} movie: ${
-				movieInfo.title
-			} (${movieInfo.year}) - ${
-				movieInfo.isWinner ? "Palme d'Or Winner" : 'In Competition'
-			} ${movieDetails.imdbId ? `IMDb: ${movieDetails.imdbId}` : ''} ${
-				movieDetails.japaneseTitle ? `JA: ${movieDetails.japaneseTitle}` : ''
-			} ${movieDetails.posterPath ? 'Poster: ✓' : ''}`,
+		const movieResolution = await resolveMovieUid(
+			database,
+			movieInfo,
+			movieDetails,
 		);
+
+		await saveTranslations(database, movieResolution.translations);
+
+		if (movieDetails.japaneseTitle) {
+			await upsertJapaneseTitleTranslation(
+				database,
+				movieResolution.movieUid,
+				movieDetails.japaneseTitle,
+			);
+		}
+
+		const referenceUrlData = buildReferenceUrlData(
+			movieInfo,
+			movieResolution.movieUid,
+		);
+		if (referenceUrlData) {
+			await saveReferenceUrl(database, referenceUrlData);
+		}
+
+		const nominationData = buildNominationData(
+			movieInfo,
+			movieResolution.movieUid,
+			ceremonyUid,
+			main,
+		);
+		await upsertNominationEntry(database, nominationData);
+
+		const posterUrlsBatch = await collectPosterUrls(
+			movieDetails,
+			movieResolution.movieUid,
+			['w342', 'w780'],
+		);
+		await savePosterUrls(database, posterUrlsBatch);
+
+		logProcessedMovie(movieInfo, movieDetails, movieResolution.wasExisting);
 	} catch (error) {
 		console.error(`Error processing movie ${movieInfo.title}:`, error);
 		throw error;
