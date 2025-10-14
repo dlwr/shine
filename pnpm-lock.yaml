@@ -20,8 +20,8 @@ importers:
         specifier: ^17.2.0
         version: 17.2.0
       drizzle-orm:
-        specifier: ^0.44.3
-        version: 0.44.3(@cloudflare/workers-types@4.20251011.0)(@libsql/client@0.15.9)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.2.0)(gel@2.1.0)
+        specifier: ^0.44.6
+        version: 0.44.6(@cloudflare/workers-types@4.20251011.0)(@libsql/client@0.15.9)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.2.0)(gel@2.1.0)
       zod:
         specifier: ^4.0.5
         version: 4.0.5
@@ -3183,8 +3183,8 @@ packages:
     resolution: {integrity: sha512-tCPWVZWZqWVx2XUsVpJRnH9Mx0ClVOf5YUHerZ5so1OKSlqww4zy1R5ksEdGRcO3tM3zj0PYN6V48TbQCL1RfA==}
     hasBin: true
 
-  drizzle-orm@0.44.3:
-    resolution: {integrity: sha512-8nIiYQxOpgUicEL04YFojJmvC4DNO4KoyXsEIqN44+g6gNBr6hmVpWk3uyAt4CaTiRGDwoU+alfqNNeonLAFOQ==}
+  drizzle-orm@0.44.6:
+    resolution: {integrity: sha512-uy6uarrrEOc9K1u5/uhBFJbdF5VJ5xQ/Yzbecw3eAYOunv5FDeYkR2m8iitocdHBOHbvorviKOW5GVw0U1j4LQ==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
@@ -8916,7 +8916,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.44.3(@cloudflare/workers-types@4.20251011.0)(@libsql/client@0.15.9)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.2.0)(gel@2.1.0):
+  drizzle-orm@0.44.6(@cloudflare/workers-types@4.20251011.0)(@libsql/client@0.15.9)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.2.0)(gel@2.1.0):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20251011.0
       '@libsql/client': 0.15.9
