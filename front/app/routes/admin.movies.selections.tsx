@@ -567,19 +567,30 @@ export default function AdminMovieSelections({
 										{randomMovie && (
 											<div
 												data-testid="random-movie-result"
-												className="mt-6 p-4 border border-gray-200 rounded-lg cursor-pointer"
-												onClick={() => {
-													setSelectedMovie(randomMovie);
-												}}
+												className="mt-6 flex justify-center"
 											>
-												<h4 className="font-medium">
-													{getPrimaryTitle(randomMovie)}
-												</h4>
-												<p className="text-sm text-gray-600">
-													{randomMovie.year && `${randomMovie.year}年`}
-													{randomMovie.nominations?.length > 0 &&
-														` • ${randomMovie.nominations.length}件のノミネート`}
-												</p>
+												<div
+													className={`relative inline-flex rounded-xl transition-all duration-200 cursor-pointer ${
+														selectedMovie?.uid === randomMovie.uid
+															? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white'
+															: 'hover:ring-2 hover:ring-blue-300 hover:ring-offset-2 hover:ring-offset-white'
+													}`}
+													onClick={() => {
+														setSelectedMovie(randomMovie);
+													}}
+												>
+													<MovieCard
+														movie={randomMovie}
+														locale={locale}
+														adminToken={adminToken}
+													/>
+
+													{selectedMovie?.uid === randomMovie.uid && (
+														<span className="absolute top-3 right-3 rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">
+															選択中
+														</span>
+													)}
+												</div>
 											</div>
 										)}
 									</div>
