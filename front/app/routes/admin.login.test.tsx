@@ -1,10 +1,9 @@
-// eslint-disable-next-line import-x/no-unassigned-import -- Test setup requires side effects
 import '@testing-library/jest-dom';
-import {fireEvent, render, screen, waitFor} from '@testing-library/react';
-import {MemoryRouter} from 'react-router-dom';
-import {beforeEach, describe, expect, it, vi} from 'vitest';
-import type {Route} from '../../.react-router/types/app/routes/+types/admin.login';
-import AdminLogin, {action, meta} from './admin.login';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Route } from '../../.react-router/types/app/routes/+types/admin.login';
+import AdminLogin, { action, meta } from './admin.login';
 
 // UseNavigateのモック
 const mockNavigate = vi.fn();

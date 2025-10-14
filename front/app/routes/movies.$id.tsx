@@ -551,7 +551,9 @@ export async function action({context, params, request}: Route.ActionArgs) {
 		try {
 			const errorData = (await response.json()) as {error?: string};
 			errorMessage = errorData.error || errorMessage;
-		} catch {}
+		} catch {
+			// JSON でない場合はデフォルトメッセージをそのまま使う
+		}
 
 		return {
 			success: false,

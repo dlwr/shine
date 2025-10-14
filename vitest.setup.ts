@@ -1,7 +1,6 @@
 import {webcrypto} from 'node:crypto';
 import {vi} from 'vitest';
 import React from 'react';
-// eslint-disable-next-line import-x/no-unassigned-import -- Test setup requires side effects
 import '@testing-library/jest-dom';
 
 // Ensure React is available globally for JSX

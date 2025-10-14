@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/prefer-global-this */
 import {useEffect, useState} from 'react';
 import type {Route} from './+types/home';
 import {Button} from '@/components/ui/button';

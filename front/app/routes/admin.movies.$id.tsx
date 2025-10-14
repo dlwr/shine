@@ -77,7 +77,6 @@ export function meta({data: _data}: Route.MetaArgs): Route.MetaDescriptors {
 
 export async function loader({context, params}: Route.LoaderArgs) {
 	if (!params.id) {
-		// eslint-disable-next-line @typescript-eslint/only-throw-error -- React Router v7 pattern
 		throw new Response('Movie ID is required', {status: 400});
 	}
 

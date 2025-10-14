@@ -15,7 +15,7 @@
 - Database migrations rely on `pnpm db:generate` and `pnpm db:migrate`; studio launches via `pnpm db:studio`.
 
 ## Coding Style & Naming Conventions
-- TypeScript modules use `xo` + Prettier; format before pushing with `pnpm lint` or `pnpm lint:fix`.
+- TypeScript modules use ESLint (flat config) + Prettier; format before pushing with `pnpm lint` or `pnpm lint:fix`.
 - Prefer tabs for indentation (existing codebase style) and single quotes; keep files ESM (`type: module`).
 - Follow domain-driven naming: PascalCase for React components/services, camelCase for helpers, dot-separated Remix route filenames (e.g. `admin.movies.$id.tsx`).
 - Shared types live in `api/src/types` and `scrapers/src/types`; co-locate tests as `.test.ts`/`.test.tsx`.
