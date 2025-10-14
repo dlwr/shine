@@ -1,21 +1,19 @@
 import DOMPurify from 'dompurify';
 
-export const sanitizeHtml = (input: string): string => {
-	return DOMPurify.sanitize(input, {
+export const sanitizeHtml = (input: string): string =>
+	DOMPurify.sanitize(input, {
 		ALLOWED_TAGS: [],
 		ALLOWED_ATTR: [],
 		KEEP_CONTENT: true,
 	});
-};
 
-export const sanitizeText = (input: string): string => {
-	return input
+export const sanitizeText = (input: string): string =>
+	input
 		.replaceAll(/[<>]/g, '')
 		.replaceAll(/javascript:/gi, '')
 		.replaceAll(/data:/gi, '')
 		.replaceAll(/vbscript:/gi, '')
 		.trim();
-};
 
 export const sanitizeUrl = (input: string): string => {
 	try {

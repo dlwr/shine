@@ -3,8 +3,9 @@ import {HTTPException} from 'hono/http-exception';
 import {z} from 'zod';
 import {sanitizeText, sanitizeUrl} from './sanitizer';
 
-const createValidationMiddleware = <T>(schema: z.ZodType<T>) => {
-	return async (c: Context, next: Next) => {
+const createValidationMiddleware =
+	<T>(schema: z.ZodType<T>) =>
+	async (c: Context, next: Next) => {
 		try {
 			const body = await c.req.json();
 			const validatedData = schema.parse(body);
@@ -21,7 +22,6 @@ const createValidationMiddleware = <T>(schema: z.ZodType<T>) => {
 			throw error;
 		}
 	};
-};
 
 export const articleLinkSchema = z.object({
 	url: z.string().transform(sanitizeUrl),

@@ -26,12 +26,10 @@ export const translations = sqliteTable(
 			.notNull()
 			.default(sql`(unixepoch())`),
 	},
-	(table) => {
-		return [
-			unique().on(table.resourceType, table.resourceUid, table.languageCode),
-			index('translations_resource_type_idx').on(table.resourceType),
-			index('translations_resource_uid_idx').on(table.resourceUid),
-			index('translations_language_code_idx').on(table.languageCode),
-		];
-	},
+	(table) => [
+		unique().on(table.resourceType, table.resourceUid, table.languageCode),
+		index('translations_resource_type_idx').on(table.resourceType),
+		index('translations_resource_uid_idx').on(table.resourceUid),
+		index('translations_language_code_idx').on(table.languageCode),
+	],
 );

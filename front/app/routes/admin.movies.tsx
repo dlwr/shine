@@ -45,7 +45,12 @@ export async function loader({context, request}: Route.LoaderArgs) {
 		limit: Number.parseInt(limit, 10),
 		search,
 		movies: [],
-		pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
+		pagination: {
+			page: 1,
+			limit: 20,
+			totalCount: 0,
+			totalPages: 0,
+		},
 	};
 }
 
@@ -73,7 +78,9 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 	// Fetch movies based on URL params
 	useEffect(() => {
 		const fetchMovies = async () => {
-			if (globalThis.window === undefined) return;
+			if (globalThis.window === undefined) {
+				return;
+			}
 
 			const token = globalThis.localStorage.getItem('adminToken');
 			if (!token) {
@@ -127,7 +134,9 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 		// Listen for URL changes
 		const handleUrlChange = async () => fetchMovies();
 		globalThis.addEventListener('urlchange', handleUrlChange);
-		return () => globalThis.removeEventListener('urlchange', handleUrlChange);
+		return () => {
+			globalThis.removeEventListener('urlchange', handleUrlChange);
+		};
 	}, [apiUrl]); // Only depend on apiUrl, use custom event for URL changes
 
 	const handleDelete = async (movieId: string, movieTitle: string) => {
@@ -538,7 +547,9 @@ const deleteMovie = async (
 	}
 
 	const token = globalThis.localStorage?.getItem('adminToken');
-	if (!token) return false;
+	if (!token) {
+		return false;
+	}
 
 	try {
 		const response = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
@@ -574,12 +585,12 @@ const showMergeDialog = (sourceId: string, sourceTitle: string) => {
 
 	if (targetId?.trim()) {
 		const confirmed = globalThis.confirm?.(
-			`確認：\n\n` +
+			'確認：\n\n' +
 				`マージ元: ${sourceTitle} (${sourceId})\n` +
 				`マージ先: ${targetId.trim()}\n\n` +
-				`マージ元の映画とそのデータは削除されます。\n` +
-				`この操作は取り消せません。\n\n` +
-				`続行しますか？`,
+				'マージ元の映画とそのデータは削除されます。\n' +
+				'この操作は取り消せません。\n\n' +
+				'続行しますか？',
 		);
 
 		if (confirmed) {
@@ -597,7 +608,9 @@ const mergeMovies = async (
 	apiUrl: string,
 ) => {
 	const token = globalThis.localStorage?.getItem('adminToken');
-	if (!token) return false;
+	if (!token) {
+		return false;
+	}
 
 	try {
 		const response = await fetch(

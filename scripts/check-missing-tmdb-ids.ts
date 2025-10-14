@@ -1,5 +1,7 @@
 import {config} from 'dotenv';
-import {and, isNotNull, isNull, count} from 'drizzle-orm';
+import {
+	and, isNotNull, isNull, count,
+} from 'drizzle-orm';
 import {getDatabase} from '../src/index';
 import {movies} from '../src/schema/movies';
 
@@ -25,9 +27,7 @@ async function checkMissingTmdbIds() {
 		.from(movies)
 		.where(and(isNotNull(movies.imdbId), isNull(movies.tmdbId)));
 
-	console.log(
-		`Found ${moviesWithImdbButNoTmdb.length} movies with IMDb ID but no TMDb ID`,
-	);
+	console.log(`Found ${moviesWithImdbButNoTmdb.length} movies with IMDb ID but no TMDb ID`);
 
 	for (const movie of moviesWithImdbButNoTmdb) {
 		console.log(`- ${movie.uid}: IMDb ${movie.imdbId}, Year ${movie.year}`);
@@ -42,7 +42,7 @@ async function checkMissingTmdbIds() {
 		.where(isNotNull(movies.tmdbId))
 		.groupBy(movies.tmdbId);
 
-	const actualDuplicates = duplicateTmdbIds.filter((item) => item.count > 1);
+	const actualDuplicates = duplicateTmdbIds.filter(item => item.count > 1);
 	if (actualDuplicates.length > 0) {
 		console.log(`\nFound ${actualDuplicates.length} duplicate TMDb IDs:`);
 		for (const dup of actualDuplicates) {

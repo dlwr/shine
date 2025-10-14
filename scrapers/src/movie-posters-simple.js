@@ -18,9 +18,7 @@ if (!environment.TMDB_API_KEY) {
 }
 
 if (!environment.TURSO_DATABASE_URL || !environment.TURSO_AUTH_TOKEN) {
-	console.error(
-		'Turso database credentials are not set in environment variables',
-	);
+	console.error('Turso database credentials are not set in environment variables');
 	process.exit(1);
 }
 
@@ -38,26 +36,26 @@ async function getMoviesWithImdbId(limit = null) {
 
 	let args = [];
 	if (limit) {
-		sql += ` LIMIT ?`;
+		sql += ' LIMIT ?';
 		args = [limit];
 	}
 
 	const result = await client.execute({sql, args});
 
 	if (result.rows.length > 0) {
-		return result.rows.map((row) => ({uid: row.uid, imdbId: row.imdbId}));
+		return result.rows.map(row => ({uid: row.uid, imdbId: row.imdbId}));
 	}
 
 	// ポスターがない映画がない場合は、すべての映画を取得（重複を避けるため実際には実行されない）
-	let allSql = `SELECT uid, imdb_id as imdbId FROM movies WHERE imdb_id IS NOT NULL`;
+	let allSql = 'SELECT uid, imdb_id as imdbId FROM movies WHERE imdb_id IS NOT NULL';
 	let allArgs = [];
 	if (limit) {
-		allSql += ` LIMIT ?`;
+		allSql += ' LIMIT ?';
 		allArgs = [limit];
 	}
 
 	const allResult = await client.execute({sql: allSql, args: allArgs});
-	return allResult.rows.map((row) => ({uid: row.uid, imdbId: row.imdbId}));
+	return allResult.rows.map(row => ({uid: row.uid, imdbId: row.imdbId}));
 }
 
 async function fetchMovieImages(imdbId) {
@@ -106,7 +104,7 @@ async function savePosterUrls(movieUid, posters) {
 		args: [movieUid],
 	});
 
-	const existingUrls = new Set(existingResult.rows.map((row) => row.url));
+	const existingUrls = new Set(existingResult.rows.map(row => row.url));
 	let savedCount = 0;
 
 	for (const poster of posters) {
@@ -142,7 +140,7 @@ async function main() {
 		console.log('Starting poster URL scraper...');
 
 		const args = process.argv.slice(2);
-		const countArg = args.find((arg) => arg.startsWith('--count='));
+		const countArg = args.find(arg => arg.startsWith('--count='));
 		const allArg = args.includes('--all');
 
 		let count;
@@ -160,9 +158,7 @@ async function main() {
 
 		const moviesWithImdbId = await getMoviesWithImdbId(count);
 		if (moviesWithImdbId.length === 0) {
-			console.log(
-				'ポスターが必要な映画が見つかりませんでした。すべての映画にポスターが設定済みです。',
-			);
+			console.log('ポスターが必要な映画が見つかりませんでした。すべての映画にポスターが設定済みです。');
 			return;
 		}
 
@@ -174,29 +170,25 @@ async function main() {
 		let totalPosters = 0;
 
 		for (const movie of moviesWithImdbId) {
-			console.log(
-				`[${processed + 1}/${moviesWithImdbId.length}] 処理開始: IMDb ID ${
-					movie.imdbId
-				}`,
-			);
+			console.log(`[${processed + 1}/${moviesWithImdbId.length}] 処理開始: IMDb ID ${
+				movie.imdbId
+			}`);
 			processed++;
 
 			try {
-				console.log(`  TMDb API からポスター情報を取得中...`);
+				console.log('  TMDb API からポスター情報を取得中...');
 				const imagesData = await fetchMovieImages(movie.imdbId);
 
 				if (
-					!imagesData ||
-					!imagesData.posters ||
-					imagesData.posters.length === 0
+					!imagesData
+					|| !imagesData.posters
+					|| imagesData.posters.length === 0
 				) {
 					failed++;
-					console.log(`  ✘ ポスターが見つかりませんでした`);
+					console.log('  ✘ ポスターが見つかりませんでした');
 				} else {
-					console.log(
-						`  ポスター候補: ${imagesData.posters.length}枚見つかりました`,
-					);
-					console.log(`  データベースに保存中...`);
+					console.log(`  ポスター候補: ${imagesData.posters.length}枚見つかりました`);
+					console.log('  データベースに保存中...');
 					const savedCount = await savePosterUrls(
 						movie.uid,
 						imagesData.posters,
@@ -208,7 +200,7 @@ async function main() {
 						console.log(`  ✓ ${savedCount}枚のポスターを保存しました`);
 					} else {
 						failed++;
-						console.log(`  ✘ 新しいポスターはありませんでした`);
+						console.log('  ✘ 新しいポスターはありませんでした');
 					}
 				}
 			} catch (error) {
@@ -217,24 +209,20 @@ async function main() {
 			}
 
 			console.log(`[${processed}/${moviesWithImdbId.length}] 処理完了`);
-			console.log(
-				`進捗状況: 成功=${success}, 失敗=${failed}, 合計=${processed}/${moviesWithImdbId.length}`,
-			);
+			console.log(`進捗状況: 成功=${success}, 失敗=${failed}, 合計=${processed}/${moviesWithImdbId.length}`);
 
 			// 進捗率の表示
 			const progressPercent = (
-				(processed / moviesWithImdbId.length) *
-				100
+				(processed / moviesWithImdbId.length)
+				* 100
 			).toFixed(1);
-			console.log(
-				`進捗: ${progressPercent}% (残り: ${
-					moviesWithImdbId.length - processed
-				}件)`,
-			);
-			console.log(`------------------------------`);
+			console.log(`進捗: ${progressPercent}% (残り: ${
+				moviesWithImdbId.length - processed
+			}件)`);
+			console.log('------------------------------');
 
 			// APIレート制限を考慮して少し待機（TMDBは40リクエスト/10秒の制限）
-			await new Promise((resolve) => {
+			await new Promise(resolve => {
 				setTimeout(resolve, 300);
 			});
 		}

@@ -172,9 +172,7 @@ describe('Movie Selections E2E Workflows', () => {
 		it('should complete search and manual override workflow', async () => {
 			// Step 1: Search for movies
 			const searchQuery = 'Pianist';
-			const searchUrl = `${mockApiBase}/admin/movies?limit=20&search=${encodeURIComponent(
-				searchQuery,
-			)}`;
+			const searchUrl = `${mockApiBase}/admin/movies?limit=20&search=${encodeURIComponent(searchQuery)}`;
 
 			expect(searchUrl).toBe(
 				'http://localhost:8787/admin/movies?limit=20&search=Pianist',

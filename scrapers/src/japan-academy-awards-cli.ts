@@ -81,8 +81,14 @@ try {
 	console.log('Starting Japan Academy Awards scraping...');
 	const baseUrl = 'http://localhost/';
 	const searchParameters = new URLSearchParams();
-	if (year) searchParameters.append('year', year);
-	if (isDryRun) searchParameters.append('dry-run', 'true');
+	if (year) {
+		searchParameters.append('year', year);
+	}
+
+	if (isDryRun) {
+		searchParameters.append('dry-run', 'true');
+	}
+
 	const url = `${baseUrl}?${searchParameters.toString()}`;
 	const request = new Request(url);
 	await japanAcademyAwards.fetch(request, environment);

@@ -92,7 +92,12 @@ describe('AdminMovies Component', () => {
 				limit: 50,
 				search: 'test',
 				movies: [],
-				pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
+				pagination: {
+					page: 1,
+					limit: 20,
+					totalCount: 0,
+					totalPages: 0,
+				},
 			});
 		});
 
@@ -112,7 +117,12 @@ describe('AdminMovies Component', () => {
 				limit: 20,
 				search: '',
 				movies: [],
-				pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
+				pagination: {
+					page: 1,
+					limit: 20,
+					totalCount: 0,
+					totalPages: 0,
+				},
 			});
 		});
 
@@ -153,7 +163,12 @@ describe('AdminMovies Component', () => {
 								limit: 20,
 								search: '',
 								movies: [],
-								pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
+								pagination: {
+									page: 1,
+									limit: 20,
+									totalCount: 0,
+									totalPages: 0,
+								},
 							} as any
 						}
 						actionData={{} as any}
@@ -191,7 +206,12 @@ describe('AdminMovies Component', () => {
 				ok: true,
 				json: async () => ({
 					movies: [],
-					pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
+					pagination: {
+						page: 1,
+						limit: 20,
+						totalCount: 0,
+						totalPages: 0,
+					},
 				}),
 			} as Response);
 
@@ -205,7 +225,12 @@ describe('AdminMovies Component', () => {
 								limit: 20,
 								search: '',
 								movies: [],
-								pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
+								pagination: {
+									page: 1,
+									limit: 20,
+									totalCount: 0,
+									totalPages: 0,
+								},
 							} as any
 						}
 						actionData={{} as any}
@@ -245,7 +270,12 @@ describe('AdminMovies Component', () => {
 								limit: 20,
 								search: '',
 								movies: [],
-								pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
+								pagination: {
+									page: 1,
+									limit: 20,
+									totalCount: 0,
+									totalPages: 0,
+								},
 							} as any
 						}
 						actionData={{} as any}
@@ -288,7 +318,12 @@ describe('AdminMovies Component', () => {
 				ok: true,
 				json: async () => ({
 					movies: [],
-					pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
+					pagination: {
+						page: 1,
+						limit: 20,
+						totalCount: 0,
+						totalPages: 0,
+					},
 				}),
 			} as Response);
 
@@ -302,7 +337,12 @@ describe('AdminMovies Component', () => {
 								limit: 20,
 								search: '',
 								movies: [],
-								pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
+								pagination: {
+									page: 1,
+									limit: 20,
+									totalCount: 0,
+									totalPages: 0,
+								},
 							} as any
 						}
 						actionData={{} as any}
@@ -354,7 +394,12 @@ describe('AdminMovies Component', () => {
 								limit: 20,
 								search: '',
 								movies: [],
-								pagination: {page: 1, limit: 20, totalCount: 0, totalPages: 0},
+								pagination: {
+									page: 1,
+									limit: 20,
+									totalCount: 0,
+									totalPages: 0,
+								},
 							} as any
 						}
 						actionData={{} as any}

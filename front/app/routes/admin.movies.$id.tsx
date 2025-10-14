@@ -109,7 +109,9 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
 
 	useEffect(() => {
 		const loadMovie = async () => {
-			if (globalThis.window === undefined) return;
+			if (globalThis.window === undefined) {
+				return;
+			}
 
 			const token = globalThis.localStorage.getItem('adminToken');
 			if (!token) {

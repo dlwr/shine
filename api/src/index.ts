@@ -35,9 +35,9 @@ app.use(
 );
 
 // Apply security headers to all routes except documentation
-app.use('*', async (c, next) => {
-	return c.req.path.startsWith('/docs') ? next() : securityHeaders(c, next);
-});
+app.use('*', async (c, next) =>
+	c.req.path.startsWith('/docs') ? next() : securityHeaders(c, next),
+);
 app.use('*', globalErrorHandler);
 
 // Mount route modules

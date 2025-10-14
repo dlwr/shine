@@ -332,7 +332,7 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
 			// 既にTMDB IDがある映画の場合、ポスター取得のみ行う
 			if (movie.tmdbId === null) {
 				// TMDB IDがない場合は、IMDb IDから検索
-				console.log(`  TMDb API からポスター情報を取得中...`);
+				console.log('  TMDb API からポスター情報を取得中...');
 				const movieData = await fetchMovieImages(movie.imdbId);
 
 				if (movieData) {
@@ -345,12 +345,12 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
 					) {
 						result.error = 'No posters found';
 						results.failed++;
-						console.log(`  ✘ ポスターが見つかりませんでした`);
+						console.log('  ✘ ポスターが見つかりませんでした');
 					} else {
 						console.log(
 							`  ポスター候補: ${movieData.images.posters.length}枚見つかりました`,
 						);
-						console.log(`  データベースに保存中...`);
+						console.log('  データベースに保存中...');
 						const savedCount = await savePosterUrls(
 							movie.uid,
 							movieData.images.posters,
@@ -363,13 +363,13 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
 						} else {
 							results.failed++;
 							result.error = 'No new posters saved';
-							console.log(`  ✘ 新しいポスターはありませんでした`);
+							console.log('  ✘ 新しいポスターはありませんでした');
 						}
 					}
 				} else {
 					result.error = 'No TMDb data found';
 					results.failed++;
-					console.log(`  ✘ TMDb データが見つかりませんでした`);
+					console.log('  ✘ TMDb データが見つかりませんでした');
 				}
 			} else {
 				console.log(`  既存のTMDB ID を使用: ${movie.tmdbId}`);
@@ -390,12 +390,12 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
 				if (!images.posters || images.posters.length === 0) {
 					result.error = 'No posters found';
 					results.failed++;
-					console.log(`  ✘ ポスターが見つかりませんでした`);
+					console.log('  ✘ ポスターが見つかりませんでした');
 				} else {
 					console.log(
 						`  ポスター候補: ${images.posters.length}枚見つかりました`,
 					);
-					console.log(`  データベースに保存中...`);
+					console.log('  データベースに保存中...');
 					const savedCount = await savePosterUrls(movie.uid, images.posters);
 					result.postersAdded = savedCount;
 
@@ -405,7 +405,7 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
 					} else {
 						results.failed++;
 						result.error = 'No new posters saved';
-						console.log(`  ✘ 新しいポスターはありませんでした`);
+						console.log('  ✘ 新しいポスターはありませんでした');
 					}
 				}
 			}
@@ -422,7 +422,7 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
 		console.log(
 			`進捗状況: 成功=${results.success}, 失敗=${results.failed}, 合計=${results.processed}/${moviesWithImdbId.length}`,
 		);
-		console.log(`------------------------------`);
+		console.log('------------------------------');
 	}
 
 	console.log(

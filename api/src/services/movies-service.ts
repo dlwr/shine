@@ -45,21 +45,21 @@ export class MoviesService extends BaseService {
 				imdbId: movies.imdbId,
 				title: translations.content,
 				posterUrl: sql`
-          (
-            SELECT url
-            FROM poster_urls
-            WHERE poster_urls.movie_uid = movies.uid
-            ORDER BY poster_urls.is_primary DESC, poster_urls.created_at ASC
-            LIMIT 1
-          )
-        `.as('posterUrl'),
+					(
+					  SELECT url
+					  FROM poster_urls
+					  WHERE poster_urls.movie_uid = movies.uid
+					  ORDER BY poster_urls.is_primary DESC, poster_urls.created_at ASC
+					  LIMIT 1
+					)
+				`.as('posterUrl'),
 				hasNominations: sql`
-          (
-            SELECT COUNT(*) > 0
-            FROM nominations
-            WHERE nominations.movie_uid = movies.uid
-          )
-        `.as('hasNominations'),
+					(
+					  SELECT COUNT(*) > 0
+					  FROM nominations
+					  WHERE nominations.movie_uid = movies.uid
+					)
+				`.as('hasNominations'),
 			})
 			.from(movies)
 			.leftJoin(
@@ -182,24 +182,24 @@ export class MoviesService extends BaseService {
 				tmdbId: movies.tmdbId,
 				title: translations.content,
 				description: sql`
-          (
-            SELECT content
-            FROM translations
-            WHERE translations.resource_uid = movies.uid
-              AND translations.resource_type = 'movie_description'
-              AND translations.language_code = ${locale}
-            LIMIT 1
-          )
-        `.as('description'),
+					(
+					  SELECT content
+					  FROM translations
+					  WHERE translations.resource_uid = movies.uid
+					    AND translations.resource_type = 'movie_description'
+					    AND translations.language_code = ${locale}
+					  LIMIT 1
+					)
+				`.as('description'),
 				posterUrl: sql`
-          (
-            SELECT url
-            FROM poster_urls
-            WHERE poster_urls.movie_uid = movies.uid
-            ORDER BY poster_urls.is_primary DESC, poster_urls.created_at ASC
-            LIMIT 1
-          )
-        `.as('posterUrl'),
+					(
+					  SELECT url
+					  FROM poster_urls
+					  WHERE poster_urls.movie_uid = movies.uid
+					  ORDER BY poster_urls.is_primary DESC, poster_urls.created_at ASC
+					  LIMIT 1
+					)
+				`.as('posterUrl'),
 			})
 			.from(movies)
 			.leftJoin(

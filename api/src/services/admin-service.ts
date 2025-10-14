@@ -71,12 +71,14 @@ export class AdminService extends BaseService {
 				})
 				.from(movies)
 				.where(
-					sql`EXISTS (
-						SELECT 1 FROM translations 
-						WHERE translations.resource_uid = movies.uid
-						AND translations.resource_type = 'movie_title'
-						AND translations.content LIKE ${searchPattern}
-					)`,
+					sql`
+					EXISTS (
+											SELECT 1 FROM translations 
+											WHERE translations.resource_uid = movies.uid
+											AND translations.resource_type = 'movie_title'
+											AND translations.content LIKE ${searchPattern}
+										)
+				`,
 				)
 				.orderBy(sql`${movies.createdAt} DESC`)
 				.limit(limit)
@@ -87,15 +89,14 @@ export class AdminService extends BaseService {
 			// Count total matching movies
 			const totalCountResult = await this.database
 				.select({count: sql`COUNT(*)`.as('count')})
-				.from(movies)
-				.where(
-					sql`EXISTS (
-						SELECT 1 FROM translations 
-						WHERE translations.resource_uid = movies.uid
-						AND translations.resource_type = 'movie_title'
-						AND translations.content LIKE ${searchPattern}
-					)`,
-				);
+				.from(movies).where(sql`
+					EXISTS (
+											SELECT 1 FROM translations 
+											WHERE translations.resource_uid = movies.uid
+											AND translations.resource_type = 'movie_title'
+											AND translations.content LIKE ${searchPattern}
+										)
+				`);
 
 			const totalCount = Number(totalCountResult[0]?.count) || 0;
 			const totalPages = Math.ceil(totalCount / limit);
@@ -613,7 +614,9 @@ export class AdminService extends BaseService {
 		movieId: string,
 		tmdbData: TMDBMovieData,
 	): Promise<number> {
-		if (!tmdbData.poster_path) return 0;
+		if (!tmdbData.poster_path) {
+			return 0;
+		}
 
 		const url = `https://image.tmdb.org/t/p/w500${tmdbData.poster_path}`;
 
@@ -624,7 +627,9 @@ export class AdminService extends BaseService {
 			.where(and(eq(posterUrls.movieUid, movieId), eq(posterUrls.url, url)))
 			.limit(1);
 
-		if (existingPoster.length > 0) return 0;
+		if (existingPoster.length > 0) {
+			return 0;
+		}
 
 		await this.database.insert(posterUrls).values({
 			movieUid: movieId,

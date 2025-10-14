@@ -21,20 +21,20 @@ vi.mock('db', () => ({
 						}, delay);
 					});
 				}),
-				limit: vi.fn(async (count) => {
-					return Array.from({length: Math.min(count, 100)}, (_, index) => ({
+				limit: vi.fn(async (count) =>
+					Array.from({length: Math.min(count, 100)}, (_, index) => ({
 						uid: `movie-${index}`,
 						year: 2020 + index,
 						originalLanguage: 'en',
-					}));
-				}),
-				orderBy: vi.fn(async () => {
-					return Array.from({length: 50}, (_, index) => ({
+					})),
+				),
+				orderBy: vi.fn(async () =>
+					Array.from({length: 50}, (_, index) => ({
 						uid: `movie-${index}`,
 						year: 2023 - index,
 						createdAt: new Date(Date.now() - index * 86_400_000),
-					}));
-				}),
+					})),
+				),
 			})),
 		})),
 		insert: vi.fn(() => ({
@@ -306,15 +306,14 @@ describe('Algorithm Performance', () => {
 
 		const startTime = Date.now();
 
-		const filtered = testMovies.filter((movie) => {
-			return (
+		const filtered = testMovies.filter(
+			(movie) =>
 				movie.year >= 2000 &&
 				movie.year <= 2020 &&
 				['en', 'ja'].includes(movie.originalLanguage) &&
 				movie.hasAwards &&
-				movie.title.includes('Title')
-			);
-		});
+				movie.title.includes('Title'),
+		);
 
 		const duration = Date.now() - startTime;
 

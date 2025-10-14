@@ -173,9 +173,7 @@ export const getCacheKeyForSelection = (
 	type: string,
 	date: string,
 	locale: string,
-): string => {
-	return `selections:${type}:${date}:${locale}:v1`;
-};
+): string => `selections:${type}:${date}:${locale}:v1`;
 
 export const getCacheKeyForMovie = (
 	movieId: string,
@@ -257,8 +255,13 @@ export const shouldCacheSearch = (
 	year?: number,
 	language?: string,
 ): boolean => {
-	if (!query || query.length < 3) return true;
-	if (year !== undefined || language !== undefined) return false;
+	if (!query || query.length < 3) {
+		return true;
+	}
+
+	if (year !== undefined || language !== undefined) {
+		return false;
+	}
 
 	const commonQueries = [
 		'アカデミー',

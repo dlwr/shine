@@ -1,5 +1,7 @@
 import {config} from 'dotenv';
-import {isNotNull, count, sql, eq} from 'drizzle-orm';
+import {
+	isNotNull, count, sql, eq,
+} from 'drizzle-orm';
 import {getDatabase} from '../src/index';
 import {movies} from '../src/schema/movies';
 
@@ -29,9 +31,7 @@ async function findDuplicateTmdbIds() {
 	console.log(`Found ${duplicates.length} duplicate TMDb IDs`);
 
 	for (const duplicate of duplicates) {
-		console.log(
-			`\nTMDb ID ${duplicate.tmdbId} is used by ${duplicate.count} movies:`,
-		);
+		console.log(`\nTMDb ID ${duplicate.tmdbId} is used by ${duplicate.count} movies:`);
 
 		const conflictingMovies = await db
 			.select({
@@ -45,9 +45,7 @@ async function findDuplicateTmdbIds() {
 			.orderBy(movies.createdAt);
 
 		for (const movie of conflictingMovies) {
-			console.log(
-				`  - ${movie.uid}: IMDb ${movie.imdbId}, Year ${movie.year}, Created: ${new Date(movie.createdAt * 1000).toISOString()}`,
-			);
+			console.log(`  - ${movie.uid}: IMDb ${movie.imdbId}, Year ${movie.year}, Created: ${new Date(movie.createdAt * 1000).toISOString()}`);
 		}
 	}
 }

@@ -159,7 +159,7 @@ async function assignImdbIds() {
 
 					successCount++;
 				} else {
-					console.log(`⚠️  No IMDb ID found on TMDb`);
+					console.log('⚠️  No IMDb ID found on TMDb');
 					skipCount++;
 				}
 			} catch (error) {

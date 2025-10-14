@@ -331,10 +331,17 @@ async function getMovieByDateSeedPreview(
 
 async function getMovieByDateSeed(
 	database: ReturnType<typeof getDatabase>,
-	date: Date,
-	type: 'daily' | 'weekly' | 'monthly',
-	preferredLanguage = 'en',
-	forceNew = false,
+	{
+		date,
+		type,
+		preferredLanguage = 'en',
+		forceNew = false,
+	}: {
+		date: Date;
+		type: 'daily' | 'weekly' | 'monthly';
+		preferredLanguage?: string;
+		forceNew?: boolean;
+	},
 ) {
 	const selectionDate = getSelectionDate(date, type);
 
@@ -536,7 +543,9 @@ async function getMovieByDateSeed(
 }
 
 function parseAcceptLanguage(acceptLanguage?: string): string[] {
-	if (!acceptLanguage) return [];
+	if (!acceptLanguage) {
+		return [];
+	}
 
 	return acceptLanguage
 		.split(',')

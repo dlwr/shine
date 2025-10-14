@@ -1,5 +1,7 @@
 import {config} from 'dotenv';
-import {isNotNull, count, desc, eq, sql} from 'drizzle-orm';
+import {
+	isNotNull, count, desc, eq, sql,
+} from 'drizzle-orm';
 import {getDatabase} from '../src/index';
 import {movies} from '../src/schema/movies';
 
@@ -31,9 +33,7 @@ async function cleanDuplicateTmdbIds() {
 	let cleaned = 0;
 
 	for (const duplicate of duplicates) {
-		console.log(
-			`\nProcessing TMDb ID ${String(duplicate.tmdbId)} (${duplicate.count} movies)`,
-		);
+		console.log(`\nProcessing TMDb ID ${String(duplicate.tmdbId)} (${duplicate.count} movies)`);
 
 		const conflictingMovies = await db
 			.select({
@@ -50,9 +50,7 @@ async function cleanDuplicateTmdbIds() {
 		const toKeep = conflictingMovies[0];
 		const toClean = conflictingMovies.slice(1);
 
-		console.log(
-			`  Keeping: ${toKeep.uid} (IMDb: ${toKeep.imdbId ?? 'N/A'}, Year: ${toKeep.year})`,
-		);
+		console.log(`  Keeping: ${toKeep.uid} (IMDb: ${toKeep.imdbId ?? 'N/A'}, Year: ${toKeep.year})`);
 
 		for (const movie of toClean) {
 			await db
@@ -60,9 +58,7 @@ async function cleanDuplicateTmdbIds() {
 				.set({tmdbId: null})
 				.where(eq(movies.uid, movie.uid));
 
-			console.log(
-				`  Cleaned: ${movie.uid} (IMDb: ${movie.imdbId ?? 'N/A'}, Year: ${movie.year})`,
-			);
+			console.log(`  Cleaned: ${movie.uid} (IMDb: ${movie.imdbId ?? 'N/A'}, Year: ${movie.year})`);
 			cleaned++;
 		}
 	}
@@ -80,9 +76,7 @@ async function cleanDuplicateTmdbIds() {
 		.groupBy(movies.tmdbId)
 		.having(sql`count(${movies.uid}) > 1`);
 
-	console.log(
-		`\n📊 Final check: ${remainingDuplicates.length} remaining duplicates`,
-	);
+	console.log(`\n📊 Final check: ${remainingDuplicates.length} remaining duplicates`);
 }
 
 await cleanDuplicateTmdbIds();

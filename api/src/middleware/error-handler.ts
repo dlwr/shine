@@ -34,8 +34,8 @@ export const globalErrorHandler: MiddlewareHandler = async (
 	}
 };
 
-export const notFoundHandler = (c: Context) => {
-	return c.json(
+export const notFoundHandler = (c: Context) =>
+	c.json(
 		{
 			error: 'Endpoint not found',
 			code: 'NOT_FOUND',
@@ -46,4 +46,3 @@ export const notFoundHandler = (c: Context) => {
 		},
 		404,
 	);
-};

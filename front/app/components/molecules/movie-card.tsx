@@ -42,21 +42,29 @@ function selectBestPoster(
 	const primaryLocaleMatch = posters.find(
 		(p) => p.isPrimary === 1 && p.languageCode === languageCode,
 	);
-	if (primaryLocaleMatch) return primaryLocaleMatch.url;
+	if (primaryLocaleMatch) {
+		return primaryLocaleMatch.url;
+	}
 
 	// Find any poster with matching language
 	const localeMatch = posters.find((p) => p.languageCode === languageCode);
-	if (localeMatch) return localeMatch.url;
+	if (localeMatch) {
+		return localeMatch.url;
+	}
 
 	// Find primary poster with no language (international)
 	const primaryInternational = posters.find(
 		(p) => p.isPrimary === 1 && !p.languageCode,
 	);
-	if (primaryInternational) return primaryInternational.url;
+	if (primaryInternational) {
+		return primaryInternational.url;
+	}
 
 	// Find any primary poster
 	const primaryAny = posters.find((p) => p.isPrimary === 1);
-	if (primaryAny) return primaryAny.url;
+	if (primaryAny) {
+		return primaryAny.url;
+	}
 
 	// Return first poster
 	return posters[0].url;
@@ -89,25 +97,33 @@ function selectBestTitle(movie: any, locale: string): string {
 		const localeMatch = movie.translations.find(
 			(t: TranslationInfo) => t.languageCode === languageCode,
 		);
-		if (localeMatch) return localeMatch.content;
+		if (localeMatch) {
+			return localeMatch.content;
+		}
 
 		// Find default translation
 		const defaultTranslation = movie.translations.find(
 			(t: TranslationInfo) => t.isDefault === 1,
 		);
-		if (defaultTranslation) return defaultTranslation.content;
+		if (defaultTranslation) {
+			return defaultTranslation.content;
+		}
 
 		// Find Japanese translation
 		const jaTranslation = movie.translations.find(
 			(t: TranslationInfo) => t.languageCode === 'ja',
 		);
-		if (jaTranslation) return jaTranslation.content;
+		if (jaTranslation) {
+			return jaTranslation.content;
+		}
 
 		// Find English translation
 		const enTranslation = movie.translations.find(
 			(t: TranslationInfo) => t.languageCode === 'en',
 		);
-		if (enTranslation) return enTranslation.content;
+		if (enTranslation) {
+			return enTranslation.content;
+		}
 
 		// Return first available translation
 		if (movie.translations.length > 0) {
@@ -182,9 +198,7 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 			name: 'Amazon Prime',
 			color: 'bg-blue-600 text-white',
 			url: (title: string) =>
-				`https://www.amazon.co.jp/s?k=${encodeURIComponent(
-					title,
-				)}&i=prime-instant-video`,
+				`https://www.amazon.co.jp/s?k=${encodeURIComponent(title)}&i=prime-instant-video`,
 		},
 		{
 			name: 'TMDb',
@@ -276,9 +290,7 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 							<a
 								href={
 									movie.imdbUrl ||
-									`https://www.imdb.com/find?q=${encodeURIComponent(
-										movieTitle + ' ' + String(movie.year),
-									)}`
+									`https://www.imdb.com/find?q=${encodeURIComponent(movieTitle + ' ' + String(movie.year))}`
 								}
 								target="_blank"
 								rel="noopener noreferrer"

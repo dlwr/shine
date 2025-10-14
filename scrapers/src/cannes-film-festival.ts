@@ -129,7 +129,9 @@ async function seedCannesOrganization(): Promise<void> {
 }
 
 async function fetchMainData(): Promise<MainData> {
-	if (mainData) return mainData;
+	if (mainData) {
+		return mainData;
+	}
 
 	if (isDryRun) {
 		// Dry run mode - return mock data
@@ -613,7 +615,9 @@ function extractMoviesFromSection(
 	} else if (section.is('table')) {
 		// テーブル形式の場合
 		section.find('tr').each((index, element) => {
-			if (index === 0) return; // ヘッダー行をスキップ
+			if (index === 0) {
+				return;
+			} // ヘッダー行をスキップ
 
 			const movieInfo = parseMovieTableRow(_$, _$(element), year);
 			if (movieInfo) {
@@ -655,7 +659,9 @@ function parseMovieListItem(
 		}
 	}
 
-	if (!title) return undefined;
+	if (!title) {
+		return undefined;
+	}
 
 	// 監督を抽出
 	let director: string | undefined;
@@ -679,7 +685,9 @@ function parseMovieTableRow(
 	year: number,
 ): MovieInfo | undefined {
 	const cells = $row.find('td');
-	if (cells.length < 2) return undefined;
+	if (cells.length < 2) {
+		return undefined;
+	}
 
 	// 通常、最初のセルがタイトル、2番目が監督
 	const titleCell = cells.eq(0);
@@ -703,7 +711,9 @@ function parseMovieTableRow(
 		title = titleCell.text().trim();
 	}
 
-	if (!title) return undefined;
+	if (!title) {
+		return undefined;
+	}
 
 	const director = directorCell.text().trim() || undefined;
 

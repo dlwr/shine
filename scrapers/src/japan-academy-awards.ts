@@ -92,7 +92,9 @@ export default {
 };
 
 async function fetchMainData(): Promise<MainData> {
-	if (mainData) return mainData;
+	if (mainData) {
+		return mainData;
+	}
 
 	if (isDryRun) {
 		// Dry run mode - return mock data

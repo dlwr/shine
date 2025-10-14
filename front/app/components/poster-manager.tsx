@@ -219,45 +219,45 @@ export default function PosterManager({
 						<input
 							type="url"
 							value={newPoster.url}
-							onChange={(event) =>
-								setNewPoster({...newPoster, url: event.target.value})
-							}
+							onChange={(event) => {
+								setNewPoster({...newPoster, url: event.target.value});
+							}}
 							className="col-span-5 px-3 py-2 border border-gray-300 rounded text-sm"
 							placeholder="ポスターURL（必須）"
 						/>
 						<input
 							type="number"
 							value={newPoster.width}
-							onChange={(event) =>
-								setNewPoster({...newPoster, width: event.target.value})
-							}
+							onChange={(event) => {
+								setNewPoster({...newPoster, width: event.target.value});
+							}}
 							className="px-3 py-2 border border-gray-300 rounded text-sm"
 							placeholder="幅"
 						/>
 						<input
 							type="number"
 							value={newPoster.height}
-							onChange={(event) =>
-								setNewPoster({...newPoster, height: event.target.value})
-							}
+							onChange={(event) => {
+								setNewPoster({...newPoster, height: event.target.value});
+							}}
 							className="px-3 py-2 border border-gray-300 rounded text-sm"
 							placeholder="高さ"
 						/>
 						<input
 							type="text"
 							value={newPoster.languageCode}
-							onChange={(event) =>
-								setNewPoster({...newPoster, languageCode: event.target.value})
-							}
+							onChange={(event) => {
+								setNewPoster({...newPoster, languageCode: event.target.value});
+							}}
 							className="px-3 py-2 border border-gray-300 rounded text-sm"
 							placeholder="言語（例: ja）"
 						/>
 						<input
 							type="text"
 							value={newPoster.source}
-							onChange={(event) =>
-								setNewPoster({...newPoster, source: event.target.value})
-							}
+							onChange={(event) => {
+								setNewPoster({...newPoster, source: event.target.value});
+							}}
 							className="px-3 py-2 border border-gray-300 rounded text-sm"
 							placeholder="ソース（例: TMDb）"
 						/>
@@ -266,9 +266,9 @@ export default function PosterManager({
 								type="checkbox"
 								id="isPrimary"
 								checked={newPoster.isPrimary}
-								onChange={(event) =>
-									setNewPoster({...newPoster, isPrimary: event.target.checked})
-								}
+								onChange={(event) => {
+									setNewPoster({...newPoster, isPrimary: event.target.checked});
+								}}
 								className="mr-1"
 							/>
 							<label htmlFor="isPrimary" className="text-sm text-gray-700">

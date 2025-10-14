@@ -62,9 +62,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
 			(context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
 				.PUBLIC_API_URL || 'http://localhost:8787';
 		const response = await fetch(
-			`${apiUrl}/movies/search?q=${encodeURIComponent(
-				searchQuery,
-			)}&page=${page}&limit=${limit}`,
+			`${apiUrl}/movies/search?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${limit}`,
 			{
 				signal: request.signal, // React Router v7推奨：abortシグナル
 			},

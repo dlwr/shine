@@ -283,7 +283,7 @@ export async function fetchJapaneseTitleFromTMDB(
 			return movieData.title;
 		}
 
-		console.log(`  No Japanese title found in TMDB`);
+		console.log('  No Japanese title found in TMDB');
 		return undefined;
 	} catch (error) {
 		console.error(
@@ -411,7 +411,7 @@ export async function saveJapaneseTranslation(
 
 		console.log(`  Saved Japanese title: ${japaneseTitle}`);
 	} catch (error) {
-		console.error(`Error saving Japanese translation:`, error);
+		console.error('Error saving Japanese translation:', error);
 	}
 }
 

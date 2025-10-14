@@ -72,7 +72,9 @@ export default {
 };
 
 async function fetchMainData(): Promise<MainData> {
-	if (mainData) return mainData;
+	if (mainData) {
+		return mainData;
+	}
 
 	const [organization] = await getDatabase(environment_)
 		.select()
@@ -162,7 +164,9 @@ export async function scrapeAcademyAwards() {
 		for (const [tableIndex, table] of allTables.entries()) {
 			const tableInfo = analyzeTableStructure($, $(table), tableIndex);
 
-			if (!tableInfo || tableInfo.tableType === 'unknown') continue;
+			if (!tableInfo || tableInfo.tableType === 'unknown') {
+				continue;
+			}
 
 			const movies = processTableRows($, $(table));
 
@@ -185,7 +189,9 @@ export async function scrapeAcademyAwards() {
 				}
 
 				moviesProcessed++;
-				if (movie.isWinner) winnersProcessed++;
+				if (movie.isWinner) {
+					winnersProcessed++;
+				}
 			}
 		}
 
@@ -295,7 +301,12 @@ function analyzeTableStructure(
 		`Table ${tableIndex}: film=${filmIndex}, year=${yearIndex}, producer=${producerIndex}, type=${tableType}`,
 	);
 
-	return {filmIndex, yearIndex, producerIndex, tableType};
+	return {
+		filmIndex,
+		yearIndex,
+		producerIndex,
+		tableType,
+	};
 }
 
 function processTableRows(
@@ -430,7 +441,9 @@ function extractMovieTitle(
 	$row: cheerio.Cheerio<Element>,
 ): {title: string; referenceUrl?: string; imdbId?: string} {
 	const filmCell = $row.find('td').first();
-	if (!filmCell || filmCell.length === 0) return {title: ''};
+	if (!filmCell || filmCell.length === 0) {
+		return {title: ''};
+	}
 
 	let title = '';
 	let referenceUrl: string | undefined;

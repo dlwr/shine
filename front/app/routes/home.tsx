@@ -74,7 +74,12 @@ export async function loader({context, request}: Route.LoaderArgs) {
 		}
 
 		const movies = await response.json();
-		return {movies, error: undefined, locale, apiUrl};
+		return {
+			movies,
+			error: undefined,
+			locale,
+			apiUrl,
+		};
 	} catch (error) {
 		console.error('SSR fetch error:', error);
 

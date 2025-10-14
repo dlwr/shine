@@ -117,7 +117,7 @@ async function main() {
 
 				// TMDBで見つからなかった場合はWikipediaで検索（フォールバック）
 				if (!japaneseTitle) {
-					console.log(`  TMDBで見つからなかったため、Wikipediaで検索中...`);
+					console.log('  TMDBで見つからなかったため、Wikipediaで検索中...');
 					japaneseTitle = await scrapeJapaneseTitleFromWikipedia(movie.imdbId);
 				}
 

@@ -90,7 +90,7 @@ async function assignTmdbIds() {
 		}
 	}
 
-	console.log(`\n📊 Summary:`);
+	console.log('\n📊 Summary:');
 	console.log(`  Processed: ${processed}`);
 	console.log(`  Successful: ${successful}`);
 	console.log(`  Failed: ${failed}`);

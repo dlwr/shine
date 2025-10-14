@@ -352,7 +352,12 @@ describe('Search Component', () => {
 				searchQuery: 'nomatch',
 				searchResults: {
 					movies: [],
-					pagination: {page: 1, limit: 20, total: 0, totalPages: 0},
+					pagination: {
+						page: 1,
+						limit: 20,
+						total: 0,
+						totalPages: 0,
+					},
 				},
 			};
 

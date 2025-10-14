@@ -127,7 +127,7 @@ export async function importMoviesFromList(
 
 	// バッチでデータを挿入
 	if (isDryRun) {
-		console.log(`\n[DRY RUN] Would insert:`);
+		console.log('\n[DRY RUN] Would insert:');
 		console.log(`  - ${translationsBatch.length} translations`);
 		console.log(`  - ${posterUrlsBatch.length} poster URLs`);
 		console.log(`  - ${nominationsBatch.length} nominations`);
@@ -357,7 +357,7 @@ async function processMovieForBatch(
 
 	let nominationData: typeof nominations.$inferInsert | undefined;
 	if (existingNomination) {
-		console.log(`  Nomination already exists`);
+		console.log('  Nomination already exists');
 	} else {
 		nominationData = {
 			movieUid,
@@ -365,7 +365,7 @@ async function processMovieForBatch(
 			ceremonyUid,
 			isWinner: 0,
 		};
-		console.log(`  Added nomination to batch`);
+		console.log('  Added nomination to batch');
 	}
 
 	return {
@@ -460,7 +460,7 @@ async function createNewMovieForBatch(tmdbMovie: TMDBMovieData): Promise<{
 			isDefault: 1,
 		});
 	} else {
-		console.log(`  WARN: tmdbMovie.original_title is undefined!`);
+		console.log('  WARN: tmdbMovie.original_title is undefined!');
 	}
 
 	// 日本語翻訳を追加

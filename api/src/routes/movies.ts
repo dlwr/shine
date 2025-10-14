@@ -165,7 +165,7 @@ moviesRoutes.post('/:id/translations', authMiddleware, async (c) => {
 		await Promise.all([
 			cache.delete(getCacheKeyForMovie(movieId, true)),
 			cache.delete(getCacheKeyForMovie(movieId, false)),
-			cache.deleteByPattern(`selections:all:`), // Invalidate main selections that might include this movie
+			cache.deleteByPattern('selections:all:'), // Invalidate main selections that might include this movie
 		]);
 
 		console.log(
@@ -197,7 +197,7 @@ moviesRoutes.delete('/:id/translations/:lang', authMiddleware, async (c) => {
 		await Promise.all([
 			cache.delete(getCacheKeyForMovie(movieId, true)),
 			cache.delete(getCacheKeyForMovie(movieId, false)),
-			cache.deleteByPattern(`selections:all:`),
+			cache.deleteByPattern('selections:all:'),
 		]);
 
 		console.log(

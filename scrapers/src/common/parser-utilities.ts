@@ -22,7 +22,9 @@ export function extractWikipediaJsonLD(
 ): Record<string, unknown> | undefined {
 	try {
 		const scriptContent = $('script[type="application/ld+json"]').html();
-		if (!scriptContent) return undefined;
+		if (!scriptContent) {
+			return undefined;
+		}
 
 		return JSON.parse(scriptContent) as Record<string, unknown>;
 	} catch (error) {
@@ -37,7 +39,9 @@ export function extractWikipediaJsonLD(
  * @returns 正規化されたテキスト
  */
 export function normalizeText(text: string): string {
-	if (!text) return '';
+	if (!text) {
+		return '';
+	}
 
 	return text
 		.trim()
@@ -53,7 +57,9 @@ export function normalizeText(text: string): string {
  */
 export function extractText($: cheerio.CheerioAPI, selector: string): string {
 	const element = $(selector);
-	if (element.length === 0) return '';
+	if (element.length === 0) {
+		return '';
+	}
 
 	return normalizeText(element.text());
 }

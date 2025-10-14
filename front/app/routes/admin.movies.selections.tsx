@@ -106,7 +106,9 @@ export default function AdminMovieSelections({
 	// Load movie selections
 	useEffect(() => {
 		const loadSelections = async () => {
-			if (globalThis.window === undefined) return;
+			if (globalThis.window === undefined) {
+				return;
+			}
 
 			const token = globalThis.localStorage.getItem('adminToken');
 			if (!token) {
@@ -161,9 +163,7 @@ export default function AdminMovieSelections({
 			try {
 				const token = globalThis.localStorage.getItem('adminToken');
 				const response = await fetch(
-					`${apiUrl}/admin/movies?search=${encodeURIComponent(
-						searchQuery,
-					)}&limit=20`,
+					`${apiUrl}/admin/movies?search=${encodeURIComponent(searchQuery)}&limit=20`,
 					{headers: {Authorization: `Bearer ${token}`}},
 				);
 
@@ -217,7 +217,9 @@ export default function AdminMovieSelections({
 	};
 
 	const handleOverride = async () => {
-		if (!selectedMovie) return;
+		if (!selectedMovie) {
+			return;
+		}
 
 		try {
 			const token = globalThis.localStorage.getItem('adminToken');
@@ -299,8 +301,14 @@ export default function AdminMovieSelections({
 	};
 
 	const getPrimaryTitle = (movie: SelectionData['movie'] | SearchMovie) => {
-		if (!movie) return '無題';
-		if ('title' in movie && movie.title) return movie.title;
+		if (!movie) {
+			return '無題';
+		}
+
+		if ('title' in movie && movie.title) {
+			return movie.title;
+		}
+
 		if ('translations' in movie && movie.translations) {
 			return (
 				movie.translations.find((t: any) => t.isDefault === 1)?.content ||
@@ -390,9 +398,7 @@ export default function AdminMovieSelections({
 							>
 								{/* Card Header */}
 								<div
-									className={`bg-gradient-to-r ${getTypeColor(
-										type,
-									)} p-6 text-white`}
+									className={`bg-gradient-to-r ${getTypeColor(type)} p-6 text-white`}
 								>
 									<h2 className="text-xl font-bold">{getTypeLabel(type)}</h2>
 									{selection && (

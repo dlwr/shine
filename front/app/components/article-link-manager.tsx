@@ -26,10 +26,14 @@ export default function ArticleLinkManager({
 	);
 
 	const handleDeleteArticle = async (articleId: string) => {
-		if (!globalThis.window) return;
+		if (!globalThis.window) {
+			return;
+		}
 
 		const token = globalThis.localStorage.getItem('adminToken');
-		if (!token) return;
+		if (!token) {
+			return;
+		}
 
 		try {
 			const response = await fetch(
@@ -65,10 +69,14 @@ export default function ArticleLinkManager({
 		articleId: string,
 		currentSpamStatus: boolean,
 	) => {
-		if (!globalThis.window) return;
+		if (!globalThis.window) {
+			return;
+		}
 
 		const token = globalThis.localStorage.getItem('adminToken');
-		if (!token) return;
+		if (!token) {
+			return;
+		}
 
 		try {
 			const response = await fetch(
@@ -170,7 +178,9 @@ export default function ArticleLinkManager({
 											</button>
 											<button
 												type="button"
-												onClick={() => setDeleteConfirmId(undefined)}
+												onClick={() => {
+													setDeleteConfirmId(undefined);
+												}}
 												className="text-gray-600 hover:text-gray-800 text-sm font-medium"
 											>
 												キャンセル
@@ -179,7 +189,9 @@ export default function ArticleLinkManager({
 									) : (
 										<button
 											type="button"
-											onClick={() => setDeleteConfirmId(article.uid)}
+											onClick={() => {
+												setDeleteConfirmId(article.uid);
+											}}
 											className="text-red-600 hover:text-red-800 text-sm font-medium"
 										>
 											削除

@@ -243,7 +243,9 @@ export default function TranslationManager({
 				<h3 className="text-lg font-medium text-gray-900">翻訳</h3>
 				<button
 					type="button"
-					onClick={() => setShowAddTranslation(!showAddTranslation)}
+					onClick={() => {
+						setShowAddTranslation(!showAddTranslation);
+					}}
 					className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
 				>
 					{showAddTranslation ? 'キャンセル' : '翻訳を追加'}
@@ -261,12 +263,12 @@ export default function TranslationManager({
 							<input
 								type="text"
 								value={newTranslation.languageCode}
-								onChange={(event) =>
+								onChange={(event) => {
 									setNewTranslation({
 										...newTranslation,
 										languageCode: event.target.value,
-									})
-								}
+									});
+								}}
 								className="w-full px-3 py-2 border border-gray-300 rounded-md"
 								placeholder="例: ja, en, fr"
 							/>
@@ -278,12 +280,12 @@ export default function TranslationManager({
 							<input
 								type="text"
 								value={newTranslation.content}
-								onChange={(event) =>
+								onChange={(event) => {
 									setNewTranslation({
 										...newTranslation,
 										content: event.target.value,
-									})
-								}
+									});
+								}}
 								className="w-full px-3 py-2 border border-gray-300 rounded-md"
 								placeholder="映画のタイトル"
 							/>
@@ -293,12 +295,12 @@ export default function TranslationManager({
 								type="checkbox"
 								id="isDefault"
 								checked={newTranslation.isDefault}
-								onChange={(event) =>
+								onChange={(event) => {
 									setNewTranslation({
 										...newTranslation,
 										isDefault: event.target.checked,
-									})
-								}
+									});
+								}}
 								className="mr-2"
 							/>
 							<label htmlFor="isDefault" className="text-sm text-gray-700">
@@ -351,7 +353,9 @@ export default function TranslationManager({
 									onSave={async (languageCode, content, isDefault) =>
 										updateTranslation(languageCode, content, isDefault)
 									}
-									onCancel={() => setEditingTranslation(undefined)}
+									onCancel={() => {
+										setEditingTranslation(undefined);
+									}}
 								/>
 							) : (
 								<>
@@ -370,7 +374,9 @@ export default function TranslationManager({
 									<div className="flex space-x-2">
 										<button
 											type="button"
-											onClick={() => setEditingTranslation(translation.uid)}
+											onClick={() => {
+												setEditingTranslation(translation.uid);
+											}}
 											className="text-blue-600 hover:text-blue-800 text-sm"
 										>
 											編集
@@ -416,14 +422,18 @@ function EditTranslationForm({
 				<input
 					type="text"
 					value={languageCode}
-					onChange={(event) => setLanguageCode(event.target.value)}
+					onChange={(event) => {
+						setLanguageCode(event.target.value);
+					}}
 					className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
 					placeholder="言語"
 				/>
 				<input
 					type="text"
 					value={content}
-					onChange={(event) => setContent(event.target.value)}
+					onChange={(event) => {
+						setContent(event.target.value);
+					}}
 					className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
 					placeholder="タイトル"
 				/>
@@ -434,7 +444,9 @@ function EditTranslationForm({
 						type="checkbox"
 						id={`default-${translation.uid}`}
 						checked={isDefault}
-						onChange={(event) => setIsDefault(event.target.checked)}
+						onChange={(event) => {
+							setIsDefault(event.target.checked);
+						}}
 						className="mr-1"
 					/>
 					<label htmlFor={`default-${translation.uid}`} className="text-xs">
@@ -444,7 +456,9 @@ function EditTranslationForm({
 				<div className="flex space-x-2">
 					<button
 						type="button"
-						onClick={() => onSave(languageCode, content, isDefault)}
+						onClick={() => {
+							onSave(languageCode, content, isDefault);
+						}}
 						className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700"
 					>
 						保存

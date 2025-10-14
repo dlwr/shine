@@ -88,7 +88,7 @@ export async function fetchJapaneseTitleFromTMDB(
 			return movieData.title;
 		}
 
-		console.log(`  No Japanese title found in TMDB`);
+		console.log('  No Japanese title found in TMDB');
 		return undefined;
 	} catch (error) {
 		console.error(
