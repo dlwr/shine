@@ -10,11 +10,6 @@ import {nominations} from '../../src/schema/nominations';
 import {posterUrls} from '../../src/schema/poster-urls';
 import {referenceUrls} from '../../src/schema/reference-urls';
 import {translations} from '../../src/schema/translations';
-import type {
-	TMDBSearchResponse,
-	TMDBTranslationsResponse,
-	TMDBMovieData,
-} from './common/tmdb-utilities';
 
 const WIKIPEDIA_BASE_URL = 'https://en.wikipedia.org';
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
@@ -1093,6 +1088,7 @@ function cleanupTitle(title: string): string {
 }
 
 // TMDb APIのレスポンス型
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type TMDatabaseSearchResponse = {
 	results: Array<{
 		id: number;
@@ -1102,6 +1098,7 @@ type TMDatabaseSearchResponse = {
 	}>;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type TMDatabaseMovieDetails = {
 	imdb_id: string;
 	title: string;
@@ -1633,6 +1630,7 @@ async function processMovieForBatch(
 	}
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function processMovie(
 	movieInfo: MovieInfo,
 	ceremonyUid: string,

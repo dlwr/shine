@@ -38,9 +38,11 @@
     "docs:serve": "redocly preview-docs api/openapi.yml",
     "docs:bundle": "redocly bundle api/openapi.yml --output api/openapi.json",
     "lint": "eslint . --max-warnings 0",
-    "lint:fix": "eslint . --fix",
+    "lint:fix": "pnpm exec eslint . --fix && pnpm run format:fix",
     "lint:front": "eslint front/app --ext .ts,.tsx",
     "lint:front:fix": "eslint front/app --ext .ts,.tsx --fix",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
     "type-check": "pnpm --filter front run typecheck && tsc -b",
     "check": "concurrently -n \"lint,types\" -c \"yellow,green\" \"pnpm lint\" \"tsc --build --noEmit\"",
     "typegen": "cd front && npx react-router typegen"

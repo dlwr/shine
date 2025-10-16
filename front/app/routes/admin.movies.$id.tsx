@@ -68,7 +68,7 @@ type LoaderData = {
 	movieId: string;
 };
 
-export function meta({data: _data}: Route.MetaArgs): Route.MetaDescriptors {
+export function meta(): Route.MetaDescriptors {
 	return [
 		{title: '映画の編集 - SHINE Admin'},
 		{name: 'description', content: 'SHINE Admin 映画編集画面'},

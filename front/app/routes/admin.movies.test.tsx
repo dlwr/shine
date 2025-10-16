@@ -38,33 +38,6 @@ const createMockContext = (apiUrl = 'http://localhost:8787') => ({
 });
 
 // 映画リストのモックデータ
-const mockMoviesList = {
-	movies: [
-		{
-			uid: 'movie-1',
-			title: 'テスト映画',
-			year: 2023,
-			originalLanguage: 'ja',
-			posterUrl: 'https://example.com/poster1.jpg',
-			imdbUrl: 'https://www.imdb.com/title/tt1234567/',
-		},
-		{
-			uid: 'movie-2',
-			title: '管理画面テスト映画',
-			year: 2022,
-			originalLanguage: 'ja',
-			posterUrl: undefined,
-			imdbUrl: 'https://www.imdb.com/title/tt7654321/',
-		},
-	],
-	pagination: {
-		page: 1,
-		limit: 20,
-		totalCount: 2,
-		totalPages: 1,
-	},
-};
-
 describe('AdminMovies Component', () => {
 	beforeEach(() => {
 		vi.resetAllMocks();

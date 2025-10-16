@@ -23,7 +23,19 @@ type MoviesResponse = {
 	pagination: PaginationData;
 };
 
-export function meta({data: _data}: Route.MetaArgs): Route.MetaDescriptors {
+type CloudflareContext = {
+	env?: {
+		PUBLIC_API_URL?: string;
+	};
+};
+
+type SearchTimeoutGlobal = typeof globalThis & {
+	searchTimeout?: ReturnType<typeof setTimeout>;
+};
+
+const globalWithSearchTimeout = globalThis as SearchTimeoutGlobal;
+
+export function meta(): Route.MetaDescriptors {
 	return [
 		{title: '映画管理 | SHINE Admin'},
 		{name: 'description', content: '映画データベースの管理画面'},
@@ -37,10 +49,10 @@ export async function loader({context, request}: Route.LoaderArgs) {
 	const limit = url.searchParams.get('limit') || '20';
 	const search = url.searchParams.get('search') || '';
 
+	const cloudflareEnv = (context.cloudflare as CloudflareContext | undefined)
+		?.env;
 	return {
-		apiUrl:
-			(context.cloudflare as any)?.env?.PUBLIC_API_URL ||
-			'http://localhost:8787',
+		apiUrl: cloudflareEnv?.PUBLIC_API_URL ?? 'http://localhost:8787',
 		page: Number.parseInt(page, 10),
 		limit: Number.parseInt(limit, 10),
 		search,
@@ -773,12 +785,12 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
 						onChange={(event) => {
 							const {value} = event.target;
 							// Clear existing timeout
-							if ((globalThis as any).searchTimeout) {
-								clearTimeout((globalThis as any).searchTimeout);
-							}
+			if (globalWithSearchTimeout.searchTimeout) {
+				clearTimeout(globalWithSearchTimeout.searchTimeout);
+			}
 
-							// Set new timeout for debounced search
-							(globalThis as any).searchTimeout = setTimeout(() => {
+			// Set new timeout for debounced search
+			globalWithSearchTimeout.searchTimeout = setTimeout(() => {
 								handleSearch(value);
 							}, 300);
 						}}

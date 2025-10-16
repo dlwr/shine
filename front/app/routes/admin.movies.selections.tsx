@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import type {Route} from './+types/admin.movies.selections';
+import type {Route} from "./+types/admin.movies.selections";
 import {MovieCard} from '@/components/molecules/movie-card';
 
 type SelectionData = {
@@ -45,7 +45,10 @@ type SearchMovie = {
 	}>;
 };
 
-export function meta({data: _data}: Route.MetaArgs): Route.MetaDescriptors {
+type SearchMovieTranslation =
+	NonNullable<SearchMovie['translations']>[number];
+
+export function meta(): Route.MetaDescriptors {
 	return [
 		{title: '映画選択管理 - SHINE Admin'},
 		{name: 'description', content: 'SHINE Admin 映画選択管理画面'},
@@ -309,14 +312,19 @@ export default function AdminMovieSelections({
 			return movie.title;
 		}
 
-		if ('translations' in movie && movie.translations) {
-			return (
-				movie.translations.find((t: any) => t.isDefault === 1)?.content ||
-				movie.translations.find((t: any) => t.languageCode === 'ja')?.content ||
-				movie.translations[0]?.content ||
-				'無題'
-			);
-		}
+	if ('translations' in movie && movie.translations) {
+		return (
+			movie.translations.find(
+				(translation: SearchMovieTranslation) => translation.isDefault === 1,
+			)?.content ||
+			movie.translations.find(
+				(translation: SearchMovieTranslation) =>
+					translation.languageCode === 'ja',
+			)?.content ||
+			movie.translations[0]?.content ||
+			'無題'
+		);
+	}
 
 		return '無題';
 	};

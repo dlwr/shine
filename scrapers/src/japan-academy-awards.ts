@@ -14,7 +14,6 @@ import {
 	fetchTMDBMovieImages,
 	savePosterUrls,
 	saveTMDBId,
-	type TMDBFindResponse,
 } from './common/tmdb-utilities';
 
 const WIKIPEDIA_BASE_URL = 'https://ja.wikipedia.org';
@@ -462,8 +461,7 @@ function extractMoviesFromText(text: string, year: number): MovieInfo[] {
 
 function extractMoviesFromTableWithYear(
 	$: cheerio.CheerioAPI,
-
-	$table: any,
+	$table: cheerio.Cheerio<cheerio.Element>,
 	year: number,
 ): MovieInfo[] {
 	const movies: MovieInfo[] = [];
@@ -482,7 +480,7 @@ function extractMoviesFromTableWithYear(
 
 	// 表の行をチェック
 
-	$table.find('tr').each((_: any, element: any) => {
+	$table.find('tr').each((_index, element) => {
 		const $row = $(element);
 		const cells = $row.find('td');
 
@@ -756,6 +754,7 @@ async function processMovieForBatch(movieInfo: MovieInfo): Promise<
 	}
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function processMovie(movieInfo: MovieInfo) {
 	try {
 		if (isDryRun) {

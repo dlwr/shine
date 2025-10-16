@@ -15,17 +15,6 @@ type TMDBMovieImages = {
 	}>;
 };
 
-type TMDBMovieData = {
-	id: number;
-	title: string;
-	original_title: string;
-	release_date: string;
-};
-
-type TMDBFindResponse = {
-	movie_results: TMDBMovieData[];
-};
-
 type MovieWithImdbId = {
 	uid: string;
 	imdbId: string;

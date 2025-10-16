@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import type {Dispatch, SetStateAction} from 'react';
 
 type ArticleLink = {
 	uid: string;
@@ -8,22 +9,39 @@ type ArticleLink = {
 	isSpam: boolean;
 };
 
-type ArticleLinkManagerProps = {
+type ArticleLinksContainer = {
+	articleLinks?: ArticleLink[];
+};
+
+type ArticleLinkManagerProps<TState extends ArticleLinksContainer> = {
 	movieId: string;
 	apiUrl: string;
 	articleLinks: ArticleLink[];
-	onArticleLinksUpdate: (updater: (previousData: any) => any) => void;
+	onArticleLinksUpdate: Dispatch<SetStateAction<TState | undefined>>;
 };
 
-export default function ArticleLinkManager({
-	movieId,
+export default function ArticleLinkManager<TState extends ArticleLinksContainer>({
 	apiUrl,
 	articleLinks,
 	onArticleLinksUpdate,
-}: ArticleLinkManagerProps) {
+}: ArticleLinkManagerProps<TState>) {
 	const [deleteConfirmId, setDeleteConfirmId] = useState<string | undefined>(
 		undefined,
 	);
+
+	const updateArticleLinks = (mutate: (links: ArticleLink[]) => ArticleLink[]) => {
+		onArticleLinksUpdate((previousState) => {
+			if (!previousState) {
+				return previousState;
+			}
+
+			const nextLinks = mutate(previousState.articleLinks ?? []);
+			return {
+				...previousState,
+				articleLinks: nextLinks,
+			};
+		});
+	};
 
 	const handleDeleteArticle = async (articleId: string) => {
 		if (!globalThis.window) {
@@ -51,12 +69,9 @@ export default function ArticleLinkManager({
 			}
 
 			// Update local state to remove the deleted article
-			onArticleLinksUpdate((previousData) => ({
-				...previousData,
-				articleLinks: previousData.articleLinks.filter(
-					(link: ArticleLink) => link.uid !== articleId,
-				),
-			}));
+			updateArticleLinks((links) =>
+				links.filter((link) => link.uid !== articleId),
+			);
 
 			setDeleteConfirmId(undefined);
 		} catch (error) {
@@ -65,10 +80,7 @@ export default function ArticleLinkManager({
 		}
 	};
 
-	const handleSpamToggle = async (
-		articleId: string,
-		currentSpamStatus: boolean,
-	) => {
+	const handleSpamToggle = async (articleId: string) => {
 		if (!globalThis.window) {
 			return;
 		}
@@ -94,12 +106,11 @@ export default function ArticleLinkManager({
 			}
 
 			// Update local state to mark as spam
-			onArticleLinksUpdate((previousData) => ({
-				...previousData,
-				articleLinks: previousData.articleLinks.map((link: ArticleLink) =>
+			updateArticleLinks((links) =>
+				links.map((link) =>
 					link.uid === articleId ? {...link, isSpam: true} : link,
 				),
-			}));
+			);
 		} catch (error) {
 			console.error('Error updating spam status:', error);
 			alert('スパムフラグの更新に失敗しました');
@@ -150,7 +161,7 @@ export default function ArticleLinkManager({
 										<button
 											type="button"
 											onClick={() => {
-												handleSpamToggle(article.uid, article.isSpam).catch(
+							handleSpamToggle(article.uid).catch(
 													(error: unknown) => {
 														console.error('Failed to toggle spam:', error);
 													},

@@ -650,6 +650,7 @@ async function processMovieForBatch(
 	}
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function processMovie(
 	title: string,
 	year: number,

@@ -4,17 +4,6 @@ import {movies} from '../../../../src/schema/movies';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 
-type TMDBMovieData = {
-	id: number;
-	title: string;
-	original_title: string;
-	release_date: string;
-};
-
-type TMDBFindResponse = {
-	movie_results: TMDBMovieData[];
-};
-
 /**
  * TMDBから日本語タイトルを取得する
  * @param imdbId IMDb ID

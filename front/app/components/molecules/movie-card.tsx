@@ -9,14 +9,14 @@ import {
 } from '@/components/ui/card';
 
 type MovieCardProps = {
-	movie: any;
+	movie: MovieCardMovie;
 	locale?: string;
 	adminToken?: string;
 };
 
 type PosterInfo = {
 	url: string;
-	languageCode: string | undefined;
+	languageCode?: string;
 	isPrimary: number;
 };
 
@@ -76,63 +76,89 @@ type TranslationInfo = {
 	isDefault: number;
 };
 
-function selectBestTitle(movie: any, locale: string): string {
-	// If movie.title is already provided (from public API), use it with fallback
+type MovieCardOrganization = {
+	uid: string;
+	name: string;
+	shortName?: string;
+};
+
+type MovieCardCeremony = {
+	uid: string;
+	year: number;
+	number?: number;
+};
+
+export type MovieCardNomination = {
+	uid: string;
+	isWinner: boolean;
+	category: {name: string};
+	ceremony: MovieCardCeremony;
+	organization: MovieCardOrganization;
+};
+
+export type MovieCardArticleLink = {
+	uid: string;
+	url: string;
+	title: string;
+	description?: string;
+	isSpam?: boolean;
+};
+
+export type MovieCardMovie = {
+	uid: string;
+	title?: string;
+	year?: number;
+	tmdbId?: string | number;
+	imdbUrl?: string;
+	posterUrl?: string;
+	posterUrls?: PosterInfo[];
+	translations?: TranslationInfo[];
+	nominations?: MovieCardNomination[];
+	articleLinks?: MovieCardArticleLink[];
+};
+
+function selectBestTitle(movie: MovieCardMovie, locale: string): string {
 	if (movie.title) {
 		return movie.title;
 	}
 
-	// If movie.translations is available (from admin API), find the best translation
-	if (movie.translations && Array.isArray(movie.translations)) {
+	const translations = movie.translations ?? [];
+	if (translations.length > 0) {
 		const languageCode = locale.split('-')[0];
 
-		// Priority:
-		// 1. Translation with matching language
-		// 2. Default translation (isDefault = 1)
-		// 3. Japanese translation ('ja')
-		// 4. English translation ('en')
-		// 5. First available translation
-
-		// Find translation with matching language
-		const localeMatch = movie.translations.find(
-			(t: TranslationInfo) => t.languageCode === languageCode,
+		const localeMatch = translations.find(
+			(translation) => translation.languageCode === languageCode,
 		);
 		if (localeMatch) {
 			return localeMatch.content;
 		}
 
-		// Find default translation
-		const defaultTranslation = movie.translations.find(
-			(t: TranslationInfo) => t.isDefault === 1,
+		const defaultTranslation = translations.find(
+			(translation) => translation.isDefault === 1,
 		);
 		if (defaultTranslation) {
 			return defaultTranslation.content;
 		}
 
-		// Find Japanese translation
-		const jaTranslation = movie.translations.find(
-			(t: TranslationInfo) => t.languageCode === 'ja',
+		const jaTranslation = translations.find(
+			(translation) => translation.languageCode === 'ja',
 		);
 		if (jaTranslation) {
 			return jaTranslation.content;
 		}
 
-		// Find English translation
-		const enTranslation = movie.translations.find(
-			(t: TranslationInfo) => t.languageCode === 'en',
+		const enTranslation = translations.find(
+			(translation) => translation.languageCode === 'en',
 		);
 		if (enTranslation) {
 			return enTranslation.content;
 		}
 
-		// Return first available translation
-		if (movie.translations.length > 0) {
-			return movie.translations[0].content;
-		}
+		return translations[0]?.content ?? 'Unknown Title';
 	}
 
-	// Fallback to "Unknown Title (year)"
-	return `Unknown Title (${movie.year})`;
+	const yearLabel = movie.year ? ` (${movie.year})` : '';
+	return `Unknown Title${yearLabel}`;
 }
 
 export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
@@ -216,29 +242,43 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 		},
 	];
 
-	// Group nominations by organization and ceremony
-	const nominationsByOrg =
-		movie.nominations?.reduce(
-			(acc: any, nom: any) => {
-				const orgKey = nom.organization.uid;
-				acc[orgKey] ||= {
-					organization: nom.organization,
-					ceremonies: {},
-				};
+	type CeremonyGroup = {
+		ceremony: MovieCardCeremony;
+		nominations: MovieCardNomination[];
+	};
 
-				const ceremonyKey = nom.ceremony.uid;
-				acc[orgKey].ceremonies[ceremonyKey] ||= {
-					ceremony: nom.ceremony,
-					nominations: [],
-				};
+	type OrganizationGroup = {
+		organization: MovieCardOrganization;
+		ceremonies: Record<string, CeremonyGroup>;
+	};
 
-				acc[orgKey].ceremonies[ceremonyKey].nominations.push(nom);
-				return acc;
-			},
-			{} as Record<string, any>,
-		) || {};
+	const nominationsByOrg = (movie.nominations ?? []).reduce<
+		Record<string, OrganizationGroup>
+	>((accumulator, nomination) => {
+		const orgKey = nomination.organization.uid;
+		if (!accumulator[orgKey]) {
+			accumulator[orgKey] = {
+				organization: nomination.organization,
+				ceremonies: {},
+			};
+		}
+
+		const organizationGroup = accumulator[orgKey];
+		const ceremonyKey = nomination.ceremony.uid;
+		if (!organizationGroup.ceremonies[ceremonyKey]) {
+			organizationGroup.ceremonies[ceremonyKey] = {
+				ceremony: nomination.ceremony,
+				nominations: [],
+			};
+		}
+
+		organizationGroup.ceremonies[ceremonyKey].nominations.push(nomination);
+		return accumulator;
+	}, {});
 
 	const isMobile = globalThis.window !== undefined && window.innerWidth <= 768;
+	const organizationGroups = Object.values(nominationsByOrg);
+	const articleLinks = movie.articleLinks ?? [];
 
 	return (
 		<Card ref={cardRef} className="relative h-full w-80 overflow-hidden">
@@ -335,37 +375,40 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 						isMobile && !showDetails ? 'max-h-0 overflow-hidden' : 'max-h-none'
 					} transition-all duration-300`}
 				>
-					{movie.nominations && movie.nominations.length > 0 && (
+							{organizationGroups.length > 0 && (
 						<div className="mt-auto pt-4 border-t border-gray-200">
-							{Object.values(nominationsByOrg).map((orgData: any) => (
+							{organizationGroups.map((orgData) => (
 								<div key={orgData.organization.uid} className="mb-4 last:mb-0">
 									<h4 className="text-sm font-semibold text-gray-700 mb-2">
 										{orgData.organization.shortName ||
 											orgData.organization.name}
 									</h4>
 									{Object.values(orgData.ceremonies).map(
-										(ceremonyData: any) => (
+										(ceremonyData) => (
 											<div key={ceremonyData.ceremony.uid} className="mb-2">
 												<span className="text-xs text-gray-600 font-medium">
 													{ceremonyData.ceremony.year}
 												</span>
 												<ul className="list-none p-0 mt-1">
-													{ceremonyData.nominations.map((nom: any) => (
-														<li
-															key={nom.uid}
+													{ceremonyData.nominations.map(
+														(nomination) => (
+															<li
+																key={nomination.uid}
 															className="text-xs py-1 flex items-center justify-between"
 														>
 															<span className="text-gray-700">
-																{nom.category.name}
+																{nomination.category.name}
 															</span>
 															<span
 																className={`text-xs px-2 py-1 rounded font-medium ml-2 ${
-																	nom.isWinner
+																	nomination.isWinner
 																		? 'bg-yellow-400 text-gray-900'
 																		: 'bg-gray-200 text-gray-700'
 																}`}
 															>
-																{nom.isWinner ? t.winner : t.nominee}
+																{nomination.isWinner
+																	? t.winner
+																	: t.nominee}
 															</span>
 														</li>
 													))}
@@ -377,13 +420,13 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
 							))}
 						</div>
 					)}
-					{movie.articleLinks && movie.articleLinks.length > 0 && (
-						<div className="px-6 pb-2 border-t border-gray-200">
-							<h4 className="text-sm font-semibold text-gray-700 mt-4 mb-3">
-								{t.relatedArticles}
-							</h4>
-							<ul className="list-none p-0 m-0">
-								{movie.articleLinks.map((article: any) => (
+							{articleLinks.length > 0 && (
+								<div className="px-6 pb-2 border-t border-gray-200">
+									<h4 className="text-sm font-semibold text-gray-700 mt-4 mb-3">
+										{t.relatedArticles}
+									</h4>
+									<ul className="list-none p-0 m-0">
+										{articleLinks.map((article: MovieCardArticleLink) => (
 									<li key={article.uid} className="mb-1.5 last:mb-0">
 										<a
 											href={article.url}

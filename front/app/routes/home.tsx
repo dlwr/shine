@@ -2,10 +2,26 @@ import {useEffect, useState} from 'react';
 import type {Route} from './+types/home';
 import {Button} from '@/components/ui/button';
 import {MovieCard} from '@/components/molecules/movie-card';
+import type {MovieCardMovie} from '@/components/molecules/movie-card';
 import {AdminLogin} from '@/components/molecules/admin-login';
 import {LanguageSelector} from '@/components/molecules/language-selector';
+import type {MovieCardMovie} from '@/components/molecules/movie-card';
 
-export function meta({data: _data}: Route.MetaArgs): Route.MetaDescriptors {
+type HighlightedMovies = {
+	daily?: MovieCardMovie;
+	weekly?: MovieCardMovie;
+	monthly?: MovieCardMovie;
+};
+
+type MoviesLabels = {
+	randomMovie: string;
+	daily: string;
+	weekly: string;
+	monthly: string;
+	reselect: string;
+};
+
+export function meta(): Route.MetaDescriptors {
 	return [
 		{title: 'SHINE'},
 		{
@@ -101,14 +117,16 @@ export default function Home({loaderData}: Route.ComponentProps) {
 		apiUrl,
 		shouldFetchOnClient,
 	} = loaderData as {
-		movies: any;
+		movies: HighlightedMovies | undefined;
 		error: string | undefined;
 		locale: string;
 		apiUrl: string;
 		shouldFetchOnClient?: boolean;
 	};
 
-	const [movies, setMovies] = useState(initialMovies);
+	const [movies, setMovies] = useState<HighlightedMovies | undefined>(
+		initialMovies,
+	);
 	const [error, setError] = useState<string | undefined>(initialError);
 	const [loading, setLoading] = useState(shouldFetchOnClient);
 	const [adminToken, setAdminToken] = useState<string | undefined>(undefined);
@@ -166,7 +184,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
 						throw new Error(`API request failed: ${response.status}`);
 					}
 
-					const fetchedMovies = await response.json();
+			const fetchedMovies = (await response.json()) as HighlightedMovies;
 					setMovies(fetchedMovies);
 				} catch (error_) {
 					console.error('Error fetching movies:', error_);
@@ -241,17 +259,18 @@ function Movies({
 	labels,
 	loading: isDataLoading,
 }: {
-	movies: any;
+	movies: HighlightedMovies | undefined;
 	error: string | undefined;
 	locale: string;
 	apiUrl: string;
 	adminToken: string | undefined;
-	labels: any;
+	labels: MoviesLabels;
 	loading?: boolean;
 }) {
 	const [reselectLoading, setReselectLoading] = useState<
 		Record<string, boolean>
 	>({});
+	const highlightedMovies: HighlightedMovies = movies ?? {};
 
 	const handleReselect = async (type: string) => {
 		if (!adminToken) {
@@ -282,7 +301,7 @@ function Movies({
 				throw new Error(`API request failed: ${response.status}`);
 			}
 
-			const result = (await response.json()) as {movie?: any};
+		const result = (await response.json()) as {movie?: MovieCardMovie};
 
 			if (result.movie) {
 				window.location.reload();

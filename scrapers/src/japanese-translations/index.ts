@@ -4,7 +4,6 @@
 import {getDatabase, type Environment} from '../../../src/index';
 import {
 	getMoviesWithoutJapaneseTranslation,
-	saveJapaneseTranslation,
 	saveJapaneseTranslationsBatch,
 } from './repository';
 import {fetchJapaneseTitleFromTMDB} from './scrapers/tmdb-scraper';

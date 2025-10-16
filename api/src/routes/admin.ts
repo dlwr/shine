@@ -1,4 +1,4 @@
-import {and, eq, getDatabase, not, sql, type Environment} from 'db';
+import {and, eq, getDatabase, not, type Environment} from 'db';
 import {articleLinks} from 'db/schema/article-links';
 import {awardCategories} from 'db/schema/award-categories';
 import {awardCeremonies} from 'db/schema/award-ceremonies';
@@ -13,13 +13,6 @@ import {Hono} from 'hono';
 import {authMiddleware} from '../auth';
 import {sanitizeText} from '../middleware/sanitizer';
 import {AdminService} from '../services';
-
-type MovieDatabaseTranslation = {
-	iso_639_1: string;
-	data?: {
-		title?: string;
-	};
-};
 
 type TMDBMovieImages = {
 	id: number;

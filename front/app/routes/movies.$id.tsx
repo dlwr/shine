@@ -3,6 +3,12 @@ import {Form, redirect} from 'react-router';
 import type {Route} from './+types/movies.$id';
 import {Button} from '@/components/ui/button';
 
+type CloudflareContext = {
+	env?: {
+		PUBLIC_API_URL?: string;
+	};
+};
+
 type MovieDetailData = {
 	uid: string;
 	year: number;
@@ -484,9 +490,9 @@ export async function loader({
 	request,
 }: Route.LoaderArgs): Promise<LoaderData> {
 	try {
-		const apiUrl =
-			(context.cloudflare as any)?.env?.PUBLIC_API_URL ??
-			'http://localhost:8787';
+		const cloudflareEnv = (context.cloudflare as CloudflareContext | undefined)
+			?.env;
+		const apiUrl = cloudflareEnv?.PUBLIC_API_URL ?? 'http://localhost:8787';
 		const response = await fetch(`${apiUrl}/movies/${params.id}`, {
 			signal: request.signal, // React Router v7推奨：abortシグナル
 		});
@@ -517,9 +523,9 @@ export async function loader({
 
 export async function action({context, params, request}: Route.ActionArgs) {
 	try {
-		const apiUrl =
-			(context.cloudflare as any)?.env?.PUBLIC_API_URL ??
-			'http://localhost:8787';
+		const cloudflareEnv = (context.cloudflare as CloudflareContext | undefined)
+			?.env;
+		const apiUrl = cloudflareEnv?.PUBLIC_API_URL ?? 'http://localhost:8787';
 		const formData = await request.formData();
 
 		const url = formData.get('url') as string;

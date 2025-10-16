@@ -1,6 +1,22 @@
 export default {
-	useTabs: true,
+	bracketSpacing: false,
 	singleQuote: true,
-	printWidth: 100,
-	trailingComma: 'all',
+	bracketSameLine: true,
+	trailingComma: 'es5',
+	printWidth: 80,
+	arrowParens: 'avoid',
+	overrides: [
+		{
+			files: ['*.code-workspace'],
+			options: {
+				parser: 'json-stringify',
+			},
+		},
+		{
+			files: ['*.ts', '*.tsx'],
+			options: {
+				trailingComma: 'all',
+			},
+		},
+	],
 };

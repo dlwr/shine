@@ -3,6 +3,15 @@ import {vi} from 'vitest';
 import React from 'react';
 import '@testing-library/jest-dom';
 
+type DomLikeGlobal = typeof globalThis & {
+	window?: Window & typeof globalThis;
+	HTMLFormElement?: typeof HTMLFormElement;
+	HTMLDialogElement?: unknown;
+	ResizeObserver?: unknown;
+};
+
+const domGlobal = globalThis as DomLikeGlobal;
+
 // Ensure React is available globally for JSX
 globalThis.React = React;
 
@@ -24,25 +33,24 @@ if (globalThis.crypto) {
 // Mock HTMLFormElement.prototype.requestSubmit for jsdom
 // This mock needs to be available globally for all test environments
 if (
-	(globalThis as any).window !== undefined &&
-	(globalThis as any).HTMLFormElement &&
-	!(globalThis as any).HTMLFormElement.prototype.requestSubmit
+	domGlobal.window !== undefined &&
+	domGlobal.HTMLFormElement &&
+	!domGlobal.HTMLFormElement.prototype.requestSubmit
 ) {
-	Object.defineProperty(
-		(globalThis as any).HTMLFormElement.prototype,
-		'requestSubmit',
-		{
-			value(this: HTMLFormElement, submitter?: any) {
-				const submitEvent = new Event('submit', {
-					bubbles: true,
-					cancelable: true,
-				});
-				if (submitter) {
-					(submitEvent as any).submitter = submitter;
-				}
+	type SubmitEventLike = Event & { submitter?: HTMLElement | null };
 
-				this.dispatchEvent(submitEvent);
-			},
+	Object.defineProperty(domGlobal.HTMLFormElement.prototype, 'requestSubmit', {
+		value(this: HTMLFormElement, submitter?: HTMLElement | null) {
+			const submitEvent = new Event('submit', {
+				bubbles: true,
+				cancelable: true,
+			}) as SubmitEventLike;
+			if (submitter) {
+				submitEvent.submitter = submitter;
+			}
+
+			this.dispatchEvent(submitEvent);
+		},
 			writable: true,
 			configurable: true,
 		},
@@ -50,7 +58,7 @@ if (
 }
 
 // Mock HTMLDialogElement for jsdom
-if ((globalThis as any).window && !(globalThis as any).HTMLDialogElement) {
+if (domGlobal.window && !domGlobal.HTMLDialogElement) {
 	class MockHTMLDialogElement {
 		open = false;
 		returnValue = '';
@@ -72,16 +80,17 @@ if ((globalThis as any).window && !(globalThis as any).HTMLDialogElement) {
 			// Dispatch close event
 		}
 
-		dispatchEvent(_event: Event) {
-			// Mock implementation
+		dispatchEvent(event: Event) {
+			void event;
+			return true;
 		}
 	}
 
-	(globalThis as any).HTMLDialogElement = MockHTMLDialogElement;
+	domGlobal.HTMLDialogElement = MockHTMLDialogElement;
 }
 
 // Mock ResizeObserver
-if (!(globalThis as any).ResizeObserver) {
+if (!domGlobal.ResizeObserver) {
 	class MockResizeObserver {
 		observe() {
 			// Mock implementation
@@ -96,11 +105,11 @@ if (!(globalThis as any).ResizeObserver) {
 		}
 	}
 
-	(globalThis as any).ResizeObserver = MockResizeObserver;
+	domGlobal.ResizeObserver = MockResizeObserver;
 }
 
 // Window.locationのモック（テスト環境用）
-if ((globalThis as any).window !== undefined) {
+if (domGlobal.window !== undefined) {
 	Object.defineProperty(globalThis, 'location', {
 		value: {
 			href: 'http://localhost:3000/',
