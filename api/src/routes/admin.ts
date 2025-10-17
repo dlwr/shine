@@ -207,9 +207,9 @@ adminRoutes.put('/movies/:id', authMiddleware, async (c) => {
 			return c.json({error: 'Movie not found'}, 404);
 		}
 
-		const updateData: any = {
-			updatedAt: Math.floor(Date.now() / 1000),
-		};
+	const updateData: Partial<typeof movies.$inferInsert> = {
+		updatedAt: Math.floor(Date.now() / 1000),
+	};
 
 		// Validate year if provided
 		if (year !== undefined) {
@@ -1262,7 +1262,7 @@ adminRoutes.post(
 
 				// Update target movie with merged metadata (preserve existing if target has data)
 
-				const updateData: any = {
+				const updateData: Partial<typeof movies.$inferInsert> = {
 					updatedAt: Math.floor(Date.now() / 1000),
 				};
 

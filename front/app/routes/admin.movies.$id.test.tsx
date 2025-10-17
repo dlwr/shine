@@ -8,8 +8,6 @@ type AdminMovieEditMetaArgs = Parameters<typeof meta>[0];
 type AdminMovieEditComponentProps = Parameters<typeof AdminMovieEdit>[0];
 type AdminMovieEditMatch = AdminMovieEditComponentProps['matches'][number];
 
-const cast = <T>(value: unknown): T => value as T;
-
 // LocalStorageのモック
 const mockLocalStorage = {
 	getItem: vi.fn(),

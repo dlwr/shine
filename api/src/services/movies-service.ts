@@ -13,7 +13,7 @@ import type {MovieSelection, SearchOptions} from './types';
 export class MoviesService extends BaseService {
 	private readonly cache = new EdgeCache();
 
-	private executeQuery(query: any): any {
+	private executeQuery<T>(query: T): T {
 		return query;
 	}
 

@@ -5,12 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Route } from '../../.react-router/types/app/routes/+types/admin.login';
 import AdminLogin, { action, meta } from './admin.login';
 
-type AdminLoginActionArgs = Parameters<typeof action>[0];
-type AdminLoginMetaArgs = Parameters<typeof meta>[0];
-type AdminLoginComponentProps = Parameters<typeof AdminLogin>[0];
 type AdminLoginMatch = AdminLoginComponentProps['matches'][number];
-
-const cast = <T>(value: unknown): T => value as T;
 
 // UseNavigateのモック
 const mockNavigate = vi.fn();

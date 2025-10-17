@@ -5,7 +5,6 @@ import {MovieCard} from '@/components/molecules/movie-card';
 import type {MovieCardMovie} from '@/components/molecules/movie-card';
 import {AdminLogin} from '@/components/molecules/admin-login';
 import {LanguageSelector} from '@/components/molecules/language-selector';
-import type {MovieCardMovie} from '@/components/molecules/movie-card';
 
 type HighlightedMovies = {
 	daily?: MovieCardMovie;
@@ -270,8 +269,6 @@ function Movies({
 	const [reselectLoading, setReselectLoading] = useState<
 		Record<string, boolean>
 	>({});
-	const highlightedMovies: HighlightedMovies = movies ?? {};
-
 	const handleReselect = async (type: string) => {
 		if (!adminToken) {
 			alert(

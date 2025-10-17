@@ -3,7 +3,7 @@ import {fireEvent, render, screen} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import AdminMovies, {loader, meta} from './admin.movies';
-// Import type { Route } from './+types/admin.movies';
+import type {Route} from './+types/admin.movies';
 
 // UseSearchParamsのモック
 const mockSearchParameters = new URLSearchParams();
@@ -38,6 +38,79 @@ const createMockContext = (apiUrl = 'http://localhost:8787') => ({
 });
 
 // 映画リストのモックデータ
+const cast = <T,>(value: unknown): T => value as T;
+
+type LoaderResult = Awaited<ReturnType<typeof loader>>;
+type LoaderArgs = Route.LoaderArgs;
+type MetaArgs = Route.MetaArgs;
+type ComponentProps = Route.ComponentProps;
+type Matches = ComponentProps['matches'];
+
+const createLoaderArgs = (
+	args: Pick<LoaderArgs, 'context' | 'request'> &
+		Partial<Omit<LoaderArgs, 'context' | 'request'>>,
+): LoaderArgs =>
+	cast<LoaderArgs>({
+		params: {},
+		matches: [],
+		...args,
+	});
+
+const createMetaArgs = (data: MetaArgs['data']): MetaArgs =>
+	cast<MetaArgs>({
+		data,
+		params: {},
+		location: {
+			pathname: '/admin/movies',
+			search: '',
+			hash: '',
+			state: null,
+			key: 'test',
+		},
+		matches: [],
+	});
+
+const createLoaderData = (
+	overrides: Partial<LoaderResult> = {},
+): LoaderResult => ({
+	apiUrl: 'http://localhost:8787',
+	page: 1,
+	limit: 20,
+	search: '',
+	movies: [],
+	pagination: {
+		page: 1,
+		limit: 20,
+		totalCount: 0,
+		totalPages: 0,
+	},
+	...overrides,
+});
+
+const createMatches = (): Matches =>
+	cast<Matches>([
+		{
+			id: 'root',
+			params: {},
+			pathname: '/',
+			data: undefined,
+			handle: undefined,
+		},
+		{
+			id: 'routes/admin.movies',
+			params: {},
+			pathname: '/admin/movies',
+			data: undefined,
+			handle: undefined,
+		},
+	]);
+
+const createParams = (): ComponentProps['params'] =>
+	cast<ComponentProps['params']>({});
+
+const createActionData = (): ComponentProps['actionData'] =>
+	cast<ComponentProps['actionData']>({});
+
 describe('AdminMovies Component', () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
@@ -53,10 +126,12 @@ describe('AdminMovies Component', () => {
 			);
 			const request = {url} as unknown as Request;
 
-			const result = (await loader({
-				context,
-				request,
-			} as any)) as any;
+			const result = await loader(
+				createLoaderArgs({
+					context,
+					request,
+				}),
+			);
 
 			expect(result).toEqual({
 				apiUrl: 'http://localhost:8787',
@@ -78,10 +153,12 @@ describe('AdminMovies Component', () => {
 			const url = new URL('http://localhost:3000/admin/movies');
 			const request = {url} as unknown as Request;
 
-			const result = (await loader({
-				context,
-				request,
-			} as any)) as any;
+			const result = await loader(
+				createLoaderArgs({
+					context,
+					request,
+				}),
+			);
 
 			expect(result).toEqual({
 				apiUrl: 'http://localhost:8787',
@@ -103,10 +180,12 @@ describe('AdminMovies Component', () => {
 			const url = new URL('http://localhost:3000/admin/movies');
 			const request = {url} as unknown as Request;
 
-			const result = (await loader({
-				context,
-				request,
-			} as any)) as any;
+			const result = await loader(
+				createLoaderArgs({
+					context,
+					request,
+				}),
+			);
 
 			expect(result.apiUrl).toBe('https://api.example.com');
 		});
@@ -114,7 +193,7 @@ describe('AdminMovies Component', () => {
 
 	describe('meta', () => {
 		it('正しいメタデータを返す', () => {
-			const result = meta({data: undefined} as any);
+			const result = meta(createMetaArgs(undefined));
 
 			expect(result).toEqual([
 				{title: '映画管理 | SHINE Admin'},
@@ -128,39 +207,10 @@ describe('AdminMovies Component', () => {
 			render(
 				<MemoryRouter initialEntries={['/admin/movies']}>
 					<AdminMovies
-						loaderData={
-							{
-								apiUrl: 'http://localhost:8787',
-								page: 1,
-								limit: 20,
-								search: '',
-								movies: [],
-								pagination: {
-									page: 1,
-									limit: 20,
-									totalCount: 0,
-									totalPages: 0,
-								},
-							} as any
-						}
-						actionData={{} as any}
-						params={{}}
-						matches={[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: {} as any,
-								handle: undefined,
-							},
-							{
-								id: 'routes/admin.movies',
-								params: {},
-								pathname: '/admin/movies',
-								data: {} as any,
-								handle: undefined,
-							},
-						]}
+						loaderData={createLoaderData()}
+						actionData={createActionData()}
+						params={createParams()}
+						matches={createMatches()}
 					/>
 				</MemoryRouter>,
 			);
@@ -191,9 +241,8 @@ describe('AdminMovies Component', () => {
 				<MemoryRouter initialEntries={['/admin/movies']}>
 					<AdminMovies
 						loaderData={
-							{
+							createLoaderData({
 								apiUrl: 'http://localhost:8787',
-								page: 1,
 								limit: 20,
 								search: '',
 								movies: [],
@@ -203,26 +252,11 @@ describe('AdminMovies Component', () => {
 									totalCount: 0,
 									totalPages: 0,
 								},
-							} as any
+							})
 						}
-						actionData={{} as any}
-						params={{}}
-						matches={[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: {} as any,
-								handle: undefined,
-							},
-							{
-								id: 'routes/admin.movies',
-								params: {},
-								pathname: '/admin/movies',
-								data: {} as any,
-								handle: undefined,
-							},
-						]}
+						actionData={createActionData()}
+						params={createParams()}
+						matches={createMatches()}
 					/>
 				</MemoryRouter>,
 			);
@@ -236,38 +270,11 @@ describe('AdminMovies Component', () => {
 				<MemoryRouter initialEntries={['/admin/movies']}>
 					<AdminMovies
 						loaderData={
-							{
-								apiUrl: 'http://localhost:8787',
-								page: 1,
-								limit: 20,
-								search: '',
-								movies: [],
-								pagination: {
-									page: 1,
-									limit: 20,
-									totalCount: 0,
-									totalPages: 0,
-								},
-							} as any
+							createLoaderData()
 						}
-						actionData={{} as any}
-						params={{}}
-						matches={[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: {} as any,
-								handle: undefined,
-							},
-							{
-								id: 'routes/admin.movies',
-								params: {},
-								pathname: '/admin/movies',
-								data: {} as any,
-								handle: undefined,
-							},
-						]}
+						actionData={createActionData()}
+						params={createParams()}
+						matches={createMatches()}
 					/>
 				</MemoryRouter>,
 			);
@@ -303,38 +310,11 @@ describe('AdminMovies Component', () => {
 				<MemoryRouter initialEntries={['/admin/movies']}>
 					<AdminMovies
 						loaderData={
-							{
-								apiUrl: 'http://localhost:8787',
-								page: 1,
-								limit: 20,
-								search: '',
-								movies: [],
-								pagination: {
-									page: 1,
-									limit: 20,
-									totalCount: 0,
-									totalPages: 0,
-								},
-							} as any
+							createLoaderData()
 						}
-						actionData={{} as any}
-						params={{}}
-						matches={[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: {} as any,
-								handle: undefined,
-							},
-							{
-								id: 'routes/admin.movies',
-								params: {},
-								pathname: '/admin/movies',
-								data: {} as any,
-								handle: undefined,
-							},
-						]}
+						actionData={createActionData()}
+						params={createParams()}
+						matches={createMatches()}
 					/>
 				</MemoryRouter>,
 			);
@@ -360,38 +340,11 @@ describe('AdminMovies Component', () => {
 				<MemoryRouter initialEntries={['/admin/movies']}>
 					<AdminMovies
 						loaderData={
-							{
-								apiUrl: 'http://localhost:8787',
-								page: 1,
-								limit: 20,
-								search: '',
-								movies: [],
-								pagination: {
-									page: 1,
-									limit: 20,
-									totalCount: 0,
-									totalPages: 0,
-								},
-							} as any
+							createLoaderData()
 						}
-						actionData={{} as any}
-						params={{}}
-						matches={[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: {} as any,
-								handle: undefined,
-							},
-							{
-								id: 'routes/admin.movies',
-								params: {},
-								pathname: '/admin/movies',
-								data: {} as any,
-								handle: undefined,
-							},
-						]}
+						actionData={createActionData()}
+						params={createParams()}
+						matches={createMatches()}
 					/>
 				</MemoryRouter>,
 			);

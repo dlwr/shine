@@ -308,11 +308,11 @@ describe('External API Integration', () => {
 		);
 
 		const response = await fetch('https://api.themoviedb.org/3/movie/12345');
-		const data = await response.json();
+		const data: typeof mockTmdbResponse = await response.json();
 
 		expect(data).toEqual(mockTmdbResponse);
-		expect((data as any).title).toBe('Test Movie');
-		expect((data as any).poster_path).toBe('/test-poster.jpg');
+		expect(data.title).toBe('Test Movie');
+		expect(data.poster_path).toBe('/test-poster.jpg');
 	});
 
 	it('should handle TMDb API errors gracefully', async () => {

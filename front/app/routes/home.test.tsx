@@ -2,6 +2,7 @@ import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {render, screen} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Home, {loader, meta} from './home';
+import type {Route} from './+types/home';
 
 // Cloudflare環境のモック
 const createMockContext = (apiUrl = 'http://localhost:8787') => ({
@@ -58,6 +59,77 @@ const mockMovies = {
 // Fetchのモック
 globalThis.fetch = vi.fn();
 
+const cast = <T,>(value: unknown): T => value as T;
+
+type LoaderResult = Awaited<ReturnType<typeof loader>>;
+type LoaderArgs = Route.LoaderArgs;
+type MetaArgs = Route.MetaArgs;
+type ComponentProps = Route.ComponentProps;
+
+const createLoaderArgs = (
+	context: LoaderArgs['context'],
+	request: LoaderArgs['request'],
+	overrides: Partial<Omit<LoaderArgs, 'context' | 'request'>> = {},
+): LoaderArgs =>
+	cast<LoaderArgs>({
+		context,
+		request,
+		params: {},
+		matches: [],
+		...overrides,
+	});
+
+const createMetaArgs = (data: MetaArgs['data']): MetaArgs =>
+	cast<MetaArgs>({
+		data,
+		params: {},
+		location: {
+			pathname: '/',
+			search: '',
+			hash: '',
+			state: null,
+			key: 'home-test',
+		},
+		matches: [],
+	});
+
+const createLoaderData = (
+	overrides: Partial<LoaderResult> = {},
+): LoaderResult => ({
+	movies: mockMovies,
+	error: undefined,
+	locale: 'ja',
+	apiUrl: 'http://localhost:8787',
+	shouldFetchOnClient: undefined,
+	...overrides,
+});
+
+const createParams = (): ComponentProps['params'] =>
+	cast<ComponentProps['params']>({});
+
+const createMatches = (
+	loaderData: LoaderResult,
+): ComponentProps['matches'] =>
+	cast<ComponentProps['matches']>([
+		{
+			id: 'root',
+			params: {},
+			pathname: '/',
+			data: undefined,
+			handle: undefined,
+		},
+		{
+			id: 'routes/home',
+			params: {},
+			pathname: '/',
+			data: loaderData,
+			handle: undefined,
+		},
+	]);
+
+const createActionData = (): ComponentProps['actionData'] =>
+	cast<ComponentProps['actionData']>(undefined);
+
 describe('Home Component', () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
@@ -73,20 +145,7 @@ describe('Home Component', () => {
 
 			const context = createMockContext();
 			const request = new Request('http://localhost:3000/');
-			const result = await loader({
-				context,
-				request,
-				params: {},
-				matches: [
-					{
-						id: 'root',
-						params: {},
-						pathname: '/',
-						data: undefined,
-						handle: undefined,
-					},
-				],
-			} as any);
+			const result = await loader(createLoaderArgs(context, request));
 
 			expect(mockFetch).toHaveBeenCalledWith(
 				expect.stringMatching(
@@ -113,20 +172,7 @@ describe('Home Component', () => {
 
 			const context = createMockContext();
 			const request = new Request('http://localhost:3000/');
-			const result = await loader({
-				context,
-				request,
-				params: {},
-				matches: [
-					{
-						id: 'root',
-						params: {},
-						pathname: '/',
-						data: undefined,
-						handle: undefined,
-					},
-				],
-			} as any);
+			const result = await loader(createLoaderArgs(context, request));
 
 			expect(result).toEqual({
 				movies: undefined,
@@ -146,20 +192,7 @@ describe('Home Component', () => {
 
 			const context = createMockContext();
 			const request = new Request('http://localhost:3000/');
-			const result = await loader({
-				context,
-				request,
-				params: {},
-				matches: [
-					{
-						id: 'root',
-						params: {},
-						pathname: '/',
-						data: undefined,
-						handle: undefined,
-					},
-				],
-			} as any);
+			const result = await loader(createLoaderArgs(context, request));
 
 			expect(result).toEqual({
 				movies: undefined,
@@ -173,7 +206,7 @@ describe('Home Component', () => {
 
 	describe('meta', () => {
 		it('正しいメタデータを返す', () => {
-			const result = meta({data: undefined} as any);
+			const result = meta(createMetaArgs(undefined));
 
 			expect(result).toEqual([
 				{title: 'SHINE'},
@@ -187,36 +220,14 @@ describe('Home Component', () => {
 
 	describe('Component', () => {
 		it('映画選択データが正常に表示される', () => {
-			const loaderData = {
-				movies: mockMovies,
-				error: undefined,
-				locale: 'ja',
-				apiUrl: 'http://localhost:8787',
-			};
+			const loaderData = createLoaderData();
 
 			render(
 				<Home
-					loaderData={loaderData as any}
-					actionData={undefined}
-					params={{}}
-					matches={
-						[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: undefined,
-								handle: undefined,
-							},
-							{
-								id: 'routes/home',
-								params: {},
-								pathname: '/',
-								data: loaderData,
-								handle: undefined,
-							},
-						] as any
-					}
+					loaderData={loaderData}
+					actionData={createActionData()}
+					params={createParams()}
+					matches={createMatches(loaderData)}
 				/>,
 			);
 
@@ -232,40 +243,21 @@ describe('Home Component', () => {
 		});
 
 		it('エラー状態が正常に表示される', () => {
-			const loaderData = {
+			const loaderData = createLoaderData({
 				movies: {
 					daily: {uid: '1', title: 'The Shawshank Redemption', year: 1994},
 					weekly: {uid: '1', title: 'The Shawshank Redemption', year: 1994},
 					monthly: {uid: '1', title: 'The Shawshank Redemption', year: 1994},
 				},
 				error: 'APIへの接続に失敗しました',
-				locale: 'ja',
-				apiUrl: 'http://localhost:8787',
-			};
+			});
 
 			render(
 				<Home
-					loaderData={loaderData as any}
-					actionData={undefined}
-					params={{}}
-					matches={
-						[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: undefined,
-								handle: undefined,
-							},
-							{
-								id: 'routes/home',
-								params: {},
-								pathname: '/',
-								data: loaderData,
-								handle: undefined,
-							},
-						] as any
-					}
+					loaderData={loaderData}
+					actionData={createActionData()}
+					params={createParams()}
+					matches={createMatches(loaderData)}
 				/>,
 			);
 
@@ -277,36 +269,14 @@ describe('Home Component', () => {
 		});
 
 		it('受賞情報がバッジとして表示される', () => {
-			const loaderData = {
-				movies: mockMovies,
-				error: undefined,
-				locale: 'ja',
-				apiUrl: 'http://localhost:8787',
-			};
+			const loaderData = createLoaderData();
 
 			render(
 				<Home
-					loaderData={loaderData as any}
-					actionData={undefined}
-					params={{}}
-					matches={
-						[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: undefined,
-								handle: undefined,
-							},
-							{
-								id: 'routes/home',
-								params: {},
-								pathname: '/',
-								data: loaderData,
-								handle: undefined,
-							},
-						] as any
-					}
+					loaderData={loaderData}
+					actionData={createActionData()}
+					params={createParams()}
+					matches={createMatches(loaderData)}
 				/>,
 			);
 
@@ -325,36 +295,14 @@ describe('Home Component', () => {
 		});
 
 		it('映画詳細ページへのリンクが正しく設定される', () => {
-			const loaderData = {
-				movies: mockMovies,
-				error: undefined,
-				locale: 'ja',
-				apiUrl: 'http://localhost:8787',
-			};
+			const loaderData = createLoaderData();
 
 			render(
 				<Home
-					loaderData={loaderData as any}
-					actionData={undefined}
-					params={{}}
-					matches={
-						[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: undefined,
-								handle: undefined,
-							},
-							{
-								id: 'routes/home',
-								params: {},
-								pathname: '/',
-								data: loaderData,
-								handle: undefined,
-							},
-						] as any
-					}
+					loaderData={loaderData}
+					actionData={createActionData()}
+					params={createParams()}
+					matches={createMatches(loaderData)}
 				/>,
 			);
 

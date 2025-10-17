@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 import {render, screen} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import MovieDetail, {action, loader, meta} from './movies.$id';
+import type {Route} from './+types/movies.$id';
 
 // Cloudflare環境のモック
 const createMockContext = (apiUrl = 'http://localhost:8787') => ({
@@ -80,6 +81,92 @@ const mockMovieDetail = {
 // Fetchのモック
 globalThis.fetch = vi.fn();
 
+const cast = <T,>(value: unknown): T => value as T;
+
+type LoaderResult = Awaited<ReturnType<typeof loader>>;
+type LoaderArgs = Route.LoaderArgs;
+type MetaArgs = Route.MetaArgs;
+type ComponentProps = Route.ComponentProps;
+type Matches = ComponentProps['matches'];
+type ActionArgs = Route.ActionArgs;
+
+const createLoaderArgs = (
+	context: LoaderArgs['context'],
+	request: LoaderArgs['request'],
+	params: LoaderArgs['params'],
+	overrides: Partial<Omit<LoaderArgs, 'context' | 'request' | 'params'>> = {},
+): LoaderArgs =>
+	cast<LoaderArgs>({
+		context,
+		request,
+		params,
+		matches: [],
+		...overrides,
+	});
+
+const createMetaArgs = (
+	data: MetaArgs['data'],
+	params: MetaArgs['params'],
+): MetaArgs =>
+	cast<MetaArgs>({
+		data,
+		params,
+		location: {
+			pathname: '/movies/movie-123',
+			search: '',
+			hash: '',
+			state: undefined,
+			key: 'movies-id-test',
+		},
+		matches: [],
+	});
+
+const createLoaderData = (
+	overrides: Partial<LoaderResult> = {},
+): LoaderResult => ({
+	movieDetail: mockMovieDetail,
+	...overrides,
+});
+
+const createMatches = (
+	loaderData: LoaderResult,
+	params: ComponentProps['params'],
+): Matches =>
+	cast<Matches>([
+		{
+			id: 'root',
+			params: {},
+			pathname: '/',
+			data: undefined,
+			handle: undefined,
+		},
+		{
+			id: 'routes/movies.$id',
+			params,
+			pathname: `/movies/${params.id ?? ''}`,
+			data: loaderData,
+			handle: undefined,
+		},
+	]);
+
+const createParams = (id: string): ComponentProps['params'] =>
+	cast<ComponentProps['params']>({id});
+
+const createActionData = (): ComponentProps['actionData'] =>
+	cast<ComponentProps['actionData']>(undefined);
+
+const createActionArgs = (
+	context: ActionArgs['context'],
+	request: ActionArgs['request'],
+	params: ActionArgs['params'],
+): ActionArgs =>
+	cast<ActionArgs>({
+		context,
+		request,
+		params,
+		matches: [],
+	});
+
 describe('MovieDetail Component', () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
@@ -96,27 +183,14 @@ describe('MovieDetail Component', () => {
 			const context = createMockContext();
 			const parameters = {id: 'movie-123'};
 			const request = {signal: undefined} as unknown as Request;
-			const result = await loader({
-				context,
-				request,
-				params: parameters,
-				matches: [
-					{
-						id: 'root',
-						params: {},
-						pathname: '/',
-						data: undefined,
-						handle: undefined,
-					},
-					{
-						id: 'routes/movies.$id',
-						params: {id: 'movie-123'},
-						pathname: '/movies/movie-123',
-						data: undefined,
-						handle: undefined,
-					},
-				],
-			} as any);
+			const result = await loader(
+				createLoaderArgs(context, request, parameters, {
+					matches: createMatches(
+						createLoaderData(),
+						createParams(parameters.id),
+					),
+				}),
+			);
 
 			expect(mockFetch).toHaveBeenCalledWith(
 				'http://localhost:8787/movies/movie-123',
@@ -139,27 +213,14 @@ describe('MovieDetail Component', () => {
 			const context = createMockContext();
 			const parameters = {id: 'non-existent'};
 			const request = {signal: undefined} as unknown as Request;
-			const result = await loader({
-				context,
-				request,
-				params: parameters,
-				matches: [
-					{
-						id: 'root',
-						params: {},
-						pathname: '/',
-						data: undefined,
-						handle: undefined,
-					},
-					{
-						id: 'routes/movies.$id',
-						params: {id: 'non-existent'},
-						pathname: '/movies/non-existent',
-						data: undefined,
-						handle: undefined,
-					},
-				],
-			} as any);
+			const result = await loader(
+				createLoaderArgs(context, request, parameters, {
+					matches: createMatches(
+						createLoaderData(),
+						createParams(parameters.id),
+					),
+				}),
+			);
 
 			expect(result).toEqual({
 				error: '映画が見つかりませんでした',
@@ -174,27 +235,14 @@ describe('MovieDetail Component', () => {
 			const context = createMockContext();
 			const parameters = {id: 'movie-123'};
 			const request = {signal: undefined} as unknown as Request;
-			const result = await loader({
-				context,
-				request,
-				params: parameters,
-				matches: [
-					{
-						id: 'root',
-						params: {},
-						pathname: '/',
-						data: undefined,
-						handle: undefined,
-					},
-					{
-						id: 'routes/movies.$id',
-						params: {id: 'movie-123'},
-						pathname: '/movies/movie-123',
-						data: undefined,
-						handle: undefined,
-					},
-				],
-			} as any);
+			const result = await loader(
+				createLoaderArgs(context, request, parameters, {
+					matches: createMatches(
+						createLoaderData(),
+						createParams(parameters.id),
+					),
+				}),
+			);
 
 			expect(result).toEqual({
 				error: 'APIへの接続に失敗しました',
@@ -209,33 +257,9 @@ describe('MovieDetail Component', () => {
 				movieDetail: mockMovieDetail,
 			};
 
-			const result = meta({
-				data: loaderData,
-				location: {
-					pathname: '/movies/movie-123',
-					search: '',
-					hash: '',
-					state: undefined,
-					key: '',
-				},
-				params: {id: 'movie-123'},
-				matches: [
-					{
-						id: 'root',
-						params: {},
-						pathname: '/',
-						data: undefined,
-						handle: undefined,
-					},
-					{
-						id: 'routes/movies.$id',
-						params: {id: 'movie-123'},
-						pathname: '/movies/movie-123',
-						data: undefined,
-						handle: undefined,
-					},
-				],
-			} as any);
+			const result = meta(
+				createMetaArgs(loaderData, {id: 'movie-123'}),
+			);
 
 			expect(result).toEqual([
 				{title: 'パルム・ドール受賞作品 (2023) | SHINE'},
@@ -253,33 +277,9 @@ describe('MovieDetail Component', () => {
 				status: 404,
 			};
 
-			const result = meta({
-				data: loaderData,
-				location: {
-					pathname: '/movies/movie-123',
-					search: '',
-					hash: '',
-					state: undefined,
-					key: '',
-				},
-				params: {id: 'movie-123'},
-				matches: [
-					{
-						id: 'root',
-						params: {},
-						pathname: '/',
-						data: undefined,
-						handle: undefined,
-					},
-					{
-						id: 'routes/movies.$id',
-						params: {id: 'movie-123'},
-						pathname: '/movies/movie-123',
-						data: undefined,
-						handle: undefined,
-					},
-				],
-			} as any);
+			const result = meta(
+				createMetaArgs(loaderData, {id: 'movie-123'}),
+			);
 
 			expect(result).toEqual([
 				{title: '映画が見つかりません | SHINE'},
@@ -293,33 +293,15 @@ describe('MovieDetail Component', () => {
 
 	describe('Component', () => {
 		it('映画詳細データが正常に表示される', () => {
-			const loaderData = {
-				movieDetail: mockMovieDetail,
-			};
+			const loaderData = createLoaderData();
+			const params = createParams('movie-123');
 
 			render(
 				<MovieDetail
-					loaderData={loaderData as any}
-					actionData={undefined}
-					params={{id: 'movie-123'}}
-					matches={
-						[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: undefined,
-								handle: undefined,
-							},
-							{
-								id: 'routes/movies.$id',
-								params: {id: 'movie-123'},
-								pathname: '/movies/movie-123',
-								data: loaderData,
-								handle: undefined,
-							},
-						] as any
-					}
+					loaderData={loaderData}
+					actionData={createActionData()}
+					params={params}
+					matches={createMatches(loaderData, params)}
 				/>,
 			);
 
@@ -345,33 +327,15 @@ describe('MovieDetail Component', () => {
 		});
 
 		it('受賞・ノミネート情報が正しく表示される', () => {
-			const loaderData = {
-				movieDetail: mockMovieDetail,
-			};
+			const loaderData = createLoaderData();
+			const params = createParams('movie-123');
 
 			render(
 				<MovieDetail
-					loaderData={loaderData as any}
-					actionData={undefined}
-					params={{id: 'movie-123'}}
-					matches={
-						[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: undefined,
-								handle: undefined,
-							},
-							{
-								id: 'routes/movies.$id',
-								params: {id: 'movie-123'},
-								pathname: '/movies/movie-123',
-								data: loaderData,
-								handle: undefined,
-							},
-						] as any
-					}
+					loaderData={loaderData}
+					actionData={createActionData()}
+					params={params}
+					matches={createMatches(loaderData, params)}
 				/>,
 			);
 
@@ -391,34 +355,18 @@ describe('MovieDetail Component', () => {
 		});
 
 		it('404エラー状態が正常に表示される', () => {
-			const loaderData = {
+			const loaderData = cast<LoaderResult>({
 				error: '映画が見つかりませんでした',
 				status: 404,
-			};
+			});
+			const params = createParams('movie-123');
 
 			render(
 				<MovieDetail
-					loaderData={loaderData as any}
-					actionData={undefined}
-					params={{id: 'movie-123'}}
-					matches={
-						[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: undefined,
-								handle: undefined,
-							},
-							{
-								id: 'routes/movies.$id',
-								params: {id: 'movie-123'},
-								pathname: '/movies/movie-123',
-								data: loaderData,
-								handle: undefined,
-							},
-						] as any
-					}
+					loaderData={loaderData}
+					actionData={createActionData()}
+					params={params}
+					matches={createMatches(loaderData, params)}
 				/>,
 			);
 
@@ -429,34 +377,18 @@ describe('MovieDetail Component', () => {
 		});
 
 		it('サーバーエラー状態が正常に表示される', () => {
-			const loaderData = {
+			const loaderData = cast<LoaderResult>({
 				error: 'APIへの接続に失敗しました',
 				status: 500,
-			};
+			});
+			const params = createParams('movie-123');
 
 			render(
 				<MovieDetail
-					loaderData={loaderData as any}
-					actionData={undefined}
-					params={{id: 'movie-123'}}
-					matches={
-						[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: undefined,
-								handle: undefined,
-							},
-							{
-								id: 'routes/movies.$id',
-								params: {id: 'movie-123'},
-								pathname: '/movies/movie-123',
-								data: loaderData,
-								handle: undefined,
-							},
-						] as any
-					}
+					loaderData={loaderData}
+					actionData={createActionData()}
+					params={params}
+					matches={createMatches(loaderData, params)}
 				/>,
 			);
 
@@ -465,33 +397,15 @@ describe('MovieDetail Component', () => {
 		});
 
 		it('ホームページへの戻るリンクが表示される', () => {
-			const loaderData = {
-				movieDetail: mockMovieDetail,
-			};
+			const loaderData = createLoaderData();
+			const params = createParams('movie-123');
 
 			render(
 				<MovieDetail
-					loaderData={loaderData as any}
-					actionData={undefined}
-					params={{id: 'movie-123'}}
-					matches={
-						[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: undefined,
-								handle: undefined,
-							},
-							{
-								id: 'routes/movies.$id',
-								params: {id: 'movie-123'},
-								pathname: '/movies/movie-123',
-								data: loaderData,
-								handle: undefined,
-							},
-						] as any
-					}
+					loaderData={loaderData}
+					actionData={createActionData()}
+					params={params}
+					matches={createMatches(loaderData, params)}
 				/>,
 			);
 
@@ -504,33 +418,15 @@ describe('MovieDetail Component', () => {
 
 	describe('記事リンク機能', () => {
 		it('記事リンクが正しく表示される', () => {
-			const loaderData = {
-				movieDetail: mockMovieDetail,
-			};
+			const loaderData = createLoaderData();
+			const params = createParams('movie-123');
 
 			render(
 				<MovieDetail
-					loaderData={loaderData as any}
-					actionData={undefined}
-					params={{id: 'movie-123'}}
-					matches={
-						[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: undefined,
-								handle: undefined,
-							},
-							{
-								id: 'routes/movies.$id',
-								params: {id: 'movie-123'},
-								pathname: '/movies/movie-123',
-								data: loaderData,
-								handle: undefined,
-							},
-						] as any
-					}
+					loaderData={loaderData}
+					actionData={createActionData()}
+					params={params}
+					matches={createMatches(loaderData, params)}
 				/>,
 			);
 
@@ -568,33 +464,15 @@ describe('MovieDetail Component', () => {
 		});
 
 		it('記事リンク投稿フォームが表示される', () => {
-			const loaderData = {
-				movieDetail: mockMovieDetail,
-			};
+			const loaderData = createLoaderData();
+			const params = createParams('movie-123');
 
 			render(
 				<MovieDetail
-					loaderData={loaderData as any}
-					actionData={undefined}
-					params={{id: 'movie-123'}}
-					matches={
-						[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: undefined,
-								handle: undefined,
-							},
-							{
-								id: 'routes/movies.$id',
-								params: {id: 'movie-123'},
-								pathname: '/movies/movie-123',
-								data: loaderData,
-								handle: undefined,
-							},
-						] as any
-					}
+					loaderData={loaderData}
+					actionData={createActionData()}
+					params={params}
+					matches={createMatches(loaderData, params)}
 				/>,
 			);
 
@@ -621,30 +499,17 @@ describe('MovieDetail Component', () => {
 			const loaderData = {
 				movieDetail: movieDetailWithoutArticles,
 			};
+			const params = createParams('movie-123');
 
 			render(
 				<MovieDetail
-					loaderData={loaderData as any}
-					actionData={undefined}
-					params={{id: 'movie-123'}}
-					matches={
-						[
-							{
-								id: 'root',
-								params: {},
-								pathname: '/',
-								data: undefined,
-								handle: undefined,
-							},
-							{
-								id: 'routes/movies.$id',
-								params: {id: 'movie-123'},
-								pathname: '/movies/movie-123',
-								data: loaderData,
-								handle: undefined,
-							},
-						] as any
-					}
+					loaderData={cast<LoaderResult>(loaderData)}
+					actionData={createActionData()}
+					params={params}
+					matches={createMatches(
+						cast<LoaderResult>(loaderData),
+						params,
+					)}
 				/>,
 			);
 
@@ -678,11 +543,9 @@ describe('MovieDetail Component', () => {
 				signal: undefined,
 			} as unknown as Request;
 
-			const result = await action({
-				context,
-				request,
-				params: parameters,
-			} as any);
+			const result = await action(
+				createActionArgs(context, request, parameters),
+			);
 
 			expect(mockFetch).toHaveBeenCalledWith(
 				'http://localhost:8787/movies/movie-123/article-links',
@@ -729,11 +592,9 @@ describe('MovieDetail Component', () => {
 				signal: undefined,
 			} as unknown as Request;
 
-			const result = await action({
-				context,
-				request,
-				params: parameters,
-			} as any);
+			const result = await action(
+				createActionArgs(context, request, parameters),
+			);
 
 			expect(result).toEqual({
 				success: false,
@@ -761,11 +622,9 @@ describe('MovieDetail Component', () => {
 				signal: undefined,
 			} as unknown as Request;
 
-			const result = await action({
-				context,
-				request,
-				params: parameters,
-			} as any);
+			const result = await action(
+				createActionArgs(context, request, parameters),
+			);
 
 			expect(result).toEqual({
 				success: false,
