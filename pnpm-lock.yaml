@@ -114,8 +114,8 @@ importers:
         specifier: ^4.8.5
         version: 4.8.5
       jose:
-        specifier: ^6.0.12
-        version: 6.0.12
+        specifier: ^6.1.0
+        version: 6.1.0
 
   front:
     dependencies:
@@ -3773,8 +3773,8 @@ packages:
     resolution: {integrity: sha512-rg9zJN+G4n2nfJl5MW3BMygZX56zKPNVEYYqq7adpmMh4Jn2QNEwhvQlFy6jPVdcod7txZtKHWnyZiA3a0zP7A==}
     hasBin: true
 
-  jose@6.0.12:
-    resolution: {integrity: sha512-T8xypXs8CpmiIi78k0E+Lk7T2zlK4zDyg+o1CZ4AkOHgDg98ogdP2BeZ61lTFKFyoEwJ9RgAgN+SdM3iPgNonQ==}
+  jose@6.1.0:
+    resolution: {integrity: sha512-TTQJyoEoKcC1lscpVDCSsVgYzUDg/0Bt3WE//WiTPK6uOCQC2KZS4MpugbMWt/zyjkopgZoXhZuCi00gLudfUA==}
 
   js-base64@3.7.7:
     resolution: {integrity: sha512-7rCnleh0z2CkXhH67J8K1Ytz0b2Y+yxTPL+/KOJoa20hfnVQ/3/T6W/KflYI4bRHRagNeXeU2bkNGI3v1oS/lw==}
@@ -8768,7 +8768,7 @@ snapshots:
 
   jiti@2.4.2: {}
 
-  jose@6.0.12: {}
+  jose@6.1.0: {}
 
   js-base64@3.7.7: {}
 
