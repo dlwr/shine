@@ -82,6 +82,81 @@ adminRoutes.get('/movies', authMiddleware, async c => {
   }
 });
 
+adminRoutes.post('/movies', authMiddleware, async c => {
+  try {
+    const adminService = new AdminService(c.env);
+
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({error: 'Invalid request body'}, 400);
+    }
+
+    const {imdbId, refreshData = true} = (body ?? {}) as {
+      imdbId?: string;
+      refreshData?: boolean;
+    };
+
+    if (!imdbId || typeof imdbId !== 'string') {
+      return c.json({error: 'IMDb ID is required'}, 400);
+    }
+
+    const sanitizedImdbId = sanitizeText(imdbId);
+
+    const result = await adminService.createMovieFromImdbId(sanitizedImdbId, {
+      fetchTMDBData: refreshData !== false,
+    });
+
+    return c.json(
+      {
+        success: true,
+        movie: {
+          uid: result.movie.uid,
+          imdbId: result.movie.imdbId ?? undefined,
+          tmdbId: result.movie.tmdbId ?? undefined,
+          year: result.movie.year ?? undefined,
+          originalLanguage: result.movie.originalLanguage,
+        },
+        imports: {
+          translationsAdded: result.translationsAdded,
+          postersAdded: result.postersAdded,
+        },
+      },
+      201,
+    );
+  } catch (error) {
+    console.error('Error creating movie:', error);
+
+    if (error instanceof Error) {
+      if (error.message === 'IMDb ID is required') {
+        return c.json({error: 'IMDb ID is required'}, 400);
+      }
+
+      if (error.message === 'Invalid IMDb ID format') {
+        return c.json({error: "IMDB ID must be in format 'tt1234567'"}, 400);
+      }
+
+      if (error.message === 'IMDb ID already exists for another movie') {
+        return c.json({error: 'IMDB ID is already used by another movie'}, 409);
+      }
+
+      if (error.message === 'TMDB data not found for IMDb ID') {
+        return c.json(
+          {error: 'Could not find TMDB data for that IMDb ID'},
+          404,
+        );
+      }
+
+      if (error.message === 'TMDB ID already exists for another movie') {
+        return c.json({error: 'TMDB ID is already used by another movie'}, 409);
+      }
+    }
+
+    return c.json({error: 'Internal server error'}, 500);
+  }
+});
+
 // Delete movie
 adminRoutes.delete('/movies/:id', authMiddleware, async c => {
   try {

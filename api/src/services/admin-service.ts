@@ -194,6 +194,164 @@ export class AdminService extends BaseService {
     };
   }
 
+  async createMovieFromImdbId(
+    imdbId: string,
+    options: {fetchTMDBData?: boolean} = {},
+  ): Promise<{
+    movie: typeof movies.$inferSelect;
+    tmdbId?: number;
+    postersAdded: number;
+    translationsAdded: number;
+  }> {
+    const normalizedImdbId = imdbId.trim();
+
+    if (!normalizedImdbId) {
+      throw new Error('IMDb ID is required');
+    }
+
+    if (!/^tt\d+$/.test(normalizedImdbId)) {
+      throw new Error('Invalid IMDb ID format');
+    }
+
+    const existingMovie = await this.database
+      .select({uid: movies.uid})
+      .from(movies)
+      .where(eq(movies.imdbId, normalizedImdbId))
+      .limit(1);
+
+    if (existingMovie.length > 0) {
+      throw new Error('IMDb ID already exists for another movie');
+    }
+
+    const {fetchTMDBData = true} = options;
+
+    let tmdbMovieId: number | undefined;
+    let tmdbMovieData: TMDBMovieData | undefined;
+
+    if (fetchTMDBData) {
+      const tmdbData = await this.fetchTMDBDataByImdbId(normalizedImdbId);
+
+      if (!tmdbData) {
+        throw new Error('TMDB data not found for IMDb ID');
+      }
+
+      tmdbMovieId = tmdbData.tmdbId;
+      tmdbMovieData = tmdbData.movie;
+
+      if (tmdbMovieId !== undefined) {
+        const existingByTmdb = await this.database
+          .select({uid: movies.uid})
+          .from(movies)
+          .where(eq(movies.tmdbId, tmdbMovieId))
+          .limit(1);
+
+        if (existingByTmdb.length > 0) {
+          throw new Error('TMDB ID already exists for another movie');
+        }
+      }
+    }
+
+    let releaseYear: number | undefined;
+    if (tmdbMovieData?.release_date) {
+      const parsedYear = Number.parseInt(
+        tmdbMovieData.release_date.slice(0, 4),
+        10,
+      );
+      if (!Number.isNaN(parsedYear)) {
+        releaseYear = parsedYear;
+      }
+    }
+
+    const movieValues: typeof movies.$inferInsert = {
+      imdbId: normalizedImdbId,
+    };
+
+    if (tmdbMovieData?.original_language) {
+      movieValues.originalLanguage = tmdbMovieData.original_language;
+    }
+
+    if (releaseYear !== undefined) {
+      movieValues.year = releaseYear;
+    }
+
+    if (tmdbMovieId !== undefined) {
+      movieValues.tmdbId = tmdbMovieId;
+    }
+
+    const [newMovie] = await this.database
+      .insert(movies)
+      .values(movieValues)
+      .returning();
+
+    if (!newMovie) {
+      throw new Error('Failed to create movie');
+    }
+
+    let postersAdded = 0;
+    let translationsAdded = 0;
+
+    if (fetchTMDBData && this.env.TMDB_API_KEY) {
+      try {
+        const {fetchTMDBMovieImages, savePosterUrls} = await import(
+          '../../../scrapers/src/common/tmdb-utilities'
+        );
+
+        const imagesResult = await fetchTMDBMovieImages(
+          normalizedImdbId,
+          this.env.TMDB_API_KEY,
+        );
+
+        if (imagesResult?.images?.posters?.length) {
+          const saved = await savePosterUrls(
+            newMovie.uid,
+            imagesResult.images.posters,
+            this.env,
+          );
+          postersAdded += saved;
+        }
+
+        if (!tmdbMovieId && imagesResult?.tmdbId) {
+          tmdbMovieId = imagesResult.tmdbId;
+          await this.database
+            .update(movies)
+            .set({
+              tmdbId: tmdbMovieId,
+              updatedAt: Math.floor(Date.now() / 1000),
+            })
+            .where(eq(movies.uid, newMovie.uid));
+        }
+      } catch (error) {
+        console.error('Failed to save TMDB posters:', error);
+      }
+    }
+
+    if (tmdbMovieData) {
+      if (postersAdded === 0) {
+        postersAdded = await this.addPostersFromTMDB(
+          newMovie.uid,
+          tmdbMovieData,
+        );
+      }
+
+      translationsAdded = await this.addTranslationsFromTMDB(
+        newMovie.uid,
+        tmdbMovieData,
+      );
+    }
+
+    return {
+      movie: {
+        ...newMovie,
+        imdbId: newMovie.imdbId ?? normalizedImdbId,
+        tmdbId: newMovie.tmdbId ?? tmdbMovieId ?? null,
+        year: newMovie.year ?? releaseYear ?? null,
+      },
+      tmdbId: tmdbMovieId,
+      postersAdded,
+      translationsAdded,
+    };
+  }
+
   async deleteMovie(movieId: string): Promise<void> {
     await this.database.transaction(async trx => {
       await trx.delete(articleLinks).where(eq(articleLinks.movieUid, movieId));

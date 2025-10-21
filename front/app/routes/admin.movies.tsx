@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useState, memo} from 'react';
+import {useCallback, useEffect, useState, memo, type FormEvent} from 'react';
 import {useSearchParams} from 'react-router';
 import type {Route} from './+types/admin.movies';
 
@@ -21,6 +21,22 @@ type PaginationData = {
 type MoviesResponse = {
   movies: Movie[];
   pagination: PaginationData;
+};
+
+type CreateMovieResponse = {
+  success?: boolean;
+  movie?: {
+    uid: string;
+    imdbId?: string | null;
+    tmdbId?: number | null;
+    year?: number | null;
+    originalLanguage?: string | null;
+  };
+  imports?: {
+    translationsAdded: number;
+    postersAdded: number;
+  };
+  error?: string;
 };
 
 type CloudflareContext = {
@@ -145,9 +161,12 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 
     // Listen for URL changes
     const handleUrlChange = async () => fetchMovies();
+    const handleRefetch = async () => fetchMovies();
     globalThis.addEventListener('urlchange', handleUrlChange);
+    globalThis.addEventListener('refetchMovies', handleRefetch);
     return () => {
       globalThis.removeEventListener('urlchange', handleUrlChange);
+      globalThis.removeEventListener('refetchMovies', handleRefetch);
     };
   }, [apiUrl]); // Only depend on apiUrl, use custom event for URL changes
 
@@ -649,6 +668,11 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
   // Get current search from URL params
   const currentSearch = searchParameters.get('search') || '';
 
+  const [newImdbId, setNewImdbId] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | undefined>();
+  const [createSuccess, setCreateSuccess] = useState<string | undefined>();
+
   // Handle search - only update URL
   const handleSearch = useCallback(
     (query: string) => {
@@ -671,6 +695,79 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
     },
     [searchParameters],
   );
+
+  const submitNewMovie = async () => {
+    const trimmedImdbId = newImdbId.trim().toLowerCase();
+
+    if (!trimmedImdbId) {
+      setCreateError('Please enter an IMDb ID.');
+      return;
+    }
+
+    if (!/^tt\d+$/.test(trimmedImdbId)) {
+      setCreateError("IMDb ID must look like 'tt1234567'.");
+      return;
+    }
+
+    const token = globalThis.localStorage?.getItem('adminToken');
+    if (!token) {
+      globalThis.location.href = '/admin/login';
+      return;
+    }
+
+    setIsCreating(true);
+    setCreateError(undefined);
+    setCreateSuccess(undefined);
+
+    try {
+      const response = await fetch(`${apiUrl}/admin/movies`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imdbId: trimmedImdbId,
+          refreshData: true,
+        }),
+      });
+
+      if (response.status === 401) {
+        globalThis.localStorage?.removeItem('adminToken');
+        globalThis.location.href = '/admin/login';
+        return;
+      }
+
+      const data = (await response.json()) as CreateMovieResponse;
+
+      if (!response.ok || !data.success) {
+        setCreateError(data.error || 'Failed to create movie.');
+        return;
+      }
+
+      const translations = data.imports?.translationsAdded ?? 0;
+      const posters = data.imports?.postersAdded ?? 0;
+      const importSummary =
+        translations > 0 || posters > 0
+          ? ` (translations: ${translations}, posters: ${posters})`
+          : '';
+
+      setCreateSuccess(`Movie created successfully${importSummary}.`);
+      setNewImdbId('');
+
+      globalThis.dispatchEvent(new Event('refetchMovies'));
+    } catch (error) {
+      console.error('Create movie error:', error);
+      setCreateError('Failed to create movie. Please try again.');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleCreateMovie = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await submitNewMovie();
+  };
 
   return (
     <div
@@ -779,6 +876,103 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
             }}
           />
         </div>
+      </div>
+
+      {/* Create Movie */}
+      <div
+        style={{
+          marginBottom: '2rem',
+          padding: '1.5rem',
+          background: '#f9fafb',
+          borderRadius: '8px',
+          border: '1px solid #e5e7eb',
+        }}>
+        <h2 style={{margin: 0, marginBottom: '1rem', color: '#111827'}}>
+          Add Movie by IMDb ID
+        </h2>
+        <p style={{margin: 0, marginBottom: '1rem', color: '#6b7280'}}>
+          Enter an IMDb ID (e.g., tt1234567). TMDB data is fetched
+          automatically.
+        </p>
+        <form
+          onSubmit={handleCreateMovie}
+          style={{
+            display: 'flex',
+            gap: '1rem',
+            flexWrap: 'wrap',
+            alignItems: 'flex-end',
+          }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              flex: '1 1 240px',
+            }}>
+            <label
+              htmlFor="new-movie-imdb-id"
+              style={{marginBottom: '0.5rem', color: '#374151'}}>
+              IMDb ID
+            </label>
+            <input
+              id="new-movie-imdb-id"
+              type="text"
+              value={newImdbId}
+              onChange={event => {
+                setNewImdbId(event.target.value);
+                if (createError) {
+                  setCreateError(undefined);
+                }
+                if (createSuccess) {
+                  setCreateSuccess(undefined);
+                }
+              }}
+              placeholder="tt1234567"
+              inputMode="text"
+              required
+              autoComplete="off"
+              style={{
+                padding: '0.75rem 1rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '1rem',
+                background: 'white',
+              }}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isCreating}
+            style={{
+              padding: '0.75rem 1.5rem',
+              border: 'none',
+              borderRadius: '6px',
+              background: isCreating ? '#9ca3af' : '#2563eb',
+              color: 'white',
+              cursor: isCreating ? 'not-allowed' : 'pointer',
+              fontSize: '1rem',
+              transition: 'background-color 0.2s',
+            }}
+            onMouseOver={event => {
+              if (!isCreating) {
+                event.currentTarget.style.background = '#1d4ed8';
+              }
+            }}
+            onMouseOut={event => {
+              if (!isCreating) {
+                event.currentTarget.style.background = '#2563eb';
+              }
+            }}>
+            {isCreating ? 'Registering...' : 'Register Movie'}
+          </button>
+        </form>
+        {createError && (
+          <p style={{color: '#dc2626', marginTop: '0.75rem'}}>{createError}</p>
+        )}
+        {createSuccess && (
+          <p style={{color: '#16a34a', marginTop: '0.75rem'}}>
+            {createSuccess}
+          </p>
+        )}
       </div>
 
       {/* Movies Table */}
