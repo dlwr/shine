@@ -4,48 +4,47 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 const ignores = [
-	'**/.wrangler/**',
-	'**/dist/**',
-	'**/node_modules/**',
-	'**/*.mjs',
-	'**/*.js',
-	'**/*.cjs',
-	'**/.astro/**',
-	'**/worker-configuration.d.ts',
-	'**/build/**',
-	'**/test-results/**',
-	'**/.react-router/**',
-	'**/coverage/**',
-	'**/.cache/**',
-	'**/tmp/**',
-	'**/scripts/**',
-	'**/package.json',
+  '**/.wrangler/**',
+  '**/dist/**',
+  '**/node_modules/**',
+  '**/*.mjs',
+  '**/*.js',
+  '**/*.cjs',
+  '**/.astro/**',
+  '**/worker-configuration.d.ts',
+  '**/build/**',
+  '**/test-results/**',
+  '**/.react-router/**',
+  '**/coverage/**',
+  '**/.cache/**',
+  '**/tmp/**',
+  '**/scripts/**',
+  '**/package.json',
 ];
 
-const projectRules = {
-};
+const projectRules = {};
 
 const stylisticRules = {};
 
 export default tseslint.config(
-	{
-		ignores,
-	},
-	js.configs.recommended,
-	...tseslint.configs.recommended,
-	{
-		languageOptions: {
-			globals: {
-				...globals.browser,
-				...globals.node,
-			},
-		},
-	},
-	eslintConfigPrettier,
-	{
-		rules: {
-			...projectRules,
-			...stylisticRules,
-		},
-	},
+  {
+    ignores,
+  },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+  },
+  eslintConfigPrettier,
+  {
+    rules: {
+      ...projectRules,
+      ...stylisticRules,
+    },
+  }
 );

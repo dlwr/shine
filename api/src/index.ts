@@ -13,30 +13,30 @@ import {utilitiesRoutes} from './routes/utilities';
 const app = new Hono<{Bindings: Environment}>();
 
 app.use(
-	'*',
-	cors({
-		origin(origin) {
-			// Allow all localhost origins in development
-			if (origin?.startsWith('http://localhost:')) {
-				return origin;
-			}
+  '*',
+  cors({
+    origin(origin) {
+      // Allow all localhost origins in development
+      if (origin?.startsWith('http://localhost:')) {
+        return origin;
+      }
 
-			// Production origins
-			const allowedOrigins = [
-				'https://shine-film.com',
-				'https://dlwr.github.io',
-				'https://shine-front-production.yuta25.workers.dev',
-				'https://shine-front.yuta25.workers.dev',
-			];
-			return allowedOrigins.includes(origin || '') ? origin : null;
-		},
-		credentials: true,
-	}),
+      // Production origins
+      const allowedOrigins = [
+        'https://shine-film.com',
+        'https://dlwr.github.io',
+        'https://shine-front-production.yuta25.workers.dev',
+        'https://shine-front.yuta25.workers.dev',
+      ];
+      return allowedOrigins.includes(origin || '') ? origin : null;
+    },
+    credentials: true,
+  }),
 );
 
 // Apply security headers to all routes except documentation
 app.use('*', async (c, next) =>
-	c.req.path.startsWith('/docs') ? next() : securityHeaders(c, next),
+  c.req.path.startsWith('/docs') ? next() : securityHeaders(c, next),
 );
 app.use('*', globalErrorHandler);
 

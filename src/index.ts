@@ -6,27 +6,27 @@ import * as schema from './schema/index';
 export {and, eq, like, not, sql} from 'drizzle-orm';
 
 export type Environment = {
-	TMDB_API_KEY?: string;
-	TMDB_LEAD_ACCESS_TOKEN?: string;
-	OMDB_API_KEY?: string;
-	TURSO_DATABASE_URL: string;
-	TURSO_AUTH_TOKEN: string;
-	ADMIN_PASSWORD?: string;
-	JWT_SECRET?: string;
+  TMDB_API_KEY?: string;
+  TMDB_LEAD_ACCESS_TOKEN?: string;
+  OMDB_API_KEY?: string;
+  TURSO_DATABASE_URL: string;
+  TURSO_AUTH_TOKEN: string;
+  ADMIN_PASSWORD?: string;
+  JWT_SECRET?: string;
 };
 
 export const getDatabase = (environment: Environment) => {
-	const client = createClient({
-		url: environment.TURSO_DATABASE_URL,
-		authToken: environment.TURSO_AUTH_TOKEN,
-	});
+  const client = createClient({
+    url: environment.TURSO_DATABASE_URL,
+    authToken: environment.TURSO_AUTH_TOKEN,
+  });
 
-	return drizzle(client, {
-		schema: {
-			...schema,
-		},
-		casing: 'snake_case',
-	});
+  return drizzle(client, {
+    schema: {
+      ...schema,
+    },
+    casing: 'snake_case',
+  });
 };
 
 export type Movie = typeof schema.movies.$inferSelect;
@@ -39,4 +39,4 @@ export type AwardCeremony = typeof schema.awardCeremonies.$inferSelect;
 export type NewAwardCeremony = typeof schema.awardCeremonies.$inferInsert;
 export type AwardOrganization = typeof schema.awardOrganizations.$inferSelect;
 export type NewAwardOrganization =
-	typeof schema.awardOrganizations.$inferInsert;
+  typeof schema.awardOrganizations.$inferInsert;

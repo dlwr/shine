@@ -4,29 +4,29 @@ import {generateUUID} from '../utils/uuid';
 import {awardOrganizations} from './award-organizations';
 
 export const awardCeremonies = sqliteTable(
-	'award_ceremonies',
-	{
-		uid: text('uid')
-			.primaryKey()
-			.$defaultFn(() => generateUUID()),
-		organizationUid: text()
-			.notNull()
-			.references(() => awardOrganizations.uid),
-		ceremonyNumber: integer(),
-		year: integer().notNull(),
-		startDate: integer(),
-		endDate: integer(),
-		location: text(),
-		description: text(),
-		createdAt: integer()
-			.notNull()
-			.default(sql`(unixepoch())`),
-		updatedAt: integer()
-			.notNull()
-			.default(sql`(unixepoch())`),
-	},
-	(table) => [
-		unique().on(table.organizationUid, table.year),
-		unique().on(table.organizationUid, table.ceremonyNumber),
-	],
+  'award_ceremonies',
+  {
+    uid: text('uid')
+      .primaryKey()
+      .$defaultFn(() => generateUUID()),
+    organizationUid: text()
+      .notNull()
+      .references(() => awardOrganizations.uid),
+    ceremonyNumber: integer(),
+    year: integer().notNull(),
+    startDate: integer(),
+    endDate: integer(),
+    location: text(),
+    description: text(),
+    createdAt: integer()
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer()
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  table => [
+    unique().on(table.organizationUid, table.year),
+    unique().on(table.organizationUid, table.ceremonyNumber),
+  ],
 );

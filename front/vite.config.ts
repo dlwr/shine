@@ -8,15 +8,15 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 const dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
-	plugins: [
-		cloudflare({viteEnvironment: {name: 'ssr'}}),
-		tailwindcss(),
-		reactRouter(),
-		tsconfigPaths(),
-	],
-	resolve: {
-		alias: {
-			'@routes': `${dirname}/app/routes`,
-		},
-	},
+  plugins: [
+    cloudflare({viteEnvironment: {name: 'ssr'}}),
+    tailwindcss(),
+    reactRouter(),
+    tsconfigPaths(),
+  ],
+  resolve: {
+    alias: {
+      '@routes': `${dirname}/app/routes`,
+    },
+  },
 });

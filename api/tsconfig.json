@@ -16,6 +16,10 @@
       "@shine/api/*": ["api/*"]
     }
   },
-  "include": ["src/**/*", "../src/**/*", "../scrapers/src/common/tmdb-utilities.ts"],
+  "include": [
+    "src/**/*",
+    "../src/**/*",
+    "../scrapers/src/common/tmdb-utilities.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

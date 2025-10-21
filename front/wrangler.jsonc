@@ -6,13 +6,13 @@
   "env": {
     "development": {
       "vars": {
-        "PUBLIC_API_URL": "http://localhost:8787"
-      }
+        "PUBLIC_API_URL": "http://localhost:8787",
+      },
     },
     "production": {
       "vars": {
-        "PUBLIC_API_URL": "https://shine-api.yuta25.workers.dev"
-      }
-    }
-  }
+        "PUBLIC_API_URL": "https://shine-api.yuta25.workers.dev",
+      },
+    },
+  },
 }
