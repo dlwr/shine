@@ -2,18 +2,18 @@ import {useEffect, useState} from 'react';
 import TranslationManager from '../components/translation-manager';
 import PosterManager from '../components/poster-manager';
 import MovieInfoEditor from '../components/movie-info-editor';
-import NominationList from '../components/nomination-list';
+import NominationManager from '../components/nomination-manager';
 import ArticleLinkManager from '../components/article-link-manager';
 import type {Route} from './+types/admin.movies.$id';
 
-type Translation = {
+export type Translation = {
   uid: string;
   languageCode: string;
   content: string;
   isDefault: number;
 };
 
-type Nomination = {
+export type Nomination = {
   uid: string;
   isWinner: boolean;
   specialMention: string | undefined;
@@ -51,7 +51,7 @@ type ArticleLink = {
   isSpam: boolean;
 };
 
-type MovieDetails = {
+export type MovieDetails = {
   uid: string;
   year: number;
   originalLanguage: string;
@@ -245,7 +245,12 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
             onTranslationsUpdate={setMovieData}
           />
 
-          <NominationList nominations={movieData.nominations} />
+          <NominationManager
+            movieId={movieId}
+            apiUrl={apiUrl}
+            nominations={movieData.nominations}
+            onNominationsUpdate={updatedMovie => setMovieData(updatedMovie)}
+          />
 
           <PosterManager
             movieId={movieId}
