@@ -160,7 +160,6 @@ export default function Home({loaderData}: Route.ComponentProps) {
       const fetchMovies = async () => {
         try {
           setLoading(true);
-          setError(undefined);
 
           function getCacheKey() {
             const now = new Date();
@@ -187,6 +186,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
 
           const fetchedMovies = (await response.json()) as HighlightedMovies;
           setMovies(fetchedMovies);
+          setError(undefined);
         } catch (error_) {
           console.error('Error fetching movies:', error_);
           setError(
@@ -335,8 +335,8 @@ function Movies({
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-center max-w-4xl mx-auto">
           {locale === 'ja'
-            ? `APIから映画データを取得できませんでした。フォールバック映画を表示しています。エラー: ${error} | API URL: ${apiUrl}`
-            : `Failed to fetch movie data from API. Showing fallback movies. Error: ${error} | API URL: ${apiUrl}`}
+            ? `APIから映画データを取得できませんでした。フォールバック映画を表示しています。エラー: ${error}…`
+            : `Failed to fetch movie data from API. Showing fallback movies. Error: ${error}…`}
         </div>
       )}
 

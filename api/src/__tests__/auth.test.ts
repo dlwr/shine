@@ -57,7 +57,7 @@ describe('JWT Authentication', () => {
     it('should return 401 when no Authorization header', async () => {
       (mockContext.req.header as ReturnType<typeof vi.fn>).mockReturnValue('');
 
-      await authMiddleware(mockContext, mockNext);
+      await expect(authMiddleware(mockContext, mockNext)).rejects.toBeDefined();
 
       expect(mockContext.json).toHaveBeenCalledWith(
         {
@@ -75,7 +75,7 @@ describe('JWT Authentication', () => {
         'Basic token',
       );
 
-      await authMiddleware(mockContext, mockNext);
+      await expect(authMiddleware(mockContext, mockNext)).rejects.toBeDefined();
 
       expect(mockContext.json).toHaveBeenCalledWith(
         {
@@ -94,7 +94,7 @@ describe('JWT Authentication', () => {
       );
       mockContext.env.JWT_SECRET = undefined;
 
-      await authMiddleware(mockContext, mockNext);
+      await expect(authMiddleware(mockContext, mockNext)).rejects.toBeDefined();
 
       expect(mockContext.json).toHaveBeenCalledWith(
         {
@@ -111,7 +111,7 @@ describe('JWT Authentication', () => {
         'Bearer invalid-token',
       );
 
-      await authMiddleware(mockContext, mockNext);
+      await expect(authMiddleware(mockContext, mockNext)).rejects.toBeDefined();
 
       expect(mockContext.json).toHaveBeenCalledWith(
         {
