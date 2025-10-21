@@ -10,13 +10,13 @@ type SelectionData = {
 				title: string;
 				year: number;
 				posterUrl?: string;
-				nominations?: Array<{
-					uid: string;
-					isWinner: boolean;
-					category: {name: string};
-					ceremony: {year: number};
-					organization: {name: string};
-				}>;
+			nominations?: Array<{
+				uid: string;
+				isWinner: boolean;
+				category: {name: string};
+				ceremony: {uid: string; year: number; number?: number};
+				organization: {uid: string; name: string; shortName?: string};
+			}>;
 		  }
 		| undefined;
 };
@@ -40,8 +40,8 @@ type SearchMovie = {
 		uid: string;
 		isWinner: boolean;
 		category: {name: string};
-		ceremony: {year: number};
-		organization: {name: string};
+		ceremony: {uid: string; year: number; number?: number};
+		organization: {uid: string; name: string; shortName?: string};
 	}>;
 };
 

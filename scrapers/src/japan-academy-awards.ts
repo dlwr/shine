@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import type {AnyNode} from 'domhandler';
 import {and, eq} from 'drizzle-orm';
 import {getDatabase, type Environment} from '../../src/index';
 import {awardCategories} from '../../src/schema/award-categories';
@@ -461,7 +462,7 @@ function extractMoviesFromText(text: string, year: number): MovieInfo[] {
 
 function extractMoviesFromTableWithYear(
 	$: cheerio.CheerioAPI,
-	$table: cheerio.Cheerio<cheerio.Element>,
+	$table: cheerio.Cheerio<AnyNode>,
 	year: number,
 ): MovieInfo[] {
 	const movies: MovieInfo[] = [];
@@ -480,7 +481,7 @@ function extractMoviesFromTableWithYear(
 
 	// 表の行をチェック
 
-	$table.find('tr').each((_index, element) => {
+	$table.find('tr').each((_index: number, element: AnyNode) => {
 		const $row = $(element);
 		const cells = $row.find('td');
 

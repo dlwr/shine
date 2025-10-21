@@ -62,8 +62,9 @@ globalThis.fetch = vi.fn();
 const cast = <T,>(value: unknown): T => value as T;
 
 type LoaderResult = Awaited<ReturnType<typeof loader>>;
+type LoaderSuccess = Extract<LoaderResult, {error: undefined}>;
+type LoaderFailure = Extract<LoaderResult, {error: string}>;
 type LoaderArgs = Route.LoaderArgs;
-type MetaArgs = Route.MetaArgs;
 type ComponentProps = Route.ComponentProps;
 
 const createLoaderArgs = (
@@ -79,23 +80,9 @@ const createLoaderArgs = (
 		...overrides,
 	});
 
-const createMetaArgs = (data: MetaArgs['data']): MetaArgs =>
-	cast<MetaArgs>({
-		data,
-		params: {},
-		location: {
-			pathname: '/',
-			search: '',
-			hash: '',
-			state: null,
-			key: 'home-test',
-		},
-		matches: [],
-	});
-
 const createLoaderData = (
-	overrides: Partial<LoaderResult> = {},
-): LoaderResult => ({
+	overrides: Partial<LoaderSuccess> = {},
+): LoaderSuccess => ({
 	movies: mockMovies,
 	error: undefined,
 	locale: 'ja',
@@ -104,11 +91,22 @@ const createLoaderData = (
 	...overrides,
 });
 
+const createErrorLoaderData = (
+	overrides: Partial<LoaderFailure> = {},
+): LoaderFailure => ({
+	movies: undefined,
+	error: 'API request failed',
+	locale: 'ja',
+	apiUrl: 'http://localhost:8787',
+	shouldFetchOnClient: true,
+	...overrides,
+});
+
 const createParams = (): ComponentProps['params'] =>
 	cast<ComponentProps['params']>({});
 
 const createMatches = (
-	loaderData: LoaderResult,
+	loaderData: ComponentProps['loaderData'],
 ): ComponentProps['matches'] =>
 	cast<ComponentProps['matches']>([
 		{
@@ -122,7 +120,7 @@ const createMatches = (
 			id: 'routes/home',
 			params: {},
 			pathname: '/',
-			data: loaderData,
+			data: loaderData as NonNullable<ComponentProps['matches'][number]>['data'],
 			handle: undefined,
 		},
 	]);
@@ -206,7 +204,7 @@ describe('Home Component', () => {
 
 	describe('meta', () => {
 		it('正しいメタデータを返す', () => {
-			const result = meta(createMetaArgs(undefined));
+			const result = meta();
 
 			expect(result).toEqual([
 				{title: 'SHINE'},
@@ -220,7 +218,7 @@ describe('Home Component', () => {
 
 	describe('Component', () => {
 		it('映画選択データが正常に表示される', () => {
-			const loaderData = createLoaderData();
+			const loaderData = cast<ComponentProps['loaderData']>(createLoaderData());
 
 			render(
 				<Home
@@ -243,14 +241,11 @@ describe('Home Component', () => {
 		});
 
 		it('エラー状態が正常に表示される', () => {
-			const loaderData = createLoaderData({
-				movies: {
-					daily: {uid: '1', title: 'The Shawshank Redemption', year: 1994},
-					weekly: {uid: '1', title: 'The Shawshank Redemption', year: 1994},
-					monthly: {uid: '1', title: 'The Shawshank Redemption', year: 1994},
-				},
-				error: 'APIへの接続に失敗しました',
-			});
+			const loaderData = cast<ComponentProps['loaderData']>(
+				createErrorLoaderData({
+					error: 'APIへの接続に失敗しました',
+				}),
+			);
 
 			render(
 				<Home
@@ -269,7 +264,7 @@ describe('Home Component', () => {
 		});
 
 		it('受賞情報がバッジとして表示される', () => {
-			const loaderData = createLoaderData();
+			const loaderData = cast<ComponentProps['loaderData']>(createLoaderData());
 
 			render(
 				<Home
@@ -295,7 +290,7 @@ describe('Home Component', () => {
 		});
 
 		it('映画詳細ページへのリンクが正しく設定される', () => {
-			const loaderData = createLoaderData();
+			const loaderData = cast<ComponentProps['loaderData']>(createLoaderData());
 
 			render(
 				<Home

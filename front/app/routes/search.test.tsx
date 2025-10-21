@@ -70,10 +70,10 @@ describe('Search Component', () => {
 
 const cast = <T,>(value: unknown): T => value as T;
 
-type LoaderResult = Awaited<ReturnType<typeof loader>>;
 type LoaderArgs = Route.LoaderArgs;
 type MetaArgs = Route.MetaArgs;
 type ComponentProps = Route.ComponentProps;
+type LoaderData = ComponentProps['loaderData'];
 type Matches = ComponentProps['matches'];
 
 const createLoaderArgs = (
@@ -89,7 +89,7 @@ const createLoaderArgs = (
 	});
 
 const createMetaArgs = (
-	data: MetaArgs['data'],
+	data: LoaderData,
 	locationSearch: string,
 ): MetaArgs =>
 	cast<MetaArgs>({
@@ -106,8 +106,8 @@ const createMetaArgs = (
 	});
 
 const createLoaderData = (
-	overrides: Partial<LoaderResult> = {},
-): LoaderResult => ({
+	overrides: Partial<LoaderData> = {},
+): LoaderData => ({
 	searchQuery: '',
 	searchResults: undefined,
 	...overrides,
@@ -117,7 +117,7 @@ const createParams = (): ComponentProps['params'] =>
 	cast<ComponentProps['params']>({});
 
 const createMatches = (
-	loaderData: LoaderResult,
+	loaderData: LoaderData,
 ): Matches =>
 	cast<Matches>([
 		{
@@ -131,7 +131,7 @@ const createMatches = (
 			id: 'routes/search',
 			params: {},
 			pathname: '/search',
-			data: loaderData,
+			data: loaderData as NonNullable<Matches[number]>['data'],
 			handle: undefined,
 		},
 	]);
@@ -203,10 +203,10 @@ const createActionData = (): ComponentProps['actionData'] =>
 
 	describe('meta', () => {
 		it('検索クエリありの場合は検索クエリを含むメタデータを返す', () => {
-			const loaderData = {
+			const loaderData = cast<LoaderData>({
 				searchQuery: 'test movie',
 				searchResults: mockSearchResults,
-			};
+			});
 
 			const result = meta(createMetaArgs(loaderData, '?q=test%20movie'));
 
@@ -220,10 +220,10 @@ const createActionData = (): ComponentProps['actionData'] =>
 		});
 
 		it('検索クエリなしの場合はデフォルトメタデータを返す', () => {
-			const loaderData = {
+			const loaderData = cast<LoaderData>({
 				searchQuery: '',
 				searchResults: undefined,
-			};
+			});
 
 			const result = meta(createMetaArgs(loaderData, '?q=test%20movie'));
 
@@ -255,7 +255,7 @@ const createActionData = (): ComponentProps['actionData'] =>
 		});
 
 		it('検索結果が正常に表示される', () => {
-			const loaderData = createLoaderData({
+			const loaderData = cast<LoaderData>({
 				searchQuery: 'test',
 				searchResults: mockSearchResults,
 			});
@@ -276,7 +276,7 @@ const createActionData = (): ComponentProps['actionData'] =>
 		});
 
 		it('検索結果なしの場合は適切なメッセージが表示される', () => {
-			const loaderData = createLoaderData({
+			const loaderData = cast<LoaderData>({
 				searchQuery: 'nomatch',
 				searchResults: {
 					movies: [],
@@ -304,7 +304,7 @@ const createActionData = (): ComponentProps['actionData'] =>
 		});
 
 		it('エラー状態が正常に表示される', () => {
-			const loaderData = createLoaderData({
+			const loaderData = cast<LoaderData>({
 				searchQuery: 'test',
 				error: '検索に失敗しました',
 			});
@@ -322,7 +322,7 @@ const createActionData = (): ComponentProps['actionData'] =>
 		});
 
 		it('映画詳細ページへのリンクが正しく設定される', () => {
-			const loaderData = createLoaderData({
+			const loaderData = cast<LoaderData>({
 				searchQuery: 'test',
 				searchResults: mockSearchResults,
 			});

@@ -1,12 +1,11 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {render, screen} from '@testing-library/react';
 import '@testing-library/jest-dom';
+import type {Route} from '../../.react-router/types/app/routes/+types/admin.movies.$id';
 import AdminMovieEdit, {loader, meta} from './admin.movies.$id';
 
-type AdminMovieEditLoaderArgs = Parameters<typeof loader>[0];
-type AdminMovieEditMetaArgs = Parameters<typeof meta>[0];
-type AdminMovieEditComponentProps = Parameters<typeof AdminMovieEdit>[0];
-type AdminMovieEditMatch = AdminMovieEditComponentProps['matches'][number];
+type AdminMovieEditLoaderArgs = Route.LoaderArgs;
+type AdminMovieEditComponentProps = Route.ComponentProps;
 
 // LocalStorageのモック
 const mockLocalStorage = {
@@ -127,12 +126,11 @@ describe('AdminMovieEdit Route', () => {
 		});
 	});
 
-	describe('meta', () => {
-		it('正しいメタデータを返す', () => {
-			const parameters = {id: 'movie-123'};
-		const result = meta({params: parameters} as unknown as AdminMovieEditMetaArgs);
+		describe('meta', () => {
+			it('正しいメタデータを返す', () => {
+				const result = meta();
 
-			expect(result).toEqual([
+				expect(result).toEqual([
 				{title: '映画の編集 - SHINE Admin'},
 				{name: 'description', content: 'SHINE Admin 映画編集画面'},
 			]);
@@ -147,21 +145,21 @@ describe('AdminMovieEdit Route', () => {
 						apiUrl: 'http://localhost:8787',
 						movieId: 'movie-123',
 					}}
-					actionData={{} as AdminMovieEditComponentProps['actionData']}
+					actionData={undefined}
 					params={{id: 'movie-123'}}
-					matches={[
-						{
-							id: 'root',
-							params: {},
-							pathname: '/',
-					data: {} as AdminMovieEditMatch['data'],
-							handle: undefined,
-						},
+				matches={[
+					{
+						id: 'root',
+						params: {},
+						pathname: '/',
+						data: undefined,
+						handle: undefined,
+					},
 						{
 							id: 'routes/admin.movies.$id',
 							params: {id: 'movie-123'},
 							pathname: '/admin/movies/movie-123',
-					data: {} as AdminMovieEditMatch['data'],
+						data: {} as AdminMovieEditComponentProps['loaderData'],
 							handle: undefined,
 						},
 					]}
@@ -187,7 +185,7 @@ describe('AdminMovieEdit Route', () => {
 						apiUrl: 'http://localhost:8787',
 						movieId: 'movie-123',
 					}}
-					actionData={{} as AdminMovieEditComponentProps['actionData']}
+					actionData={undefined}
 					params={{id: 'movie-123'}}
 					matches={
 						[
@@ -233,7 +231,7 @@ describe('AdminMovieEdit Route', () => {
 						apiUrl: 'http://localhost:8787',
 						movieId: 'movie-123',
 					}}
-					actionData={{} as AdminMovieEditComponentProps['actionData']}
+					actionData={undefined}
 					params={{id: 'movie-123'}}
 					matches={
 						[

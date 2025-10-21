@@ -13,10 +13,6 @@ import type {MovieSelection, SearchOptions} from './types';
 export class MoviesService extends BaseService {
 	private readonly cache = new EdgeCache();
 
-	private executeQuery<T>(query: T): T {
-		return query;
-	}
-
 	async searchMovies(options: SearchOptions) {
 		const {page, limit, query, year, language, hasAwards} = options;
 		const offset = (page - 1) * limit;
@@ -71,30 +67,33 @@ export class MoviesService extends BaseService {
 				),
 			);
 
-		// Build final query with conditions - using unknown type for complex Drizzle types
-		let finalQuery: unknown = baseQuery;
+		type BaseQuery = typeof baseQuery;
+		type SearchResultRow = Awaited<ReturnType<BaseQuery['execute']>>[number];
 
-		if (String(hasAwards) === 'true') {
-			// Join nominations for awards filter
-			finalQuery = this.executeQuery(finalQuery).innerJoin(
-				nominations,
-				eq(nominations.movieUid, movies.uid),
-			);
+		// Build final query with conditions
+		const finalQuery = (() => {
+			if (String(hasAwards) === 'true') {
+				// Join nominations for awards filter
+				const joined = baseQuery.innerJoin(
+					nominations,
+					eq(nominations.movieUid, movies.uid),
+				);
 
-			if (conditions.length > 0) {
-				finalQuery = this.executeQuery(finalQuery).where(and(...conditions));
+				const filtered =
+					conditions.length > 0 ? joined.where(and(...conditions)) : joined;
+
+				return filtered.groupBy(movies.uid, translations.content);
 			}
 
-			finalQuery = this.executeQuery(finalQuery).groupBy(
-				movies.uid,
-				translations.content,
-			);
-		} else if (conditions.length > 0) {
-			finalQuery = this.executeQuery(finalQuery).where(and(...conditions));
-		}
+			if (conditions.length > 0) {
+				return baseQuery.where(and(...conditions));
+			}
+
+			return baseQuery;
+		})();
 
 		// Get movies with pagination
-		const searchResults = await this.executeQuery(finalQuery)
+		const searchResults: SearchResultRow[] = await finalQuery
 			.orderBy(movies.year, movies.uid)
 			.limit(limit)
 			.offset(offset);
@@ -112,44 +111,35 @@ export class MoviesService extends BaseService {
 				),
 			);
 
-		// Use unknown type for count query
-		let countQuery: unknown = baseCountQuery;
+		// Build count query
+		const countQuery = (() => {
+			const withAwards =
+				String(hasAwards) === 'true'
+					? baseCountQuery.innerJoin(
+							nominations,
+							eq(nominations.movieUid, movies.uid),
+						)
+					: baseCountQuery;
 
-		if (String(hasAwards) === 'true') {
-			countQuery = this.executeQuery(countQuery).innerJoin(
-				nominations,
-				eq(nominations.movieUid, movies.uid),
-			);
-		}
+			return conditions.length > 0
+				? withAwards.where(and(...conditions))
+				: withAwards;
+		})();
 
-		if (conditions.length > 0) {
-			countQuery = this.executeQuery(countQuery).where(and(...conditions));
-		}
-
-		const totalCountResult = await this.executeQuery(countQuery);
+		const totalCountResult = await countQuery;
 		const totalCount = Number(totalCountResult[0]?.count) || 0;
 		const totalPages = Math.ceil(totalCount / limit);
 
 		return {
-			movies: searchResults.map(
-				(movie: {
-					uid: string;
-					year: number | undefined;
-					originalLanguage: string;
-					imdbId: string | undefined;
-					title: string | undefined;
-					posterUrl: unknown;
-					hasNominations: unknown;
-				}) => ({
-					uid: movie.uid,
-					year: movie.year ?? 0,
-					originalLanguage: movie.originalLanguage,
-					imdbId: movie.imdbId,
-					title: movie.title || `Unknown Title (${movie.year})`,
-					posterUrl: movie.posterUrl,
-					hasNominations: Boolean(movie.hasNominations),
-				}),
-			),
+			movies: searchResults.map((movie) => ({
+				uid: movie.uid,
+				year: movie.year ?? undefined,
+				originalLanguage: movie.originalLanguage,
+				imdbId: movie.imdbId ?? undefined,
+				title: movie.title ?? (movie.year ? `Unknown Title (${movie.year})` : 'Unknown Title'),
+				posterUrl: movie.posterUrl,
+				hasNominations: Boolean(movie.hasNominations),
+			})),
 			pagination: {
 				currentPage: page,
 				totalPages,

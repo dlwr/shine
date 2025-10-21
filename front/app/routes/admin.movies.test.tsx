@@ -42,7 +42,6 @@ const cast = <T,>(value: unknown): T => value as T;
 
 type LoaderResult = Awaited<ReturnType<typeof loader>>;
 type LoaderArgs = Route.LoaderArgs;
-type MetaArgs = Route.MetaArgs;
 type ComponentProps = Route.ComponentProps;
 type Matches = ComponentProps['matches'];
 
@@ -56,19 +55,6 @@ const createLoaderArgs = (
 		...args,
 	});
 
-const createMetaArgs = (data: MetaArgs['data']): MetaArgs =>
-	cast<MetaArgs>({
-		data,
-		params: {},
-		location: {
-			pathname: '/admin/movies',
-			search: '',
-			hash: '',
-			state: null,
-			key: 'test',
-		},
-		matches: [],
-	});
 
 const createLoaderData = (
 	overrides: Partial<LoaderResult> = {},
@@ -193,7 +179,7 @@ describe('AdminMovies Component', () => {
 
 	describe('meta', () => {
 		it('正しいメタデータを返す', () => {
-			const result = meta(createMetaArgs(undefined));
+			const result = meta();
 
 			expect(result).toEqual([
 				{title: '映画管理 | SHINE Admin'},

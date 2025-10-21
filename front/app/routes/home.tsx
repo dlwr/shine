@@ -12,6 +12,8 @@ type HighlightedMovies = {
 	monthly?: MovieCardMovie;
 };
 
+type PeriodType = keyof HighlightedMovies;
+
 type MoviesLabels = {
 	randomMovie: string;
 	daily: string;
@@ -267,9 +269,9 @@ function Movies({
 	loading?: boolean;
 }) {
 	const [reselectLoading, setReselectLoading] = useState<
-		Record<string, boolean>
+		Partial<Record<PeriodType, boolean>>
 	>({});
-	const handleReselect = async (type: string) => {
+	const handleReselect = async (type: PeriodType) => {
 		if (!adminToken) {
 			alert(
 				locale === 'ja'
@@ -279,7 +281,7 @@ function Movies({
 			return;
 		}
 
-		setReselectLoading((previous) => ({...previous, [type]: true}));
+	setReselectLoading((previous) => ({...previous, [type]: true}));
 
 		try {
 			const response = await fetch(`${apiUrl}/reselect`, {
@@ -311,7 +313,7 @@ function Movies({
 					: 'An error occurred. Please try again.',
 			);
 		} finally {
-			setReselectLoading((previous) => ({...previous, [type]: false}));
+	setReselectLoading((previous) => ({...previous, [type]: false}));
 		}
 	};
 
@@ -340,14 +342,14 @@ function Movies({
 
 			{movies && !isDataLoading && (
 				<div className="flex justify-center items-start gap-8 max-w-[90%] mx-auto px-4 flex-wrap md:flex-nowrap">
-					{['daily', 'weekly', 'monthly'].map((period) => (
+					{(['daily', 'weekly', 'monthly'] as PeriodType[]).map((period) => (
 						<div key={period} className="flex flex-col items-center">
 							<div className="bg-blue-600 text-white px-4 py-1 rounded-t font-bold mb-2">
 								{labels[period]}
 							</div>
-							{movies[period] && (
+							{movies?.[period] && (
 								<MovieCard
-									movie={movies[period]}
+									movie={movies[period] as MovieCardMovie}
 									locale={locale}
 									adminToken={adminToken}
 								/>
@@ -357,7 +359,7 @@ function Movies({
 									onClick={() => {
 										void handleReselect(period);
 									}}
-									disabled={reselectLoading[period]}
+									disabled={Boolean(reselectLoading[period])}
 									className="mt-4 bg-green-600 hover:bg-green-700"
 									size="sm"
 								>
