@@ -1,7 +1,7 @@
 import {config} from 'dotenv';
 import {isNotNull, count, desc, eq, sql} from 'drizzle-orm';
-import {getDatabase} from '../src/index';
-import {movies} from '../src/schema/movies';
+import {getDatabase} from '@shine/database';
+import {movies} from '@shine/database/schema/movies';
 
 config({path: '.dev.vars'});
 

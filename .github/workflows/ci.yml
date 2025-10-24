@@ -50,7 +50,7 @@ jobs:
         run: pnpm run test
 
       - name: Build - API
-        run: cd api && pnpm run build
+        run: pnpm --filter @shine/api run build
 
       - name: Build - Frontend
         run: pnpm run front:build

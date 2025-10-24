@@ -1,0 +1,27 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "types": ["@cloudflare/workers-types", "node"],
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "allowImportingTsExtensions": false,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "src/**/*",
+    "../../packages/database/src/**/*",
+    "../../packages/utils/src/**/*"
+  ],
+  "exclude": ["node_modules", "dist"],
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node",
+    "transpileOnly": true,
+    "compilerOptions": {
+      "module": "ESNext",
+      "target": "ES2022",
+      "allowImportingTsExtensions": false
+    }
+  }
+}

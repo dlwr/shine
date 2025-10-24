@@ -349,14 +349,14 @@ Note: Authentication uses localStorage, not cookies, ensuring client-side auth m
 
 ## Important Files
 
-- `src/schema/index.ts` - Database schema definitions
-- `api/src/index.ts` - Main API implementation with date-seeding logic
+- `packages/database/src/schema/index.ts` - Database schema definitions
+- `apps/api/src/index.ts` - Main API implementation with date-seeding logic
 - `drizzle.config.ts` - Database configuration for Turso
 - `.dev.vars.example` - Environment variable template
 - `.dev.vars` - Local development variables (symlinked to `api/` and `scrapers/`)
-- `src/schema/movie-selections.ts` - Movie selection persistence schema
-- `scrapers/src/japanese-translations/` - TMDb integration for translations
-- `scrapers/src/cannes-film-festival.ts` - Cannes scraper with year parameter support
+- `packages/database/src/schema/movie-selections.ts` - Movie selection persistence schema
+- `apps/scrapers/src/japanese-translations/` - TMDb integration for translations
+- `apps/scrapers/src/cannes-film-festival.ts` - Cannes scraper with year parameter support
 
 ## Recent Changes Log
 
@@ -383,7 +383,7 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - Proper cleanup of movie_selections, nominations, translations, and poster_urls
 - Fixed `/admin/movies` API endpoint bug:
   - Corrected SQL ORDER BY clause to use proper camelCase column name `createdAt` instead of snake_case `created_at`
-  - Used SQL template with schema field reference: `sql`${movies.createdAt} DESC`` at api/src/index.ts:581
+  - Used SQL template with schema field reference: `sql`${movies.createdAt} DESC`` at apps/api/src/index.ts:581
 
 ### 2025-06-10 (Updated)
 
@@ -409,7 +409,7 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 - Fixed movie import nomination assignment bug:
   - Movie import scripts were incorrectly assigning all nominations to Cannes Film Festival
   - Root cause: Database lookups for categories and ceremonies didn't filter by `organizationUid`
-  - Fixed `scrapers/src/movie-import-from-list.ts` and `scrapers/src/academy-awards.ts` to use compound WHERE clauses
+  - Fixed `apps/scrapers/src/movie-import-from-list.ts` and `apps/scrapers/src/academy-awards.ts` to use compound WHERE clauses
   - Now properly filters by both identifying field AND `organizationUid` using `and()` condition
   - This ensures nominations are assigned to the correct award organization
 
@@ -451,8 +451,8 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - `pnpm run scrapers:cannes-film-festival --winners-only` (all years)
   - `pnpm run scrapers:cannes-film-festival --year 2024 --winners-only` (specific year)
 - **Key Files**:
-  - `scrapers/src/cannes-film-festival.ts`: Added `updateAllCannesWinnersOnly()` and `updateCannesWinnersOnly(year)` functions
-  - `scrapers/src/cannes-film-festival-cli.ts`: Added CLI argument parsing for `--winners-only` flag
+  - `apps/scrapers/src/cannes-film-festival.ts`: Added `updateAllCannesWinnersOnly()` and `updateCannesWinnersOnly(year)` functions
+  - `apps/scrapers/src/cannes-film-festival-cli.ts`: Added CLI argument parsing for `--winners-only` flag
 
 ### 2025-06-13 (Admin Movie Management Enhancement)
 
@@ -485,9 +485,9 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 - **CLI Integration**: Full support for `--year`, `--dry-run`, `--seed` options
 - **Code Quality**: ESLint compliant, proper TypeScript types, clean production-ready code
 - **Key Files**:
-  - `scrapers/src/japan-academy-awards.ts`: Main scraper implementation
-  - `scrapers/src/japan-academy-awards-cli.ts`: CLI interface
-  - `src/seeds/japan-academy-awards.ts`: Database seeding
+  - `apps/scrapers/src/japan-academy-awards.ts`: Main scraper implementation
+  - `apps/scrapers/src/japan-academy-awards-cli.ts`: CLI interface
+  - `packages/database/seeds/japan-academy-awards.ts`: Database seeding
 - **Usage**:
   - `pnpm run scrapers:japan-academy-awards` (all years)
   - `pnpm run scrapers:japan-academy-awards --year 2024` (specific year)
@@ -497,7 +497,7 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 
 - Fixed critical foreign key constraint error in movie deletion API:
   - **Root cause**: `reference_urls` table deletion was missing from cascading delete logic
-  - **Solution**: Added `referenceUrls` deletion to movie delete endpoint at `api/src/index.ts:665-668`
+  - **Solution**: Added `referenceUrls` deletion to movie delete endpoint at `apps/api/src/index.ts:665-668`
   - **Complete deletion order**: article_links → movie_selections → nominations → reference_urls → translations → poster_urls → movies
   - **Prevention**: Added comprehensive guidelines for foreign key constraint handling in Development Guidelines
 - **Lesson learned**: Always verify ALL foreign key references across entire schema when implementing delete operations
@@ -565,7 +565,7 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
   - Use grid layouts for visual content management (poster thumbnails)
   - Implement confirmation dialogs for destructive operations (delete)
 - **TMDb API Integration Best Practices**:
-  - Always use existing TMDb utility functions from `scrapers/src/common/tmdb-utilities.ts`
+  - Always use existing TMDb utility functions from `apps/scrapers/src/common/tmdb-utilities.ts`
   - Implement graceful fallbacks when TMDb data is unavailable
   - Log essential operations but remove debug output for production
   - Use consistent error handling patterns across TMDb API calls

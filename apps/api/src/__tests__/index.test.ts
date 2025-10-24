@@ -1,0 +1,115 @@
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {createJWT} from '../auth';
+
+// Mock the db module
+const createAsyncEmptyFn = () => vi.fn(async () => []);
+
+const createSelectFromStub = () => ({
+  where: createAsyncEmptyFn(),
+  limit: createAsyncEmptyFn(),
+  orderBy: createAsyncEmptyFn(),
+});
+
+const createSelectStub = () =>
+  vi.fn(() => ({
+    from: vi.fn(() => createSelectFromStub()),
+  }));
+
+const createInsertStub = () =>
+  vi.fn(() => ({
+    values: vi.fn(async () => {
+      // Mock implementation
+    }),
+  }));
+
+vi.mock('@shine/database', () => {
+  const select = createSelectStub();
+  const insert = createInsertStub();
+
+  return {
+    getDatabase: vi.fn(() => ({
+      select,
+      insert,
+    })),
+    eq: vi.fn(),
+    and: vi.fn(),
+    not: vi.fn(),
+    sql: vi.fn(),
+  };
+});
+
+describe('API Module Tests', () => {
+  const testSecret = 'test-secret-key';
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('JWT Token Creation', () => {
+    it('should create valid JWT token', async () => {
+      const token = await createJWT(testSecret);
+      expect(token).toBeDefined();
+      expect(typeof token).toBe('string');
+      expect(token.split('.')).toHaveLength(3);
+    });
+  });
+
+  describe('Mock Database Operations', () => {
+    it('should mock database connection', async () => {
+      const {getDatabase} = await import('@shine/database');
+      const mockEnvironment = {
+        TMDB_API_KEY: 'test-key',
+        TMDB_LEAD_ACCESS_TOKEN: 'test-token',
+        OMDB_API_KEY: 'test-key',
+        TURSO_DATABASE_URL: 'test-url',
+        TURSO_AUTH_TOKEN: 'test-token',
+      };
+      const database = getDatabase(mockEnvironment);
+
+      expect(getDatabase).toHaveBeenCalled();
+      expect(database.select).toBeDefined();
+      expect(database.insert).toBeDefined();
+    });
+  });
+
+  describe('Environment Configuration', () => {
+    it('should handle required environment variables', () => {
+      const environment = {
+        TURSO_DATABASE_URL: 'test-url',
+        TURSO_AUTH_TOKEN: 'test-token',
+        JWT_SECRET: testSecret,
+        ADMIN_PASSWORD: 'admin123',
+      };
+
+      expect(environment.TURSO_DATABASE_URL).toBe('test-url');
+      expect(environment.JWT_SECRET).toBe(testSecret);
+      expect(environment.ADMIN_PASSWORD).toBe('admin123');
+    });
+  });
+
+  describe('Rate Limiting Logic', () => {
+    it('should validate rate limiting parameters', () => {
+      const rateLimitConfig = {
+        maxRequests: 10,
+        windowMs: 3_600_000, // 1 hour
+      };
+
+      expect(rateLimitConfig.maxRequests).toBe(10);
+      expect(rateLimitConfig.windowMs).toBe(3_600_000);
+    });
+  });
+
+  describe('Request Validation', () => {
+    it('should validate request structure', () => {
+      const validRequest = {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({movieId: 'test-id', title: 'Test'}),
+      };
+
+      expect(validRequest.method).toBe('POST');
+      expect(validRequest.headers['Content-Type']).toBe('application/json');
+      expect(JSON.parse(validRequest.body)).toHaveProperty('movieId');
+    });
+  });
+});

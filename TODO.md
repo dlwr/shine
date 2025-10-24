@@ -7,13 +7,13 @@
 
 ### 1. API ファイルの分割 ✅ 完了（2025 年 6 月 23 日）
 
-- **問題**: `api/src/index.ts`が 2083 行の巨大ファイル
+- **問題**: `apps/api/src/index.ts`が 2083 行の巨大ファイル
 - **対策完了**: 機能別にルートファイルを分割
-  - `api/src/routes/movies.ts` - 映画詳細・翻訳・記事リンク関連
-  - `api/src/routes/auth.ts` - 認証関連
-  - `api/src/routes/admin.ts` - 管理者機能
-  - `api/src/routes/selections.ts` - 映画選出関連
-  - `api/src/routes/utilities.ts` - ユーティリティ機能
+  - `apps/api/src/routes/movies.ts` - 映画詳細・翻訳・記事リンク関連
+  - `apps/api/src/routes/auth.ts` - 認証関連
+  - `apps/api/src/routes/admin.ts` - 管理者機能
+  - `apps/api/src/routes/selections.ts` - 映画選出関連
+  - `apps/api/src/routes/utilities.ts` - ユーティリティ機能
 - **結果**: 2083 行 → 21 行のメインファイルに削減、保守性・可読性が大幅改善
 - **技術的改善**: TypeScript 型安全性確保、ESLint 準拠、全機能正常動作確認済み
 
@@ -47,9 +47,9 @@
 
 - **問題**: 統一的なエラー処理が欠如
 - **対策完了**: 包括的エラーハンドリングシステム実装
-  - **統一エラー型定義**: `api/src/types/errors.ts` - 構造化されたエラーレスポンス型
-  - **エラーハンドラーユーティリティ**: `api/src/utils/error-handlers.ts` - 一貫したエラーレスポンス生成
-  - **グローバルエラーミドルウェア**: `api/src/middleware/error-handler.ts` - 全 API 統一エラー処理
+  - **統一エラー型定義**: `apps/api/src/types/errors.ts` - 構造化されたエラーレスポンス型
+  - **エラーハンドラーユーティリティ**: `apps/api/src/utils/error-handlers.ts` - 一貫したエラーレスポンス生成
+  - **グローバルエラーミドルウェア**: `apps/api/src/middleware/error-handler.ts` - 全 API 統一エラー処理
   - **認証エラー強化**: 詳細なエラー理由（MISSING_TOKEN、INVALID_TOKEN 等）
   - **適切な HTTP ステータスコード**: 400, 401, 404, 409, 429, 500, 503 の適切な使い分け
 - **結果**: 統一的なエラーレスポンス、デバッグ効率向上、型安全なエラーハンドリング
@@ -187,9 +187,9 @@
   - データベース環境設定スクリプト（setup-database-environment.cjs）の整備
 
 - **2025 年 6 月 23 日**: エラーハンドリング改善完了
-  - 統一エラー型定義システム実装（`api/src/types/errors.ts`）
-  - エラーハンドラーユーティリティ作成（`api/src/utils/error-handlers.ts`）
-  - グローバルエラーミドルウェア導入（`api/src/middleware/error-handler.ts`）
+  - 統一エラー型定義システム実装（`apps/api/src/types/errors.ts`）
+  - エラーハンドラーユーティリティ作成（`apps/api/src/utils/error-handlers.ts`）
+  - グローバルエラーミドルウェア導入（`apps/api/src/middleware/error-handler.ts`）
   - 認証エラーハンドリング強化（詳細なエラー理由付き）
   - 全 API ルートでの統一的エラー処理実現
   - 適切な HTTP ステータスコード使用（400, 401, 404, 409, 429, 500, 503）

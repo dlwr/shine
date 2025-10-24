@@ -4,9 +4,9 @@
 
 - The repo is a pnpm workspace with `api`, `front`, and `scrapers` packages alongside shared `src/` database logic.
 - `src/` hosts Drizzle ORM schema, migrations, and shared utilities; database setup scripts live in `scripts/`.
-- Cloudflare Worker code sits in `api/src` with route files under `routes/` and middleware/services folders; tests reside in `api/tests` and `api/src/__tests__`.
+- Cloudflare Worker code sits in `apps/api/src` with route files under `routes/` and middleware/services folders; tests reside in `apps/api/tests` and `apps/api/src/__tests__`.
 - The Remix front end lives in `front/app` (routes named with Remix dot-segments), static assets in `front/public`, and worker builds in `front/build`.
-- Scraper CLIs are in `scrapers/src` with per-festival directories and matching `__tests__`; run outputs to `data/` and `tmp/`.
+- Scraper CLIs are in `apps/scrapers/src` with per-festival directories and matching `__tests__`; run outputs to `data/` and `tmp/`.
 
 ## Build, Test, and Development Commands
 
@@ -21,7 +21,7 @@
 - TypeScript modules use ESLint (flat config) + Prettier; format before pushing with `pnpm lint` or `pnpm lint:fix`.
 - Prefer tabs for indentation (existing codebase style) and single quotes; keep files ESM (`type: module`).
 - Follow domain-driven naming: PascalCase for React components/services, camelCase for helpers, dot-separated Remix route filenames (e.g. `admin.movies.$id.tsx`).
-- Shared types live in `api/src/types` and `scrapers/src/types`; co-locate tests as `.test.ts`/`.test.tsx`.
+- Shared types live in `packages/types` and feature-specific folders; co-locate tests as `.test.ts`/`.test.tsx`.
 
 ## Testing Guidelines
 

@@ -1,0 +1,17 @@
+{
+  "name": "@shine/database",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema/*": "./src/schema/*.ts",
+    "./seeds/*": "./seeds/*.ts"
+  },
+  "dependencies": {
+    "@shine/utils": "workspace:*",
+    "@libsql/client": "^0.15.9",
+    "drizzle-orm": "^0.44.6"
+  }
+}

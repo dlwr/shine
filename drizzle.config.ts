@@ -20,8 +20,8 @@ const authToken =
   '';
 
 export default defineConfig({
-  schema: './src/schema/index.ts',
-  out: './src/migrations',
+  schema: './packages/database/src/schema/index.ts',
+  out: './packages/database/migrations',
   dialect: 'turso',
   dbCredentials: {
     url: databaseUrl,

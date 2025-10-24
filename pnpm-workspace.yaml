@@ -1,7 +1,6 @@
 packages:
-  - api
-  - scrapers
-  - front
+  - apps/*
+  - packages/*
 ignoredBuiltDependencies:
   - esbuild
   - sharp

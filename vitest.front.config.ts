@@ -8,18 +8,18 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@routes': `${dirname}/front/app/routes`,
-      '@': `${dirname}/front/app`,
-      '@/components': `${dirname}/front/app/components`,
-      '@/lib': `${dirname}/front/app/lib`,
-      '@/hooks': `${dirname}/front/app/hooks`,
+      '@routes': `${dirname}/apps/front/app/routes`,
+      '@': `${dirname}/apps/front/app`,
+      '@/components': `${dirname}/apps/front/app/components`,
+      '@/lib': `${dirname}/apps/front/app/lib`,
+      '@/hooks': `${dirname}/apps/front/app/hooks`,
     },
   },
   test: {
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
-    include: ['front/app/**/*.test.{ts,tsx}'],
+    include: ['apps/front/app/**/*.test.{ts,tsx}'],
     exclude: ['node_modules/**'],
   },
 });

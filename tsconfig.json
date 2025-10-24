@@ -1,9 +1,12 @@
 {
   "files": [],
   "references": [
-    {"path": "./front"},
-    {"path": "./api"},
-    {"path": "./scrapers"}
+    {"path": "./apps/front"},
+    {"path": "./apps/api"},
+    {"path": "./apps/scrapers"},
+    {"path": "./packages/database"},
+    {"path": "./packages/utils"},
+    {"path": "./packages/types"}
   ],
   "compilerOptions": {
     "composite": true,
@@ -31,14 +34,18 @@
     "esModuleInterop": true,
     "baseUrl": ".",
     "paths": {
-      "db": ["./src"],
-      "db/*": ["./src/*"],
-      "@shine/db": ["src"],
-      "@shine/db/*": ["src/*"],
-      "@shine/scrapers": ["scrapers"],
-      "@shine/scrapers/*": ["scrapers/*"],
-      "@shine/api": ["api"],
-      "@shine/api/*": ["api/*"]
+      "@shine/database": ["packages/database/src"],
+      "@shine/database/*": ["packages/database/src/*"],
+      "@shine/utils": ["packages/utils/src"],
+      "@shine/utils/*": ["packages/utils/src/*"],
+      "@shine/types": ["packages/types/src"],
+      "@shine/types/*": ["packages/types/src/*"],
+      "@shine/scrapers": ["apps/scrapers/src"],
+      "@shine/scrapers/*": ["apps/scrapers/src/*"],
+      "@shine/api": ["apps/api/src"],
+      "@shine/api/*": ["apps/api/src/*"],
+      "@shine/front": ["apps/front/app"],
+      "@shine/front/*": ["apps/front/app/*"]
     }
   },
   "exclude": [

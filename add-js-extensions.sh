@@ -30,7 +30,7 @@ total_files=0
 modified_files=0
 
 # Process all TypeScript files in the specified directories
-for dir in "src" "scrapers/src" "api/src"; do
+for dir in "packages/database/src" "apps/scrapers/src" "apps/api/src"; do
     if [ -d "$dir" ]; then
         while IFS= read -r -d '' file; do
             total_files=$((total_files + 1))

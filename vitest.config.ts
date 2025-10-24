@@ -9,7 +9,12 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      db: path.resolve(dirname, './src/index.ts'),
+      '@shine/database': path.resolve(
+        dirname,
+        './packages/database/src/index.ts',
+      ),
+      '@shine/utils': path.resolve(dirname, './packages/utils/src/index.ts'),
+      '@shine/types': path.resolve(dirname, './packages/types/src/index.ts'),
     },
   },
   test: {
@@ -30,9 +35,9 @@ export default defineConfig({
         test: {
           name: 'node',
           include: [
-            'api/src/**/*.test.ts',
-            'scrapers/src/**/*.test.ts',
-            'src/**/*.test.ts',
+            'apps/api/src/**/*.test.ts',
+            'apps/scrapers/src/**/*.test.ts',
+            'packages/database/**/*.test.ts',
           ],
           environment: 'node',
           globals: true,
@@ -42,16 +47,16 @@ export default defineConfig({
       {
         resolve: {
           alias: {
-            '@routes': path.resolve(dirname, 'front/app/routes'),
-            '@': path.resolve(dirname, 'front/app'),
-            '@/components': path.resolve(dirname, 'front/app/components'),
-            '@/lib': path.resolve(dirname, 'front/app/lib'),
-            '@/hooks': path.resolve(dirname, 'front/app/hooks'),
+            '@routes': path.resolve(dirname, 'apps/front/app/routes'),
+            '@': path.resolve(dirname, 'apps/front/app'),
+            '@/components': path.resolve(dirname, 'apps/front/app/components'),
+            '@/lib': path.resolve(dirname, 'apps/front/app/lib'),
+            '@/hooks': path.resolve(dirname, 'apps/front/app/hooks'),
           },
         },
         test: {
           name: 'jsdom',
-          include: ['front/app/**/*.test.{ts,tsx}'],
+          include: ['apps/front/app/**/*.test.{ts,tsx}'],
           environment: 'jsdom',
           globals: true,
           setupFiles: ['./vitest.setup.ts'],

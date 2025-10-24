@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "types": ["@cloudflare/workers-types", "node"],
+    "jsxImportSource": "hono/jsx"
+  },
+  "include": [
+    "src/**/*",
+    "../../packages/database/src/**/*",
+    "../../packages/types/src/**/*",
+    "../../packages/utils/src/**/*",
+    "../scrapers/src/common/tmdb-utilities.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}
