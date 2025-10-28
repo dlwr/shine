@@ -5,7 +5,9 @@ import MovieInfoEditor from './movie-info-editor';
 
 type MovieDetailsProps = Parameters<typeof MovieInfoEditor>[0]['movieData'];
 
-const createMovieData = (overrides: Partial<MovieDetailsProps> = {}): MovieDetailsProps => ({
+const createMovieData = (
+  overrides: Partial<MovieDetailsProps> = {},
+): MovieDetailsProps => ({
   uid: 'movie-123',
   year: 2023,
   originalLanguage: 'ja',
@@ -111,44 +113,49 @@ describe('MovieInfoEditor 外部ID検索', () => {
       imdbId: 'tt7654321',
     });
 
-    fetchMock.mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
-      const url = typeof input === 'string' ? input : input.toString();
-      const method = init?.method ?? 'GET';
+    fetchMock.mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        const method = init?.method ?? 'GET';
 
-      if (url.includes('/external-id-search')) {
+        if (url.includes('/external-id-search')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => searchResponse,
+          });
+        }
+
+        if (url.endsWith('/tmdb-id') && method === 'PUT') {
+          expect(init?.headers).toMatchObject({
+            Authorization: 'Bearer admin-token',
+            'Content-Type': 'application/json',
+          });
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({success: true}),
+          });
+        }
+
+        if (
+          url.endsWith(`/admin/movies/${movieData.uid}`) &&
+          method === 'GET'
+        ) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => updatedMovie,
+          });
+        }
+
         return Promise.resolve({
           ok: true,
           status: 200,
-          json: async () => searchResponse,
+          json: async () => ({}),
         });
-      }
-
-      if (url.endsWith('/tmdb-id') && method === 'PUT') {
-        expect(init?.headers).toMatchObject({
-          Authorization: 'Bearer admin-token',
-          'Content-Type': 'application/json',
-        });
-        return Promise.resolve({
-          ok: true,
-          status: 200,
-          json: async () => ({success: true}),
-        });
-      }
-
-      if (url.endsWith(`/admin/movies/${movieData.uid}`) && method === 'GET') {
-        return Promise.resolve({
-          ok: true,
-          status: 200,
-          json: async () => updatedMovie,
-        });
-      }
-
-      return Promise.resolve({
-        ok: true,
-        status: 200,
-        json: async () => ({}),
-      });
-    });
+      },
+    );
 
     render(
       <MovieInfoEditor
@@ -181,7 +188,9 @@ describe('MovieInfoEditor 外部ID検索', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining(`/admin/movies/${movieData.uid}/external-id-search`),
+      expect.stringContaining(
+        `/admin/movies/${movieData.uid}/external-id-search`,
+      ),
       expect.objectContaining({
         headers: {Authorization: 'Bearer admin-token'},
       }),

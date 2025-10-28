@@ -157,6 +157,7 @@ describe('AdminMovieEdit Route', () => {
               params: {},
               pathname: '/',
               data: undefined,
+              loaderData: undefined,
               handle: undefined,
             },
             {
@@ -164,6 +165,7 @@ describe('AdminMovieEdit Route', () => {
               params: {id: 'movie-123'},
               pathname: '/admin/movies/movie-123',
               data: {} as AdminMovieEditComponentProps['loaderData'],
+              loaderData: {} as AdminMovieEditComponentProps['loaderData'],
               handle: undefined,
             },
           ]}
@@ -198,6 +200,7 @@ describe('AdminMovieEdit Route', () => {
                 params: {},
                 pathname: '/admin/movies/movie-123',
                 data: undefined,
+                loaderData: undefined,
                 handle: undefined,
               },
               {
@@ -205,6 +208,10 @@ describe('AdminMovieEdit Route', () => {
                 params: {id: 'movie-123'},
                 pathname: '/admin/movies/movie-123',
                 data: {
+                  apiUrl: 'http://localhost:8787',
+                  movieId: 'movie-123',
+                },
+                loaderData: {
                   apiUrl: 'http://localhost:8787',
                   movieId: 'movie-123',
                 },
@@ -244,6 +251,7 @@ describe('AdminMovieEdit Route', () => {
                 params: {},
                 pathname: '/admin/movies/movie-123',
                 data: undefined,
+                loaderData: undefined,
                 handle: undefined,
               },
               {
@@ -251,6 +259,10 @@ describe('AdminMovieEdit Route', () => {
                 params: {id: 'movie-123'},
                 pathname: '/admin/movies/movie-123',
                 data: {
+                  apiUrl: 'http://localhost:8787',
+                  movieId: 'movie-123',
+                },
+                loaderData: {
                   apiUrl: 'http://localhost:8787',
                   movieId: 'movie-123',
                 },

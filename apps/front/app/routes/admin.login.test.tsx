@@ -168,6 +168,7 @@ describe('AdminLogin Component', () => {
                 params: {},
                 pathname: '/',
                 data: undefined,
+                loaderData: undefined,
                 handle: undefined,
               },
               {
@@ -175,6 +176,7 @@ describe('AdminLogin Component', () => {
                 params: {},
                 pathname: '/admin/login',
                 data: {} as AdminLoginComponentProps['loaderData'],
+                loaderData: {} as AdminLoginComponentProps['loaderData'],
                 handle: undefined,
               },
             ]}
@@ -206,6 +208,7 @@ describe('AdminLogin Component', () => {
                 params: {},
                 pathname: '/',
                 data: undefined,
+                loaderData: undefined,
                 handle: undefined,
               },
               {
@@ -213,6 +216,7 @@ describe('AdminLogin Component', () => {
                 params: {},
                 pathname: '/admin/login',
                 data: {} as AdminLoginComponentProps['loaderData'],
+                loaderData: {} as AdminLoginComponentProps['loaderData'],
                 handle: undefined,
               },
             ]}
@@ -243,6 +247,7 @@ describe('AdminLogin Component', () => {
                 params: {},
                 pathname: '/',
                 data: undefined,
+                loaderData: undefined,
                 handle: undefined,
               },
               {
@@ -250,6 +255,7 @@ describe('AdminLogin Component', () => {
                 params: {},
                 pathname: '/admin/login',
                 data: {} as AdminLoginComponentProps['loaderData'],
+                loaderData: {} as AdminLoginComponentProps['loaderData'],
                 handle: undefined,
               },
             ]}
@@ -284,6 +290,7 @@ describe('AdminLogin Component', () => {
                 params: {},
                 pathname: '/',
                 data: undefined,
+                loaderData: undefined,
                 handle: undefined,
               },
               {
@@ -291,6 +298,7 @@ describe('AdminLogin Component', () => {
                 params: {},
                 pathname: '/admin/login',
                 data: {} as AdminLoginComponentProps['loaderData'],
+                loaderData: {} as AdminLoginComponentProps['loaderData'],
                 handle: undefined,
               },
             ]}
@@ -318,6 +326,7 @@ describe('AdminLogin Component', () => {
                 params: {},
                 pathname: '/',
                 data: undefined,
+                loaderData: undefined,
                 handle: undefined,
               },
               {
@@ -325,6 +334,7 @@ describe('AdminLogin Component', () => {
                 params: {},
                 pathname: '/admin/login',
                 data: {} as AdminLoginComponentProps['loaderData'],
+                loaderData: {} as AdminLoginComponentProps['loaderData'],
                 handle: undefined,
               },
             ]}
@@ -358,6 +368,7 @@ describe('AdminLogin Component', () => {
                 params: {},
                 pathname: '/',
                 data: undefined,
+                loaderData: undefined,
                 handle: undefined,
               },
               {
@@ -365,6 +376,7 @@ describe('AdminLogin Component', () => {
                 params: {},
                 pathname: '/admin/login',
                 data: {} as AdminLoginComponentProps['loaderData'],
+                loaderData: {} as AdminLoginComponentProps['loaderData'],
                 handle: undefined,
               },
             ]}

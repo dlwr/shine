@@ -116,7 +116,9 @@ export default function MovieInfoEditor({
 
     if (fallback?.content) {
       const language =
-        fallback.languageCode === 'ja' ? ('ja-JP' as const) : ('en-US' as const);
+        fallback.languageCode === 'ja'
+          ? ('ja-JP' as const)
+          : ('en-US' as const);
 
       return {text: fallback.content.trim(), language};
     }
@@ -140,9 +142,9 @@ export default function MovieInfoEditor({
     undefined,
   );
   const [searchingIds, setSearchingIds] = useState(false);
-  const [idSearchUsedQuery, setIdSearchUsedQuery] = useState<string | undefined>(
-    undefined,
-  );
+  const [idSearchUsedQuery, setIdSearchUsedQuery] = useState<
+    string | undefined
+  >(undefined);
   const [idSearchUsedYear, setIdSearchUsedYear] = useState<number | undefined>(
     undefined,
   );
@@ -291,12 +293,9 @@ export default function MovieInfoEditor({
         throw new Error(errorData.error || 'Failed to update IMDb ID');
       }
 
-      const movieResponse = await fetch(
-        `${apiUrl}/admin/movies/${movieId}`,
-        {
-          headers: {Authorization: `Bearer ${token}`},
-        },
-      );
+      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
+        headers: {Authorization: `Bearer ${token}`},
+      });
 
       if (movieResponse.ok) {
         const data = (await movieResponse.json()) as MovieDetails;
@@ -356,12 +355,9 @@ export default function MovieInfoEditor({
         throw new Error(errorData.error || 'Failed to update TMDb ID');
       }
 
-      const movieResponse = await fetch(
-        `${apiUrl}/admin/movies/${movieId}`,
-        {
-          headers: {Authorization: `Bearer ${token}`},
-        },
-      );
+      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
+        headers: {Authorization: `Bearer ${token}`},
+      });
 
       if (movieResponse.ok) {
         const data = (await movieResponse.json()) as MovieDetails;
@@ -535,9 +531,7 @@ export default function MovieInfoEditor({
       globalThis.alert?.('IMDb IDを設定しました');
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : 'IMDb IDの設定に失敗しました';
+        error instanceof Error ? error.message : 'IMDb IDの設定に失敗しました';
       setIdSearchError(message);
       console.error('Apply IMDb ID error:', error);
     }
@@ -548,10 +542,7 @@ export default function MovieInfoEditor({
     options: {refreshData?: boolean} = {},
   ) => {
     try {
-      const success = await performTmdbUpdate(
-        suggestion.tmdbId,
-        options,
-      );
+      const success = await performTmdbUpdate(suggestion.tmdbId, options);
 
       if (!success) {
         return;
@@ -562,9 +553,7 @@ export default function MovieInfoEditor({
       globalThis.alert?.('TMDb IDを設定しました');
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : 'TMDb IDの設定に失敗しました';
+        error instanceof Error ? error.message : 'TMDb IDの設定に失敗しました';
       setIdSearchError(message);
       console.error('Apply TMDb ID error:', error);
     }
@@ -960,10 +949,9 @@ export default function MovieInfoEditor({
                 }}
                 className="grid gap-3 md:grid-cols-12 md:items-end">
                 <div className="md:col-span-6">
-                <label
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                  htmlFor="external-id-search-query"
-                >
+                  <label
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                    htmlFor="external-id-search-query">
                     検索キーワード
                   </label>
                   <input
@@ -978,14 +966,13 @@ export default function MovieInfoEditor({
                   />
                 </div>
                 <div className="md:col-span-3">
-                <label
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                  htmlFor="external-id-search-language"
-                >
+                  <label
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                    htmlFor="external-id-search-language">
                     検索言語
                   </label>
-                <select
-                  id="external-id-search-language"
+                  <select
+                    id="external-id-search-language"
                     value={idSearchLanguage}
                     onChange={event => {
                       const value = event.target.value as 'ja-JP' | 'en-US';
@@ -997,10 +984,9 @@ export default function MovieInfoEditor({
                   </select>
                 </div>
                 <div className="md:col-span-3">
-                <label
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                  htmlFor="external-id-search-year"
-                >
+                  <label
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                    htmlFor="external-id-search-year">
                     公開年 (任意)
                   </label>
                   <input
@@ -1059,14 +1045,15 @@ export default function MovieInfoEditor({
                     <span className="font-medium text-gray-700">
                       {idSearchUsedQuery ?? idSearchQuery}
                     </span>
-                    {idSearchUsedYear !== undefined && !Number.isNaN(idSearchUsedYear) && (
-                      <span className="ml-2">
-                        公開年:{' '}
-                        <span className="font-medium text-gray-700">
-                          {idSearchUsedYear}
+                    {idSearchUsedYear !== undefined &&
+                      !Number.isNaN(idSearchUsedYear) && (
+                        <span className="ml-2">
+                          公開年:{' '}
+                          <span className="font-medium text-gray-700">
+                            {idSearchUsedYear}
+                          </span>
                         </span>
-                      </span>
-                    )}
+                      )}
                   </div>
                   <ul className="space-y-3">
                     {idSearchResults.map(result => (
@@ -1091,7 +1078,9 @@ export default function MovieInfoEditor({
                               )}
                             <div className="text-xs text-gray-500 space-x-2">
                               <span>TMDb: {result.tmdbId}</span>
-                              {result.imdbId && <span>IMDb: {result.imdbId}</span>}
+                              {result.imdbId && (
+                                <span>IMDb: {result.imdbId}</span>
+                              )}
                             </div>
                             {typeof result.yearDifference === 'number' &&
                               movieData.year && (

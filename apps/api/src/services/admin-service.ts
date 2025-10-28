@@ -677,7 +677,7 @@ export class AdminService extends BaseService {
     const yearToUse =
       options.year !== undefined && !Number.isNaN(options.year)
         ? options.year
-        : movie.year ?? undefined;
+        : (movie.year ?? undefined);
 
     const limit = Math.min(Math.max(options.limit ?? 5, 1), 10);
 
@@ -746,7 +746,9 @@ export class AdminService extends BaseService {
           : undefined;
 
         const yearDifference =
-          releaseYear !== undefined && movie.year !== null && movie.year !== undefined
+          releaseYear !== undefined &&
+          movie.year !== null &&
+          movie.year !== undefined
             ? Math.abs(releaseYear - movie.year)
             : undefined;
 

@@ -46,78 +46,74 @@ adminRoutes.get('/movies/:id', authMiddleware, async c => {
   }
 });
 
-adminRoutes.get(
-  '/movies/:id/external-id-search',
-  authMiddleware,
-  async c => {
-    try {
-      const adminService = new AdminService(c.env);
-      const movieId = c.req.param('id');
-      const rawQuery = c.req.query('query');
-      const rawLanguage = c.req.query('language');
-      const rawYear = c.req.query('year');
-      const rawLimit = c.req.query('limit');
+adminRoutes.get('/movies/:id/external-id-search', authMiddleware, async c => {
+  try {
+    const adminService = new AdminService(c.env);
+    const movieId = c.req.param('id');
+    const rawQuery = c.req.query('query');
+    const rawLanguage = c.req.query('language');
+    const rawYear = c.req.query('year');
+    const rawLimit = c.req.query('limit');
 
-      const query = rawQuery ? sanitizeText(rawQuery) : undefined;
+    const query = rawQuery ? sanitizeText(rawQuery) : undefined;
 
-      const language = (() => {
-        if (!rawLanguage) {
-          return undefined;
-        }
-
-        const sanitized = sanitizeText(rawLanguage);
-
-        if (/^ja/i.test(sanitized)) {
-          return 'ja-JP';
-        }
-
-        if (/^en/i.test(sanitized)) {
-          return 'en-US';
-        }
-
+    const language = (() => {
+      if (!rawLanguage) {
         return undefined;
-      })();
-
-      const year = rawYear ? Number.parseInt(rawYear, 10) : undefined;
-      const limit = rawLimit ? Number.parseInt(rawLimit, 10) : undefined;
-
-      if (year !== undefined && Number.isNaN(year)) {
-        return c.json({error: 'Invalid year parameter'}, 400);
       }
 
-      if (limit !== undefined && (Number.isNaN(limit) || limit < 1)) {
-        return c.json({error: 'Invalid limit parameter'}, 400);
+      const sanitized = sanitizeText(rawLanguage);
+
+      if (/^ja/i.test(sanitized)) {
+        return 'ja-JP';
       }
 
-      const result = await adminService.searchExternalMovieIds(movieId, {
-        query,
-        language,
-        year,
-        limit,
-      });
-
-      return c.json(result);
-    } catch (error) {
-      console.error('Error searching external IDs:', error);
-
-      if (error instanceof Error) {
-        if (error.message === 'Movie not found') {
-          return c.json({error: 'Movie not found'}, 404);
-        }
-
-        if (error.message === 'Unable to determine search query') {
-          return c.json({error: 'Search query is required'}, 400);
-        }
-
-        if (error.message === 'TMDb API key not configured') {
-          return c.json({error: 'TMDb API key is not configured'}, 503);
-        }
+      if (/^en/i.test(sanitized)) {
+        return 'en-US';
       }
 
-      return c.json({error: 'Internal server error'}, 500);
+      return undefined;
+    })();
+
+    const year = rawYear ? Number.parseInt(rawYear, 10) : undefined;
+    const limit = rawLimit ? Number.parseInt(rawLimit, 10) : undefined;
+
+    if (year !== undefined && Number.isNaN(year)) {
+      return c.json({error: 'Invalid year parameter'}, 400);
     }
-  },
-);
+
+    if (limit !== undefined && (Number.isNaN(limit) || limit < 1)) {
+      return c.json({error: 'Invalid limit parameter'}, 400);
+    }
+
+    const result = await adminService.searchExternalMovieIds(movieId, {
+      query,
+      language,
+      year,
+      limit,
+    });
+
+    return c.json(result);
+  } catch (error) {
+    console.error('Error searching external IDs:', error);
+
+    if (error instanceof Error) {
+      if (error.message === 'Movie not found') {
+        return c.json({error: 'Movie not found'}, 404);
+      }
+
+      if (error.message === 'Unable to determine search query') {
+        return c.json({error: 'Search query is required'}, 400);
+      }
+
+      if (error.message === 'TMDb API key not configured') {
+        return c.json({error: 'TMDb API key is not configured'}, 503);
+      }
+    }
+
+    return c.json({error: 'Internal server error'}, 500);
+  }
+});
 
 // Get all movies for admin
 adminRoutes.get('/movies', authMiddleware, async c => {
