@@ -5,14 +5,14 @@ import {authMiddleware} from '../auth';
 import {sanitizeText, sanitizeUrl} from '../middleware/sanitizer';
 
 // Mock the db module
-const createAsyncArrayFn = () => vi.fn(async () => []);
+const createAsyncArrayFunction = () => vi.fn(async () => []);
 
-const createAsyncSuccessFn = () => vi.fn(async () => ({success: true}));
+const createAsyncSuccessFunction = () => vi.fn(async () => ({success: true}));
 
 const createJoinChainStub = () => ({
-  where: createAsyncArrayFn(),
-  limit: createAsyncArrayFn(),
-  orderBy: createAsyncArrayFn(),
+  where: createAsyncArrayFunction(),
+  limit: createAsyncArrayFunction(),
+  orderBy: createAsyncArrayFunction(),
 });
 
 const createFromStub = () => ({
@@ -33,13 +33,13 @@ const createInsertStub = () =>
 const createUpdateStub = () =>
   vi.fn(() => ({
     set: vi.fn(() => ({
-      where: createAsyncSuccessFn(),
+      where: createAsyncSuccessFunction(),
     })),
   }));
 
 const createDeleteStub = () =>
   vi.fn(() => ({
-    where: createAsyncSuccessFn(),
+    where: createAsyncSuccessFunction(),
   }));
 
 vi.mock('@shine/database', () => {
@@ -65,7 +65,7 @@ vi.mock('@shine/database', () => {
 
 const createAuthContext = (
   headerValue: string | undefined,
-  envOverrides: Partial<Environment> = {},
+  environmentOverrides: Partial<Environment> = {},
 ) => {
   const header = vi.fn();
   if (headerValue !== undefined) {
@@ -79,7 +79,7 @@ const createAuthContext = (
       TURSO_DATABASE_URL: 'test-url',
       TURSO_AUTH_TOKEN: 'test-token',
       JWT_SECRET: 'test-secret',
-      ...envOverrides,
+      ...environmentOverrides,
     },
     json: vi.fn(),
   } as unknown as Context<{Bindings: Environment}>;
@@ -99,7 +99,7 @@ describe('Authentication Middleware Edge Cases', () => {
   };
 
   it('should handle missing Authorization header', async () => {
-    const context = createAuthContext(undefined);
+    const context = createAuthContext();
     await expectAuthFailure(context);
   });
 

@@ -33,7 +33,7 @@ type MovieDetails = {
   posters: PosterUrl[];
 };
 
-type PosterManagerProps = {
+type PosterManagerProperties = {
   movieId: string;
   apiUrl: string;
   posters: PosterUrl[];
@@ -45,7 +45,7 @@ export default function PosterManager({
   apiUrl,
   posters,
   onPostersUpdate,
-}: PosterManagerProps) {
+}: PosterManagerProperties) {
   const [showAddPoster, setShowAddPoster] = useState(false);
   const [newPoster, setNewPoster] = useState({
     url: '',
@@ -55,7 +55,7 @@ export default function PosterManager({
     source: '',
     isPrimary: false,
   });
-  const [posterError, setPosterError] = useState<string | undefined>(undefined);
+  const [posterError, setPosterError] = useState<string | undefined>();
 
   const addPoster = async () => {
     if (!newPoster.url.trim()) {

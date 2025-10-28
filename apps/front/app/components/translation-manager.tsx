@@ -33,7 +33,7 @@ type MovieDetails = {
   }>;
 };
 
-type TranslationManagerProps = {
+type TranslationManagerProperties = {
   movieId: string;
   apiUrl: string;
   translations: Translation[];
@@ -45,10 +45,10 @@ export default function TranslationManager({
   apiUrl,
   translations,
   onTranslationsUpdate,
-}: TranslationManagerProps) {
+}: TranslationManagerProperties) {
   const [editingTranslation, setEditingTranslation] = useState<
     string | undefined
-  >(undefined);
+  >();
   const [newTranslation, setNewTranslation] = useState({
     languageCode: '',
     content: '',
@@ -56,7 +56,7 @@ export default function TranslationManager({
   });
   const [showAddTranslation, setShowAddTranslation] = useState(false);
   const [translationError, setTranslationError] = useState<string | undefined>(
-    undefined,
+    
   );
 
   const addTranslation = async () => {
@@ -395,7 +395,7 @@ export default function TranslationManager({
   );
 }
 
-type EditTranslationFormProps = {
+type EditTranslationFormProperties = {
   translation: Translation;
   onSave: (languageCode: string, content: string, isDefault: boolean) => void;
   onCancel: () => void;
@@ -405,7 +405,7 @@ function EditTranslationForm({
   translation,
   onSave,
   onCancel,
-}: EditTranslationFormProps) {
+}: EditTranslationFormProperties) {
   const [languageCode, setLanguageCode] = useState(translation.languageCode);
   const [content, setContent] = useState(translation.content);
   const [isDefault, setIsDefault] = useState(translation.isDefault === 1);

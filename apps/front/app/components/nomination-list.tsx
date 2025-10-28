@@ -18,11 +18,11 @@ type Nomination = {
   };
 };
 
-type NominationListProps = {
+type NominationListProperties = {
   nominations: Nomination[];
 };
 
-export default function NominationList({nominations}: NominationListProps) {
+export default function NominationList({nominations}: NominationListProperties) {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h3 className="text-lg font-medium text-gray-900 mb-4">ノミネート</h3>

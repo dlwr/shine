@@ -101,10 +101,10 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
   const {apiUrl, movieId} = loaderData as LoaderData;
 
   const [movieData, setMovieData] = useState<MovieDetails | undefined>(
-    undefined,
+    
   );
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | undefined>(undefined);
+  const [error, setError] = useState<string | undefined>();
 
   useEffect(() => {
     const loadMovie = async () => {

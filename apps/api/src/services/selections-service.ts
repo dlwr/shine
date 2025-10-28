@@ -69,7 +69,7 @@ export class SelectionsService extends BaseService {
 
     // Cache result
     const cacheKey = `selection-${type}-${selectionDate}`;
-    const response = new Response(JSON.stringify(movie), {
+    const response = Response.json(movie, {
       headers: {'Content-Type': 'application/json'},
     });
     await this.cache.put(cacheKey, response);
@@ -284,7 +284,7 @@ export class SelectionsService extends BaseService {
     const movie = await this.getCompleteMovieData(movieId, locale);
 
     // Cache result
-    const response = new Response(JSON.stringify(movie), {
+    const response = Response.json(movie, {
       headers: {'Content-Type': 'application/json'},
     });
     await this.cache.put(cacheKey, response);

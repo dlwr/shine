@@ -3,11 +3,11 @@ type Language = {
   name: string;
 };
 
-type LanguageSelectorProps = {
+type LanguageSelectorProperties = {
   locale: string;
 };
 
-export function LanguageSelector({locale}: LanguageSelectorProps) {
+export function LanguageSelector({locale}: LanguageSelectorProperties) {
   const languages: Language[] = [
     {code: 'en', name: 'English'},
     {code: 'ja', name: '日本語'},

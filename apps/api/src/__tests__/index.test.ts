@@ -2,12 +2,12 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {createJWT} from '../auth';
 
 // Mock the db module
-const createAsyncEmptyFn = () => vi.fn(async () => []);
+const createAsyncEmptyFunction = () => vi.fn(async () => []);
 
 const createSelectFromStub = () => ({
-  where: createAsyncEmptyFn(),
-  limit: createAsyncEmptyFn(),
-  orderBy: createAsyncEmptyFn(),
+  where: createAsyncEmptyFunction(),
+  limit: createAsyncEmptyFunction(),
+  orderBy: createAsyncEmptyFunction(),
 });
 
 const createSelectStub = () =>

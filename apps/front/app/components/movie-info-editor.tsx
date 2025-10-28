@@ -32,7 +32,7 @@ type MovieDetails = {
   }>;
 };
 
-type MovieInfoEditorProps = {
+type MovieInfoEditorProperties = {
   movieData: MovieDetails;
   apiUrl: string;
   movieId: string;
@@ -65,29 +65,29 @@ export default function MovieInfoEditor({
   apiUrl,
   movieId,
   onMovieDataUpdate,
-}: MovieInfoEditorProps) {
+}: MovieInfoEditorProperties) {
   const [editingImdbId, setEditingImdbId] = useState(false);
   const [newImdbId, setNewImdbId] = useState('');
-  const [imdbError, setImdbError] = useState<string | undefined>(undefined);
+  const [imdbError, setImdbError] = useState<string | undefined>();
   const [fetchTmdbData, setFetchTmdbData] = useState(false);
 
   const [editingTmdbId, setEditingTmdbId] = useState(false);
   const [newTmdbId, setNewTmdbId] = useState('');
-  const [tmdbError, setTmdbError] = useState<string | undefined>(undefined);
+  const [tmdbError, setTmdbError] = useState<string | undefined>();
 
   const [tmdbRefreshing, setTmdbRefreshing] = useState(false);
   const [tmdbRefreshError, setTmdbRefreshError] = useState<string | undefined>(
-    undefined,
+    
   );
 
   const [autoFetching, setAutoFetching] = useState(false);
   const [autoFetchError, setAutoFetchError] = useState<string | undefined>(
-    undefined,
+    
   );
 
   const [editingYear, setEditingYear] = useState(false);
   const [newYear, setNewYear] = useState('');
-  const [yearError, setYearError] = useState<string | undefined>(undefined);
+  const [yearError, setYearError] = useState<string | undefined>();
 
   const preferredSearch = useMemo(() => {
     const translations = movieData.translations ?? [];
@@ -139,14 +139,14 @@ export default function MovieInfoEditor({
     ExternalIdSuggestion[]
   >([]);
   const [idSearchError, setIdSearchError] = useState<string | undefined>(
-    undefined,
+    
   );
   const [searchingIds, setSearchingIds] = useState(false);
   const [idSearchUsedQuery, setIdSearchUsedQuery] = useState<
     string | undefined
-  >(undefined);
+  >();
   const [idSearchUsedYear, setIdSearchUsedYear] = useState<number | undefined>(
-    undefined,
+    
   );
   const [idSearchInitialized, setIdSearchInitialized] = useState(false);
 
@@ -443,10 +443,10 @@ export default function MovieInfoEditor({
       return;
     }
 
-    const params = new URLSearchParams();
-    params.set('query', trimmedQuery);
-    params.set('language', idSearchLanguage);
-    params.set('limit', '5');
+    const parameters = new URLSearchParams();
+    parameters.set('query', trimmedQuery);
+    parameters.set('language', idSearchLanguage);
+    parameters.set('limit', '5');
 
     if (idSearchYear.trim()) {
       const parsedYear = Number.parseInt(idSearchYear.trim(), 10);
@@ -455,7 +455,7 @@ export default function MovieInfoEditor({
         return;
       }
 
-      params.set('year', String(parsedYear));
+      parameters.set('year', String(parsedYear));
     }
 
     const token = globalThis.localStorage?.getItem('adminToken');
@@ -472,7 +472,7 @@ export default function MovieInfoEditor({
 
     try {
       const response = await fetch(
-        `${apiUrl}/admin/movies/${movieId}/external-id-search?${params.toString()}`,
+        `${apiUrl}/admin/movies/${movieId}/external-id-search?${parameters.toString()}`,
         {
           headers: {Authorization: `Bearer ${token}`},
         },
@@ -590,7 +590,7 @@ export default function MovieInfoEditor({
     }
   };
 
-  const refreshTMDbData = async () => {
+  const refreshTMDatabaseData = async () => {
     if (!movieData?.tmdbId) {
       setTmdbRefreshError('TMDb IDが設定されていません');
       return;
@@ -649,7 +649,7 @@ export default function MovieInfoEditor({
     }
   };
 
-  const autoFetchTMDbData = async () => {
+  const autoFetchTMDatabaseData = async () => {
     if (!movieData?.imdbId) {
       setAutoFetchError('IMDb IDが設定されていません');
       return;
@@ -910,7 +910,7 @@ export default function MovieInfoEditor({
                 {movieData.tmdbId && (
                   <button
                     type="button"
-                    onClick={refreshTMDbData}
+                    onClick={refreshTMDatabaseData}
                     disabled={tmdbRefreshing}
                     className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 disabled:bg-gray-400">
                     {tmdbRefreshing ? '更新中...' : 'TMDb情報更新'}
@@ -1153,7 +1153,7 @@ export default function MovieInfoEditor({
               <strong className="text-gray-700">TMDb自動取得:</strong>
               <button
                 type="button"
-                onClick={autoFetchTMDbData}
+                onClick={autoFetchTMDatabaseData}
                 disabled={autoFetching}
                 className="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700 disabled:bg-gray-400">
                 {autoFetching ? '取得中...' : 'IMDb IDからTMDbデータを自動取得'}

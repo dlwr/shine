@@ -84,33 +84,33 @@ globalThis.fetch = vi.fn();
 const cast = <T,>(value: unknown): T => value as T;
 
 type LoaderResult = Awaited<ReturnType<typeof loader>>;
-type LoaderArgs = Route.LoaderArgs;
-type MetaArgs = Route.MetaArgs;
-type ComponentProps = Route.ComponentProps;
-type Matches = ComponentProps['matches'];
-type ActionArgs = Route.ActionArgs;
+type LoaderArguments = Route.LoaderArgs;
+type MetaArguments = Route.MetaArgs;
+type ComponentProperties = Route.ComponentProps;
+type Matches = ComponentProperties['matches'];
+type ActionArguments = Route.ActionArgs;
 
-const createLoaderArgs = (
-  context: LoaderArgs['context'],
-  request: LoaderArgs['request'],
-  params: LoaderArgs['params'],
-  overrides: Partial<Omit<LoaderArgs, 'context' | 'request' | 'params'>> = {},
-): LoaderArgs =>
-  cast<LoaderArgs>({
+const createLoaderArguments = (
+  context: LoaderArguments['context'],
+  request: LoaderArguments['request'],
+  parameters: LoaderArguments['params'],
+  overrides: Partial<Omit<LoaderArguments, 'context' | 'request' | 'params'>> = {},
+): LoaderArguments =>
+  cast<LoaderArguments>({
     context,
     request,
-    params,
+    params: parameters,
     matches: [],
     ...overrides,
   });
 
-const createMetaArgs = (
-  data: MetaArgs['data'],
-  params: MetaArgs['params'],
-): MetaArgs =>
-  cast<MetaArgs>({
+const createMetaArguments = (
+  data: MetaArguments['data'],
+  parameters: MetaArguments['params'],
+): MetaArguments =>
+  cast<MetaArguments>({
     data,
-    params,
+    params: parameters,
     location: {
       pathname: '/movies/movie-123',
       search: '',
@@ -130,7 +130,7 @@ const createLoaderData = (
 
 const createMatches = (
   loaderData: LoaderResult,
-  params: ComponentProps['params'],
+  parameters: ComponentProperties['params'],
 ): Matches =>
   cast<Matches>([
     {
@@ -142,28 +142,28 @@ const createMatches = (
     },
     {
       id: 'routes/movies.$id',
-      params,
-      pathname: `/movies/${params.id ?? ''}`,
+      params: parameters,
+      pathname: `/movies/${parameters.id ?? ''}`,
       data: loaderData,
       handle: undefined,
     },
   ]);
 
-const createParams = (id: string): ComponentProps['params'] =>
-  cast<ComponentProps['params']>({id});
+const createParameters = (id: string): ComponentProperties['params'] =>
+  cast<ComponentProperties['params']>({id});
 
-const createActionData = (): ComponentProps['actionData'] =>
-  cast<ComponentProps['actionData']>(undefined);
+const createActionData = (): ComponentProperties['actionData'] =>
+  cast<ComponentProperties['actionData']>();
 
-const createActionArgs = (
-  context: ActionArgs['context'],
-  request: ActionArgs['request'],
-  params: ActionArgs['params'],
-): ActionArgs =>
-  cast<ActionArgs>({
+const createActionArguments = (
+  context: ActionArguments['context'],
+  request: ActionArguments['request'],
+  parameters: ActionArguments['params'],
+): ActionArguments =>
+  cast<ActionArguments>({
     context,
     request,
-    params,
+    params: parameters,
     matches: [],
   });
 
@@ -184,10 +184,10 @@ describe('MovieDetail Component', () => {
       const parameters = {id: 'movie-123'};
       const request = {signal: undefined} as unknown as Request;
       const result = await loader(
-        createLoaderArgs(context, request, parameters, {
+        createLoaderArguments(context, request, parameters, {
           matches: createMatches(
             createLoaderData(),
-            createParams(parameters.id),
+            createParameters(parameters.id),
           ),
         }),
       );
@@ -214,10 +214,10 @@ describe('MovieDetail Component', () => {
       const parameters = {id: 'non-existent'};
       const request = {signal: undefined} as unknown as Request;
       const result = await loader(
-        createLoaderArgs(context, request, parameters, {
+        createLoaderArguments(context, request, parameters, {
           matches: createMatches(
             createLoaderData(),
-            createParams(parameters.id),
+            createParameters(parameters.id),
           ),
         }),
       );
@@ -236,10 +236,10 @@ describe('MovieDetail Component', () => {
       const parameters = {id: 'movie-123'};
       const request = {signal: undefined} as unknown as Request;
       const result = await loader(
-        createLoaderArgs(context, request, parameters, {
+        createLoaderArguments(context, request, parameters, {
           matches: createMatches(
             createLoaderData(),
-            createParams(parameters.id),
+            createParameters(parameters.id),
           ),
         }),
       );
@@ -257,7 +257,7 @@ describe('MovieDetail Component', () => {
         movieDetail: mockMovieDetail,
       };
 
-      const result = meta(createMetaArgs(loaderData, {id: 'movie-123'}));
+      const result = meta(createMetaArguments(loaderData, {id: 'movie-123'}));
 
       expect(result).toEqual([
         {title: 'パルム・ドール受賞作品 (2023) | SHINE'},
@@ -275,7 +275,7 @@ describe('MovieDetail Component', () => {
         status: 404,
       };
 
-      const result = meta(createMetaArgs(loaderData, {id: 'movie-123'}));
+      const result = meta(createMetaArguments(loaderData, {id: 'movie-123'}));
 
       expect(result).toEqual([
         {title: '映画が見つかりません | SHINE'},
@@ -290,14 +290,14 @@ describe('MovieDetail Component', () => {
   describe('Component', () => {
     it('映画詳細データが正常に表示される', () => {
       const loaderData = createLoaderData();
-      const params = createParams('movie-123');
+      const parameters = createParameters('movie-123');
 
       render(
         <MovieDetail
           loaderData={loaderData}
           actionData={createActionData()}
-          params={params}
-          matches={createMatches(loaderData, params)}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
         />,
       );
 
@@ -324,14 +324,14 @@ describe('MovieDetail Component', () => {
 
     it('受賞・ノミネート情報が正しく表示される', () => {
       const loaderData = createLoaderData();
-      const params = createParams('movie-123');
+      const parameters = createParameters('movie-123');
 
       render(
         <MovieDetail
           loaderData={loaderData}
           actionData={createActionData()}
-          params={params}
-          matches={createMatches(loaderData, params)}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
         />,
       );
 
@@ -355,14 +355,14 @@ describe('MovieDetail Component', () => {
         error: '映画が見つかりませんでした',
         status: 404,
       });
-      const params = createParams('movie-123');
+      const parameters = createParameters('movie-123');
 
       render(
         <MovieDetail
           loaderData={loaderData}
           actionData={createActionData()}
-          params={params}
-          matches={createMatches(loaderData, params)}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
         />,
       );
 
@@ -377,14 +377,14 @@ describe('MovieDetail Component', () => {
         error: 'APIへの接続に失敗しました',
         status: 500,
       });
-      const params = createParams('movie-123');
+      const parameters = createParameters('movie-123');
 
       render(
         <MovieDetail
           loaderData={loaderData}
           actionData={createActionData()}
-          params={params}
-          matches={createMatches(loaderData, params)}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
         />,
       );
 
@@ -394,14 +394,14 @@ describe('MovieDetail Component', () => {
 
     it('ホームページへの戻るリンクが表示される', () => {
       const loaderData = createLoaderData();
-      const params = createParams('movie-123');
+      const parameters = createParameters('movie-123');
 
       render(
         <MovieDetail
           loaderData={loaderData}
           actionData={createActionData()}
-          params={params}
-          matches={createMatches(loaderData, params)}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
         />,
       );
 
@@ -415,14 +415,14 @@ describe('MovieDetail Component', () => {
   describe('記事リンク機能', () => {
     it('記事リンクが正しく表示される', () => {
       const loaderData = createLoaderData();
-      const params = createParams('movie-123');
+      const parameters = createParameters('movie-123');
 
       render(
         <MovieDetail
           loaderData={loaderData}
           actionData={createActionData()}
-          params={params}
-          matches={createMatches(loaderData, params)}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
         />,
       );
 
@@ -461,14 +461,14 @@ describe('MovieDetail Component', () => {
 
     it('記事リンク投稿フォームが表示される', () => {
       const loaderData = createLoaderData();
-      const params = createParams('movie-123');
+      const parameters = createParameters('movie-123');
 
       render(
         <MovieDetail
           loaderData={loaderData}
           actionData={createActionData()}
-          params={params}
-          matches={createMatches(loaderData, params)}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
         />,
       );
 
@@ -495,14 +495,14 @@ describe('MovieDetail Component', () => {
       const loaderData = {
         movieDetail: movieDetailWithoutArticles,
       };
-      const params = createParams('movie-123');
+      const parameters = createParameters('movie-123');
 
       render(
         <MovieDetail
           loaderData={cast<LoaderResult>(loaderData)}
           actionData={createActionData()}
-          params={params}
-          matches={createMatches(cast<LoaderResult>(loaderData), params)}
+          params={parameters}
+          matches={createMatches(cast<LoaderResult>(loaderData), parameters)}
         />,
       );
 
@@ -537,7 +537,7 @@ describe('MovieDetail Component', () => {
       } as unknown as Request;
 
       const result = await action(
-        createActionArgs(context, request, parameters),
+        createActionArguments(context, request, parameters),
       );
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -586,7 +586,7 @@ describe('MovieDetail Component', () => {
       } as unknown as Request;
 
       const result = await action(
-        createActionArgs(context, request, parameters),
+        createActionArguments(context, request, parameters),
       );
 
       expect(result).toEqual({
@@ -616,7 +616,7 @@ describe('MovieDetail Component', () => {
       } as unknown as Request;
 
       const result = await action(
-        createActionArgs(context, request, parameters),
+        createActionArguments(context, request, parameters),
       );
 
       expect(result).toEqual({

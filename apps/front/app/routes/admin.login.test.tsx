@@ -5,7 +5,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import type {Route} from '../../.react-router/types/app/routes/+types/admin.login';
 import AdminLogin, {action, meta} from './admin.login';
 
-type AdminLoginComponentProps = Route.ComponentProps;
+type AdminLoginComponentProperties = Route.ComponentProps;
 
 // UseNavigateのモック
 const mockNavigate = vi.fn();
@@ -53,7 +53,7 @@ describe('AdminLogin Component', () => {
     vi.resetAllMocks();
     mockNavigate.mockClear();
     // LocalStorage.getItemが既存トークンなしを返すようにセット
-    mockLocalStorage.getItem.mockReturnValue(undefined);
+    mockLocalStorage.getItem.mockReturnValue();
   });
 
   describe('action', () => {
@@ -154,7 +154,7 @@ describe('AdminLogin Component', () => {
 
   describe('Component', () => {
     it('ログインフォームが正常に表示される', () => {
-      const actionData: AdminLoginComponentProps['actionData'] = undefined;
+      const actionData: AdminLoginComponentProperties['actionData'] = undefined;
 
       render(
         <MemoryRouter initialEntries={['/admin/login']}>
@@ -175,8 +175,8 @@ describe('AdminLogin Component', () => {
                 id: 'routes/admin.login',
                 params: {},
                 pathname: '/admin/login',
-                data: {} as AdminLoginComponentProps['loaderData'],
-                loaderData: {} as AdminLoginComponentProps['loaderData'],
+                data: {} as AdminLoginComponentProperties['loaderData'],
+                loaderData: {} as AdminLoginComponentProperties['loaderData'],
                 handle: undefined,
               },
             ]}
@@ -192,7 +192,7 @@ describe('AdminLogin Component', () => {
     });
 
     it('エラーメッセージが表示される', () => {
-      const actionData: AdminLoginComponentProps['actionData'] = {
+      const actionData: AdminLoginComponentProperties['actionData'] = {
         error: 'パスワードが正しくありません',
       };
 
@@ -215,8 +215,8 @@ describe('AdminLogin Component', () => {
                 id: 'routes/admin.login',
                 params: {},
                 pathname: '/admin/login',
-                data: {} as AdminLoginComponentProps['loaderData'],
-                loaderData: {} as AdminLoginComponentProps['loaderData'],
+                data: {} as AdminLoginComponentProperties['loaderData'],
+                loaderData: {} as AdminLoginComponentProperties['loaderData'],
                 handle: undefined,
               },
             ]}
@@ -230,7 +230,7 @@ describe('AdminLogin Component', () => {
     });
 
     it('ログイン成功時にlocalStorageにトークンを保存し、リダイレクトする', async () => {
-      const actionData: AdminLoginComponentProps['actionData'] = {
+      const actionData: AdminLoginComponentProperties['actionData'] = {
         success: true,
         token: 'test-token',
       };
@@ -254,8 +254,8 @@ describe('AdminLogin Component', () => {
                 id: 'routes/admin.login',
                 params: {},
                 pathname: '/admin/login',
-                data: {} as AdminLoginComponentProps['loaderData'],
-                loaderData: {} as AdminLoginComponentProps['loaderData'],
+                data: {} as AdminLoginComponentProperties['loaderData'],
+                loaderData: {} as AdminLoginComponentProperties['loaderData'],
                 handle: undefined,
               },
             ]}
@@ -277,7 +277,7 @@ describe('AdminLogin Component', () => {
     it('既にログイン済みの場合は管理画面にリダイレクトする', () => {
       mockLocalStorage.getItem.mockReturnValue('existing-token');
 
-      const actionData: AdminLoginComponentProps['actionData'] = undefined;
+      const actionData: AdminLoginComponentProperties['actionData'] = undefined;
       render(
         <MemoryRouter initialEntries={['/admin/login']}>
           <AdminLogin
@@ -297,8 +297,8 @@ describe('AdminLogin Component', () => {
                 id: 'routes/admin.login',
                 params: {},
                 pathname: '/admin/login',
-                data: {} as AdminLoginComponentProps['loaderData'],
-                loaderData: {} as AdminLoginComponentProps['loaderData'],
+                data: {} as AdminLoginComponentProperties['loaderData'],
+                loaderData: {} as AdminLoginComponentProperties['loaderData'],
                 handle: undefined,
               },
             ]}
@@ -312,7 +312,7 @@ describe('AdminLogin Component', () => {
     });
 
     it('フォーム送信が正常に動作する', async () => {
-      const actionData: AdminLoginComponentProps['actionData'] = undefined;
+      const actionData: AdminLoginComponentProperties['actionData'] = undefined;
 
       render(
         <MemoryRouter initialEntries={['/admin/login']}>
@@ -333,8 +333,8 @@ describe('AdminLogin Component', () => {
                 id: 'routes/admin.login',
                 params: {},
                 pathname: '/admin/login',
-                data: {} as AdminLoginComponentProps['loaderData'],
-                loaderData: {} as AdminLoginComponentProps['loaderData'],
+                data: {} as AdminLoginComponentProperties['loaderData'],
+                loaderData: {} as AdminLoginComponentProperties['loaderData'],
                 handle: undefined,
               },
             ]}
@@ -354,7 +354,7 @@ describe('AdminLogin Component', () => {
     });
 
     it('ホームページへの戻るリンクが表示される', () => {
-      const actionData: AdminLoginComponentProps['actionData'] = undefined;
+      const actionData: AdminLoginComponentProperties['actionData'] = undefined;
 
       render(
         <MemoryRouter initialEntries={['/admin/login']}>
@@ -375,8 +375,8 @@ describe('AdminLogin Component', () => {
                 id: 'routes/admin.login',
                 params: {},
                 pathname: '/admin/login',
-                data: {} as AdminLoginComponentProps['loaderData'],
-                loaderData: {} as AdminLoginComponentProps['loaderData'],
+                data: {} as AdminLoginComponentProperties['loaderData'],
+                loaderData: {} as AdminLoginComponentProperties['loaderData'],
                 handle: undefined,
               },
             ]}

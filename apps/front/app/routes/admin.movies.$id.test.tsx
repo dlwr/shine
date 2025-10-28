@@ -4,8 +4,8 @@ import '@testing-library/jest-dom';
 import type {Route} from '../../.react-router/types/app/routes/+types/admin.movies.$id';
 import AdminMovieEdit, {loader, meta} from './admin.movies.$id';
 
-type AdminMovieEditLoaderArgs = Route.LoaderArgs;
-type AdminMovieEditComponentProps = Route.ComponentProps;
+type AdminMovieEditLoaderArguments = Route.LoaderArgs;
+type AdminMovieEditComponentProperties = Route.ComponentProps;
 
 // LocalStorageのモック
 const mockLocalStorage = {
@@ -103,7 +103,7 @@ describe('AdminMovieEdit Route', () => {
         await loader({
           context,
           params: parameters,
-        } as unknown as AdminMovieEditLoaderArgs);
+        } as unknown as AdminMovieEditLoaderArguments);
         // Should not reach here
         expect(true).toBe(false);
       } catch (error) {
@@ -121,7 +121,7 @@ describe('AdminMovieEdit Route', () => {
       const result = await loader({
         context,
         params: parameters,
-      } as unknown as AdminMovieEditLoaderArgs);
+      } as unknown as AdminMovieEditLoaderArguments);
 
       expect(result).toEqual({
         apiUrl: 'http://localhost:8787',
@@ -164,8 +164,8 @@ describe('AdminMovieEdit Route', () => {
               id: 'routes/admin.movies.$id',
               params: {id: 'movie-123'},
               pathname: '/admin/movies/movie-123',
-              data: {} as AdminMovieEditComponentProps['loaderData'],
-              loaderData: {} as AdminMovieEditComponentProps['loaderData'],
+              data: {} as AdminMovieEditComponentProperties['loaderData'],
+              loaderData: {} as AdminMovieEditComponentProperties['loaderData'],
               handle: undefined,
             },
           ]}
@@ -217,7 +217,7 @@ describe('AdminMovieEdit Route', () => {
                 },
                 handle: undefined,
               },
-            ] as AdminMovieEditComponentProps['matches']
+            ] as AdminMovieEditComponentProperties['matches']
           }
         />,
       );
@@ -268,7 +268,7 @@ describe('AdminMovieEdit Route', () => {
                 },
                 handle: undefined,
               },
-            ] as AdminMovieEditComponentProps['matches']
+            ] as AdminMovieEditComponentProperties['matches']
           }
         />,
       );

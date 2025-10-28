@@ -301,7 +301,7 @@ describe('External API Integration', () => {
     };
 
     vi.mocked(globalThis.fetch).mockResolvedValueOnce(
-      new Response(JSON.stringify(mockTmdbResponse), {
+      Response.json(mockTmdbResponse, {
         status: 200,
         headers: {'Content-Type': 'application/json'},
       }),

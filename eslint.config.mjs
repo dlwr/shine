@@ -3,6 +3,7 @@ import eslintConfigPrettier from 'eslint-config-prettier/flat';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
+import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 const ignores = [
   '**/.wrangler/**',
   '**/dist/**',
@@ -32,6 +33,7 @@ export default tseslint.config(
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  eslintPluginUnicorn.configs['flat/recommended'],
   {
     languageOptions: {
       globals: {

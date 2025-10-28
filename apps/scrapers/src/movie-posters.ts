@@ -64,7 +64,7 @@ export default {
         : 10;
 
       const result = await fetchAndStorePosterUrls(processCount);
-      return new Response(JSON.stringify(result), {
+      return Response.json(result, {
         status: 200,
         headers: {'Content-Type': 'application/json'},
       });

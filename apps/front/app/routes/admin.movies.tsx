@@ -65,10 +65,10 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const limit = url.searchParams.get('limit') || '20';
   const search = url.searchParams.get('search') || '';
 
-  const cloudflareEnv = (context.cloudflare as CloudflareContext | undefined)
+  const cloudflareEnvironment = (context.cloudflare as CloudflareContext | undefined)
     ?.env;
   return {
-    apiUrl: cloudflareEnv?.PUBLIC_API_URL ?? 'http://localhost:8787',
+    apiUrl: cloudflareEnvironment?.PUBLIC_API_URL ?? 'http://localhost:8787',
     page: Number.parseInt(page, 10),
     limit: Number.parseInt(limit, 10),
     search,
@@ -607,7 +607,7 @@ const showMergeDialog = (sourceId: string, sourceTitle: string) => {
     }
   }
 
-  return undefined;
+  return;
 };
 
 const mergeMovies = async (

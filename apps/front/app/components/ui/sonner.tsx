@@ -1,6 +1,6 @@
 import {Toaster as Sonner, type ToasterProps} from 'sonner';
 
-const Toaster = ({...props}: ToasterProps) => {
+const Toaster = ({...properties}: ToasterProps) => {
   // React Router v7では独自のテーマ管理を使用
   const theme = 'system';
 
@@ -15,7 +15,7 @@ const Toaster = ({...props}: ToasterProps) => {
           '--normal-border': 'var(--border)',
         } as React.CSSProperties
       }
-      {...props}
+      {...properties}
     />
   );
 };

@@ -76,11 +76,11 @@ export default function AdminMovieSelections({
   const locale = 'ja';
 
   const [selections, setSelections] = useState<PreviewSelections | undefined>(
-    undefined,
+    
   );
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | undefined>(undefined);
-  const [adminToken, setAdminToken] = useState<string | undefined>(undefined);
+  const [error, setError] = useState<string | undefined>();
+  const [adminToken, setAdminToken] = useState<string | undefined>();
 
   // Override modal states
   const [showOverrideModal, setShowOverrideModal] = useState(false);
@@ -96,13 +96,13 @@ export default function AdminMovieSelections({
 
   // Random movie states
   const [randomMovie, setRandomMovie] = useState<SearchMovie | undefined>(
-    undefined,
+    
   );
   const [randomLoading, setRandomLoading] = useState(false);
 
   // Selected movie for override
   const [selectedMovie, setSelectedMovie] = useState<SearchMovie | undefined>(
-    undefined,
+    
   );
 
   // Load movie selections

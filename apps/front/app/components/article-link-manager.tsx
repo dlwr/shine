@@ -13,7 +13,7 @@ type ArticleLinksContainer = {
   articleLinks?: ArticleLink[];
 };
 
-type ArticleLinkManagerProps<TState extends ArticleLinksContainer> = {
+type ArticleLinkManagerProperties<TState extends ArticleLinksContainer> = {
   movieId: string;
   apiUrl: string;
   articleLinks: ArticleLink[];
@@ -26,9 +26,9 @@ export default function ArticleLinkManager<
   apiUrl,
   articleLinks,
   onArticleLinksUpdate,
-}: ArticleLinkManagerProps<TState>) {
+}: ArticleLinkManagerProperties<TState>) {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | undefined>(
-    undefined,
+    
   );
 
   const updateArticleLinks = (

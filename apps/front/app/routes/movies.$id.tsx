@@ -314,7 +314,7 @@ function NominationsSection({
   );
 }
 
-type ArticleLinksSectionProps = {
+type ArticleLinksSectionProperties = {
   articleLinks: ArticleLink[] | undefined;
   isTestMode: boolean;
   formData: ArticleLinkFormState;
@@ -334,7 +334,7 @@ function ArticleLinksSection({
   isLoadingTitle,
   titleError,
   submissionResult,
-}: ArticleLinksSectionProps) {
+}: ArticleLinksSectionProperties) {
   const FormRoot: ElementType = isTestMode ? 'form' : Form;
   const links = articleLinks ?? [];
 
@@ -483,9 +483,9 @@ export async function loader({
   request,
 }: Route.LoaderArgs): Promise<LoaderData> {
   try {
-    const cloudflareEnv = (context.cloudflare as CloudflareContext | undefined)
+    const cloudflareEnvironment = (context.cloudflare as CloudflareContext | undefined)
       ?.env;
-    const apiUrl = cloudflareEnv?.PUBLIC_API_URL ?? 'http://localhost:8787';
+    const apiUrl = cloudflareEnvironment?.PUBLIC_API_URL ?? 'http://localhost:8787';
     const response = await fetch(`${apiUrl}/movies/${params.id}`, {
       signal: request.signal, // React Router v7推奨：abortシグナル
     });
@@ -516,9 +516,9 @@ export async function loader({
 
 export async function action({context, params, request}: Route.ActionArgs) {
   try {
-    const cloudflareEnv = (context.cloudflare as CloudflareContext | undefined)
+    const cloudflareEnvironment = (context.cloudflare as CloudflareContext | undefined)
       ?.env;
-    const apiUrl = cloudflareEnv?.PUBLIC_API_URL ?? 'http://localhost:8787';
+    const apiUrl = cloudflareEnvironment?.PUBLIC_API_URL ?? 'http://localhost:8787';
     const formData = await request.formData();
 
     const url = formData.get('url') as string;

@@ -3,11 +3,11 @@ import '@testing-library/jest-dom';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import MovieInfoEditor from './movie-info-editor';
 
-type MovieDetailsProps = Parameters<typeof MovieInfoEditor>[0]['movieData'];
+type MovieDetailsProperties = Parameters<typeof MovieInfoEditor>[0]['movieData'];
 
 const createMovieData = (
-  overrides: Partial<MovieDetailsProps> = {},
-): MovieDetailsProps => ({
+  overrides: Partial<MovieDetailsProperties> = {},
+): MovieDetailsProperties => ({
   uid: 'movie-123',
   year: 2023,
   originalLanguage: 'ja',
@@ -93,7 +93,7 @@ describe('MovieInfoEditor 外部ID検索', () => {
       usedYear: 2023,
       results: [
         {
-          tmdbId: 98765,
+          tmdbId: 98_765,
           imdbId: 'tt7654321',
           title: 'Test Movie Result',
           originalTitle: 'Original Title',
@@ -109,7 +109,7 @@ describe('MovieInfoEditor 外部ID検索', () => {
     };
 
     const updatedMovie = createMovieData({
-      tmdbId: 98765,
+      tmdbId: 98_765,
       imdbId: 'tt7654321',
     });
 
@@ -181,7 +181,7 @@ describe('MovieInfoEditor 外部ID検索', () => {
     await waitFor(() => {
       expect(onMovieDataUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
-          tmdbId: 98765,
+          tmdbId: 98_765,
           imdbId: 'tt7654321',
         }),
       );

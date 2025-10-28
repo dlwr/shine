@@ -64,15 +64,15 @@ const cast = <T,>(value: unknown): T => value as T;
 type LoaderResult = Awaited<ReturnType<typeof loader>>;
 type LoaderSuccess = Extract<LoaderResult, {error: undefined}>;
 type LoaderFailure = Extract<LoaderResult, {error: string}>;
-type LoaderArgs = Route.LoaderArgs;
-type ComponentProps = Route.ComponentProps;
+type LoaderArguments = Route.LoaderArgs;
+type ComponentProperties = Route.ComponentProps;
 
-const createLoaderArgs = (
-  context: LoaderArgs['context'],
-  request: LoaderArgs['request'],
-  overrides: Partial<Omit<LoaderArgs, 'context' | 'request'>> = {},
-): LoaderArgs =>
-  cast<LoaderArgs>({
+const createLoaderArguments = (
+  context: LoaderArguments['context'],
+  request: LoaderArguments['request'],
+  overrides: Partial<Omit<LoaderArguments, 'context' | 'request'>> = {},
+): LoaderArguments =>
+  cast<LoaderArguments>({
     context,
     request,
     params: {},
@@ -102,13 +102,13 @@ const createErrorLoaderData = (
   ...overrides,
 });
 
-const createParams = (): ComponentProps['params'] =>
-  cast<ComponentProps['params']>({});
+const createParameters = (): ComponentProperties['params'] =>
+  cast<ComponentProperties['params']>({});
 
 const createMatches = (
-  loaderData: ComponentProps['loaderData'],
-): ComponentProps['matches'] =>
-  cast<ComponentProps['matches']>([
+  loaderData: ComponentProperties['loaderData'],
+): ComponentProperties['matches'] =>
+  cast<ComponentProperties['matches']>([
     {
       id: 'root',
       params: {},
@@ -121,14 +121,14 @@ const createMatches = (
       params: {},
       pathname: '/',
       data: loaderData as NonNullable<
-        ComponentProps['matches'][number]
+        ComponentProperties['matches'][number]
       >['data'],
       handle: undefined,
     },
   ]);
 
-const createActionData = (): ComponentProps['actionData'] =>
-  cast<ComponentProps['actionData']>(undefined);
+const createActionData = (): ComponentProperties['actionData'] =>
+  cast<ComponentProperties['actionData']>();
 
 describe('Home Component', () => {
   beforeEach(() => {
@@ -145,7 +145,7 @@ describe('Home Component', () => {
 
       const context = createMockContext();
       const request = new Request('http://localhost:3000/');
-      const result = await loader(createLoaderArgs(context, request));
+      const result = await loader(createLoaderArguments(context, request));
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringMatching(
@@ -172,7 +172,7 @@ describe('Home Component', () => {
 
       const context = createMockContext();
       const request = new Request('http://localhost:3000/');
-      const result = await loader(createLoaderArgs(context, request));
+      const result = await loader(createLoaderArguments(context, request));
 
       expect(result).toEqual({
         movies: undefined,
@@ -192,7 +192,7 @@ describe('Home Component', () => {
 
       const context = createMockContext();
       const request = new Request('http://localhost:3000/');
-      const result = await loader(createLoaderArgs(context, request));
+      const result = await loader(createLoaderArguments(context, request));
 
       expect(result).toEqual({
         movies: undefined,
@@ -220,13 +220,13 @@ describe('Home Component', () => {
 
   describe('Component', () => {
     it('映画選択データが正常に表示される', () => {
-      const loaderData = cast<ComponentProps['loaderData']>(createLoaderData());
+      const loaderData = cast<ComponentProperties['loaderData']>(createLoaderData());
 
       render(
         <Home
           loaderData={loaderData}
           actionData={createActionData()}
-          params={createParams()}
+          params={createParameters()}
           matches={createMatches(loaderData)}
         />,
       );
@@ -243,7 +243,7 @@ describe('Home Component', () => {
     });
 
     it('エラー状態が正常に表示される', () => {
-      const loaderData = cast<ComponentProps['loaderData']>(
+      const loaderData = cast<ComponentProperties['loaderData']>(
         createErrorLoaderData({
           error: 'APIへの接続に失敗しました',
         }),
@@ -253,7 +253,7 @@ describe('Home Component', () => {
         <Home
           loaderData={loaderData}
           actionData={createActionData()}
-          params={createParams()}
+          params={createParameters()}
           matches={createMatches(loaderData)}
         />,
       );
@@ -266,13 +266,13 @@ describe('Home Component', () => {
     });
 
     it('受賞情報がバッジとして表示される', () => {
-      const loaderData = cast<ComponentProps['loaderData']>(createLoaderData());
+      const loaderData = cast<ComponentProperties['loaderData']>(createLoaderData());
 
       render(
         <Home
           loaderData={loaderData}
           actionData={createActionData()}
-          params={createParams()}
+          params={createParameters()}
           matches={createMatches(loaderData)}
         />,
       );
@@ -292,13 +292,13 @@ describe('Home Component', () => {
     });
 
     it('映画詳細ページへのリンクが正しく設定される', () => {
-      const loaderData = cast<ComponentProps['loaderData']>(createLoaderData());
+      const loaderData = cast<ComponentProperties['loaderData']>(createLoaderData());
 
       render(
         <Home
           loaderData={loaderData}
           actionData={createActionData()}
-          params={createParams()}
+          params={createParameters()}
           matches={createMatches(loaderData)}
         />,
       );

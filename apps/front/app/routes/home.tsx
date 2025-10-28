@@ -130,10 +130,10 @@ export default function Home({loaderData}: Route.ComponentProps) {
   );
   const [error, setError] = useState<string | undefined>(initialError);
   const [loading, setLoading] = useState(shouldFetchOnClient);
-  const [adminToken, setAdminToken] = useState<string | undefined>(undefined);
+  const [adminToken, setAdminToken] = useState<string | undefined>();
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (globalThis.window !== undefined) {
       setAdminToken(localStorage.getItem('adminToken') || undefined);
 
       const handleAdminLogin = () => {
@@ -144,19 +144,19 @@ export default function Home({loaderData}: Route.ComponentProps) {
         setAdminToken(undefined);
       };
 
-      window.addEventListener('adminLogin', handleAdminLogin);
-      window.addEventListener('adminLogout', handleAdminLogout);
+      globalThis.addEventListener('adminLogin', handleAdminLogin);
+      globalThis.addEventListener('adminLogout', handleAdminLogout);
 
       return () => {
-        window.removeEventListener('adminLogin', handleAdminLogin);
-        window.removeEventListener('adminLogout', handleAdminLogout);
+        globalThis.removeEventListener('adminLogin', handleAdminLogin);
+        globalThis.removeEventListener('adminLogout', handleAdminLogout);
       };
     }
   }, []);
 
   // クライアントサイドでデータフェッチ
   useEffect(() => {
-    if (shouldFetchOnClient && typeof window !== 'undefined') {
+    if (shouldFetchOnClient && globalThis.window !== undefined) {
       const fetchMovies = async () => {
         try {
           setLoading(true);
@@ -303,7 +303,7 @@ function Movies({
       const result = (await response.json()) as {movie?: MovieCardMovie};
 
       if (result.movie) {
-        window.location.reload();
+        globalThis.location.reload();
       }
     } catch (error) {
       console.error('Error re-selecting movie:', error);

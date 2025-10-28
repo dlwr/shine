@@ -70,26 +70,26 @@ describe('Search Component', () => {
 
   const cast = <T,>(value: unknown): T => value as T;
 
-  type LoaderArgs = Route.LoaderArgs;
-  type MetaArgs = Route.MetaArgs;
-  type ComponentProps = Route.ComponentProps;
-  type LoaderData = ComponentProps['loaderData'];
-  type Matches = ComponentProps['matches'];
+  type LoaderArguments = Route.LoaderArgs;
+  type MetaArguments = Route.MetaArgs;
+  type ComponentProperties = Route.ComponentProps;
+  type LoaderData = ComponentProperties['loaderData'];
+  type Matches = ComponentProperties['matches'];
 
-  const createLoaderArgs = (
-    context: LoaderArgs['context'],
-    request: LoaderArgs['request'],
-    params: LoaderArgs['params'],
-  ): LoaderArgs =>
-    cast<LoaderArgs>({
+  const createLoaderArguments = (
+    context: LoaderArguments['context'],
+    request: LoaderArguments['request'],
+    parameters: LoaderArguments['params'],
+  ): LoaderArguments =>
+    cast<LoaderArguments>({
       context,
       request,
-      params,
+      params: parameters,
       matches: [],
     });
 
-  const createMetaArgs = (data: LoaderData, locationSearch: string): MetaArgs =>
-    cast<MetaArgs>({
+  const createMetaArguments = (data: LoaderData, locationSearch: string): MetaArguments =>
+    cast<MetaArguments>({
       data,
       params: {},
       location: {
@@ -110,8 +110,8 @@ describe('Search Component', () => {
     ...overrides,
   });
 
-  const createParams = (): ComponentProps['params'] =>
-    cast<ComponentProps['params']>({});
+  const createParameters = (): ComponentProperties['params'] =>
+    cast<ComponentProperties['params']>({});
 
   const createMatches = (loaderData: LoaderData): Matches =>
     cast<Matches>([
@@ -131,8 +131,8 @@ describe('Search Component', () => {
       },
     ]);
 
-  const createActionData = (): ComponentProps['actionData'] =>
-    cast<ComponentProps['actionData']>(undefined);
+  const createActionData = (): ComponentProperties['actionData'] =>
+    cast<ComponentProperties['actionData']>();
 
   describe('loader', () => {
     it('検索クエリありの場合は検索結果を取得する', async () => {
@@ -146,7 +146,7 @@ describe('Search Component', () => {
       const url = new URL('http://localhost:3000/search?q=test');
       const request = {url} as unknown as Request;
 
-      const result = await loader(createLoaderArgs(context, request, {}));
+      const result = await loader(createLoaderArguments(context, request, {}));
 
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:8787/movies/search?q=test&page=1&limit=20',
@@ -165,7 +165,7 @@ describe('Search Component', () => {
       const url = new URL('http://localhost:3000/search');
       const request = {url} as unknown as Request;
 
-      const result = await loader(createLoaderArgs(context, request, {}));
+      const result = await loader(createLoaderArguments(context, request, {}));
 
       expect(result).toEqual({
         searchQuery: '',
@@ -181,7 +181,7 @@ describe('Search Component', () => {
       const url = new URL('http://localhost:3000/search?q=test');
       const request = {url} as unknown as Request;
 
-      const result = await loader(createLoaderArgs(context, request, {}));
+      const result = await loader(createLoaderArguments(context, request, {}));
 
       expect(result).toEqual({
         searchQuery: 'test',
@@ -197,7 +197,7 @@ describe('Search Component', () => {
         searchResults: mockSearchResults,
       });
 
-      const result = meta(createMetaArgs(loaderData, '?q=test%20movie'));
+      const result = meta(createMetaArguments(loaderData, '?q=test%20movie'));
 
       expect(result).toEqual([
         {title: '「test movie」の検索結果 | SHINE'},
@@ -214,7 +214,7 @@ describe('Search Component', () => {
         searchResults: undefined,
       });
 
-      const result = meta(createMetaArgs(loaderData, '?q=test%20movie'));
+      const result = meta(createMetaArguments(loaderData, '?q=test%20movie'));
 
       expect(result).toEqual([
         {title: '映画検索 | SHINE'},
@@ -231,7 +231,7 @@ describe('Search Component', () => {
         <Search
           loaderData={loaderData}
           actionData={createActionData()}
-          params={createParams()}
+          params={createParameters()}
           matches={createMatches(loaderData)}
         />,
       );
@@ -253,7 +253,7 @@ describe('Search Component', () => {
         <Search
           loaderData={loaderData}
           actionData={createActionData()}
-          params={createParams()}
+          params={createParameters()}
           matches={createMatches(loaderData)}
         />,
       );
@@ -282,7 +282,7 @@ describe('Search Component', () => {
         <Search
           loaderData={loaderData}
           actionData={createActionData()}
-          params={createParams()}
+          params={createParameters()}
           matches={createMatches(loaderData)}
         />,
       );
@@ -302,7 +302,7 @@ describe('Search Component', () => {
         <Search
           loaderData={loaderData}
           actionData={createActionData()}
-          params={createParams()}
+          params={createParameters()}
           matches={createMatches(loaderData)}
         />,
       );
@@ -320,7 +320,7 @@ describe('Search Component', () => {
         <Search
           loaderData={loaderData}
           actionData={createActionData()}
-          params={createParams()}
+          params={createParameters()}
           matches={createMatches(loaderData)}
         />,
       );
@@ -341,7 +341,7 @@ describe('Search Component', () => {
         <Search
           loaderData={loaderData}
           actionData={createActionData()}
-          params={createParams()}
+          params={createParameters()}
           matches={createMatches(loaderData)}
         />,
       );

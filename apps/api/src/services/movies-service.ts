@@ -301,7 +301,7 @@ export class MoviesService extends BaseService {
     };
 
     // Cache result
-    const response = new Response(JSON.stringify(movieDetails), {
+    const response = Response.json(movieDetails, {
       headers: {'Content-Type': 'application/json'},
     });
     await this.cache.put(cacheKey, response);

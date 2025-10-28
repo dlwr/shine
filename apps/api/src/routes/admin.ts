@@ -59,7 +59,7 @@ adminRoutes.get('/movies/:id/external-id-search', authMiddleware, async c => {
 
     const language = (() => {
       if (!rawLanguage) {
-        return undefined;
+        return;
       }
 
       const sanitized = sanitizeText(rawLanguage);
@@ -72,7 +72,7 @@ adminRoutes.get('/movies/:id/external-id-search', authMiddleware, async c => {
         return 'en-US';
       }
 
-      return undefined;
+      return;
     })();
 
     const year = rawYear ? Number.parseInt(rawYear, 10) : undefined;
@@ -937,14 +937,14 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
               updatedAt: Math.floor(Date.now() / 1000),
             })
             .where(eq(movies.uid, movieId));
-        } catch (dbError) {
+        } catch (databaseError) {
           console.error('Database update error:', {
-            error: dbError,
+            error: databaseError,
             movieId,
             tmdbId: movieTmdbId,
             updatedAt: Math.floor(Date.now() / 1000),
           });
-          throw dbError;
+          throw databaseError;
         }
 
         fetchResults.tmdbIdSet = true;

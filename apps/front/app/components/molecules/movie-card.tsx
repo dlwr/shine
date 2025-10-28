@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-type MovieCardProps = {
+type MovieCardProperties = {
   movie: MovieCardMovie;
   locale?: string;
   adminToken?: string;
@@ -161,14 +161,14 @@ function selectBestTitle(movie: MovieCardMovie, locale: string): string {
   return `Unknown Title${yearLabel}`;
 }
 
-export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
+export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProperties) {
   const [showStreamingMenu, setShowStreamingMenu] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardReference = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
+      if (cardReference.current && !cardReference.current.contains(event.target as Node)) {
         setShowStreamingMenu(false);
       }
     };
@@ -281,7 +281,7 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProps) {
   const articleLinks = movie.articleLinks ?? [];
 
   return (
-    <Card ref={cardRef} className="relative h-full w-80 overflow-hidden">
+    <Card ref={cardReference} className="relative h-full w-80 overflow-hidden">
       <div
         className="h-[400px] md:h-[450px] bg-gray-100 flex items-center justify-center relative cursor-pointer"
         onMouseEnter={() => !isMobile && setShowStreamingMenu(true)}

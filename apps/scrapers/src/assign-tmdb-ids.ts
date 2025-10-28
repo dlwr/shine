@@ -15,10 +15,10 @@ const environment: Environment = {
 };
 
 async function assignTmdbIds() {
-  const db = getDatabase(environment);
+  const database = getDatabase(environment);
 
   console.log('Fetching movies with IMDb ID but no TMDb ID...');
-  const moviesWithoutTmdbId = await db
+  const moviesWithoutTmdbId = await database
     .select({
       uid: movies.uid,
       imdbId: movies.imdbId,
@@ -53,7 +53,7 @@ async function assignTmdbIds() {
 
       if (tmdbId) {
         // 重複チェック
-        const duplicateMovie = await db
+        const duplicateMovie = await database
           .select({uid: movies.uid, imdbId: movies.imdbId})
           .from(movies)
           .where(and(eq(movies.tmdbId, tmdbId), not(eq(movies.uid, movie.uid))))
@@ -68,7 +68,7 @@ async function assignTmdbIds() {
         }
 
         // TMDb IDを更新
-        await db.update(movies).set({tmdbId}).where(eq(movies.uid, movie.uid));
+        await database.update(movies).set({tmdbId}).where(eq(movies.uid, movie.uid));
 
         console.log(`  ✅ Assigned TMDb ID: ${tmdbId}`);
         successful++;

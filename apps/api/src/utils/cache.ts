@@ -77,8 +77,8 @@ export class EdgeCache {
     }
 
     try {
-      const response = new Response(
-        JSON.stringify({data, cachedAt: Date.now()}),
+      const response = Response.json(
+        {data, cachedAt: Date.now()},
         {
           headers: {
             'Content-Type': 'application/json',
@@ -247,7 +247,7 @@ export const createCachedResponse = (
     ...additionalHeaders,
   };
 
-  return new Response(JSON.stringify(data), {headers});
+  return Response.json(data, {headers});
 };
 
 export const shouldCacheSearch = (

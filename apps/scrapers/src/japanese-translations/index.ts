@@ -162,12 +162,12 @@ export default {
         );
       }
 
-      return new Response(
-        JSON.stringify({
+      return Response.json(
+        {
           total: movies.length,
           success: successCount,
           results,
-        }),
+        },
         {
           status: 200,
           headers: {'Content-Type': 'application/json'},
@@ -175,10 +175,10 @@ export default {
       );
     } catch (error) {
       console.error('Batch scraping error:', error);
-      return new Response(
-        JSON.stringify({
+      return Response.json(
+        {
           error: error instanceof Error ? error.message : String(error),
-        }),
+        },
         {
           status: 500,
           headers: {'Content-Type': 'application/json'},
@@ -198,10 +198,10 @@ export default {
       return new Response('Not implemented yet', {status: 501});
     } catch (error) {
       console.error(`Error scraping movie ${movieId}:`, error);
-      return new Response(
-        JSON.stringify({
+      return Response.json(
+        {
           error: error instanceof Error ? error.message : String(error),
-        }),
+        },
         {
           status: 500,
           headers: {'Content-Type': 'application/json'},

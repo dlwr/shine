@@ -41,18 +41,18 @@ const createMockContext = (apiUrl = 'http://localhost:8787') => ({
 const cast = <T,>(value: unknown): T => value as T;
 
 type LoaderResult = Awaited<ReturnType<typeof loader>>;
-type LoaderArgs = Route.LoaderArgs;
-type ComponentProps = Route.ComponentProps;
-type Matches = ComponentProps['matches'];
+type LoaderArguments = Route.LoaderArgs;
+type ComponentProperties = Route.ComponentProps;
+type Matches = ComponentProperties['matches'];
 
-const createLoaderArgs = (
-  args: Pick<LoaderArgs, 'context' | 'request'> &
-    Partial<Omit<LoaderArgs, 'context' | 'request'>>,
-): LoaderArgs =>
-  cast<LoaderArgs>({
+const createLoaderArguments = (
+  arguments_: Pick<LoaderArguments, 'context' | 'request'> &
+    Partial<Omit<LoaderArguments, 'context' | 'request'>>,
+): LoaderArguments =>
+  cast<LoaderArguments>({
     params: {},
     matches: [],
-    ...args,
+    ...arguments_,
   });
 
 const createLoaderData = (
@@ -90,11 +90,11 @@ const createMatches = (): Matches =>
     },
   ]);
 
-const createParams = (): ComponentProps['params'] =>
-  cast<ComponentProps['params']>({});
+const createParameters = (): ComponentProperties['params'] =>
+  cast<ComponentProperties['params']>({});
 
-const createActionData = (): ComponentProps['actionData'] =>
-  cast<ComponentProps['actionData']>({});
+const createActionData = (): ComponentProperties['actionData'] =>
+  cast<ComponentProperties['actionData']>({});
 
 describe('AdminMovies Component', () => {
   beforeEach(() => {
@@ -112,7 +112,7 @@ describe('AdminMovies Component', () => {
       const request = {url} as unknown as Request;
 
       const result = await loader(
-        createLoaderArgs({
+        createLoaderArguments({
           context,
           request,
         }),
@@ -139,7 +139,7 @@ describe('AdminMovies Component', () => {
       const request = {url} as unknown as Request;
 
       const result = await loader(
-        createLoaderArgs({
+        createLoaderArguments({
           context,
           request,
         }),
@@ -166,7 +166,7 @@ describe('AdminMovies Component', () => {
       const request = {url} as unknown as Request;
 
       const result = await loader(
-        createLoaderArgs({
+        createLoaderArguments({
           context,
           request,
         }),
@@ -194,7 +194,7 @@ describe('AdminMovies Component', () => {
           <AdminMovies
             loaderData={createLoaderData()}
             actionData={createActionData()}
-            params={createParams()}
+            params={createParameters()}
             matches={createMatches()}
           />
         </MemoryRouter>,
@@ -238,7 +238,7 @@ describe('AdminMovies Component', () => {
               },
             })}
             actionData={createActionData()}
-            params={createParams()}
+            params={createParameters()}
             matches={createMatches()}
           />
         </MemoryRouter>,
@@ -254,7 +254,7 @@ describe('AdminMovies Component', () => {
           <AdminMovies
             loaderData={createLoaderData()}
             actionData={createActionData()}
-            params={createParams()}
+            params={createParameters()}
             matches={createMatches()}
           />
         </MemoryRouter>,
@@ -292,7 +292,7 @@ describe('AdminMovies Component', () => {
           <AdminMovies
             loaderData={createLoaderData()}
             actionData={createActionData()}
-            params={createParams()}
+            params={createParameters()}
             matches={createMatches()}
           />
         </MemoryRouter>,
@@ -320,7 +320,7 @@ describe('AdminMovies Component', () => {
           <AdminMovies
             loaderData={createLoaderData()}
             actionData={createActionData()}
-            params={createParams()}
+            params={createParameters()}
             matches={createMatches()}
           />
         </MemoryRouter>,

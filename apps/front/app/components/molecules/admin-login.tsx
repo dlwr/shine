@@ -1,12 +1,12 @@
 import {useEffect, useState} from 'react';
 import {Button} from '@/components/ui/button.tsx';
 
-type AdminLoginProps = {
+type AdminLoginProperties = {
   locale: string;
   apiUrl?: string;
 };
 
-export function AdminLogin({locale, apiUrl}: AdminLoginProps) {
+export function AdminLogin({locale, apiUrl}: AdminLoginProperties) {
   const [showModal, setShowModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [password, setPassword] = useState('');

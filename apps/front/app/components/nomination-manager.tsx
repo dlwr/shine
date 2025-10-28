@@ -2,7 +2,7 @@ import {useEffect, useMemo, useState} from 'react';
 import type {ChangeEvent, FormEvent} from 'react';
 import type {MovieDetails, Nomination} from '../routes/admin.movies.$id';
 
-type NominationManagerProps = {
+type NominationManagerProperties = {
   movieId: string;
   apiUrl: string;
   nominations: Nomination[];
@@ -61,9 +61,9 @@ export default function NominationManager({
   apiUrl,
   nominations,
   onNominationsUpdate,
-}: NominationManagerProps) {
+}: NominationManagerProperties) {
   const [awardsData, setAwardsData] = useState<AwardsData | undefined>(
-    undefined,
+    
   );
   const [loadingAwards, setLoadingAwards] = useState(true);
   const [awardsError, setAwardsError] = useState<string | undefined>();
@@ -80,7 +80,7 @@ export default function NominationManager({
 
   const [editingNominationId, setEditingNominationId] = useState<
     string | undefined
-  >(undefined);
+  >();
   const [editValues, setEditValues] = useState({
     isWinner: false,
     specialMention: '',
@@ -88,7 +88,7 @@ export default function NominationManager({
   const [isUpdating, setIsUpdating] = useState(false);
   const [deletingNominationId, setDeletingNominationId] = useState<
     string | undefined
-  >(undefined);
+  >();
 
   const [nominationError, setNominationError] = useState<string | undefined>();
 
@@ -183,7 +183,7 @@ export default function NominationManager({
     const token = globalThis.localStorage?.getItem('adminToken');
     if (!token) {
       globalThis.location.href = '/admin/login';
-      return undefined;
+      return;
     }
     return token;
   };
