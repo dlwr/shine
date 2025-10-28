@@ -12,5 +12,3 @@ onlyBuiltDependencies:
   - msw
   - protobufjs
   - unrs-resolver
-patchedDependencies:
-  wrangler@4.42.0: patches/wrangler@4.42.0.patch
