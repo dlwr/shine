@@ -960,11 +960,15 @@ export default function MovieInfoEditor({
                 }}
                 className="grid gap-3 md:grid-cols-12 md:items-end">
                 <div className="md:col-span-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                  htmlFor="external-id-search-query"
+                >
                     検索キーワード
                   </label>
                   <input
                     type="text"
+                    id="external-id-search-query"
                     value={idSearchQuery}
                     onChange={event => {
                       setIdSearchQuery(event.target.value);
@@ -974,10 +978,14 @@ export default function MovieInfoEditor({
                   />
                 </div>
                 <div className="md:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                  htmlFor="external-id-search-language"
+                >
                     検索言語
                   </label>
-                  <select
+                <select
+                  id="external-id-search-language"
                     value={idSearchLanguage}
                     onChange={event => {
                       const value = event.target.value as 'ja-JP' | 'en-US';
@@ -989,11 +997,15 @@ export default function MovieInfoEditor({
                   </select>
                 </div>
                 <div className="md:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                  htmlFor="external-id-search-year"
+                >
                     公開年 (任意)
                   </label>
                   <input
                     type="number"
+                    id="external-id-search-year"
                     value={idSearchYear}
                     onChange={event => {
                       setIdSearchYear(event.target.value);

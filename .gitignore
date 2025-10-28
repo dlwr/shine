@@ -179,3 +179,5 @@ front-rr/tests/screenshots
 front-rr/playwright-report
 front-rr/test-results/.last-run.json
 front/test-results/.last-run.json
+shine.db-info
+shine.db-wal
