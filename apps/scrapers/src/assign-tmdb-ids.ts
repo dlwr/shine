@@ -68,7 +68,10 @@ async function assignTmdbIds() {
         }
 
         // TMDb IDを更新
-        await database.update(movies).set({tmdbId}).where(eq(movies.uid, movie.uid));
+        await database
+          .update(movies)
+          .set({tmdbId})
+          .where(eq(movies.uid, movie.uid));
 
         console.log(`  ✅ Assigned TMDb ID: ${tmdbId}`);
         successful++;

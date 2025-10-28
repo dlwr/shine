@@ -64,7 +64,7 @@ vi.mock('@shine/database', () => {
 });
 
 const createAuthContext = (
-  headerValue: string | undefined,
+  headerValue?: string,
   environmentOverrides: Partial<Environment> = {},
 ) => {
   const header = vi.fn();
@@ -89,15 +89,13 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('Authentication Middleware Edge Cases', () => {
-  const expectAuthFailure = async (
-    context: Context<{Bindings: Environment}>,
-  ) => {
-    const next = vi.fn();
-    await expect(authMiddleware(context, next)).rejects.toBeDefined();
-    expect(next).not.toHaveBeenCalled();
-  };
+const expectAuthFailure = async (context: Context<{Bindings: Environment}>) => {
+  const next = vi.fn();
+  await expect(authMiddleware(context, next)).rejects.toBeDefined();
+  expect(next).not.toHaveBeenCalled();
+};
 
+describe('Authentication Middleware Edge Cases', () => {
   it('should handle missing Authorization header', async () => {
     const context = createAuthContext();
     await expectAuthFailure(context);

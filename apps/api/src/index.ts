@@ -28,7 +28,7 @@ app.use(
         'https://shine-front-production.yuta25.workers.dev',
         'https://shine-front.yuta25.workers.dev',
       ];
-      return allowedOrigins.includes(origin || '') ? origin : null;
+      return allowedOrigins.includes(origin || '') ? origin : undefined;
     },
     credentials: true,
   }),

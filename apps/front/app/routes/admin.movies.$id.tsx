@@ -100,9 +100,7 @@ const handleLogout = () => {
 export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
   const {apiUrl, movieId} = loaderData as LoaderData;
 
-  const [movieData, setMovieData] = useState<MovieDetails | undefined>(
-    
-  );
+  const [movieData, setMovieData] = useState<MovieDetails | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
 

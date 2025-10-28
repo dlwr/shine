@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {cn} from '@/lib/utils';
+import {cn} from '@/lib/utilities';
 
 function Card({className, ...properties}: React.ComponentProps<'div'>) {
   return (
@@ -37,7 +37,10 @@ function CardTitle({className, ...properties}: React.ComponentProps<'div'>) {
   );
 }
 
-function CardDescription({className, ...properties}: React.ComponentProps<'div'>) {
+function CardDescription({
+  className,
+  ...properties
+}: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-description"

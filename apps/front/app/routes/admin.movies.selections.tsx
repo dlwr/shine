@@ -47,6 +47,40 @@ type SearchMovie = {
 
 type SearchMovieTranslation = NonNullable<SearchMovie['translations']>[number];
 
+const getTypeLabel = (type: string) => {
+  switch (type) {
+    case 'daily': {
+      return '今日の映画';
+    }
+    case 'weekly': {
+      return '今週の映画';
+    }
+    case 'monthly': {
+      return '今月の映画';
+    }
+    default: {
+      return type;
+    }
+  }
+};
+
+const getTypeColor = (type: string) => {
+  switch (type) {
+    case 'daily': {
+      return 'from-blue-500 to-blue-600';
+    }
+    case 'weekly': {
+      return 'from-green-500 to-green-600';
+    }
+    case 'monthly': {
+      return 'from-purple-500 to-purple-600';
+    }
+    default: {
+      return 'from-gray-500 to-gray-600';
+    }
+  }
+};
+
 export function meta(): Route.MetaDescriptors {
   return [
     {title: '映画選択管理 - SHINE Admin'},
@@ -75,9 +109,7 @@ export default function AdminMovieSelections({
   const {apiUrl} = loaderData as {apiUrl: string};
   const locale = 'ja';
 
-  const [selections, setSelections] = useState<PreviewSelections | undefined>(
-    
-  );
+  const [selections, setSelections] = useState<PreviewSelections | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
   const [adminToken, setAdminToken] = useState<string | undefined>();
@@ -95,15 +127,11 @@ export default function AdminMovieSelections({
   const [searchLoading, setSearchLoading] = useState(false);
 
   // Random movie states
-  const [randomMovie, setRandomMovie] = useState<SearchMovie | undefined>(
-    
-  );
+  const [randomMovie, setRandomMovie] = useState<SearchMovie | undefined>();
   const [randomLoading, setRandomLoading] = useState(false);
 
   // Selected movie for override
-  const [selectedMovie, setSelectedMovie] = useState<SearchMovie | undefined>(
-    
-  );
+  const [selectedMovie, setSelectedMovie] = useState<SearchMovie | undefined>();
 
   // Load movie selections
   useEffect(() => {
@@ -260,46 +288,6 @@ export default function AdminMovieSelections({
     setSearchResults([]);
     setRandomMovie(undefined);
     setSelectedMovie(undefined);
-  };
-
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'daily': {
-        return '今日の映画';
-      }
-
-      case 'weekly': {
-        return '今週の映画';
-      }
-
-      case 'monthly': {
-        return '今月の映画';
-      }
-
-      default: {
-        return type;
-      }
-    }
-  };
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'daily': {
-        return 'from-blue-500 to-blue-600';
-      }
-
-      case 'weekly': {
-        return 'from-green-500 to-green-600';
-      }
-
-      case 'monthly': {
-        return 'from-purple-500 to-purple-600';
-      }
-
-      default: {
-        return 'from-gray-500 to-gray-600';
-      }
-    }
   };
 
   const getPrimaryTitle = (movie: SelectionData['movie'] | SearchMovie) => {

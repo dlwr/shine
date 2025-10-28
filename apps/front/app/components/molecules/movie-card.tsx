@@ -161,14 +161,21 @@ function selectBestTitle(movie: MovieCardMovie, locale: string): string {
   return `Unknown Title${yearLabel}`;
 }
 
-export function MovieCard({movie, locale = 'en', adminToken}: MovieCardProperties) {
+export function MovieCard({
+  movie,
+  locale = 'en',
+  adminToken,
+}: MovieCardProperties) {
   const [showStreamingMenu, setShowStreamingMenu] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const cardReference = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (cardReference.current && !cardReference.current.contains(event.target as Node)) {
+      if (
+        cardReference.current &&
+        !cardReference.current.contains(event.target as Node)
+      ) {
         setShowStreamingMenu(false);
       }
     };
@@ -252,18 +259,17 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardPropertie
     ceremonies: Record<string, CeremonyGroup>;
   };
 
-  const nominationsByOrg = (movie.nominations ?? []).reduce<
-    Record<string, OrganizationGroup>
-  >((accumulator, nomination) => {
+  const nominationsByOrg: Record<string, OrganizationGroup> = {};
+  for (const nomination of movie.nominations ?? []) {
     const orgKey = nomination.organization.uid;
-    if (!accumulator[orgKey]) {
-      accumulator[orgKey] = {
+    if (!nominationsByOrg[orgKey]) {
+      nominationsByOrg[orgKey] = {
         organization: nomination.organization,
         ceremonies: {},
       };
     }
 
-    const organizationGroup = accumulator[orgKey];
+    const organizationGroup = nominationsByOrg[orgKey];
     const ceremonyKey = nomination.ceremony.uid;
     if (!organizationGroup.ceremonies[ceremonyKey]) {
       organizationGroup.ceremonies[ceremonyKey] = {
@@ -273,8 +279,7 @@ export function MovieCard({movie, locale = 'en', adminToken}: MovieCardPropertie
     }
 
     organizationGroup.ceremonies[ceremonyKey].nominations.push(nomination);
-    return accumulator;
-  }, {});
+  }
 
   const isMobile = globalThis.window !== undefined && window.innerWidth <= 768;
   const organizationGroups = Object.values(nominationsByOrg);

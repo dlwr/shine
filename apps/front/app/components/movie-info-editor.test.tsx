@@ -3,7 +3,9 @@ import '@testing-library/jest-dom';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import MovieInfoEditor from './movie-info-editor';
 
-type MovieDetailsProperties = Parameters<typeof MovieInfoEditor>[0]['movieData'];
+type MovieDetailsProperties = Parameters<
+  typeof MovieInfoEditor
+>[0]['movieData'];
 
 const createMovieData = (
   overrides: Partial<MovieDetailsProperties> = {},

@@ -51,6 +51,15 @@ type SearchTimeoutGlobal = typeof globalThis & {
 
 const globalWithSearchTimeout = globalThis as SearchTimeoutGlobal;
 
+const getUrlParameters = () => {
+  const parameters = new URLSearchParams(globalThis.location.search);
+  return {
+    search: parameters.get('search') || '',
+    page: Number(parameters.get('page') || 1),
+    limit: Number(parameters.get('limit') || 20),
+  };
+};
+
 export function meta(): Route.MetaDescriptors {
   return [
     {title: '映画管理 | SHINE Admin'},
@@ -65,8 +74,9 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const limit = url.searchParams.get('limit') || '20';
   const search = url.searchParams.get('search') || '';
 
-  const cloudflareEnvironment = (context.cloudflare as CloudflareContext | undefined)
-    ?.env;
+  const cloudflareEnvironment = (
+    context.cloudflare as CloudflareContext | undefined
+  )?.env;
   return {
     apiUrl: cloudflareEnvironment?.PUBLIC_API_URL ?? 'http://localhost:8787',
     page: Number.parseInt(page, 10),
@@ -92,16 +102,6 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
     totalPages: 0,
   });
   const [loading, setLoading] = useState(true);
-
-  // Get params directly from URL
-  const getUrlParameters = () => {
-    const parameters = new URLSearchParams(globalThis.location.search);
-    return {
-      search: parameters.get('search') || '',
-      page: Number(parameters.get('page') || 1),
-      limit: Number(parameters.get('limit') || 20),
-    };
-  };
 
   // Fetch movies based on URL params
   useEffect(() => {

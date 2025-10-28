@@ -339,13 +339,28 @@ export class AdminService extends BaseService {
       );
     }
 
+    const tmdbIdValue = newMovie.tmdbId ?? tmdbMovieId;
+    const yearValue = newMovie.year ?? releaseYear;
+
+    const movieDetails = {
+      ...newMovie,
+      imdbId: newMovie.imdbId ?? normalizedImdbId,
+    };
+
+    if (tmdbIdValue === undefined) {
+      // Keep existing value from database when new data is unavailable
+    } else {
+      movieDetails.tmdbId = tmdbIdValue;
+    }
+
+    if (yearValue === undefined) {
+      // Preserve existing year if we cannot determine a better value
+    } else {
+      movieDetails.year = yearValue;
+    }
+
     return {
-      movie: {
-        ...newMovie,
-        imdbId: newMovie.imdbId ?? normalizedImdbId,
-        tmdbId: newMovie.tmdbId ?? tmdbMovieId ?? null,
-        year: newMovie.year ?? releaseYear ?? null,
-      },
+      movie: movieDetails,
       tmdbId: tmdbMovieId,
       postersAdded,
       translationsAdded,

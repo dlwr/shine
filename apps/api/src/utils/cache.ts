@@ -189,12 +189,22 @@ export const getCacheKeyForSearch = (
   limit: number,
   filters: Record<string, unknown>,
 ): string => {
-  const filterString = Object.entries(filters)
-    .filter(
-      ([, value]) => value !== undefined && value !== null && value !== '',
-    )
+  const entries = Object.entries(filters).filter(
+    ([, value]) => value !== undefined && value !== null && value !== '',
+  );
+  const sortedEntries: Array<[string, unknown]> = [];
+  for (const entry of entries) {
+    const insertIndex = sortedEntries.findIndex(
+      current => current[0] > entry[0],
+    );
+    if (insertIndex === -1) {
+      sortedEntries.push(entry);
+    } else {
+      sortedEntries.splice(insertIndex, 0, entry);
+    }
+  }
+  const filterString = sortedEntries
     .map(([key, value]) => `${key}:${String(value)}`)
-    .sort()
     .join('|');
 
   return `search:${query || 'all'}:${page}:${limit}:${filterString}:v1`;

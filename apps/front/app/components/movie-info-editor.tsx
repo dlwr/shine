@@ -76,14 +76,12 @@ export default function MovieInfoEditor({
   const [tmdbError, setTmdbError] = useState<string | undefined>();
 
   const [tmdbRefreshing, setTmdbRefreshing] = useState(false);
-  const [tmdbRefreshError, setTmdbRefreshError] = useState<string | undefined>(
-    
-  );
+  const [tmdbRefreshError, setTmdbRefreshError] = useState<
+    string | undefined
+  >();
 
   const [autoFetching, setAutoFetching] = useState(false);
-  const [autoFetchError, setAutoFetchError] = useState<string | undefined>(
-    
-  );
+  const [autoFetchError, setAutoFetchError] = useState<string | undefined>();
 
   const [editingYear, setEditingYear] = useState(false);
   const [newYear, setNewYear] = useState('');
@@ -138,16 +136,14 @@ export default function MovieInfoEditor({
   const [idSearchResults, setIdSearchResults] = useState<
     ExternalIdSuggestion[]
   >([]);
-  const [idSearchError, setIdSearchError] = useState<string | undefined>(
-    
-  );
+  const [idSearchError, setIdSearchError] = useState<string | undefined>();
   const [searchingIds, setSearchingIds] = useState(false);
   const [idSearchUsedQuery, setIdSearchUsedQuery] = useState<
     string | undefined
   >();
-  const [idSearchUsedYear, setIdSearchUsedYear] = useState<number | undefined>(
-    
-  );
+  const [idSearchUsedYear, setIdSearchUsedYear] = useState<
+    number | undefined
+  >();
   const [idSearchInitialized, setIdSearchInitialized] = useState(false);
 
   useEffect(() => {
@@ -373,7 +369,8 @@ export default function MovieInfoEditor({
   };
 
   const updateImdbId = async () => {
-    const imdbIdValue = newImdbId.trim() ? newImdbId.trim() : undefined;
+    const trimmedImdbId = newImdbId.trim();
+    const imdbIdValue = trimmedImdbId || undefined;
 
     try {
       const success = await performImdbUpdate(imdbIdValue, {
@@ -399,12 +396,14 @@ export default function MovieInfoEditor({
   };
 
   const updateTmdbId = async () => {
-    const tmdbIdNumber = newTmdbId.trim()
-      ? Number.parseInt(newTmdbId.trim(), 10)
-      : undefined;
+    const trimmedTmdbId = newTmdbId.trim();
+    let tmdbIdNumber: number | undefined;
+    if (trimmedTmdbId !== '') {
+      tmdbIdNumber = Number.parseInt(trimmedTmdbId, 10);
+    }
 
     if (
-      newTmdbId.trim() &&
+      trimmedTmdbId &&
       (tmdbIdNumber === undefined ||
         Number.isNaN(tmdbIdNumber) ||
         tmdbIdNumber <= 0)

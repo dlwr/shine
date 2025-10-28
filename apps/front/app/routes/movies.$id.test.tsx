@@ -81,7 +81,7 @@ const mockMovieDetail = {
 // Fetchのモック
 globalThis.fetch = vi.fn();
 
-const cast = <T,>(value: unknown): T => value as T;
+const cast = <T,>(value?: unknown): T => value as T;
 
 type LoaderResult = Awaited<ReturnType<typeof loader>>;
 type LoaderArguments = Route.LoaderArgs;
@@ -94,7 +94,9 @@ const createLoaderArguments = (
   context: LoaderArguments['context'],
   request: LoaderArguments['request'],
   parameters: LoaderArguments['params'],
-  overrides: Partial<Omit<LoaderArguments, 'context' | 'request' | 'params'>> = {},
+  overrides: Partial<
+    Omit<LoaderArguments, 'context' | 'request' | 'params'>
+  > = {},
 ): LoaderArguments =>
   cast<LoaderArguments>({
     context,

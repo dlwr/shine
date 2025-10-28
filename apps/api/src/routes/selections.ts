@@ -153,22 +153,37 @@ async function getMovieNominations(
   }));
 }
 
+function sortLanguagesByQuality(
+  languages: Array<{code: string; quality: number}>,
+) {
+  const sorted: Array<{code: string; quality: number}> = [];
+  for (const language of languages) {
+    const insertIndex = sorted.findIndex(
+      current => current.quality < language.quality,
+    );
+    if (insertIndex === -1) {
+      sorted.push(language);
+    } else {
+      sorted.splice(insertIndex, 0, language);
+    }
+  }
+  return sorted;
+}
+
 function parseAcceptLanguage(acceptLanguage?: string): string[] {
   if (!acceptLanguage) {
     return [];
   }
 
-  return acceptLanguage
-    .split(',')
-    .map(lang => {
-      const [code, q] = lang.trim().split(';q=');
-      return {
-        code: code.split('-')[0],
-        quality: q ? Number.parseFloat(q) : 1,
-      };
-    })
-    .sort((a, b) => b.quality - a.quality)
-    .map(lang => lang.code);
+  const languages = acceptLanguage.split(',').map(entry => {
+    const [code, quality] = entry.trim().split(';q=');
+    return {
+      code: code.split('-')[0],
+      quality: quality ? Number.parseFloat(quality) : 1,
+    };
+  });
+  const sortedLanguages = sortLanguagesByQuality(languages);
+  return sortedLanguages.map(language => language.code);
 }
 
 // Main endpoint for date-seeded movie selections

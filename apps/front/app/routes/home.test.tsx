@@ -59,7 +59,7 @@ const mockMovies = {
 // Fetchのモック
 globalThis.fetch = vi.fn();
 
-const cast = <T,>(value: unknown): T => value as T;
+const cast = <T,>(value?: unknown): T => value as T;
 
 type LoaderResult = Awaited<ReturnType<typeof loader>>;
 type LoaderSuccess = Extract<LoaderResult, {error: undefined}>;
@@ -220,7 +220,8 @@ describe('Home Component', () => {
 
   describe('Component', () => {
     it('映画選択データが正常に表示される', () => {
-      const loaderData = cast<ComponentProperties['loaderData']>(createLoaderData());
+      const loaderData =
+        cast<ComponentProperties['loaderData']>(createLoaderData());
 
       render(
         <Home
@@ -266,7 +267,8 @@ describe('Home Component', () => {
     });
 
     it('受賞情報がバッジとして表示される', () => {
-      const loaderData = cast<ComponentProperties['loaderData']>(createLoaderData());
+      const loaderData =
+        cast<ComponentProperties['loaderData']>(createLoaderData());
 
       render(
         <Home
@@ -292,7 +294,8 @@ describe('Home Component', () => {
     });
 
     it('映画詳細ページへのリンクが正しく設定される', () => {
-      const loaderData = cast<ComponentProperties['loaderData']>(createLoaderData());
+      const loaderData =
+        cast<ComponentProperties['loaderData']>(createLoaderData());
 
       render(
         <Home

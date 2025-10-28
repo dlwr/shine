@@ -262,7 +262,7 @@ function NominationBadgeList({
   variant: 'winner' | 'nominee';
 }) {
   if (nominations.length === 0) {
-    return null;
+    return <></>;
   }
 
   const baseClass =
@@ -293,7 +293,7 @@ function NominationsSection({
   nominees: Nomination[];
 }) {
   if (winningNominations.length === 0 && nominees.length === 0) {
-    return null;
+    return <></>;
   }
 
   return (
@@ -483,9 +483,11 @@ export async function loader({
   request,
 }: Route.LoaderArgs): Promise<LoaderData> {
   try {
-    const cloudflareEnvironment = (context.cloudflare as CloudflareContext | undefined)
-      ?.env;
-    const apiUrl = cloudflareEnvironment?.PUBLIC_API_URL ?? 'http://localhost:8787';
+    const cloudflareEnvironment = (
+      context.cloudflare as CloudflareContext | undefined
+    )?.env;
+    const apiUrl =
+      cloudflareEnvironment?.PUBLIC_API_URL ?? 'http://localhost:8787';
     const response = await fetch(`${apiUrl}/movies/${params.id}`, {
       signal: request.signal, // React Router v7推奨：abortシグナル
     });
@@ -516,9 +518,11 @@ export async function loader({
 
 export async function action({context, params, request}: Route.ActionArgs) {
   try {
-    const cloudflareEnvironment = (context.cloudflare as CloudflareContext | undefined)
-      ?.env;
-    const apiUrl = cloudflareEnvironment?.PUBLIC_API_URL ?? 'http://localhost:8787';
+    const cloudflareEnvironment = (
+      context.cloudflare as CloudflareContext | undefined
+    )?.env;
+    const apiUrl =
+      cloudflareEnvironment?.PUBLIC_API_URL ?? 'http://localhost:8787';
     const formData = await request.formData();
 
     const url = formData.get('url') as string;

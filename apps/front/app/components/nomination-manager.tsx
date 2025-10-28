@@ -37,6 +37,45 @@ type AwardsData = {
   categories: AwardsCategory[];
 };
 
+const ensureToken = () => {
+  const token = globalThis.localStorage?.getItem('adminToken');
+  if (!token) {
+    globalThis.location.href = '/admin/login';
+    return;
+  }
+  return token;
+};
+
+const sortCeremoniesByYearDesc = (ceremonies: AwardsCeremony[]) => {
+  const sorted: AwardsCeremony[] = [];
+  for (const ceremony of ceremonies) {
+    const insertIndex = sorted.findIndex(
+      current => current.year < ceremony.year,
+    );
+    if (insertIndex === -1) {
+      sorted.push(ceremony);
+    } else {
+      sorted.splice(insertIndex, 0, ceremony);
+    }
+  }
+  return sorted;
+};
+
+const sortCategoriesByName = (categories: AwardsCategory[]) => {
+  const sorted: AwardsCategory[] = [];
+  for (const category of categories) {
+    const insertIndex = sorted.findIndex(
+      current => current.name.localeCompare(category.name, 'ja') > 0,
+    );
+    if (insertIndex === -1) {
+      sorted.push(category);
+    } else {
+      sorted.splice(insertIndex, 0, category);
+    }
+  }
+  return sorted;
+};
+
 const formatOrganizationLabel = (organization: AwardsOrganization) => {
   const segments = [organization.name];
   if (organization.shortName && organization.shortName.trim() !== '') {
@@ -62,9 +101,7 @@ export default function NominationManager({
   nominations,
   onNominationsUpdate,
 }: NominationManagerProperties) {
-  const [awardsData, setAwardsData] = useState<AwardsData | undefined>(
-    
-  );
+  const [awardsData, setAwardsData] = useState<AwardsData | undefined>();
   const [loadingAwards, setLoadingAwards] = useState(true);
   const [awardsError, setAwardsError] = useState<string | undefined>();
 
@@ -144,28 +181,26 @@ export default function NominationManager({
     }
   }, [nominations, editingNominationId]);
 
-  const filteredCeremonies = useMemo(() => {
+  const filteredCeremonies = useMemo<AwardsCeremony[]>(() => {
     if (!awardsData || !newNomination.organizationUid) {
       return [];
     }
 
-    return awardsData.ceremonies
-      .filter(
-        ceremony => ceremony.organizationUid === newNomination.organizationUid,
-      )
-      .sort((a, b) => b.year - a.year);
+    const ceremoniesForOrganization = awardsData.ceremonies.filter(
+      ceremony => ceremony.organizationUid === newNomination.organizationUid,
+    );
+    return sortCeremoniesByYearDesc(ceremoniesForOrganization);
   }, [awardsData, newNomination.organizationUid]);
 
-  const filteredCategories = useMemo(() => {
+  const filteredCategories = useMemo<AwardsCategory[]>(() => {
     if (!awardsData || !newNomination.organizationUid) {
       return [];
     }
 
-    return awardsData.categories
-      .filter(
-        category => category.organizationUid === newNomination.organizationUid,
-      )
-      .sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+    const categoriesForOrganization = awardsData.categories.filter(
+      category => category.organizationUid === newNomination.organizationUid,
+    );
+    return sortCategoriesByName(categoriesForOrganization);
   }, [awardsData, newNomination.organizationUid]);
 
   const resetAddForm = () => {
@@ -177,15 +212,6 @@ export default function NominationManager({
       specialMention: '',
     });
     setNominationError(undefined);
-  };
-
-  const ensureToken = () => {
-    const token = globalThis.localStorage?.getItem('adminToken');
-    if (!token) {
-      globalThis.location.href = '/admin/login';
-      return;
-    }
-    return token;
   };
 
   const refreshMovieData = async (token: string) => {

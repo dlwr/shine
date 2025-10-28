@@ -7,21 +7,21 @@ type LanguageSelectorProperties = {
   locale: string;
 };
 
+const getCurrentUrl = (newLocale: string): string => {
+  if (globalThis.window !== undefined) {
+    const url = new URL(globalThis.location.href);
+    url.searchParams.set('locale', newLocale);
+    return url.toString();
+  }
+
+  return `?locale=${newLocale}`;
+};
+
 export function LanguageSelector({locale}: LanguageSelectorProperties) {
   const languages: Language[] = [
     {code: 'en', name: 'English'},
     {code: 'ja', name: '日本語'},
   ];
-
-  const getCurrentUrl = (newLocale: string): string => {
-    if (globalThis.window !== undefined) {
-      const url = new URL(globalThis.location.href);
-      url.searchParams.set('locale', newLocale);
-      return url.toString();
-    }
-
-    return `?locale=${newLocale}`;
-  };
 
   return (
     <div className="flex gap-2 my-4 justify-center">

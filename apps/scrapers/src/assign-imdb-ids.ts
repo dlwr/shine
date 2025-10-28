@@ -185,7 +185,9 @@ async function assignImdbIds() {
   } catch (error) {
     console.error('Error occurred');
     console.error('Error:', error);
-    process.exit(1);
+    throw error instanceof Error
+      ? error
+      : new Error('Failed to assign IMDb IDs');
   }
 }
 

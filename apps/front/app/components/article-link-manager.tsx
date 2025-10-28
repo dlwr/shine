@@ -27,9 +27,7 @@ export default function ArticleLinkManager<
   articleLinks,
   onArticleLinksUpdate,
 }: ArticleLinkManagerProperties<TState>) {
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | undefined>(
-    
-  );
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | undefined>();
 
   const updateArticleLinks = (
     mutate: (links: ArticleLink[]) => ArticleLink[],

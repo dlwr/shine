@@ -55,9 +55,9 @@ export default function TranslationManager({
     isDefault: false,
   });
   const [showAddTranslation, setShowAddTranslation] = useState(false);
-  const [translationError, setTranslationError] = useState<string | undefined>(
-    
-  );
+  const [translationError, setTranslationError] = useState<
+    string | undefined
+  >();
 
   const addTranslation = async () => {
     if (!newTranslation.languageCode.trim() || !newTranslation.content.trim()) {

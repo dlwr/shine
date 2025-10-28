@@ -63,12 +63,12 @@ const mockSearchResults = {
   },
 };
 
+const cast = <T,>(value?: unknown): T => value as T;
+
 describe('Search Component', () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
-
-  const cast = <T,>(value: unknown): T => value as T;
 
   type LoaderArguments = Route.LoaderArgs;
   type MetaArguments = Route.MetaArgs;
@@ -88,7 +88,10 @@ describe('Search Component', () => {
       matches: [],
     });
 
-  const createMetaArguments = (data: LoaderData, locationSearch: string): MetaArguments =>
+  const createMetaArguments = (
+    data: LoaderData,
+    locationSearch: string,
+  ): MetaArguments =>
     cast<MetaArguments>({
       data,
       params: {},

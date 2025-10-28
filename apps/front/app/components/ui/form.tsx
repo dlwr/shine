@@ -12,7 +12,7 @@ import {
   type FieldPath,
   type FieldValues,
 } from 'react-hook-form';
-import {cn} from '@/lib/utils';
+import {cn} from '@/lib/utilities';
 import {Label} from '@/components/ui/label';
 
 const Form = FormProvider;
@@ -117,7 +117,10 @@ function FormControl({...properties}: React.ComponentProps<typeof Slot>) {
   );
 }
 
-function FormDescription({className, ...properties}: React.ComponentProps<'p'>) {
+function FormDescription({
+  className,
+  ...properties
+}: React.ComponentProps<'p'>) {
   const {formDescriptionId} = useFormField();
 
   return (
@@ -135,7 +138,7 @@ function FormMessage({className, ...properties}: React.ComponentProps<'p'>) {
   const body = error ? String(error?.message ?? '') : properties.children;
 
   if (!body) {
-    return null;
+    return <></>;
   }
 
   return (

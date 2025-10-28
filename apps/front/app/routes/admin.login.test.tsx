@@ -53,7 +53,7 @@ describe('AdminLogin Component', () => {
     vi.resetAllMocks();
     mockNavigate.mockClear();
     // LocalStorage.getItemが既存トークンなしを返すようにセット
-    mockLocalStorage.getItem.mockReturnValue();
+    mockLocalStorage.getItem.mockImplementation(() => {});
   });
 
   describe('action', () => {
