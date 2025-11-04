@@ -181,3 +181,5 @@ front-rr/test-results/.last-run.json
 front/test-results/.last-run.json
 shine.db-info
 shine.db-wal
+.dev copy.vars
+shine.db-shm
