@@ -18,6 +18,7 @@ export const awardCeremonies = sqliteTable(
     endDate: integer(),
     location: text(),
     description: text(),
+    imdbEventUrl: text('imdb_event_url'),
     createdAt: integer()
       .notNull()
       .default(sql`(unixepoch())`),

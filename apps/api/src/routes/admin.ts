@@ -12,12 +12,12 @@ import {translations} from '@shine/database/schema/translations';
 import {Hono} from 'hono';
 import {inArray, sql} from 'drizzle-orm';
 import {authMiddleware} from '../auth';
-import {sanitizeText} from '../middleware/sanitizer';
+import {sanitizeText, sanitizeUrl} from '../middleware/sanitizer';
 import {AdminService} from '../services';
 
 type Database = ReturnType<typeof getDatabase>;
 
-const parseInteger = (value: unknown): number | null => {
+const parseInteger = (value: unknown): number | undefined => {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return Math.trunc(value);
   }
@@ -25,7 +25,7 @@ const parseInteger = (value: unknown): number | null => {
   if (typeof value === 'string') {
     const trimmed = value.trim();
     if (trimmed === '') {
-      return null;
+      return;
     }
 
     const parsed = Number.parseInt(trimmed, 10);
@@ -34,26 +34,26 @@ const parseInteger = (value: unknown): number | null => {
     }
   }
 
-  return null;
+  return;
 };
 
-const parseYear = (value: unknown): number | null => {
+const parseYear = (value: unknown): number | undefined => {
   const parsed = parseInteger(value);
-  if (parsed === null || parsed < 1880 || parsed > 9999) {
-    return null;
+  if (parsed === undefined || parsed < 1880 || parsed > 9999) {
+    return;
   }
   return parsed;
 };
 
-const parseCeremonyNumber = (value: unknown): number | null => {
+const parseCeremonyNumber = (value: unknown): number | undefined => {
   const parsed = parseInteger(value);
-  if (parsed === null) {
-    return null;
+  if (parsed === undefined) {
+    return;
   }
-  return parsed > 0 ? parsed : null;
+  return parsed > 0 ? parsed : undefined;
 };
 
-const parseUnixTimestamp = (value: unknown): number | null => {
+const parseUnixTimestamp = (value: unknown): number | undefined => {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return Math.floor(value);
   }
@@ -61,7 +61,7 @@ const parseUnixTimestamp = (value: unknown): number | null => {
   if (typeof value === 'string') {
     const trimmed = value.trim();
     if (trimmed === '') {
-      return null;
+      return;
     }
 
     const parsed = new Date(trimmed);
@@ -70,16 +70,33 @@ const parseUnixTimestamp = (value: unknown): number | null => {
     }
   }
 
-  return null;
+  return;
 };
 
-const sanitizeOptionalText = (value: unknown): string | null => {
+const sanitizeOptionalText = (value: unknown): string | undefined => {
   if (typeof value !== 'string') {
-    return null;
+    return;
   }
 
   const sanitized = sanitizeText(value).trim();
-  return sanitized.length > 0 ? sanitized : null;
+  return sanitized.length > 0 ? sanitized : undefined;
+};
+
+const parseOptionalUrl = (value: unknown): string | undefined => {
+  if (value === undefined) {
+    return;
+  }
+
+  if (typeof value !== 'string') {
+    throw new TypeError('Invalid URL');
+  }
+
+  const trimmed = value.trim();
+  if (trimmed === '') {
+    return;
+  }
+
+  return sanitizeUrl(trimmed);
 };
 
 const loadCeremonyDetail = async (database: Database, ceremonyUid: string) => {
@@ -95,6 +112,7 @@ const loadCeremonyDetail = async (database: Database, ceremonyUid: string) => {
       endDate: awardCeremonies.endDate,
       location: awardCeremonies.location,
       description: awardCeremonies.description,
+      imdbEventUrl: awardCeremonies.imdbEventUrl,
       createdAt: awardCeremonies.createdAt,
       updatedAt: awardCeremonies.updatedAt,
     })
@@ -107,7 +125,7 @@ const loadCeremonyDetail = async (database: Database, ceremonyUid: string) => {
     .limit(1);
 
   if (ceremonyResult.length === 0) {
-    return null;
+    return;
   }
 
   const nominationsResult = await database
@@ -129,9 +147,9 @@ const loadCeremonyDetail = async (database: Database, ceremonyUid: string) => {
     .where(eq(nominations.ceremonyUid, ceremonyUid))
     .orderBy(awardCategories.name, movies.year);
 
-  const movieUids = Array.from(
-    new Set(nominationsResult.map(nomination => nomination.movieUid)),
-  );
+  const movieUids = [
+    ...new Set(nominationsResult.map(nomination => nomination.movieUid)),
+  ];
 
   const titlesMap = new Map<string, string>();
   if (movieUids.length > 0) {
@@ -154,6 +172,47 @@ const loadCeremonyDetail = async (database: Database, ceremonyUid: string) => {
     }
   }
 
+  const siblingRows = await database
+    .select({
+      uid: awardCeremonies.uid,
+      year: awardCeremonies.year,
+      ceremonyNumber: awardCeremonies.ceremonyNumber,
+    })
+    .from(awardCeremonies)
+    .where(eq(awardCeremonies.organizationUid, ceremonyResult[0].organizationUid))
+    .orderBy(awardCeremonies.year, awardCeremonies.ceremonyNumber);
+
+  // eslint-disable-next-line unicorn/no-array-sort
+  const sortedSiblings = [...siblingRows].sort((a, b) => {
+    if (a.year !== b.year) {
+      return a.year - b.year;
+    }
+
+    const aNumber = a.ceremonyNumber ?? Number.MAX_SAFE_INTEGER;
+    const bNumber = b.ceremonyNumber ?? Number.MAX_SAFE_INTEGER;
+
+    if (aNumber < bNumber) {
+      return -1;
+    }
+
+    if (aNumber > bNumber) {
+      return 1;
+    }
+
+    return 0;
+  });
+
+  const currentIndex = sortedSiblings.findIndex(
+    sibling => sibling.uid === ceremonyUid,
+  );
+
+  const previousCeremony =
+    currentIndex > 0 ? sortedSiblings[currentIndex - 1] : undefined;
+  const nextCeremony =
+    currentIndex >= 0 && currentIndex < sortedSiblings.length - 1
+      ? sortedSiblings[currentIndex + 1]
+      : undefined;
+
   return {
     ceremony: ceremonyResult[0],
     nominations: nominationsResult.map(nomination => ({
@@ -170,6 +229,22 @@ const loadCeremonyDetail = async (database: Database, ceremonyUid: string) => {
       isWinner: Boolean(nomination.isWinner),
       specialMention: nomination.specialMention,
     })),
+    navigation: {
+      previous: previousCeremony
+        ? {
+            uid: previousCeremony.uid,
+            year: previousCeremony.year,
+            ceremonyNumber: previousCeremony.ceremonyNumber ?? undefined,
+          }
+        : undefined,
+      next: nextCeremony
+        ? {
+            uid: nextCeremony.uid,
+            year: nextCeremony.year,
+            ceremonyNumber: nextCeremony.ceremonyNumber ?? undefined,
+          }
+        : undefined,
+    },
   };
 };
 
@@ -516,10 +591,7 @@ adminRoutes.put('/movies/:id', authMiddleware, async c => {
 
     // Validate year if provided
     if (year !== undefined) {
-      if (
-        year !== null &&
-        (!Number.isInteger(year) || year < 1888 || year > 2100)
-      ) {
+      if (typeof year !== 'number' || !Number.isInteger(year) || year < 1888 || year > 2100) {
         return c.json(
           {error: 'Year must be a valid integer between 1888 and 2100'},
           400,
@@ -604,9 +676,8 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
 
     // Validate TMDb ID (must be a positive integer)
     if (
-      tmdbId !== null &&
       tmdbId !== undefined &&
-      (!Number.isInteger(tmdbId) || tmdbId <= 0)
+      (typeof tmdbId !== 'number' || !Number.isInteger(tmdbId) || tmdbId <= 0)
     ) {
       return c.json({error: 'TMDb ID must be a positive integer'}, 400);
     }
@@ -623,7 +694,7 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
     }
 
     // Check if TMDb ID is already used by another movie
-    if (tmdbId) {
+    if (typeof tmdbId === 'number') {
       const existingMovie = await database
         .select({uid: movies.uid})
         .from(movies)
@@ -639,7 +710,7 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
     await database
       .update(movies)
       .set({
-        tmdbId: tmdbId || undefined,
+        tmdbId: typeof tmdbId === 'number' ? tmdbId : undefined,
         updatedAt: Math.floor(Date.now() / 1000),
       })
       .where(eq(movies.uid, movieId));
@@ -650,7 +721,7 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
       translationsAdded: 0,
     };
 
-    if (refreshData && tmdbId && c.env.TMDB_API_KEY) {
+    if (refreshData && typeof tmdbId === 'number' && c.env.TMDB_API_KEY) {
       try {
         // Import TMDb utilities
         const {fetchTMDBMovieTranslations, savePosterUrls} = await import(
@@ -823,6 +894,7 @@ adminRoutes.get('/ceremonies', authMiddleware, async c => {
         endDate: awardCeremonies.endDate,
         location: awardCeremonies.location,
         description: awardCeremonies.description,
+        imdbEventUrl: awardCeremonies.imdbEventUrl,
         createdAt: awardCeremonies.createdAt,
         updatedAt: awardCeremonies.updatedAt,
       })
@@ -899,7 +971,7 @@ adminRoutes.post('/ceremonies', authMiddleware, async c => {
     }
 
     const year = parseYear(body.year);
-    if (year === null) {
+    if (year === undefined) {
       return c.json({error: 'year must be a valid number (1880-9999)'}, 400);
     }
 
@@ -907,12 +979,19 @@ adminRoutes.post('/ceremonies', authMiddleware, async c => {
     const startDate = parseUnixTimestamp(body.startDate);
     const endDate = parseUnixTimestamp(body.endDate);
 
-    if (startDate !== null && endDate !== null && endDate < startDate) {
+    if (startDate !== undefined && endDate !== undefined && endDate < startDate) {
       return c.json({error: 'endDate must be the same as or after startDate'}, 400);
     }
 
     const location = sanitizeOptionalText(body.location);
     const description = sanitizeOptionalText(body.description);
+
+    let imdbEventUrl: string | undefined;
+    try {
+      imdbEventUrl = parseOptionalUrl(body.imdbEventUrl);
+    } catch {
+      return c.json({error: 'imdbEventUrl must be a valid http(s) URL'}, 400);
+    }
 
     const database = getDatabase(c.env);
 
@@ -944,7 +1023,7 @@ adminRoutes.post('/ceremonies', authMiddleware, async c => {
       );
     }
 
-    if (ceremonyNumber !== null) {
+    if (ceremonyNumber !== undefined) {
       const duplicateNumber = await database
         .select({uid: awardCeremonies.uid})
         .from(awardCeremonies)
@@ -974,6 +1053,7 @@ adminRoutes.post('/ceremonies', authMiddleware, async c => {
         endDate,
         location,
         description,
+        imdbEventUrl,
       })
       .returning({uid: awardCeremonies.uid});
 
@@ -1012,7 +1092,7 @@ adminRoutes.put(
       }
 
       const year = parseYear(body.year);
-      if (year === null) {
+      if (year === undefined) {
         return c.json({error: 'year must be a valid number (1880-9999)'}, 400);
       }
 
@@ -1020,12 +1100,19 @@ adminRoutes.put(
       const startDate = parseUnixTimestamp(body.startDate);
       const endDate = parseUnixTimestamp(body.endDate);
 
-      if (startDate !== null && endDate !== null && endDate < startDate) {
+      if (startDate !== undefined && endDate !== undefined && endDate < startDate) {
         return c.json({error: 'endDate must be the same as or after startDate'}, 400);
       }
 
       const location = sanitizeOptionalText(body.location);
       const description = sanitizeOptionalText(body.description);
+
+      let imdbEventUrl: string | undefined;
+      try {
+        imdbEventUrl = parseOptionalUrl(body.imdbEventUrl);
+      } catch {
+        return c.json({error: 'imdbEventUrl must be a valid http(s) URL'}, 400);
+      }
 
       const database = getDatabase(c.env);
 
@@ -1068,7 +1155,7 @@ adminRoutes.put(
         );
       }
 
-      if (ceremonyNumber !== null) {
+      if (ceremonyNumber !== undefined) {
         const duplicateNumber = await database
           .select({uid: awardCeremonies.uid})
           .from(awardCeremonies)
@@ -1101,6 +1188,7 @@ adminRoutes.put(
           endDate,
           location,
           description,
+          imdbEventUrl,
           updatedAt: now,
         })
         .where(eq(awardCeremonies.uid, ceremonyUid));
@@ -1176,6 +1264,7 @@ adminRoutes.get('/awards', authMiddleware, async c => {
         year: awardCeremonies.year,
         ceremonyNumber: awardCeremonies.ceremonyNumber,
         organizationName: awardOrganizations.name,
+        imdbEventUrl: awardCeremonies.imdbEventUrl,
       })
       .from(awardCeremonies)
       .innerJoin(

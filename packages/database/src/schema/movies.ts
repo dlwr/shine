@@ -12,6 +12,7 @@ export const movies = sqliteTable(
     year: integer(),
     imdbId: text().unique(),
     tmdbId: integer().unique(),
+    releaseDate: text('release_date'),
     createdAt: integer()
       .notNull()
       .default(sql`(unixepoch())`),

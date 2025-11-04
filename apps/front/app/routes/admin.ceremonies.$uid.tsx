@@ -13,6 +13,12 @@ type LoaderData = {
   ceremonyUid: string;
 };
 
+type CeremonyNavigationItem = {
+  uid: string;
+  year: number;
+  ceremonyNumber?: number;
+};
+
 type CeremonyResponse = {
   ceremony: {
     uid: string;
@@ -25,6 +31,7 @@ type CeremonyResponse = {
     endDate: number | null;
     location: string | null;
     description: string | null;
+    imdbEventUrl: string | null;
     createdAt: number;
     updatedAt: number;
   };
@@ -42,6 +49,10 @@ type CeremonyResponse = {
     isWinner: boolean;
     specialMention: string | null;
   }>;
+  navigation: {
+    previous: CeremonyNavigationItem | null;
+    next: CeremonyNavigationItem | null;
+  };
 };
 
 type AwardsOrganization = {
@@ -70,6 +81,7 @@ type CeremonyFormState = {
   endDate: string;
   location: string;
   description: string;
+  imdbEventUrl: string;
 };
 
 type MovieSearchResult = {
@@ -87,6 +99,7 @@ const emptyFormState: CeremonyFormState = {
   endDate: '',
   location: '',
   description: '',
+  imdbEventUrl: '',
 };
 
 const formatDateInput = (value: number | null) => {
@@ -117,15 +130,23 @@ const formatTimestamp = (value: number) => {
   });
 };
 
+const formatNavigationLabel = (item: CeremonyNavigationItem) => {
+  if (item.ceremonyNumber && item.ceremonyNumber > 0) {
+    return `${item.year}年・第${item.ceremonyNumber}回`;
+  }
+
+  return `${item.year}年`;
+};
+
 const ensureToken = () => {
   if (typeof globalThis === 'undefined') {
-    return null;
+    return;
   }
 
   const token = globalThis.localStorage?.getItem('adminToken');
   if (!token) {
     globalThis.location.href = '/admin/login';
-    return null;
+    return;
   }
 
   return token;
@@ -163,9 +184,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
   const [awardsLoading, setAwardsLoading] = useState(true);
   const [awardsError, setAwardsError] = useState<string | undefined>();
 
-  const [ceremonyDetail, setCeremonyDetail] = useState<CeremonyResponse | null>(
-    null,
-  );
+  const [ceremonyDetail, setCeremonyDetail] = useState<CeremonyResponse | undefined>();
   const [detailLoading, setDetailLoading] = useState(!isNew);
   const [detailError, setDetailError] = useState<string | undefined>();
 
@@ -257,7 +276,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
 
         if (response.status === 404) {
           setDetailError('セレモニーが見つかりませんでした。');
-          setCeremonyDetail(null);
+          setCeremonyDetail(undefined);
           return;
         }
 
@@ -278,12 +297,13 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
             endDate: formatDateInput(data.ceremony.endDate),
             location: data.ceremony.location ?? '',
             description: data.ceremony.description ?? '',
+            imdbEventUrl: data.ceremony.imdbEventUrl ?? '',
           });
         }
       } catch (error) {
         console.error('Failed to load ceremony detail:', error);
         setDetailError('セレモニー情報の取得に失敗しました。');
-        setCeremonyDetail(null);
+        setCeremonyDetail(undefined);
       } finally {
         if (showSpinner) {
           setDetailLoading(false);
@@ -300,7 +320,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
   useEffect(() => {
     if (isNew) {
       setDetailLoading(false);
-      setCeremonyDetail(null);
+      setCeremonyDetail(undefined);
       return;
     }
 
@@ -313,33 +333,41 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
   }, [fetchCeremony, isNew]);
 
   useEffect(() => {
-    if (!isNew || formState.organizationUid) {
-      return;
+    if (
+      isNew &&
+      formState.organizationUid === '' &&
+      awardsData &&
+      awardsData.organizations.length > 0
+    ) {
+      setFormState(current => ({
+        ...current,
+        organizationUid: awardsData.organizations[0]?.uid ?? '',
+      }));
     }
-
-    if (!awardsData || awardsData.organizations.length === 0) {
-      return;
-    }
-
-    setFormState(current => ({
-      ...current,
-      organizationUid: awardsData.organizations[0]?.uid ?? '',
-    }));
   }, [awardsData, formState.organizationUid, isNew]);
 
-  const organizationOptions = useMemo(() => {
-    return awardsData?.organizations ?? [];
-  }, [awardsData]);
-
-  const categoriesForOrganization = useMemo(() => {
-    if (!awardsData) {
+  const organizationOptions = useMemo<AwardsOrganization[]>(() => {
+    if (awardsData === undefined) {
       return [];
     }
 
-    return awardsData.categories
-      .filter(category => category.organizationUid === formState.organizationUid)
-      .sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+    return awardsData.organizations;
+  }, [awardsData]);
+
+  const categoriesForOrganization = useMemo(() => {
+    if (awardsData === undefined) {
+      return [];
+    }
+
+    const filtered: AwardsCategory[] = awardsData.categories.filter(
+      category => category.organizationUid === formState.organizationUid,
+    );
+
+    // eslint-disable-next-line unicorn/no-array-sort
+    return filtered.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
   }, [awardsData, formState.organizationUid]);
+
+  const navigation = ceremonyDetail?.navigation;
 
   const handleInputChange = (
     event:
@@ -382,11 +410,15 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       const payload = {
         organizationUid: formState.organizationUid,
         year: formState.year,
-        ceremonyNumber: formState.ceremonyNumber || null,
-        startDate: formState.startDate || null,
-        endDate: formState.endDate || null,
-        location: formState.location || null,
-        description: formState.description || null,
+        ceremonyNumber: formState.ceremonyNumber
+          ? Number.parseInt(formState.ceremonyNumber, 10)
+          : undefined,
+        startDate: formState.startDate || undefined,
+        endDate: formState.endDate || undefined,
+        location: formState.location || undefined,
+        description: formState.description || undefined,
+        imdbEventUrl:
+          formState.imdbEventUrl.trim() === '' ? undefined : formState.imdbEventUrl,
       };
 
       const response = await fetch(
@@ -409,32 +441,43 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
         return;
       }
 
-      const data = (await response
-        .json()
-        .catch(() => ({error: 'Unknown error'}))) as
-        | CeremonyResponse
-        | {error?: string};
-
-      if (!response.ok || 'error' in data) {
-        throw new Error(data.error || 'セレモニーの保存に失敗しました。');
+      let responseBody: unknown;
+      try {
+        responseBody = await response.json();
+      } catch {
+        // ignore parse errors
       }
 
-      setCeremonyDetail(data);
+      if (!response.ok) {
+        const errorMessage =
+          responseBody &&
+          typeof responseBody === 'object' &&
+          'error' in responseBody &&
+          typeof (responseBody as {error?: unknown}).error === 'string'
+            ? (responseBody as {error: string}).error
+            : 'セレモニーの保存に失敗しました。';
+        throw new Error(errorMessage);
+      }
+
+      const saved = responseBody as CeremonyResponse;
+
+      setCeremonyDetail(saved);
       setSaveSuccess('セレモニーを保存しました。');
 
       if (isNew) {
-        navigate(`/admin/ceremonies/${data.ceremony.uid}`, {replace: true});
+        navigate(`/admin/ceremonies/${saved.ceremony.uid}`, {replace: true});
       }
 
       setFormState({
-        organizationUid: data.ceremony.organizationUid,
-        year: data.ceremony.year.toString(),
+        organizationUid: saved.ceremony.organizationUid,
+        year: saved.ceremony.year.toString(),
         ceremonyNumber:
-          data.ceremony.ceremonyNumber?.toString() ?? '',
-        startDate: formatDateInput(data.ceremony.startDate),
-        endDate: formatDateInput(data.ceremony.endDate),
-        location: data.ceremony.location ?? '',
-        description: data.ceremony.description ?? '',
+          saved.ceremony.ceremonyNumber?.toString() ?? '',
+        startDate: formatDateInput(saved.ceremony.startDate),
+        endDate: formatDateInput(saved.ceremony.endDate),
+        location: saved.ceremony.location ?? '',
+        description: saved.ceremony.description ?? '',
+        imdbEventUrl: saved.ceremony.imdbEventUrl ?? '',
       });
     } catch (error) {
       const message =
@@ -697,34 +740,74 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
               <h1 className="text-3xl font-bold text-gray-900">
                 セレモニー{isNew ? 'の新規作成' : '編集'}
               </h1>
-              {ceremonyDetail ? (
+              {ceremonyDetail && (
                 <p className="mt-1 text-sm text-gray-500">
                   最終更新: {formatTimestamp(ceremonyDetail.ceremony.updatedAt)}
                 </p>
-              ) : null}
+              )}
             </div>
-            <div className="flex gap-3">
-              <a
-                href="/admin/ceremonies"
-                className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                一覧に戻る
-              </a>
-              {!isNew ? (
-                <button
-                  type="button"
-                  onClick={handleDeleteCeremony}
-                  disabled={isDeleting}
-                  className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            <div className="flex flex-col gap-3 md:items-end">
+              {!isNew && navigation && (
+                <div className="flex justify-end gap-2">
+                  {navigation.previous ? (
+                    <a
+                      href={`/admin/ceremonies/${navigation.previous.uid}`}
+                      className="rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                      ← {formatNavigationLabel(navigation.previous)}
+                    </a>
+                  ) : (
+                    <span className="rounded border border-gray-200 px-3 py-1 text-sm font-medium text-gray-300">
+                      ← 前へ
+                    </span>
+                  )}
+                  {navigation.next ? (
+                    <a
+                      href={`/admin/ceremonies/${navigation.next.uid}`}
+                      className="rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                      {formatNavigationLabel(navigation.next)} →
+                    </a>
+                  ) : (
+                    <span className="rounded border border-gray-200 px-3 py-1 text-sm font-medium text-gray-300">
+                      次へ →
+                    </span>
+                  )}
+                </div>
+              )}
+              {!isNew && ceremonyDetail?.ceremony.imdbEventUrl && (
+                <a
+                  href={ceremonyDetail.ceremony.imdbEventUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
                 >
-                  {isDeleting ? '削除中…' : 'セレモニーを削除'}
-                </button>
-              ) : null}
+                  IMDbで表示
+                </a>
+              )}
+              <div className="flex gap-3">
+                <a
+                  href="/admin/ceremonies"
+                  className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  一覧に戻る
+                </a>
+                {!isNew && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteCeremony}
+                    disabled={isDeleting}
+                    className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isDeleting ? '削除中…' : 'セレモニーを削除'}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-          {deleteError ? (
+          {deleteError && (
             <p className="mt-2 text-sm text-red-600">{deleteError}</p>
-          ) : null}
+          )}
         </div>
       </header>
 
@@ -827,6 +910,21 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                 </label>
 
                 <label className="md:col-span-2 flex flex-col text-sm font-medium text-gray-700">
+                  IMDbイベントURL
+                  <input
+                    type="url"
+                    name="imdbEventUrl"
+                    value={formState.imdbEventUrl}
+                    onChange={handleInputChange}
+                    placeholder="https://www.imdb.com/event/ev0000372/1978/1"
+                    className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <span className="mt-1 text-xs text-gray-500">
+                    IMDb のイベントページへの完全な URL を入力してください（任意）。
+                  </span>
+                </label>
+
+                <label className="md:col-span-2 flex flex-col text-sm font-medium text-gray-700">
                   説明
                   <textarea
                     name="description"
@@ -840,17 +938,17 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
               </div>
             )}
 
-            {saveError ? (
+            {saveError && (
               <div className="rounded bg-red-50 px-4 py-3 text-sm text-red-700">
                 {saveError}
               </div>
-            ) : null}
+            )}
 
-            {saveSuccess ? (
+            {saveSuccess && (
               <div className="rounded bg-green-50 px-4 py-3 text-sm text-green-700">
                 {saveSuccess}
               </div>
-            ) : null}
+            )}
 
             <div className="flex justify-end gap-3">
               <button
@@ -874,11 +972,11 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                 ノミネート・受賞作品を追加・削除できます。
               </p>
             </div>
-            {ceremonyDetail ? (
+            {ceremonyDetail && (
               <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600">
                 {ceremonyDetail.nominations.length} 件
               </span>
-            ) : null}
+            )}
           </div>
 
           {detailLoading ? (
@@ -988,13 +1086,13 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                     </button>
                   </form>
 
-                  {movieSearchError ? (
+                  {movieSearchError && (
                     <div className="rounded bg-red-50 px-4 py-3 text-sm text-red-700">
                       {movieSearchError}
                     </div>
-                  ) : null}
+                  )}
 
-                  {selectedMovie ? (
+                  {selectedMovie && (
                     <div className="rounded border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
                       選択中: {selectedMovie.title}
                       {selectedMovie.year ? `（${selectedMovie.year}年）` : ''}
@@ -1006,9 +1104,9 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                         解除
                       </button>
                     </div>
-                  ) : null}
+                  )}
 
-                  {movieSearchResults.length > 0 ? (
+                  {movieSearchResults.length > 0 && (
                     <div className="rounded border border-gray-200">
                       <ul className="divide-y divide-gray-200">
                         {movieSearchResults.map(result => (
@@ -1036,7 +1134,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                         ))}
                       </ul>
                     </div>
-                  ) : null}
+                  )}
 
                   <form className="space-y-4" onSubmit={handleAddNomination}>
                     <div className="grid gap-4 md:grid-cols-2">
@@ -1086,11 +1184,11 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                       />
                     </label>
 
-                    {nominationMessage ? (
+                    {nominationMessage && (
                       <div className="rounded bg-blue-50 px-4 py-3 text-sm text-blue-700">
                         {nominationMessage}
                       </div>
-                    ) : null}
+                    )}
 
                     <div className="flex justify-end">
                       <button
@@ -1115,4 +1213,3 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
     </div>
   );
 }
-

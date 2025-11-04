@@ -15,6 +15,7 @@ type CeremonyListItem = {
   createdAt: number;
   updatedAt: number;
   movieCount: number;
+  imdbEventUrl: string | null;
 };
 
 type LoaderData = {
@@ -56,14 +57,14 @@ const formatYearAndNumber = (
   return `${year}年`;
 };
 
-const formatDate = (value: number | null): string | null => {
-  if (!value) {
-    return null;
+const formatDate = (value: number | null | undefined): string | undefined => {
+  if (typeof value !== 'number') {
+    return undefined;
   }
 
   const date = new Date(value * 1000);
   if (Number.isNaN(date.getTime())) {
-    return null;
+    return undefined;
   }
 
   return date.toLocaleDateString('ja-JP');
@@ -184,9 +185,14 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
         unique.set(ceremony.organizationUid, ceremony.organizationName);
       }
     }
-    return Array.from(unique.entries())
-      .map(([value, label]) => ({value, label}))
-      .sort((a, b) => a.label.localeCompare(b.label, 'ja'));
+
+    const options = [...unique.entries()].map(([value, label]) => ({
+      value,
+      label,
+    }));
+
+    // eslint-disable-next-line unicorn/no-array-sort
+    return options.sort((a, b) => a.label.localeCompare(b.label, 'ja'));
   }, [ceremonies]);
 
   const filteredCeremonies = useMemo(
@@ -283,6 +289,9 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
                       場所
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      IMDb
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                       映画数
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -309,17 +318,31 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900">
                         <div className="font-medium">{ceremony.organizationName}</div>
-                        {ceremony.organizationCountry ? (
+                        {ceremony.organizationCountry && (
                           <div className="text-xs text-gray-500">
                             {ceremony.organizationCountry}
                           </div>
-                        ) : null}
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900">
                         {formatDateRange(ceremony.startDate, ceremony.endDate)}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900">
                         {ceremony.location ?? '-'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {ceremony.imdbEventUrl ? (
+                          <a
+                            href={ceremony.imdbEventUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-600 underline hover:text-blue-800"
+                          >
+                            IMDb
+                          </a>
+                        ) : (
+                          '-'
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900">
                         {ceremony.movieCount}
@@ -346,4 +369,3 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
     </div>
   );
 }
-
