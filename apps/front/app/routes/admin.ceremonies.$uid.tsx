@@ -212,6 +212,156 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
   const [nominationMessage, setNominationMessage] = useState<
     string | undefined
   >();
+  const [isSyncingFromImdb, setIsSyncingFromImdb] = useState(false);
+
+  const normalizeCategoryName = useCallback((value: string) => {
+    return value
+      .normalize('NFKC')
+      .toLowerCase()
+      .replaceAll('’', "'")
+      .replaceAll(/[（）]/g, match => (match === '（' ? '(' : ')'))
+      .replaceAll(/\s+/g, ' ')
+      .trim();
+  }, []);
+
+  const bestFilmCategory = useMemo(() => {
+    if (!awardsData) {
+      return;
+    }
+
+    const organizationUid =
+      ceremonyDetail?.ceremony.organizationUid || formState.organizationUid;
+
+    if (!organizationUid) {
+      return;
+    }
+
+    const synonyms = [
+      'best film',
+      'best picture',
+      'best motion picture',
+      'best motion picture of the year',
+      'picture of the year',
+      '最優秀作品賞',
+      '最優秀作品',
+      '作品賞',
+      '最優秀作品賞(最優秀作品)',
+      '最優秀作品賞 (最優秀作品)',
+      '作品賞(最優秀作品)',
+      '作品賞 (最優秀作品)',
+      '最優秀日本作品賞',
+      '最優秀日本映画賞',
+    ];
+
+    const normalizedSynonyms = synonyms.map(synonym =>
+      normalizeCategoryName(synonym),
+    );
+
+    return awardsData.categories.find(category => {
+      if (category.organizationUid !== organizationUid) {
+        return false;
+      }
+
+      const normalizedName = normalizeCategoryName(category.name);
+      return normalizedSynonyms.some(
+        synonym =>
+          normalizedName === synonym ||
+          normalizedName.includes(synonym) ||
+          synonym.includes(normalizedName),
+      );
+    });
+  }, [
+    awardsData,
+    ceremonyDetail?.ceremony.organizationUid,
+    formState.organizationUid,
+    normalizeCategoryName,
+  ]);
+
+  const organizationCategories = useMemo(() => {
+    if (!awardsData) {
+      return [];
+    }
+
+    const organizationUid =
+      ceremonyDetail?.ceremony.organizationUid || formState.organizationUid;
+
+    if (!organizationUid) {
+      return [];
+    }
+
+    return awardsData.categories.filter(
+      category => category.organizationUid === organizationUid,
+    );
+  }, [
+    awardsData,
+    ceremonyDetail?.ceremony.organizationUid,
+    formState.organizationUid,
+  ]);
+
+  const [syncCategoryUid, setSyncCategoryUid] = useState('');
+
+  const defaultSyncCategory = useMemo(() => {
+    if (bestFilmCategory) {
+      return bestFilmCategory;
+    }
+
+    if (organizationCategories.length === 1) {
+      return organizationCategories[0];
+    }
+
+    return;
+  }, [bestFilmCategory, organizationCategories]);
+
+  useEffect(() => {
+    if (defaultSyncCategory) {
+      setSyncCategoryUid(previous =>
+        previous === defaultSyncCategory.uid ? previous : defaultSyncCategory.uid,
+      );
+      return;
+    }
+
+    if (organizationCategories.length > 0) {
+      setSyncCategoryUid(previous => {
+        if (
+          previous &&
+          organizationCategories.some(category => category.uid === previous)
+        ) {
+          return previous;
+        }
+        return organizationCategories[0].uid;
+      });
+      return;
+    }
+
+    setSyncCategoryUid('');
+  }, [defaultSyncCategory, organizationCategories]);
+
+  const selectedSyncCategory = useMemo(
+    () =>
+      organizationCategories.find(
+        category => category.uid === syncCategoryUid,
+      ),
+    [organizationCategories, syncCategoryUid],
+  );
+
+  const canSyncFromImdb =
+    !isNew &&
+    Boolean(ceremonyDetail?.ceremony.imdbEventUrl) &&
+    Boolean(selectedSyncCategory);
+
+  const syncButtonTooltip = useMemo(() => {
+    if (!ceremonyDetail?.ceremony.imdbEventUrl) {
+      return 'IMDbイベントURLを設定してください。';
+    }
+
+    if (!selectedSyncCategory) {
+      return '同期対象のカテゴリを特定できませんでした。';
+    }
+
+    return;
+  }, [ceremonyDetail?.ceremony.imdbEventUrl, selectedSyncCategory]);
+
+  const isSyncButtonDisabled = isSyncingFromImdb || !canSyncFromImdb;
 
   const fetchAwardsData = useCallback(async () => {
     const token = ensureToken();
@@ -731,6 +881,123 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
     }
   };
 
+  const handleSyncFromImdb = async () => {
+    if (!ceremonyDetail) {
+      setNominationMessage('まずセレモニー情報を読み込んでください。');
+      return;
+    }
+
+    if (!ceremonyDetail.ceremony.imdbEventUrl) {
+      setNominationMessage('IMDbイベントURLを設定してください。');
+      return;
+    }
+
+    if (!selectedSyncCategory) {
+      setNominationMessage('同期対象のカテゴリを選択してください。');
+      return;
+    }
+
+    const token = ensureToken();
+    if (!token) {
+      return;
+    }
+
+    setIsSyncingFromImdb(true);
+    setNominationMessage(undefined);
+
+    try {
+      const response = await fetch(
+        `${apiUrl}/admin/ceremonies/${ceremonyDetail.ceremony.uid}/sync-imdb`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({categoryUid: selectedSyncCategory.uid}),
+        },
+      );
+
+      if (response.status === 401) {
+        globalThis.localStorage?.removeItem('adminToken');
+        globalThis.location.href = '/admin/login';
+        return;
+      }
+
+      const data = (await response
+        .json()
+        .catch(() => ({
+          success: false,
+          error: 'Unknown error',
+        }))) as {
+        success?: boolean;
+        error?: string;
+        stats?: {
+          moviesCreated?: number;
+          nominationsInserted?: number;
+          skipped?: number;
+          imdbEntries?: number;
+          categoryName?: string;
+        };
+      };
+
+      if (!response.ok || data.success !== true) {
+        throw new Error(
+          data.error || 'IMDbリストとの同期に失敗しました。',
+        );
+      }
+
+      const tokenAfter = ensureToken();
+      if (!tokenAfter) {
+        return;
+      }
+
+      await fetchCeremony(tokenAfter, {syncForm: false, showSpinner: true});
+
+      if (data.stats) {
+        const {
+          moviesCreated = 0,
+          nominationsInserted = 0,
+          skipped = 0,
+          imdbEntries = 0,
+          categoryName,
+        } = data.stats;
+
+        const detailParts = [
+          `取得 ${imdbEntries} 件`,
+          `登録 ${nominationsInserted} 件`,
+        ];
+
+        if (moviesCreated > 0) {
+          detailParts.push(`新規映画 ${moviesCreated} 件`);
+        }
+
+        if (skipped > 0) {
+          detailParts.push(`スキップ ${skipped} 件`);
+        }
+
+        setNominationMessage(
+          `IMDb${
+            categoryName
+              ? `（${categoryName}）`
+              : `（${selectedSyncCategory.name}）`
+          }のリストと同期しました（${detailParts.join(' / ')}）。`,
+        );
+      } else {
+        setNominationMessage('IMDbのリストと同期しました。');
+      }
+    } catch (error) {
+      console.error('Sync nominations from IMDb error:', error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'IMDbリストとの同期に失敗しました。';
+      setNominationMessage(message);
+    } finally {
+      setIsSyncingFromImdb(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow">
@@ -972,11 +1239,40 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                 ノミネート・受賞作品を追加・削除できます。
               </p>
             </div>
-            {ceremonyDetail && (
-              <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600">
-                {ceremonyDetail.nominations.length} 件
-              </span>
-            )}
+            <div className="flex flex-wrap items-center gap-3">
+              {ceremonyDetail && (
+                <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600">
+                  {ceremonyDetail.nominations.length} 件
+                </span>
+              )}
+              {!isNew && (
+                <button
+                  type="button"
+                  onClick={handleSyncFromImdb}
+                  disabled={isSyncButtonDisabled}
+                  title={syncButtonTooltip}
+                  className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSyncingFromImdb ? '同期中…' : 'IMDbリストと同期'}
+                </button>
+              )}
+              {!isNew && organizationCategories.length > 1 && (
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <span>対象部門</span>
+                  <select
+                    value={syncCategoryUid}
+                    onChange={event => setSyncCategoryUid(event.target.value)}
+                    className="rounded border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    {organizationCategories.map(category => (
+                      <option key={category.uid} value={category.uid}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </div>
           </div>
 
           {detailLoading ? (
@@ -1020,7 +1316,12 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                         <tr key={nomination.uid}>
                           <td className="px-4 py-3 text-sm text-gray-900">
                             <div className="font-medium text-gray-900">
-                              {nomination.movie.title}
+                              <a
+                                href={`/admin/movies/${nomination.movie.uid}`}
+                                className="text-blue-600 hover:underline"
+                              >
+                                {nomination.movie.title}
+                              </a>
                             </div>
                             <div className="text-xs text-gray-500">
                               UID: {nomination.movie.uid}

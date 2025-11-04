@@ -1202,6 +1202,92 @@ adminRoutes.put(
   },
 );
 
+adminRoutes.post(
+  '/ceremonies/:ceremonyUid/sync-imdb',
+  authMiddleware,
+  async c => {
+    try {
+      const ceremonyUid = c.req.param('ceremonyUid');
+
+      if (!ceremonyUid) {
+        return c.json({error: 'Ceremony UID is required'}, 400);
+      }
+
+      let body: unknown;
+      try {
+        body = await c.req.json();
+      } catch {
+        return c.json({error: 'Invalid request body'}, 400);
+      }
+
+      const {categoryUid} = (body ?? {}) as {categoryUid?: unknown};
+
+      if (typeof categoryUid !== 'string' || categoryUid.trim() === '') {
+        return c.json({error: 'Category UID is required'}, 400);
+      }
+
+      const sanitizedCategoryUid = sanitizeText(categoryUid).trim();
+      if (sanitizedCategoryUid === '') {
+        return c.json({error: 'Category UID is required'}, 400);
+      }
+
+      const adminService = new AdminService(c.env);
+      const result = await adminService.syncCeremonyNominationsFromImdb(
+        ceremonyUid,
+        {categoryUid: sanitizedCategoryUid},
+      );
+
+      const database = getDatabase(c.env);
+      const detail = await loadCeremonyDetail(database, ceremonyUid);
+
+      if (!detail) {
+        return c.json({error: 'Ceremony not found'}, 404);
+      }
+
+      return c.json({
+        success: true,
+        ceremony: detail,
+        stats: result,
+      });
+    } catch (error) {
+      console.error('Error syncing ceremony from IMDb:', error);
+
+      if (error instanceof Error) {
+        if (
+          error.message === 'Ceremony not found' ||
+          error.message === 'Category not found'
+        ) {
+          return c.json({error: error.message}, 404);
+        }
+
+        if (
+          error.message ===
+            'Ceremony does not have an IMDb event URL configured' ||
+          error.message ===
+            'Category does not belong to the ceremony organization' ||
+          error.message === 'Category UID is required'
+        ) {
+          return c.json({error: error.message}, 400);
+        }
+
+        if (error.message.startsWith('Failed to fetch IMDb event page')) {
+          return c.json({error: error.message}, 502);
+        }
+
+        if (
+          error.message.startsWith('IMDb event page') ||
+          error.message ===
+            'IMDb nominations could not be matched to any movies (missing IMDb IDs)'
+        ) {
+          return c.json({error: error.message}, 422);
+        }
+      }
+
+      return c.json({error: 'Internal server error'}, 500);
+    }
+  },
+);
+
 adminRoutes.delete(
   '/ceremonies/:ceremonyUid',
   authMiddleware,

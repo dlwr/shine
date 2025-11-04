@@ -10,12 +10,174 @@ import {posterUrls} from '@shine/database/schema/poster-urls';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import type {TMDBMovieData} from '@shine/scrapers/common/tmdb-utilities';
+import {generateUUID} from '@shine/utils';
 import {BaseService} from './base-service';
 import type {
   MergeMoviesOptions,
   PaginationOptions,
   UpdateIMDBIdOptions,
 } from '@shine/types';
+
+type ImdbNextData = {
+	props?: {
+		pageProps?: {
+			edition?: {
+				awards?: Array<{
+					nominationCategories?: {
+						edges?: Array<{
+							node?: {
+								category?: {text?: string | null};
+								nominations?: {
+									edges?: Array<{
+										node?: {
+											isWinner?: boolean | null;
+											notes?: unknown;
+											awardedEntities?: {
+												awardTitles?: Array<{
+													title?: {
+														id?: string | null;
+														titleText?: {text?: string | null};
+														originalTitleText?: {
+															text?: string | null;
+														};
+													};
+												}>;
+											};
+										};
+									}>;
+								};
+							};
+						}>;
+					};
+				}>;
+			};
+		};
+	};
+};
+
+type ImdbNomination = {
+	imdbId?: string;
+	title?: string;
+	isWinner: boolean;
+	notes?: string;
+};
+
+const IMDB_FETCH_HEADERS = {
+	'User-Agent':
+		'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15',
+	'Accept-Language': 'en-US,en;q=0.9',
+	Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+};
+
+const ensureTrailingSlash = (value: string): string =>
+	value.endsWith('/') ? value : `${value}/`;
+
+const normalizeCategoryName = (value: string): string =>
+	value
+		.normalize('NFKC')
+		.toLowerCase()
+		.replaceAll('’', "'")
+		.replaceAll(/[（）]/g, match => (match === '（' ? '(' : ')'))
+		.replaceAll(/\s+/g, ' ')
+		.trim();
+
+const extractNoteText = (note: unknown): string | undefined => {
+	if (typeof note === 'string') {
+		const trimmed = note.trim();
+		return trimmed === '' ? undefined : trimmed;
+	}
+
+	if (note && typeof note === 'object') {
+		const plainText =
+			(typeof (note as {plainText?: unknown}).plainText === 'string'
+				? (note as {plainText: string}).plainText
+				: undefined) ??
+			(typeof (note as {value?: {plainText?: unknown}}).value?.plainText ===
+			'string'
+				? (note as {value: {plainText: string}}).value.plainText
+				: undefined);
+
+		if (plainText) {
+			const trimmed = plainText.trim();
+			return trimmed === '' ? undefined : trimmed;
+		}
+	}
+
+	return undefined;
+};
+
+const extractImdbNominations = (
+	data: ImdbNextData,
+	targetNames: Set<string>,
+): {categoryName?: string; nominations: ImdbNomination[]} => {
+	const awards = data?.props?.pageProps?.edition?.awards ?? [];
+
+	const categoryEdges = awards.flatMap(
+		award => award?.nominationCategories?.edges ?? [],
+	);
+
+	const matchesTarget = (name: string): boolean => {
+		const normalized = normalizeCategoryName(name);
+		if (targetNames.has(normalized)) {
+			return true;
+		}
+
+		for (const candidate of targetNames) {
+			if (
+				normalized.includes(candidate) ||
+				candidate.includes(normalized)
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	};
+
+	const targetEdge = categoryEdges.find(edge => {
+		const name = edge?.node?.category?.text;
+		return typeof name === 'string' && matchesTarget(name);
+	});
+
+	if (!targetEdge?.node) {
+		return {nominations: []};
+	}
+
+	const nominations: ImdbNomination[] = [];
+	const nominationEdges = targetEdge.node.nominations?.edges ?? [];
+
+	for (const edge of nominationEdges) {
+		const node = edge?.node;
+		if (!node) {
+			continue;
+		}
+
+		const titleInfo = node.awardedEntities?.awardTitles?.[0]?.title;
+		const imdbId =
+			typeof titleInfo?.id === 'string' ? titleInfo.id.trim() : undefined;
+		const englishTitle =
+			typeof titleInfo?.titleText?.text === 'string'
+				? titleInfo.titleText.text.trim()
+				: undefined;
+		const originalTitle =
+			typeof titleInfo?.originalTitleText?.text === 'string'
+				? titleInfo.originalTitleText.text.trim()
+				: undefined;
+
+		nominations.push({
+			imdbId: imdbId && imdbId !== '' ? imdbId : undefined,
+			title:
+				englishTitle && englishTitle !== '' ? englishTitle : originalTitle,
+			isWinner: Boolean(node.isWinner),
+			notes: extractNoteText(node.notes),
+		});
+	}
+
+	return {
+		categoryName: targetEdge.node.category?.text ?? undefined,
+		nominations,
+	};
+};
 
 export class AdminService extends BaseService {
   async getMovies(options: PaginationOptions & {search?: string}) {
@@ -278,10 +440,23 @@ export class AdminService extends BaseService {
       movieValues.tmdbId = tmdbMovieId;
     }
 
-    const [newMovie] = await this.database
-      .insert(movies)
-      .values(movieValues)
-      .returning();
+    let newMovie: typeof movies.$inferSelect | undefined;
+
+    try {
+      [newMovie] = await this.database
+        .insert(movies)
+        .values(movieValues)
+        .returning();
+    } catch (error) {
+      if (this.isMissingColumnError(error, 'release_date')) {
+        newMovie = await this.insertMovieWithoutReleaseDate(
+          movieValues,
+          normalizedImdbId,
+        );
+      } else {
+        throw error;
+      }
+    }
 
     if (!newMovie) {
       throw new Error('Failed to create movie');
@@ -934,6 +1109,284 @@ export class AdminService extends BaseService {
     });
   }
 
+  async syncCeremonyNominationsFromImdb(
+    ceremonyUid: string,
+    options: {categoryUid: string},
+  ): Promise<{
+    moviesCreated: number;
+    nominationsInserted: number;
+    skipped: number;
+    imdbEntries: number;
+    categoryName: string;
+  }> {
+    const trimmedCategoryUid = options.categoryUid?.trim();
+
+    if (!trimmedCategoryUid) {
+      throw new Error('Category UID is required');
+    }
+
+    const ceremonyRows = await this.database
+      .select({
+        uid: awardCeremonies.uid,
+        organizationUid: awardCeremonies.organizationUid,
+        imdbEventUrl: awardCeremonies.imdbEventUrl,
+      })
+      .from(awardCeremonies)
+      .where(eq(awardCeremonies.uid, ceremonyUid))
+      .limit(1);
+
+    const ceremony = ceremonyRows[0];
+    if (!ceremony) {
+      throw new Error('Ceremony not found');
+    }
+
+    const imdbEventUrl = ceremony.imdbEventUrl?.trim();
+    if (!imdbEventUrl) {
+      throw new Error(
+        'Ceremony does not have an IMDb event URL configured',
+      );
+    }
+
+    const categoryRows = await this.database
+      .select({
+        uid: awardCategories.uid,
+        organizationUid: awardCategories.organizationUid,
+        name: awardCategories.name,
+      })
+      .from(awardCategories)
+      .where(eq(awardCategories.uid, trimmedCategoryUid))
+      .limit(1);
+
+    const category = categoryRows[0];
+    if (!category) {
+      throw new Error('Category not found');
+    }
+
+    if (category.organizationUid !== ceremony.organizationUid) {
+      throw new Error(
+        'Category does not belong to the ceremony organization',
+      );
+    }
+
+    const normalizedUrl = ensureTrailingSlash(imdbEventUrl);
+    const response = await fetch(normalizedUrl, {
+      headers: IMDB_FETCH_HEADERS,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch IMDb event page (status ${response.status})`,
+      );
+    }
+
+    const html = await response.text();
+    const marker =
+      '<script id="__NEXT_DATA__" type="application/json">';
+    const markerIndex = html.indexOf(marker);
+
+    if (markerIndex === -1) {
+      throw new Error(
+        'IMDb event page format is not supported (missing __NEXT_DATA__ payload)',
+      );
+    }
+
+    const startIndex = markerIndex + marker.length;
+    const endIndex = html.indexOf('</script>', startIndex);
+
+    if (endIndex === -1) {
+      throw new Error(
+        'IMDb event page format is not supported (unterminated __NEXT_DATA__ payload)',
+      );
+    }
+
+    let nextData: ImdbNextData;
+    try {
+      const jsonText = html.slice(startIndex, endIndex);
+      nextData = JSON.parse(jsonText) as ImdbNextData;
+    } catch (error) {
+      console.error('Failed to parse IMDb __NEXT_DATA__ payload:', error);
+      throw new Error('Failed to parse IMDb event payload');
+    }
+
+    const normalizedTarget = normalizeCategoryName(category.name);
+    const targetNames = new Set<string>([normalizedTarget]);
+    const commonSynonyms = [
+      'best film',
+      'best picture',
+      'best motion picture',
+      'best motion picture of the year',
+      'picture of the year',
+    ].map(synonym => normalizeCategoryName(synonym));
+
+    const japaneseBestFilmMarkers = [
+      '優秀作品賞',
+      '最優秀作品賞',
+      '最優秀作品',
+      '作品賞',
+      '最優秀日本作品賞',
+      '最優秀日本映画賞',
+    ].map(marker => normalizeCategoryName(marker));
+
+    const targetLooksLikeBestFilm = japaneseBestFilmMarkers.some(marker => {
+      return (
+        normalizedTarget.includes(marker) || marker.includes(normalizedTarget)
+      );
+    });
+
+    if (targetLooksLikeBestFilm) {
+      for (const synonym of commonSynonyms) {
+        targetNames.add(synonym);
+      }
+    } else {
+      for (const synonym of commonSynonyms) {
+        if (
+          normalizedTarget.includes(synonym) ||
+          synonym.includes(normalizedTarget)
+        ) {
+          targetNames.add(synonym);
+        }
+      }
+    }
+
+    const {
+      categoryName: imdbCategoryName,
+      nominations: imdbNominations,
+    } = extractImdbNominations(nextData, targetNames);
+
+    if (imdbNominations.length === 0) {
+      throw new Error(
+        `IMDb event page did not provide nominations for category "${category.name}"`,
+      );
+    }
+
+    let moviesCreated = 0;
+    let skipped = 0;
+    const ensuredMovies = new Map<string, string>();
+
+    for (const nomination of imdbNominations) {
+      if (!nomination.imdbId) {
+        skipped++;
+        continue;
+      }
+
+      if (ensuredMovies.has(nomination.imdbId)) {
+        continue;
+      }
+
+      const existing = await this.database
+        .select({uid: movies.uid})
+        .from(movies)
+        .where(eq(movies.imdbId, nomination.imdbId))
+        .limit(1);
+
+      if (existing.length > 0) {
+        ensuredMovies.set(nomination.imdbId, existing[0].uid);
+        continue;
+      }
+
+      try {
+        const created = await this.createMovieFromImdbId(
+          nomination.imdbId,
+        );
+        ensuredMovies.set(nomination.imdbId, created.movie.uid);
+        moviesCreated++;
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          (error.message === 'TMDB API key not configured' ||
+            error.message === 'TMDB data not found for IMDb ID')
+        ) {
+          const fallback = await this.createMovieFromImdbId(
+            nomination.imdbId,
+            {fetchTMDBData: false},
+          );
+          ensuredMovies.set(nomination.imdbId, fallback.movie.uid);
+          moviesCreated++;
+          continue;
+        }
+
+        if (
+          error instanceof Error &&
+          error.message === 'IMDb ID already exists for another movie'
+        ) {
+          const recheck = await this.database
+            .select({uid: movies.uid})
+            .from(movies)
+            .where(eq(movies.imdbId, nomination.imdbId))
+            .limit(1);
+
+          if (recheck.length > 0) {
+            ensuredMovies.set(nomination.imdbId, recheck[0].uid);
+            continue;
+          }
+        }
+
+        throw error;
+      }
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const insertedMovieKeys = new Set<string>();
+    const nominationRecords: Array<typeof nominations.$inferInsert> = [];
+
+    for (const nomination of imdbNominations) {
+      if (!nomination.imdbId) {
+        continue;
+      }
+
+      const movieUid = ensuredMovies.get(nomination.imdbId);
+      if (!movieUid) {
+        continue;
+      }
+
+      if (insertedMovieKeys.has(movieUid)) {
+        continue;
+      }
+
+      insertedMovieKeys.add(movieUid);
+
+      nominationRecords.push({
+        movieUid,
+        ceremonyUid: ceremony.uid,
+        categoryUid: category.uid,
+        isWinner: nomination.isWinner ? 1 : 0,
+        specialMention:
+          nomination.notes && nomination.notes !== ''
+            ? nomination.notes
+            : undefined,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    if (nominationRecords.length === 0) {
+      throw new Error(
+        'IMDb nominations could not be matched to any movies (missing IMDb IDs)',
+      );
+    }
+
+    await this.database.transaction(async trx => {
+      await trx
+        .delete(nominations)
+        .where(
+          and(
+            eq(nominations.ceremonyUid, ceremony.uid),
+            eq(nominations.categoryUid, category.uid),
+          ),
+        );
+
+      await trx.insert(nominations).values(nominationRecords);
+    });
+
+    return {
+      moviesCreated,
+      nominationsInserted: nominationRecords.length,
+      skipped,
+      imdbEntries: imdbNominations.length,
+      categoryName: imdbCategoryName ?? category.name,
+    };
+  }
+
   private async fetchTMDBDataByImdbId(imdbId: string): Promise<
     | {
         tmdbId: number;
@@ -1119,5 +1572,130 @@ export class AdminService extends BaseService {
     }
 
     return addedCount;
+  }
+
+  private isMissingColumnError(error: unknown, column: string): boolean {
+    if (!(error instanceof Error)) {
+      return false;
+    }
+
+    const message = error.message ?? '';
+    if (
+      message.includes(`column named ${column}`) ||
+      message.includes(`no such column: ${column}`) ||
+      message.includes(`has no column named ${column}`)
+    ) {
+      return true;
+    }
+
+    const cause = (error as {cause?: unknown}).cause;
+    if (cause) {
+      return this.isMissingColumnError(cause, column);
+    }
+
+    return false;
+  }
+
+  private async insertMovieWithoutReleaseDate(
+    movieValues: typeof movies.$inferInsert,
+    imdbId: string,
+  ): Promise<typeof movies.$inferSelect> {
+    const uid = generateUUID();
+    const now = Math.floor(Date.now() / 1000);
+    const originalLanguage = movieValues.originalLanguage ?? 'en';
+    const year =
+      typeof movieValues.year === 'number' ? movieValues.year : undefined;
+    const tmdbIdValue =
+      typeof movieValues.tmdbId === 'number' ? movieValues.tmdbId : undefined;
+
+    type LibsqlExecuteResult = {
+      rows?: Array<Record<string, unknown>>;
+    };
+    type LibsqlClient = {
+      execute: (input: {sql: string; args?: unknown[]}) => Promise<LibsqlExecuteResult>;
+    };
+
+    const client = (this.database as unknown as {
+      session?: {client?: LibsqlClient};
+    })?.session?.client;
+
+    if (!client?.execute) {
+      throw new Error('Database client does not support raw execute');
+    }
+
+    await client.execute({
+      sql: `
+        INSERT INTO movies (
+          uid,
+          original_language,
+          year,
+          imdb_id,
+          tmdb_id,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `,
+      args: [
+        uid,
+        originalLanguage,
+        year,
+        imdbId,
+        tmdbIdValue,
+        now,
+        now,
+      ],
+    });
+
+    const inserted = await client.execute({
+      sql: `
+        SELECT
+          uid,
+          original_language,
+          year,
+          imdb_id,
+          tmdb_id,
+          created_at,
+          updated_at
+        FROM movies
+        WHERE uid = ?
+        LIMIT 1
+      `,
+      args: [uid],
+    });
+
+    const row = inserted.rows?.[0];
+
+    if (!row || typeof row.uid !== 'string') {
+      throw new Error('Failed to create movie');
+    }
+
+    const result: Partial<typeof movies.$inferSelect> = {
+      uid: row.uid as string,
+      originalLanguage:
+        typeof row.original_language === 'string'
+          ? (row.original_language as string)
+          : originalLanguage,
+      imdbId:
+        typeof row.imdb_id === 'string' ? (row.imdb_id as string) : imdbId,
+      createdAt:
+        typeof row.created_at === 'number' ? (row.created_at as number) : now,
+      updatedAt:
+        typeof row.updated_at === 'number' ? (row.updated_at as number) : now,
+    };
+
+    if (typeof row.year === 'number') {
+      result.year = row.year as number;
+    }
+
+    if (typeof row.tmdb_id === 'number') {
+      result.tmdbId = row.tmdb_id as number;
+    }
+
+    if (typeof (row as Record<string, unknown>).release_date === 'string') {
+      result.releaseDate = (row as Record<string, unknown>)
+        .release_date as string;
+    }
+
+    return result as typeof movies.$inferSelect;
   }
 }
