@@ -155,17 +155,18 @@ async function getOrCreateCeremony(
   organizationUid: string,
 ): Promise<string> {
   const database = getDatabase(environment_);
+  const ceremonyNumber = year - 1977; // 1978年が第1回、2024年が第47回
   const [ceremony] = await database
     .insert(awardCeremonies)
     .values({
       organizationUid,
       year,
-      ceremonyNumber: year - 1976, // 1977年が第1回、2024年が第48回
+      ceremonyNumber,
     })
     .onConflictDoUpdate({
       target: [awardCeremonies.organizationUid, awardCeremonies.year],
       set: {
-        ceremonyNumber: year - 1976,
+        ceremonyNumber,
         updatedAt: Math.floor(Date.now() / 1000),
       },
     })
@@ -370,7 +371,7 @@ function extractAllMoviesFromMainPage($: cheerio.CheerioAPI): MovieInfo[] {
     ) {
       const previousText = $previousElement.text().trim();
 
-      // 「2024年（第48回）」のようなパターン
+      // 「2024年（第47回）」のようなパターン
       const yearAndCeremonyMatch = /(\d{4})年.*第(\d+)回/.exec(previousText);
       if (yearAndCeremonyMatch) {
         specificYear = Number.parseInt(yearAndCeremonyMatch[1], 10);
@@ -391,7 +392,7 @@ function extractAllMoviesFromMainPage($: cheerio.CheerioAPI): MovieInfo[] {
       const ceremonyMatch = /第(\d+)回/.exec(previousText);
       if (ceremonyMatch) {
         const ceremonyNumber = Number.parseInt(ceremonyMatch[1], 10);
-        specificYear = 1976 + ceremonyNumber;
+        specificYear = 1977 + ceremonyNumber;
         break;
       }
 
