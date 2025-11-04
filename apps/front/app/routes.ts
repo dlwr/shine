@@ -8,4 +8,6 @@ export default [
   route('admin/movies', 'routes/admin.movies.tsx'),
   route('admin/movies/:id', 'routes/admin.movies.$id.tsx'),
   route('admin/movies/selections', 'routes/admin.movies.selections.tsx'),
+  route('admin/ceremonies', 'routes/admin.ceremonies.tsx'),
+  route('admin/ceremonies/:uid', 'routes/admin.ceremonies.$uid.tsx'),
 ] satisfies RouteConfig;
