@@ -102,7 +102,6 @@ const createLoaderArguments = (
     context,
     request,
     params: parameters,
-    matches: [],
     ...overrides,
   });
 
@@ -186,12 +185,7 @@ describe('MovieDetail Component', () => {
       const parameters = {id: 'movie-123'};
       const request = {signal: undefined} as unknown as Request;
       const result = await loader(
-        createLoaderArguments(context, request, parameters, {
-          matches: createMatches(
-            createLoaderData(),
-            createParameters(parameters.id),
-          ),
-        }),
+        createLoaderArguments(context, request, parameters),
       );
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -216,12 +210,7 @@ describe('MovieDetail Component', () => {
       const parameters = {id: 'non-existent'};
       const request = {signal: undefined} as unknown as Request;
       const result = await loader(
-        createLoaderArguments(context, request, parameters, {
-          matches: createMatches(
-            createLoaderData(),
-            createParameters(parameters.id),
-          ),
-        }),
+        createLoaderArguments(context, request, parameters),
       );
 
       expect(result).toEqual({
@@ -238,12 +227,7 @@ describe('MovieDetail Component', () => {
       const parameters = {id: 'movie-123'};
       const request = {signal: undefined} as unknown as Request;
       const result = await loader(
-        createLoaderArguments(context, request, parameters, {
-          matches: createMatches(
-            createLoaderData(),
-            createParameters(parameters.id),
-          ),
-        }),
+        createLoaderArguments(context, request, parameters),
       );
 
       expect(result).toEqual({

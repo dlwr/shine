@@ -76,6 +76,7 @@ describe('AdminLogin Component', () => {
         context,
         request,
         params: {},
+        unstable_pattern: '/admin/login',
       } as Route.ActionArgs);
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -112,6 +113,7 @@ describe('AdminLogin Component', () => {
         context,
         request,
         params: {},
+        unstable_pattern: '/admin/login',
       } as Route.ActionArgs);
 
       expect(result).toEqual({
@@ -133,6 +135,7 @@ describe('AdminLogin Component', () => {
         context,
         request,
         params: {},
+        unstable_pattern: '/admin/login',
       } as Route.ActionArgs);
 
       expect(result).toEqual({
