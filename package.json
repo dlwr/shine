@@ -24,6 +24,7 @@
     "scrapers:japanese-translations": "pnpm --filter @shine/scrapers tsx src/japanese-translations-cli.ts",
     "scrapers:cannes-film-festival": "pnpm --filter @shine/scrapers tsx src/cannes-film-festival-cli.ts",
     "scrapers:movie-import": "pnpm --filter @shine/scrapers tsx src/movie-import-from-list-cli.ts",
+    "scrapers:import-imdb-list": "pnpm --filter @shine/scrapers tsx src/import-imdb-list-cli.ts",
     "scrapers:assign-imdb-ids": "pnpm --filter @shine/scrapers run assign-imdb-ids",
     "db:studio": "node scripts/setup-database-environment.cjs drizzle-kit studio",
     "db:generate": "node scripts/setup-database-environment.cjs drizzle-kit generate",

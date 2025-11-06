@@ -383,9 +383,24 @@ selectionsRoutes.post(
 
       const movieId = randomMovieResult[0].uid;
 
+      const movieSelectionFields = {
+        movie: {
+          uid: movies.uid,
+          year: movies.year,
+          originalLanguage: movies.originalLanguage,
+          imdbId: movies.imdbId,
+        },
+        translation: {
+          content: translations.content,
+        },
+        poster: {
+          url: posterUrls.url,
+        },
+      } as const;
+
       // Fetch the full movie details (reuse existing logic)
       const results = await database
-        .select()
+        .select(movieSelectionFields)
         .from(movies)
         .leftJoin(
           translations,
@@ -399,10 +414,10 @@ selectionsRoutes.post(
         .where(eq(movies.uid, movieId))
         .limit(1);
 
-      if (results.length === 0 || !results[0].translations?.content) {
+      if (results.length === 0 || !results[0].translation?.content) {
         // Try with default language
         const fallbackResults = await database
-          .select()
+          .select(movieSelectionFields)
           .from(movies)
           .leftJoin(
             translations,
@@ -417,11 +432,7 @@ selectionsRoutes.post(
           .limit(1);
 
         if (fallbackResults.length > 0) {
-          const {
-            movies: movie,
-            translations: translation,
-            poster_urls: poster,
-          } = fallbackResults[0];
+          const {movie, translation, poster} = fallbackResults[0];
 
           const imdbUrl = movie.imdbId
             ? `https://www.imdb.com/title/${movie.imdbId}/`
@@ -449,11 +460,7 @@ selectionsRoutes.post(
         return c.json({error: 'Movie not found'}, 404);
       }
 
-      const {
-        movies: movie,
-        translations: translation,
-        poster_urls: poster,
-      } = results[0];
+      const {movie, translation, poster} = results[0];
 
       const imdbUrl = movie.imdbId
         ? `https://www.imdb.com/title/${movie.imdbId}/`

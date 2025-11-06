@@ -8,11 +8,13 @@
     "movie-import": "tsx src/movie-import-from-list-cli.ts",
     "academy-awards": "tsx src/academy-awards-cli.ts",
     "japan-academy-awards": "tsx src/japan-academy-awards-cli.ts",
-    "assign-imdb-ids": "tsx src/assign-imdb-ids-cli.ts"
+    "assign-imdb-ids": "tsx src/assign-imdb-ids-cli.ts",
+    "import-imdb-list": "tsx src/import-imdb-list-cli.ts"
   },
   "dependencies": {
     "@shine/database": "workspace:*",
     "@shine/utils": "workspace:*",
+    "csv-parse": "^5.6.0",
     "cheerio": "^1.1.2",
     "commander": "^14.0.2",
     "domhandler": "^5.0.3",
