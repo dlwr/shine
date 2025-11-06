@@ -57,7 +57,7 @@
     "@vitest/coverage-v8": "^4.0.4",
     "better-sqlite3": "^12.4.1",
     "concurrently": "^9.2.1",
-    "drizzle-kit": "^0.31.5",
+    "drizzle-kit": "^0.31.6",
     "eslint": "^9.38.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import-x": "^4.16.1",
