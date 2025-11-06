@@ -12,7 +12,7 @@
     "@shine/types": "workspace:*",
     "@types/dompurify": "^3.2.0",
     "dompurify": "^3.3.0",
-    "hono": "^4.10.3",
+    "hono": "^4.10.4",
     "jose": "^6.1.0"
   }
 }
