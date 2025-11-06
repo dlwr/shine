@@ -19,164 +19,160 @@ import type {
 } from '@shine/types';
 
 type ImdbNextData = {
-	props?: {
-		pageProps?: {
-			edition?: {
-				awards?: Array<{
-					nominationCategories?: {
-						edges?: Array<{
-							node?: {
-								category?: {text?: string | null};
-								nominations?: {
-									edges?: Array<{
-										node?: {
-											isWinner?: boolean | null;
-											notes?: unknown;
-											awardedEntities?: {
-												awardTitles?: Array<{
-													title?: {
-														id?: string | null;
-														titleText?: {text?: string | null};
-														originalTitleText?: {
-															text?: string | null;
-														};
-													};
-												}>;
-											};
-										};
-									}>;
-								};
-							};
-						}>;
-					};
-				}>;
-			};
-		};
-	};
+  props?: {
+    pageProps?: {
+      edition?: {
+        awards?: Array<{
+          nominationCategories?: {
+            edges?: Array<{
+              node?: {
+                category?: {text?: string | null};
+                nominations?: {
+                  edges?: Array<{
+                    node?: {
+                      isWinner?: boolean | null;
+                      notes?: unknown;
+                      awardedEntities?: {
+                        awardTitles?: Array<{
+                          title?: {
+                            id?: string | null;
+                            titleText?: {text?: string | null};
+                            originalTitleText?: {
+                              text?: string | null;
+                            };
+                          };
+                        }>;
+                      };
+                    };
+                  }>;
+                };
+              };
+            }>;
+          };
+        }>;
+      };
+    };
+  };
 };
 
 type ImdbNomination = {
-	imdbId?: string;
-	title?: string;
-	isWinner: boolean;
-	notes?: string;
+  imdbId?: string;
+  title?: string;
+  isWinner: boolean;
+  notes?: string;
 };
 
 const IMDB_FETCH_HEADERS = {
-	'User-Agent':
-		'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15',
-	'Accept-Language': 'en-US,en;q=0.9',
-	Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'User-Agent':
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15',
+  'Accept-Language': 'en-US,en;q=0.9',
+  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
 };
 
 const ensureTrailingSlash = (value: string): string =>
-	value.endsWith('/') ? value : `${value}/`;
+  value.endsWith('/') ? value : `${value}/`;
 
 const normalizeCategoryName = (value: string): string =>
-	value
-		.normalize('NFKC')
-		.toLowerCase()
-		.replaceAll('’', "'")
-		.replaceAll(/[（）]/g, match => (match === '（' ? '(' : ')'))
-		.replaceAll(/\s+/g, ' ')
-		.trim();
+  value
+    .normalize('NFKC')
+    .toLowerCase()
+    .replaceAll('’', "'")
+    .replaceAll(/[（）]/g, match => (match === '（' ? '(' : ')'))
+    .replaceAll(/\s+/g, ' ')
+    .trim();
 
 const extractNoteText = (note: unknown): string | undefined => {
-	if (typeof note === 'string') {
-		const trimmed = note.trim();
-		return trimmed === '' ? undefined : trimmed;
-	}
+  if (typeof note === 'string') {
+    const trimmed = note.trim();
+    return trimmed === '' ? undefined : trimmed;
+  }
 
-	if (note && typeof note === 'object') {
-		const plainText =
-			(typeof (note as {plainText?: unknown}).plainText === 'string'
-				? (note as {plainText: string}).plainText
-				: undefined) ??
-			(typeof (note as {value?: {plainText?: unknown}}).value?.plainText ===
-			'string'
-				? (note as {value: {plainText: string}}).value.plainText
-				: undefined);
+  if (note && typeof note === 'object') {
+    const plainText =
+      (typeof (note as {plainText?: unknown}).plainText === 'string'
+        ? (note as {plainText: string}).plainText
+        : undefined) ??
+      (typeof (note as {value?: {plainText?: unknown}}).value?.plainText ===
+      'string'
+        ? (note as {value: {plainText: string}}).value.plainText
+        : undefined);
 
-		if (plainText) {
-			const trimmed = plainText.trim();
-			return trimmed === '' ? undefined : trimmed;
-		}
-	}
+    if (plainText) {
+      const trimmed = plainText.trim();
+      return trimmed === '' ? undefined : trimmed;
+    }
+  }
 
-	return undefined;
+  return undefined;
 };
 
 const extractImdbNominations = (
-	data: ImdbNextData,
-	targetNames: Set<string>,
+  data: ImdbNextData,
+  targetNames: Set<string>,
 ): {categoryName?: string; nominations: ImdbNomination[]} => {
-	const awards = data?.props?.pageProps?.edition?.awards ?? [];
+  const awards = data?.props?.pageProps?.edition?.awards ?? [];
 
-	const categoryEdges = awards.flatMap(
-		award => award?.nominationCategories?.edges ?? [],
-	);
+  const categoryEdges = awards.flatMap(
+    award => award?.nominationCategories?.edges ?? [],
+  );
 
-	const matchesTarget = (name: string): boolean => {
-		const normalized = normalizeCategoryName(name);
-		if (targetNames.has(normalized)) {
-			return true;
-		}
+  const matchesTarget = (name: string): boolean => {
+    const normalized = normalizeCategoryName(name);
+    if (targetNames.has(normalized)) {
+      return true;
+    }
 
-		for (const candidate of targetNames) {
-			if (
-				normalized.includes(candidate) ||
-				candidate.includes(normalized)
-			) {
-				return true;
-			}
-		}
+    for (const candidate of targetNames) {
+      if (normalized.includes(candidate) || candidate.includes(normalized)) {
+        return true;
+      }
+    }
 
-		return false;
-	};
+    return false;
+  };
 
-	const targetEdge = categoryEdges.find(edge => {
-		const name = edge?.node?.category?.text;
-		return typeof name === 'string' && matchesTarget(name);
-	});
+  const targetEdge = categoryEdges.find(edge => {
+    const name = edge?.node?.category?.text;
+    return typeof name === 'string' && matchesTarget(name);
+  });
 
-	if (!targetEdge?.node) {
-		return {nominations: []};
-	}
+  if (!targetEdge?.node) {
+    return {nominations: []};
+  }
 
-	const nominations: ImdbNomination[] = [];
-	const nominationEdges = targetEdge.node.nominations?.edges ?? [];
+  const nominations: ImdbNomination[] = [];
+  const nominationEdges = targetEdge.node.nominations?.edges ?? [];
 
-	for (const edge of nominationEdges) {
-		const node = edge?.node;
-		if (!node) {
-			continue;
-		}
+  for (const edge of nominationEdges) {
+    const node = edge?.node;
+    if (!node) {
+      continue;
+    }
 
-		const titleInfo = node.awardedEntities?.awardTitles?.[0]?.title;
-		const imdbId =
-			typeof titleInfo?.id === 'string' ? titleInfo.id.trim() : undefined;
-		const englishTitle =
-			typeof titleInfo?.titleText?.text === 'string'
-				? titleInfo.titleText.text.trim()
-				: undefined;
-		const originalTitle =
-			typeof titleInfo?.originalTitleText?.text === 'string'
-				? titleInfo.originalTitleText.text.trim()
-				: undefined;
+    const titleInfo = node.awardedEntities?.awardTitles?.[0]?.title;
+    const imdbId =
+      typeof titleInfo?.id === 'string' ? titleInfo.id.trim() : undefined;
+    const englishTitle =
+      typeof titleInfo?.titleText?.text === 'string'
+        ? titleInfo.titleText.text.trim()
+        : undefined;
+    const originalTitle =
+      typeof titleInfo?.originalTitleText?.text === 'string'
+        ? titleInfo.originalTitleText.text.trim()
+        : undefined;
 
-		nominations.push({
-			imdbId: imdbId && imdbId !== '' ? imdbId : undefined,
-			title:
-				englishTitle && englishTitle !== '' ? englishTitle : originalTitle,
-			isWinner: Boolean(node.isWinner),
-			notes: extractNoteText(node.notes),
-		});
-	}
+    nominations.push({
+      imdbId: imdbId && imdbId !== '' ? imdbId : undefined,
+      title: englishTitle && englishTitle !== '' ? englishTitle : originalTitle,
+      isWinner: Boolean(node.isWinner),
+      notes: extractNoteText(node.notes),
+    });
+  }
 
-	return {
-		categoryName: targetEdge.node.category?.text ?? undefined,
-		nominations,
-	};
+  return {
+    categoryName: targetEdge.node.category?.text ?? undefined,
+    nominations,
+  };
 };
 
 export class AdminService extends BaseService {
@@ -1142,9 +1138,7 @@ export class AdminService extends BaseService {
 
     const imdbEventUrl = ceremony.imdbEventUrl?.trim();
     if (!imdbEventUrl) {
-      throw new Error(
-        'Ceremony does not have an IMDb event URL configured',
-      );
+      throw new Error('Ceremony does not have an IMDb event URL configured');
     }
 
     const categoryRows = await this.database
@@ -1163,9 +1157,7 @@ export class AdminService extends BaseService {
     }
 
     if (category.organizationUid !== ceremony.organizationUid) {
-      throw new Error(
-        'Category does not belong to the ceremony organization',
-      );
+      throw new Error('Category does not belong to the ceremony organization');
     }
 
     const normalizedUrl = ensureTrailingSlash(imdbEventUrl);
@@ -1180,8 +1172,7 @@ export class AdminService extends BaseService {
     }
 
     const html = await response.text();
-    const marker =
-      '<script id="__NEXT_DATA__" type="application/json">';
+    const marker = '<script id="__NEXT_DATA__" type="application/json">';
     const markerIndex = html.indexOf(marker);
 
     if (markerIndex === -1) {
@@ -1248,10 +1239,8 @@ export class AdminService extends BaseService {
       }
     }
 
-    const {
-      categoryName: imdbCategoryName,
-      nominations: imdbNominations,
-    } = extractImdbNominations(nextData, targetNames);
+    const {categoryName: imdbCategoryName, nominations: imdbNominations} =
+      extractImdbNominations(nextData, targetNames);
 
     if (imdbNominations.length === 0) {
       throw new Error(
@@ -1285,9 +1274,7 @@ export class AdminService extends BaseService {
       }
 
       try {
-        const created = await this.createMovieFromImdbId(
-          nomination.imdbId,
-        );
+        const created = await this.createMovieFromImdbId(nomination.imdbId);
         ensuredMovies.set(nomination.imdbId, created.movie.uid);
         moviesCreated++;
       } catch (error) {
@@ -1296,10 +1283,9 @@ export class AdminService extends BaseService {
           (error.message === 'TMDB API key not configured' ||
             error.message === 'TMDB data not found for IMDb ID')
         ) {
-          const fallback = await this.createMovieFromImdbId(
-            nomination.imdbId,
-            {fetchTMDBData: false},
-          );
+          const fallback = await this.createMovieFromImdbId(nomination.imdbId, {
+            fetchTMDBData: false,
+          });
           ensuredMovies.set(nomination.imdbId, fallback.movie.uid);
           moviesCreated++;
           continue;
@@ -1612,12 +1598,17 @@ export class AdminService extends BaseService {
       rows?: Array<Record<string, unknown>>;
     };
     type LibsqlClient = {
-      execute: (input: {sql: string; args?: unknown[]}) => Promise<LibsqlExecuteResult>;
+      execute: (input: {
+        sql: string;
+        args?: unknown[];
+      }) => Promise<LibsqlExecuteResult>;
     };
 
-    const client = (this.database as unknown as {
-      session?: {client?: LibsqlClient};
-    })?.session?.client;
+    const client = (
+      this.database as unknown as {
+        session?: {client?: LibsqlClient};
+      }
+    )?.session?.client;
 
     if (!client?.execute) {
       throw new Error('Database client does not support raw execute');
@@ -1635,15 +1626,7 @@ export class AdminService extends BaseService {
           updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?)
       `,
-      args: [
-        uid,
-        originalLanguage,
-        year,
-        imdbId,
-        tmdbIdValue,
-        now,
-        now,
-      ],
+      args: [uid, originalLanguage, year, imdbId, tmdbIdValue, now, now],
     });
 
     const inserted = await client.execute({

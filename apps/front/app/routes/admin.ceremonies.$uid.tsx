@@ -1,10 +1,4 @@
-import {
-  type FormEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import {type FormEvent, useCallback, useEffect, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router';
 import type {Route} from './+types/admin.ceremonies.$uid';
 
@@ -155,7 +149,10 @@ const ensureToken = () => {
 export function meta() {
   return [
     {title: 'セレモニー編集 | Shine Admin'},
-    {name: 'description', content: 'セレモニー情報と映画の紐付けを編集します。'},
+    {
+      name: 'description',
+      content: 'セレモニー情報と映画の紐付けを編集します。',
+    },
   ];
 }
 
@@ -184,7 +181,9 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
   const [awardsLoading, setAwardsLoading] = useState(true);
   const [awardsError, setAwardsError] = useState<string | undefined>();
 
-  const [ceremonyDetail, setCeremonyDetail] = useState<CeremonyResponse | undefined>();
+  const [ceremonyDetail, setCeremonyDetail] = useState<
+    CeremonyResponse | undefined
+  >();
   const [detailLoading, setDetailLoading] = useState(!isNew);
   const [detailError, setDetailError] = useState<string | undefined>();
 
@@ -201,7 +200,9 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
     MovieSearchResult[]
   >([]);
   const [isSearchingMovies, setIsSearchingMovies] = useState(false);
-  const [movieSearchError, setMovieSearchError] = useState<string | undefined>();
+  const [movieSearchError, setMovieSearchError] = useState<
+    string | undefined
+  >();
   const [selectedMovie, setSelectedMovie] = useState<MovieSearchResult>();
 
   const [newNominationCategoryUid, setNewNominationCategoryUid] = useState('');
@@ -315,7 +316,9 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
   useEffect(() => {
     if (defaultSyncCategory) {
       setSyncCategoryUid(previous =>
-        previous === defaultSyncCategory.uid ? previous : defaultSyncCategory.uid,
+        previous === defaultSyncCategory.uid
+          ? previous
+          : defaultSyncCategory.uid,
       );
       return;
     }
@@ -338,9 +341,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
 
   const selectedSyncCategory = useMemo(
     () =>
-      organizationCategories.find(
-        category => category.uid === syncCategoryUid,
-      ),
+      organizationCategories.find(category => category.uid === syncCategoryUid),
     [organizationCategories, syncCategoryUid],
   );
 
@@ -405,7 +406,10 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
   }, [apiUrl]);
 
   const fetchCeremony = useCallback(
-    async (token: string, options?: {syncForm?: boolean; showSpinner?: boolean}) => {
+    async (
+      token: string,
+      options?: {syncForm?: boolean; showSpinner?: boolean},
+    ) => {
       const {syncForm = true, showSpinner = true} = options ?? {};
 
       if (showSpinner) {
@@ -414,9 +418,12 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       setDetailError(undefined);
 
       try {
-        const response = await fetch(`${apiUrl}/admin/ceremonies/${ceremonyUid}`, {
-          headers: {Authorization: `Bearer ${token}`},
-        });
+        const response = await fetch(
+          `${apiUrl}/admin/ceremonies/${ceremonyUid}`,
+          {
+            headers: {Authorization: `Bearer ${token}`},
+          },
+        );
 
         if (response.status === 401) {
           globalThis.localStorage?.removeItem('adminToken');
@@ -441,8 +448,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
           setFormState({
             organizationUid: data.ceremony.organizationUid,
             year: data.ceremony.year.toString(),
-            ceremonyNumber:
-              data.ceremony.ceremonyNumber?.toString() ?? '',
+            ceremonyNumber: data.ceremony.ceremonyNumber?.toString() ?? '',
             startDate: formatDateInput(data.ceremony.startDate),
             endDate: formatDateInput(data.ceremony.endDate),
             location: data.ceremony.location ?? '',
@@ -525,7 +531,10 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       | FormEvent<HTMLTextAreaElement>
       | FormEvent<HTMLSelectElement>,
   ) => {
-    const target = event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+    const target = event.target as
+      | HTMLInputElement
+      | HTMLTextAreaElement
+      | HTMLSelectElement;
     const {name, value} = target;
 
     setFormState(current => ({
@@ -568,7 +577,9 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
         location: formState.location || undefined,
         description: formState.description || undefined,
         imdbEventUrl:
-          formState.imdbEventUrl.trim() === '' ? undefined : formState.imdbEventUrl,
+          formState.imdbEventUrl.trim() === ''
+            ? undefined
+            : formState.imdbEventUrl,
       };
 
       const response = await fetch(
@@ -621,8 +632,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       setFormState({
         organizationUid: saved.ceremony.organizationUid,
         year: saved.ceremony.year.toString(),
-        ceremonyNumber:
-          saved.ceremony.ceremonyNumber?.toString() ?? '',
+        ceremonyNumber: saved.ceremony.ceremonyNumber?.toString() ?? '',
         startDate: formatDateInput(saved.ceremony.startDate),
         endDate: formatDateInput(saved.ceremony.endDate),
         location: saved.ceremony.location ?? '',
@@ -835,7 +845,8 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
 
   const handleRemoveNomination = async (nominationUid: string) => {
     if (typeof globalThis !== 'undefined') {
-      const confirmed = globalThis.confirm?.('この映画との紐付けを削除しますか？');
+      const confirmed =
+        globalThis.confirm?.('この映画との紐付けを削除しますか？');
       if (!confirmed) {
         return;
       }
@@ -847,10 +858,13 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
     }
 
     try {
-      const response = await fetch(`${apiUrl}/admin/nominations/${nominationUid}`, {
-        method: 'DELETE',
-        headers: {Authorization: `Bearer ${token}`},
-      });
+      const response = await fetch(
+        `${apiUrl}/admin/nominations/${nominationUid}`,
+        {
+          method: 'DELETE',
+          headers: {Authorization: `Bearer ${token}`},
+        },
+      );
 
       if (response.status === 401) {
         globalThis.localStorage?.removeItem('adminToken');
@@ -873,9 +887,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       await fetchCeremony(tokenAfter, {syncForm: false, showSpinner: false});
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : '紐付けの削除に失敗しました。';
+        error instanceof Error ? error.message : '紐付けの削除に失敗しました。';
       setNominationMessage(message);
       console.error('Remove nomination error:', error);
     }
@@ -924,12 +936,10 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
         return;
       }
 
-      const data = (await response
-        .json()
-        .catch(() => ({
-          success: false,
-          error: 'Unknown error',
-        }))) as {
+      const data = (await response.json().catch(() => ({
+        success: false,
+        error: 'Unknown error',
+      }))) as {
         success?: boolean;
         error?: string;
         stats?: {
@@ -942,9 +952,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       };
 
       if (!response.ok || data.success !== true) {
-        throw new Error(
-          data.error || 'IMDbリストとの同期に失敗しました。',
-        );
+        throw new Error(data.error || 'IMDbリストとの同期に失敗しました。');
       }
 
       const tokenAfter = ensureToken();
@@ -1019,8 +1027,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                   {navigation.previous ? (
                     <a
                       href={`/admin/ceremonies/${navigation.previous.uid}`}
-                      className="rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                    >
+                      className="rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50">
                       ← {formatNavigationLabel(navigation.previous)}
                     </a>
                   ) : (
@@ -1031,8 +1038,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                   {navigation.next ? (
                     <a
                       href={`/admin/ceremonies/${navigation.next.uid}`}
-                      className="rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                    >
+                      className="rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50">
                       {formatNavigationLabel(navigation.next)} →
                     </a>
                   ) : (
@@ -1047,16 +1053,14 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                   href={ceremonyDetail.ceremony.imdbEventUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
-                >
+                  className="rounded border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50">
                   IMDbで表示
                 </a>
               )}
               <div className="flex gap-3">
                 <a
                   href="/admin/ceremonies"
-                  className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
+                  className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                   一覧に戻る
                 </a>
                 {!isNew && (
@@ -1064,8 +1068,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                     type="button"
                     onClick={handleDeleteCeremony}
                     disabled={isDeleting}
-                    className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
+                    className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60">
                     {isDeleting ? '削除中…' : 'セレモニーを削除'}
                   </button>
                 )}
@@ -1103,8 +1106,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                     value={formState.organizationUid}
                     onChange={handleInputChange}
                     className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    required
-                  >
+                    required>
                     <option value="">選択してください</option>
                     {organizationOptions.map(organization => (
                       <option key={organization.uid} value={organization.uid}>
@@ -1187,7 +1189,8 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                     className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   <span className="mt-1 text-xs text-gray-500">
-                    IMDb のイベントページへの完全な URL を入力してください（任意）。
+                    IMDb のイベントページへの完全な URL
+                    を入力してください（任意）。
                   </span>
                 </label>
 
@@ -1221,8 +1224,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
               <button
                 type="submit"
                 disabled={isSaving || awardsLoading}
-                className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-              >
+                className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
                 {isSaving ? '保存中…' : '保存する'}
               </button>
             </div>
@@ -1251,8 +1253,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                   onClick={handleSyncFromImdb}
                   disabled={isSyncButtonDisabled}
                   title={syncButtonTooltip}
-                  className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
+                  className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60">
                   {isSyncingFromImdb ? '同期中…' : 'IMDbリストと同期'}
                 </button>
               )}
@@ -1262,8 +1263,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                   <select
                     value={syncCategoryUid}
                     onChange={event => setSyncCategoryUid(event.target.value)}
-                    className="rounded border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  >
+                    className="rounded border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
                     {organizationCategories.map(category => (
                       <option key={category.uid} value={category.uid}>
                         {category.name}
@@ -1318,8 +1318,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                             <div className="font-medium text-gray-900">
                               <a
                                 href={`/admin/movies/${nomination.movie.uid}`}
-                                className="text-blue-600 hover:underline"
-                              >
+                                className="text-blue-600 hover:underline">
                                 {nomination.movie.title}
                               </a>
                             </div>
@@ -1342,9 +1341,10 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                           <td className="px-4 py-3 text-right">
                             <button
                               type="button"
-                              onClick={() => handleRemoveNomination(nomination.uid)}
-                              className="rounded border border-red-600 px-3 py-1 text-sm font-medium text-red-600 hover:bg-red-50"
-                            >
+                              onClick={() =>
+                                handleRemoveNomination(nomination.uid)
+                              }
+                              className="rounded border border-red-600 px-3 py-1 text-sm font-medium text-red-600 hover:bg-red-50">
                               削除
                             </button>
                           </td>
@@ -1366,14 +1366,15 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                 <div className="mt-4 space-y-6">
                   <form
                     className="flex flex-col gap-3 md:flex-row md:items-end"
-                    onSubmit={handleSearchMovies}
-                  >
+                    onSubmit={handleSearchMovies}>
                     <label className="flex flex-1 flex-col text-sm font-medium text-gray-700">
                       キーワード検索
                       <input
                         type="search"
                         value={movieSearchQuery}
-                        onChange={event => setMovieSearchQuery(event.target.value)}
+                        onChange={event =>
+                          setMovieSearchQuery(event.target.value)
+                        }
                         placeholder="作品名など"
                         className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
@@ -1381,8 +1382,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                     <button
                       type="submit"
                       className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                      disabled={isSearchingMovies}
-                    >
+                      disabled={isSearchingMovies}>
                       {isSearchingMovies ? '検索中…' : '検索'}
                     </button>
                   </form>
@@ -1400,8 +1400,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                       <button
                         type="button"
                         onClick={() => setSelectedMovie(undefined)}
-                        className="ml-3 text-xs underline hover:text-blue-900"
-                      >
+                        className="ml-3 text-xs underline hover:text-blue-900">
                         解除
                       </button>
                     </div>
@@ -1411,7 +1410,9 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                     <div className="rounded border border-gray-200">
                       <ul className="divide-y divide-gray-200">
                         {movieSearchResults.map(result => (
-                          <li key={result.uid} className="flex items-center justify-between px-4 py-3 text-sm">
+                          <li
+                            key={result.uid}
+                            className="flex items-center justify-between px-4 py-3 text-sm">
                             <div>
                               <div className="font-medium text-gray-900">
                                 {result.title}
@@ -1427,8 +1428,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                                 setSelectedMovie(result);
                                 setMovieSearchResults([]);
                               }}
-                              className="rounded border border-blue-600 px-3 py-1 text-sm font-medium text-blue-600 hover:bg-blue-50"
-                            >
+                              className="rounded border border-blue-600 px-3 py-1 text-sm font-medium text-blue-600 hover:bg-blue-50">
                               選択
                             </button>
                           </li>
@@ -1448,8 +1448,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                           }
                           className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
-                          disabled={categoriesForOrganization.length === 0}
-                        >
+                          disabled={categoriesForOrganization.length === 0}>
                           <option value="">選択してください</option>
                           {categoriesForOrganization.map(category => (
                             <option key={category.uid} value={category.uid}>
@@ -1495,8 +1494,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                       <button
                         type="submit"
                         disabled={!selectedMovie || isAddingNomination}
-                        className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
+                        className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60">
                         {isAddingNomination ? '追加中…' : '映画を追加'}
                       </button>
                     </div>

@@ -4,7 +4,12 @@ import {config as loadEnvironment} from 'dotenv';
 import {Command} from 'commander';
 import {importMoviesFromCsv} from './import-imdb-list';
 
-const environmentCandidates = ['.env', '.dev.vars', '../.dev.vars', '../../.dev.vars'];
+const environmentCandidates = [
+  '.env',
+  '.dev.vars',
+  '../.dev.vars',
+  '../../.dev.vars',
+];
 for (const candidate of environmentCandidates) {
   const resolvedPath = path.resolve(process.cwd(), candidate);
   if (existsSync(resolvedPath)) {
@@ -21,22 +26,31 @@ program
   .option('-l, --limit <number>', 'Limit number of movies to process', value =>
     Number.parseInt(value, 10),
   )
-  .option('-t, --throttle <number>', 'Throttle between TMDb requests in milliseconds', value =>
-    Number.parseInt(value, 10),
+  .option(
+    '-t, --throttle <number>',
+    'Throttle between TMDb requests in milliseconds',
+    value => Number.parseInt(value, 10),
   )
   .option('--dry-run', 'Run without writing to the database', false)
   .action(async (csvFile: string, options: Record<string, unknown>) => {
-    const limit = typeof options.limit === 'number' && Number.isFinite(options.limit)
-      ? options.limit
-      : undefined;
+    const limit =
+      typeof options.limit === 'number' && Number.isFinite(options.limit)
+        ? options.limit
+        : undefined;
     const throttle =
       typeof options.throttle === 'number' && Number.isFinite(options.throttle)
         ? options.throttle
         : undefined;
     const dryRun = Boolean(options.dryRun);
 
-    const requiredEnvironment = ['TURSO_DATABASE_URL', 'TURSO_AUTH_TOKEN', 'TMDB_API_KEY'] as const;
-    const missingEnvironment = requiredEnvironment.filter(key => !process.env[key]);
+    const requiredEnvironment = [
+      'TURSO_DATABASE_URL',
+      'TURSO_AUTH_TOKEN',
+      'TMDB_API_KEY',
+    ] as const;
+    const missingEnvironment = requiredEnvironment.filter(
+      key => !process.env[key],
+    );
     if (missingEnvironment.length > 0) {
       throw new Error(
         `Missing required environment variables: ${missingEnvironment.join(', ')}`,

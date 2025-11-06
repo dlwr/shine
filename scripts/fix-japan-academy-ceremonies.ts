@@ -6,10 +6,7 @@ import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {asc, eq} from 'drizzle-orm';
 
 loadEnv({path: '.dev.vars', override: true});
-if (
-  !process.env.TURSO_DATABASE_URL ||
-  !process.env.TURSO_AUTH_TOKEN
-) {
+if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
   loadEnv();
 }
 
@@ -124,7 +121,9 @@ async function main() {
   }
 
   if (updates.length === 0 && missing.length === 0) {
-    console.log('No mismatched ceremony numbers or missing ceremonies detected.');
+    console.log(
+      'No mismatched ceremony numbers or missing ceremonies detected.',
+    );
     return;
   }
 

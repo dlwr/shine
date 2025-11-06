@@ -165,7 +165,9 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
           throw new Error(`Failed with status ${response.status}`);
         }
 
-        const data = (await response.json()) as {ceremonies: CeremonyListItem[]};
+        const data = (await response.json()) as {
+          ceremonies: CeremonyListItem[];
+        };
         setCeremonies(data.ceremonies ?? []);
       } catch (fetchError) {
         console.error('Failed to load ceremonies:', fetchError);
@@ -213,15 +215,13 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
           <div className="flex gap-3">
             <a
               href="/admin/ceremonies/new"
-              className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
+              className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
               ＋ セレモニーを追加
             </a>
             <button
               type="button"
               onClick={handleLogout}
-              className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-            >
+              className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
               ログアウト
             </button>
           </div>
@@ -248,8 +248,7 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
                 <select
                   value={organizationFilter}
                   onChange={event => setOrganizationFilter(event.target.value)}
-                  className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
+                  className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
                   <option value="">すべて</option>
                   {organizations.map(option => (
                     <option key={option.value} value={option.value}>
@@ -317,7 +316,9 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900">
-                        <div className="font-medium">{ceremony.organizationName}</div>
+                        <div className="font-medium">
+                          {ceremony.organizationName}
+                        </div>
                         {ceremony.organizationCountry && (
                           <div className="text-xs text-gray-500">
                             {ceremony.organizationCountry}
@@ -336,8 +337,7 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
                             href={ceremony.imdbEventUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-blue-600 underline hover:text-blue-800"
-                          >
+                            className="text-blue-600 underline hover:text-blue-800">
                             IMDb
                           </a>
                         ) : (
@@ -353,8 +353,7 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
                       <td className="px-4 py-3 text-sm text-blue-600">
                         <a
                           href={`/admin/ceremonies/${ceremony.uid}`}
-                          className="rounded border border-blue-600 px-3 py-1 text-sm font-medium text-blue-600 hover:bg-blue-50"
-                        >
+                          className="rounded border border-blue-600 px-3 py-1 text-sm font-medium text-blue-600 hover:bg-blue-50">
                           編集
                         </a>
                       </td>

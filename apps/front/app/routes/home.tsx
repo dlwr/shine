@@ -18,58 +18,59 @@ type PeriodType = keyof HighlightedMovies;
 const SELECTION_PERIODS: PeriodType[] = ['daily', 'weekly', 'monthly'];
 
 type SearchMovie = {
-	uid: string;
-	title?: string;
-	year?: number;
-	translations?: Array<{
-		languageCode: string;
-		content: string;
-		isDefault: number;
-	}>;
+  uid: string;
+  title?: string;
+  year?: number;
+  translations?: Array<{
+    languageCode: string;
+    content: string;
+    isDefault: number;
+  }>;
 };
 
 function createSelectionCacheKey() {
-	const now = new Date();
+  const now = new Date();
 
-	if (now.getHours() < 6) {
-		now.setDate(now.getDate() - 1);
-	}
+  if (now.getHours() < 6) {
+    now.setDate(now.getDate() - 1);
+  }
 
-	const year = now.getFullYear();
-	const month = now.getMonth() + 1;
-	const day = now.getDate();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
 
-	return `${year}-${month}-${day}`;
+  return `${year}-${month}-${day}`;
 }
 
 function getLocalizedMovieTitle(movie: SearchMovie, locale: string) {
-	if (movie.title && movie.title.trim().length > 0) {
-		return movie.title;
-	}
+  if (movie.title && movie.title.trim().length > 0) {
+    return movie.title;
+  }
 
-	if (!movie.translations || movie.translations.length === 0) {
-		return locale === 'ja' ? 'タイトル不明' : 'Untitled';
-	}
+  if (!movie.translations || movie.translations.length === 0) {
+    return locale === 'ja' ? 'タイトル不明' : 'Untitled';
+  }
 
-	const translationForLocale = movie.translations.find(
-		translation => translation.languageCode === locale,
-	);
+  const translationForLocale = movie.translations.find(
+    translation => translation.languageCode === locale,
+  );
 
-	if (translationForLocale?.content) {
-		return translationForLocale.content;
-	}
+  if (translationForLocale?.content) {
+    return translationForLocale.content;
+  }
 
-	const defaultTranslation = movie.translations.find(
-		translation => translation.isDefault === 1,
-	);
+  const defaultTranslation = movie.translations.find(
+    translation => translation.isDefault === 1,
+  );
 
-	if (defaultTranslation?.content) {
-		return defaultTranslation.content;
-	}
+  if (defaultTranslation?.content) {
+    return defaultTranslation.content;
+  }
 
-	return (
-		movie.translations[0]?.content || (locale === 'ja' ? 'タイトル不明' : 'Untitled')
-	);
+  return (
+    movie.translations[0]?.content ||
+    (locale === 'ja' ? 'タイトル不明' : 'Untitled')
+  );
 }
 
 type MoviesLabels = {
@@ -294,354 +295,355 @@ export default function Home({loaderData}: Route.ComponentProps) {
 }
 
 function ManualSelectionPanel({
-	period,
-	locale,
-	apiUrl,
-	adminToken,
-	onClose,
-	onOverrideSuccess,
-	onOverrideLoadingChange,
-	isParentLoading,
+  period,
+  locale,
+  apiUrl,
+  adminToken,
+  onClose,
+  onOverrideSuccess,
+  onOverrideLoadingChange,
+  isParentLoading,
 }: {
-	period: PeriodType;
-	locale: string;
-	apiUrl: string;
-	adminToken: string;
-	onClose: () => void;
-	onOverrideSuccess: () => Promise<void> | void;
-	onOverrideLoadingChange: (value: boolean) => void;
-	isParentLoading: boolean;
+  period: PeriodType;
+  locale: string;
+  apiUrl: string;
+  adminToken: string;
+  onClose: () => void;
+  onOverrideSuccess: () => Promise<void> | void;
+  onOverrideLoadingChange: (value: boolean) => void;
+  isParentLoading: boolean;
 }) {
-	const [query, setQuery] = useState('');
-	const [results, setResults] = useState<SearchMovie[]>([]);
-	const [searchLoading, setSearchLoading] = useState(false);
-	const [overrideLoading, setOverrideLoading] = useState(false);
-	const [message, setMessage] = useState<string | undefined>();
-	const [error, setError] = useState<string | undefined>();
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchMovie[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [overrideLoading, setOverrideLoading] = useState(false);
+  const [message, setMessage] = useState<string | undefined>();
+  const [error, setError] = useState<string | undefined>();
 
-	useEffect(() => {
-		if (!query.trim()) {
-			setResults([]);
-			setSearchLoading(false);
-			return;
-		}
+  useEffect(() => {
+    if (!query.trim()) {
+      setResults([]);
+      setSearchLoading(false);
+      return;
+    }
 
-		let cancelled = false;
-		setSearchLoading(true);
-		setError(undefined);
+    let cancelled = false;
+    setSearchLoading(true);
+    setError(undefined);
 
-		const timeoutId = setTimeout(async () => {
-			try {
-				const response = await fetch(
-					`${apiUrl}/admin/movies?search=${encodeURIComponent(query)}&limit=20`,
-					{headers: {Authorization: `Bearer ${adminToken}`}},
-				);
+    const timeoutId = setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/admin/movies?search=${encodeURIComponent(query)}&limit=20`,
+          {headers: {Authorization: `Bearer ${adminToken}`}},
+        );
 
-				if (!response.ok) {
-					throw new Error(`Search failed: ${response.status}`);
-				}
+        if (!response.ok) {
+          throw new Error(`Search failed: ${response.status}`);
+        }
 
-				const data = (await response.json()) as {movies: SearchMovie[]};
+        const data = (await response.json()) as {movies: SearchMovie[]};
 
-				if (!cancelled) {
-					setResults(data.movies ?? []);
-				}
-			} catch (error_) {
-				if (cancelled) {
-					return;
-				}
+        if (!cancelled) {
+          setResults(data.movies ?? []);
+        }
+      } catch (error_) {
+        if (cancelled) {
+          return;
+        }
 
-				console.error('Search error:', error_);
-				setError(locale === 'ja' ? '検索に失敗しました。' : 'Search failed.');
-				setResults([]);
-			} finally {
-				if (!cancelled) {
-					setSearchLoading(false);
-				}
-			}
-		}, 300);
+        console.error('Search error:', error_);
+        setError(locale === 'ja' ? '検索に失敗しました。' : 'Search failed.');
+        setResults([]);
+      } finally {
+        if (!cancelled) {
+          setSearchLoading(false);
+        }
+      }
+    }, 300);
 
-		return () => {
-			cancelled = true;
-			clearTimeout(timeoutId);
-		};
-	}, [query, apiUrl, adminToken, locale]);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [query, apiUrl, adminToken, locale]);
 
-	const processingLabel = locale === 'ja' ? '処理中...' : 'Processing...';
-	const searchPlaceholder =
-		locale === 'ja' ? '作品名や年で検索' : 'Search by title or year';
-	const hintText =
-		locale === 'ja'
-			? 'キーワードを入力すると自動で検索します。'
-			: 'Type a keyword and results will appear automatically.';
-	const resultsEmptyText =
-		locale === 'ja' ? '検索結果がありません。' : 'No movies found.';
-	const closeLabel = locale === 'ja' ? '閉じる' : 'Close';
-	const setMovieLabel =
-		locale === 'ja' ? 'この映画を設定' : 'Set this movie';
-	const searchLabel =
-		locale === 'ja' ? '映画を検索して設定' : 'Search and set a movie';
+  const processingLabel = locale === 'ja' ? '処理中...' : 'Processing...';
+  const searchPlaceholder =
+    locale === 'ja' ? '作品名や年で検索' : 'Search by title or year';
+  const hintText =
+    locale === 'ja'
+      ? 'キーワードを入力すると自動で検索します。'
+      : 'Type a keyword and results will appear automatically.';
+  const resultsEmptyText =
+    locale === 'ja' ? '検索結果がありません。' : 'No movies found.';
+  const closeLabel = locale === 'ja' ? '閉じる' : 'Close';
+  const setMovieLabel = locale === 'ja' ? 'この映画を設定' : 'Set this movie';
+  const searchLabel =
+    locale === 'ja' ? '映画を検索して設定' : 'Search and set a movie';
 
-	const isBusy = overrideLoading || isParentLoading;
+  const isBusy = overrideLoading || isParentLoading;
 
-	const handleOverride = async (movie: SearchMovie) => {
-		if (isBusy) {
-			return;
-		}
+  const handleOverride = async (movie: SearchMovie) => {
+    if (isBusy) {
+      return;
+    }
 
-		setOverrideLoading(true);
-		onOverrideLoadingChange(true);
-		setMessage(undefined);
-		setError(undefined);
+    setOverrideLoading(true);
+    onOverrideLoadingChange(true);
+    setMessage(undefined);
+    setError(undefined);
 
-		try {
-			const response = await fetch(`${apiUrl}/admin/override-selection`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${adminToken}`,
-				},
-				body: JSON.stringify({
-					type: period,
-					date: new Date().toISOString().split('T')[0],
-					movieId: movie.uid,
-				}),
-			});
+    try {
+      const response = await fetch(`${apiUrl}/admin/override-selection`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({
+          type: period,
+          date: new Date().toISOString().split('T')[0],
+          movieId: movie.uid,
+        }),
+      });
 
-			if (!response.ok) {
-				let serverMessage: string | undefined;
-				try {
-					const payload = (await response.json()) as {error?: string};
-					serverMessage = payload.error;
-				} catch (parseError) {
-					console.debug('Failed to parse override error payload', parseError);
-				}
-				throw new Error(serverMessage ?? `Request failed: ${response.status}`);
-			}
+      if (!response.ok) {
+        let serverMessage: string | undefined;
+        try {
+          const payload = (await response.json()) as {error?: string};
+          serverMessage = payload.error;
+        } catch (parseError) {
+          console.debug('Failed to parse override error payload', parseError);
+        }
+        throw new Error(serverMessage ?? `Request failed: ${response.status}`);
+      }
 
-			await onOverrideSuccess();
-			setMessage(locale === 'ja' ? '選択を更新しました。' : 'Selection updated.');
-			setQuery('');
-			setResults([]);
-		} catch (error_) {
-			console.error('Override error:', error_);
-			setError(
-				locale === 'ja'
-					? '更新に失敗しました。もう一度お試しください。'
-					: 'Failed to update selection. Please try again.',
-			);
-		} finally {
-			setOverrideLoading(false);
-			onOverrideLoadingChange(false);
-		}
-	};
+      await onOverrideSuccess();
+      setMessage(
+        locale === 'ja' ? '選択を更新しました。' : 'Selection updated.',
+      );
+      setQuery('');
+      setResults([]);
+    } catch (error_) {
+      console.error('Override error:', error_);
+      setError(
+        locale === 'ja'
+          ? '更新に失敗しました。もう一度お試しください。'
+          : 'Failed to update selection. Please try again.',
+      );
+    } finally {
+      setOverrideLoading(false);
+      onOverrideLoadingChange(false);
+    }
+  };
 
-	return (
-		<div className="space-y-4">
-			<div className="flex items-center justify-between gap-2">
-				<p className="text-sm font-medium text-gray-800">{searchLabel}</p>
-				<button
-					type="button"
-					onClick={onClose}
-					className="text-xs font-medium text-gray-500 hover:text-gray-700"
-				>
-					{closeLabel}
-				</button>
-			</div>
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-medium text-gray-800">{searchLabel}</p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-xs font-medium text-gray-500 hover:text-gray-700">
+          {closeLabel}
+        </button>
+      </div>
 
-			<div className="flex flex-col gap-2">
-				<input
-					type="text"
-					value={query}
-					onChange={event => setQuery(event.target.value)}
-					placeholder={searchPlaceholder}
-					className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100"
-					disabled={isParentLoading}
-				/>
-				<p className="text-xs text-gray-500">{hintText}</p>
-			</div>
+      <div className="flex flex-col gap-2">
+        <input
+          type="text"
+          value={query}
+          onChange={event => setQuery(event.target.value)}
+          placeholder={searchPlaceholder}
+          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100"
+          disabled={isParentLoading}
+        />
+        <p className="text-xs text-gray-500">{hintText}</p>
+      </div>
 
-			{searchLoading && (
-				<p className="text-sm text-gray-500">
-					{locale === 'ja' ? '検索中...' : 'Searching...'}
-				</p>
-			)}
+      {searchLoading && (
+        <p className="text-sm text-gray-500">
+          {locale === 'ja' ? '検索中...' : 'Searching...'}
+        </p>
+      )}
 
-			{!searchLoading && query.trim().length > 0 && results.length === 0 && !error && (
-				<p className="text-sm text-gray-500">{resultsEmptyText}</p>
-			)}
+      {!searchLoading &&
+        query.trim().length > 0 &&
+        results.length === 0 &&
+        !error && <p className="text-sm text-gray-500">{resultsEmptyText}</p>}
 
-			<ul className="space-y-2">
-				{results.map(movie => {
-					const title = getLocalizedMovieTitle(movie, locale);
-					return (
-						<li
-							key={movie.uid}
-							className="flex flex-col gap-2 border-b border-gray-200 pb-3 last:border-0"
-						>
-							<div className="text-left">
-								<p className="text-sm font-medium text-gray-900">{title}</p>
-								{movie.year !== undefined && (
-									<p className="text-xs text-gray-500">
-										{locale === 'ja' ? `公開年: ${movie.year}` : `Year: ${movie.year}`}
-									</p>
-								)}
-							</div>
-							<div>
-								<Button
-									size="sm"
-									variant="outline"
-									onClick={() => {
-										void handleOverride(movie);
-									}}
-									disabled={isBusy}
-								>
-									{isBusy ? processingLabel : setMovieLabel}
-								</Button>
-							</div>
-						</li>
-					);
-				})}
-			</ul>
+      <ul className="space-y-2">
+        {results.map(movie => {
+          const title = getLocalizedMovieTitle(movie, locale);
+          return (
+            <li
+              key={movie.uid}
+              className="flex flex-col gap-2 border-b border-gray-200 pb-3 last:border-0">
+              <div className="text-left">
+                <p className="text-sm font-medium text-gray-900">{title}</p>
+                {movie.year !== undefined && (
+                  <p className="text-xs text-gray-500">
+                    {locale === 'ja'
+                      ? `公開年: ${movie.year}`
+                      : `Year: ${movie.year}`}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    void handleOverride(movie);
+                  }}
+                  disabled={isBusy}>
+                  {isBusy ? processingLabel : setMovieLabel}
+                </Button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
 
-			{message && (
-				<p className="text-sm text-green-600">
-					{message}
-				</p>
-			)}
+      {message && <p className="text-sm text-green-600">{message}</p>}
 
-			{error && (
-				<p className="text-sm text-red-600">
-					{error}
-				</p>
-			)}
-		</div>
-	);
+      {error && <p className="text-sm text-red-600">{error}</p>}
+    </div>
+  );
 }
 
 function Movies({
-	movies,
-	error,
-	locale,
-	apiUrl,
-	adminToken,
-	labels,
-	loading: isDataLoading,
-	onMoviesChange,
-	onError,
+  movies,
+  error,
+  locale,
+  apiUrl,
+  adminToken,
+  labels,
+  loading: isDataLoading,
+  onMoviesChange,
+  onError,
 }: {
-	movies: HighlightedMovies | undefined;
-	error: string | undefined;
-	locale: string;
-	apiUrl: string;
-	adminToken: string | undefined;
-	labels: MoviesLabels;
-	loading?: boolean;
-	onMoviesChange: Dispatch<SetStateAction<HighlightedMovies | undefined>>;
-	onError: Dispatch<SetStateAction<string | undefined>>;
+  movies: HighlightedMovies | undefined;
+  error: string | undefined;
+  locale: string;
+  apiUrl: string;
+  adminToken: string | undefined;
+  labels: MoviesLabels;
+  loading?: boolean;
+  onMoviesChange: Dispatch<SetStateAction<HighlightedMovies | undefined>>;
+  onError: Dispatch<SetStateAction<string | undefined>>;
 }) {
-	const [actionLoading, setActionLoading] = useState<
-		Partial<Record<PeriodType, boolean>>
-	>({});
-	const [searchOpen, setSearchOpen] = useState<
-		Partial<Record<PeriodType, boolean>>
-	>({});
+  const [actionLoading, setActionLoading] = useState<
+    Partial<Record<PeriodType, boolean>>
+  >({});
+  const [searchOpen, setSearchOpen] = useState<
+    Partial<Record<PeriodType, boolean>>
+  >({});
 
-	const refreshHighlightedMovies = useCallback(async () => {
-		const cacheKey = createSelectionCacheKey();
-		const response = await fetch(`${apiUrl}/?cache=${cacheKey}&locale=${locale}`, {
-			headers: {
-				'Cache-Control': 'no-store',
-				'Accept-Language': locale === 'ja' ? 'ja,en;q=0.5' : 'en',
-			},
-		});
+  const refreshHighlightedMovies = useCallback(async () => {
+    const cacheKey = createSelectionCacheKey();
+    const response = await fetch(
+      `${apiUrl}/?cache=${cacheKey}&locale=${locale}`,
+      {
+        headers: {
+          'Cache-Control': 'no-store',
+          'Accept-Language': locale === 'ja' ? 'ja,en;q=0.5' : 'en',
+        },
+      },
+    );
 
-		if (!response.ok) {
-			throw new Error(`API request failed: ${response.status}`);
-		}
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
 
-		const updatedMovies = (await response.json()) as HighlightedMovies;
-		onMoviesChange(updatedMovies);
-	}, [apiUrl, locale, onMoviesChange]);
+    const updatedMovies = (await response.json()) as HighlightedMovies;
+    onMoviesChange(updatedMovies);
+  }, [apiUrl, locale, onMoviesChange]);
 
-	const handleReselect = useCallback(
-		async (type: PeriodType) => {
-			if (!adminToken) {
-				alert(
-					locale === 'ja'
-						? '管理者としてログインしてください'
-						: 'Please login as admin',
-				);
-				return;
-			}
+  const handleReselect = useCallback(
+    async (type: PeriodType) => {
+      if (!adminToken) {
+        alert(
+          locale === 'ja'
+            ? '管理者としてログインしてください'
+            : 'Please login as admin',
+        );
+        return;
+      }
 
-			setActionLoading(previous => ({...previous, [type]: true}));
+      setActionLoading(previous => ({...previous, [type]: true}));
 
-			try {
-				const response = await fetch(`${apiUrl}/reselect`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${adminToken}`,
-					},
-					body: JSON.stringify({
-						type,
-						locale,
-					}),
-				});
+      try {
+        const response = await fetch(`${apiUrl}/reselect`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({
+            type,
+            locale,
+          }),
+        });
 
-				if (!response.ok) {
-					throw new Error(`API request failed: ${response.status}`);
-				}
+        if (!response.ok) {
+          throw new Error(`API request failed: ${response.status}`);
+        }
 
-				await refreshHighlightedMovies();
-				onError(() => undefined); // eslint-disable-line unicorn/no-useless-undefined
-			} catch (error_) {
-				console.error('Error re-selecting movie:', error_);
-				alert(
-					locale === 'ja'
-						? 'エラーが発生しました。再度お試しください。'
-						: 'An error occurred. Please try again.',
-				);
-				onError(
-					locale === 'ja'
-						? '最新の映画情報を取得できませんでした。'
-						: 'Failed to update selections.',
-				);
-			} finally {
-				setActionLoading(previous => ({...previous, [type]: false}));
-			}
-		},
-		[adminToken, apiUrl, locale, onError, refreshHighlightedMovies],
-	);
+        await refreshHighlightedMovies();
+        onError(() => undefined); // eslint-disable-line unicorn/no-useless-undefined
+      } catch (error_) {
+        console.error('Error re-selecting movie:', error_);
+        alert(
+          locale === 'ja'
+            ? 'エラーが発生しました。再度お試しください。'
+            : 'An error occurred. Please try again.',
+        );
+        onError(
+          locale === 'ja'
+            ? '最新の映画情報を取得できませんでした。'
+            : 'Failed to update selections.',
+        );
+      } finally {
+        setActionLoading(previous => ({...previous, [type]: false}));
+      }
+    },
+    [adminToken, apiUrl, locale, onError, refreshHighlightedMovies],
+  );
 
-	const handleOverrideSuccess = useCallback(
-		async (type: PeriodType) => {
-			try {
-				await refreshHighlightedMovies();
+  const handleOverrideSuccess = useCallback(
+    async (type: PeriodType) => {
+      try {
+        await refreshHighlightedMovies();
         onError(() => '');
-				setSearchOpen(previous => ({...previous, [type]: false}));
-			} catch (error_) {
-				console.error('Error refreshing movies after override:', error_);
-				onError(
-					locale === 'ja'
-						? '最新の映画情報を取得できませんでした。'
-						: 'Failed to update selections.',
-				);
-			}
-		},
-		[locale, onError, refreshHighlightedMovies],
-	);
+        setSearchOpen(previous => ({...previous, [type]: false}));
+      } catch (error_) {
+        console.error('Error refreshing movies after override:', error_);
+        onError(
+          locale === 'ja'
+            ? '最新の映画情報を取得できませんでした。'
+            : 'Failed to update selections.',
+        );
+      }
+    },
+    [locale, onError, refreshHighlightedMovies],
+  );
 
-	const handleOverrideLoadingChange = useCallback((type: PeriodType, value: boolean) => {
-		setActionLoading(previous => ({...previous, [type]: value}));
-	}, []);
+  const handleOverrideLoadingChange = useCallback(
+    (type: PeriodType, value: boolean) => {
+      setActionLoading(previous => ({...previous, [type]: value}));
+    },
+    [],
+  );
 
-	const manualSetLabel = locale === 'ja' ? '検索して設定' : 'Search & Set';
-	const closeSearchLabel = locale === 'ja' ? '検索を閉じる' : 'Close Search';
-	const processingLabel = locale === 'ja' ? '処理中...' : 'Processing...';
-	const noMovieLabel =
-		locale === 'ja' ? '現在表示できる映画がありません。' : 'No movie selected yet.';
+  const manualSetLabel = locale === 'ja' ? '検索して設定' : 'Search & Set';
+  const closeSearchLabel = locale === 'ja' ? '検索を閉じる' : 'Close Search';
+  const processingLabel = locale === 'ja' ? '処理中...' : 'Processing...';
+  const noMovieLabel =
+    locale === 'ja'
+      ? '現在表示できる映画がありません。'
+      : 'No movie selected yet.';
 
   return (
     <section className="py-8">
@@ -679,7 +681,11 @@ function Movies({
               </div>
 
               {movie ? (
-                <MovieCard movie={movie} locale={locale} adminToken={adminToken} />
+                <MovieCard
+                  movie={movie}
+                  locale={locale}
+                  adminToken={adminToken}
+                />
               ) : (
                 <p className="text-sm text-gray-500">{noMovieLabel}</p>
               )}
@@ -692,8 +698,7 @@ function Movies({
                     onClick={() => {
                       void handleReselect(period);
                     }}
-                    disabled={isLoading}
-                  >
+                    disabled={isLoading}>
                     {isLoading ? (
                       <div className="flex items-center justify-center">
                         <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
@@ -713,8 +718,7 @@ function Movies({
                         [period]: !isSearchVisible,
                       }));
                     }}
-                    disabled={isLoading}
-                  >
+                    disabled={isLoading}>
                     {isSearchVisible ? closeSearchLabel : manualSetLabel}
                   </Button>
                 </div>
@@ -728,7 +732,10 @@ function Movies({
                     apiUrl={apiUrl}
                     adminToken={adminToken}
                     onClose={() => {
-                      setSearchOpen(previous => ({...previous, [period]: false}));
+                      setSearchOpen(previous => ({
+                        ...previous,
+                        [period]: false,
+                      }));
                     }}
                     onOverrideSuccess={() => handleOverrideSuccess(period)}
                     onOverrideLoadingChange={value =>

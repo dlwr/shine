@@ -2,10 +2,7 @@ import {readFileSync} from 'node:fs';
 import {setTimeout as sleep} from 'node:timers/promises';
 import {parse} from 'csv-parse/sync';
 import {and, desc, eq, inArray, isNotNull} from 'drizzle-orm';
-import {
-  getDatabase,
-  type Environment,
-} from '@shine/database';
+import {getDatabase, type Environment} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
@@ -131,21 +128,17 @@ export async function importMoviesFromCsv({
   const awardContext = await getAwardContext(database);
   const imdbIds = uniqueRecords.map(record => record.Const.trim());
 
-  const existingMovies = imdbIds.length > 0
-    ? await database
-        .select({
-          uid: movies.uid,
-          imdbId: movies.imdbId,
-          tmdbId: movies.tmdbId,
-        })
-        .from(movies)
-        .where(
-          and(
-            isNotNull(movies.imdbId),
-            inArray(movies.imdbId, imdbIds),
-          ),
-        )
-    : [];
+  const existingMovies =
+    imdbIds.length > 0
+      ? await database
+          .select({
+            uid: movies.uid,
+            imdbId: movies.imdbId,
+            tmdbId: movies.tmdbId,
+          })
+          .from(movies)
+          .where(and(isNotNull(movies.imdbId), inArray(movies.imdbId, imdbIds)))
+      : [];
 
   const existingByImdbId = new Map<string, ExistingMovieRecord>();
   for (const movie of existingMovies) {
@@ -187,7 +180,9 @@ export async function importMoviesFromCsv({
         eq(nominations.categoryUid, awardContext.categoryUid),
       ),
     );
-  const nominatedMovieUids = new Set(existingNominations.map(item => item.movieUid));
+  const nominatedMovieUids = new Set(
+    existingNominations.map(item => item.movieUid),
+  );
 
   const existingRecordsForNomination = existingRecords.filter(record => {
     const imdbId = record.Const.trim();
@@ -199,8 +194,11 @@ export async function importMoviesFromCsv({
   });
 
   const targetNewRecords =
-    typeof limit === 'number' && Number.isFinite(limit) ? newRecords.slice(0, limit) : newRecords;
-  const totalToProcess = existingRecordsForNomination.length + targetNewRecords.length;
+    typeof limit === 'number' && Number.isFinite(limit)
+      ? newRecords.slice(0, limit)
+      : newRecords;
+  const totalToProcess =
+    existingRecordsForNomination.length + targetNewRecords.length;
 
   const stats: ImportStats = {
     skippedExisting: 0,
@@ -257,7 +255,9 @@ export async function importMoviesFromCsv({
         `  [DRY RUN] Would create ${existingRecordsForNomination.length} nominations for existing movies.`,
       );
     } else {
-      console.log(`  Created ${existingCreated} nominations for existing movies.`);
+      console.log(
+        `  Created ${existingCreated} nominations for existing movies.`,
+      );
     }
   }
 
@@ -291,11 +291,15 @@ export async function importMoviesFromCsv({
     if (!tmdbMovie) {
       stats.notFound++;
       if (dryRun) {
-        console.log('  [DRY RUN] Would insert movie using CSV metadata (no TMDb match).');
+        console.log(
+          '  [DRY RUN] Would insert movie using CSV metadata (no TMDb match).',
+        );
         stats.imported++;
         stats.nominationsCreated++;
       } else {
-        console.warn('  TMDb match not found. Using CSV metadata for insertion.');
+        console.warn(
+          '  TMDb match not found. Using CSV metadata for insertion.',
+        );
         try {
           const movieUid = await insertMovieFromCsvRecord({
             database,
@@ -412,7 +416,9 @@ async function ensureTmdbConfiguration(): Promise<void> {
 
   const response = await fetch(url.toString());
   if (!response.ok) {
-    throw new Error(`Failed to load TMDb configuration: ${response.statusText}`);
+    throw new Error(
+      `Failed to load TMDb configuration: ${response.statusText}`,
+    );
   }
 
   tmdbConfiguration = (await response.json()) as TmdbConfiguration;
@@ -475,7 +481,9 @@ async function getAwardContext(
   return cachedAwardContext;
 }
 
-async function fetchMovieByImdbId(imdbId: string): Promise<TmdbMovieDetails | undefined> {
+async function fetchMovieByImdbId(
+  imdbId: string,
+): Promise<TmdbMovieDetails | undefined> {
   const findUrl = new URL(`${TMDB_API_BASE_URL}/find/${imdbId}`);
   findUrl.searchParams.set('api_key', tmdbApiKey);
   findUrl.searchParams.set('external_source', 'imdb_id');
@@ -511,10 +519,10 @@ async function fetchMovieByImdbId(imdbId: string): Promise<TmdbMovieDetails | un
   return undefined;
 }
 
-async function searchMovieByTitle(record: CsvMovieRow): Promise<TmdbMovieDetails | undefined> {
-  const query =
-    record['Original Title']?.trim() ||
-    record.Title?.trim();
+async function searchMovieByTitle(
+  record: CsvMovieRow,
+): Promise<TmdbMovieDetails | undefined> {
+  const query = record['Original Title']?.trim() || record.Title?.trim();
   if (!query) {
     return undefined;
   }
@@ -574,7 +582,9 @@ async function searchMovieByTitle(record: CsvMovieRow): Promise<TmdbMovieDetails
   return undefined;
 }
 
-async function fetchMovieDetails(tmdbId: number): Promise<TmdbMovieDetails | undefined> {
+async function fetchMovieDetails(
+  tmdbId: number,
+): Promise<TmdbMovieDetails | undefined> {
   const detailUrl = new URL(`${TMDB_API_BASE_URL}/movie/${tmdbId}`);
   detailUrl.searchParams.set('api_key', tmdbApiKey);
   detailUrl.searchParams.set('language', 'en-US');
@@ -612,7 +622,9 @@ async function fetchMovieDetails(tmdbId: number): Promise<TmdbMovieDetails | und
   return details;
 }
 
-async function fetchTvDetails(tmdbId: number): Promise<TmdbMovieDetails | undefined> {
+async function fetchTvDetails(
+  tmdbId: number,
+): Promise<TmdbMovieDetails | undefined> {
   const detailUrl = new URL(`${TMDB_API_BASE_URL}/tv/${tmdbId}`);
   detailUrl.searchParams.set('api_key', tmdbApiKey);
   detailUrl.searchParams.set('language', 'en-US');
@@ -664,7 +676,9 @@ async function fetchTvDetails(tmdbId: number): Promise<TmdbMovieDetails | undefi
       };
     }
   } catch (error) {
-    console.warn(`    Failed to fetch localized TMDb TV data: ${String(error)}`);
+    console.warn(
+      `    Failed to fetch localized TMDb TV data: ${String(error)}`,
+    );
   }
 
   return tvDetails;
@@ -710,7 +724,8 @@ async function insertMovieWithTranslations({
   csvDescription,
 }: InsertMovieParameters): Promise<string> {
   const releaseYear =
-    (tmdbMovie.release_date && Number.parseInt(tmdbMovie.release_date.slice(0, 4), 10)) ||
+    (tmdbMovie.release_date &&
+      Number.parseInt(tmdbMovie.release_date.slice(0, 4), 10)) ||
     (csvYear ? Number.parseInt(csvYear, 10) : undefined);
   const normalizedYear =
     typeof releaseYear === 'number' && Number.isFinite(releaseYear)
@@ -741,7 +756,8 @@ async function insertMovieWithTranslations({
   ]);
 
   const isReleaseDateColumnAvailable = releaseDateColumnAvailable ?? true;
-  const shouldIncludeReleaseDate = Boolean(releaseDate) && isReleaseDateColumnAvailable;
+  const shouldIncludeReleaseDate =
+    Boolean(releaseDate) && isReleaseDateColumnAvailable;
 
   if (shouldIncludeReleaseDate) {
     try {
@@ -791,7 +807,13 @@ async function insertMovieWithTranslations({
     csvDescription,
   });
 
-  await insertReferenceUrls(database, movieUid, imdbId, tmdbId, tmdbMovie.media_type);
+  await insertReferenceUrls(
+    database,
+    movieUid,
+    imdbId,
+    tmdbId,
+    tmdbMovie.media_type,
+  );
   await insertPoster(database, movieUid, tmdbMovie.poster_path);
 
   return movieUid;
@@ -847,7 +869,8 @@ async function insertTranslations({
   originalTitle?: string;
   csvDescription?: string;
 }) {
-  const englishTitle = originalTitle || tmdbMovie.original_title || tmdbMovie.title;
+  const englishTitle =
+    originalTitle || tmdbMovie.original_title || tmdbMovie.title;
   const japaneseTitle =
     jaTitle ||
     tmdbMovie.localizedTitle ||
@@ -875,8 +898,7 @@ async function insertTranslations({
     });
   }
 
-  const englishOverview =
-    tmdbMovie.overview?.trim() || csvDescription?.trim();
+  const englishOverview = tmdbMovie.overview?.trim() || csvDescription?.trim();
   if (englishOverview) {
     values.push({
       resourceType: 'movie_description',
@@ -902,10 +924,7 @@ async function insertTranslations({
     return;
   }
 
-  await database
-    .insert(translations)
-    .values(values)
-    .onConflictDoNothing();
+  await database.insert(translations).values(values).onConflictDoNothing();
 }
 
 async function insertReferenceUrls(
@@ -937,10 +956,7 @@ async function insertReferenceUrls(
     });
   }
 
-  await database
-    .insert(referenceUrls)
-    .values(values)
-    .onConflictDoNothing();
+  await database.insert(referenceUrls).values(values).onConflictDoNothing();
 }
 
 async function insertPoster(
@@ -953,7 +969,9 @@ async function insertPoster(
   }
 
   const baseUrl = tmdbConfiguration.images.secure_base_url;
-  const size = tmdbConfiguration.images.poster_sizes.includes('w500') ? 'w500' : 'original';
+  const size = tmdbConfiguration.images.poster_sizes.includes('w500')
+    ? 'w500'
+    : 'original';
 
   await database
     .insert(posterUrls)

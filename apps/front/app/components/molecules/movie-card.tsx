@@ -231,7 +231,7 @@ export function MovieCard({
       name: 'Amazon Prime',
       color: 'bg-blue-600 text-white',
       url: (title: string) =>
-        `https://www.amazon.co.jp/s?k=${encodeURIComponent(title)}&i=prime-instant-video`,
+        `https://www.amazon.co.jp/s/ref=nb_sb_noss_1?url=search-alias%3Dinstant-video&field-keywords=${encodeURIComponent(title)}`,
     },
     {
       name: 'TMDb',
