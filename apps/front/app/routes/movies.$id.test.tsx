@@ -89,19 +89,25 @@ type MetaArguments = Route.MetaArgs;
 type ComponentProperties = Route.ComponentProps;
 type Matches = ComponentProperties['matches'];
 type ActionArguments = Route.ActionArgs;
+const movieRoutePattern = '/movies/:id';
+
+type LoaderOverrides = Partial<
+  Omit<LoaderArguments, 'context' | 'request' | 'params'>
+> & {
+  matches?: Matches;
+};
 
 const createLoaderArguments = (
   context: LoaderArguments['context'],
   request: LoaderArguments['request'],
   parameters: LoaderArguments['params'],
-  overrides: Partial<
-    Omit<LoaderArguments, 'context' | 'request' | 'params'>
-  > = {},
+  overrides: LoaderOverrides = {},
 ): LoaderArguments =>
   cast<LoaderArguments>({
     context,
     request,
     params: parameters,
+    unstable_pattern: movieRoutePattern,
     matches: [],
     ...overrides,
   });
@@ -166,6 +172,7 @@ const createActionArguments = (
     context,
     request,
     params: parameters,
+    unstable_pattern: movieRoutePattern,
     matches: [],
   });
 
