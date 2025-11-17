@@ -1,0 +1,8 @@
+{
+  "name": "node-domexception",
+  "version": "1.0.0",
+  "description": "Local drop-in replacement for the deprecated node-domexception package.",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "index.js"
+}
