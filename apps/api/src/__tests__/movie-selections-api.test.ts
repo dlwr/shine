@@ -1,37 +1,59 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 // Mock the db module
-const mockDatabase = {
-  select: vi.fn(() => ({
+const defaultMovies = [
+  {
+    uid: 'movie-1',
+    year: 2023,
+    originalLanguage: 'en',
+    translations: {content: 'Test Movie'},
+    poster_urls: {url: 'https://example.com/poster.jpg'},
+  },
+];
+
+const defaultSelections = [
+  {
+    uid: 'selection-1',
+    selectionType: 'daily',
+    selectionDate: '2025-06-21',
+    movieId: 'movie-1',
+  },
+];
+
+const defaultOrdering = [{uid: 'movie-1'}];
+
+type SelectQueryOverrides = {
+  movies?: typeof defaultMovies;
+  selections?: typeof defaultSelections;
+  ordering?: typeof defaultOrdering;
+};
+
+const createSelectQueryResult = (overrides: SelectQueryOverrides = {}) => {
+  const {
+    movies = defaultMovies,
+    selections = defaultSelections,
+    ordering = defaultOrdering,
+  } = overrides;
+
+  return {
     from: vi.fn(() => ({
       leftJoin: vi.fn(() => ({
         where: vi.fn(() => ({
-          limit: vi.fn(async () => [
-            {
-              uid: 'movie-1',
-              year: 2023,
-              originalLanguage: 'en',
-              translations: {content: 'Test Movie'},
-              poster_urls: {url: 'https://example.com/poster.jpg'},
-            },
-          ]),
+          limit: vi.fn(async () => movies),
         })),
       })),
       where: vi.fn(() => ({
-        limit: vi.fn(async () => [
-          {
-            uid: 'selection-1',
-            selectionType: 'daily',
-            selectionDate: '2025-06-21',
-            movieId: 'movie-1',
-          },
-        ]),
+        limit: vi.fn(async () => selections),
       })),
       orderBy: vi.fn(() => ({
-        limit: vi.fn(async () => [{uid: 'movie-1'}]),
+        limit: vi.fn(async () => ordering),
       })),
     })),
-  })),
+  };
+};
+
+const mockDatabase = {
+  select: vi.fn(() => createSelectQueryResult()),
   insert: vi.fn(() => ({
     values: vi.fn(() => ({
       returning: vi.fn(async () => [
@@ -146,13 +168,13 @@ describe('Database Query Logic', () => {
   });
 
   it('should handle empty query results', async () => {
-    mockDatabase.select.mockReturnValueOnce({
-      from: vi.fn(() => ({
-        where: vi.fn(() => ({
-          limit: vi.fn(async () => []),
-        })),
-      })),
-    });
+    mockDatabase.select.mockImplementationOnce(() =>
+      createSelectQueryResult({
+        movies: [],
+        selections: [],
+        ordering: [],
+      }),
+    );
 
     const result = await mockDatabase.select().from().where().limit();
 

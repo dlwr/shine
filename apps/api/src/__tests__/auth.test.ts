@@ -37,9 +37,11 @@ describe('JWT Authentication', () => {
   describe('authMiddleware', () => {
     let mockContext: Context<{Bindings: Environment}>;
     let mockNext: ReturnType<typeof vi.fn>;
+    let runNext: () => Promise<void>;
 
     beforeEach(() => {
-      mockNext = vi.fn();
+      mockNext = vi.fn(async () => {});
+      runNext = mockNext as unknown as () => Promise<void>;
       mockContext = {
         req: {
           header: vi.fn(),
@@ -57,7 +59,7 @@ describe('JWT Authentication', () => {
     it('should return 401 when no Authorization header', async () => {
       (mockContext.req.header as ReturnType<typeof vi.fn>).mockReturnValue('');
 
-      await expect(authMiddleware(mockContext, mockNext)).rejects.toBeDefined();
+      await expect(authMiddleware(mockContext, runNext)).rejects.toBeDefined();
 
       expect(mockContext.json).toHaveBeenCalledWith(
         {
@@ -75,7 +77,7 @@ describe('JWT Authentication', () => {
         'Basic token',
       );
 
-      await expect(authMiddleware(mockContext, mockNext)).rejects.toBeDefined();
+      await expect(authMiddleware(mockContext, runNext)).rejects.toBeDefined();
 
       expect(mockContext.json).toHaveBeenCalledWith(
         {
@@ -94,7 +96,7 @@ describe('JWT Authentication', () => {
       );
       mockContext.env.JWT_SECRET = undefined;
 
-      await expect(authMiddleware(mockContext, mockNext)).rejects.toBeDefined();
+      await expect(authMiddleware(mockContext, runNext)).rejects.toBeDefined();
 
       expect(mockContext.json).toHaveBeenCalledWith(
         {
@@ -111,7 +113,7 @@ describe('JWT Authentication', () => {
         'Bearer invalid-token',
       );
 
-      await expect(authMiddleware(mockContext, mockNext)).rejects.toBeDefined();
+      await expect(authMiddleware(mockContext, runNext)).rejects.toBeDefined();
 
       expect(mockContext.json).toHaveBeenCalledWith(
         {
@@ -130,7 +132,7 @@ describe('JWT Authentication', () => {
         `Bearer ${validToken}`,
       );
 
-      await authMiddleware(mockContext, mockNext);
+      await authMiddleware(mockContext, runNext);
 
       expect(mockNext).toHaveBeenCalled();
       expect(mockContext.json).not.toHaveBeenCalled();

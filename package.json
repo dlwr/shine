@@ -44,7 +44,7 @@
     "lint:front:fix": "eslint apps/front/app --ext .ts,.tsx --fix",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
-    "type-check": "pnpm --filter @shine/front run typecheck && tsc -b",
+    "type-check": "pnpm --filter @shine/front run typecheck && tsc -b --clean && tsc -b",
     "check": "concurrently -n \"lint,types\" -c \"yellow,green\" \"pnpm lint\" \"tsc --build --noEmit\"",
     "typegen": "cd apps/front && npx react-router typegen"
   },
