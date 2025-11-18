@@ -13,6 +13,7 @@ export type Environment = {
   TURSO_AUTH_TOKEN: string;
   ADMIN_PASSWORD?: string;
   JWT_SECRET?: string;
+  TURNSTILE_SECRET_KEY?: string;
 };
 
 export const getDatabase = (environment: Environment) => {

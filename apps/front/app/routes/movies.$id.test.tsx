@@ -9,6 +9,7 @@ const createMockContext = (apiUrl = 'http://localhost:8787') => ({
   cloudflare: {
     env: {
       PUBLIC_API_URL: apiUrl,
+      PUBLIC_TURNSTILE_SITE_KEY: 'test-site-key',
     },
   },
 });
@@ -133,6 +134,7 @@ const createLoaderData = (
   overrides: Partial<LoaderResult> = {},
 ): LoaderResult => ({
   movieDetail: mockMovieDetail,
+  turnstileSiteKey: 'test-site-key',
   ...overrides,
 });
 
@@ -209,6 +211,7 @@ describe('MovieDetail Component', () => {
       );
       expect(result).toEqual({
         movieDetail: mockMovieDetail,
+        turnstileSiteKey: 'test-site-key',
       });
     });
 
@@ -537,6 +540,7 @@ describe('MovieDetail Component', () => {
       formData.append('url', 'https://example.com/new-article');
       formData.append('title', '新しい記事');
       formData.append('description', '新しい記事の説明');
+      formData.append('captchaToken', 'test-token');
 
       const context = createMockContext();
       const parameters = {id: 'movie-123'};
@@ -560,6 +564,7 @@ describe('MovieDetail Component', () => {
             url: 'https://example.com/new-article',
             title: '新しい記事',
             description: '新しい記事の説明',
+            captchaToken: 'test-token',
           }),
           signal: undefined,
         },
@@ -586,6 +591,7 @@ describe('MovieDetail Component', () => {
       formData.append('url', 'invalid-url');
       formData.append('title', '記事タイトル');
       formData.append('description', '記事の説明');
+      formData.append('captchaToken', 'test-token');
 
       const context = createMockContext();
       const parameters = {id: 'movie-123'};
@@ -616,6 +622,7 @@ describe('MovieDetail Component', () => {
       formData.append('url', 'https://example.com/article');
       formData.append('title', '記事タイトル');
       formData.append('description', '記事の説明');
+      formData.append('captchaToken', 'test-token');
 
       const context = createMockContext();
       const parameters = {id: 'movie-123'};
@@ -631,6 +638,31 @@ describe('MovieDetail Component', () => {
       expect(result).toEqual({
         success: false,
         error: '投稿制限に達しました',
+      });
+    });
+
+    it('認証トークンがない場合はエラーを返す', async () => {
+      const mockFetch = vi.mocked(fetch);
+      const formData = new FormData();
+      formData.append('url', 'https://example.com/article');
+      formData.append('title', '記事タイトル');
+      formData.append('description', '記事の説明');
+
+      const context = createMockContext();
+      const parameters = {id: 'movie-123'};
+      const request = {
+        formData: async () => formData,
+        signal: undefined,
+      } as unknown as Request;
+
+      const result = await action(
+        createActionArguments(context, request, parameters),
+      );
+
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        success: false,
+        error: '認証に失敗しました。少し待ってから再度お試しください。',
       });
     });
   });

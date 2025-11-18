@@ -1,3 +1,4 @@
+import {Turnstile} from '@marsidev/react-turnstile';
 import {useCallback, useState, type ChangeEvent, type ElementType} from 'react';
 import {Form, redirect} from 'react-router';
 import type {Route} from './+types/movies.$id';
@@ -6,6 +7,7 @@ import {Button} from '@/components/ui/button';
 type CloudflareContext = {
   env?: {
     PUBLIC_API_URL?: string;
+    PUBLIC_TURNSTILE_SITE_KEY?: string;
   };
 };
 
@@ -52,6 +54,7 @@ type LoaderErrorResponse = {
 
 type LoaderSuccessResponse = {
   movieDetail: MovieDetailData;
+  turnstileSiteKey?: string;
 };
 
 type LoaderData = LoaderErrorResponse | LoaderSuccessResponse;
@@ -68,6 +71,7 @@ type ArticleLinkFormState = {
   url: string;
   title: string;
   description: string;
+  captchaToken: string;
 };
 
 type SubmissionResult = {error?: string} | undefined;
@@ -77,24 +81,14 @@ type ArticleLinkFormReturn = {
   handleInputChange: (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => void;
+  handleCaptchaTokenChange: (token: string) => void;
   isLoadingTitle: boolean;
   titleError: string;
   submissionResult: SubmissionResult;
 };
 
 function useIsTestMode(): boolean {
-  const [isTestMode] = useState(() => {
-    try {
-      return (
-        globalThis.window !== undefined &&
-        globalThis.location.hostname === 'localhost'
-      );
-    } catch {
-      return true;
-    }
-  });
-
-  return isTestMode;
+  return import.meta.env.MODE === 'test';
 }
 
 function useArticleLinkForm(
@@ -105,6 +99,7 @@ function useArticleLinkForm(
     url: '',
     title: '',
     description: '',
+    captchaToken: isTestMode ? 'test-token' : '',
   });
   const [isLoadingTitle, setIsLoadingTitle] = useState(false);
   const [titleError, setTitleError] = useState('');
@@ -170,9 +165,17 @@ function useArticleLinkForm(
     [fetchTitleFromUrl],
   );
 
+  const handleCaptchaTokenChange = useCallback((token: string) => {
+    setFormData(previous => ({
+      ...previous,
+      captchaToken: token,
+    }));
+  }, []);
+
   return {
     formData,
     handleInputChange,
+    handleCaptchaTokenChange,
     isLoadingTitle,
     titleError,
     submissionResult,
@@ -321,9 +324,11 @@ type ArticleLinksSectionProperties = {
   handleInputChange: (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => void;
+  handleCaptchaTokenChange: (token: string) => void;
   isLoadingTitle: boolean;
   titleError: string;
   submissionResult: SubmissionResult;
+  turnstileSiteKey?: string;
 };
 
 function ArticleLinksSection({
@@ -331,12 +336,20 @@ function ArticleLinksSection({
   isTestMode,
   formData,
   handleInputChange,
+  handleCaptchaTokenChange,
   isLoadingTitle,
   titleError,
   submissionResult,
+  turnstileSiteKey,
 }: ArticleLinksSectionProperties) {
   const FormRoot: ElementType = isTestMode ? 'form' : Form;
   const links = articleLinks ?? [];
+  const [captchaError, setCaptchaError] = useState('');
+  const hasSiteKey = Boolean(turnstileSiteKey);
+  const isCaptchaRequired = hasSiteKey && !isTestMode;
+  const isSubmitDisabled =
+    (!isTestMode && !hasSiteKey) ||
+    (isCaptchaRequired && formData.captchaToken === '');
 
   return (
     <section>
@@ -383,6 +396,13 @@ function ArticleLinksSection({
         )}
 
         <FormRoot method="post" className="space-y-4">
+          <input
+            type="hidden"
+            name="captchaToken"
+            value={formData.captchaToken}
+            readOnly
+          />
+
           <div>
             <label
               htmlFor="url"
@@ -444,7 +464,51 @@ function ArticleLinksSection({
             />
           </div>
 
-          <Button type="submit">投稿する</Button>
+          {hasSiteKey ? (
+            isCaptchaRequired ? (
+              <div className="space-y-2">
+                <Turnstile
+                  siteKey={turnstileSiteKey as string}
+                  options={{action: 'submit-article-link'}}
+                  onSuccess={token => {
+                    handleCaptchaTokenChange(token ?? '');
+                    setCaptchaError('');
+                  }}
+                  onError={() => {
+                    handleCaptchaTokenChange('');
+                    setCaptchaError('認証に失敗しました。再度お試しください。');
+                  }}
+                  onExpire={() => {
+                    handleCaptchaTokenChange('');
+                    setCaptchaError(
+                      '認証の有効期限が切れました。再認証してください。',
+                    );
+                  }}
+                  onUnsupported={() => {
+                    handleCaptchaTokenChange('');
+                    setCaptchaError(
+                      'お使いの環境では認証が利用できません。別のブラウザをお試しください。',
+                    );
+                  }}
+                />
+                {captchaError && (
+                  <p className="text-sm text-red-600">{captchaError}</p>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">
+                ローカルテストモードのため認証はスキップされます。
+              </p>
+            )
+          ) : (
+            <p className="text-sm text-red-600">
+              認証キーが設定されていないため投稿できません。管理者にお問い合わせください。
+            </p>
+          )}
+
+          <Button type="submit" disabled={isSubmitDisabled}>
+            投稿する
+          </Button>
         </FormRoot>
       </div>
     </section>
@@ -507,7 +571,8 @@ export async function loader({
     }
 
     const movieDetail = (await response.json()) as MovieDetailData;
-    return {movieDetail};
+    const turnstileSiteKey = cloudflareEnvironment?.PUBLIC_TURNSTILE_SITE_KEY;
+    return {movieDetail, turnstileSiteKey};
   } catch {
     return {
       error: 'APIへの接続に失敗しました',
@@ -528,6 +593,14 @@ export async function action({context, params, request}: Route.ActionArgs) {
     const url = formData.get('url') as string;
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
+    const captchaToken = formData.get('captchaToken');
+
+    if (!captchaToken || typeof captchaToken !== 'string' || !captchaToken) {
+      return {
+        success: false,
+        error: '認証に失敗しました。少し待ってから再度お試しください。',
+      };
+    }
 
     const response = await fetch(
       `${apiUrl}/movies/${params.id}/article-links`,
@@ -540,6 +613,7 @@ export async function action({context, params, request}: Route.ActionArgs) {
           url,
           title,
           description,
+          captchaToken,
         }),
         signal: request.signal,
       },
@@ -578,6 +652,7 @@ export default function MovieDetail({
   const {
     formData,
     handleInputChange,
+    handleCaptchaTokenChange,
     isLoadingTitle,
     titleError,
     submissionResult,
@@ -598,7 +673,7 @@ export default function MovieDetail({
     return <MovieDetailErrorView error="映画情報が取得できませんでした" />;
   }
 
-  const {movieDetail} = data;
+  const {movieDetail, turnstileSiteKey} = data;
   const title = movieDetail.title || 'タイトル不明';
   const {posterUrl} = movieDetail;
   const winningNominations =
@@ -633,9 +708,11 @@ export default function MovieDetail({
               isTestMode={isTestMode}
               formData={formData}
               handleInputChange={handleInputChange}
+              handleCaptchaTokenChange={handleCaptchaTokenChange}
               isLoadingTitle={isLoadingTitle}
               titleError={titleError}
               submissionResult={submissionResult}
+              turnstileSiteKey={turnstileSiteKey}
             />
           </div>
         </div>

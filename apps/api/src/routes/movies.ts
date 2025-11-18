@@ -17,6 +17,48 @@ import {
 export const moviesRoutes = new Hono<{Bindings: Environment}>();
 
 const cache = new EdgeCache();
+const TURNSTILE_VERIFY_ENDPOINT =
+  'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+
+type TurnstileVerificationResponse = {
+  success: boolean;
+  'error-codes'?: string[];
+  challenge_ts?: string;
+  hostname?: string;
+  action?: string;
+  cdata?: string;
+};
+
+async function verifyTurnstileToken(
+  secretKey: string | undefined,
+  token: string,
+  remoteIp: string,
+): Promise<TurnstileVerificationResponse> {
+  if (!secretKey) {
+    throw new Error('TURNSTILE_SECRET_KEY is not configured');
+  }
+
+  const formData = new FormData();
+  formData.append('secret', secretKey);
+  formData.append('response', token);
+
+  if (remoteIp && remoteIp !== 'unknown') {
+    formData.append('remoteip', remoteIp);
+  }
+
+  const response = await fetch(TURNSTILE_VERIFY_ENDPOINT, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Turnstile verification failed with status ${response.status}`,
+    );
+  }
+
+  return (await response.json()) as TurnstileVerificationResponse;
+}
 
 // Search movies endpoint
 moviesRoutes.get('/search', async c => {
@@ -220,10 +262,15 @@ moviesRoutes.post('/:id/article-links', async c => {
       url: rawUrl,
       title: rawTitle,
       description: rawDescription,
+      captchaToken: rawCaptchaToken,
     } = await c.req.json();
 
     if (!rawUrl || !rawTitle) {
       return c.json({error: 'URL and title are required'}, 400);
+    }
+
+    if (!rawCaptchaToken) {
+      return c.json({error: 'Captcha token is required'}, 400);
     }
 
     if (rawTitle.length > 200) {
@@ -239,6 +286,12 @@ moviesRoutes.post('/:id/article-links', async c => {
     const description = rawDescription
       ? sanitizeText(rawDescription)
       : undefined;
+    const captchaToken =
+      typeof rawCaptchaToken === 'string' ? rawCaptchaToken.trim() : '';
+
+    if (!captchaToken) {
+      return c.json({error: 'Captcha token is required'}, 400);
+    }
 
     // Check if movie exists
     const movieExists = await database
@@ -251,12 +304,43 @@ moviesRoutes.post('/:id/article-links', async c => {
       return c.json({error: 'Movie not found'}, 404);
     }
 
-    // Get IP address for rate limiting
+    // Get IP address for rate limiting and Turnstile verification
     const ip =
       c.req.header('cf-connecting-ip') ||
       c.req.header('x-forwarded-for') ||
       c.req.header('x-real-ip') ||
       'unknown';
+
+    const nodeEnvironment =
+      typeof process === 'undefined' ? undefined : process.env?.NODE_ENV;
+    const isTestEnvironment = nodeEnvironment === 'test';
+
+    if (!isTestEnvironment) {
+      try {
+        const verification = await verifyTurnstileToken(
+          c.env.TURNSTILE_SECRET_KEY,
+          captchaToken,
+          ip,
+        );
+
+        if (!verification.success) {
+          console.warn(
+            'Turnstile verification failed',
+            verification['error-codes'],
+          );
+          return c.json(
+            {error: 'Turnstile verification failed. Please try again.'},
+            400,
+          );
+        }
+      } catch (verificationError) {
+        console.error('Error verifying Turnstile token:', verificationError);
+        return c.json(
+          {error: 'Failed to verify submission. Please try again later.'},
+          500,
+        );
+      }
+    }
 
     // Check rate limit (max 10 submissions per IP per hour)
     const oneHourAgo = new Date();
@@ -291,7 +375,7 @@ moviesRoutes.post('/:id/article-links', async c => {
       })
       .returning();
 
-    return c.json(newArticle[0]);
+    return c.json(newArticle[0], 201);
   } catch (error) {
     console.error('Error submitting article link:', error);
     return c.json({error: 'Internal server error'}, 500);

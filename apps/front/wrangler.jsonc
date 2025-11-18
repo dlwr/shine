@@ -7,11 +7,13 @@
     "development": {
       "vars": {
         "PUBLIC_API_URL": "http://localhost:8787",
+        "PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAACBZwqj0sn-sCTK5",
       },
     },
     "production": {
       "vars": {
         "PUBLIC_API_URL": "https://shine-api.yuta25.workers.dev",
+        "PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAACBZwqj0sn-sCTK5",
       },
     },
   },

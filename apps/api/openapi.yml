@@ -1060,9 +1060,13 @@ components:
           maxLength: 500
           nullable: true
           description: Article description
+        captchaToken:
+          type: string
+          description: Turnstile captcha response token
       required:
         - url
         - title
+        - captchaToken
 
     ArticleLinkResponse:
       allOf:

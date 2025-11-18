@@ -7,7 +7,11 @@ if (!globalThis.DOMException) {
     const ab = new ArrayBuffer();
     port.postMessage(ab, [ab, ab]);
   } catch (error) {
-    if (error && error.constructor && error.constructor.name === 'DOMException') {
+    if (
+      error &&
+      error.constructor &&
+      error.constructor.name === 'DOMException'
+    ) {
       globalThis.DOMException = error.constructor;
     }
   }
