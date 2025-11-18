@@ -224,170 +224,156 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 
   return (
     <>
-      <table
+      <div
         style={{
           width: '100%',
-          borderCollapse: 'collapse',
+          overflowX: 'auto',
+          borderRadius: '0.5rem',
+          border: '1px solid #e5e7eb',
+          boxShadow: '0 1px 2px rgba(15, 23, 42, 0.06)',
+          marginTop: '1.5rem',
         }}>
-        <thead>
-          <tr>
-            <th
-              style={{
-                background: '#f3f4f6',
-                padding: '1rem',
-                textAlign: 'left',
-                fontWeight: 600,
-                color: '#374151',
-                borderBottom: '1px solid #e5e7eb',
-              }}>
-              Poster
-            </th>
-            <th
-              style={{
-                background: '#f3f4f6',
-                padding: '1rem',
-                textAlign: 'left',
-                fontWeight: 600,
-                color: '#374151',
-                borderBottom: '1px solid #e5e7eb',
-              }}>
-              Title
-            </th>
-            <th
-              style={{
-                background: '#f3f4f6',
-                padding: '1rem',
-                textAlign: 'left',
-                fontWeight: 600,
-                color: '#374151',
-                borderBottom: '1px solid #e5e7eb',
-              }}>
-              Year
-            </th>
-            <th
-              style={{
-                background: '#f3f4f6',
-                padding: '1rem',
-                textAlign: 'left',
-                fontWeight: 600,
-                color: '#374151',
-                borderBottom: '1px solid #e5e7eb',
-              }}>
-              Language
-            </th>
-            <th
-              style={{
-                background: '#f3f4f6',
-                padding: '1rem',
-                textAlign: 'left',
-                fontWeight: 600,
-                color: '#374151',
-                borderBottom: '1px solid #e5e7eb',
-              }}>
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {movies.map(movie => (
-            <tr
-              key={movie.uid}
-              style={{
-                transition: 'background-color 0.2s',
-              }}
-              onMouseOver={event =>
-                (event.currentTarget.style.background = '#f9fafb')
-              }
-              onMouseOut={event =>
-                (event.currentTarget.style.background = 'transparent')
-              }>
-              <td
+        <table
+          style={{
+            width: '100%',
+            minWidth: '720px',
+            borderCollapse: 'collapse',
+          }}>
+          <thead>
+            <tr>
+              <th
                 style={{
+                  background: '#f3f4f6',
                   padding: '1rem',
+                  textAlign: 'left',
+                  fontWeight: 600,
+                  color: '#374151',
                   borderBottom: '1px solid #e5e7eb',
                 }}>
-                {movie.posterUrl ? (
-                  <img
-                    src={movie.posterUrl}
-                    alt={movie.title}
-                    style={{
-                      width: '50px',
-                      height: '75px',
-                      objectFit: 'cover',
-                      borderRadius: '4px',
-                    }}
-                  />
-                ) : (
+                Poster
+              </th>
+              <th
+                style={{
+                  background: '#f3f4f6',
+                  padding: '1rem',
+                  textAlign: 'left',
+                  fontWeight: 600,
+                  color: '#374151',
+                  borderBottom: '1px solid #e5e7eb',
+                }}>
+                Title
+              </th>
+              <th
+                style={{
+                  background: '#f3f4f6',
+                  padding: '1rem',
+                  textAlign: 'left',
+                  fontWeight: 600,
+                  color: '#374151',
+                  borderBottom: '1px solid #e5e7eb',
+                }}>
+                Year
+              </th>
+              <th
+                style={{
+                  background: '#f3f4f6',
+                  padding: '1rem',
+                  textAlign: 'left',
+                  fontWeight: 600,
+                  color: '#374151',
+                  borderBottom: '1px solid #e5e7eb',
+                }}>
+                Language
+              </th>
+              <th
+                style={{
+                  background: '#f3f4f6',
+                  padding: '1rem',
+                  textAlign: 'left',
+                  fontWeight: 600,
+                  color: '#374151',
+                  borderBottom: '1px solid #e5e7eb',
+                }}>
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {movies.map(movie => (
+              <tr
+                key={movie.uid}
+                style={{
+                  transition: 'background-color 0.2s',
+                }}
+                onMouseOver={event =>
+                  (event.currentTarget.style.background = '#f9fafb')
+                }
+                onMouseOut={event =>
+                  (event.currentTarget.style.background = 'transparent')
+                }>
+                <td
+                  style={{
+                    padding: '1rem',
+                    borderBottom: '1px solid #e5e7eb',
+                  }}>
+                  {movie.posterUrl ? (
+                    <img
+                      src={movie.posterUrl}
+                      alt={movie.title}
+                      style={{
+                        width: '50px',
+                        height: '75px',
+                        objectFit: 'cover',
+                        borderRadius: '4px',
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '50px',
+                        height: '75px',
+                        background: '#e5e7eb',
+                        borderRadius: '4px',
+                      }}
+                    />
+                  )}
+                </td>
+                <td
+                  style={{
+                    padding: '1rem',
+                    borderBottom: '1px solid #e5e7eb',
+                  }}>
                   <div
                     style={{
-                      width: '50px',
-                      height: '75px',
-                      background: '#e5e7eb',
-                      borderRadius: '4px',
-                    }}
-                  />
-                )}
-              </td>
-              <td
-                style={{
-                  padding: '1rem',
-                  borderBottom: '1px solid #e5e7eb',
-                }}>
-                <div
+                      fontWeight: 500,
+                      color: '#111827',
+                    }}>
+                    {movie.title}
+                  </div>
+                </td>
+                <td
                   style={{
-                    fontWeight: 500,
-                    color: '#111827',
+                    padding: '1rem',
+                    borderBottom: '1px solid #e5e7eb',
+                    color: '#6b7280',
                   }}>
-                  {movie.title}
-                </div>
-              </td>
-              <td
-                style={{
-                  padding: '1rem',
-                  borderBottom: '1px solid #e5e7eb',
-                  color: '#6b7280',
-                }}>
-                {movie.year || 'N/A'}
-              </td>
-              <td
-                style={{
-                  padding: '1rem',
-                  borderBottom: '1px solid #e5e7eb',
-                }}>
-                {movie.originalLanguage || 'N/A'}
-              </td>
-              <td
-                style={{
-                  padding: '1rem',
-                  borderBottom: '1px solid #e5e7eb',
-                }}>
-                <div style={{display: 'flex', gap: '0.5rem'}}>
-                  <a
-                    href={`/admin/movies/${movie.uid}`}
-                    style={{
-                      padding: '0.375rem 0.75rem',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.875rem',
-                      textDecoration: 'none',
-                      display: 'inline-block',
-                      background: '#2563eb',
-                      color: 'white',
-                    }}
-                    onMouseOver={event =>
-                      (event.currentTarget.style.background = '#1d4ed8')
-                    }
-                    onMouseOut={event =>
-                      (event.currentTarget.style.background = '#2563eb')
-                    }>
-                    Edit
-                  </a>
-                  {movie.imdbUrl && (
+                  {movie.year || 'N/A'}
+                </td>
+                <td
+                  style={{
+                    padding: '1rem',
+                    borderBottom: '1px solid #e5e7eb',
+                  }}>
+                  {movie.originalLanguage || 'N/A'}
+                </td>
+                <td
+                  style={{
+                    padding: '1rem',
+                    borderBottom: '1px solid #e5e7eb',
+                  }}>
+                  <div style={{display: 'flex', gap: '0.5rem'}}>
                     <a
-                      href={movie.imdbUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={`/admin/movies/${movie.uid}`}
                       style={{
                         padding: '0.375rem 0.75rem',
                         border: 'none',
@@ -396,6 +382,69 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
                         fontSize: '0.875rem',
                         textDecoration: 'none',
                         display: 'inline-block',
+                        background: '#2563eb',
+                        color: 'white',
+                      }}
+                      onMouseOver={event =>
+                        (event.currentTarget.style.background = '#1d4ed8')
+                      }
+                      onMouseOut={event =>
+                        (event.currentTarget.style.background = '#2563eb')
+                      }>
+                      Edit
+                    </a>
+                    {movie.imdbUrl && (
+                      <a
+                        href={movie.imdbUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          padding: '0.375rem 0.75rem',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.875rem',
+                          textDecoration: 'none',
+                          display: 'inline-block',
+                          background: '#6b7280',
+                          color: 'white',
+                        }}
+                        onMouseOver={event =>
+                          (event.currentTarget.style.background = '#4b5563')
+                        }
+                        onMouseOut={event =>
+                          (event.currentTarget.style.background = '#6b7280')
+                        }>
+                        IMDb
+                      </a>
+                    )}
+                    <button
+                      onClick={async () => handleDelete(movie.uid, movie.title)}
+                      style={{
+                        padding: '0.375rem 0.75rem',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.875rem',
+                        background: '#dc2626',
+                        color: 'white',
+                      }}
+                      onMouseOver={event =>
+                        (event.currentTarget.style.background = '#b91c1c')
+                      }
+                      onMouseOut={event =>
+                        (event.currentTarget.style.background = '#dc2626')
+                      }>
+                      Delete
+                    </button>
+                    <button
+                      onClick={async () => handleMerge(movie.uid, movie.title)}
+                      style={{
+                        padding: '0.375rem 0.75rem',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.875rem',
                         background: '#6b7280',
                         color: 'white',
                       }}
@@ -405,53 +454,15 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
                       onMouseOut={event =>
                         (event.currentTarget.style.background = '#6b7280')
                       }>
-                      IMDb
-                    </a>
-                  )}
-                  <button
-                    onClick={async () => handleDelete(movie.uid, movie.title)}
-                    style={{
-                      padding: '0.375rem 0.75rem',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.875rem',
-                      background: '#dc2626',
-                      color: 'white',
-                    }}
-                    onMouseOver={event =>
-                      (event.currentTarget.style.background = '#b91c1c')
-                    }
-                    onMouseOut={event =>
-                      (event.currentTarget.style.background = '#dc2626')
-                    }>
-                    Delete
-                  </button>
-                  <button
-                    onClick={async () => handleMerge(movie.uid, movie.title)}
-                    style={{
-                      padding: '0.375rem 0.75rem',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.875rem',
-                      background: '#6b7280',
-                      color: 'white',
-                    }}
-                    onMouseOver={event =>
-                      (event.currentTarget.style.background = '#4b5563')
-                    }
-                    onMouseOut={event =>
-                      (event.currentTarget.style.background = '#6b7280')
-                    }>
-                    Merge
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                      Merge
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
@@ -785,7 +796,14 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
           marginBottom: '2rem',
         }}>
         <h1 style={{color: '#333', margin: 0}}>Movies Management</h1>
-        <div style={{display: 'flex', gap: '1rem', alignItems: 'center'}}>
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '1rem',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+          }}>
           <a
             href="/"
             style={{
@@ -804,6 +822,25 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
               (event.currentTarget.style.background = '#16a34a')
             }>
             トップページ
+          </a>
+          <a
+            href="/admin/ceremonies"
+            style={{
+              padding: '0.5rem 1rem',
+              background: '#0ea5e9',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '4px',
+              fontSize: '0.875rem',
+              transition: 'background-color 0.2s',
+            }}
+            onMouseOver={event =>
+              (event.currentTarget.style.background = '#0284c7')
+            }
+            onMouseOut={event =>
+              (event.currentTarget.style.background = '#0ea5e9')
+            }>
+            セレモニー管理
           </a>
           <a
             href="/admin/movies/selections"
