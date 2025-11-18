@@ -82,8 +82,10 @@ type ImportOptions = {
 let tmdbApiKey: string;
 let tmdbConfiguration: TmdbConfiguration | undefined;
 let releaseDateColumnAvailable: boolean | undefined;
-const AWARD_ORGANIZATION_NAME = '1001 Movies You Must See Before You Die';
-const AWARD_CATEGORY_NAME = 'Selected Films';
+const AWARD_ORGANIZATION_NAME =
+  process.env.AWARD_ORGANIZATION_NAME ?? '1001 Movies You Must See Before You Die';
+const AWARD_CATEGORY_NAME =
+  process.env.AWARD_CATEGORY_NAME ?? 'Selected Films';
 
 type AwardContext = {
   organizationUid: string;
