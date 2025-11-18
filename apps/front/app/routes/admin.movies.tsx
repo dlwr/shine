@@ -1,5 +1,15 @@
 import {useCallback, useEffect, useState, memo, type FormEvent} from 'react';
 import {useSearchParams} from 'react-router';
+import {Button} from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
 import type {Route} from './+types/admin.movies';
 
 type Movie = {
@@ -198,12 +208,7 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 
   if (loading) {
     return (
-      <div
-        style={{
-          textAlign: 'center',
-          padding: '3rem',
-          color: '#666',
-        }}>
+      <div className="rounded-xl border border-dashed border-slate-200 bg-white/80 p-10 text-center text-sm text-slate-500">
         Loading movies...
       </div>
     );
@@ -211,271 +216,99 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 
   if (movies.length === 0) {
     return (
-      <div
-        style={{
-          textAlign: 'center',
-          padding: '3rem',
-          color: '#666',
-        }}>
+      <div className="rounded-xl border border-dashed border-slate-200 bg-white/80 p-12 text-center text-sm text-slate-500">
         No movies found
       </div>
     );
   }
 
   return (
-    <>
-      <div
-        style={{
-          width: '100%',
-          overflowX: 'auto',
-          borderRadius: '0.5rem',
-          border: '1px solid #e5e7eb',
-          boxShadow: '0 1px 2px rgba(15, 23, 42, 0.06)',
-          marginTop: '1.5rem',
-        }}>
-        <table
-          style={{
-            width: '100%',
-            minWidth: '720px',
-            borderCollapse: 'collapse',
-          }}>
-          <thead>
-            <tr>
-              <th
-                style={{
-                  background: '#f3f4f6',
-                  padding: '1rem',
-                  textAlign: 'left',
-                  fontWeight: 600,
-                  color: '#374151',
-                  borderBottom: '1px solid #e5e7eb',
-                }}>
-                Poster
-              </th>
-              <th
-                style={{
-                  background: '#f3f4f6',
-                  padding: '1rem',
-                  textAlign: 'left',
-                  fontWeight: 600,
-                  color: '#374151',
-                  borderBottom: '1px solid #e5e7eb',
-                }}>
-                Title
-              </th>
-              <th
-                style={{
-                  background: '#f3f4f6',
-                  padding: '1rem',
-                  textAlign: 'left',
-                  fontWeight: 600,
-                  color: '#374151',
-                  borderBottom: '1px solid #e5e7eb',
-                }}>
-                Year
-              </th>
-              <th
-                style={{
-                  background: '#f3f4f6',
-                  padding: '1rem',
-                  textAlign: 'left',
-                  fontWeight: 600,
-                  color: '#374151',
-                  borderBottom: '1px solid #e5e7eb',
-                }}>
-                Language
-              </th>
-              <th
-                style={{
-                  background: '#f3f4f6',
-                  padding: '1rem',
-                  textAlign: 'left',
-                  fontWeight: 600,
-                  color: '#374151',
-                  borderBottom: '1px solid #e5e7eb',
-                }}>
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {movies.map(movie => (
-              <tr
-                key={movie.uid}
-                style={{
-                  transition: 'background-color 0.2s',
-                }}
-                onMouseOver={event =>
-                  (event.currentTarget.style.background = '#f9fafb')
-                }
-                onMouseOut={event =>
-                  (event.currentTarget.style.background = 'transparent')
-                }>
-                <td
-                  style={{
-                    padding: '1rem',
-                    borderBottom: '1px solid #e5e7eb',
-                  }}>
-                  {movie.posterUrl ? (
-                    <img
-                      src={movie.posterUrl}
-                      alt={movie.title}
-                      style={{
-                        width: '50px',
-                        height: '75px',
-                        objectFit: 'cover',
-                        borderRadius: '4px',
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: '50px',
-                        height: '75px',
-                        background: '#e5e7eb',
-                        borderRadius: '4px',
-                      }}
-                    />
-                  )}
-                </td>
-                <td
-                  style={{
-                    padding: '1rem',
-                    borderBottom: '1px solid #e5e7eb',
-                  }}>
-                  <div
-                    style={{
-                      fontWeight: 500,
-                      color: '#111827',
-                    }}>
-                    {movie.title}
-                  </div>
-                </td>
-                <td
-                  style={{
-                    padding: '1rem',
-                    borderBottom: '1px solid #e5e7eb',
-                    color: '#6b7280',
-                  }}>
-                  {movie.year || 'N/A'}
-                </td>
-                <td
-                  style={{
-                    padding: '1rem',
-                    borderBottom: '1px solid #e5e7eb',
-                  }}>
-                  {movie.originalLanguage || 'N/A'}
-                </td>
-                <td
-                  style={{
-                    padding: '1rem',
-                    borderBottom: '1px solid #e5e7eb',
-                  }}>
-                  <div style={{display: 'flex', gap: '0.5rem'}}>
-                    <a
-                      href={`/admin/movies/${movie.uid}`}
-                      style={{
-                        padding: '0.375rem 0.75rem',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '0.875rem',
-                        textDecoration: 'none',
-                        display: 'inline-block',
-                        background: '#2563eb',
-                        color: 'white',
-                      }}
-                      onMouseOver={event =>
-                        (event.currentTarget.style.background = '#1d4ed8')
-                      }
-                      onMouseOut={event =>
-                        (event.currentTarget.style.background = '#2563eb')
-                      }>
-                      Edit
-                    </a>
-                    {movie.imdbUrl && (
-                      <a
-                        href={movie.imdbUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          padding: '0.375rem 0.75rem',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '0.875rem',
-                          textDecoration: 'none',
-                          display: 'inline-block',
-                          background: '#6b7280',
-                          color: 'white',
-                        }}
-                        onMouseOver={event =>
-                          (event.currentTarget.style.background = '#4b5563')
-                        }
-                        onMouseOut={event =>
-                          (event.currentTarget.style.background = '#6b7280')
-                        }>
-                        IMDb
-                      </a>
-                    )}
-                    <button
-                      onClick={async () => handleDelete(movie.uid, movie.title)}
-                      style={{
-                        padding: '0.375rem 0.75rem',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '0.875rem',
-                        background: '#dc2626',
-                        color: 'white',
-                      }}
-                      onMouseOver={event =>
-                        (event.currentTarget.style.background = '#b91c1c')
-                      }
-                      onMouseOut={event =>
-                        (event.currentTarget.style.background = '#dc2626')
-                      }>
-                      Delete
-                    </button>
-                    <button
-                      onClick={async () => handleMerge(movie.uid, movie.title)}
-                      style={{
-                        padding: '0.375rem 0.75rem',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '0.875rem',
-                        background: '#6b7280',
-                        color: 'white',
-                      }}
-                      onMouseOver={event =>
-                        (event.currentTarget.style.background = '#4b5563')
-                      }
-                      onMouseOut={event =>
-                        (event.currentTarget.style.background = '#6b7280')
-                      }>
-                      Merge
-                    </button>
-                  </div>
-                </td>
+    <div className="space-y-4">
+      <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] border-collapse text-sm">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Poster</th>
+                <th className="px-4 py-3">Title</th>
+                <th className="px-4 py-3">Year</th>
+                <th className="px-4 py-3">Language</th>
+                <th className="px-4 py-3">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {movies.map(movie => (
+                <tr
+                  key={movie.uid}
+                  className="border-b border-slate-100 text-sm transition hover:bg-slate-50">
+                  <td className="px-4 py-4">
+                    {movie.posterUrl ? (
+                      <img
+                        src={movie.posterUrl}
+                        alt={movie.title}
+                        className="h-20 w-16 rounded-md object-cover shadow-sm"
+                      />
+                    ) : (
+                      <div className="h-20 w-16 rounded-md border border-dashed border-slate-200 bg-slate-100" />
+                    )}
+                  </td>
+                  <td className="px-4 py-4">
+                    <p className="font-semibold text-slate-900">
+                      {movie.title}
+                    </p>
+                  </td>
+                  <td className="px-4 py-4 text-slate-600">
+                    {movie.year || 'N/A'}
+                  </td>
+                  <td className="px-4 py-4 text-slate-600">
+                    {movie.originalLanguage || 'N/A'}
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="flex flex-wrap gap-2">
+                      <Button asChild size="sm" variant="outline">
+                        <a href={`/admin/movies/${movie.uid}`}>Edit</a>
+                      </Button>
+                      {movie.imdbUrl && (
+                        <Button asChild size="sm" variant="secondary">
+                          <a
+                            href={movie.imdbUrl}
+                            target="_blank"
+                            rel="noopener noreferrer">
+                            IMDb
+                          </a>
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={async () =>
+                          handleDelete(movie.uid, movie.title)
+                        }>
+                        Delete
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="bg-slate-700 text-white hover:bg-slate-600"
+                        onClick={async () =>
+                          handleMerge(movie.uid, movie.title)
+                        }>
+                        Merge
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Pagination */}
       {pagination.totalPages > 1 && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '1rem',
-            marginTop: '2rem',
-            padding: '1rem',
-          }}>
-          <button
+        <div className="flex flex-wrap items-center justify-center gap-4 rounded-xl border border-dashed border-slate-200 bg-white/90 px-4 py-3 text-sm text-slate-600">
+          <Button
+            variant="outline"
+            size="sm"
             disabled={pagination.page === 1}
             onClick={() => {
               if (pagination.page > 1 && globalThis.window !== undefined) {
@@ -485,25 +318,18 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
                 parameters.set('page', String(pagination.page - 1));
                 const newUrl = `${globalThis.location.pathname}?${parameters.toString()}`;
                 globalThis.history.replaceState({}, '', newUrl);
-                // Force re-fetch by updating location
                 globalThis.dispatchEvent(new Event('urlchange'));
               }
             }}
-            style={{
-              padding: '0.5rem 1rem',
-              border: '1px solid #e5e7eb',
-              background: pagination.page === 1 ? '#f3f4f6' : 'white',
-              color: pagination.page === 1 ? '#9ca3af' : '#374151',
-              borderRadius: '4px',
-              cursor: pagination.page === 1 ? 'not-allowed' : 'pointer',
-              opacity: pagination.page === 1 ? 0.5 : 1,
-            }}>
+            className="min-w-[120px]">
             Previous
-          </button>
-          <span style={{color: '#6b7280'}}>
+          </Button>
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Page {pagination.page} of {pagination.totalPages}
           </span>
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             disabled={pagination.page === pagination.totalPages}
             onClick={() => {
               if (
@@ -516,31 +342,15 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
                 parameters.set('page', String(pagination.page + 1));
                 const newUrl = `${globalThis.location.pathname}?${parameters.toString()}`;
                 globalThis.history.replaceState({}, '', newUrl);
-                // Force re-fetch by updating location
                 globalThis.dispatchEvent(new Event('urlchange'));
               }
             }}
-            style={{
-              padding: '0.5rem 1rem',
-              border: '1px solid #e5e7eb',
-              background:
-                pagination.page === pagination.totalPages ? '#f3f4f6' : 'white',
-              color:
-                pagination.page === pagination.totalPages
-                  ? '#9ca3af'
-                  : '#374151',
-              borderRadius: '4px',
-              cursor:
-                pagination.page === pagination.totalPages
-                  ? 'not-allowed'
-                  : 'pointer',
-              opacity: pagination.page === pagination.totalPages ? 0.5 : 1,
-            }}>
+            className="min-w-[120px]">
             Next
-          </button>
+          </Button>
         </div>
       )}
-    </>
+    </div>
   );
 });
 
@@ -781,249 +591,118 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
   };
 
   return (
-    <div
-      style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        padding: '2rem',
-      }}>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 lg:px-8">
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '2rem',
-        }}>
-        <h1 style={{color: '#333', margin: 0}}>Movies Management</h1>
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '1rem',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-          }}>
-          <a
-            href="/"
-            style={{
-              padding: '0.5rem 1rem',
-              background: '#16a34a',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '4px',
-              fontSize: '0.875rem',
-              transition: 'background-color 0.2s',
-            }}
-            onMouseOver={event =>
-              (event.currentTarget.style.background = '#15803d')
-            }
-            onMouseOut={event =>
-              (event.currentTarget.style.background = '#16a34a')
-            }>
-            トップページ
-          </a>
-          <a
-            href="/admin/ceremonies"
-            style={{
-              padding: '0.5rem 1rem',
-              background: '#0ea5e9',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '4px',
-              fontSize: '0.875rem',
-              transition: 'background-color 0.2s',
-            }}
-            onMouseOver={event =>
-              (event.currentTarget.style.background = '#0284c7')
-            }
-            onMouseOut={event =>
-              (event.currentTarget.style.background = '#0ea5e9')
-            }>
-            セレモニー管理
-          </a>
-          <a
-            href="/admin/movies/selections"
-            style={{
-              padding: '0.5rem 1rem',
-              background: '#4f46e5',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '4px',
-              fontSize: '0.875rem',
-              transition: 'background-color 0.2s',
-            }}
-            onMouseOver={event =>
-              (event.currentTarget.style.background = '#4338ca')
-            }
-            onMouseOut={event =>
-              (event.currentTarget.style.background = '#4f46e5')
-            }>
-            Movie Selections
-          </a>
-          <button
-            onClick={handleLogout}
-            style={{
-              padding: '0.5rem 1rem',
-              background: '#dc2626',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-            }}
-            onMouseOver={event =>
-              (event.currentTarget.style.background = '#b91c1c')
-            }
-            onMouseOut={event =>
-              (event.currentTarget.style.background = '#dc2626')
-            }>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-3xl font-semibold text-slate-900">
+          Movies Management
+        </h1>
+        <div className="flex flex-wrap gap-3">
+          <Button
+            asChild
+            size="sm"
+            className="bg-emerald-600 text-white hover:bg-emerald-500">
+            <a href="/">トップページ</a>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            className="bg-sky-600 text-white hover:bg-sky-500">
+            <a href="/admin/ceremonies">セレモニー管理</a>
+          </Button>
+          <Button asChild size="sm" variant="secondary">
+            <a href="/admin/movies/selections">Movie Selections</a>
+          </Button>
+          <Button size="sm" variant="destructive" onClick={handleLogout}>
             Logout
-          </button>
+          </Button>
         </div>
       </div>
 
-      {/* Search - Uncontrolled input to prevent re-render issues */}
-      <div style={{marginBottom: '2rem'}}>
-        <div style={{position: 'relative', maxWidth: '400px'}}>
-          <input
-            type="text"
-            defaultValue={currentSearch}
-            onChange={event => {
-              const {value} = event.target;
-              // Clear existing timeout
-              if (globalWithSearchTimeout.searchTimeout) {
-                clearTimeout(globalWithSearchTimeout.searchTimeout);
-              }
-
-              // Set new timeout for debounced search
-              globalWithSearchTimeout.searchTimeout = setTimeout(() => {
-                handleSearch(value);
-              }, 300);
-            }}
-            placeholder="Search movies by title..."
-            style={{
-              width: '100%',
-              padding: '0.75rem 2.5rem 0.75rem 1rem',
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              background: 'white',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Create Movie */}
-      <div
-        style={{
-          marginBottom: '2rem',
-          padding: '1.5rem',
-          background: '#f9fafb',
-          borderRadius: '8px',
-          border: '1px solid #e5e7eb',
-        }}>
-        <h2 style={{margin: 0, marginBottom: '1rem', color: '#111827'}}>
-          Add Movie by IMDb ID
-        </h2>
-        <p style={{margin: 0, marginBottom: '1rem', color: '#6b7280'}}>
-          Enter an IMDb ID (e.g., tt1234567). TMDB data is fetched
-          automatically.
-        </p>
-        <form
-          onSubmit={handleCreateMovie}
-          style={{
-            display: 'flex',
-            gap: '1rem',
-            flexWrap: 'wrap',
-            alignItems: 'flex-end',
-          }}>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              flex: '1 1 240px',
-            }}>
-            <label
-              htmlFor="new-movie-imdb-id"
-              style={{marginBottom: '0.5rem', color: '#374151'}}>
-              IMDb ID
-            </label>
-            <input
-              id="new-movie-imdb-id"
+      <Card className="bg-white">
+        <CardHeader>
+          <CardTitle>作品検索</CardTitle>
+          <CardDescription>
+            タイトルの一部を入力すると URL
+            パラメーターが更新され、一覧が自動的に再取得されます。
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="relative max-w-xl">
+            <Input
               type="text"
-              value={newImdbId}
+              defaultValue={currentSearch}
+              placeholder="Search movies by title..."
+              aria-label="Search movies"
               onChange={event => {
-                setNewImdbId(event.target.value);
-                if (createError) {
-                  setCreateError(undefined);
+                const {value} = event.target;
+                if (globalWithSearchTimeout.searchTimeout) {
+                  clearTimeout(globalWithSearchTimeout.searchTimeout);
                 }
-                if (createSuccess) {
-                  setCreateSuccess(undefined);
-                }
-              }}
-              placeholder="tt1234567"
-              inputMode="text"
-              required
-              autoComplete="off"
-              style={{
-                padding: '0.75rem 1rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '1rem',
-                background: 'white',
+                globalWithSearchTimeout.searchTimeout = setTimeout(() => {
+                  handleSearch(value);
+                }, 300);
               }}
             />
           </div>
-          <button
-            type="submit"
-            disabled={isCreating}
-            style={{
-              padding: '0.75rem 1.5rem',
-              border: 'none',
-              borderRadius: '6px',
-              background: isCreating ? '#9ca3af' : '#2563eb',
-              color: 'white',
-              cursor: isCreating ? 'not-allowed' : 'pointer',
-              fontSize: '1rem',
-              transition: 'background-color 0.2s',
-            }}
-            onMouseOver={event => {
-              if (!isCreating) {
-                event.currentTarget.style.background = '#1d4ed8';
-              }
-            }}
-            onMouseOut={event => {
-              if (!isCreating) {
-                event.currentTarget.style.background = '#2563eb';
-              }
-            }}>
-            {isCreating ? 'Registering...' : 'Register Movie'}
-          </button>
-        </form>
-        {createError && (
-          <p style={{color: '#dc2626', marginTop: '0.75rem'}}>{createError}</p>
-        )}
-        {createSuccess && (
-          <p style={{color: '#16a34a', marginTop: '0.75rem'}}>
-            {createSuccess}
-          </p>
-        )}
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Movies Table */}
-      <div
-        style={{
-          background: 'white',
-          borderRadius: '8px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          overflow: 'hidden',
-        }}>
-        <MoviesList apiUrl={apiUrl} />
-      </div>
+      <Card className="bg-white">
+        <CardHeader>
+          <CardTitle>Add Movie by IMDb ID</CardTitle>
+          <CardDescription>
+            Enter an IMDb ID (e.g., tt1234567). TMDB data is fetched
+            automatically.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <form
+            onSubmit={handleCreateMovie}
+            className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <div className="flex-1">
+              <Label
+                htmlFor="new-movie-imdb-id"
+                className="text-sm font-medium text-slate-600">
+                IMDb ID
+              </Label>
+              <Input
+                id="new-movie-imdb-id"
+                type="text"
+                value={newImdbId}
+                onChange={event => {
+                  setNewImdbId(event.target.value);
+                  if (createError) {
+                    setCreateError(undefined);
+                  }
+                  if (createSuccess) {
+                    setCreateSuccess(undefined);
+                  }
+                }}
+                placeholder="tt1234567"
+                inputMode="text"
+                required
+                autoComplete="off"
+                className="mt-2"
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={isCreating}
+              className="sm:h-10 sm:min-w-[160px]">
+              {isCreating ? 'Registering...' : 'Register Movie'}
+            </Button>
+          </form>
+          {createError && (
+            <p className="text-sm text-destructive">{createError}</p>
+          )}
+          {createSuccess && (
+            <p className="text-sm text-emerald-600">{createSuccess}</p>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Pagination is now handled inside MoviesList */}
+      <MoviesList apiUrl={apiUrl} />
     </div>
   );
 }
