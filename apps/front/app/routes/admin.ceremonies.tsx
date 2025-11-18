@@ -1,4 +1,14 @@
 import {useEffect, useMemo, useState} from 'react';
+import {Button} from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
 import type {Route} from './+types/admin.ceremonies';
 
 type CeremonyListItem = {
@@ -213,42 +223,57 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
             </p>
           </div>
           <div className="flex gap-3">
-            <a
-              href="/admin/ceremonies/new"
-              className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-              ＋ セレモニーを追加
-            </a>
-            <button
-              type="button"
+            <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-500">
+              <a href="/admin/ceremonies/new">＋ セレモニーを追加</a>
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
               onClick={handleLogout}
-              className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+              className="px-4">
               ログアウト
-            </button>
+            </Button>
           </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <section className="mb-6 rounded-lg bg-white p-6 shadow">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <Card className="mb-6">
+          <CardHeader className="pb-4">
+            <CardTitle>検索・フィルター</CardTitle>
+            <CardDescription>
+              団体名や開催年で素早く絞り込み、目的のセレモニーを探せます。
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex flex-1 flex-col gap-2 lg:flex-row lg:items-center">
-              <label className="flex flex-1 flex-col text-sm font-medium text-gray-700 lg:mr-4">
-                キーワード検索
-                <input
+              <div className="flex flex-1 flex-col lg:mr-4">
+                <Label
+                  htmlFor="ceremony-search"
+                  className="text-sm font-medium text-gray-700">
+                  キーワード検索
+                </Label>
+                <Input
+                  id="ceremony-search"
                   type="search"
                   value={searchQuery}
                   onChange={event => setSearchQuery(event.target.value)}
                   placeholder="団体名・場所・年で検索"
-                  className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="mt-1"
                 />
-              </label>
+              </div>
 
-              <label className="flex flex-col text-sm font-medium text-gray-700">
-                主催団体
+              <div className="flex flex-col">
+                <Label
+                  htmlFor="organization-filter"
+                  className="text-sm font-medium text-gray-700">
+                  主催団体
+                </Label>
                 <select
+                  id="organization-filter"
                   value={organizationFilter}
                   onChange={event => setOrganizationFilter(event.target.value)}
-                  className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  className="mt-1 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
                   <option value="">すべて</option>
                   {organizations.map(option => (
                     <option key={option.value} value={option.value}>
@@ -256,10 +281,10 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
                     </option>
                   ))}
                 </select>
-              </label>
+              </div>
             </div>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
 
         <section className="rounded-lg bg-white shadow">
           {isLoading ? (
@@ -351,11 +376,13 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
                         {formatTimestamp(ceremony.updatedAt)}
                       </td>
                       <td className="px-4 py-3 text-sm text-blue-600">
-                        <a
-                          href={`/admin/ceremonies/${ceremony.uid}`}
-                          className="rounded border border-blue-600 px-3 py-1 text-sm font-medium text-blue-600 hover:bg-blue-50">
-                          編集
-                        </a>
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="outline"
+                          className="border-blue-600 text-blue-600 hover:bg-blue-50">
+                          <a href={`/admin/ceremonies/${ceremony.uid}`}>編集</a>
+                        </Button>
                       </td>
                     </tr>
                   ))}

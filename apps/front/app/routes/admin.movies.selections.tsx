@@ -1,6 +1,15 @@
 import {useEffect, useState} from 'react';
-import type {Route} from './+types/admin.movies.selections';
 import {MovieCard} from '@/components/molecules/movie-card';
+import {Button} from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {Input} from '@/components/ui/input';
+import type {Route} from './+types/admin.movies.selections';
 
 type SelectionData = {
   date: string;
@@ -318,61 +327,52 @@ export default function AdminMovieSelections({
 
   if (loading) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '50vh',
-        }}>
-        <div style={{color: '#6b7280'}}>読み込み中...</div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <span className="text-sm text-slate-500">読み込み中...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '50vh',
-        }}>
-        <div style={{color: '#ef4444'}}>{error}</div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>エラーが発生しました</CardTitle>
+            <CardDescription className="text-red-600">{error}</CardDescription>
+          </CardHeader>
+        </Card>
       </div>
     );
   }
 
   return (
     <main className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
             <h1 className="text-3xl font-bold text-gray-900">映画選択管理</h1>
+            <p className="text-sm text-gray-600">
+              プレビュー用の「今日/今週/今月の映画」を素早く調整できます。
+            </p>
           </div>
-          <div className="flex items-center space-x-4">
-            <a
-              href="/"
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-              トップページ
-            </a>
-            <a
-              href="/admin/movies"
-              className="text-gray-600 hover:text-gray-900 transition-colors">
-              ← 映画一覧に戻る
-            </a>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+          <div className="flex flex-wrap gap-3">
+            <Button
+              asChild
+              size="sm"
+              className="bg-emerald-600 text-white hover:bg-emerald-500">
+              <a href="/">トップページ</a>
+            </Button>
+            <Button asChild size="sm" variant="secondary">
+              <a href="/admin/movies">← 映画一覧に戻る</a>
+            </Button>
+            <Button size="sm" variant="destructive" onClick={handleLogout}>
               ログアウト
-            </button>
+            </Button>
           </div>
         </div>
 
-        {/* Selection Cards Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {(['daily', 'weekly', 'monthly'] as const).map(type => {
             const selection =
               selections?.[
@@ -381,26 +381,27 @@ export default function AdminMovieSelections({
                 }` as keyof PreviewSelections
               ];
             return (
-              <div
+              <Card
                 key={type}
                 data-testid={`${type}-selection`}
-                className="bg-white rounded-lg shadow-lg overflow-hidden">
-                {/* Card Header */}
-                <div
-                  className={`bg-gradient-to-r ${getTypeColor(type)} p-6 text-white`}>
-                  <h2 className="text-xl font-bold">{getTypeLabel(type)}</h2>
+                className="overflow-hidden shadow-lg">
+                <CardHeader
+                  className={`bg-gradient-to-r ${getTypeColor(
+                    type,
+                  )} text-white`}>
+                  <CardTitle className="text-white">
+                    {getTypeLabel(type)}
+                  </CardTitle>
                   {selection && (
-                    <p className="text-sm opacity-90 mt-1">
+                    <CardDescription className="text-white/90">
                       選択日時:{' '}
                       {new Date(selection.date).toLocaleDateString('ja-JP')}
-                    </p>
+                    </CardDescription>
                   )}
-                </div>
-
-                {/* Card Content */}
-                <div className="p-6">
+                </CardHeader>
+                <CardContent className="space-y-6">
                   {selection?.movie ? (
-                    <div className="flex flex-col items-center gap-6">
+                    <div className="space-y-6">
                       <div className="flex justify-center">
                         <MovieCard
                           movie={selection.movie}
@@ -408,112 +409,98 @@ export default function AdminMovieSelections({
                           adminToken={adminToken}
                         />
                       </div>
-
                       <div className="flex w-full flex-col gap-2 sm:flex-row">
-                        <button
-                          onClick={() => {
-                            openOverrideModal(type);
-                          }}
-                          className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700">
+                        <Button
+                          onClick={() => openOverrideModal(type)}
+                          className="flex-1 bg-blue-600 text-white hover:bg-blue-500">
                           Override Selection
-                        </button>
-                        <a
-                          href={`/admin/movies/${selection.movie.uid}`}
-                          className="flex-1 rounded-lg bg-gray-600 px-4 py-2 text-center text-white transition-colors hover:bg-gray-700">
-                          Edit Movie
-                        </a>
+                        </Button>
+                        <Button
+                          asChild
+                          variant="secondary"
+                          className="flex-1 bg-slate-700 text-white hover:bg-slate-600">
+                          <a href={`/admin/movies/${selection.movie.uid}`}>
+                            Edit Movie
+                          </a>
+                        </Button>
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center text-gray-500">
-                      <p className="mb-4">選択された映画がありません</p>
-                      <button
-                        onClick={() => {
-                          openOverrideModal(type);
-                        }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <div className="space-y-4 text-center text-gray-500">
+                      <p>選択された映画がありません</p>
+                      <Button
+                        onClick={() => openOverrideModal(type)}
+                        className="bg-blue-600 text-white hover:bg-blue-500">
                         映画を選択
-                      </button>
+                      </Button>
                     </div>
                   )}
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             );
           })}
         </div>
 
-        {/* Override Modal */}
         {showOverrideModal && (
           <div
             data-testid="override-modal"
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg w-full max-w-4xl max-h-screen overflow-auto m-4">
-              <div className="p-6 border-b">
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6">
+            <div className="max-h-screen w-full max-w-4xl overflow-auto rounded-lg bg-white shadow-xl">
+              <div className="border-b p-6">
                 <h3 className="text-xl font-bold">映画選択をオーバーライド</h3>
                 <p className="text-gray-600">
                   {getTypeLabel(overrideType)}の選択
                 </p>
               </div>
 
-              {/* Tabs */}
-              <div className="border-b">
-                <div className="flex">
-                  <button
-                    data-testid="search-tab"
-                    onClick={() => {
-                      setActiveTab('search');
-                    }}
-                    className={`px-6 py-3 font-medium ${
-                      activeTab === 'search'
-                        ? 'border-b-2 border-blue-600 text-blue-600'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}>
-                    映画を検索
-                  </button>
-                  <button
-                    data-testid="random-tab"
-                    onClick={() => {
-                      setActiveTab('random');
-                    }}
-                    className={`px-6 py-3 font-medium ${
-                      activeTab === 'random'
-                        ? 'border-b-2 border-blue-600 text-blue-600'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}>
-                    ランダム選択
-                  </button>
-                </div>
+              <div className="border-b flex">
+                <Button
+                  data-testid="search-tab"
+                  variant="ghost"
+                  className={`w-1/2 rounded-none border-b-2 text-sm font-medium ${
+                    activeTab === 'search'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setActiveTab('search')}>
+                  映画を検索
+                </Button>
+                <Button
+                  data-testid="random-tab"
+                  variant="ghost"
+                  className={`w-1/2 rounded-none border-b-2 text-sm font-medium ${
+                    activeTab === 'random'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setActiveTab('random')}>
+                  ランダム選択
+                </Button>
               </div>
 
-              {/* Tab Content */}
               <div className="p-6">
                 {activeTab === 'search' && (
                   <div>
-                    <input
+                    <Input
                       data-testid="movie-search-input"
                       type="text"
                       placeholder="映画タイトルを検索..."
                       value={searchQuery}
-                      onChange={event => {
-                        setSearchQuery(event.target.value);
-                      }}
-                      className="w-full p-3 border border-gray-300 rounded-lg mb-4"
+                      onChange={event => setSearchQuery(event.target.value)}
+                      className="mb-4"
                     />
-
                     {searchLoading && (
                       <div className="text-center text-gray-600">検索中...</div>
                     )}
-
                     <div
                       data-testid="search-results"
-                      className="space-y-2 max-h-96 overflow-y-auto">
+                      className="max-h-96 space-y-2 overflow-y-auto">
                       {searchResults.map(movie => (
-                        <div
+                        <button
+                          type="button"
                           key={movie.uid}
-                          onClick={() => {
-                            setSelectedMovie(movie);
-                          }}
-                          className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                          onClick={() => setSelectedMovie(movie)}
+                          className={`w-full rounded-lg border p-4 text-left transition-colors ${
                             selectedMovie?.uid === movie.uid
                               ? 'border-blue-600 bg-blue-50'
                               : 'border-gray-200 hover:border-gray-300'
@@ -526,69 +513,63 @@ export default function AdminMovieSelections({
                             {movie.nominations?.length > 0 &&
                               ` • ${movie.nominations.length}件のノミネート`}
                           </p>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   </div>
                 )}
 
                 {activeTab === 'random' && (
-                  <div className="text-center">
-                    <button
+                  <div className="space-y-6 text-center">
+                    <Button
                       onClick={generateRandomMovie}
                       disabled={randomLoading}
-                      className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50">
+                      className="bg-green-600 text-white hover:bg-green-500 disabled:opacity-50">
                       {randomLoading
                         ? 'ランダム映画を生成中...'
                         : 'ランダム映画を生成'}
-                    </button>
-
+                    </Button>
                     {randomMovie && (
                       <div
                         data-testid="random-movie-result"
-                        className="mt-6 flex justify-center">
-                        <div
-                          className={`relative inline-flex rounded-xl transition-all duration-200 cursor-pointer ${
+                        className="flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedMovie(randomMovie)}
+                          className={`relative inline-flex rounded-xl transition-all duration-200 ${
                             selectedMovie?.uid === randomMovie.uid
                               ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white'
                               : 'hover:ring-2 hover:ring-blue-300 hover:ring-offset-2 hover:ring-offset-white'
-                          }`}
-                          onClick={() => {
-                            setSelectedMovie(randomMovie);
-                          }}>
+                          }`}>
                           <MovieCard
                             movie={randomMovie}
                             locale={locale}
                             adminToken={adminToken}
                           />
-
                           {selectedMovie?.uid === randomMovie.uid && (
                             <span className="absolute top-3 right-3 rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">
                               選択中
                             </span>
                           )}
-                        </div>
+                        </button>
                       </div>
                     )}
                   </div>
                 )}
               </div>
 
-              {/* Modal Actions */}
-              <div className="p-6 border-t flex justify-end space-x-4">
-                <button
-                  onClick={() => {
-                    setShowOverrideModal(false);
-                  }}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+              <div className="flex justify-end gap-3 border-t p-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowOverrideModal(false)}>
                   キャンセル
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={handleOverride}
                   disabled={!selectedMovie}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
+                  className="bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50">
                   選択を確定
-                </button>
+                </Button>
               </div>
             </div>
           </div>

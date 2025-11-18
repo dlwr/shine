@@ -1,5 +1,8 @@
 import {type FormEvent, useCallback, useEffect, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+import {Textarea} from '@/components/ui/textarea';
 import type {Route} from './+types/admin.ceremonies.$uid';
 
 type LoaderData = {
@@ -1025,22 +1028,30 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
               {!isNew && navigation && (
                 <div className="flex justify-end gap-2">
                   {navigation.previous ? (
-                    <a
-                      href={`/admin/ceremonies/${navigation.previous.uid}`}
-                      className="rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                      ← {formatNavigationLabel(navigation.previous)}
-                    </a>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="text-gray-700">
+                      <a href={`/admin/ceremonies/${navigation.previous.uid}`}>
+                        ← {formatNavigationLabel(navigation.previous)}
+                      </a>
+                    </Button>
                   ) : (
                     <span className="rounded border border-gray-200 px-3 py-1 text-sm font-medium text-gray-300">
                       ← 前へ
                     </span>
                   )}
                   {navigation.next ? (
-                    <a
-                      href={`/admin/ceremonies/${navigation.next.uid}`}
-                      className="rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                      {formatNavigationLabel(navigation.next)} →
-                    </a>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="text-gray-700">
+                      <a href={`/admin/ceremonies/${navigation.next.uid}`}>
+                        {formatNavigationLabel(navigation.next)} →
+                      </a>
+                    </Button>
                   ) : (
                     <span className="rounded border border-gray-200 px-3 py-1 text-sm font-medium text-gray-300">
                       次へ →
@@ -1049,28 +1060,33 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                 </div>
               )}
               {!isNew && ceremonyDetail?.ceremony.imdbEventUrl && (
-                <a
-                  href={ceremonyDetail.ceremony.imdbEventUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50">
-                  IMDbで表示
-                </a>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-600 text-blue-600 hover:bg-blue-50">
+                  <a
+                    href={ceremonyDetail.ceremony.imdbEventUrl}
+                    target="_blank"
+                    rel="noreferrer">
+                    IMDbで表示
+                  </a>
+                </Button>
               )}
               <div className="flex gap-3">
-                <a
-                  href="/admin/ceremonies"
-                  className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                  一覧に戻る
-                </a>
+                <Button asChild size="sm" variant="secondary">
+                  <a href="/admin/ceremonies">一覧に戻る</a>
+                </Button>
                 {!isNew && (
-                  <button
+                  <Button
                     type="button"
+                    variant="destructive"
+                    size="sm"
                     onClick={handleDeleteCeremony}
                     disabled={isDeleting}
-                    className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60">
+                    className="px-4">
                     {isDeleting ? '削除中…' : 'セレモニーを削除'}
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -1118,26 +1134,26 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
 
                 <label className="flex flex-col text-sm font-medium text-gray-700">
                   開催年
-                  <input
+                  <Input
                     type="number"
                     name="year"
                     value={formState.year}
                     onChange={handleInputChange}
                     placeholder="2025"
-                    className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="mt-1"
                     required
                   />
                 </label>
 
                 <label className="flex flex-col text-sm font-medium text-gray-700">
                   回数
-                  <input
+                  <Input
                     type="number"
                     name="ceremonyNumber"
                     value={formState.ceremonyNumber}
                     onChange={handleInputChange}
                     placeholder="例: 96"
-                    className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="mt-1"
                     min={1}
                   />
                 </label>
@@ -1145,48 +1161,48 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="flex flex-col text-sm font-medium text-gray-700">
                     開始日
-                    <input
+                    <Input
                       type="date"
                       name="startDate"
                       value={formState.startDate}
                       onChange={handleInputChange}
-                      className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="mt-1"
                     />
                   </label>
 
                   <label className="flex flex-col text-sm font-medium text-gray-700">
                     終了日
-                    <input
+                    <Input
                       type="date"
                       name="endDate"
                       value={formState.endDate}
                       onChange={handleInputChange}
-                      className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="mt-1"
                     />
                   </label>
                 </div>
 
                 <label className="md:col-span-2 flex flex-col text-sm font-medium text-gray-700">
                   開催場所
-                  <input
+                  <Input
                     type="text"
                     name="location"
                     value={formState.location}
                     onChange={handleInputChange}
                     placeholder="例: ロサンゼルス"
-                    className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="mt-1"
                   />
                 </label>
 
                 <label className="md:col-span-2 flex flex-col text-sm font-medium text-gray-700">
                   IMDbイベントURL
-                  <input
+                  <Input
                     type="url"
                     name="imdbEventUrl"
                     value={formState.imdbEventUrl}
                     onChange={handleInputChange}
                     placeholder="https://www.imdb.com/event/ev0000372/1978/1"
-                    className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="mt-1"
                   />
                   <span className="mt-1 text-xs text-gray-500">
                     IMDb のイベントページへの完全な URL
@@ -1196,13 +1212,13 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
 
                 <label className="md:col-span-2 flex flex-col text-sm font-medium text-gray-700">
                   説明
-                  <textarea
+                  <Textarea
                     name="description"
                     value={formState.description}
                     onChange={handleInputChange}
                     rows={4}
                     placeholder="補足情報があれば記入してください"
-                    className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="mt-1"
                   />
                 </label>
               </div>
@@ -1221,12 +1237,12 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
             )}
 
             <div className="flex justify-end gap-3">
-              <button
+              <Button
                 type="submit"
                 disabled={isSaving || awardsLoading}
-                className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+                className="bg-blue-600 text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60">
                 {isSaving ? '保存中…' : '保存する'}
-              </button>
+              </Button>
             </div>
           </form>
         </section>
@@ -1248,14 +1264,14 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                 </span>
               )}
               {!isNew && (
-                <button
+                <Button
                   type="button"
                   onClick={handleSyncFromImdb}
                   disabled={isSyncButtonDisabled}
                   title={syncButtonTooltip}
-                  className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60">
+                  className="bg-indigo-600 text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60">
                   {isSyncingFromImdb ? '同期中…' : 'IMDbリストと同期'}
-                </button>
+                </Button>
               )}
               {!isNew && organizationCategories.length > 1 && (
                 <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -1339,14 +1355,16 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                             {nomination.specialMention ?? '-'}
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <button
+                            <Button
                               type="button"
+                              variant="outline"
+                              size="sm"
+                              className="border-red-600 text-red-600 hover:bg-red-50"
                               onClick={() =>
                                 handleRemoveNomination(nomination.uid)
-                              }
-                              className="rounded border border-red-600 px-3 py-1 text-sm font-medium text-red-600 hover:bg-red-50">
+                              }>
                               削除
-                            </button>
+                            </Button>
                           </td>
                         </tr>
                       ))}
@@ -1369,22 +1387,22 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                     onSubmit={handleSearchMovies}>
                     <label className="flex flex-1 flex-col text-sm font-medium text-gray-700">
                       キーワード検索
-                      <input
+                      <Input
                         type="search"
                         value={movieSearchQuery}
                         onChange={event =>
                           setMovieSearchQuery(event.target.value)
                         }
                         placeholder="作品名など"
-                        className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="mt-1"
                       />
                     </label>
-                    <button
+                    <Button
                       type="submit"
-                      className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="bg-blue-600 text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
                       disabled={isSearchingMovies}>
                       {isSearchingMovies ? '検索中…' : '検索'}
-                    </button>
+                    </Button>
                   </form>
 
                   {movieSearchError && (
@@ -1397,12 +1415,14 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                     <div className="rounded border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
                       選択中: {selectedMovie.title}
                       {selectedMovie.year ? `（${selectedMovie.year}年）` : ''}
-                      <button
+                      <Button
                         type="button"
-                        onClick={() => setSelectedMovie(undefined)}
-                        className="ml-3 text-xs underline hover:text-blue-900">
+                        variant="link"
+                        size="sm"
+                        className="ml-2 text-blue-700 hover:text-blue-900"
+                        onClick={() => setSelectedMovie(undefined)}>
                         解除
-                      </button>
+                      </Button>
                     </div>
                   )}
 
@@ -1422,15 +1442,17 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                                 {result.year ? ` / ${result.year}年` : ''}
                               </div>
                             </div>
-                            <button
+                            <Button
                               type="button"
+                              variant="outline"
+                              size="sm"
+                              className="border-blue-600 text-blue-600 hover:bg-blue-50"
                               onClick={() => {
                                 setSelectedMovie(result);
                                 setMovieSearchResults([]);
-                              }}
-                              className="rounded border border-blue-600 px-3 py-1 text-sm font-medium text-blue-600 hover:bg-blue-50">
+                              }}>
                               選択
-                            </button>
+                            </Button>
                           </li>
                         ))}
                       </ul>
@@ -1473,14 +1495,14 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
 
                     <label className="flex flex-col text-sm font-medium text-gray-700">
                       特記事項
-                      <input
+                      <Input
                         type="text"
                         value={newNominationSpecialMention}
                         onChange={event =>
                           setNewNominationSpecialMention(event.target.value)
                         }
                         placeholder="コメント等（任意）"
-                        className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="mt-1"
                       />
                     </label>
 
@@ -1491,12 +1513,12 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                     )}
 
                     <div className="flex justify-end">
-                      <button
+                      <Button
                         type="submit"
                         disabled={!selectedMovie || isAddingNomination}
-                        className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60">
+                        className="bg-green-600 text-white hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-60">
                         {isAddingNomination ? '追加中…' : '映画を追加'}
-                      </button>
+                      </Button>
                     </div>
                   </form>
                 </div>
