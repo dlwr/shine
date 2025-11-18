@@ -1,4 +1,4 @@
-import {and, eq, sql} from '@shine/database';
+import {and, eq, isNull, sql} from '@shine/database';
 import {articleLinks} from '@shine/database/schema/article-links';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
@@ -205,7 +205,7 @@ export class SelectionsService extends BaseService {
     const movieExists = await this.database
       .select({uid: movies.uid})
       .from(movies)
-      .where(eq(movies.uid, movieId))
+      .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
       .limit(1);
 
     if (movieExists.length === 0) {
@@ -281,7 +281,36 @@ export class SelectionsService extends BaseService {
     }
 
     // Get complete movie data
-    const movie = await this.getCompleteMovieData(movieId, locale);
+    let movie: MovieSelection;
+    try {
+      movie = await this.getCompleteMovieData(movieId, locale);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Movie not found') {
+        console.warn(
+          `Selection movie ${movieId} for ${type} ${selectionDate} missing or deleted. Reselecting...`,
+        );
+        await this.database
+          .delete(movieSelections)
+          .where(
+            and(
+              eq(movieSelections.selectionType, type),
+              eq(movieSelections.selectionDate, selectionDate),
+            ),
+          );
+        const regenerated = await this.generateMovieSelection(
+          date,
+          type,
+          locale,
+          true,
+        );
+        if (!regenerated) {
+          throw new Error('No movies available for selection');
+        }
+        movie = regenerated;
+      } else {
+        throw error;
+      }
+    }
 
     // Cache result
     const response = Response.json(movie, {
@@ -310,6 +339,7 @@ export class SelectionsService extends BaseService {
         tmdbId: movies.tmdbId,
       })
       .from(movies)
+      .where(isNull(movies.deletedAt))
       .orderBy(movies.year, movies.uid);
 
     if (availableMovies.length === 0) {
@@ -355,7 +385,7 @@ export class SelectionsService extends BaseService {
         tmdbId: movies.tmdbId,
       })
       .from(movies)
-      .where(eq(movies.uid, movieId))
+      .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
       .limit(1);
 
     if (movieResult.length === 0) {
@@ -636,6 +666,7 @@ export class SelectionsService extends BaseService {
         uid: movies.uid,
       })
       .from(movies)
+      .where(isNull(movies.deletedAt))
       .orderBy(movies.createdAt);
 
     if (availableMovies.length === 0) {

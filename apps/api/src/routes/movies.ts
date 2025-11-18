@@ -1,4 +1,11 @@
-import {and, eq, getDatabase, sql, type Environment} from '@shine/database';
+import {
+  and,
+  eq,
+  getDatabase,
+  isNull,
+  sql,
+  type Environment,
+} from '@shine/database';
 import {articleLinks} from '@shine/database/schema/article-links';
 import {movies} from '@shine/database/schema/movies';
 import {Hono} from 'hono';
@@ -297,7 +304,7 @@ moviesRoutes.post('/:id/article-links', async c => {
     const movieExists = await database
       .select({uid: movies.uid})
       .from(movies)
-      .where(eq(movies.uid, movieId))
+      .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
       .limit(1);
 
     if (movieExists.length === 0) {

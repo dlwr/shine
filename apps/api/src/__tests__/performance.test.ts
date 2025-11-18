@@ -77,8 +77,35 @@ vi.mock('@shine/database', () => ({
   sql: vi.fn(),
 }));
 
+type PerformanceMockDatabase = {
+  select: (...arguments_: unknown[]) => {
+    from: (...arguments_: unknown[]) => {
+      where: (...arguments_: unknown[]) => Promise<unknown>;
+      limit: (...arguments_: unknown[]) => Promise<unknown>;
+      orderBy: (...arguments_: unknown[]) => Promise<unknown>;
+    };
+  };
+  insert: (...arguments_: unknown[]) => {
+    values: (...arguments_: unknown[]) => Promise<unknown>;
+  };
+  update: (...arguments_: unknown[]) => {
+    set: (...arguments_: unknown[]) => {
+      where: (...arguments_: unknown[]) => Promise<unknown>;
+    };
+  };
+  delete: (...arguments_: unknown[]) => {
+    where: (...arguments_: unknown[]) => Promise<unknown>;
+  };
+};
+
+type PerformanceModuleMock = {
+  getDatabase: (...arguments_: unknown[]) => PerformanceMockDatabase;
+};
+
 const createMockDatabase = async () => {
-  const {getDatabase} = await import('@shine/database');
+  const {getDatabase} = (await import(
+    '@shine/database'
+  )) as PerformanceModuleMock;
   return getDatabase({} as never);
 };
 
@@ -91,10 +118,10 @@ describe('Database Query Performance', () => {
     const database = await createMockDatabase();
 
     const startTime = Date.now();
-    const result = await database
+    const result = (await database
       .select()
       .from({} as never)
-      .limit(20);
+      .limit(20)) as unknown[];
     const duration = Date.now() - startTime;
 
     expect(duration).toBeLessThan(100);
@@ -106,10 +133,10 @@ describe('Database Query Performance', () => {
     const database = await createMockDatabase();
 
     const startTime = Date.now();
-    const result = await database
+    const result = (await database
       .select()
       .from({} as never)
-      .where({} as never);
+      .where({} as never)) as unknown[];
     const duration = Date.now() - startTime;
 
     expect(duration).toBeLessThan(200);
@@ -130,7 +157,7 @@ describe('Database Query Performance', () => {
         .limit(pageSize),
     );
 
-    const results = await Promise.all(pagePromises);
+    const results = (await Promise.all(pagePromises)) as unknown[][];
     const duration = Date.now() - startTime;
 
     expect(duration).toBeLessThan(150);
@@ -155,7 +182,7 @@ describe('Concurrent Operations Performance', () => {
         .limit(10),
     );
 
-    const results = await Promise.all(readPromises);
+    const results = (await Promise.all(readPromises)) as unknown[][];
     const duration = Date.now() - startTime;
 
     expect(duration).toBeLessThan(300);
@@ -220,10 +247,10 @@ describe('Memory Usage Performance', () => {
     let processedCount = 0;
 
     for (let chunk = 0; chunk < chunks; chunk++) {
-      const data = await database
+      const data = (await database
         .select()
         .from({} as never)
-        .limit(chunkSize);
+        .limit(chunkSize)) as unknown[];
 
       for (const record of data) {
         processedCount++;

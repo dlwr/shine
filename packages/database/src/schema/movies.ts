@@ -19,10 +19,12 @@ export const movies = sqliteTable(
     updatedAt: integer()
       .notNull()
       .default(sql`(unixepoch())`),
+    deletedAt: integer('deleted_at'),
   },
   table => [
     index('movies_year_idx').on(table.year),
     index('movies_original_language_idx').on(table.originalLanguage),
     index('movies_created_at_idx').on(table.createdAt),
+    index('movies_deleted_at_idx').on(table.deletedAt),
   ],
 );

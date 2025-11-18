@@ -1,4 +1,4 @@
-import {and, eq, like, sql} from '@shine/database';
+import {and, eq, isNull, like, sql} from '@shine/database';
 import {articleLinks} from '@shine/database/schema/article-links';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
@@ -18,7 +18,7 @@ export class MoviesService extends BaseService {
     const offset = (page - 1) * limit;
 
     // Build search conditions
-    const conditions = [];
+    const conditions = [isNull(movies.deletedAt)];
 
     if (query) {
       conditions.push(like(translations.content, `%${query}%`));
@@ -202,7 +202,7 @@ export class MoviesService extends BaseService {
           eq(translations.languageCode, locale),
         ),
       )
-      .where(eq(movies.uid, movieId))
+      .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
       .limit(1);
 
     if (movieResult.length === 0) {

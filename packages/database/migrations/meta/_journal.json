@@ -71,6 +71,13 @@
       "when": 1762238966105,
       "tag": "0009_lush_cobalt_man",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1763435384000,
+      "tag": "0010_soft_delete_movies",
+      "breakpoints": true
     }
   ]
 }

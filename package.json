@@ -26,6 +26,7 @@
     "scrapers:movie-import": "pnpm --filter @shine/scrapers tsx src/movie-import-from-list-cli.ts",
     "scrapers:import-imdb-list": "pnpm --filter @shine/scrapers tsx src/import-imdb-list-cli.ts",
     "scrapers:assign-imdb-ids": "pnpm --filter @shine/scrapers run assign-imdb-ids",
+    "scripts:soft-delete-orphan-movies": "tsx scripts/soft-delete-orphan-movies.ts",
     "db:studio": "node scripts/setup-database-environment.cjs drizzle-kit studio",
     "db:generate": "node scripts/setup-database-environment.cjs drizzle-kit generate",
     "db:migrate": "node scripts/setup-database-environment.cjs drizzle-kit migrate",
@@ -69,6 +70,7 @@
     "msw": "^2.12.2",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.4",
     "vitest": "3.2.4",
@@ -77,7 +79,7 @@
   "dependencies": {
     "@libsql/client": "^0.15.15",
     "dotenv": "^17.2.3",
-    "drizzle-orm": "^0.44.7",
+    "drizzle-orm": "1.0.0-beta.1-fd8bfcc",
     "zod": "^4.1.12"
   },
   "workspaces": [

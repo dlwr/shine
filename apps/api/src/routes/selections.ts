@@ -1,4 +1,11 @@
-import {and, eq, getDatabase, sql, type Environment} from '@shine/database';
+import {
+  and,
+  eq,
+  getDatabase,
+  isNull,
+  sql,
+  type Environment,
+} from '@shine/database';
 import {articleLinks} from '@shine/database/schema/article-links';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
@@ -362,7 +369,8 @@ selectionsRoutes.post(
       // Get a random movie using the random seed
       const totalMovies = await database
         .select({count: sql<number>`COUNT(*)`})
-        .from(movies);
+        .from(movies)
+        .where(isNull(movies.deletedAt));
 
       const {count} = totalMovies[0];
       if (count === 0) {
@@ -373,6 +381,7 @@ selectionsRoutes.post(
       const randomMovieResult = await database
         .select({uid: movies.uid})
         .from(movies)
+        .where(isNull(movies.deletedAt))
         .orderBy(movies.createdAt)
         .limit(1)
         .offset(offset);
@@ -411,7 +420,7 @@ selectionsRoutes.post(
           ),
         )
         .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
-        .where(eq(movies.uid, movieId))
+        .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
         .limit(1);
 
       if (results.length === 0 || !results[0].translation?.content) {
@@ -428,7 +437,7 @@ selectionsRoutes.post(
             ),
           )
           .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
-          .where(eq(movies.uid, movieId))
+          .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
           .limit(1);
 
         if (fallbackResults.length > 0) {

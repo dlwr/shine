@@ -99,8 +99,41 @@ vi.mock('@shine/database', () => ({
 // Mock external dependencies
 globalThis.fetch = vi.fn();
 
+type MockSelectResult = {
+  where: (...arguments_: unknown[]) => Promise<unknown>;
+  leftJoin?: (...arguments_: unknown[]) => MockSelectResult;
+  limit?: (...arguments_: unknown[]) => Promise<unknown>;
+  orderBy?: (...arguments_: unknown[]) => Promise<unknown>;
+};
+
+type MockDatabase = {
+  select: (...arguments_: unknown[]) => {
+    from: (...arguments_: unknown[]) => {
+      where: (...arguments_: unknown[]) => Promise<unknown>;
+      leftJoin: (...arguments_: unknown[]) => MockSelectResult;
+      limit: (...arguments_: unknown[]) => Promise<unknown>;
+      orderBy: (...arguments_: unknown[]) => Promise<unknown>;
+    };
+  };
+  insert: (...arguments_: unknown[]) => {
+    values: (...arguments_: unknown[]) => Promise<unknown>;
+  };
+  update: (...arguments_: unknown[]) => {
+    set: (...arguments_: unknown[]) => {
+      where: (...arguments_: unknown[]) => Promise<unknown>;
+    };
+  };
+  delete: (...arguments_: unknown[]) => {
+    where: (...arguments_: unknown[]) => Promise<unknown>;
+  };
+};
+
+type DatabaseModuleMock = {
+  getDatabase: (...arguments_: unknown[]) => MockDatabase;
+};
+
 const createMockDatabase = async () => {
-  const {getDatabase} = await import('@shine/database');
+  const {getDatabase} = (await import('@shine/database')) as DatabaseModuleMock;
   return getDatabase({} as never);
 };
 
@@ -112,16 +145,16 @@ describe('Movie Search Integration', () => {
   it('should integrate search with pagination and filtering', async () => {
     const database = await createMockDatabase();
 
-    const searchResult = await database
+    const searchResult = (await database
       .select()
       .from({} as never)
-      .where({} as never);
+      .where({} as never)) as unknown[];
 
     expect(searchResult).toBeDefined();
     expect(Array.isArray(searchResult)).toBe(true);
     expect(searchResult.length).toBeGreaterThan(0);
 
-    const movie = searchResult[0];
+    const movie = searchResult[0] as Record<string, unknown>;
     expect(movie).toHaveProperty('uid');
     expect(movie).toHaveProperty('year');
     expect(movie).toHaveProperty('originalLanguage');
@@ -130,17 +163,17 @@ describe('Movie Search Integration', () => {
   it('should handle search with multiple language translations', async () => {
     const database = await createMockDatabase();
 
-    const movieWithTranslations = await database
+    const movieWithTranslations = (await database
       .select()
       .from({} as never)
       .leftJoin({} as never, {} as never)
-      .where({} as never);
+      .where({} as never)) as unknown[];
 
     expect(movieWithTranslations).toBeDefined();
     expect(Array.isArray(movieWithTranslations)).toBe(true);
 
     if (movieWithTranslations.length > 0) {
-      const movie = movieWithTranslations[0];
+      const movie = movieWithTranslations[0] as Record<string, unknown>;
       expect(movie).toHaveProperty('translations');
       expect(Array.isArray(movie.translations)).toBe(true);
     }
@@ -149,17 +182,17 @@ describe('Movie Search Integration', () => {
   it('should integrate awards data with movie search', async () => {
     const database = await createMockDatabase();
 
-    const movieWithAwards = await database
+    const movieWithAwards = (await database
       .select()
       .from({} as never)
       .leftJoin({} as never, {} as never)
-      .where({} as never);
+      .where({} as never)) as unknown[];
 
     expect(movieWithAwards).toBeDefined();
     expect(Array.isArray(movieWithAwards)).toBe(true);
 
     if (movieWithAwards.length > 0) {
-      const movie = movieWithAwards[0];
+      const movie = movieWithAwards[0] as Record<string, unknown>;
       expect(movie).toHaveProperty('nominations');
       expect(Array.isArray(movie.nominations)).toBe(true);
     }
@@ -170,10 +203,10 @@ describe('Movie Selection Algorithm Integration', () => {
   it('should integrate date-based selection with database queries', async () => {
     const database = await createMockDatabase();
 
-    const dailySelection = await database
+    const dailySelection = (await database
       .select()
       .from({} as never)
-      .where({} as never);
+      .where({} as never)) as unknown[];
 
     expect(dailySelection).toBeDefined();
     expect(Array.isArray(dailySelection)).toBe(true);
@@ -308,7 +341,7 @@ describe('External API Integration', () => {
     );
 
     const response = await fetch('https://api.themoviedb.org/3/movie/12345');
-    const data: typeof mockTmdbResponse = await response.json();
+    const data = (await response.json()) as typeof mockTmdbResponse;
 
     expect(data).toEqual(mockTmdbResponse);
     expect(data.title).toBe('Test Movie');
