@@ -366,31 +366,33 @@ selectionsRoutes.post(
       const baseSeed = getDateSeed(targetDate, type);
       const randomSeed = baseSeed + Date.now();
 
-      // Get a random movie using the random seed
-      const totalMovies = await database
+      // Get a random nomination using the random seed so highly nominated movies appear more often
+      const totalNominations = await database
         .select({count: sql<number>`COUNT(*)`})
-        .from(movies)
+        .from(nominations)
+        .innerJoin(movies, eq(movies.uid, nominations.movieUid))
         .where(isNull(movies.deletedAt));
 
-      const {count} = totalMovies[0];
+      const {count} = totalNominations[0];
       if (count === 0) {
-        return c.json({error: 'No movies found'}, 404);
+        return c.json({error: 'No nominations found'}, 404);
       }
 
       const offset = Math.abs(randomSeed) % count;
-      const randomMovieResult = await database
-        .select({uid: movies.uid})
-        .from(movies)
+      const randomNominationResult = await database
+        .select({movieUid: nominations.movieUid})
+        .from(nominations)
+        .innerJoin(movies, eq(movies.uid, nominations.movieUid))
         .where(isNull(movies.deletedAt))
-        .orderBy(movies.createdAt)
+        .orderBy(nominations.createdAt)
         .limit(1)
         .offset(offset);
 
-      if (randomMovieResult.length === 0) {
-        return c.json({error: 'No movies found'}, 404);
+      if (randomNominationResult.length === 0) {
+        return c.json({error: 'No nominations found'}, 404);
       }
 
-      const movieId = randomMovieResult[0].uid;
+      const movieId = randomNominationResult[0].movieUid;
 
       const movieSelectionFields = {
         movie: {
