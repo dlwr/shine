@@ -22,7 +22,8 @@ export const getDatabase = (environment: Environment) => {
     authToken: environment.TURSO_AUTH_TOKEN,
   });
 
-  return drizzle(client, {
+  return drizzle({
+    client,
     schema: {
       ...schema,
     },
