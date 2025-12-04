@@ -247,6 +247,12 @@ export function MovieCard({
       url: (title: string) =>
         `https://filmarks.com/search/movies?q=${encodeURIComponent(title)}`,
     },
+    {
+      name: 'JustWatch',
+      color: 'bg-yellow-400 text-gray-900',
+      url: (title: string) =>
+        `https://www.justwatch.com/jp/%E6%A4%9C%E7%B4%A2?q=${encodeURIComponent(title)}`,
+    },
   ];
 
   type CeremonyGroup = {
