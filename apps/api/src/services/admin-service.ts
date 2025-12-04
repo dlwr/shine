@@ -463,9 +463,8 @@ export class AdminService extends BaseService {
 
     if (fetchTMDBData && this.env.TMDB_API_KEY) {
       try {
-        const {fetchTMDBMovieImages, savePosterUrls} = await import(
-          '@shine/scrapers/common/tmdb-utilities'
-        );
+        const {fetchTMDBMovieImages, savePosterUrls} =
+          await import('@shine/scrapers/common/tmdb-utilities');
 
         const imagesResult = await fetchTMDBMovieImages(
           normalizedImdbId,

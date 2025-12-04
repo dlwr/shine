@@ -103,9 +103,8 @@ type PerformanceModuleMock = {
 };
 
 const createMockDatabase = async () => {
-  const {getDatabase} = (await import(
-    '@shine/database'
-  )) as PerformanceModuleMock;
+  const {getDatabase} =
+    (await import('@shine/database')) as PerformanceModuleMock;
   return getDatabase({} as never);
 };
 

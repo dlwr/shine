@@ -731,9 +731,8 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
     if (refreshData && typeof tmdbId === 'number' && c.env.TMDB_API_KEY) {
       try {
         // Import TMDb utilities
-        const {fetchTMDBMovieTranslations, savePosterUrls} = await import(
-          '@shine/scrapers/common/tmdb-utilities'
-        );
+        const {fetchTMDBMovieTranslations, savePosterUrls} =
+          await import('@shine/scrapers/common/tmdb-utilities');
 
         // Fetch and save posters using TMDb ID directly
         const imagesUrl = new URL(
@@ -757,9 +756,8 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
         // Fetch and save translations using TMDb Translations API
         let translationsAdded = 0;
         const database = getDatabase(c.env);
-        const {translations} = await import(
-          '@shine/database/schema/translations'
-        );
+        const {translations} =
+          await import('@shine/database/schema/translations');
 
         // Get all translations from TMDb
         const translationsData = await fetchTMDBMovieTranslations(
@@ -1663,9 +1661,8 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
 
       // Fetch and save translations using TMDb Translations API
       let translationsAdded = 0;
-      const {translations} = await import(
-        '@shine/database/schema/translations'
-      );
+      const {translations} =
+        await import('@shine/database/schema/translations');
 
       // Get all translations from TMDb
       const translationsData = await fetchTMDBMovieTranslations(
@@ -1821,9 +1818,8 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
 
     try {
       // Import TMDb utilities
-      const {fetchTMDBMovieTranslations, savePosterUrls} = await import(
-        '@shine/scrapers/common/tmdb-utilities'
-      );
+      const {fetchTMDBMovieTranslations, savePosterUrls} =
+        await import('@shine/scrapers/common/tmdb-utilities');
 
       // Fetch and save posters using TMDb ID
       const imagesUrl = new URL(
@@ -1846,9 +1842,8 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
 
       // Fetch and save translations using TMDb Translations API
       let translationsAdded = 0;
-      const {translations} = await import(
-        '@shine/database/schema/translations'
-      );
+      const {translations} =
+        await import('@shine/database/schema/translations');
 
       // Get all translations from TMDb
       const translationsData = await fetchTMDBMovieTranslations(
