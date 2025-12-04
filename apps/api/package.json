@@ -11,7 +11,7 @@
     "@shine/scrapers": "workspace:*",
     "@shine/types": "workspace:*",
     "dompurify": "^3.3.0",
-    "hono": "^4.10.6",
-    "jose": "^6.1.2"
+    "hono": "^4.10.7",
+    "jose": "^6.1.3"
   }
 }
