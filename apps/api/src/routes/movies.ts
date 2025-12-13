@@ -196,7 +196,11 @@ moviesRoutes.post('/:id/translations', authMiddleware, async c => {
   try {
     const moviesService = new MoviesService(c.env);
     const movieId = c.req.param('id');
-    const {languageCode, content: rawContent} = await c.req.json();
+    const {
+      languageCode,
+      content: rawContent,
+      isDefault: rawIsDefault,
+    } = await c.req.json();
 
     if (!languageCode || !rawContent) {
       return c.json({error: 'languageCode and content are required'}, 400);
@@ -207,8 +211,18 @@ moviesRoutes.post('/:id/translations', authMiddleware, async c => {
     }
 
     const content = sanitizeText(rawContent);
+    const isDefault =
+      rawIsDefault === true ||
+      rawIsDefault === 1 ||
+      rawIsDefault === 'true' ||
+      rawIsDefault === '1';
 
-    await moviesService.addMovieTranslation(movieId, languageCode, content);
+    await moviesService.addMovieTranslation(
+      movieId,
+      languageCode,
+      content,
+      isDefault,
+    );
 
     // Invalidate movie details cache
     await Promise.all([

@@ -313,6 +313,7 @@ export class MoviesService extends BaseService {
     movieId: string,
     languageCode: string,
     title: string,
+    isDefault = false,
     description?: string,
   ): Promise<void> {
     // Check if movie exists
@@ -327,6 +328,20 @@ export class MoviesService extends BaseService {
     }
 
     await this.database.transaction(async trx => {
+      const now = Math.floor(Date.now() / 1000);
+
+      if (isDefault) {
+        await trx
+          .update(translations)
+          .set({isDefault: 0, updatedAt: now})
+          .where(
+            and(
+              eq(translations.resourceUid, movieId),
+              eq(translations.resourceType, 'movie_title'),
+            ),
+          );
+      }
+
       // Add or update title translation
       const existingTitle = await trx
         .select({uid: translations.uid})
@@ -346,7 +361,8 @@ export class MoviesService extends BaseService {
             .update(translations)
             .set({
               content: title,
-              updatedAt: Math.floor(Date.now() / 1000),
+              isDefault: isDefault ? 1 : 0,
+              updatedAt: now,
             })
             .where(eq(translations.uid, existingTitle[0].uid))
         : await trx.insert(translations).values({
@@ -354,8 +370,9 @@ export class MoviesService extends BaseService {
             resourceUid: movieId,
             languageCode,
             content: title,
-            createdAt: Math.floor(Date.now() / 1000),
-            updatedAt: Math.floor(Date.now() / 1000),
+            isDefault: isDefault ? 1 : 0,
+            createdAt: now,
+            updatedAt: now,
           }));
 
       // Add or update description translation if provided
@@ -378,7 +395,7 @@ export class MoviesService extends BaseService {
               .update(translations)
               .set({
                 content: description,
-                updatedAt: Math.floor(Date.now() / 1000),
+                updatedAt: now,
               })
               .where(eq(translations.uid, existingDescription[0].uid))
           : await trx.insert(translations).values({
@@ -386,8 +403,8 @@ export class MoviesService extends BaseService {
               resourceUid: movieId,
               languageCode,
               content: description,
-              createdAt: Math.floor(Date.now() / 1000),
-              updatedAt: Math.floor(Date.now() / 1000),
+              createdAt: now,
+              updatedAt: now,
             }));
       }
     });
