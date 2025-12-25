@@ -16,6 +16,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
+      '@': `${dirname}/app`,
       '@routes': `${dirname}/app/routes`,
     },
   },
