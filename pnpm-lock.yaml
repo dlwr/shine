@@ -49,8 +49,8 @@ importers:
         specifier: ^9.2.1
         version: 9.2.1
       drizzle-kit:
-        specifier: 1.0.0-beta.2-6565b14
-        version: 1.0.0-beta.2-6565b14
+        specifier: 1.0.0-beta.10-9f1399e
+        version: 1.0.0-beta.10-9f1399e
       eslint:
         specifier: ^9.39.2
         version: 9.39.2(jiti@2.6.1)
@@ -2935,8 +2935,8 @@ packages:
     resolution: {integrity: sha512-JVUnt+DUIzu87TABbhPmNfVdBDt18BLOWjMUFJMSi/Qqg7NTYtabbvSNJGOJ7afbRuv9D/lngizHtP7QyLQ+9w==}
     engines: {node: '>=12'}
 
-  drizzle-kit@1.0.0-beta.2-6565b14:
-    resolution: {integrity: sha512-5DfrxZGoMedKb+c82D/BwmF1WjysBtiKXbThNiQpaWczyWOqmJpm3rCGqJTM07XSPYEWJH9FDN5r5Sln8fsU4w==}
+  drizzle-kit@1.0.0-beta.10-9f1399e:
+    resolution: {integrity: sha512-kNtl3YrPnfmGo5EUpmSn783/MvClD8mm+qo+CSDlcU3yquePShY64tXFZrPgox53gMdc04mw4LKvTX6nKPI/ug==}
     hasBin: true
 
   drizzle-orm@1.0.0-beta.2-6565b14:
@@ -3084,11 +3084,6 @@ packages:
 
   es6-promise@3.3.1:
     resolution: {integrity: sha512-SOp9Phqvqn7jtEUxPWdWfWoLmyt2VaJ6MpvP9Comy1MceMXqE6bxvaTu4iaxpYYPzhny28Lc+M87/c2cPK6lDg==}
-
-  esbuild-register@3.6.0:
-    resolution: {integrity: sha512-H2/S7Pm8a9CL1uhp9OvjwrBh5Pvx0H8qVOxNu8Wed9Y7qv56MPtq+GGM8RJpq6glYJn9Wspr8uw7l55uyinNeg==}
-    peerDependencies:
-      esbuild: '>=0.12 <1'
 
   esbuild@0.25.12:
     resolution: {integrity: sha512-bbPBYYrtZbkt6Os6FiTLCTFxvq4tt3JKall1vRwshA3fdVztsLAatFaZobhkBC8/BrPetoa0oksYoKXoG4ryJg==}
@@ -7546,14 +7541,12 @@ snapshots:
 
   dotenv@17.2.3: {}
 
-  drizzle-kit@1.0.0-beta.2-6565b14:
+  drizzle-kit@1.0.0-beta.10-9f1399e:
     dependencies:
       '@drizzle-team/brocli': 0.11.0
       '@js-temporal/polyfill': 0.5.1
       esbuild: 0.25.12
-      esbuild-register: 3.6.0(esbuild@0.25.12)
-    transitivePeerDependencies:
-      - supports-color
+      tsx: 4.21.0
 
   drizzle-orm@1.0.0-beta.2-6565b14(@cloudflare/workers-types@4.20260109.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/mssql@9.1.8)(better-sqlite3@12.5.0)(gel@2.1.0)(mssql@11.0.1):
     dependencies:
@@ -7605,13 +7598,6 @@ snapshots:
   es-module-lexer@1.7.0: {}
 
   es6-promise@3.3.1: {}
-
-  esbuild-register@3.6.0(esbuild@0.25.12):
-    dependencies:
-      debug: 4.4.3
-      esbuild: 0.25.12
-    transitivePeerDependencies:
-      - supports-color
 
   esbuild@0.25.12:
     optionalDependencies:
