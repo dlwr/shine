@@ -136,6 +136,7 @@ const loadCeremonyDetail = async (database: Database, ceremonyUid: string) => {
       isWinner: nominations.isWinner,
       specialMention: nominations.specialMention,
       movieYear: movies.year,
+      movieOriginalLanguage: movies.originalLanguage,
       categoryName: awardCategories.name,
     })
     .from(nominations)
@@ -156,19 +157,75 @@ const loadCeremonyDetail = async (database: Database, ceremonyUid: string) => {
     const titleRows = await database
       .select({
         movieUid: translations.resourceUid,
+        languageCode: translations.languageCode,
         title: translations.content,
+        isDefault: translations.isDefault,
       })
       .from(translations)
       .where(
         and(
           eq(translations.resourceType, 'movie_title'),
-          eq(translations.isDefault, 1),
           inArray(translations.resourceUid, movieUids),
         ),
       );
 
+    const translationsByMovie = new Map<
+      string,
+      Array<{
+        languageCode: string;
+        title: string;
+        isDefault: number | null;
+      }>
+    >();
+
     for (const row of titleRows) {
-      titlesMap.set(row.movieUid, row.title);
+      const trimmedTitle = row.title?.trim();
+      if (!trimmedTitle) {
+        continue;
+      }
+
+      const entries = translationsByMovie.get(row.movieUid) ?? [];
+      entries.push({
+        languageCode: row.languageCode,
+        title: trimmedTitle,
+        isDefault: row.isDefault ?? 0,
+      });
+      translationsByMovie.set(row.movieUid, entries);
+    }
+
+    const originalLanguageMap = new Map<string, string>();
+    for (const nomination of nominationsResult) {
+      if (originalLanguageMap.has(nomination.movieUid)) {
+        continue;
+      }
+
+      const originalLanguage = nomination.movieOriginalLanguage?.trim();
+      if (originalLanguage) {
+        originalLanguageMap.set(nomination.movieUid, originalLanguage);
+      }
+    }
+
+    for (const movieUid of movieUids) {
+      const entries = translationsByMovie.get(movieUid) ?? [];
+      if (entries.length === 0) {
+        continue;
+      }
+
+      const defaultEntry = entries.find(entry => entry.isDefault === 1);
+      const jaEntry = entries.find(entry => entry.languageCode === 'ja');
+      const originalLanguage = originalLanguageMap.get(movieUid);
+      const originalEntry = originalLanguage
+        ? entries.find(entry => entry.languageCode === originalLanguage)
+        : undefined;
+      const enEntry = entries.find(entry => entry.languageCode === 'en');
+      const fallbackEntry = entries[0];
+
+      const selectedEntry =
+        defaultEntry ?? jaEntry ?? originalEntry ?? enEntry ?? fallbackEntry;
+
+      if (selectedEntry) {
+        titlesMap.set(movieUid, selectedEntry.title);
+      }
     }
   }
 
@@ -221,7 +278,7 @@ const loadCeremonyDetail = async (database: Database, ceremonyUid: string) => {
       uid: nomination.uid,
       movie: {
         uid: nomination.movieUid,
-        title: titlesMap.get(nomination.movieUid) ?? '(タイトル未設定)',
+        title: titlesMap.get(nomination.movieUid) ?? '',
         year: nomination.movieYear,
       },
       category: {

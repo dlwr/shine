@@ -23,6 +23,7 @@ type ImdbNextData = {
     pageProps?: {
       edition?: {
         awards?: Array<{
+          text?: string | null;
           nominationCategories?: {
             edges?: Array<{
               node?: {
@@ -112,10 +113,6 @@ const extractImdbNominations = (
 ): {categoryName?: string; nominations: ImdbNomination[]} => {
   const awards = data?.props?.pageProps?.edition?.awards ?? [];
 
-  const categoryEdges = awards.flatMap(
-    award => award?.nominationCategories?.edges ?? [],
-  );
-
   const matchesTarget = (name: string): boolean => {
     const normalized = normalizeCategoryName(name);
     if (targetNames.has(normalized)) {
@@ -131,17 +128,32 @@ const extractImdbNominations = (
     return false;
   };
 
-  const targetEdge = categoryEdges.find(edge => {
-    const name = edge?.node?.category?.text;
-    return typeof name === 'string' && matchesTarget(name);
+  const categoryEdges = awards.flatMap(award => {
+    const edges = award?.nominationCategories?.edges ?? [];
+    return edges.map(edge => ({edge, award}));
   });
 
-  if (!targetEdge?.node) {
+  const targetEntry = categoryEdges.find(({edge, award}) => {
+    const categoryName = edge?.node?.category?.text;
+    const awardName = award?.text;
+
+    if (typeof categoryName === 'string' && categoryName.trim() !== '') {
+      return matchesTarget(categoryName);
+    }
+
+    if (typeof awardName === 'string' && awardName.trim() !== '') {
+      return matchesTarget(awardName);
+    }
+
+    return false;
+  });
+
+  if (!targetEntry?.edge?.node) {
     return {nominations: []};
   }
 
   const nominations: ImdbNomination[] = [];
-  const nominationEdges = targetEdge.node.nominations?.edges ?? [];
+  const nominationEdges = targetEntry.edge.node.nominations?.edges ?? [];
 
   for (const edge of nominationEdges) {
     const node = edge?.node;
@@ -169,8 +181,17 @@ const extractImdbNominations = (
     });
   }
 
+  const resolvedCategoryName =
+    typeof targetEntry.edge.node.category?.text === 'string' &&
+    targetEntry.edge.node.category.text.trim() !== ''
+      ? targetEntry.edge.node.category.text
+      : typeof targetEntry.award?.text === 'string' &&
+          targetEntry.award.text.trim() !== ''
+        ? targetEntry.award.text
+        : undefined;
+
   return {
-    categoryName: targetEdge.node.category?.text ?? undefined,
+    categoryName: resolvedCategoryName,
     nominations,
   };
 };
