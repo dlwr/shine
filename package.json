@@ -79,7 +79,7 @@
   "dependencies": {
     "@libsql/client": "^0.17.0",
     "dotenv": "^17.2.3",
-    "drizzle-orm": "1.0.0-beta.2-6565b14",
+    "drizzle-orm": "1.0.0-beta.10-42c284e",
     "zod": "^4.3.5"
   },
   "workspaces": [
