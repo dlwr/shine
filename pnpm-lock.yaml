@@ -18,8 +18,8 @@ importers:
         specifier: ^17.2.3
         version: 17.2.3
       drizzle-orm:
-        specifier: 1.0.0-beta.2-6565b14
-        version: 1.0.0-beta.2-6565b14(@cloudflare/workers-types@4.20260124.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/mssql@9.1.8)(better-sqlite3@12.6.2)(gel@2.1.0)(mssql@11.0.1)
+        specifier: 1.0.0-beta.12-566a3bc
+        version: 1.0.0-beta.12-566a3bc(@cloudflare/workers-types@4.20260124.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/mssql@9.1.8)(better-sqlite3@12.6.2)(gel@2.1.0)(mssql@11.0.1)
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -258,8 +258,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       drizzle-orm:
-        specifier: 1.0.0-beta.2-6565b14
-        version: 1.0.0-beta.2-6565b14(@cloudflare/workers-types@4.20260124.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/mssql@9.1.8)(better-sqlite3@12.6.2)(gel@2.1.0)(mssql@11.0.1)
+        specifier: 1.0.0-beta.12-566a3bc
+        version: 1.0.0-beta.12-566a3bc(@cloudflare/workers-types@4.20260124.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/mssql@9.1.8)(better-sqlite3@12.6.2)(gel@2.1.0)(mssql@11.0.1)
 
   packages/node-domexception: {}
 
@@ -2948,11 +2948,13 @@ packages:
     resolution: {integrity: sha512-kNtl3YrPnfmGo5EUpmSn783/MvClD8mm+qo+CSDlcU3yquePShY64tXFZrPgox53gMdc04mw4LKvTX6nKPI/ug==}
     hasBin: true
 
-  drizzle-orm@1.0.0-beta.2-6565b14:
-    resolution: {integrity: sha512-seLt4EEChTdkvgMWsqFQi8ELtFKZK6nB6tju3QPV2jXROGs7rpSPtEIPzuQzJYDqf4gwlPtfJ4mbykIxzpJDJQ==}
+  drizzle-orm@1.0.0-beta.12-566a3bc:
+    resolution: {integrity: sha512-kcr8U6xeskTqHlkkUNkxpakujne5SY0AOWreqVp597kLLpX2KXNkEOcqTSabHpOEqKCT0qy1wB/LDO6frZzW+A==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
+      '@effect/sql': ^0.48.5
+      '@effect/sql-pg': ^0.49.7
       '@electric-sql/pglite': '>=0.2.0'
       '@libsql/client': '>=0.10.0'
       '@libsql/client-wasm': '>=0.10.0'
@@ -2988,6 +2990,10 @@ packages:
       '@aws-sdk/client-rds-data':
         optional: true
       '@cloudflare/workers-types':
+        optional: true
+      '@effect/sql':
+        optional: true
+      '@effect/sql-pg':
         optional: true
       '@electric-sql/pglite':
         optional: true
@@ -7533,7 +7539,7 @@ snapshots:
       esbuild: 0.25.12
       tsx: 4.21.0
 
-  drizzle-orm@1.0.0-beta.2-6565b14(@cloudflare/workers-types@4.20260124.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/mssql@9.1.8)(better-sqlite3@12.6.2)(gel@2.1.0)(mssql@11.0.1):
+  drizzle-orm@1.0.0-beta.12-566a3bc(@cloudflare/workers-types@4.20260124.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/mssql@9.1.8)(better-sqlite3@12.6.2)(gel@2.1.0)(mssql@11.0.1):
     dependencies:
       '@types/mssql': 9.1.8
       mssql: 11.0.1
