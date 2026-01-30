@@ -282,8 +282,8 @@ describe('Movie Selection Functions', () => {
     it('should calculate next month correctly', () => {
       const now = new Date('2025-06-20');
       const nextMonth = new Date(now);
+      nextMonth.setDate(1); // Must set date BEFORE month to avoid overflow
       nextMonth.setMonth(now.getMonth() + 1);
-      nextMonth.setDate(1);
 
       expect(nextMonth.getDate()).toBe(1);
       expect(nextMonth.getMonth()).toBe(6); // July (0-indexed)
@@ -293,12 +293,57 @@ describe('Movie Selection Functions', () => {
     it('should handle year rollover for next month', () => {
       const december = new Date('2025-12-20');
       const nextMonth = new Date(december);
+      nextMonth.setDate(1); // Must set date BEFORE month to avoid overflow
       nextMonth.setMonth(december.getMonth() + 1);
-      nextMonth.setDate(1);
 
       expect(nextMonth.getDate()).toBe(1);
       expect(nextMonth.getMonth()).toBe(0); // January (0-indexed)
       expect(nextMonth.getFullYear()).toBe(2026);
+    });
+
+    it('should calculate next month correctly when current date is 29th (month-end edge case)', () => {
+      // This tests the bug fix: when current date is Jan 29-31, next month should be Feb, not March
+      const jan29 = new Date('2026-01-29');
+      const nextMonth = new Date(jan29);
+      nextMonth.setDate(1); // Must set date to 1 BEFORE incrementing month
+      nextMonth.setMonth(jan29.getMonth() + 1);
+
+      expect(nextMonth.getDate()).toBe(1);
+      expect(nextMonth.getMonth()).toBe(1); // February (0-indexed), NOT March
+      expect(nextMonth.getFullYear()).toBe(2026);
+    });
+
+    it('should calculate next month correctly when current date is 30th (month-end edge case)', () => {
+      const jan30 = new Date('2026-01-30');
+      const nextMonth = new Date(jan30);
+      nextMonth.setDate(1); // Must set date to 1 BEFORE incrementing month
+      nextMonth.setMonth(jan30.getMonth() + 1);
+
+      expect(nextMonth.getDate()).toBe(1);
+      expect(nextMonth.getMonth()).toBe(1); // February (0-indexed), NOT March
+      expect(nextMonth.getFullYear()).toBe(2026);
+    });
+
+    it('should calculate next month correctly when current date is 31st (month-end edge case)', () => {
+      const jan31 = new Date('2026-01-31');
+      const nextMonth = new Date(jan31);
+      nextMonth.setDate(1); // Must set date to 1 BEFORE incrementing month
+      nextMonth.setMonth(jan31.getMonth() + 1);
+
+      expect(nextMonth.getDate()).toBe(1);
+      expect(nextMonth.getMonth()).toBe(1); // February (0-indexed), NOT March
+      expect(nextMonth.getFullYear()).toBe(2026);
+    });
+
+    it('should demonstrate the bug when setMonth is called BEFORE setDate', () => {
+      // This demonstrates the bug that was fixed
+      const jan30 = new Date('2026-01-30');
+      const buggyNextMonth = new Date(jan30);
+      buggyNextMonth.setMonth(jan30.getMonth() + 1); // BUG: Feb 30 doesn't exist, overflows to Mar 2
+      buggyNextMonth.setDate(1);
+
+      // This is the buggy behavior - it results in March instead of February
+      expect(buggyNextMonth.getMonth()).toBe(2); // March (0-indexed) - this is wrong!
     });
   });
 });

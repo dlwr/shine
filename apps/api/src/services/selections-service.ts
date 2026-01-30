@@ -131,8 +131,8 @@ export class SelectionsService extends BaseService {
     nextFriday.setDate(fridayDate.getDate() + 7);
 
     const nextMonth = new Date(now);
+    nextMonth.setDate(1); // Must set date to 1 BEFORE incrementing month to avoid overflow (e.g., Jan 30 + 1 month = Mar 2, not Feb)
     nextMonth.setMonth(now.getMonth() + 1);
-    nextMonth.setDate(1);
 
     const nextDates = {
       daily: this.getSelectionDate(nextDay, 'daily'),
