@@ -50,11 +50,11 @@
     "typegen": "cd apps/front && npx react-router typegen"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260124.0",
+    "@cloudflare/workers-types": "^4.20260130.0",
     "@eslint/js": "^9.39.2",
-    "@redocly/cli": "^2.14.9",
+    "@redocly/cli": "^2.15.0",
     "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^25.0.10",
+    "@types/node": "^25.1.0",
     "@vitest/coverage-v8": "4.0.18",
     "better-sqlite3": "^12.6.2",
     "concurrently": "^9.2.1",
@@ -65,16 +65,16 @@
     "eslint-plugin-n": "^17.23.2",
     "eslint-plugin-promise": "^7.2.1",
     "eslint-plugin-unicorn": "^62.0.0",
-    "globals": "^17.1.0",
+    "globals": "^17.2.0",
     "jsdom": "^27.4.0",
     "msw": "^2.12.7",
     "prettier": "^3.8.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.53.1",
+    "typescript-eslint": "^8.54.0",
     "vitest": "4.0.18",
-    "wrangler": "4.60.0"
+    "wrangler": "4.61.1"
   },
   "dependencies": {
     "@libsql/client": "^0.17.0",
