@@ -49,8 +49,8 @@ importers:
         specifier: ^9.2.1
         version: 9.2.1
       drizzle-kit:
-        specifier: 1.0.0-beta.13-f728631
-        version: 1.0.0-beta.13-f728631
+        specifier: 1.0.0-beta.13-5204f18
+        version: 1.0.0-beta.13-5204f18
       eslint:
         specifier: ^9.39.2
         version: 9.39.2(jiti@2.6.1)
@@ -2928,8 +2928,8 @@ packages:
     resolution: {integrity: sha512-JVUnt+DUIzu87TABbhPmNfVdBDt18BLOWjMUFJMSi/Qqg7NTYtabbvSNJGOJ7afbRuv9D/lngizHtP7QyLQ+9w==}
     engines: {node: '>=12'}
 
-  drizzle-kit@1.0.0-beta.13-f728631:
-    resolution: {integrity: sha512-Yfjns5vbi3Y5LmQMWPPGjMh2mD20i1qwRHJrWnqD/O1EJgn4kfH0WuzMdXlqMRtocos+e6nJYm3ZJXeU1efHGQ==}
+  drizzle-kit@1.0.0-beta.13-5204f18:
+    resolution: {integrity: sha512-pOacxCik28bFtQUSuPbDYIhd0IZYV+Um78Rfsg2S7RNIvjR+JuGC0zArV9tOqD+qlmDACOooSaw0etlBryM/wg==}
     hasBin: true
 
   drizzle-orm@1.0.0-beta.2-6565b14:
@@ -7456,12 +7456,12 @@ snapshots:
 
   dotenv@17.2.3: {}
 
-  drizzle-kit@1.0.0-beta.13-f728631:
+  drizzle-kit@1.0.0-beta.13-5204f18:
     dependencies:
       '@drizzle-team/brocli': 0.11.0
       '@js-temporal/polyfill': 0.5.1
       esbuild: 0.25.12
-      jiti: 2.6.1
+      tsx: 4.21.0
 
   drizzle-orm@1.0.0-beta.2-6565b14(@cloudflare/workers-types@4.20260203.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/mssql@9.1.8)(better-sqlite3@12.6.2)(gel@2.1.0)(mssql@11.0.1):
     dependencies:
