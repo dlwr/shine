@@ -60,9 +60,20 @@ export async function seedAcademyAwards(environment: Environment) {
       nameEn: 'Academy Award for Outstanding Motion Picture',
       shortName: 'Outstanding Motion Picture',
       description:
-        'Former name of the Academy Award for Best Picture (1941-1944)',
+        'Former name of the Academy Award for Best Picture (1941-1943)',
       firstAwardedYear: 1941,
-      discontinuedYear: 1944,
+      discontinuedYear: 1943,
+      isActive: 0,
+    },
+    {
+      organizationUid: organization.uid,
+      name: 'Academy Award for Best Motion Picture of the Year',
+      nameEn: 'Academy Award for Best Motion Picture of the Year',
+      shortName: 'Best Motion Picture',
+      description:
+        'Former name of the Academy Award for Best Picture (1944-1961)',
+      firstAwardedYear: 1944,
+      discontinuedYear: 1961,
       isActive: 0,
     },
   ];
