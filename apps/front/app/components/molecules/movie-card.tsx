@@ -391,9 +391,17 @@ export function MovieCard({
                   </h4>
                   {Object.values(orgData.ceremonies).map(ceremonyData => (
                     <div key={ceremonyData.ceremony.uid} className="mb-2">
-                      <span className="text-xs text-gray-600 font-medium">
-                        {ceremonyData.ceremony.year}
-                      </span>
+                      {adminToken ? (
+                        <a
+                          href={`/admin/ceremonies/${ceremonyData.ceremony.uid}`}
+                          className="text-xs text-blue-600 font-medium hover:underline">
+                          {ceremonyData.ceremony.year}
+                        </a>
+                      ) : (
+                        <span className="text-xs text-gray-600 font-medium">
+                          {ceremonyData.ceremony.year}
+                        </span>
+                      )}
                       <ul className="list-none p-0 mt-1">
                         {ceremonyData.nominations.map(nomination => (
                           <li
