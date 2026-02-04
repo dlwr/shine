@@ -1227,6 +1227,9 @@ export class AdminService extends BaseService {
       'best motion picture',
       'best motion picture of the year',
       'picture of the year',
+      'outstanding picture',
+      'outstanding production',
+      'outstanding motion picture',
     ].map(synonym => normalizeCategoryName(synonym));
 
     const japaneseBestFilmMarkers = [
@@ -1238,11 +1241,19 @@ export class AdminService extends BaseService {
       '最優秀日本映画賞',
     ].map(marker => normalizeCategoryName(marker));
 
-    const targetLooksLikeBestFilm = japaneseBestFilmMarkers.some(marker => {
-      return (
-        normalizedTarget.includes(marker) || marker.includes(normalizedTarget)
-      );
-    });
+    const englishBestFilmMarkers = commonSynonyms;
+
+    const targetLooksLikeBestFilm =
+      japaneseBestFilmMarkers.some(marker => {
+        return (
+          normalizedTarget.includes(marker) || marker.includes(normalizedTarget)
+        );
+      }) ||
+      englishBestFilmMarkers.some(marker => {
+        return (
+          normalizedTarget.includes(marker) || marker.includes(normalizedTarget)
+        );
+      });
 
     if (targetLooksLikeBestFilm) {
       for (const synonym of commonSynonyms) {
