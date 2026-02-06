@@ -117,6 +117,18 @@ export type MovieCardMovie = {
   articleLinks?: MovieCardArticleLink[];
 };
 
+function selectJapaneseTitle(movie: MovieCardMovie): string | undefined {
+  const translations = movie.translations ?? [];
+  const jaTranslation = translations.find(
+    translation => translation.languageCode === 'ja',
+  );
+  if (jaTranslation) {
+    return jaTranslation.content;
+  }
+
+  return undefined;
+}
+
 function selectBestTitle(movie: MovieCardMovie, locale: string): string {
   if (movie.title) {
     return movie.title;
@@ -219,6 +231,7 @@ export function MovieCard({
   const t = labels[locale as keyof typeof labels] || labels.en;
 
   const movieTitle = selectBestTitle(movie, locale);
+  const discasTitle = selectJapaneseTitle(movie) ?? movieTitle;
 
   const streamingServices = [
     {
@@ -365,6 +378,22 @@ export function MovieCard({
                 }}>
                 Google
               </a>
+              <form
+                action="https://movie-tsutaya.tsite.jp/netdvd/dvd/searchDvdBd.do"
+                method="GET"
+                acceptCharset="Shift_JIS"
+                target="_blank"
+                className="mt-3"
+                onClick={event => {
+                  event.stopPropagation();
+                }}>
+                <input type="hidden" name="k" value={discasTitle} />
+                <button
+                  type="submit"
+                  className="w-full px-4 py-3 bg-sky-500 text-white rounded-md text-center text-sm font-medium">
+                  TSUTAYA DISCAS
+                </button>
+              </form>
             </div>
           </div>
         )}
