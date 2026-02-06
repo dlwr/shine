@@ -12,6 +12,6 @@
   "dependencies": {
     "@libsql/client": "^0.17.0",
     "@shine/utils": "workspace:*",
-    "drizzle-orm": "1.0.0-beta.2-6565b14"
+    "drizzle-orm": "1.0.0-beta.13-f728631"
   }
 }

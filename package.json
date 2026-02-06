@@ -50,11 +50,11 @@
     "typegen": "cd apps/front && npx react-router typegen"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260203.0",
+    "@cloudflare/workers-types": "^4.20260205.0",
     "@eslint/js": "^9.39.2",
     "@redocly/cli": "^2.15.1",
     "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^25.2.0",
+    "@types/node": "^25.2.1",
     "@vitest/coverage-v8": "4.0.18",
     "better-sqlite3": "^12.6.2",
     "concurrently": "^9.2.1",
@@ -78,7 +78,7 @@
   },
   "dependencies": {
     "@libsql/client": "^0.17.0",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.2.4",
     "drizzle-orm": "1.0.0-beta.13-f728631",
     "zod": "^4.3.6"
   },
