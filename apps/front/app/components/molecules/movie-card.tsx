@@ -329,19 +329,19 @@ export function MovieCard({
 
         {/* Streaming services hover menu */}
         {showStreamingMenu && (
-          <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20">
-            <div className="bg-white rounded-lg p-6 max-w-xs w-full mx-4">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4 text-center">
+          <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20 overflow-y-auto">
+            <div className="bg-white rounded-lg p-4 max-w-xs w-full mx-4 my-2">
+              <h4 className="text-base font-semibold text-gray-900 mb-3 text-center">
                 {t.searchOn}
               </h4>
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-1 gap-2">
                 {streamingServices.map(service => (
                   <a
                     key={service.name}
                     href={service.url(movieTitle)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`block px-4 py-3 rounded-md text-center text-sm font-medium ${service.color}`}
+                    className={`block px-4 py-2.5 rounded-md text-center text-sm font-medium ${service.color}`}
                     onClick={event => {
                       event.stopPropagation();
                     }}>
@@ -356,7 +356,7 @@ export function MovieCard({
                 }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block px-4 py-3 mt-3 bg-yellow-500 text-gray-900 rounded-md text-center text-sm font-medium"
+                className="block px-4 py-2.5 mt-2 bg-yellow-500 text-gray-900 rounded-md text-center text-sm font-medium"
                 onClick={event => {
                   event.stopPropagation();
                 }}>
@@ -372,7 +372,7 @@ export function MovieCard({
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block px-4 py-3 mt-3 bg-gray-600 text-white rounded-md text-center text-sm font-medium"
+                className="block px-4 py-2.5 mt-2 bg-gray-600 text-white rounded-md text-center text-sm font-medium"
                 onClick={event => {
                   event.stopPropagation();
                 }}>
@@ -383,14 +383,14 @@ export function MovieCard({
                 method="GET"
                 acceptCharset="Shift_JIS"
                 target="_blank"
-                className="mt-3"
+                className="mt-2"
                 onClick={event => {
                   event.stopPropagation();
                 }}>
                 <input type="hidden" name="k" value={discasTitle} />
                 <button
                   type="submit"
-                  className="w-full px-4 py-3 bg-sky-500 text-white rounded-md text-center text-sm font-medium">
+                  className="w-full px-4 py-2.5 bg-sky-500 text-white rounded-md text-center text-sm font-medium">
                   TSUTAYA DISCAS
                 </button>
               </form>
