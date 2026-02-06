@@ -32,6 +32,15 @@ program
     value => Number.parseInt(value, 10),
   )
   .option('--dry-run', 'Run without writing to the database', false)
+  .option(
+    '-o, --organization <name>',
+    'Award organization name (default: env AWARD_ORGANIZATION_NAME or "1001 Movies You Must See Before You Die")',
+  )
+  .option(
+    '-c, --category <name>',
+    'Award category name (default: "Selected Films")',
+  )
+  .option('--ceremony <name>', 'Ceremony description / name')
   .action(async (csvFile: string, options: Record<string, unknown>) => {
     const limit =
       typeof options.limit === 'number' && Number.isFinite(options.limit)
@@ -42,6 +51,14 @@ program
         ? options.throttle
         : undefined;
     const dryRun = Boolean(options.dryRun);
+    const organizationName =
+      typeof options.organization === 'string'
+        ? options.organization
+        : undefined;
+    const categoryName =
+      typeof options.category === 'string' ? options.category : undefined;
+    const ceremonyName =
+      typeof options.ceremony === 'string' ? options.ceremony : undefined;
 
     const requiredEnvironment = [
       'TURSO_DATABASE_URL',
@@ -70,6 +87,9 @@ program
         dryRun,
         limit,
         throttleMs: throttle,
+        organizationName,
+        categoryName,
+        ceremonyName,
       });
     } catch (error) {
       throw new Error(`Import failed: ${String(error)}`);

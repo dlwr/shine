@@ -77,16 +77,14 @@ type ImportOptions = {
   dryRun?: boolean;
   limit?: number;
   throttleMs?: number;
+  organizationName?: string;
+  categoryName?: string;
+  ceremonyName?: string;
 };
 
 let tmdbApiKey: string;
 let tmdbConfiguration: TmdbConfiguration | undefined;
 let releaseDateColumnAvailable: boolean | undefined;
-const AWARD_ORGANIZATION_NAME =
-  process.env.AWARD_ORGANIZATION_NAME ??
-  '1001 Movies You Must See Before You Die';
-const AWARD_CATEGORY_NAME = process.env.AWARD_CATEGORY_NAME ?? 'Selected Films';
-
 type AwardContext = {
   organizationUid: string;
   ceremonyUid: string;
@@ -101,6 +99,9 @@ export async function importMoviesFromCsv({
   dryRun = false,
   limit,
   throttleMs = 300,
+  organizationName,
+  categoryName,
+  ceremonyName,
 }: ImportOptions): Promise<ImportStats> {
   tmdbApiKey = environment.TMDB_API_KEY ?? '';
   if (!tmdbApiKey) {
@@ -127,7 +128,11 @@ export async function importMoviesFromCsv({
   }
 
   const database = getDatabase(environment);
-  const awardContext = await getAwardContext(database);
+  const awardContext = await getAwardContext(database, {
+    organizationName,
+    categoryName,
+    ceremonyName,
+  });
   const imdbIds = uniqueRecords.map(record => record.Const.trim());
 
   const existingMovies =
@@ -428,41 +433,81 @@ async function ensureTmdbConfiguration(): Promise<void> {
 
 async function getAwardContext(
   database: ReturnType<typeof getDatabase>,
+  options?: {
+    organizationName?: string;
+    categoryName?: string;
+    ceremonyName?: string;
+  },
 ): Promise<AwardContext> {
   if (cachedAwardContext) {
     return cachedAwardContext;
   }
 
+  const orgName =
+    options?.organizationName ??
+    process.env.AWARD_ORGANIZATION_NAME ??
+    '1001 Movies You Must See Before You Die';
+  const catName =
+    options?.categoryName ??
+    process.env.AWARD_CATEGORY_NAME ??
+    'Selected Films';
+  const cerName = options?.ceremonyName;
+
+  await database
+    .insert(awardOrganizations)
+    .values({name: orgName})
+    .onConflictDoNothing();
+
   const [organization] = await database
     .select({uid: awardOrganizations.uid})
     .from(awardOrganizations)
-    .where(eq(awardOrganizations.name, AWARD_ORGANIZATION_NAME))
+    .where(eq(awardOrganizations.name, orgName))
     .limit(1);
 
   if (!organization) {
     throw new Error(
-      `Award organization "${AWARD_ORGANIZATION_NAME}" not found in database.`,
+      `Award organization "${orgName}" could not be created or found.`,
     );
   }
 
-  const [category] = await database
+  let [category] = await database
     .select({uid: awardCategories.uid})
     .from(awardCategories)
     .where(
       and(
         eq(awardCategories.organizationUid, organization.uid),
-        eq(awardCategories.name, AWARD_CATEGORY_NAME),
+        eq(awardCategories.name, catName),
       ),
     )
     .limit(1);
 
   if (!category) {
+    await database
+      .insert(awardCategories)
+      .values({organizationUid: organization.uid, name: catName});
+
+    [category] = await database
+      .select({uid: awardCategories.uid})
+      .from(awardCategories)
+      .where(
+        and(
+          eq(awardCategories.organizationUid, organization.uid),
+          eq(awardCategories.name, catName),
+        ),
+      )
+      .limit(1);
+  }
+
+  if (!category) {
     throw new Error(
-      `Award category "${AWARD_CATEGORY_NAME}" not found for organization "${AWARD_ORGANIZATION_NAME}".`,
+      `Award category "${catName}" could not be created or found for organization "${orgName}".`,
     );
   }
 
-  const [ceremony] = await database
+  const ceremonyYear = new Date().getFullYear();
+  const ceremonyDescription = cerName ?? orgName;
+
+  let [ceremony] = await database
     .select({uid: awardCeremonies.uid})
     .from(awardCeremonies)
     .where(eq(awardCeremonies.organizationUid, organization.uid))
@@ -470,10 +515,29 @@ async function getAwardContext(
     .limit(1);
 
   if (!ceremony) {
+    await database.insert(awardCeremonies).values({
+      organizationUid: organization.uid,
+      year: ceremonyYear,
+      description: ceremonyDescription,
+    });
+
+    [ceremony] = await database
+      .select({uid: awardCeremonies.uid})
+      .from(awardCeremonies)
+      .where(eq(awardCeremonies.organizationUid, organization.uid))
+      .orderBy(desc(awardCeremonies.year))
+      .limit(1);
+  }
+
+  if (!ceremony) {
     throw new Error(
-      `Award ceremony not found for organization "${AWARD_ORGANIZATION_NAME}".`,
+      `Award ceremony could not be created or found for organization "${orgName}".`,
     );
   }
+
+  console.log(
+    `Award context: org="${orgName}", category="${catName}", ceremony=${ceremonyYear} (${ceremonyDescription})`,
+  );
 
   cachedAwardContext = {
     organizationUid: organization.uid,
