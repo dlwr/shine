@@ -17,6 +17,16 @@ for (const candidate of environmentCandidates) {
   }
 }
 
+function finiteNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value
+    : undefined;
+}
+
+function optionalString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
 const program = new Command();
 
 program
@@ -42,23 +52,12 @@ program
   )
   .option('--ceremony <name>', 'Ceremony description / name')
   .action(async (csvFile: string, options: Record<string, unknown>) => {
-    const limit =
-      typeof options.limit === 'number' && Number.isFinite(options.limit)
-        ? options.limit
-        : undefined;
-    const throttle =
-      typeof options.throttle === 'number' && Number.isFinite(options.throttle)
-        ? options.throttle
-        : undefined;
+    const limit = finiteNumber(options.limit);
+    const throttle = finiteNumber(options.throttle);
     const dryRun = Boolean(options.dryRun);
-    const organizationName =
-      typeof options.organization === 'string'
-        ? options.organization
-        : undefined;
-    const categoryName =
-      typeof options.category === 'string' ? options.category : undefined;
-    const ceremonyName =
-      typeof options.ceremony === 'string' ? options.ceremony : undefined;
+    const organizationName = optionalString(options.organization);
+    const categoryName = optionalString(options.category);
+    const ceremonyName = optionalString(options.ceremony);
 
     const requiredEnvironment = [
       'TURSO_DATABASE_URL',

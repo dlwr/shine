@@ -431,6 +431,86 @@ async function ensureTmdbConfiguration(): Promise<void> {
   tmdbConfiguration = (await response.json()) as TmdbConfiguration;
 }
 
+async function findOrCreateOrganization(
+  database: ReturnType<typeof getDatabase>,
+  name: string,
+): Promise<string> {
+  await database
+    .insert(awardOrganizations)
+    .values({name})
+    .onConflictDoNothing();
+
+  const [row] = await database
+    .select({uid: awardOrganizations.uid})
+    .from(awardOrganizations)
+    .where(eq(awardOrganizations.name, name))
+    .limit(1);
+
+  if (!row) {
+    throw new Error(
+      `Award organization "${name}" could not be created or found.`,
+    );
+  }
+
+  return row.uid;
+}
+
+async function findOrCreateCategory(
+  database: ReturnType<typeof getDatabase>,
+  organizationUid: string,
+  name: string,
+): Promise<string> {
+  await database
+    .insert(awardCategories)
+    .values({organizationUid, name})
+    .onConflictDoNothing();
+
+  const [row] = await database
+    .select({uid: awardCategories.uid})
+    .from(awardCategories)
+    .where(
+      and(
+        eq(awardCategories.organizationUid, organizationUid),
+        eq(awardCategories.name, name),
+      ),
+    )
+    .limit(1);
+
+  if (!row) {
+    throw new Error(`Award category "${name}" could not be created or found.`);
+  }
+
+  return row.uid;
+}
+
+async function findOrCreateCeremony(
+  database: ReturnType<typeof getDatabase>,
+  organizationUid: string,
+  description: string,
+): Promise<string> {
+  const year = new Date().getFullYear();
+
+  await database
+    .insert(awardCeremonies)
+    .values({organizationUid, year, description})
+    .onConflictDoNothing();
+
+  const [row] = await database
+    .select({uid: awardCeremonies.uid})
+    .from(awardCeremonies)
+    .where(eq(awardCeremonies.organizationUid, organizationUid))
+    .orderBy(desc(awardCeremonies.year))
+    .limit(1);
+
+  if (!row) {
+    throw new Error(
+      `Award ceremony could not be created or found for organization.`,
+    );
+  }
+
+  return row.uid;
+}
+
 async function getAwardContext(
   database: ReturnType<typeof getDatabase>,
   options?: {
@@ -451,99 +531,25 @@ async function getAwardContext(
     options?.categoryName ??
     process.env.AWARD_CATEGORY_NAME ??
     'Selected Films';
-  const cerName = options?.ceremonyName;
+  const ceremonyDescription = options?.ceremonyName ?? orgName;
 
-  await database
-    .insert(awardOrganizations)
-    .values({name: orgName})
-    .onConflictDoNothing();
-
-  const [organization] = await database
-    .select({uid: awardOrganizations.uid})
-    .from(awardOrganizations)
-    .where(eq(awardOrganizations.name, orgName))
-    .limit(1);
-
-  if (!organization) {
-    throw new Error(
-      `Award organization "${orgName}" could not be created or found.`,
-    );
-  }
-
-  let [category] = await database
-    .select({uid: awardCategories.uid})
-    .from(awardCategories)
-    .where(
-      and(
-        eq(awardCategories.organizationUid, organization.uid),
-        eq(awardCategories.name, catName),
-      ),
-    )
-    .limit(1);
-
-  if (!category) {
-    await database
-      .insert(awardCategories)
-      .values({organizationUid: organization.uid, name: catName});
-
-    [category] = await database
-      .select({uid: awardCategories.uid})
-      .from(awardCategories)
-      .where(
-        and(
-          eq(awardCategories.organizationUid, organization.uid),
-          eq(awardCategories.name, catName),
-        ),
-      )
-      .limit(1);
-  }
-
-  if (!category) {
-    throw new Error(
-      `Award category "${catName}" could not be created or found for organization "${orgName}".`,
-    );
-  }
-
-  const ceremonyYear = new Date().getFullYear();
-  const ceremonyDescription = cerName ?? orgName;
-
-  let [ceremony] = await database
-    .select({uid: awardCeremonies.uid})
-    .from(awardCeremonies)
-    .where(eq(awardCeremonies.organizationUid, organization.uid))
-    .orderBy(desc(awardCeremonies.year))
-    .limit(1);
-
-  if (!ceremony) {
-    await database.insert(awardCeremonies).values({
-      organizationUid: organization.uid,
-      year: ceremonyYear,
-      description: ceremonyDescription,
-    });
-
-    [ceremony] = await database
-      .select({uid: awardCeremonies.uid})
-      .from(awardCeremonies)
-      .where(eq(awardCeremonies.organizationUid, organization.uid))
-      .orderBy(desc(awardCeremonies.year))
-      .limit(1);
-  }
-
-  if (!ceremony) {
-    throw new Error(
-      `Award ceremony could not be created or found for organization "${orgName}".`,
-    );
-  }
-
-  console.log(
-    `Award context: org="${orgName}", category="${catName}", ceremony=${ceremonyYear} (${ceremonyDescription})`,
+  const organizationUid = await findOrCreateOrganization(database, orgName);
+  const categoryUid = await findOrCreateCategory(
+    database,
+    organizationUid,
+    catName,
+  );
+  const ceremonyUid = await findOrCreateCeremony(
+    database,
+    organizationUid,
+    ceremonyDescription,
   );
 
-  cachedAwardContext = {
-    organizationUid: organization.uid,
-    categoryUid: category.uid,
-    ceremonyUid: ceremony.uid,
-  };
+  console.log(
+    `Award context: org="${orgName}", category="${catName}", ceremony="${ceremonyDescription}"`,
+  );
+
+  cachedAwardContext = {organizationUid, categoryUid, ceremonyUid};
   return cachedAwardContext;
 }
 
