@@ -18,8 +18,8 @@ importers:
         specifier: ^17.2.4
         version: 17.2.4
       drizzle-orm:
-        specifier: 1.0.0-beta.13-f728631
-        version: 1.0.0-beta.13-f728631(@cloudflare/workers-types@4.20260210.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(better-sqlite3@12.6.2)(gel@2.1.0)(mssql@11.0.1(@azure/core-client@1.10.1))
+        specifier: 1.0.0-beta.15-859cf75
+        version: 1.0.0-beta.15-859cf75(@cloudflare/workers-types@4.20260210.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(better-sqlite3@12.6.2)(gel@2.1.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.2.0(typescript@5.9.3))(zod@4.3.6)
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -258,8 +258,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       drizzle-orm:
-        specifier: 1.0.0-beta.13-f728631
-        version: 1.0.0-beta.13-f728631(@cloudflare/workers-types@4.20260210.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(better-sqlite3@12.6.2)(gel@2.1.0)(mssql@11.0.1(@azure/core-client@1.10.1))
+        specifier: 1.0.0-beta.15-859cf75
+        version: 1.0.0-beta.15-859cf75(@cloudflare/workers-types@4.20260210.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(better-sqlite3@12.6.2)(gel@2.1.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.2.0(typescript@5.9.3))(zod@4.3.6)
 
   packages/node-domexception: {}
 
@@ -2930,8 +2930,8 @@ packages:
     resolution: {integrity: sha512-Yfjns5vbi3Y5LmQMWPPGjMh2mD20i1qwRHJrWnqD/O1EJgn4kfH0WuzMdXlqMRtocos+e6nJYm3ZJXeU1efHGQ==}
     hasBin: true
 
-  drizzle-orm@1.0.0-beta.13-f728631:
-    resolution: {integrity: sha512-P+QKVzS80WoeUm2cinAj6z5+56g3N1VlM4kfK29ppKOd1x6TOuYmY6RI9/ABTGxOCIrPEfrxijyqpAqIOwLrjg==}
+  drizzle-orm@1.0.0-beta.15-859cf75:
+    resolution: {integrity: sha512-dGVb2Q70H2AV6513hkOXR3Ud0FeGXLdugVq3YehoqkGIVTJrkuo0gRnCcW/dfI00O07t3T4HSh4clF/D/o/IsQ==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
@@ -2945,6 +2945,7 @@ packages:
       '@opentelemetry/api': ^1.4.1
       '@planetscale/database': '>=1.13'
       '@prisma/client': '*'
+      '@sinclair/typebox': '>=0.34.8'
       '@sqlitecloud/drivers': '>=1.0.653'
       '@tidbcloud/serverless': '*'
       '@tursodatabase/database': '>=0.2.1'
@@ -2957,6 +2958,7 @@ packages:
       '@upstash/redis': '>=1.34.7'
       '@vercel/postgres': '>=0.8.0'
       '@xata.io/client': '*'
+      arktype: '>=2.0.0'
       better-sqlite3: '>=9.3.0'
       bun-types: '*'
       expo-sqlite: '>=14.0.0'
@@ -2968,6 +2970,9 @@ packages:
       prisma: '*'
       sql.js: '>=1'
       sqlite3: '>=5'
+      typebox: '>=1.0.0'
+      valibot: '>=1.0.0-beta.7'
+      zod: ^3.25.0 || ^4.0.0
     peerDependenciesMeta:
       '@aws-sdk/client-rds-data':
         optional: true
@@ -2993,6 +2998,8 @@ packages:
         optional: true
       '@prisma/client':
         optional: true
+      '@sinclair/typebox':
+        optional: true
       '@sqlitecloud/drivers':
         optional: true
       '@tidbcloud/serverless':
@@ -3015,6 +3022,8 @@ packages:
         optional: true
       '@xata.io/client':
         optional: true
+      arktype:
+        optional: true
       better-sqlite3:
         optional: true
       bun-types:
@@ -3034,6 +3043,12 @@ packages:
       sql.js:
         optional: true
       sqlite3:
+        optional: true
+      typebox:
+        optional: true
+      valibot:
+        optional: true
+      zod:
         optional: true
 
   ecdsa-sig-formatter@1.0.11:
@@ -7445,7 +7460,7 @@ snapshots:
       esbuild: 0.25.12
       jiti: 2.6.1
 
-  drizzle-orm@1.0.0-beta.13-f728631(@cloudflare/workers-types@4.20260210.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(better-sqlite3@12.6.2)(gel@2.1.0)(mssql@11.0.1(@azure/core-client@1.10.1)):
+  drizzle-orm@1.0.0-beta.15-859cf75(@cloudflare/workers-types@4.20260210.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(better-sqlite3@12.6.2)(gel@2.1.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.2.0(typescript@5.9.3))(zod@4.3.6):
     dependencies:
       '@types/mssql': 9.1.8(@azure/core-client@1.10.1)
       mssql: 11.0.1(@azure/core-client@1.10.1)
@@ -7456,6 +7471,8 @@ snapshots:
       '@types/better-sqlite3': 7.6.13
       better-sqlite3: 12.6.2
       gel: 2.1.0
+      valibot: 1.2.0(typescript@5.9.3)
+      zod: 4.3.6
 
   ecdsa-sig-formatter@1.0.11:
     dependencies:
