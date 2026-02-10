@@ -1,4 +1,5 @@
 import {useEffect, useMemo, useState} from 'react';
+import {Link} from 'react-router';
 import type {ChangeEvent, FormEvent} from 'react';
 import type {MovieDetails, Nomination} from '../routes/admin.movies.$id';
 
@@ -609,12 +610,14 @@ export default function NominationManager({
                     </div>
                   </td>
                   <td className="py-2 px-3">
-                    <div className="text-sm">
+                    <Link
+                      to={`/admin/ceremonies/${nomination.ceremony.uid}`}
+                      className="text-sm hover:underline text-blue-600">
                       <div>{nomination.ceremony.year}</div>
                       <div className="text-gray-500">
                         第{nomination.ceremony.number}回
                       </div>
-                    </div>
+                    </Link>
                   </td>
                   <td className="py-2 px-3 text-sm">
                     {nomination.category.name}
