@@ -12,56 +12,16 @@ import {translations} from '@shine/database/schema/translations';
 import type {TMDBMovieData} from '@shine/scrapers/common/tmdb-utilities';
 import {generateUUID} from '@shine/utils';
 import {BaseService} from './base-service';
+import {
+  type ImdbNextData,
+  extractImdbNominations,
+  normalizeCategoryName,
+} from './imdb-matching';
 import type {
   MergeMoviesOptions,
   PaginationOptions,
   UpdateIMDBIdOptions,
 } from '@shine/types';
-
-type ImdbNextData = {
-  props?: {
-    pageProps?: {
-      edition?: {
-        awards?: Array<{
-          text?: string | null;
-          nominationCategories?: {
-            edges?: Array<{
-              node?: {
-                category?: {text?: string | null};
-                nominations?: {
-                  edges?: Array<{
-                    node?: {
-                      isWinner?: boolean | null;
-                      notes?: unknown;
-                      awardedEntities?: {
-                        awardTitles?: Array<{
-                          title?: {
-                            id?: string | null;
-                            titleText?: {text?: string | null};
-                            originalTitleText?: {
-                              text?: string | null;
-                            };
-                          };
-                        }>;
-                      };
-                    };
-                  }>;
-                };
-              };
-            }>;
-          };
-        }>;
-      };
-    };
-  };
-};
-
-type ImdbNomination = {
-  imdbId?: string;
-  title?: string;
-  isWinner: boolean;
-  notes?: string;
-};
 
 const IMDB_FETCH_HEADERS = {
   'User-Agent':
@@ -72,129 +32,6 @@ const IMDB_FETCH_HEADERS = {
 
 const ensureTrailingSlash = (value: string): string =>
   value.endsWith('/') ? value : `${value}/`;
-
-const normalizeCategoryName = (value: string): string =>
-  value
-    .normalize('NFKC')
-    .toLowerCase()
-    .replaceAll('’', "'")
-    .replaceAll(/[（）]/g, match => (match === '（' ? '(' : ')'))
-    .replaceAll(/\s+/g, ' ')
-    .trim();
-
-const extractNoteText = (note: unknown): string | undefined => {
-  if (typeof note === 'string') {
-    const trimmed = note.trim();
-    return trimmed === '' ? undefined : trimmed;
-  }
-
-  if (note && typeof note === 'object') {
-    const plainText =
-      (typeof (note as {plainText?: unknown}).plainText === 'string'
-        ? (note as {plainText: string}).plainText
-        : undefined) ??
-      (typeof (note as {value?: {plainText?: unknown}}).value?.plainText ===
-      'string'
-        ? (note as {value: {plainText: string}}).value.plainText
-        : undefined);
-
-    if (plainText) {
-      const trimmed = plainText.trim();
-      return trimmed === '' ? undefined : trimmed;
-    }
-  }
-
-  return undefined;
-};
-
-const extractImdbNominations = (
-  data: ImdbNextData,
-  targetNames: Set<string>,
-): {categoryName?: string; nominations: ImdbNomination[]} => {
-  const awards = data?.props?.pageProps?.edition?.awards ?? [];
-
-  const matchesTarget = (name: string): boolean => {
-    const normalized = normalizeCategoryName(name);
-    if (targetNames.has(normalized)) {
-      return true;
-    }
-
-    for (const candidate of targetNames) {
-      if (normalized.includes(candidate) || candidate.includes(normalized)) {
-        return true;
-      }
-    }
-
-    return false;
-  };
-
-  const categoryEdges = awards.flatMap(award => {
-    const edges = award?.nominationCategories?.edges ?? [];
-    return edges.map(edge => ({edge, award}));
-  });
-
-  const targetEntry = categoryEdges.find(({edge, award}) => {
-    const categoryName = edge?.node?.category?.text;
-    const awardName = award?.text;
-
-    if (typeof categoryName === 'string' && categoryName.trim() !== '') {
-      return matchesTarget(categoryName);
-    }
-
-    if (typeof awardName === 'string' && awardName.trim() !== '') {
-      return matchesTarget(awardName);
-    }
-
-    return false;
-  });
-
-  if (!targetEntry?.edge?.node) {
-    return {nominations: []};
-  }
-
-  const nominations: ImdbNomination[] = [];
-  const nominationEdges = targetEntry.edge.node.nominations?.edges ?? [];
-
-  for (const edge of nominationEdges) {
-    const node = edge?.node;
-    if (!node) {
-      continue;
-    }
-
-    const titleInfo = node.awardedEntities?.awardTitles?.[0]?.title;
-    const imdbId =
-      typeof titleInfo?.id === 'string' ? titleInfo.id.trim() : undefined;
-    const englishTitle =
-      typeof titleInfo?.titleText?.text === 'string'
-        ? titleInfo.titleText.text.trim()
-        : undefined;
-    const originalTitle =
-      typeof titleInfo?.originalTitleText?.text === 'string'
-        ? titleInfo.originalTitleText.text.trim()
-        : undefined;
-
-    nominations.push({
-      imdbId: imdbId && imdbId !== '' ? imdbId : undefined,
-      title: englishTitle && englishTitle !== '' ? englishTitle : originalTitle,
-      isWinner: Boolean(node.isWinner),
-      notes: extractNoteText(node.notes),
-    });
-  }
-
-  const resolvedCategoryName =
-    typeof targetEntry.edge.node.category?.text === 'string' &&
-    targetEntry.edge.node.category.text.trim() !== ''
-      ? targetEntry.edge.node.category.text
-      : typeof targetEntry.award?.text === 'string' &&
-          targetEntry.award.text.trim() !== ''
-        ? targetEntry.award.text
-        : undefined;
-
-  return {
-    categoryName: resolvedCategoryName,
-    nominations,
-  };
-};
 
 export class AdminService extends BaseService {
   async getMovies(options: PaginationOptions & {search?: string}) {

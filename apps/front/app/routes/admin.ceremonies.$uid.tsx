@@ -257,23 +257,41 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       '最優秀日本映画賞',
     ];
 
-    const normalizedSynonyms = synonyms.map(synonym =>
-      normalizeCategoryName(synonym),
+    const normalizedSynonyms = new Set(
+      synonyms.map(synonym => normalizeCategoryName(synonym)),
     );
 
-    return awardsData.categories.find(category => {
+    let bestMatch: (typeof awardsData)['categories'][number] | undefined;
+    let bestScore = Number.POSITIVE_INFINITY;
+
+    for (const category of awardsData.categories) {
       if (category.organizationUid !== organizationUid) {
-        return false;
+        continue;
       }
 
       const normalizedName = normalizeCategoryName(category.name);
-      return normalizedSynonyms.some(
-        synonym =>
-          normalizedName === synonym ||
-          normalizedName.includes(synonym) ||
-          synonym.includes(normalizedName),
-      );
-    });
+      if (normalizedSynonyms.has(normalizedName)) {
+        return category;
+      }
+
+      let score = Number.POSITIVE_INFINITY;
+      for (const synonym of normalizedSynonyms) {
+        if (normalizedName.includes(synonym)) {
+          score = Math.min(score, normalizedName.length - synonym.length);
+        }
+
+        if (synonym.includes(normalizedName)) {
+          score = Math.min(score, synonym.length - normalizedName.length);
+        }
+      }
+
+      if (score < bestScore) {
+        bestScore = score;
+        bestMatch = category;
+      }
+    }
+
+    return bestMatch;
   }, [
     awardsData,
     ceremonyDetail?.ceremony.organizationUid,
