@@ -320,7 +320,7 @@ export function MovieCard({
             <img
               src={posterUrl}
               alt={`${movieTitle} poster`}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           ) : (
             <div className="text-gray-500 text-xl">{t.noPoster}</div>
