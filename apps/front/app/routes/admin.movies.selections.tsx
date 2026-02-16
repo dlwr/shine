@@ -90,6 +90,14 @@ const getTypeColor = (type: string) => {
   }
 };
 
+type SelectionType = 'daily' | 'weekly' | 'monthly';
+
+const selectionKeyMap: Record<SelectionType, keyof PreviewSelections> = {
+  daily: 'nextDaily',
+  weekly: 'nextWeekly',
+  monthly: 'nextMonthly',
+};
+
 export function meta(): Route.MetaDescriptors {
   return [
     {title: '映画選択管理 - SHINE Admin'},
@@ -125,9 +133,7 @@ export default function AdminMovieSelections({
 
   // Override modal states
   const [showOverrideModal, setShowOverrideModal] = useState(false);
-  const [overrideType, setOverrideType] = useState<
-    'daily' | 'weekly' | 'monthly'
-  >('daily');
+  const [overrideType, setOverrideType] = useState<SelectionType>('daily');
   const [activeTab, setActiveTab] = useState<'search' | 'random'>('search');
 
   // Search states
@@ -231,6 +237,10 @@ export default function AdminMovieSelections({
     };
   }, [searchQuery, apiUrl]);
 
+  const getSelectionDate = () =>
+    selections?.[selectionKeyMap[overrideType]]?.date ||
+    new Date().toISOString().split('T')[0];
+
   const generateRandomMovie = async () => {
     setRandomLoading(true);
     try {
@@ -243,12 +253,7 @@ export default function AdminMovieSelections({
         },
         body: JSON.stringify({
           type: overrideType,
-          date:
-            selections?.[
-              `next${
-                overrideType.charAt(0).toUpperCase() + overrideType.slice(1)
-              }` as keyof PreviewSelections
-            ]?.date || new Date().toISOString().split('T')[0],
+          date: getSelectionDate(),
           locale,
         }),
       });
@@ -279,12 +284,7 @@ export default function AdminMovieSelections({
         },
         body: JSON.stringify({
           type: overrideType,
-          date:
-            selections?.[
-              `next${
-                overrideType.charAt(0).toUpperCase() + overrideType.slice(1)
-              }` as keyof PreviewSelections
-            ]?.date || new Date().toISOString().split('T')[0],
+          date: getSelectionDate(),
           movieId: selectedMovie.uid,
         }),
       });
@@ -298,7 +298,7 @@ export default function AdminMovieSelections({
     }
   };
 
-  const openOverrideModal = (type: 'daily' | 'weekly' | 'monthly') => {
+  const openOverrideModal = (type: SelectionType) => {
     setOverrideType(type);
     setShowOverrideModal(true);
     setActiveTab('search');
@@ -383,12 +383,7 @@ export default function AdminMovieSelections({
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {(['daily', 'weekly', 'monthly'] as const).map(type => {
-            const selection =
-              selections?.[
-                `next${
-                  type.charAt(0).toUpperCase() + type.slice(1)
-                }` as keyof PreviewSelections
-              ];
+            const selection = selections?.[selectionKeyMap[type]];
             return (
               <Card
                 key={type}
@@ -462,29 +457,26 @@ export default function AdminMovieSelections({
                 </p>
               </div>
 
-              <div className="border-b flex">
-                <Button
-                  data-testid="search-tab"
-                  variant="ghost"
-                  className={`w-1/2 rounded-none border-b-2 text-sm font-medium ${
-                    activeTab === 'search'
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setActiveTab('search')}>
-                  映画を検索
-                </Button>
-                <Button
-                  data-testid="random-tab"
-                  variant="ghost"
-                  className={`w-1/2 rounded-none border-b-2 text-sm font-medium ${
-                    activeTab === 'random'
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setActiveTab('random')}>
-                  ランダム選択
-                </Button>
+              <div className="flex border-b">
+                {(
+                  [
+                    {key: 'search', label: '映画を検索'},
+                    {key: 'random', label: 'ランダム選択'},
+                  ] as const
+                ).map(tab => (
+                  <Button
+                    key={tab.key}
+                    data-testid={`${tab.key}-tab`}
+                    variant="ghost"
+                    className={`w-1/2 rounded-none border-b-2 text-sm font-medium ${
+                      activeTab === tab.key
+                        ? 'border-blue-600 text-blue-600'
+                        : 'border-transparent text-gray-600 hover:text-gray-900'
+                    }`}
+                    onClick={() => setActiveTab(tab.key)}>
+                    {tab.label}
+                  </Button>
+                ))}
               </div>
 
               <div className="p-6">
