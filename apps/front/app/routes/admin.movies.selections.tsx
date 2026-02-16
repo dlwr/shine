@@ -142,6 +142,15 @@ export default function AdminMovieSelections({
   // Selected movie for override
   const [selectedMovie, setSelectedMovie] = useState<SearchMovie | undefined>();
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = showOverrideModal ? 'hidden' : '';
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showOverrideModal]);
+
   // Load movie selections
   useEffect(() => {
     const loadSelections = async () => {
@@ -444,8 +453,8 @@ export default function AdminMovieSelections({
         {showOverrideModal && (
           <div
             data-testid="override-modal"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6">
-            <div className="max-h-screen w-full max-w-4xl overflow-auto rounded-lg bg-white shadow-xl">
+            className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/50 px-4 py-6">
+            <div className="mx-auto w-full max-w-4xl rounded-lg bg-white shadow-xl">
               <div className="border-b p-6">
                 <h3 className="text-xl font-bold">映画選択をオーバーライド</h3>
                 <p className="text-gray-600">
