@@ -307,7 +307,7 @@ export function MovieCard({
   return (
     <Card ref={cardReference} className="relative h-full w-80 overflow-hidden">
       <div
-        className="h-[400px] md:h-[450px] bg-gray-100 flex items-center justify-center relative cursor-pointer"
+        className="aspect-2/3 bg-gray-100 flex items-center justify-center relative cursor-pointer"
         onMouseEnter={() => !isMobile && setShowStreamingMenu(true)}
         onMouseLeave={() => !isMobile && setShowStreamingMenu(false)}
         onClick={() => isMobile && setShowStreamingMenu(!showStreamingMenu)}>
