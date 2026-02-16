@@ -1,6 +1,6 @@
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {MemoryRouter} from 'react-router';
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 import NominationManager from './nomination-manager';
 
@@ -52,42 +52,32 @@ const sampleNomination = {
   },
 };
 
-const originalFetch = globalThis.fetch;
-const originalLocalStorage = globalThis.localStorage;
 const mockLocalStorage = {
-  getItem: vi.fn(() => 'admin-token'),
+  getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
   clear: vi.fn(),
-  key: vi.fn(),
-  length: 0,
 };
+
+Object.defineProperty(globalThis, 'localStorage', {
+  value: mockLocalStorage,
+  writable: true,
+  configurable: true,
+});
 
 describe('NominationManager', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    mockLocalStorage.getItem.mockReset();
-    mockLocalStorage.setItem.mockReset();
-    mockLocalStorage.removeItem.mockReset();
-
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(awardsResponse),
-    } as Response);
-
-    Object.defineProperty(globalThis, 'localStorage', {
-      value: mockLocalStorage,
-      writable: true,
-    });
     mockLocalStorage.getItem.mockReturnValue('admin-token');
-  });
 
-  afterEach(() => {
-    globalThis.fetch = originalFetch;
-    Object.defineProperty(globalThis, 'localStorage', {
-      value: originalLocalStorage,
+    Object.defineProperty(globalThis, 'fetch', {
+      value: vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(awardsResponse),
+      } as Response),
       writable: true,
+      configurable: true,
     });
   });
 
