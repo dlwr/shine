@@ -30,6 +30,7 @@ export async function seedJapanAcademyAwards(environment: Environment) {
     if (!organization) {
       throw new Error(
         'Failed to insert or find Japan Academy Awards organization',
+        {cause: error},
       );
     }
   }

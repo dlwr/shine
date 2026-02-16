@@ -304,7 +304,7 @@ export class SelectionsService extends BaseService {
           true,
         );
         if (!regenerated) {
-          throw new Error('No movies available for selection');
+          throw new Error('No movies available for selection', {cause: error});
         }
         movie = regenerated;
       } else {

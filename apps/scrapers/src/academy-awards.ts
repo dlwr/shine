@@ -445,7 +445,6 @@ function extractMovieTitle(
     return {title: ''};
   }
 
-  let title = '';
   let referenceUrl: string | undefined;
   let imdbId: string | undefined;
 
@@ -467,7 +466,7 @@ function extractMovieTitle(
     }
   }
 
-  title =
+  let title =
     italicElements.length > 0
       ? italicElements.first().text().trim()
       : filmCell.text().trim();

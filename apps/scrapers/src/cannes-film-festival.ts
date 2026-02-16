@@ -691,9 +691,9 @@ function parseMovieTableRow(
   const titleElement = titleCell.find('i').first();
   const linkElement = titleCell.find('a').first();
 
-  let title = '';
   let referenceUrl: string | undefined;
 
+  let title: string;
   if (titleElement.length > 0) {
     title = titleElement.text().trim();
   } else if (linkElement.length > 0) {

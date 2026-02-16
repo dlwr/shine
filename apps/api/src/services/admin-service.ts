@@ -1053,7 +1053,7 @@ export class AdminService extends BaseService {
       nextData = JSON.parse(jsonText) as ImdbNextData;
     } catch (error) {
       console.error('Failed to parse IMDb __NEXT_DATA__ payload:', error);
-      throw new Error('Failed to parse IMDb event payload');
+      throw new Error('Failed to parse IMDb event payload', {cause: error});
     }
 
     const normalizedTarget = normalizeCategoryName(category.name);

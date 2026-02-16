@@ -91,7 +91,7 @@ program
         ceremonyName,
       });
     } catch (error) {
-      throw new Error(`Import failed: ${String(error)}`);
+      throw new Error(`Import failed: ${String(error)}`, {cause: error});
     }
   });
 

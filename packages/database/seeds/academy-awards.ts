@@ -28,7 +28,9 @@ export async function seedAcademyAwards(environment: Environment) {
       .where(eq(awardOrganizations.name, 'Academy Awards'));
 
     if (!organization) {
-      throw new Error('Failed to insert or find Academy Awards organization');
+      throw new Error('Failed to insert or find Academy Awards organization', {
+        cause: error,
+      });
     }
   }
 
