@@ -1,4 +1,5 @@
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {MemoryRouter} from 'react-router';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
 import NominationManager from './nomination-manager';
@@ -94,12 +95,14 @@ describe('NominationManager', () => {
     const onUpdate = vi.fn();
 
     render(
-      <NominationManager
-        movieId="movie-123"
-        apiUrl="http://localhost:8787"
-        nominations={[sampleNomination]}
-        onNominationsUpdate={onUpdate}
-      />,
+      <MemoryRouter>
+        <NominationManager
+          movieId="movie-123"
+          apiUrl="http://localhost:8787"
+          nominations={[sampleNomination]}
+          onNominationsUpdate={onUpdate}
+        />
+      </MemoryRouter>,
     );
 
     expect(screen.getByText('ノミネート管理')).toBeInTheDocument();
