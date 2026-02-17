@@ -1,4 +1,5 @@
 import {useEffect, useMemo, useState} from 'react';
+import AdminNav from '@/components/admin-nav';
 import {Button} from '@/components/ui/button';
 import {
   Card,
@@ -48,13 +49,6 @@ export async function loader({context}: Route.LoaderArgs) {
     apiUrl: cloudflareEnvironment?.PUBLIC_API_URL ?? 'http://localhost:8787',
   };
 }
-
-const handleLogout = () => {
-  if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
-    globalThis.localStorage.removeItem('adminToken');
-    globalThis.location.href = '/admin/login';
-  }
-};
 
 const formatYearAndNumber = (
   year: number,
@@ -222,16 +216,10 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
               各セレモニーの基本情報と映画の紐付け状況を管理します。
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col items-end gap-3">
+            <AdminNav />
             <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-500">
               <a href="/admin/ceremonies/new">＋ セレモニーを追加</a>
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleLogout}
-              className="px-4">
-              ログアウト
             </Button>
           </div>
         </div>

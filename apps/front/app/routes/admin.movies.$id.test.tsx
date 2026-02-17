@@ -7,6 +7,17 @@ import AdminMovieEdit, {loader, meta} from './admin.movies.$id';
 type AdminMovieEditLoaderArguments = Route.LoaderArgs;
 type AdminMovieEditComponentProperties = Route.ComponentProps;
 
+// react-router モック
+vi.mock('react-router', () => ({
+  useLocation: () => ({
+    pathname: '/admin/movies/movie-123',
+    search: '',
+    hash: '',
+    state: undefined,
+    key: 'default',
+  }),
+}));
+
 // LocalStorageのモック
 const mockLocalStorage = {
   getItem: vi.fn(),
@@ -174,7 +185,7 @@ describe('AdminMovieEdit Route', () => {
 
       expect(screen.getByText('データを読み込み中...')).toBeInTheDocument();
       expect(screen.getByText('映画の編集')).toBeInTheDocument();
-      expect(screen.getByText('← 一覧に戻る')).toBeInTheDocument();
+      expect(screen.getByText('映画管理')).toBeInTheDocument();
       expect(screen.getByText('ログアウト')).toBeInTheDocument();
     });
 
@@ -273,8 +284,8 @@ describe('AdminMovieEdit Route', () => {
         />,
       );
 
-      const backLinks = screen.getAllByText('← 一覧に戻る');
-      expect(backLinks[0]).toHaveAttribute('href', '/admin/movies');
+      const moviesLink = screen.getByText('映画管理');
+      expect(moviesLink).toHaveAttribute('href', '/admin/movies');
     });
   });
 

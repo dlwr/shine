@@ -1,5 +1,6 @@
 import {type FormEvent, useCallback, useEffect, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router';
+import AdminNav from '@/components/admin-nav';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Textarea} from '@/components/ui/textarea';
@@ -1043,6 +1044,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
               )}
             </div>
             <div className="flex flex-col gap-3 md:items-end">
+              <AdminNav />
               {!isNew && navigation && (
                 <div className="flex justify-end gap-2">
                   {navigation.previous ? (
@@ -1091,22 +1093,17 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
                   </a>
                 </Button>
               )}
-              <div className="flex gap-3">
-                <Button asChild size="sm" variant="secondary">
-                  <a href="/admin/ceremonies">一覧に戻る</a>
+              {!isNew && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteCeremony}
+                  disabled={isDeleting}
+                  className="px-4">
+                  {isDeleting ? '削除中…' : 'セレモニーを削除'}
                 </Button>
-                {!isNew && (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDeleteCeremony}
-                    disabled={isDeleting}
-                    className="px-4">
-                    {isDeleting ? '削除中…' : 'セレモニーを削除'}
-                  </Button>
-                )}
-              </div>
+              )}
             </div>
           </div>
           {deleteError && (

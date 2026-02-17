@@ -1,5 +1,6 @@
 import {useCallback, useEffect, useState, memo, type FormEvent} from 'react';
 import {useSearchParams} from 'react-router';
+import AdminNav from '@/components/admin-nav';
 import {Button} from '@/components/ui/button';
 import {
   Card,
@@ -356,13 +357,6 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 
 MoviesList.displayName = 'MoviesList';
 
-const handleLogout = () => {
-  if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
-    globalThis.localStorage.removeItem('adminToken');
-    globalThis.location.href = '/admin/login';
-  }
-};
-
 const deleteMovie = async (
   movieId: string,
   movieTitle: string,
@@ -597,26 +591,7 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
         <h1 className="text-3xl font-semibold text-slate-900">
           Movies Management
         </h1>
-        <div className="flex flex-wrap gap-3">
-          <Button
-            asChild
-            size="sm"
-            className="bg-emerald-600 text-white hover:bg-emerald-500">
-            <a href="/">トップページ</a>
-          </Button>
-          <Button
-            asChild
-            size="sm"
-            className="bg-sky-600 text-white hover:bg-sky-500">
-            <a href="/admin/ceremonies">セレモニー管理</a>
-          </Button>
-          <Button asChild size="sm" variant="secondary">
-            <a href="/admin/movies/selections">Movie Selections</a>
-          </Button>
-          <Button size="sm" variant="destructive" onClick={handleLogout}>
-            Logout
-          </Button>
-        </div>
+        <AdminNav />
       </div>
 
       <Card className="bg-white">

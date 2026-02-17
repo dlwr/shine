@@ -10,6 +10,13 @@ const mockSearchParameters = new URLSearchParams();
 const mockSetSearchParameters = vi.fn();
 vi.mock('react-router', () => ({
   useSearchParams: () => [mockSearchParameters, mockSetSearchParameters],
+  useLocation: () => ({
+    pathname: '/admin/movies',
+    search: '',
+    hash: '',
+    state: undefined,
+    key: 'default',
+  }),
 }));
 
 // LocalStorageのモック
@@ -265,7 +272,7 @@ describe('AdminMovies Component', () => {
         'href',
         '/admin/movies/selections',
       );
-      expect(screen.getByText('Logout')).toBeInTheDocument();
+      expect(screen.getByText('ログアウト')).toBeInTheDocument();
     });
 
     it('検索入力フィールドが表示される', async () => {
@@ -326,7 +333,7 @@ describe('AdminMovies Component', () => {
         </MemoryRouter>,
       );
 
-      const logoutButton = screen.getByText('Logout');
+      const logoutButton = screen.getByText('ログアウト');
       fireEvent.click(logoutButton);
 
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('adminToken');

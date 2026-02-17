@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react';
+import AdminNav from '@/components/admin-nav';
 import {MovieCard} from '@/components/molecules/movie-card';
 import {Button} from '@/components/ui/button';
 import {
@@ -112,13 +113,6 @@ export async function loader({context}: Route.LoaderArgs) {
         .PUBLIC_API_URL || 'http://localhost:8787',
   };
 }
-
-const handleLogout = () => {
-  if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
-    globalThis.localStorage.removeItem('adminToken');
-    globalThis.location.href = '/admin/login';
-  }
-};
 
 export default function AdminMovieSelections({
   loaderData,
@@ -365,20 +359,7 @@ export default function AdminMovieSelections({
               プレビュー用の「今日/今週/今月の映画」を素早く調整できます。
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Button
-              asChild
-              size="sm"
-              className="bg-emerald-600 text-white hover:bg-emerald-500">
-              <a href="/">トップページ</a>
-            </Button>
-            <Button asChild size="sm" variant="secondary">
-              <a href="/admin/movies">← 映画一覧に戻る</a>
-            </Button>
-            <Button size="sm" variant="destructive" onClick={handleLogout}>
-              ログアウト
-            </Button>
-          </div>
+          <AdminNav />
         </div>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">

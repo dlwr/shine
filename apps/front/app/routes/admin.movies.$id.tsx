@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {Button} from '@/components/ui/button';
+import AdminNav from '@/components/admin-nav';
 import TranslationManager from '../components/translation-manager';
 import PosterManager from '../components/poster-manager';
 import MovieInfoEditor from '../components/movie-info-editor';
@@ -91,13 +91,6 @@ export async function loader({context, params}: Route.LoaderArgs) {
   };
 }
 
-const handleLogout = () => {
-  if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
-    globalThis.localStorage.removeItem('adminToken');
-    globalThis.location.href = '/admin/login';
-  }
-};
-
 export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
   const {apiUrl, movieId} = loaderData as LoaderData;
 
@@ -161,18 +154,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-6">
               <h1 className="text-3xl font-bold text-gray-900">映画の編集</h1>
-              <div className="flex space-x-3">
-                <Button
-                  asChild
-                  size="sm"
-                  variant="secondary"
-                  className="bg-gray-600 text-white hover:bg-gray-500">
-                  <a href="/admin/movies">← 一覧に戻る</a>
-                </Button>
-                <Button size="sm" variant="destructive" onClick={handleLogout}>
-                  ログアウト
-                </Button>
-              </div>
+              <AdminNav />
             </div>
           </div>
         </header>
@@ -205,20 +187,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <h1 className="text-3xl font-bold text-gray-900">映画編集</h1>
-            <div className="flex space-x-3">
-              <Button
-                asChild
-                size="sm"
-                className="bg-emerald-600 text-white hover:bg-emerald-500">
-                <a href="/">トップページ</a>
-              </Button>
-              <Button asChild size="sm" variant="secondary">
-                <a href="/admin/movies">← 一覧に戻る</a>
-              </Button>
-              <Button size="sm" variant="destructive" onClick={handleLogout}>
-                ログアウト
-              </Button>
-            </div>
+            <AdminNav />
           </div>
         </div>
       </header>
