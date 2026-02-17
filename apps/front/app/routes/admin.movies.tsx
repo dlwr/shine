@@ -170,14 +170,11 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 
     void fetchMovies();
 
-    // Listen for URL changes
-    const handleUrlChange = async () => fetchMovies();
-    const handleRefetch = async () => fetchMovies();
-    globalThis.addEventListener('urlchange', handleUrlChange);
-    globalThis.addEventListener('refetchMovies', handleRefetch);
+    globalThis.addEventListener('urlchange', fetchMovies);
+    globalThis.addEventListener('refetchMovies', fetchMovies);
     return () => {
-      globalThis.removeEventListener('urlchange', handleUrlChange);
-      globalThis.removeEventListener('refetchMovies', handleRefetch);
+      globalThis.removeEventListener('urlchange', fetchMovies);
+      globalThis.removeEventListener('refetchMovies', fetchMovies);
     };
   }, [apiUrl]); // Only depend on apiUrl, use custom event for URL changes
 
@@ -402,27 +399,28 @@ const deleteMovie = async (
   }
 };
 
-const showMergeDialog = (sourceId: string, sourceTitle: string) => {
+const showMergeDialog = (
+  sourceId: string,
+  sourceTitle: string,
+): string | undefined => {
   const targetId = globalThis.prompt?.(
     `映画「${sourceTitle}」を他の映画にマージします。\n\nマージ先の映画IDを入力してください：`,
   );
 
-  if (targetId?.trim()) {
-    const confirmed = globalThis.confirm?.(
-      '確認：\n\n' +
-        `マージ元: ${sourceTitle} (${sourceId})\n` +
-        `マージ先: ${targetId.trim()}\n\n` +
-        'マージ元の映画とそのデータは削除されます。\n' +
-        'この操作は取り消せません。\n\n' +
-        '続行しますか？',
-    );
-
-    if (confirmed) {
-      return targetId.trim();
-    }
+  if (!targetId?.trim()) {
+    return undefined;
   }
 
-  return;
+  const confirmed = globalThis.confirm?.(
+    '確認：\n\n' +
+      `マージ元: ${sourceTitle} (${sourceId})\n` +
+      `マージ先: ${targetId.trim()}\n\n` +
+      'マージ元の映画とそのデータは削除されます。\n' +
+      'この操作は取り消せません。\n\n' +
+      '続行しますか？',
+  );
+
+  return confirmed ? targetId.trim() : undefined;
 };
 
 const mergeMovies = async (

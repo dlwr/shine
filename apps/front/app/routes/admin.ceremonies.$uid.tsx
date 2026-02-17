@@ -372,7 +372,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
     Boolean(ceremonyDetail?.ceremony.imdbEventUrl) &&
     Boolean(selectedSyncCategory);
 
-  const syncButtonTooltip = useMemo(() => {
+  const syncButtonTooltip = (() => {
     if (!ceremonyDetail?.ceremony.imdbEventUrl) {
       return 'IMDbイベントURLを設定してください。';
     }
@@ -382,7 +382,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
     }
 
     return;
-  }, [ceremonyDetail?.ceremony.imdbEventUrl, selectedSyncCategory]);
+  })();
 
   const isSyncButtonDisabled = isSyncingFromImdb || !canSyncFromImdb;
 
@@ -524,13 +524,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
     }
   }, [awardsData, formState.organizationUid, isNew]);
 
-  const organizationOptions = useMemo<AwardsOrganization[]>(() => {
-    if (awardsData === undefined) {
-      return [];
-    }
-
-    return awardsData.organizations;
-  }, [awardsData]);
+  const organizationOptions = awardsData?.organizations ?? [];
 
   const categoriesForOrganization = useMemo(() => {
     if (awardsData === undefined) {

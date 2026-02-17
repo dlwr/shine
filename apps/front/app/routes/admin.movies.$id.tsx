@@ -212,7 +212,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
             movieId={movieId}
             apiUrl={apiUrl}
             nominations={movieData.nominations}
-            onNominationsUpdate={updatedMovie => setMovieData(updatedMovie)}
+            onNominationsUpdate={setMovieData}
           />
 
           <PosterManager
