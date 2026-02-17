@@ -21,11 +21,18 @@ export default function AdminNav() {
   return (
     <div className="flex flex-wrap gap-2">
       {navItems.map(item => {
+        const isExactOrChild =
+          location.pathname === item.href ||
+          location.pathname.startsWith(`${item.href}/`);
+        const isStolenByMoreSpecific = navItems.some(
+          other =>
+            other.href !== item.href &&
+            other.href.startsWith(`${item.href}/`) &&
+            (location.pathname === other.href ||
+              location.pathname.startsWith(`${other.href}/`)),
+        );
         const isActive =
-          item.href === '/'
-            ? false
-            : location.pathname === item.href ||
-              location.pathname.startsWith(`${item.href}/`);
+          item.href === '/' ? false : isExactOrChild && !isStolenByMoreSpecific;
 
         return (
           <Button
