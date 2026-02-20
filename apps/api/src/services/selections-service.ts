@@ -329,26 +329,27 @@ export class SelectionsService extends BaseService {
   ): Promise<MovieSelection | undefined> {
     const seed = this.getDateSeed(date, type);
 
-    // Get all movies with basic data for selection
-    const availableMovies = await this.database
+    // Get all nominations joined with non-deleted movies
+    // Movies with more nominations have proportionally higher chance of being selected
+    const availableNominations = await this.database
       .select({
-        uid: movies.uid,
-        year: movies.year,
-        originalLanguage: movies.originalLanguage,
-        imdbId: movies.imdbId,
-        tmdbId: movies.tmdbId,
+        nominationUid: nominations.uid,
+        movieUid: nominations.movieUid,
       })
-      .from(movies)
+      .from(nominations)
+      .innerJoin(movies, eq(movies.uid, nominations.movieUid))
       .where(isNull(movies.deletedAt))
-      .orderBy(movies.year, movies.uid);
+      .orderBy(nominations.movieUid, nominations.uid);
 
-    if (availableMovies.length === 0) {
+    if (availableNominations.length === 0) {
       return undefined;
     }
 
-    // Use seed to select movie deterministically
-    const selectedIndex = seed % availableMovies.length;
-    const selectedMovieData = availableMovies[selectedIndex];
+    // Use seed to select a nomination deterministically
+    const selectedIndex = seed % availableNominations.length;
+    const selectedMovieData = {
+      uid: availableNominations[selectedIndex].movieUid,
+    };
 
     // Persist selection if requested
     if (persistSelection) {
@@ -660,22 +661,25 @@ export class SelectionsService extends BaseService {
     _locale: string,
     persistSelection: boolean,
   ): Promise<{uid: string} | undefined> {
-    // Get all movies with basic data for selection
-    const availableMovies = await this.database
+    // Get all nominations joined with non-deleted movies
+    // Movies with more nominations have proportionally higher chance of being selected
+    const availableNominations = await this.database
       .select({
-        uid: movies.uid,
+        nominationUid: nominations.uid,
+        movieUid: nominations.movieUid,
       })
-      .from(movies)
+      .from(nominations)
+      .innerJoin(movies, eq(movies.uid, nominations.movieUid))
       .where(isNull(movies.deletedAt))
-      .orderBy(movies.createdAt);
+      .orderBy(nominations.movieUid, nominations.uid);
 
-    if (availableMovies.length === 0) {
+    if (availableNominations.length === 0) {
       return undefined;
     }
 
     // Use random selection instead of seed-based
-    const randomIndex = Math.floor(Math.random() * availableMovies.length);
-    const selectedMovieData = availableMovies[randomIndex];
+    const randomIndex = Math.floor(Math.random() * availableNominations.length);
+    const selectedMovieData = {uid: availableNominations[randomIndex].movieUid};
 
     // Persist selection if requested
     if (persistSelection) {
