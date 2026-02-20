@@ -12,6 +12,8 @@ import {EdgeCache} from '../utils/cache';
 import {BaseService} from './base-service';
 import type {DateSeedOptions, MovieSelection} from '@shine/types';
 
+type SelectionType = 'daily' | 'weekly' | 'monthly';
+
 export class SelectionsService extends BaseService {
   private readonly cache = new EdgeCache();
 
@@ -34,7 +36,7 @@ export class SelectionsService extends BaseService {
   }
 
   async reselectMovie(
-    type: 'daily' | 'weekly' | 'monthly',
+    type: SelectionType,
     locale: string,
     date = new Date(),
   ): Promise<MovieSelection> {
@@ -54,18 +56,18 @@ export class SelectionsService extends BaseService {
     await this.cache.delete(`selection-${type}-${selectionDate}`);
 
     // Generate new selection with randomness
-    const selectedMovie = await this.generateRandomMovieSelection(
+    const movieUid = await this.selectMovieFromNominations(
       date,
       type,
-      locale,
       true,
+      'random',
     );
-    if (!selectedMovie) {
+    if (!movieUid) {
       throw new Error('No movies available for selection');
     }
 
     // Get complete movie data and cache it
-    const movie = await this.getCompleteMovieData(selectedMovie.uid, locale);
+    const movie = await this.getCompleteMovieData(movieUid, locale);
 
     // Cache result
     const cacheKey = `selection-${type}-${selectionDate}`;
@@ -78,7 +80,7 @@ export class SelectionsService extends BaseService {
   }
 
   async previewSelections(
-    type: 'daily' | 'weekly' | 'monthly',
+    type: SelectionType,
     locale: string,
     futureDate: Date,
   ): Promise<MovieSelection[]> {
@@ -195,7 +197,7 @@ export class SelectionsService extends BaseService {
   }
 
   async overrideSelection(
-    type: 'daily' | 'weekly' | 'monthly',
+    type: SelectionType,
     movieId: string,
     date = new Date(),
   ): Promise<void> {
@@ -237,7 +239,7 @@ export class SelectionsService extends BaseService {
 
   private async getMovieByDateSeed(
     date: Date,
-    type: 'daily' | 'weekly' | 'monthly',
+    type: SelectionType,
     locale: string,
   ): Promise<MovieSelection> {
     const selectionDate = this.getSelectionDate(date, type);
@@ -323,53 +325,22 @@ export class SelectionsService extends BaseService {
 
   private async generateMovieSelection(
     date: Date,
-    type: 'daily' | 'weekly' | 'monthly',
+    type: SelectionType,
     locale: string,
     persistSelection: boolean,
   ): Promise<MovieSelection | undefined> {
     const seed = this.getDateSeed(date, type);
-
-    // Get all nominations joined with non-deleted movies
-    // Movies with more nominations have proportionally higher chance of being selected
-    const availableNominations = await this.database
-      .select({
-        nominationUid: nominations.uid,
-        movieUid: nominations.movieUid,
-      })
-      .from(nominations)
-      .innerJoin(movies, eq(movies.uid, nominations.movieUid))
-      .where(isNull(movies.deletedAt))
-      .orderBy(nominations.movieUid, nominations.uid);
-
-    if (availableNominations.length === 0) {
+    const movieUid = await this.selectMovieFromNominations(
+      date,
+      type,
+      persistSelection,
+      seed,
+    );
+    if (!movieUid) {
       return undefined;
     }
 
-    // Use seed to select a nomination deterministically
-    const selectedIndex = seed % availableNominations.length;
-    const selectedMovieData = {
-      uid: availableNominations[selectedIndex].movieUid,
-    };
-
-    // Persist selection if requested
-    if (persistSelection) {
-      const selectionDate = this.getSelectionDate(date, type);
-
-      try {
-        await this.database.insert(movieSelections).values({
-          movieId: selectedMovieData.uid,
-          selectionType: type,
-          selectionDate,
-          createdAt: Math.floor(Date.now() / 1000),
-          updatedAt: Math.floor(Date.now() / 1000),
-        });
-      } catch {
-        // Selection might already exist due to race condition, ignore
-      }
-    }
-
-    // Get complete movie data
-    return this.getCompleteMovieData(selectedMovieData.uid, locale);
+    return this.getCompleteMovieData(movieUid, locale);
   }
 
   private async getCompleteMovieData(
@@ -411,42 +382,7 @@ export class SelectionsService extends BaseService {
         ),
       );
 
-    // Select best title based on locale with fallback
-    const languageCode = locale.split('-')[0];
-    let selectedTitle: string | undefined;
-
-    // Priority 1: Translation with matching language
-    const localeMatch = allTranslations.find(
-      t => t.languageCode === languageCode,
-    );
-    if (localeMatch) {
-      selectedTitle = localeMatch.content;
-    } else {
-      // Priority 2: Default translation
-      const defaultTranslation = allTranslations.find(t => t.isDefault === 1);
-      if (defaultTranslation) {
-        selectedTitle = defaultTranslation.content;
-      } else {
-        // Priority 3: Japanese translation
-        const jaTranslation = allTranslations.find(
-          t => t.languageCode === 'ja',
-        );
-        if (jaTranslation) {
-          selectedTitle = jaTranslation.content;
-        } else {
-          // Priority 4: English translation
-          const enTranslation = allTranslations.find(
-            t => t.languageCode === 'en',
-          );
-          if (enTranslation) {
-            selectedTitle = enTranslation.content;
-          } else if (allTranslations.length > 0) {
-            // Priority 5: First available translation
-            selectedTitle = allTranslations[0].content;
-          }
-        }
-      }
-    }
+    const selectedTitle = this.resolveTitle(allTranslations, locale);
 
     // Get description for the locale
     const descriptionResult = await this.database
@@ -573,6 +509,37 @@ export class SelectionsService extends BaseService {
     };
   }
 
+  private resolveTitle(
+    allTranslations: Array<{
+      languageCode: string;
+      content: string;
+      isDefault: number | null;
+    }>,
+    locale: string,
+  ): string | undefined {
+    const languageCode = locale.split('-')[0];
+
+    // Priority-ordered list of matchers: locale match, default, Japanese, English
+    const matchers: Array<
+      (t: {languageCode: string; isDefault: number | null}) => boolean
+    > = [
+      t => t.languageCode === languageCode,
+      t => t.isDefault === 1,
+      t => t.languageCode === 'ja',
+      t => t.languageCode === 'en',
+    ];
+
+    for (const matcher of matchers) {
+      const match = allTranslations.find(t => matcher(t));
+      if (match) {
+        return match.content;
+      }
+    }
+
+    // Fallback: first available translation
+    return allTranslations[0]?.content;
+  }
+
   private simpleHash(input: string): number {
     let hash = 0;
     for (let index = 0; index < input.length; index++) {
@@ -584,10 +551,7 @@ export class SelectionsService extends BaseService {
     return Math.abs(hash);
   }
 
-  private getSelectionDate(
-    date: Date,
-    type: 'daily' | 'weekly' | 'monthly',
-  ): string {
+  private getSelectionDate(date: Date, type: SelectionType): string {
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
     const day = date.getDate();
@@ -617,51 +581,17 @@ export class SelectionsService extends BaseService {
     }
   }
 
-  private getDateSeed(
-    date: Date,
-    type: 'daily' | 'weekly' | 'monthly',
-  ): number {
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-
-    switch (type) {
-      case 'daily': {
-        const dateString = `${year}-${month.toString().padStart(2, '0')}-${day
-          .toString()
-          .padStart(2, '0')}`;
-        return this.simpleHash(`daily-${dateString}`);
-      }
-
-      case 'weekly': {
-        const daysSinceFriday = (date.getDay() - 5 + 7) % 7;
-        const fridayDate = new Date(date);
-        fridayDate.setDate(day - daysSinceFriday);
-        const weekString = `${fridayDate.getFullYear()}-${(
-          fridayDate.getMonth() + 1
-        )
-          .toString()
-          .padStart(2, '0')}-${fridayDate
-          .getDate()
-          .toString()
-          .padStart(2, '0')}`;
-        return this.simpleHash(`weekly-${weekString}`);
-      }
-
-      case 'monthly': {
-        const monthString = `${year}-${month.toString().padStart(2, '0')}`;
-        return this.simpleHash(`monthly-${monthString}`);
-      }
-    }
+  private getDateSeed(date: Date, type: SelectionType): number {
+    const selectionDate = this.getSelectionDate(date, type);
+    return this.simpleHash(`${type}-${selectionDate}`);
   }
 
-  private async generateRandomMovieSelection(
+  private async selectMovieFromNominations(
     date: Date,
-    type: 'daily' | 'weekly' | 'monthly',
-    _locale: string,
+    type: SelectionType,
     persistSelection: boolean,
-  ): Promise<{uid: string} | undefined> {
-    // Get all nominations joined with non-deleted movies
+    seed: number | 'random',
+  ): Promise<string | undefined> {
     // Movies with more nominations have proportionally higher chance of being selected
     const availableNominations = await this.database
       .select({
@@ -677,17 +607,19 @@ export class SelectionsService extends BaseService {
       return undefined;
     }
 
-    // Use random selection instead of seed-based
-    const randomIndex = Math.floor(Math.random() * availableNominations.length);
-    const selectedMovieData = {uid: availableNominations[randomIndex].movieUid};
+    const selectedIndex =
+      seed === 'random'
+        ? Math.floor(Math.random() * availableNominations.length)
+        : seed % availableNominations.length;
 
-    // Persist selection if requested
+    const selectedMovieUid = availableNominations[selectedIndex].movieUid;
+
     if (persistSelection) {
       const selectionDate = this.getSelectionDate(date, type);
 
       try {
         await this.database.insert(movieSelections).values({
-          movieId: selectedMovieData.uid,
+          movieId: selectedMovieUid,
           selectionType: type,
           selectionDate,
           createdAt: Math.floor(Date.now() / 1000),
@@ -698,6 +630,6 @@ export class SelectionsService extends BaseService {
       }
     }
 
-    return selectedMovieData;
+    return selectedMovieUid;
   }
 }
