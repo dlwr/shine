@@ -33,183 +33,103 @@ const IMDB_FETCH_HEADERS = {
 const ensureTrailingSlash = (value: string): string =>
   value.endsWith('/') ? value : `${value}/`;
 
+function titleSubquery(languageCode?: string) {
+  if (languageCode) {
+    return sql`
+			(
+				SELECT content
+				FROM translations
+				WHERE translations.resource_uid = movies.uid
+				AND translations.resource_type = 'movie_title'
+				AND translations.language_code = ${languageCode}
+				LIMIT 1
+			)
+		`;
+  }
+
+  return sql`
+		(
+			SELECT content
+			FROM translations
+			WHERE translations.resource_uid = movies.uid
+			AND translations.resource_type = 'movie_title'
+			LIMIT 1
+		)
+	`;
+}
+
 export class AdminService extends BaseService {
   async getMovies(options: PaginationOptions & {search?: string}) {
     const {page, limit, search} = options;
     const offset = (page - 1) * limit;
 
-    if (search) {
-      // Search across both Japanese and English titles
-      const searchPattern = `%${search}%`;
+    const titleSql = sql`
+			COALESCE(
+				${titleSubquery('ja')},
+				${titleSubquery('en')},
+				${titleSubquery()},
+				'Untitled'
+			)
+		`.as('title');
 
-      // Use CTE to get all movies that match either Japanese or English titles
-      const searchQuery = this.database
-        .select({
-          uid: movies.uid,
-          year: movies.year,
-          originalLanguage: movies.originalLanguage,
-          imdbId: movies.imdbId,
-          jaTitle: sql`
-						(
-							SELECT content
-							FROM translations
-							WHERE translations.resource_uid = movies.uid
-							AND translations.resource_type = 'movie_title'
-							AND translations.language_code = 'ja'
-							LIMIT 1
-						)
-					`.as('jaTitle'),
-          enTitle: sql`
-						(
-							SELECT content
-							FROM translations
-							WHERE translations.resource_uid = movies.uid
-							AND translations.resource_type = 'movie_title'
-							AND translations.language_code = 'en'
-							LIMIT 1
-						)
-					`.as('enTitle'),
-          anyTitle: sql`
-						(
-							SELECT content
-							FROM translations
-							WHERE translations.resource_uid = movies.uid
-							AND translations.resource_type = 'movie_title'
-							LIMIT 1
-						)
-					`.as('anyTitle'),
-          posterUrl: sql`
-						(
-							SELECT url
-							FROM poster_urls
-							WHERE poster_urls.movie_uid = movies.uid
-							LIMIT 1
-						)
-					`.as('posterUrl'),
-          nominationCount: sql`
-						(
-							SELECT COUNT(*)
-							FROM nominations
-							WHERE nominations.movie_uid = movies.uid
-						)
-					`.as('nominationCount'),
-        })
-        .from(movies)
-        .where(
-          sql`
-					EXISTS (
-											SELECT 1 FROM translations 
-											WHERE translations.resource_uid = movies.uid
-											AND translations.resource_type = 'movie_title'
-											AND translations.content LIKE ${searchPattern}
-										)
-				`,
-        )
-        .orderBy(sql`${movies.createdAt} DESC`)
-        .limit(limit)
-        .offset(offset);
+    const posterUrlSql = sql`
+			(
+				SELECT url
+				FROM poster_urls
+				WHERE poster_urls.movie_uid = movies.uid
+				LIMIT 1
+			)
+		`.as('posterUrl');
 
-      const allMovies = await searchQuery;
+    const nominationCountSql = sql`
+			(
+				SELECT COUNT(*)
+				FROM nominations
+				WHERE nominations.movie_uid = movies.uid
+			)
+		`.as('nominationCount');
 
-      // Count total matching movies
-      const totalCountResult = await this.database
-        .select({count: sql`COUNT(*)`.as('count')})
-        .from(movies).where(sql`
-					EXISTS (
-											SELECT 1 FROM translations 
-											WHERE translations.resource_uid = movies.uid
-											AND translations.resource_type = 'movie_title'
-											AND translations.content LIKE ${searchPattern}
-										)
-				`);
+    const searchCondition = search
+      ? sql`
+				EXISTS (
+					SELECT 1 FROM translations
+					WHERE translations.resource_uid = movies.uid
+					AND translations.resource_type = 'movie_title'
+					AND translations.content LIKE ${`%${search}%`}
+				)
+			`
+      : undefined;
 
-      const totalCount = Number(totalCountResult[0]?.count) || 0;
-      const totalPages = Math.ceil(totalCount / limit);
-
-      // Format the results to prefer Japanese title but fall back to English
-      const formattedMovies = allMovies.map(movie => ({
-        uid: movie.uid,
-        year: movie.year,
-        originalLanguage: movie.originalLanguage,
-        imdbId: movie.imdbId,
-        title: movie.jaTitle || movie.enTitle || movie.anyTitle || 'Untitled',
-        posterUrl: movie.posterUrl,
-        nominationCount: movie.nominationCount,
-      }));
-
-      return {
-        movies: formattedMovies,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalCount,
-          hasNext: page < totalPages,
-          hasPrev: page > 1,
-        },
-      };
-    }
-
-    // No search - return all movies with Japanese titles preferred
-    const baseQuery = this.database
+    const query = this.database
       .select({
         uid: movies.uid,
         year: movies.year,
         originalLanguage: movies.originalLanguage,
         imdbId: movies.imdbId,
-        title: sql`
-					COALESCE(
-						(
-							SELECT content
-							FROM translations
-							WHERE translations.resource_uid = movies.uid
-							AND translations.resource_type = 'movie_title'
-							AND translations.language_code = 'ja'
-							LIMIT 1
-						),
-						(
-							SELECT content
-							FROM translations
-							WHERE translations.resource_uid = movies.uid
-							AND translations.resource_type = 'movie_title'
-							AND translations.language_code = 'en'
-							LIMIT 1
-						),
-						(
-							SELECT content
-							FROM translations
-							WHERE translations.resource_uid = movies.uid
-							AND translations.resource_type = 'movie_title'
-							LIMIT 1
-						),
-						'Untitled'
-					)
-				`.as('title'),
-        posterUrl: sql`
-					(
-						SELECT url
-						FROM poster_urls
-						WHERE poster_urls.movie_uid = movies.uid
-						LIMIT 1
-					)
-				`.as('posterUrl'),
-        nominationCount: sql`
-					(
-						SELECT COUNT(*)
-						FROM nominations
-						WHERE nominations.movie_uid = movies.uid
-					)
-				`.as('nominationCount'),
+        title: titleSql,
+        posterUrl: posterUrlSql,
+        nominationCount: nominationCountSql,
       })
       .from(movies);
 
-    const allMovies = await baseQuery
+    if (searchCondition) {
+      query.where(searchCondition);
+    }
+
+    const allMovies = await query
       .orderBy(sql`${movies.createdAt} DESC`)
       .limit(limit)
       .offset(offset);
 
-    const totalCountResult = await this.database
+    const countQuery = this.database
       .select({count: sql`COUNT(*)`.as('count')})
       .from(movies);
+
+    if (searchCondition) {
+      countQuery.where(searchCondition);
+    }
+
+    const totalCountResult = await countQuery;
 
     const totalCount = Number(totalCountResult[0]?.count) || 0;
     const totalPages = Math.ceil(totalCount / limit);
