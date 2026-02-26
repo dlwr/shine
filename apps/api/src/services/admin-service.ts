@@ -69,6 +69,15 @@ export class AdminService extends BaseService {
 							LIMIT 1
 						)
 					`.as('enTitle'),
+          anyTitle: sql`
+						(
+							SELECT content
+							FROM translations
+							WHERE translations.resource_uid = movies.uid
+							AND translations.resource_type = 'movie_title'
+							LIMIT 1
+						)
+					`.as('anyTitle'),
           posterUrl: sql`
 						(
 							SELECT url
@@ -123,7 +132,7 @@ export class AdminService extends BaseService {
         year: movie.year,
         originalLanguage: movie.originalLanguage,
         imdbId: movie.imdbId,
-        title: movie.jaTitle || movie.enTitle || 'Untitled',
+        title: movie.jaTitle || movie.enTitle || movie.anyTitle || 'Untitled',
         posterUrl: movie.posterUrl,
         nominationCount: movie.nominationCount,
       }));
@@ -163,6 +172,13 @@ export class AdminService extends BaseService {
 							WHERE translations.resource_uid = movies.uid
 							AND translations.resource_type = 'movie_title'
 							AND translations.language_code = 'en'
+							LIMIT 1
+						),
+						(
+							SELECT content
+							FROM translations
+							WHERE translations.resource_uid = movies.uid
+							AND translations.resource_type = 'movie_title'
 							LIMIT 1
 						),
 						'Untitled'
