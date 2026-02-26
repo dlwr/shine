@@ -34,18 +34,9 @@ const ensureTrailingSlash = (value: string): string =>
   value.endsWith('/') ? value : `${value}/`;
 
 function titleSubquery(languageCode?: string) {
-  if (languageCode) {
-    return sql`
-			(
-				SELECT content
-				FROM translations
-				WHERE translations.resource_uid = movies.uid
-				AND translations.resource_type = 'movie_title'
-				AND translations.language_code = ${languageCode}
-				LIMIT 1
-			)
-		`;
-  }
+  const languageFilter = languageCode
+    ? sql`AND translations.language_code = ${languageCode}`
+    : sql``;
 
   return sql`
 		(
@@ -53,6 +44,7 @@ function titleSubquery(languageCode?: string) {
 			FROM translations
 			WHERE translations.resource_uid = movies.uid
 			AND translations.resource_type = 'movie_title'
+			${languageFilter}
 			LIMIT 1
 		)
 	`;
@@ -100,7 +92,7 @@ export class AdminService extends BaseService {
 			`
       : undefined;
 
-    const query = this.database
+    const allMovies = await this.database
       .select({
         uid: movies.uid,
         year: movies.year,
@@ -110,26 +102,16 @@ export class AdminService extends BaseService {
         posterUrl: posterUrlSql,
         nominationCount: nominationCountSql,
       })
-      .from(movies);
-
-    if (searchCondition) {
-      query.where(searchCondition);
-    }
-
-    const allMovies = await query
+      .from(movies)
+      .where(searchCondition)
       .orderBy(sql`${movies.createdAt} DESC`)
       .limit(limit)
       .offset(offset);
 
-    const countQuery = this.database
+    const totalCountResult = await this.database
       .select({count: sql`COUNT(*)`.as('count')})
-      .from(movies);
-
-    if (searchCondition) {
-      countQuery.where(searchCondition);
-    }
-
-    const totalCountResult = await countQuery;
+      .from(movies)
+      .where(searchCondition);
 
     const totalCount = Number(totalCountResult[0]?.count) || 0;
     const totalPages = Math.ceil(totalCount / limit);
