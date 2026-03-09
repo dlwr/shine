@@ -631,7 +631,7 @@ adminRoutes.put('/movies/:id', authMiddleware, async c => {
   try {
     const database = getDatabase(c.env);
     const movieId = c.req.param('id');
-    const {year, originalLanguage} = await c.req.json();
+    const {year, originalLanguage, mediaType} = await c.req.json();
 
     // Check if movie exists
     const movieExists = await database
@@ -679,6 +679,15 @@ adminRoutes.put('/movies/:id', authMiddleware, async c => {
       }
 
       updateData.originalLanguage = originalLanguage || 'en';
+    }
+
+    // Validate mediaType if provided
+    if (mediaType !== undefined) {
+      if (mediaType !== 'movie' && mediaType !== 'tv') {
+        return c.json({error: "mediaType must be 'movie' or 'tv'"}, 400);
+      }
+
+      updateData.mediaType = mediaType;
     }
 
     // Update movie

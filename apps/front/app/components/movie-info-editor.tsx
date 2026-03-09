@@ -798,15 +798,40 @@ export default function MovieInfoEditor({
           {movieData.originalLanguage}
         </div>
 
-        <div>
-          <strong className="text-gray-700">メディアタイプ:</strong>{' '}
-          {movieData.mediaType === 'tv' ? (
-            <span className="inline-block rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700">
-              TV
-            </span>
-          ) : (
-            <span className="text-gray-900">映画</span>
-          )}
+        <div className="flex items-center space-x-2">
+          <strong className="text-gray-700">メディアタイプ:</strong>
+          <button
+            type="button"
+            className={`rounded px-2 py-0.5 text-xs font-medium ${
+              movieData.mediaType === 'tv'
+                ? 'bg-blue-100 text-blue-700'
+                : 'bg-gray-100 text-gray-700'
+            }`}
+            onClick={async () => {
+              const newType = movieData.mediaType === 'tv' ? 'movie' : 'tv';
+              try {
+                const token = globalThis.localStorage?.getItem('token');
+                const response = await fetch(
+                  `${apiUrl}/admin/movies/${movieId}`,
+                  {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({mediaType: newType}),
+                  },
+                );
+                if (response.ok) {
+                  onMovieDataUpdate({...movieData, mediaType: newType});
+                }
+              } catch {
+                // Ignore
+              }
+            }}>
+            {movieData.mediaType === 'tv' ? 'TV' : '映画'}
+          </button>
+          <span className="text-xs text-gray-400">（クリックで切替）</span>
         </div>
 
         {/* IMDb ID */}
