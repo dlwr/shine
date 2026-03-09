@@ -78,6 +78,13 @@
       "when": 1763435384000,
       "tag": "0010_soft_delete_movies",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1773021627488,
+      "tag": "0011_harsh_strong_guy",
+      "breakpoints": true
     }
   ]
 }

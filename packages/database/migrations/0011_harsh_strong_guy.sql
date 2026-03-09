@@ -1,0 +1,1 @@
+ALTER TABLE `movies` ADD `media_type` text DEFAULT 'movie' NOT NULL;
