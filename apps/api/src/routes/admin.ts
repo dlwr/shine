@@ -816,7 +816,7 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
           await import('@shine/scrapers/common/tmdb-utilities');
 
         // Fetch and save posters using TMDb ID directly
-        const updateEndpoint = updateMediaType === 'tv' ? 'tv' : 'movie';
+        const updateEndpoint = updateMediaType;
         const imagesUrl = new URL(
           `https://api.themoviedb.org/3/${updateEndpoint}/${tmdbId}/images`,
         );
@@ -1647,6 +1647,7 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
         imdbId: movies.imdbId,
         tmdbId: movies.tmdbId,
         originalLanguage: movies.originalLanguage,
+        mediaType: movies.mediaType,
       })
       .from(movies)
       .where(eq(movies.uid, movieId))
@@ -1678,20 +1679,11 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
         await import('@shine/scrapers/common/tmdb-utilities');
 
       let movieTmdbId: number | undefined = tmdbId ?? undefined;
-      let detectedMediaType: 'movie' | 'tv' = 'movie';
+      let detectedMediaType: 'movie' | 'tv' =
+        (movie[0].mediaType as 'movie' | 'tv') || 'movie';
 
       // Find TMDb ID if not already set
-      if (movieTmdbId) {
-        // Read existing mediaType from database
-        const existingMovie = await database
-          .select({mediaType: movies.mediaType})
-          .from(movies)
-          .where(eq(movies.uid, movieId))
-          .limit(1);
-        if (existingMovie.length > 0) {
-          detectedMediaType = existingMovie[0].mediaType as 'movie' | 'tv';
-        }
-      } else {
+      if (!movieTmdbId) {
         const findResult = await findTMDBByImdbId(imdbId, tmdbApiKey);
 
         if (!findResult) {
@@ -1741,7 +1733,7 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
       }
 
       // Fetch and save posters using TMDb ID
-      const tmdbEndpoint = detectedMediaType === 'tv' ? 'tv' : 'movie';
+      const tmdbEndpoint = detectedMediaType;
       const imagesUrl = new URL(
         `https://api.themoviedb.org/3/${tmdbEndpoint}/${movieTmdbId}/images`,
       );
@@ -1934,7 +1926,7 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
         await import('@shine/scrapers/common/tmdb-utilities');
 
       // Fetch and save posters using TMDb ID
-      const refreshEndpoint = refreshMediaType === 'tv' ? 'tv' : 'movie';
+      const refreshEndpoint = refreshMediaType;
       const imagesUrl = new URL(
         `https://api.themoviedb.org/3/${refreshEndpoint}/${tmdbId}/images`,
       );

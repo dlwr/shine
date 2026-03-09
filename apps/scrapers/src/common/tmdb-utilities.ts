@@ -96,7 +96,7 @@ export async function fetchTMDBMovieTranslations(
   mediaType: 'movie' | 'tv' = 'movie',
 ): Promise<TMDBTranslationsResponse | undefined> {
   try {
-    const endpoint = mediaType === 'tv' ? 'tv' : 'movie';
+    const endpoint = mediaType;
     const translationsUrl = new URL(
       `${TMDB_API_BASE_URL}/${endpoint}/${movieId}/translations`,
     );
@@ -387,7 +387,7 @@ export async function fetchTMDBMovieImages(
     }
 
     const {tmdbId, mediaType} = findResult;
-    const endpoint = mediaType === 'tv' ? 'tv' : 'movie';
+    const endpoint = mediaType;
     const imagesUrl = new URL(
       `${TMDB_API_BASE_URL}/${endpoint}/${tmdbId}/images`,
     );

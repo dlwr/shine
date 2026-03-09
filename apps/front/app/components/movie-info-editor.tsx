@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState} from 'react';
+import {useCallback, useEffect, useMemo, useState} from 'react';
 import type {FormEvent} from 'react';
 
 type MovieDetails = {
@@ -798,41 +798,12 @@ export default function MovieInfoEditor({
           {movieData.originalLanguage}
         </div>
 
-        <div className="flex items-center space-x-2">
-          <strong className="text-gray-700">メディアタイプ:</strong>
-          <button
-            type="button"
-            className={`rounded px-2 py-0.5 text-xs font-medium ${
-              movieData.mediaType === 'tv'
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-gray-100 text-gray-700'
-            }`}
-            onClick={async () => {
-              const newType = movieData.mediaType === 'tv' ? 'movie' : 'tv';
-              try {
-                const token = globalThis.localStorage?.getItem('token');
-                const response = await fetch(
-                  `${apiUrl}/admin/movies/${movieId}`,
-                  {
-                    method: 'PUT',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({mediaType: newType}),
-                  },
-                );
-                if (response.ok) {
-                  onMovieDataUpdate({...movieData, mediaType: newType});
-                }
-              } catch {
-                // Ignore
-              }
-            }}>
-            {movieData.mediaType === 'tv' ? 'TV' : '映画'}
-          </button>
-          <span className="text-xs text-gray-400">（クリックで切替）</span>
-        </div>
+        <MediaTypeToggle
+          movieData={movieData}
+          apiUrl={apiUrl}
+          movieId={movieId}
+          onMovieDataUpdate={onMovieDataUpdate}
+        />
 
         {/* IMDb ID */}
         <div>
@@ -1215,6 +1186,99 @@ export default function MovieInfoEditor({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function MediaTypeToggle({
+  movieData,
+  apiUrl,
+  movieId,
+  onMovieDataUpdate,
+}: {
+  movieData: MovieDetails;
+  apiUrl: string;
+  movieId: string;
+  onMovieDataUpdate: (movieData: MovieDetails) => void;
+}) {
+  const [updating, setUpdating] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+
+  const toggle = useCallback(async () => {
+    if (updating) return;
+
+    const newType = movieData.mediaType === 'tv' ? 'movie' : 'tv';
+    const token = globalThis.localStorage?.getItem('adminToken');
+    if (!token) {
+      globalThis.location.href = '/admin/login';
+      return;
+    }
+
+    setUpdating(true);
+    setError(undefined);
+
+    try {
+      const response = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({mediaType: newType}),
+      });
+
+      if (response.status === 401) {
+        globalThis.localStorage?.removeItem('adminToken');
+        globalThis.location.href = '/admin/login';
+        return;
+      }
+
+      if (!response.ok) {
+        const errorData = (await response
+          .json()
+          .catch(() => ({error: 'Unknown error'}))) as {error?: string};
+        throw new Error(
+          errorData.error || 'メディアタイプの更新に失敗しました',
+        );
+      }
+
+      onMovieDataUpdate({...movieData, mediaType: newType});
+    } catch (caughtError) {
+      const message =
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'メディアタイプの更新に失敗しました';
+      setError(message);
+      console.error('Update mediaType error:', caughtError);
+    } finally {
+      setUpdating(false);
+    }
+  }, [updating, movieData, apiUrl, movieId, onMovieDataUpdate]);
+
+  return (
+    <div>
+      <div className="flex items-center space-x-2">
+        <strong className="text-gray-700">メディアタイプ:</strong>
+        <button
+          type="button"
+          disabled={updating}
+          className={`rounded px-2 py-0.5 text-xs font-medium ${
+            movieData.mediaType === 'tv'
+              ? 'bg-blue-100 text-blue-700'
+              : 'bg-gray-100 text-gray-700'
+          } disabled:opacity-50`}
+          onClick={() => {
+            void toggle();
+          }}>
+          {updating
+            ? '更新中...'
+            : movieData.mediaType === 'tv'
+              ? 'TV'
+              : '映画'}
+        </button>
+        <span className="text-xs text-gray-400">（クリックで切替）</span>
+      </div>
+      {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
     </div>
   );
 }

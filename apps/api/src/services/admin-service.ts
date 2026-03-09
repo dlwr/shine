@@ -9,7 +9,10 @@ import {nominations} from '@shine/database/schema/nominations';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
-import type {TMDBMovieData} from '@shine/scrapers/common/tmdb-utilities';
+import type {
+  TMDBMovieData,
+  TMDBTvData,
+} from '@shine/scrapers/common/tmdb-utilities';
 import {generateUUID} from '@shine/utils';
 import {BaseService} from './base-service';
 import {
@@ -1181,37 +1184,18 @@ export class AdminService extends BaseService {
       throw new Error('TMDB API key not configured');
     }
 
-    // Find TMDb ID from IMDb ID
-    const findResponse = await fetch(
-      `https://api.themoviedb.org/3/find/${imdbId}?api_key=${apiKey}&external_source=imdb_id`,
-    );
-
-    if (!findResponse.ok) {
-      throw new Error(`TMDB API error: ${findResponse.statusText}`);
-    }
-
-    const findData: {
-      movie_results?: Array<{id: number}>;
-      tv_results?: Array<{id: number}>;
-    } = await findResponse.json();
-
-    let tmdbId: number;
-    let mediaType: 'movie' | 'tv';
-
-    if (findData.movie_results && findData.movie_results.length > 0) {
-      tmdbId = findData.movie_results[0].id;
-      mediaType = 'movie';
-    } else if (findData.tv_results && findData.tv_results.length > 0) {
-      tmdbId = findData.tv_results[0].id;
-      mediaType = 'tv';
-    } else {
+    const {findTMDBByImdbId} =
+      await import('@shine/scrapers/common/tmdb-utilities');
+    const findResult = await findTMDBByImdbId(imdbId, apiKey);
+    if (!findResult) {
       return undefined;
     }
 
-    // Get detailed data with translations
-    const endpoint = mediaType === 'tv' ? 'tv' : 'movie';
+    const {tmdbId, mediaType} = findResult;
+
+    // Get detailed data with translations (append_to_response not available via fetchTMDBDetails)
     const movieResponse = await fetch(
-      `https://api.themoviedb.org/3/${endpoint}/${tmdbId}?api_key=${apiKey}&append_to_response=translations`,
+      `https://api.themoviedb.org/3/${mediaType}/${tmdbId}?api_key=${apiKey}&append_to_response=translations`,
     );
 
     if (!movieResponse.ok) {
@@ -1219,13 +1203,7 @@ export class AdminService extends BaseService {
     }
 
     if (mediaType === 'tv') {
-      const tvData: {
-        id: number;
-        name: string;
-        original_name: string;
-        original_language?: string;
-        first_air_date: string;
-        poster_path?: string;
+      const tvData: TMDBTvData & {
         translations?: TMDBMovieData['translations'];
       } = await movieResponse.json();
       return {
