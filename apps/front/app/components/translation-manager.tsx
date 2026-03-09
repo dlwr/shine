@@ -352,6 +352,9 @@ export default function TranslationManager({
                   onCancel={() => {
                     setEditingTranslation(undefined);
                   }}
+                  onDelete={async languageCode =>
+                    deleteTranslation(languageCode)
+                  }
                 />
               ) : (
                 <>
@@ -399,12 +402,14 @@ type EditTranslationFormProperties = {
   translation: Translation;
   onSave: (languageCode: string, content: string, isDefault: boolean) => void;
   onCancel: () => void;
+  onDelete: (languageCode: string) => void;
 };
 
 function EditTranslationForm({
   translation,
   onSave,
   onCancel,
+  onDelete,
 }: EditTranslationFormProperties) {
   const [languageCode, setLanguageCode] = useState(translation.languageCode);
   const [content, setContent] = useState(translation.content);
@@ -461,6 +466,14 @@ function EditTranslationForm({
             onClick={onCancel}
             className="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600">
             キャンセル
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onDelete(translation.languageCode);
+            }}
+            className="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700">
+            削除
           </button>
         </div>
       </div>
