@@ -736,7 +736,11 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
   try {
     const database = getDatabase(c.env);
     const movieId = c.req.param('id');
-    const {tmdbId, refreshData = false, mediaType: bodyMediaType} = await c.req.json();
+    const {
+      tmdbId,
+      refreshData = false,
+      mediaType: bodyMediaType,
+    } = await c.req.json();
 
     // Validate TMDb ID (must be a positive integer)
     if (
@@ -748,7 +752,11 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
 
     // Check if movie exists
     const movieExists = await database
-      .select({uid: movies.uid, imdbId: movies.imdbId, mediaType: movies.mediaType})
+      .select({
+        uid: movies.uid,
+        imdbId: movies.imdbId,
+        mediaType: movies.mediaType,
+      })
       .from(movies)
       .where(eq(movies.uid, movieId))
       .limit(1);
@@ -771,8 +779,10 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
     }
 
     // Determine mediaType
-    const updateMediaType: 'movie' | 'tv' = bodyMediaType === 'tv' ? 'tv'
-      : (movieExists[0].mediaType as 'movie' | 'tv') || 'movie';
+    const updateMediaType: 'movie' | 'tv' =
+      bodyMediaType === 'tv'
+        ? 'tv'
+        : (movieExists[0].mediaType as 'movie' | 'tv') || 'movie';
 
     // Update TMDb ID and mediaType
     await database
@@ -845,9 +855,10 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
             original_title?: string;
             original_name?: string;
           } = await movieResponse.json();
-          const originalTitle = updateMediaType === 'tv'
-            ? movieData.original_name
-            : movieData.original_title;
+          const originalTitle =
+            updateMediaType === 'tv'
+              ? movieData.original_name
+              : movieData.original_title;
 
           // Always update original language from TMDb
           if (movieData.original_language) {
@@ -875,17 +886,14 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
             );
 
           // If the movie's original language is Japanese, add the original title as Japanese translation
-          if (
-            movieData.original_language === 'ja' &&
-            movieData.original_title
-          ) {
+          if (movieData.original_language === 'ja' && originalTitle) {
             await database
               .insert(translations)
               .values({
                 resourceType: 'movie_title',
                 resourceUid: movieId,
                 languageCode: 'ja',
-                content: movieData.original_title,
+                content: originalTitle,
                 isDefault: 1, // Original language is default
               })
               .onConflictDoUpdate({
@@ -895,7 +903,7 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
                   translations.languageCode,
                 ],
                 set: {
-                  content: movieData.original_title,
+                  content: originalTitle,
                   isDefault: 1,
                   updatedAt: Math.floor(Date.now() / 1000),
                 },
@@ -1664,7 +1672,17 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
       let detectedMediaType: 'movie' | 'tv' = 'movie';
 
       // Find TMDb ID if not already set
-      if (!movieTmdbId) {
+      if (movieTmdbId) {
+        // Read existing mediaType from database
+        const existingMovie = await database
+          .select({mediaType: movies.mediaType})
+          .from(movies)
+          .where(eq(movies.uid, movieId))
+          .limit(1);
+        if (existingMovie.length > 0) {
+          detectedMediaType = existingMovie[0].mediaType as 'movie' | 'tv';
+        }
+      } else {
         const findResult = await findTMDBByImdbId(imdbId, tmdbApiKey);
 
         if (!findResult) {
@@ -1711,16 +1729,6 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
         }
 
         fetchResults.tmdbIdSet = true;
-      } else {
-        // Read existing mediaType from database
-        const existingMovie = await database
-          .select({mediaType: movies.mediaType})
-          .from(movies)
-          .where(eq(movies.uid, movieId))
-          .limit(1);
-        if (existingMovie.length > 0) {
-          detectedMediaType = existingMovie[0].mediaType as 'movie' | 'tv';
-        }
       }
 
       // Fetch and save posters using TMDb ID
@@ -1764,9 +1772,10 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
         original_title?: string;
         original_name?: string;
       } = await movieResponse.json();
-      const originalTitle = detectedMediaType === 'tv'
-        ? movieData.original_name
-        : movieData.original_title;
+      const originalTitle =
+        detectedMediaType === 'tv'
+          ? movieData.original_name
+          : movieData.original_title;
 
       // Always update original language from TMDb
       if (movieData.original_language) {
@@ -1882,7 +1891,11 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
 
     // Check if movie exists and has TMDb ID
     const movie = await database
-      .select({uid: movies.uid, tmdbId: movies.tmdbId, mediaType: movies.mediaType})
+      .select({
+        uid: movies.uid,
+        tmdbId: movies.tmdbId,
+        mediaType: movies.mediaType,
+      })
       .from(movies)
       .where(eq(movies.uid, movieId))
       .limit(1);
@@ -1952,9 +1965,10 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
         original_title?: string;
         original_name?: string;
       } = await movieResponse.json();
-      const originalTitle = refreshMediaType === 'tv'
-        ? movieData.original_name
-        : movieData.original_title;
+      const originalTitle =
+        refreshMediaType === 'tv'
+          ? movieData.original_name
+          : movieData.original_title;
 
       // Always update original language from TMDb
       if (movieData.original_language) {

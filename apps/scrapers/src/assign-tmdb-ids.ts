@@ -56,7 +56,12 @@ async function assignTmdbIds() {
         const duplicateMovie = await database
           .select({uid: movies.uid, imdbId: movies.imdbId})
           .from(movies)
-          .where(and(eq(movies.tmdbId, findResult.tmdbId), not(eq(movies.uid, movie.uid))))
+          .where(
+            and(
+              eq(movies.tmdbId, findResult.tmdbId),
+              not(eq(movies.uid, movie.uid)),
+            ),
+          )
           .limit(1);
 
         if (duplicateMovie.length > 0) {
@@ -73,7 +78,9 @@ async function assignTmdbIds() {
           .set({tmdbId: findResult.tmdbId, mediaType: findResult.mediaType})
           .where(eq(movies.uid, movie.uid));
 
-        console.log(`  ✅ Assigned TMDb ID: ${findResult.tmdbId} (${findResult.mediaType})`);
+        console.log(
+          `  ✅ Assigned TMDb ID: ${findResult.tmdbId} (${findResult.mediaType})`,
+        );
         successful++;
       } else {
         console.log(`  ❌ No TMDb ID found for IMDb ID: ${movie.imdbId}`);

@@ -248,10 +248,7 @@ export async function fetchTMDBTvDetails(
       translations: data.translations,
     };
   } catch (error) {
-    console.error(
-      `Error fetching TMDb TV details for ID ${tvId}:`,
-      error,
-    );
+    console.error(`Error fetching TMDb TV details for ID ${tvId}:`, error);
     return undefined;
   }
 }
@@ -380,7 +377,8 @@ export async function fetchTMDBMovieImages(
   imdbId: string,
   tmdbApiKey: string,
 ): Promise<
-  {images: TMDBMovieImages; tmdbId: number; mediaType: 'movie' | 'tv'} | undefined
+  | {images: TMDBMovieImages; tmdbId: number; mediaType: 'movie' | 'tv'}
+  | undefined
 > {
   try {
     const findResult = await findTMDBByImdbId(imdbId, tmdbApiKey);
