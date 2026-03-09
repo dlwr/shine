@@ -20,6 +20,7 @@ type Movie = {
   originalLanguage: string | undefined;
   posterUrl: string | undefined;
   imdbUrl?: string;
+  mediaType?: 'movie' | 'tv';
 };
 
 type PaginationData = {
@@ -253,6 +254,11 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
                   <td className="px-4 py-4">
                     <p className="font-semibold text-slate-900">
                       {movie.title}
+                      {movie.mediaType === 'tv' && (
+                        <span className="ml-2 inline-block rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700">
+                          TV
+                        </span>
+                      )}
                     </p>
                   </td>
                   <td className="px-4 py-4 text-slate-600">

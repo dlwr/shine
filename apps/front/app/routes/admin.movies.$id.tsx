@@ -58,6 +58,7 @@ export type MovieDetails = {
   originalLanguage: string;
   imdbId: string | undefined;
   tmdbId: number | undefined;
+  mediaType?: 'movie' | 'tv';
   translations: Translation[];
   nominations: Nomination[];
   posters: PosterUrl[];

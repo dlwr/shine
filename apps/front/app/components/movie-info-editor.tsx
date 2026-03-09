@@ -7,6 +7,7 @@ type MovieDetails = {
   originalLanguage: string;
   imdbId: string | undefined;
   tmdbId: number | undefined;
+  mediaType?: 'movie' | 'tv';
   translations: Array<{
     uid: string;
     languageCode: string;
@@ -795,6 +796,17 @@ export default function MovieInfoEditor({
         <div>
           <strong className="text-gray-700">原語:</strong>{' '}
           {movieData.originalLanguage}
+        </div>
+
+        <div>
+          <strong className="text-gray-700">メディアタイプ:</strong>{' '}
+          {movieData.mediaType === 'tv' ? (
+            <span className="inline-block rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700">
+              TV
+            </span>
+          ) : (
+            <span className="text-gray-900">映画</span>
+          )}
         </div>
 
         {/* IMDb ID */}
