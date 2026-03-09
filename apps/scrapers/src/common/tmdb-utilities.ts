@@ -83,6 +83,7 @@ export type TMDBTranslationsResponse = {
       runtime: number;
       tagline: string;
       title: string;
+      name: string;
     };
   }>;
 };

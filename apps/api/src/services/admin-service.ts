@@ -1321,7 +1321,7 @@ export class AdminService extends BaseService {
 
     for (const translation of tmdbTranslations) {
       const languageCode = translation.iso_639_1;
-      const title = translation.data?.title;
+      const title = translation.data?.title || translation.data?.name;
 
       if (!languageCode || !title) {
         continue;
