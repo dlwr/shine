@@ -98,6 +98,7 @@ export class AdminService extends BaseService {
         year: movies.year,
         originalLanguage: movies.originalLanguage,
         imdbId: movies.imdbId,
+        mediaType: movies.mediaType,
         title: titleSql,
         posterUrl: posterUrlSql,
         nominationCount: nominationCountSql,
@@ -161,6 +162,7 @@ export class AdminService extends BaseService {
 
     let tmdbMovieId: number | undefined;
     let tmdbMovieData: TMDBMovieData | undefined;
+    let detectedMediaType: 'movie' | 'tv' = 'movie';
 
     if (fetchTMDBData) {
       const tmdbData = await this.fetchTMDBDataByImdbId(normalizedImdbId);
@@ -171,6 +173,7 @@ export class AdminService extends BaseService {
 
       tmdbMovieId = tmdbData.tmdbId;
       tmdbMovieData = tmdbData.movie;
+      detectedMediaType = tmdbData.mediaType;
 
       if (tmdbMovieId !== undefined) {
         const existingByTmdb = await this.database
@@ -211,6 +214,8 @@ export class AdminService extends BaseService {
     if (tmdbMovieId !== undefined) {
       movieValues.tmdbId = tmdbMovieId;
     }
+
+    movieValues.mediaType = detectedMediaType;
 
     let newMovie: typeof movies.$inferSelect | undefined;
 
@@ -340,6 +345,7 @@ export class AdminService extends BaseService {
         originalLanguage: movies.originalLanguage,
         imdbId: movies.imdbId,
         tmdbId: movies.tmdbId,
+        mediaType: movies.mediaType,
       })
       .from(movies)
       .where(eq(movies.uid, movieId))
@@ -499,12 +505,14 @@ export class AdminService extends BaseService {
     let tmdbId: number | undefined;
     let postersAdded = 0;
     let translationsAdded = 0;
+    let detectedMediaType: 'movie' | 'tv' | undefined;
 
     if (fetchTMDBData) {
       try {
         const tmdbData = await this.fetchTMDBDataByImdbId(imdbId);
         if (tmdbData) {
           tmdbId = tmdbData.tmdbId;
+          detectedMediaType = tmdbData.mediaType;
           postersAdded = await this.addPostersFromTMDB(movieId, tmdbData.movie);
           translationsAdded = await this.addTranslationsFromTMDB(
             movieId,
@@ -532,6 +540,7 @@ export class AdminService extends BaseService {
       .set({
         imdbId,
         ...(tmdbId && {tmdbId}),
+        ...(detectedMediaType && {mediaType: detectedMediaType}),
         updatedAt: Math.floor(Date.now() / 1000),
       })
       .where(eq(movies.uid, movieId));
@@ -1163,6 +1172,7 @@ export class AdminService extends BaseService {
     | {
         tmdbId: number;
         movie: TMDBMovieData;
+        mediaType: 'movie' | 'tv';
       }
     | undefined
   > {
@@ -1182,26 +1192,62 @@ export class AdminService extends BaseService {
 
     const findData: {
       movie_results?: Array<{id: number}>;
+      tv_results?: Array<{id: number}>;
     } = await findResponse.json();
-    if (!findData.movie_results || findData.movie_results.length === 0) {
+
+    let tmdbId: number;
+    let mediaType: 'movie' | 'tv';
+
+    if (findData.movie_results && findData.movie_results.length > 0) {
+      tmdbId = findData.movie_results[0].id;
+      mediaType = 'movie';
+    } else if (findData.tv_results && findData.tv_results.length > 0) {
+      tmdbId = findData.tv_results[0].id;
+      mediaType = 'tv';
+    } else {
       return undefined;
     }
 
-    const tmdbId = findData.movie_results[0].id;
-
-    // Get detailed movie data with translations
+    // Get detailed data with translations
+    const endpoint = mediaType === 'tv' ? 'tv' : 'movie';
     const movieResponse = await fetch(
-      `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${apiKey}&append_to_response=translations`,
+      `https://api.themoviedb.org/3/${endpoint}/${tmdbId}?api_key=${apiKey}&append_to_response=translations`,
     );
 
     if (!movieResponse.ok) {
       throw new Error(`TMDB API error: ${movieResponse.statusText}`);
     }
 
+    if (mediaType === 'tv') {
+      const tvData: {
+        id: number;
+        name: string;
+        original_name: string;
+        original_language?: string;
+        first_air_date: string;
+        poster_path?: string;
+        translations?: TMDBMovieData['translations'];
+      } = await movieResponse.json();
+      return {
+        tmdbId,
+        mediaType,
+        movie: {
+          id: tvData.id,
+          title: tvData.name,
+          original_title: tvData.original_name,
+          original_language: tvData.original_language,
+          release_date: tvData.first_air_date,
+          poster_path: tvData.poster_path,
+          translations: tvData.translations,
+        },
+      };
+    }
+
     const movieData: TMDBMovieData = await movieResponse.json();
 
     return {
       tmdbId,
+      mediaType,
       movie: movieData,
     };
   }

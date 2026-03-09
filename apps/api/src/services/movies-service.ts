@@ -172,6 +172,7 @@ export class MoviesService extends BaseService {
         originalLanguage: movies.originalLanguage,
         imdbId: movies.imdbId,
         tmdbId: movies.tmdbId,
+        mediaType: movies.mediaType,
         title: translations.content,
         description: sql`
 					(
