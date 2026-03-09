@@ -811,11 +811,14 @@ async function insertMovieWithTranslations({
   const movieUid = generateUUID();
   const tmdbId = typeof tmdbMovie.id === 'number' ? tmdbMovie.id : undefined;
 
+  const mediaType = tmdbMovie.media_type === 'tv' ? 'tv' : 'movie';
+
   const movieBaseValues: typeof movies.$inferInsert = {
     uid: movieUid,
     imdbId,
     originalLanguage: tmdbMovie.original_language ?? 'en',
     year: normalizedYear,
+    mediaType,
     ...(tmdbId === undefined ? {} : {tmdbId}),
   };
 
@@ -825,6 +828,7 @@ async function insertMovieWithTranslations({
     movieBaseValues.year,
     imdbId,
     tmdbId,
+    mediaType,
   ]);
 
   const isReleaseDateColumnAvailable = releaseDateColumnAvailable ?? true;
@@ -836,9 +840,9 @@ async function insertMovieWithTranslations({
       await database.$client.execute({
         sql: `
           INSERT INTO movies (
-            uid, original_language, year, imdb_id, tmdb_id, release_date
+            uid, original_language, year, imdb_id, tmdb_id, media_type, release_date
           )
-          VALUES (?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
         `,
         args: [...baseArguments, releaseDate!],
       });
@@ -851,8 +855,8 @@ async function insertMovieWithTranslations({
         );
         await database.$client.execute({
           sql: `
-            INSERT INTO movies (uid, original_language, year, imdb_id, tmdb_id)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO movies (uid, original_language, year, imdb_id, tmdb_id, media_type)
+            VALUES (?, ?, ?, ?, ?, ?)
           `,
           args: baseArguments,
         });
@@ -863,8 +867,8 @@ async function insertMovieWithTranslations({
   } else {
     await database.$client.execute({
       sql: `
-        INSERT INTO movies (uid, original_language, year, imdb_id, tmdb_id)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO movies (uid, original_language, year, imdb_id, tmdb_id, media_type)
+        VALUES (?, ?, ?, ?, ?, ?)
       `,
       args: baseArguments,
     });
