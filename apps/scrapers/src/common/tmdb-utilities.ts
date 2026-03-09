@@ -32,8 +32,24 @@ export type TMDBMovieData = {
   };
 };
 
+export type TMDBTvData = {
+  id: number;
+  name: string;
+  original_name: string;
+  original_language?: string;
+  first_air_date: string;
+  imdb_id?: string;
+  poster_path?: string;
+};
+
 export type TMDBFindResponse = {
   movie_results: TMDBMovieData[];
+  tv_results: TMDBTvData[];
+};
+
+export type TMDBFindResult = {
+  tmdbId: number;
+  mediaType: 'movie' | 'tv';
 };
 
 export type TMDBMovieImages = {
@@ -77,10 +93,12 @@ export type TMDBTranslationsResponse = {
 export async function fetchTMDBMovieTranslations(
   movieId: number,
   tmdbApiKey: string,
+  mediaType: 'movie' | 'tv' = 'movie',
 ): Promise<TMDBTranslationsResponse | undefined> {
   try {
+    const endpoint = mediaType === 'tv' ? 'tv' : 'movie';
     const translationsUrl = new URL(
-      `${TMDB_API_BASE_URL}/movie/${movieId}/translations`,
+      `${TMDB_API_BASE_URL}/${endpoint}/${movieId}/translations`,
     );
     translationsUrl.searchParams.append('api_key', tmdbApiKey);
 
@@ -201,12 +219,66 @@ export async function fetchTMDBMovieDetails(
 }
 
 /**
+ * TMDb APIからTV番組の詳細情報を取得し、TMDBMovieData形式に正規化
+ */
+export async function fetchTMDBTvDetails(
+  tvId: number,
+  tmdbApiKey: string,
+  language = 'en-US',
+): Promise<TMDBMovieData | undefined> {
+  try {
+    const detailsUrl = new URL(`${TMDB_API_BASE_URL}/tv/${tvId}`);
+    detailsUrl.searchParams.append('api_key', tmdbApiKey);
+    detailsUrl.searchParams.append('language', language);
+
+    const response = await fetch(detailsUrl.toString());
+    if (!response.ok) {
+      throw new Error(`TMDb API error: ${response.statusText}`);
+    }
+
+    const data: TMDBTvData & {translations?: TMDBMovieData['translations']} =
+      await response.json();
+    return {
+      id: data.id,
+      title: data.name,
+      original_title: data.original_name,
+      original_language: data.original_language,
+      release_date: data.first_air_date,
+      poster_path: data.poster_path,
+      translations: data.translations,
+    };
+  } catch (error) {
+    console.error(
+      `Error fetching TMDb TV details for ID ${tvId}:`,
+      error,
+    );
+    return undefined;
+  }
+}
+
+/**
+ * mediaTypeに応じてTMDb映画/TV詳細情報を取得
+ */
+export async function fetchTMDBDetails(
+  tmdbId: number,
+  mediaType: 'movie' | 'tv',
+  tmdbApiKey: string,
+  language = 'en-US',
+): Promise<TMDBMovieData | undefined> {
+  if (mediaType === 'tv') {
+    return fetchTMDBTvDetails(tmdbId, tmdbApiKey, language);
+  }
+
+  return fetchTMDBMovieDetails(tmdbId, tmdbApiKey, language);
+}
+
+/**
  * IMDb IDからTMDb IDを取得
  */
 export async function findTMDBByImdbId(
   imdbId: string,
   tmdbApiKey: string,
-): Promise<number | undefined> {
+): Promise<TMDBFindResult | undefined> {
   try {
     const findUrl = new URL(`${TMDB_API_BASE_URL}/find/${imdbId}`);
     findUrl.searchParams.append('api_key', tmdbApiKey);
@@ -218,14 +290,17 @@ export async function findTMDBByImdbId(
     }
 
     const data: TMDBFindResponse = await response.json();
-    const movieResults = data.movie_results;
 
-    if (!movieResults || movieResults.length === 0) {
-      console.log(`No TMDb match found for IMDb ID: ${imdbId}`);
-      return undefined;
+    if (data.movie_results && data.movie_results.length > 0) {
+      return {tmdbId: data.movie_results[0].id, mediaType: 'movie'};
     }
 
-    return movieResults[0].id;
+    if (data.tv_results && data.tv_results.length > 0) {
+      return {tmdbId: data.tv_results[0].id, mediaType: 'tv'};
+    }
+
+    console.log(`No TMDb match found for IMDb ID: ${imdbId}`);
+    return undefined;
   } catch (error) {
     console.error(`Error finding TMDb ID for IMDb ID ${imdbId}:`, error);
     return undefined;
@@ -250,25 +325,29 @@ export async function fetchJapaneseTitleFromTMDB(
   try {
     let movieTmdbId = tmdbId;
 
+    let mediaType: 'movie' | 'tv' = 'movie';
+
     // TMDB IDがない場合は、IMDb IDから検索
     if (!movieTmdbId) {
       console.log(`  TMDB ID not found, searching by IMDb ID: ${imdbId}`);
-      const foundTmdbId = await findTMDBByImdbId(imdbId, TMDB_API_KEY);
+      const findResult = await findTMDBByImdbId(imdbId, TMDB_API_KEY);
 
-      if (!foundTmdbId) {
+      if (!findResult) {
         return undefined;
       }
 
-      movieTmdbId = foundTmdbId;
+      movieTmdbId = findResult.tmdbId;
+      mediaType = findResult.mediaType;
 
-      console.log(`  Found TMDB ID: ${movieTmdbId}`);
+      console.log(`  Found TMDB ID: ${movieTmdbId} (${mediaType})`);
       // TMDB IDをデータベースに保存
       await saveTMDBId(imdbId, movieTmdbId, environment);
     }
 
     // 日本語の映画情報を取得
-    const movieData = await fetchTMDBMovieDetails(
+    const movieData = await fetchTMDBDetails(
       movieTmdbId,
+      mediaType,
       TMDB_API_KEY,
       'ja',
     );
@@ -300,14 +379,20 @@ export async function fetchJapaneseTitleFromTMDB(
 export async function fetchTMDBMovieImages(
   imdbId: string,
   tmdbApiKey: string,
-): Promise<{images: TMDBMovieImages; tmdbId: number} | undefined> {
+): Promise<
+  {images: TMDBMovieImages; tmdbId: number; mediaType: 'movie' | 'tv'} | undefined
+> {
   try {
-    const tmdbId = await findTMDBByImdbId(imdbId, tmdbApiKey);
-    if (!tmdbId) {
+    const findResult = await findTMDBByImdbId(imdbId, tmdbApiKey);
+    if (!findResult) {
       return undefined;
     }
 
-    const imagesUrl = new URL(`${TMDB_API_BASE_URL}/movie/${tmdbId}/images`);
+    const {tmdbId, mediaType} = findResult;
+    const endpoint = mediaType === 'tv' ? 'tv' : 'movie';
+    const imagesUrl = new URL(
+      `${TMDB_API_BASE_URL}/${endpoint}/${tmdbId}/images`,
+    );
     imagesUrl.searchParams.append('api_key', tmdbApiKey);
 
     const imagesResponse = await fetch(imagesUrl.toString());
@@ -316,7 +401,7 @@ export async function fetchTMDBMovieImages(
     }
 
     const images: TMDBMovieImages = await imagesResponse.json();
-    return {images, tmdbId};
+    return {images, tmdbId, mediaType};
   } catch (error) {
     console.error(`Error fetching TMDb images for IMDb ID ${imdbId}:`, error);
     return undefined;

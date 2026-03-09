@@ -736,7 +736,7 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
   try {
     const database = getDatabase(c.env);
     const movieId = c.req.param('id');
-    const {tmdbId, refreshData = false} = await c.req.json();
+    const {tmdbId, refreshData = false, mediaType: bodyMediaType} = await c.req.json();
 
     // Validate TMDb ID (must be a positive integer)
     if (
@@ -748,7 +748,7 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
 
     // Check if movie exists
     const movieExists = await database
-      .select({uid: movies.uid, imdbId: movies.imdbId})
+      .select({uid: movies.uid, imdbId: movies.imdbId, mediaType: movies.mediaType})
       .from(movies)
       .where(eq(movies.uid, movieId))
       .limit(1);
@@ -770,11 +770,16 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
       }
     }
 
-    // Update TMDb ID
+    // Determine mediaType
+    const updateMediaType: 'movie' | 'tv' = bodyMediaType === 'tv' ? 'tv'
+      : (movieExists[0].mediaType as 'movie' | 'tv') || 'movie';
+
+    // Update TMDb ID and mediaType
     await database
       .update(movies)
       .set({
         tmdbId: typeof tmdbId === 'number' ? tmdbId : undefined,
+        mediaType: updateMediaType,
         updatedAt: Math.floor(Date.now() / 1000),
       })
       .where(eq(movies.uid, movieId));
@@ -792,8 +797,9 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
           await import('@shine/scrapers/common/tmdb-utilities');
 
         // Fetch and save posters using TMDb ID directly
+        const updateEndpoint = updateMediaType === 'tv' ? 'tv' : 'movie';
         const imagesUrl = new URL(
-          `https://api.themoviedb.org/3/movie/${tmdbId}/images`,
+          `https://api.themoviedb.org/3/${updateEndpoint}/${tmdbId}/images`,
         );
         imagesUrl.searchParams.append('api_key', c.env.TMDB_API_KEY);
 
@@ -820,6 +826,7 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
         const translationsData = await fetchTMDBMovieTranslations(
           tmdbId,
           c.env.TMDB_API_KEY,
+          updateMediaType,
         );
 
         console.log(
@@ -831,12 +838,16 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
         if (translationsData?.translations) {
           // Also get basic movie info for original language
           const movieResponse = await fetch(
-            `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${c.env.TMDB_API_KEY}`,
+            `https://api.themoviedb.org/3/${updateEndpoint}/${tmdbId}?api_key=${c.env.TMDB_API_KEY}`,
           );
           const movieData: {
             original_language?: string;
             original_title?: string;
+            original_name?: string;
           } = await movieResponse.json();
+          const originalTitle = updateMediaType === 'tv'
+            ? movieData.original_name
+            : movieData.original_title;
 
           // Always update original language from TMDb
           if (movieData.original_language) {
@@ -1650,14 +1661,18 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
         await import('@shine/scrapers/common/tmdb-utilities');
 
       let movieTmdbId: number | undefined = tmdbId ?? undefined;
+      let detectedMediaType: 'movie' | 'tv' = 'movie';
 
       // Find TMDb ID if not already set
       if (!movieTmdbId) {
-        movieTmdbId = await findTMDBByImdbId(imdbId, tmdbApiKey);
+        const findResult = await findTMDBByImdbId(imdbId, tmdbApiKey);
 
-        if (!movieTmdbId) {
+        if (!findResult) {
           return c.json({error: 'TMDb映画が見つかりませんでした'}, 404);
         }
+
+        movieTmdbId = findResult.tmdbId;
+        detectedMediaType = findResult.mediaType;
 
         // Check if TMDb ID is already used by another movie
         const existingMovie = await database
@@ -1675,12 +1690,13 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
           );
         }
 
-        // Save TMDb ID to database
+        // Save TMDb ID and mediaType to database
         try {
           await database
             .update(movies)
             .set({
               tmdbId: movieTmdbId,
+              mediaType: detectedMediaType,
               updatedAt: Math.floor(Date.now() / 1000),
             })
             .where(eq(movies.uid, movieId));
@@ -1695,11 +1711,22 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
         }
 
         fetchResults.tmdbIdSet = true;
+      } else {
+        // Read existing mediaType from database
+        const existingMovie = await database
+          .select({mediaType: movies.mediaType})
+          .from(movies)
+          .where(eq(movies.uid, movieId))
+          .limit(1);
+        if (existingMovie.length > 0) {
+          detectedMediaType = existingMovie[0].mediaType as 'movie' | 'tv';
+        }
       }
 
       // Fetch and save posters using TMDb ID
+      const tmdbEndpoint = detectedMediaType === 'tv' ? 'tv' : 'movie';
       const imagesUrl = new URL(
-        `https://api.themoviedb.org/3/movie/${movieTmdbId}/images`,
+        `https://api.themoviedb.org/3/${tmdbEndpoint}/${movieTmdbId}/images`,
       );
       imagesUrl.searchParams.append('api_key', tmdbApiKey);
 
@@ -1725,16 +1752,21 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
       const translationsData = await fetchTMDBMovieTranslations(
         movieTmdbId,
         tmdbApiKey,
+        detectedMediaType,
       );
 
       // Also get basic movie info for original title
       const movieResponse = await fetch(
-        `https://api.themoviedb.org/3/movie/${movieTmdbId}?api_key=${tmdbApiKey}`,
+        `https://api.themoviedb.org/3/${tmdbEndpoint}/${movieTmdbId}?api_key=${tmdbApiKey}`,
       );
       const movieData: {
         original_language?: string;
         original_title?: string;
+        original_name?: string;
       } = await movieResponse.json();
+      const originalTitle = detectedMediaType === 'tv'
+        ? movieData.original_name
+        : movieData.original_title;
 
       // Always update original language from TMDb
       if (movieData.original_language) {
@@ -1762,14 +1794,14 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
             ),
           );
         // If the movie's original language is Japanese, add the original title as Japanese translation
-        if (movieData.original_language === 'ja' && movieData.original_title) {
+        if (movieData.original_language === 'ja' && originalTitle) {
           await database
             .insert(translations)
             .values({
               resourceType: 'movie_title',
               resourceUid: movieId,
               languageCode: 'ja',
-              content: movieData.original_title,
+              content: originalTitle,
               isDefault: 1, // Original language is default
             })
             .onConflictDoUpdate({
@@ -1779,7 +1811,7 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
                 translations.languageCode,
               ],
               set: {
-                content: movieData.original_title,
+                content: originalTitle,
                 isDefault: 1,
                 updatedAt: Math.floor(Date.now() / 1000),
               },
@@ -1850,7 +1882,7 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
 
     // Check if movie exists and has TMDb ID
     const movie = await database
-      .select({uid: movies.uid, tmdbId: movies.tmdbId})
+      .select({uid: movies.uid, tmdbId: movies.tmdbId, mediaType: movies.mediaType})
       .from(movies)
       .where(eq(movies.uid, movieId))
       .limit(1);
@@ -1860,6 +1892,7 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
     }
 
     const {tmdbId} = movie[0];
+    const refreshMediaType = (movie[0].mediaType as 'movie' | 'tv') || 'movie';
     if (!tmdbId) {
       return c.json({error: 'Movie does not have a TMDb ID'}, 400);
     }
@@ -1879,8 +1912,9 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
         await import('@shine/scrapers/common/tmdb-utilities');
 
       // Fetch and save posters using TMDb ID
+      const refreshEndpoint = refreshMediaType === 'tv' ? 'tv' : 'movie';
       const imagesUrl = new URL(
-        `https://api.themoviedb.org/3/movie/${tmdbId}/images`,
+        `https://api.themoviedb.org/3/${refreshEndpoint}/${tmdbId}/images`,
       );
       imagesUrl.searchParams.append('api_key', c.env.TMDB_API_KEY);
 
@@ -1906,16 +1940,21 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
       const translationsData = await fetchTMDBMovieTranslations(
         tmdbId,
         c.env.TMDB_API_KEY,
+        refreshMediaType,
       );
 
       // Also get basic movie info for original language
       const movieResponse = await fetch(
-        `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${c.env.TMDB_API_KEY}`,
+        `https://api.themoviedb.org/3/${refreshEndpoint}/${tmdbId}?api_key=${c.env.TMDB_API_KEY}`,
       );
       const movieData: {
         original_language?: string;
         original_title?: string;
+        original_name?: string;
       } = await movieResponse.json();
+      const originalTitle = refreshMediaType === 'tv'
+        ? movieData.original_name
+        : movieData.original_title;
 
       // Always update original language from TMDb
       if (movieData.original_language) {
@@ -1943,14 +1982,14 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
             ),
           );
         // If the movie's original language is Japanese, add the original title as Japanese translation
-        if (movieData.original_language === 'ja' && movieData.original_title) {
+        if (movieData.original_language === 'ja' && originalTitle) {
           await database
             .insert(translations)
             .values({
               resourceType: 'movie_title',
               resourceUid: movieId,
               languageCode: 'ja',
-              content: movieData.original_title,
+              content: originalTitle,
               isDefault: 1, // Original language is default
             })
             .onConflictDoUpdate({
@@ -1960,7 +1999,7 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
                 translations.languageCode,
               ],
               set: {
-                content: movieData.original_title,
+                content: originalTitle,
                 isDefault: 1,
                 updatedAt: Math.floor(Date.now() / 1000),
               },
