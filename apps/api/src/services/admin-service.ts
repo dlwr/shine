@@ -363,6 +363,7 @@ export class AdminService extends BaseService {
     // Get all translations
     const translationsResult = await this.database
       .select({
+        uid: translations.uid,
         languageCode: translations.languageCode,
         content: translations.content,
         isDefault: translations.isDefault,
