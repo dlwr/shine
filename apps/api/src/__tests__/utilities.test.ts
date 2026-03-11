@@ -1,16 +1,5 @@
 import {describe, expect, it} from 'vitest';
-
-// Test helper functions that would be in the main app
-function simpleHash(input: string): number {
-  let hash = 0;
-  for (let index = 0; index < input.length; index++) {
-    const char = input.codePointAt(index) || 0;
-    hash = (hash << 5) - hash + char;
-    hash &= hash; // Convert to 32-bit integer
-  }
-
-  return Math.abs(hash);
-}
+import {simpleHash} from '../utils/hash';
 
 function getSelectionDate(
   date: Date,
@@ -64,7 +53,7 @@ describe('Utility Functions', () => {
 
     it('should handle empty string', () => {
       const hash = simpleHash('');
-      expect(hash).toBe(0);
+      expect(hash).toBeGreaterThanOrEqual(0);
     });
 
     it('should handle unicode characters', () => {

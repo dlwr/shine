@@ -9,6 +9,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {EdgeCache} from '../utils/cache';
+import {simpleHash} from '../utils/hash';
 import {BaseService} from './base-service';
 import type {DateSeedOptions, MovieSelection} from '@shine/types';
 
@@ -540,24 +541,6 @@ export class SelectionsService extends BaseService {
     return allTranslations[0]?.content;
   }
 
-  private simpleHash(input: string): number {
-    let hash = 2_166_136_261; // FNV offset basis
-    for (let index = 0; index < input.length; index++) {
-      const char = input.codePointAt(index) || 0;
-      hash ^= char;
-      hash = Math.imul(hash, 16_777_619); // FNV prime
-    }
-
-    // Avalanche finalizer: spread bits more evenly
-    hash ^= hash >>> 16;
-    hash = Math.imul(hash, 2_246_822_507);
-    hash ^= hash >>> 13;
-    hash = Math.imul(hash, 3_266_489_909);
-    hash ^= hash >>> 16;
-
-    return Math.abs(Math.trunc(hash));
-  }
-
   private getSelectionDate(date: Date, type: SelectionType): string {
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
@@ -590,7 +573,7 @@ export class SelectionsService extends BaseService {
 
   private getDateSeed(date: Date, type: SelectionType): number {
     const selectionDate = this.getSelectionDate(date, type);
-    return this.simpleHash(`${type}-${selectionDate}`);
+    return simpleHash(`${type}-${selectionDate}`);
   }
 
   private async selectMovieFromNominations(
