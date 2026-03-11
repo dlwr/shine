@@ -1,14 +1,21 @@
 import {describe, expect, it} from 'vitest';
 
 function simpleHash(input: string): number {
-  let hash = 0;
+  let hash = 2_166_136_261; // FNV offset basis
   for (let index = 0; index < input.length; index++) {
     const char = input.codePointAt(index) || 0;
-    hash = (hash << 5) - hash + char;
-    hash &= hash;
+    hash ^= char;
+    hash = Math.imul(hash, 16_777_619); // FNV prime
   }
 
-  return Math.abs(hash);
+  // Avalanche finalizer: spread bits more evenly
+  hash ^= hash >>> 16;
+  hash = Math.imul(hash, 2_246_822_507);
+  hash ^= hash >>> 13;
+  hash = Math.imul(hash, 3_266_489_909);
+  hash ^= hash >>> 16;
+
+  return Math.abs(Math.trunc(hash));
 }
 
 describe('Nomination-based movie selection logic', () => {
@@ -103,6 +110,36 @@ describe('Nomination-based movie selection logic', () => {
       expect(selectedIndex).toBeLessThan(nominations.length);
       expect(nominations[selectedIndex].movieUid).toBeTruthy();
     }
+  });
+
+  it('should produce well-distributed indices for consecutive daily dates', () => {
+    const poolSize = 4881; // Actual production nominations count
+    const minimumIndexDifference = 50; // Adjacent indices likely point to same movie
+
+    let tooCloseCount = 0;
+    const totalPairs = 336; // 28 days * 12 months
+
+    for (let month = 1; month <= 12; month++) {
+      for (let day = 1; day <= 28; day++) {
+        const date1 = `daily-2026-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const date2 = `daily-2026-${String(month).padStart(2, '0')}-${String(day + 1).padStart(2, '0')}`;
+        const index1 = simpleHash(date1) % poolSize;
+        const index2 = simpleHash(date2) % poolSize;
+        const diff = Math.abs(index1 - index2);
+        if (diff < minimumIndexDifference) {
+          tooCloseCount++;
+        }
+      }
+    }
+
+    // No more than 5% of consecutive day pairs should have close indices
+    expect(tooCloseCount / totalPairs).toBeLessThan(0.05);
+  });
+
+  it('should be deterministic for the same input', () => {
+    const result1 = simpleHash('daily-2026-03-11');
+    const result2 = simpleHash('daily-2026-03-11');
+    expect(result1).toBe(result2);
   });
 
   it('daily, weekly, and monthly should select different nominations for same date', () => {
