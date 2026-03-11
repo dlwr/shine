@@ -324,6 +324,9 @@ adminRoutes.get('/movies/:id', authMiddleware, async c => {
   try {
     const adminService = new AdminService(c.env);
     const movieId = c.req.param('id');
+    if (!movieId) {
+      return c.json({error: 'Missing id parameter'}, 400);
+    }
 
     const movieDetails = await adminService.getMovieForAdmin(movieId);
 
@@ -343,6 +346,10 @@ adminRoutes.get('/movies/:id/external-id-search', authMiddleware, async c => {
   try {
     const adminService = new AdminService(c.env);
     const movieId = c.req.param('id');
+    if (!movieId) {
+      return c.json({error: 'Missing id parameter'}, 400);
+    }
+
     const rawQuery = c.req.query('query');
     const rawLanguage = c.req.query('language');
     const rawYear = c.req.query('year');
@@ -524,6 +531,9 @@ adminRoutes.delete('/movies/:id', authMiddleware, async c => {
   try {
     const adminService = new AdminService(c.env);
     const movieId = c.req.param('id');
+    if (!movieId) {
+      return c.json({error: 'Missing id parameter'}, 400);
+    }
 
     await adminService.deleteMovie(movieId);
 
@@ -539,6 +549,9 @@ adminRoutes.post('/article-links/:id/spam', authMiddleware, async c => {
   try {
     const adminService = new AdminService(c.env);
     const articleId = c.req.param('id');
+    if (!articleId) {
+      return c.json({error: 'Missing id parameter'}, 400);
+    }
 
     await adminService.flagArticleAsSpam(articleId);
 
@@ -554,6 +567,9 @@ adminRoutes.delete('/article-links/:id', authMiddleware, async c => {
   try {
     const adminService = new AdminService(c.env);
     const articleId = c.req.param('id');
+    if (!articleId) {
+      return c.json({error: 'Missing id parameter'}, 400);
+    }
 
     await adminService.deleteArticleLink(articleId);
 
@@ -569,6 +585,10 @@ adminRoutes.post('/movies/:id/posters', authMiddleware, async c => {
   try {
     const adminService = new AdminService(c.env);
     const movieId = c.req.param('id');
+    if (!movieId) {
+      return c.json({error: 'Missing id parameter'}, 400);
+    }
+
     const {
       url,
       width,
@@ -615,6 +635,9 @@ adminRoutes.delete(
       const adminService = new AdminService(c.env);
       const movieId = c.req.param('movieId');
       const posterId = c.req.param('posterId');
+      if (!movieId || !posterId) {
+        return c.json({error: 'Missing movieId or posterId parameter'}, 400);
+      }
 
       await adminService.deletePoster(movieId, posterId);
 
@@ -631,6 +654,10 @@ adminRoutes.put('/movies/:id', authMiddleware, async c => {
   try {
     const database = getDatabase(c.env);
     const movieId = c.req.param('id');
+    if (!movieId) {
+      return c.json({error: 'Missing id parameter'}, 400);
+    }
+
     const {year, originalLanguage, mediaType} = await c.req.json();
 
     // Check if movie exists
@@ -708,6 +735,10 @@ adminRoutes.put('/movies/:id/imdb-id', authMiddleware, async c => {
   try {
     const adminService = new AdminService(c.env);
     const movieId = c.req.param('id');
+    if (!movieId) {
+      return c.json({error: 'Missing id parameter'}, 400);
+    }
+
     const {imdbId, refreshData = false} = await c.req.json();
 
     const refreshResults = await adminService.updateIMDbId(movieId, {
@@ -745,6 +776,10 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
   try {
     const database = getDatabase(c.env);
     const movieId = c.req.param('id');
+    if (!movieId) {
+      return c.json({error: 'Missing id parameter'}, 400);
+    }
+
     const {
       tmdbId,
       refreshData = false,
@@ -1487,6 +1522,10 @@ adminRoutes.post('/movies/:movieId/nominations', authMiddleware, async c => {
   try {
     const database = getDatabase(c.env);
     const movieId = c.req.param('movieId');
+    if (!movieId) {
+      return c.json({error: 'Missing movieId parameter'}, 400);
+    }
+
     const {
       ceremonyUid,
       categoryUid,
@@ -1579,6 +1618,10 @@ adminRoutes.put('/nominations/:nominationId', authMiddleware, async c => {
   try {
     const database = getDatabase(c.env);
     const nominationId = c.req.param('nominationId');
+    if (!nominationId) {
+      return c.json({error: 'Missing nominationId parameter'}, 400);
+    }
+
     const {isWinner, specialMention} = await c.req.json();
 
     // Check if nomination exists
@@ -1614,6 +1657,9 @@ adminRoutes.delete('/nominations/:nominationId', authMiddleware, async c => {
   try {
     const database = getDatabase(c.env);
     const nominationId = c.req.param('nominationId');
+    if (!nominationId) {
+      return c.json({error: 'Missing nominationId parameter'}, 400);
+    }
 
     // Check if nomination exists
     const nomination = await database
@@ -1641,6 +1687,9 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
   try {
     const database = getDatabase(c.env);
     const movieId = c.req.param('id');
+    if (!movieId) {
+      return c.json({error: 'Missing id parameter'}, 400);
+    }
 
     // Check if movie exists and has IMDb ID
     const movie = await database
@@ -1893,6 +1942,9 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
   try {
     const database = getDatabase(c.env);
     const movieId = c.req.param('id');
+    if (!movieId) {
+      return c.json({error: 'Missing id parameter'}, 400);
+    }
 
     // Check if movie exists and has TMDb ID
     const movie = await database
@@ -2084,6 +2136,9 @@ adminRoutes.post(
       const database = getDatabase(c.env);
       const sourceId = c.req.param('sourceId');
       const targetId = c.req.param('targetId');
+      if (!sourceId || !targetId) {
+        return c.json({error: 'Missing sourceId or targetId parameter'}, 400);
+      }
 
       if (sourceId === targetId) {
         return c.json(
