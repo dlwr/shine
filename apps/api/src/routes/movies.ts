@@ -125,6 +125,10 @@ moviesRoutes.get('/:id', async c => {
   try {
     const moviesService = new MoviesService(c.env);
     const movieId = c.req.param('id');
+    if (!movieId) {
+      return c.json({error: 'Missing id parameter'}, 400);
+    }
+
     const locale = c.req.query('locale') || 'ja';
 
     // Check cache first
@@ -196,6 +200,10 @@ moviesRoutes.post('/:id/translations', authMiddleware, async c => {
   try {
     const moviesService = new MoviesService(c.env);
     const movieId = c.req.param('id');
+    if (!movieId) {
+      return c.json({error: 'Missing id parameter'}, 400);
+    }
+
     const {
       languageCode,
       content: rawContent,
@@ -253,6 +261,9 @@ moviesRoutes.delete('/:id/translations/:lang', authMiddleware, async c => {
     const moviesService = new MoviesService(c.env);
     const movieId = c.req.param('id');
     const languageCode = c.req.param('lang');
+    if (!movieId || !languageCode) {
+      return c.json({error: 'Missing required parameters'}, 400);
+    }
 
     await moviesService.deleteMovieTranslation(movieId, languageCode);
 
@@ -279,6 +290,10 @@ moviesRoutes.post('/:id/article-links', async c => {
   try {
     const database = getDatabase(c.env);
     const movieId = c.req.param('id');
+    if (!movieId) {
+      return c.json({error: 'Missing id parameter'}, 400);
+    }
+
     const {
       url: rawUrl,
       title: rawTitle,
@@ -408,6 +423,9 @@ moviesRoutes.get('/:id/article-links', async c => {
   try {
     const database = getDatabase(c.env);
     const movieId = c.req.param('id');
+    if (!movieId) {
+      return c.json({error: 'Missing id parameter'}, 400);
+    }
 
     const articles = await database
       .select({
