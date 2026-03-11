@@ -26,6 +26,7 @@ export type TMDBMovieData = {
       english_name: string;
       data: {
         title?: string;
+        name?: string;
         overview?: string;
       };
     }>;
@@ -83,7 +84,7 @@ export type TMDBTranslationsResponse = {
       runtime: number;
       tagline: string;
       title: string;
-      name: string;
+      name?: string;
     };
   }>;
 };

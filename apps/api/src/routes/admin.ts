@@ -922,7 +922,9 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
 
           // Add all translations
           for (const translation of translationsData.translations) {
-            if (translation.iso_639_1 && translation.data?.title) {
+            const translatedTitle =
+              translation.data?.title || translation.data?.name;
+            if (translation.iso_639_1 && translatedTitle) {
               const isOriginalLanguage =
                 translation.iso_639_1 === movieData.original_language;
               await database
@@ -931,7 +933,7 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
                   resourceType: 'movie_title',
                   resourceUid: movieId,
                   languageCode: translation.iso_639_1,
-                  content: translation.data.title,
+                  content: translatedTitle,
                   isDefault: isOriginalLanguage ? 1 : 0,
                 })
                 .onConflictDoUpdate({
@@ -941,7 +943,7 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
                     translations.languageCode,
                   ],
                   set: {
-                    content: translation.data.title,
+                    content: translatedTitle,
                     isDefault: isOriginalLanguage ? 1 : 0,
                     updatedAt: Math.floor(Date.now() / 1000),
                   },
