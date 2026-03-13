@@ -84,13 +84,7 @@ export class MoviesService extends BaseService {
       return baseQuery;
     })();
 
-    // Get movies with pagination
-    const searchResults: SearchResultRow[] = await finalQuery
-      .orderBy(movies.year, movies.uid)
-      .limit(limit)
-      .offset(offset);
-
-    // Get total count with simple separate query
+    // Build count query
     const baseCountQuery = this.database
       .select({count: sql`COUNT(DISTINCT movies.uid)`.as('count')})
       .from(movies)
@@ -103,7 +97,6 @@ export class MoviesService extends BaseService {
         ),
       );
 
-    // Build count query
     const countQuery = (() => {
       const withAwards =
         String(hasAwards) === 'true'
@@ -118,7 +111,15 @@ export class MoviesService extends BaseService {
         : withAwards;
     })();
 
-    const totalCountResult = await countQuery;
+    // Run search and count queries in parallel
+    const [searchResults, totalCountResult] = await Promise.all([
+      finalQuery
+        .orderBy(movies.year, movies.uid)
+        .limit(limit)
+        .offset(offset) as Promise<SearchResultRow[]>,
+      countQuery,
+    ]);
+
     const totalCount = Number(totalCountResult[0]?.count) || 0;
     const totalPages = Math.ceil(totalCount / limit);
 
