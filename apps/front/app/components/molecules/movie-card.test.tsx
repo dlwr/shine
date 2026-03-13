@@ -89,3 +89,104 @@ describe('MovieCard streaming menu', () => {
     expect(hiddenInput).toHaveAttribute('value', '別れる決心');
   });
 });
+
+describe('MovieCard poster selection by locale', () => {
+  it('selects poster matching locale language over primary', () => {
+    const movie: MovieCardMovie = {
+      uid: 'poster-test',
+      title: 'Test Movie',
+      year: 2024,
+      posterUrls: [
+        {
+          url: 'https://example.com/en-primary.jpg',
+          languageCode: 'en',
+          isPrimary: 1,
+        },
+        {url: 'https://example.com/ja.jpg', languageCode: 'ja', isPrimary: 0},
+      ],
+    };
+
+    render(<MovieCard movie={movie} locale="ja" />);
+
+    const img = screen.getByRole('img', {name: 'Test Movie poster'});
+    expect(img).toHaveAttribute('src', 'https://example.com/ja.jpg');
+  });
+
+  it('falls back to primary poster when no locale match', () => {
+    const movie: MovieCardMovie = {
+      uid: 'poster-test-2',
+      title: 'Test Movie',
+      year: 2024,
+      posterUrls: [
+        {
+          url: 'https://example.com/en-primary.jpg',
+          languageCode: 'en',
+          isPrimary: 1,
+        },
+        {url: 'https://example.com/fr.jpg', languageCode: 'fr', isPrimary: 0},
+      ],
+    };
+
+    render(<MovieCard movie={movie} locale="ja" />);
+
+    const img = screen.getByRole('img', {name: 'Test Movie poster'});
+    expect(img).toHaveAttribute('src', 'https://example.com/en-primary.jpg');
+  });
+
+  it('prefers primary poster with matching language over non-primary', () => {
+    const movie: MovieCardMovie = {
+      uid: 'poster-test-3',
+      title: 'Test Movie',
+      year: 2024,
+      posterUrls: [
+        {
+          url: 'https://example.com/ja-nonprimary.jpg',
+          languageCode: 'ja',
+          isPrimary: 0,
+        },
+        {
+          url: 'https://example.com/ja-primary.jpg',
+          languageCode: 'ja',
+          isPrimary: 1,
+        },
+      ],
+    };
+
+    render(<MovieCard movie={movie} locale="ja" />);
+
+    const img = screen.getByRole('img', {name: 'Test Movie poster'});
+    expect(img).toHaveAttribute('src', 'https://example.com/ja-primary.jpg');
+  });
+
+  it('falls back to primary with no language when no locale match', () => {
+    const movie: MovieCardMovie = {
+      uid: 'poster-test-4',
+      title: 'Test Movie',
+      year: 2024,
+      posterUrls: [
+        {url: 'https://example.com/international.jpg', isPrimary: 1},
+        {url: 'https://example.com/fr.jpg', languageCode: 'fr', isPrimary: 0},
+      ],
+    };
+
+    render(<MovieCard movie={movie} locale="ja" />);
+
+    const img = screen.getByRole('img', {name: 'Test Movie poster'});
+    expect(img).toHaveAttribute('src', 'https://example.com/international.jpg');
+  });
+
+  it('falls back to legacy posterUrl when posterUrls is empty', () => {
+    const movie: MovieCardMovie = {
+      uid: 'poster-test-5',
+      title: 'Test Movie',
+      year: 2024,
+      posterUrl: 'https://example.com/legacy.jpg',
+      posterUrls: [],
+    };
+
+    render(<MovieCard movie={movie} locale="ja" />);
+
+    const img = screen.getByRole('img', {name: 'Test Movie poster'});
+    expect(img).toHaveAttribute('src', 'https://example.com/legacy.jpg');
+  });
+});

@@ -14,13 +14,13 @@ type MovieCardProperties = {
   adminToken?: string;
 };
 
-type PosterInfo = {
+export type PosterInfo = {
   url: string;
   languageCode?: string;
   isPrimary: number;
 };
 
-function selectBestPoster(
+export function selectBestPoster(
   posters: PosterInfo[] | undefined,
   locale: string,
 ): string | undefined {
