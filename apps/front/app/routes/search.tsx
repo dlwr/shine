@@ -1,6 +1,7 @@
 import type {Route} from './+types/search';
 import {Button} from '@/components/ui/button';
-import {selectBestPoster} from '@/components/molecules/movie-card';
+import {selectBestPoster} from '@/lib/poster';
+import type {PosterInfo} from '@/lib/poster';
 
 type SearchMovieData = {
   movieUid: string;
@@ -13,11 +14,7 @@ type SearchMovieData = {
     languageCode: string;
     content: string;
   }>;
-  posterUrls?: Array<{
-    url: string;
-    languageCode?: string;
-    isPrimary: number;
-  }>;
+  posterUrls?: PosterInfo[];
 };
 
 type SearchPaginationData = {
