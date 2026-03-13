@@ -1,5 +1,6 @@
 import type {Route} from './+types/search';
 import {Button} from '@/components/ui/button';
+import {selectBestPoster} from '@/components/molecules/movie-card';
 
 type SearchMovieData = {
   movieUid: string;
@@ -14,7 +15,8 @@ type SearchMovieData = {
   }>;
   posterUrls?: Array<{
     url: string;
-    isPrimary: boolean;
+    languageCode?: string;
+    isPrimary: number;
   }>;
 };
 
@@ -157,9 +159,7 @@ export default function Search({loaderData}: Route.ComponentProps) {
                   const title =
                     movie.translations?.find(t => t.languageCode === 'ja')
                       ?.content || 'タイトル不明';
-                  const posterUrl =
-                    movie.posterUrls?.find(p => p.isPrimary)?.url ||
-                    movie.posterUrls?.[0]?.url;
+                  const posterUrl = selectBestPoster(movie.posterUrls, 'ja');
 
                   return (
                     <div

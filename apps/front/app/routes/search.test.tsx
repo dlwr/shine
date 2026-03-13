@@ -35,7 +35,8 @@ const mockSearchResults = {
       posterUrls: [
         {
           url: 'https://example.com/poster1.jpg',
-          isPrimary: true,
+          languageCode: 'ja',
+          isPrimary: 1,
         },
       ],
     },
