@@ -3,7 +3,7 @@ import {drizzle} from 'drizzle-orm/libsql';
 import * as schema from './schema/index';
 
 // Re-export drizzle-orm utilities
-export {and, eq, isNull, like, not, sql} from 'drizzle-orm';
+export {and, eq, inArray, isNull, like, not, sql} from 'drizzle-orm';
 
 export type Environment = {
   TMDB_API_KEY?: string;
