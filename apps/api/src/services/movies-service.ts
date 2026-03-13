@@ -1,10 +1,11 @@
-import {and, eq, isNull, like, sql} from '@shine/database';
+import {and, eq, inArray, isNull, like, sql} from '@shine/database';
 import {articleLinks} from '@shine/database/schema/article-links';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
+import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {EdgeCache, getCacheKeyForMovie} from '../utils/cache';
 import {BaseService} from './base-service';
@@ -40,15 +41,6 @@ export class MoviesService extends BaseService {
         originalLanguage: movies.originalLanguage,
         imdbId: movies.imdbId,
         title: translations.content,
-        posterUrl: sql`
-					(
-					  SELECT url
-					  FROM poster_urls
-					  WHERE poster_urls.movie_uid = movies.uid
-					  ORDER BY poster_urls.is_primary DESC, poster_urls.created_at ASC
-					  LIMIT 1
-					)
-				`.as('posterUrl'),
         hasNominations: sql`
 					(
 					  SELECT COUNT(*) > 0
@@ -130,6 +122,39 @@ export class MoviesService extends BaseService {
     const totalCount = Number(totalCountResult[0]?.count) || 0;
     const totalPages = Math.ceil(totalCount / limit);
 
+    // Fetch all posters for the search result movies in one query
+    const movieIds = searchResults.map(m => m.uid);
+    const allPosters =
+      movieIds.length > 0
+        ? await this.database
+            .select({
+              movieUid: posterUrls.movieUid,
+              url: posterUrls.url,
+              languageCode: posterUrls.languageCode,
+              isPrimary: posterUrls.isPrimary,
+            })
+            .from(posterUrls)
+            .where(inArray(posterUrls.movieUid, movieIds))
+            .orderBy(
+              sql`${posterUrls.isPrimary} DESC, ${posterUrls.createdAt} ASC`,
+            )
+        : [];
+
+    // Group posters by movie ID
+    const postersByMovie = new Map<
+      string,
+      Array<{
+        url: string;
+        languageCode: string | null;
+        isPrimary: number | null;
+      }>
+    >();
+    for (const poster of allPosters) {
+      const existing = postersByMovie.get(poster.movieUid) ?? [];
+      existing.push(poster);
+      postersByMovie.set(poster.movieUid, existing);
+    }
+
     return {
       movies: searchResults.map(movie => ({
         uid: movie.uid,
@@ -139,7 +164,11 @@ export class MoviesService extends BaseService {
         title:
           movie.title ??
           (movie.year ? `Unknown Title (${movie.year})` : 'Unknown Title'),
-        posterUrl: movie.posterUrl,
+        posterUrls: (postersByMovie.get(movie.uid) ?? []).map(p => ({
+          url: p.url,
+          languageCode: p.languageCode ?? undefined,
+          isPrimary: p.isPrimary ?? 0,
+        })),
         hasNominations: Boolean(movie.hasNominations),
       })),
       pagination: {
