@@ -1038,6 +1038,28 @@ export class AdminService extends BaseService {
       }
     }
 
+    // Award-specific synonym groups: IMDb often uses historical names
+    const awardSynonymGroups: string[][] = [
+      [
+        "palme d'or",
+        'grand prize of the festival',
+        'grand prix du festival',
+        'golden palm',
+      ],
+      ['grand prix', 'grand prize of the jury', 'grand prize'],
+    ];
+
+    for (const group of awardSynonymGroups) {
+      const normalizedGroup = group.map(s => normalizeCategoryName(s));
+      if (
+        normalizedGroup.some(s => targetNames.has(s) || normalizedTarget === s)
+      ) {
+        for (const synonym of normalizedGroup) {
+          targetNames.add(synonym);
+        }
+      }
+    }
+
     const {categoryName: imdbCategoryName, nominations: imdbNominations} =
       extractImdbNominations(nextData, targetNames);
 
