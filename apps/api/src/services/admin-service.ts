@@ -33,6 +33,18 @@ const IMDB_FETCH_HEADERS = {
   Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
 };
 
+const AWARD_SYNONYM_GROUPS: string[][] = [
+  [
+    "palme d'or",
+    'grand prize of the festival',
+    'grand prix du festival',
+    'golden palm',
+  ].map(s => normalizeCategoryName(s)),
+  ['grand prix', 'grand prize of the jury', 'grand prize'].map(s =>
+    normalizeCategoryName(s),
+  ),
+];
+
 const ensureTrailingSlash = (value: string): string =>
   value.endsWith('/') ? value : `${value}/`;
 
@@ -1038,23 +1050,9 @@ export class AdminService extends BaseService {
       }
     }
 
-    // Award-specific synonym groups: IMDb often uses historical names
-    const awardSynonymGroups: string[][] = [
-      [
-        "palme d'or",
-        'grand prize of the festival',
-        'grand prix du festival',
-        'golden palm',
-      ],
-      ['grand prix', 'grand prize of the jury', 'grand prize'],
-    ];
-
-    for (const group of awardSynonymGroups) {
-      const normalizedGroup = group.map(s => normalizeCategoryName(s));
-      if (
-        normalizedGroup.some(s => targetNames.has(s) || normalizedTarget === s)
-      ) {
-        for (const synonym of normalizedGroup) {
+    for (const group of AWARD_SYNONYM_GROUPS) {
+      if (group.some(s => targetNames.has(s) || normalizedTarget === s)) {
+        for (const synonym of group) {
           targetNames.add(synonym);
         }
       }
