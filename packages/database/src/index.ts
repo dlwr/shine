@@ -14,6 +14,7 @@ export type Environment = {
   ADMIN_PASSWORD?: string;
   JWT_SECRET?: string;
   TURNSTILE_SECRET_KEY?: string;
+  BROWSER?: Fetcher;
 };
 
 export const getDatabase = (environment: Environment) => {

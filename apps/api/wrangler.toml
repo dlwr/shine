@@ -3,6 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2025-03-26"
 compatibility_flags = ["nodejs_compat"]
 
+[browser]
+binding = "BROWSER"
+
 [env.development]
 name = "shine-api"
 # Environment variables are loaded from .dev.vars file

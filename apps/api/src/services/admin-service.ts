@@ -14,6 +14,7 @@ import type {
   TMDBTvData,
 } from '@shine/scrapers/common/tmdb-utilities';
 import {generateUUID} from '@shine/utils';
+import puppeteer from '@cloudflare/puppeteer';
 import {BaseService} from './base-service';
 import {
   type ImdbNextData,
@@ -25,13 +26,6 @@ import type {
   PaginationOptions,
   UpdateIMDBIdOptions,
 } from '@shine/types';
-
-const IMDB_FETCH_HEADERS = {
-  'User-Agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15',
-  'Accept-Language': 'en-US,en;q=0.9',
-  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-};
 
 const AWARD_SYNONYM_GROUPS: string[][] = [
   [
@@ -961,17 +955,22 @@ export class AdminService extends BaseService {
     }
 
     const normalizedUrl = ensureTrailingSlash(imdbEventUrl);
-    const response = await fetch(normalizedUrl, {
-      headers: IMDB_FETCH_HEADERS,
-    });
 
-    if (!response.ok) {
+    if (!this.env.BROWSER) {
       throw new Error(
-        `Failed to fetch IMDb event page (status ${response.status})`,
+        'Browser Rendering binding is not configured. Add [browser] binding to wrangler.toml.',
       );
     }
 
-    const html = await response.text();
+    const browser = await puppeteer.launch(this.env.BROWSER);
+    let html: string;
+    try {
+      const page = await browser.newPage();
+      await page.goto(normalizedUrl, {waitUntil: 'networkidle2'});
+      html = await page.content();
+    } finally {
+      await browser.close();
+    }
     const marker = '<script id="__NEXT_DATA__" type="application/json">';
     const markerIndex = html.indexOf(marker);
 

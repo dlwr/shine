@@ -13,5 +13,8 @@
     "dompurify": "^3.3.2",
     "hono": "^4.12.7",
     "jose": "^6.2.1"
+  },
+  "devDependencies": {
+    "@cloudflare/puppeteer": "^1.0.6"
   }
 }
