@@ -1423,14 +1423,7 @@ adminRoutes.post(
         }
       }
 
-      return c.json(
-        {
-          error: 'Internal server error',
-          detail:
-            error instanceof Error ? error.message : 'Unknown error',
-        },
-        500,
-      );
+      return c.json({error: 'Internal server error'}, 500);
     }
   },
 );
