@@ -1105,10 +1105,16 @@ export class AdminService extends BaseService {
       }
 
       try {
+        console.log(`[imdb-sync] creating movie: ${nomination.imdbId}`);
         const created = await this.createMovieFromImdbId(nomination.imdbId);
+        console.log(`[imdb-sync] movie created: ${nomination.imdbId}`);
         ensuredMovies.set(nomination.imdbId, created.movie.uid);
         moviesCreated++;
       } catch (error) {
+        console.error(
+          `[imdb-sync] createMovie error for ${nomination.imdbId}:`,
+          error instanceof Error ? error.message : error,
+        );
         if (
           error instanceof Error &&
           (error.message === 'TMDB API key not configured' ||
@@ -1141,6 +1147,8 @@ export class AdminService extends BaseService {
         throw error;
       }
     }
+
+    console.log(`[imdb-sync] all movies ensured, building nomination records`);
 
     const now = Math.floor(Date.now() / 1000);
     const insertedMovieKeys = new Set<string>();
@@ -1184,6 +1192,10 @@ export class AdminService extends BaseService {
       );
     }
 
+    console.log(
+      `[imdb-sync] inserting ${nominationRecords.length} nominations`,
+    );
+
     await this.database.transaction(async trx => {
       await trx
         .delete(nominations)
@@ -1196,6 +1208,8 @@ export class AdminService extends BaseService {
 
       await trx.insert(nominations).values(nominationRecords);
     });
+
+    console.log(`[imdb-sync] done`);
 
     return {
       moviesCreated,
