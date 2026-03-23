@@ -966,7 +966,8 @@ export class AdminService extends BaseService {
     let html: string;
     try {
       const page = await browser.newPage();
-      await page.goto(normalizedUrl, {waitUntil: 'networkidle2'});
+      await page.goto(normalizedUrl, {waitUntil: 'networkidle0', timeout: 30_000});
+      await page.waitForSelector('script#__NEXT_DATA__', {timeout: 15_000});
       html = await page.content();
     } finally {
       await browser.close();
