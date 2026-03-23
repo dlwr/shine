@@ -532,15 +532,20 @@ export async function savePosterUrls(
         continue;
       }
 
-      await database.insert(posterUrls).values({
+      const posterValues: typeof posterUrls.$inferInsert = {
         movieUid,
         url,
         width: poster.width,
         height: poster.height,
-        languageCode: poster.iso_639_1 || undefined,
         sourceType: 'tmdb',
         isPrimary: savedCount === 0 ? 1 : 0,
-      });
+      };
+
+      if (poster.iso_639_1) {
+        posterValues.languageCode = poster.iso_639_1;
+      }
+
+      await database.insert(posterUrls).values(posterValues);
 
       savedCount++;
     }
