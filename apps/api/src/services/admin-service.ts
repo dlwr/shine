@@ -966,8 +966,15 @@ export class AdminService extends BaseService {
     let html: string;
     try {
       const page = await browser.newPage();
-      await page.goto(normalizedUrl, {waitUntil: 'networkidle0', timeout: 30_000});
-      await page.waitForSelector('script#__NEXT_DATA__', {timeout: 15_000});
+      await page.setUserAgent(
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+      );
+      await page.goto(normalizedUrl, {waitUntil: 'networkidle0', timeout: 45_000});
+      await page.waitForSelector('script#__NEXT_DATA__', {timeout: 15_000}).catch(() => {
+        throw new Error(
+          'IMDb page did not load expected content (timed out waiting for __NEXT_DATA__)',
+        );
+      });
       html = await page.content();
     } finally {
       await browser.close();

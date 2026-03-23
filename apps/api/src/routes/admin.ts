@@ -1417,9 +1417,20 @@ adminRoutes.post(
         ) {
           return c.json({error: error.message}, 422);
         }
+
+        if (error.message.includes('Browser Rendering')) {
+          return c.json({error: error.message}, 502);
+        }
       }
 
-      return c.json({error: 'Internal server error'}, 500);
+      return c.json(
+        {
+          error: 'Internal server error',
+          detail:
+            error instanceof Error ? error.message : 'Unknown error',
+        },
+        500,
+      );
     }
   },
 );
