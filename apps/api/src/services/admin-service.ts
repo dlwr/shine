@@ -1448,10 +1448,11 @@ export class AdminService extends BaseService {
     const uid = generateUUID();
     const now = Math.floor(Date.now() / 1000);
     const originalLanguage = movieValues.originalLanguage ?? 'en';
-    const year =
-      typeof movieValues.year === 'number' ? movieValues.year : undefined;
+    /* eslint-disable unicorn/no-null -- libSQL raw args require null, not undefined */
+    const year = typeof movieValues.year === 'number' ? movieValues.year : null;
     const tmdbIdValue =
-      typeof movieValues.tmdbId === 'number' ? movieValues.tmdbId : undefined;
+      typeof movieValues.tmdbId === 'number' ? movieValues.tmdbId : null;
+    /* eslint-enable unicorn/no-null */
 
     type LibsqlExecuteResult = {
       rows?: Array<Record<string, unknown>>;
