@@ -1157,18 +1157,20 @@ export class AdminService extends BaseService {
 
       insertedMovieKeys.add(movieUid);
 
-      nominationRecords.push({
+      const record: typeof nominations.$inferInsert = {
         movieUid,
         ceremonyUid: ceremony.uid,
         categoryUid: category.uid,
         isWinner: nomination.isWinner ? 1 : 0,
-        specialMention:
-          nomination.notes && nomination.notes !== ''
-            ? nomination.notes
-            : undefined,
         createdAt: now,
         updatedAt: now,
-      });
+      };
+
+      if (nomination.notes && nomination.notes !== '') {
+        record.specialMention = nomination.notes;
+      }
+
+      nominationRecords.push(record);
     }
 
     if (nominationRecords.length === 0) {
