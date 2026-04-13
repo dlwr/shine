@@ -969,29 +969,48 @@ export class AdminService extends BaseService {
       await page.setUserAgent(
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
       );
-      try {
-        await page.goto(normalizedUrl, {
-          waitUntil: 'domcontentloaded',
-          timeout: 30_000,
-        });
-      } catch (error) {
+      const gotoWithRetry = async (): Promise<void> => {
+        const maxAttempts = 3;
+        let lastError: unknown;
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          try {
+            await page.goto(normalizedUrl, {
+              waitUntil: 'domcontentloaded',
+              timeout: 30_000,
+            });
+            return;
+          } catch (error) {
+            lastError = error;
+            const message = error instanceof Error ? error.message : '';
+            const isTransient =
+              message.includes('Requesting main frame too early') ||
+              message.includes('Target closed') ||
+              message.includes('Connection closed');
+            if (!isTransient || attempt === maxAttempts) {
+              break;
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 500 * attempt));
+          }
+        }
+
         if (
-          error instanceof Error &&
-          (error.message.includes('Session closed') ||
-            error.message.includes('Target closed') ||
-            error.message.includes('Connection closed'))
+          lastError instanceof Error &&
+          lastError.message.includes('Session closed')
         ) {
           throw new Error(
             'Failed to fetch IMDb event page: browser session closed unexpectedly (Cloudflare Browser Rendering may be at concurrent session limit; retry in a moment)',
-            {cause: error},
+            {cause: lastError},
           );
         }
 
         throw new Error(
-          `Failed to fetch IMDb event page: ${error instanceof Error ? error.message : String(error)}`,
-          {cause: error},
+          `Failed to fetch IMDb event page: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+          {cause: lastError},
         );
-      }
+      };
+
+      await gotoWithRetry();
 
       await page
         .waitForSelector('script#__NEXT_DATA__', {timeout: 20_000})
