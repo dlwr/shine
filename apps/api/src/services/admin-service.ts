@@ -969,12 +969,32 @@ export class AdminService extends BaseService {
       await page.setUserAgent(
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
       );
-      await page.goto(normalizedUrl, {
-        waitUntil: 'networkidle0',
-        timeout: 45_000,
-      });
+      try {
+        await page.goto(normalizedUrl, {
+          waitUntil: 'domcontentloaded',
+          timeout: 30_000,
+        });
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          (error.message.includes('Session closed') ||
+            error.message.includes('Target closed') ||
+            error.message.includes('Connection closed'))
+        ) {
+          throw new Error(
+            'Failed to fetch IMDb event page: browser session closed unexpectedly (Cloudflare Browser Rendering may be at concurrent session limit; retry in a moment)',
+            {cause: error},
+          );
+        }
+
+        throw new Error(
+          `Failed to fetch IMDb event page: ${error instanceof Error ? error.message : String(error)}`,
+          {cause: error},
+        );
+      }
+
       await page
-        .waitForSelector('script#__NEXT_DATA__', {timeout: 15_000})
+        .waitForSelector('script#__NEXT_DATA__', {timeout: 20_000})
         .catch(() => {
           throw new Error(
             'IMDb page did not load expected content (timed out waiting for __NEXT_DATA__)',
@@ -982,7 +1002,9 @@ export class AdminService extends BaseService {
         });
       html = await page.content();
     } finally {
-      await browser.close();
+      await browser.close().catch(() => {
+        // Browser may already be closed by the platform; ignore
+      });
     }
     const marker = '<script id="__NEXT_DATA__" type="application/json">';
     const markerIndex = html.indexOf(marker);
