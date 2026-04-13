@@ -962,10 +962,41 @@ export class AdminService extends BaseService {
       );
     }
 
-    const browser = await puppeteer.launch(this.env.BROWSER);
+    let browser: Awaited<ReturnType<typeof puppeteer.launch>> | undefined;
+    let reusedExistingSession = false;
+    try {
+      const sessions = await puppeteer.sessions(this.env.BROWSER);
+      const freeSession = sessions.find(s => !s.connectionId);
+      if (freeSession) {
+        try {
+          browser = await puppeteer.connect(
+            this.env.BROWSER,
+            freeSession.sessionId,
+          );
+          reusedExistingSession = true;
+        } catch (error) {
+          console.warn(
+            'Failed to reuse existing browser session; launching new:',
+            error instanceof Error ? error.message : error,
+          );
+        }
+      }
+    } catch (error) {
+      console.warn(
+        'Failed to enumerate browser sessions; launching new:',
+        error instanceof Error ? error.message : error,
+      );
+    }
+
+    if (!browser) {
+      browser = await puppeteer.launch(this.env.BROWSER);
+    }
+
     let html: string;
     try {
-      const page = await browser.newPage();
+      const existingPages = reusedExistingSession ? await browser.pages() : [];
+      const page =
+        existingPages.length > 0 ? existingPages[0] : await browser.newPage();
       await page.setUserAgent(
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
       );
@@ -1021,8 +1052,11 @@ export class AdminService extends BaseService {
         });
       html = await page.content();
     } finally {
-      await browser.close().catch(() => {
-        // Browser may already be closed by the platform; ignore
+      await (reusedExistingSession
+        ? browser.disconnect()
+        : browser.close()
+      ).catch(() => {
+        // Session/browser may already be closed by the platform; ignore
       });
     }
     const marker = '<script id="__NEXT_DATA__" type="application/json">';
