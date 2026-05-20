@@ -101,24 +101,24 @@ export function FilmCard({
           ) : undefined}
         </div>
       ) : undefined}
-      <div className="flex gap-4 p-4">
+      <div className="p-4">
         <PosterFrame
           posterUrl={posterUrl}
           alt={`${title} poster`}
-          className="w-28 shrink-0"
+          className="w-full"
         />
-        <div className="flex flex-col justify-between gap-3">
-          <BigYear year={movie.year} className="text-5xl md:text-6xl" />
-          <div>
-            <div className="font-display text-xl font-black leading-none tracking-tight">
+        <div className="mt-3 flex items-end justify-between gap-2">
+          <div className="min-w-0">
+            <BigYear year={movie.year} className="text-5xl" />
+            <div className="font-display text-lg font-black leading-tight tracking-tight mt-1">
               {title}
             </div>
-            {chip ? (
-              <span className="mt-2 inline-block bg-brand px-2 py-0.5 font-mono text-[10px] font-bold text-brand-on">
-                {chip}
-              </span>
-            ) : undefined}
           </div>
+          {chip ? (
+            <span className="shrink-0 bg-brand px-2 py-0.5 font-mono text-[10px] font-bold text-brand-on">
+              {chip}
+            </span>
+          ) : undefined}
         </div>
       </div>
     </a>

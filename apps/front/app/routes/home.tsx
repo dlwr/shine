@@ -667,25 +667,22 @@ function Movies({
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {SELECTION_PERIODS.map((period, index) => {
           const movie = movies?.[period];
           const isLoading = Boolean(actionLoading[period]);
           const isSearchVisible = Boolean(searchOpen[period]);
-          const isHero = period === 'daily';
           const animClass = `anim-rise anim-rise-${index + 1}`;
 
           return (
-            <div
-              key={period}
-              className={`flex flex-col gap-2 ${isHero ? 'md:flex-[1.4]' : 'md:flex-1'} ${animClass}`}>
+            <div key={period} className={`flex flex-col gap-2 ${animClass}`}>
               {movie ? (
                 <FilmCard
                   movie={movie}
-                  variant={isHero ? 'hero' : 'compact'}
+                  variant="hero"
                   locale={locale}
                   label={periodLabels[period]}
-                  index={isHero ? 'NO.001' : undefined}
+                  index={`NO.00${index + 1}`}
                 />
               ) : (
                 <p className="text-sm text-ink/50 font-mono">{noMovieLabel}</p>
