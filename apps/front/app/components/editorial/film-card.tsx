@@ -72,10 +72,17 @@ export function FilmCard({
             {label}
           </div>
         ) : undefined}
-        <div className="p-3">
-          <BigYear year={movie.year} className="text-4xl" />
-          <div className="font-display text-base font-black tracking-tight mt-1">
-            {title}
+        <div className="flex gap-3 p-3">
+          <PosterFrame
+            posterUrl={posterUrl}
+            alt={`${title} poster`}
+            className="w-16 shrink-0"
+          />
+          <div className="min-w-0">
+            <BigYear year={movie.year} className="text-4xl" />
+            <div className="font-display text-base font-black tracking-tight mt-1">
+              {title}
+            </div>
           </div>
         </div>
       </a>
