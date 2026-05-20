@@ -42,7 +42,7 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
       {Object.values(byOrg).map(group =>
         Object.values(group.ceremonies).map(({ceremony, items}) => (
           <div key={`${group.organization.uid}-${ceremony.uid}`}>
-            <div className="bg-ink px-3 py-1 font-display text-xs font-extrabold text-paper">
+            <div className="bg-ink px-3 py-1 font-display text-xs font-extrabold uppercase text-paper">
               {group.organization.shortName ?? group.organization.name} ·{' '}
               {ceremony.year}
             </div>
