@@ -32,6 +32,7 @@ git switch -c feature/editorial-redesign
 ## ファイル構成（このプランで触るもの）
 
 新規:
+
 - `apps/front/app/styles/tokens.css` — デザイントークン（light/dark）。`app.css` から `@import`。
 - `apps/front/app/styles/motion.css` — キーフレーム＋`prefers-reduced-motion`。
 - `apps/front/app/lib/theme.ts` — テーマ判定/適用ロジック（no-flash スクリプト文字列・toggle）。
@@ -48,6 +49,7 @@ git switch -c feature/editorial-redesign
 - `apps/front/public/fonts/` — self-host フォント。
 
 変更:
+
 - `apps/front/app/app.css` — トークン/モーション import、`@theme` マッピング更新。
 - `apps/front/app/root.tsx` — フォント preload、no-flash スクリプト、`bg-gray-50` 撤去。
 - `apps/front/app/routes/home.tsx` ＋ `home.test.tsx`
@@ -63,6 +65,7 @@ git switch -c feature/editorial-redesign
 ### Task 1: デザイントークン（light/dark）
 
 **Files:**
+
 - Create: `apps/front/app/styles/tokens.css`
 - Modify: `apps/front/app/app.css`（先頭付近の `@import` と `@theme inline` ブロック）
 
@@ -72,29 +75,33 @@ git switch -c feature/editorial-redesign
 
 ```css
 :root {
-  --paper: #ECE8DF;
-  --surface: #FFFFFF;
-  --ink: #15140F;
+  --paper: #ece8df;
+  --surface: #ffffff;
+  --ink: #15140f;
   --ink-muted: #595650;
-  --accent: #E01E10;
-  --accent-on: #FFFFFF;
+  --brand: #e01e10;
+  --brand-on: #ffffff;
   --border-w: 3px;
   --border-w-sub: 2px;
-  --shadow-offset: 6px 6px 0 var(--accent);
-  --shadow-offset-sm: 5px 5px 0 var(--accent);
+  --shadow-offset: 6px 6px 0 var(--brand);
+  --shadow-offset-sm: 5px 5px 0 var(--brand);
   --poster-bg: linear-gradient(160deg, #2a2330, #0e0d12);
   --poster-glow: transparent;
 }
 
 .dark {
-  --paper: #18181D;
+  --paper: #18181d;
   --surface: #202027;
-  --ink: #EDEAE3;
-  --ink-muted: #A8A8A2;
-  --accent: #FF453A;
-  --accent-on: #15140F;
+  --ink: #edeae3;
+  --ink-muted: #a8a8a2;
+  --brand: #ff453a;
+  --brand-on: #15140f;
   --poster-bg: linear-gradient(160deg, #3a2f1c, #0e0d12);
-  --poster-glow: radial-gradient(circle, rgba(255, 233, 180, 0.28), transparent 70%);
+  --poster-glow: radial-gradient(
+    circle,
+    rgba(255, 233, 180, 0.28),
+    transparent 70%
+  );
 }
 ```
 
@@ -121,8 +128,8 @@ git switch -c feature/editorial-redesign
   --color-surface: var(--surface);
   --color-ink: var(--ink);
   --color-ink-muted: var(--ink-muted);
-  --color-accent: var(--accent);
-  --color-accent-on: var(--accent-on);
+  --color-brand: var(--brand);
+  --color-brand-on: var(--brand-on);
   /* （既存の shadcn トークン行はそのまま残す） */
 }
 ```
@@ -152,6 +159,7 @@ git commit -m "feat(front): Editorial デザイントークン（light/dark）�
 ### Task 2: フォントの self-host と preload
 
 **Files:**
+
 - Create: `apps/front/public/fonts/`（Space Grotesk と等幅フォントの woff2 を配置）
 - Modify: `apps/front/app/styles/tokens.css`（`@font-face` と family 変数）、`apps/front/app/root.tsx`（preload links）
 
@@ -190,8 +198,8 @@ git commit -m "feat(front): Editorial デザイントークン（light/dark）�
 `app.css` の `@theme inline` に追加:
 
 ```css
-  --font-display: var(--font-display);
-  --font-mono: var(--font-mono);
+--font-display: var(--font-display);
+--font-mono: var(--font-mono);
 ```
 
 - [ ] **Step 3: root.tsx に preload を追加**
@@ -232,6 +240,7 @@ git commit -m "feat(front): 表示用グロテスク/等幅フォントを self-
 ### Task 3: ダークモード配線（theme.ts + ThemeToggle + no-flash）
 
 **Files:**
+
 - Create: `apps/front/app/lib/theme.ts`, `apps/front/app/components/editorial/theme-toggle.tsx`, `apps/front/app/components/editorial/theme-toggle.test.tsx`
 - Modify: `apps/front/app/root.tsx`
 
@@ -358,7 +367,9 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
-    setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    setTheme(
+      document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+    );
   }, []);
 
   const toggle = () => {
@@ -385,6 +396,7 @@ Run: `pnpm run test:front -- theme-toggle` → PASS
 - [ ] **Step 7: root.tsx に no-flash スクリプトを差し込み、body の bg を撤去**
 
 `apps/front/app/root.tsx`:
+
 - `import {NO_FLASH_SCRIPT} from '@/lib/theme';`
 - `<head>` 内（`<Meta />` の前）に `<script dangerouslySetInnerHTML={{__html: NO_FLASH_SCRIPT}} />` を追加。
 - `<body className="m-0 w-full h-full bg-gray-50">` を `<body className="m-0 w-full h-full bg-paper text-ink font-body">` に変更。
@@ -401,6 +413,7 @@ git commit -m "feat(front): ダークモード配線（OS追従＋手動トグ�
 ### Task 4: モーション（キーフレーム＋reduced-motion）
 
 **Files:**
+
 - Modify: `apps/front/app/styles/motion.css`
 
 - [ ] **Step 1: motion.css を実装**
@@ -409,19 +422,35 @@ git commit -m "feat(front): ダークモード配線（OS追従＋手動トグ�
 
 ```css
 @keyframes editorial-rise {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .anim-rise {
   animation: editorial-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.anim-rise-1 { animation-delay: 0.06s; }
-.anim-rise-2 { animation-delay: 0.12s; }
-.anim-rise-3 { animation-delay: 0.18s; }
+.anim-rise-1 {
+  animation-delay: 0.06s;
+}
+.anim-rise-2 {
+  animation-delay: 0.12s;
+}
+.anim-rise-3 {
+  animation-delay: 0.18s;
+}
 
-.poster-glow-target { transition: transform 0.3s ease, filter 0.3s ease; }
+.poster-glow-target {
+  transition:
+    transform 0.3s ease,
+    filter 0.3s ease;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .anim-rise,
@@ -431,7 +460,9 @@ git commit -m "feat(front): ダークモード配線（OS追従＋手動トグ�
     animation: none !important;
   }
 
-  .poster-glow-target { transition: none !important; }
+  .poster-glow-target {
+    transition: none !important;
+  }
 }
 ```
 
@@ -456,6 +487,7 @@ git commit -m "feat(front): モーション基盤（rise/glow）と reduced-moti
 ### Task 5: MetaLine（等幅メタ情報行）
 
 **Files:**
+
 - Create: `apps/front/app/components/editorial/meta-line.tsx`, `meta-line.test.tsx`
 
 - [ ] **Step 1: 失敗テスト**
@@ -511,6 +543,7 @@ export function MetaLine({items, className = ''}: MetaLineProperties) {
 ### Task 6: BigYear（巨大年号＋カウントアップ）
 
 **Files:**
+
 - Create: `apps/front/app/components/editorial/big-year.tsx`, `big-year.test.tsx`
 
 - [ ] **Step 1: 失敗テスト**
@@ -526,7 +559,7 @@ describe('BigYear', () => {
     render(<BigYear year={1994} />);
     expect(screen.getByText('19')).toBeInTheDocument();
     const accent = screen.getByText('94');
-    expect(accent).toHaveClass('text-accent');
+    expect(accent).toHaveClass('text-brand');
   });
 
   it('year 未指定なら何も描画しない', () => {
@@ -560,7 +593,7 @@ export function BigYear({year, className = ''}: BigYearProperties) {
       className={`font-display font-black leading-[0.78] tracking-[-0.06em] ${className}`}
       aria-label={text}>
       <span>{head}</span>
-      <span className="text-accent">{tail}</span>
+      <span className="text-brand">{tail}</span>
     </div>
   );
 }
@@ -576,6 +609,7 @@ export function BigYear({year, className = ''}: BigYearProperties) {
 ### Task 7: PosterFrame（枠＋影＋発光）
 
 **Files:**
+
 - Create: `apps/front/app/components/editorial/poster-frame.tsx`, `poster-frame.test.tsx`
 - 参照: `apps/front/app/lib/poster.ts`（`selectBestPoster`, `PosterInfo`）
 
@@ -630,7 +664,11 @@ export function PosterFrame({
         className="poster-glow-target relative aspect-2/3 border-2 border-ink overflow-hidden"
         style={{background: 'var(--poster-bg)'}}>
         {posterUrl ? (
-          <img src={posterUrl} alt={alt} className="w-full h-full object-cover" />
+          <img
+            src={posterUrl}
+            alt={alt}
+            className="w-full h-full object-cover"
+          />
         ) : (
           <div className="flex h-full items-center justify-center font-mono text-xs text-ink-muted">
             {placeholderLabel}
@@ -650,6 +688,7 @@ export function PosterFrame({
 ### Task 8: AwardTree（受賞ツリー）
 
 **Files:**
+
 - Create: `apps/front/app/components/editorial/award-tree.tsx`, `award-tree.test.tsx`
 - 参照: `molecules/movie-card.tsx` の `MovieCardNomination` 型定義（同じ形を使う）
 
@@ -715,7 +754,10 @@ export type AwardNomination = {
 
 type Grouped = {
   organization: AwardNomination['organization'];
-  ceremonies: Record<string, {ceremony: AwardNomination['ceremony']; items: AwardNomination[]}>;
+  ceremonies: Record<
+    string,
+    {ceremony: AwardNomination['ceremony']; items: AwardNomination[]}
+  >;
 };
 
 export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
@@ -741,7 +783,10 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
         Object.values(group.ceremonies).map(({ceremony, items}) => (
           <div key={`${group.organization.uid}-${ceremony.uid}`}>
             <div className="bg-ink text-paper font-display font-extrabold text-xs px-3 py-1">
-              {(group.organization.shortName || group.organization.name).toUpperCase()} · {ceremony.year}
+              {(
+                group.organization.shortName || group.organization.name
+              ).toUpperCase()}{' '}
+              · {ceremony.year}
             </div>
             {items.map(nomination => (
               <div
@@ -749,7 +794,7 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
                 className="flex items-center justify-between px-3 py-1.5 text-sm border-b border-ink/20 last:border-b-0">
                 <span>{nomination.category.name}</span>
                 {nomination.isWinner ? (
-                  <span className="font-mono text-[10px] bg-accent text-accent-on px-1.5 py-0.5">
+                  <span className="font-mono text-[10px] bg-brand text-brand-on px-1.5 py-0.5">
                     ★ WINNER
                   </span>
                 ) : (
@@ -760,7 +805,7 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
               </div>
             ))}
           </div>
-        )),
+        ))
       )}
     </div>
   );
@@ -775,6 +820,7 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
 ### Task 9: WatchMenu（配信メニュー・ブランド色維持）
 
 **Files:**
+
 - Create: `apps/front/app/components/editorial/watch-menu.tsx`, `watch-menu.test.tsx`
 - 参照: 現行 `molecules/movie-card.tsx` の `streamingServices` 定義（U-NEXT/Prime/Filmarks/JustWatch/TMDb/IMDb/Google/TSUTAYA）をそのまま移植
 
@@ -812,14 +858,49 @@ type WatchMenuProperties = {
   discasTitle?: string;
 };
 
-export function WatchMenu({title, year, locale = 'en', tmdbId, imdbUrl, discasTitle}: WatchMenuProperties) {
+export function WatchMenu({
+  title,
+  year,
+  locale = 'en',
+  tmdbId,
+  imdbUrl,
+  discasTitle,
+}: WatchMenuProperties) {
   const services = [
-    {name: 'U-NEXT', color: 'bg-black text-white', url: `https://video.unext.jp/freeword?query=${encodeURIComponent(title)}`},
-    {name: 'Amazon Prime', color: 'bg-blue-600 text-white', url: `https://www.amazon.co.jp/s?k=${encodeURIComponent(title)}&i=instant-video`},
-    {name: 'TMDb', color: 'bg-green-600 text-white', url: tmdbId ? `https://www.themoviedb.org/movie/${tmdbId}` : `https://www.themoviedb.org/search?query=${encodeURIComponent(title)}`},
-    {name: 'Filmarks', color: 'bg-purple-600 text-white', url: `https://filmarks.com/search/movies?q=${encodeURIComponent(title)}`},
-    {name: 'JustWatch', color: 'bg-yellow-400 text-gray-900', url: `https://www.justwatch.com/jp/検索?q=${encodeURIComponent(title)}`},
-    {name: 'IMDb', color: 'bg-yellow-500 text-gray-900', url: imdbUrl || `https://www.imdb.com/find?q=${encodeURIComponent(`${title} ${year ?? ''}`)}`},
+    {
+      name: 'U-NEXT',
+      color: 'bg-black text-white',
+      url: `https://video.unext.jp/freeword?query=${encodeURIComponent(title)}`,
+    },
+    {
+      name: 'Amazon Prime',
+      color: 'bg-blue-600 text-white',
+      url: `https://www.amazon.co.jp/s?k=${encodeURIComponent(title)}&i=instant-video`,
+    },
+    {
+      name: 'TMDb',
+      color: 'bg-green-600 text-white',
+      url: tmdbId
+        ? `https://www.themoviedb.org/movie/${tmdbId}`
+        : `https://www.themoviedb.org/search?query=${encodeURIComponent(title)}`,
+    },
+    {
+      name: 'Filmarks',
+      color: 'bg-purple-600 text-white',
+      url: `https://filmarks.com/search/movies?q=${encodeURIComponent(title)}`,
+    },
+    {
+      name: 'JustWatch',
+      color: 'bg-yellow-400 text-gray-900',
+      url: `https://www.justwatch.com/jp/検索?q=${encodeURIComponent(title)}`,
+    },
+    {
+      name: 'IMDb',
+      color: 'bg-yellow-500 text-gray-900',
+      url:
+        imdbUrl ||
+        `https://www.imdb.com/find?q=${encodeURIComponent(`${title} ${year ?? ''}`)}`,
+    },
   ];
 
   return (
@@ -849,6 +930,7 @@ export function WatchMenu({title, year, locale = 'en', tmdbId, imdbUrl, discasTi
 ### Task 10: FilmCard（セレクション/詳細用カード）
 
 **Files:**
+
 - Create: `apps/front/app/components/editorial/film-card.tsx`, `film-card.test.tsx`
 - 参照/流用: `molecules/movie-card.tsx` の `selectBestTitle`、`lib/poster.ts` の `selectBestPoster`
 
@@ -901,8 +983,16 @@ export type FilmCardMovie = {
   year?: number;
   posterUrl?: string;
   posterUrls?: PosterInfo[];
-  translations?: Array<{languageCode: string; content: string; isDefault: number}>;
-  nominations?: Array<{uid: string; isWinner: boolean; category: {name: string}}>;
+  translations?: Array<{
+    languageCode: string;
+    content: string;
+    isDefault: number;
+  }>;
+  nominations?: Array<{
+    uid: string;
+    isWinner: boolean;
+    category: {name: string};
+  }>;
 };
 
 function pickTitle(movie: FilmCardMovie, locale: string): string {
@@ -934,9 +1024,13 @@ export function FilmCard({
 
   if (variant === 'compact') {
     return (
-      <a href={`/movies/${movie.uid}`} className="block border-[3px] border-ink/40 bg-surface p-3">
+      <a
+        href={`/movies/${movie.uid}`}
+        className="block border-[3px] border-ink/40 bg-surface p-3">
         <BigYear year={movie.year} className="text-4xl" />
-        <div className="font-display font-black text-base tracking-tight mt-1">{title}</div>
+        <div className="font-display font-black text-base tracking-tight mt-1">
+          {title}
+        </div>
       </a>
     );
   }
@@ -945,11 +1039,17 @@ export function FilmCard({
     <a
       href={`/movies/${movie.uid}`}
       className="flex gap-4 border-[3px] border-ink bg-surface p-4 shadow-[var(--shadow-offset-sm)]">
-      <PosterFrame posterUrl={posterUrl} alt={`${title} poster`} className="w-28 shrink-0" />
+      <PosterFrame
+        posterUrl={posterUrl}
+        alt={`${title} poster`}
+        className="w-28 shrink-0"
+      />
       <div className="flex flex-col justify-between">
         <BigYear year={movie.year} className="text-6xl" />
         <div>
-          <div className="font-display font-black text-xl tracking-tight leading-none">{title}</div>
+          <div className="font-display font-black text-xl tracking-tight leading-none">
+            {title}
+          </div>
         </div>
       </div>
     </a>
@@ -965,6 +1065,7 @@ export function FilmCard({
 ### Task 11: SearchRow（検索結果行）
 
 **Files:**
+
 - Create: `apps/front/app/components/editorial/search-row.tsx`, `search-row.test.tsx`
 
 - [ ] **Step 1: 失敗テスト**
@@ -978,7 +1079,10 @@ import {SearchRow} from './search-row';
 describe('SearchRow', () => {
   it('年号・タイトルを描画し詳細へリンクする', () => {
     render(
-      <SearchRow movie={{uid: 'm1', title: 'PARASITE', year: 2019}} locale="en" />,
+      <SearchRow
+        movie={{uid: 'm1', title: 'PARASITE', year: 2019}}
+        locale="en"
+      />
     );
     const link = screen.getByRole('link', {name: /PARASITE/});
     expect(link).toHaveAttribute('href', '/movies/m1');
@@ -1001,13 +1105,24 @@ export type SearchRowMovie = {
   year?: number;
   posterUrl?: string;
   hasWinner?: boolean;
-  translations?: Array<{languageCode: string; content: string; isDefault: number}>;
+  translations?: Array<{
+    languageCode: string;
+    content: string;
+    isDefault: number;
+  }>;
 };
 
-export function SearchRow({movie, locale = 'en'}: {movie: SearchRowMovie; locale?: string}) {
+export function SearchRow({
+  movie,
+  locale = 'en',
+}: {
+  movie: SearchRowMovie;
+  locale?: string;
+}) {
   const title =
     movie.title ??
-    movie.translations?.find(t => t.languageCode === locale.split('-')[0])?.content ??
+    movie.translations?.find(t => t.languageCode === locale.split('-')[0])
+      ?.content ??
     movie.translations?.[0]?.content ??
     'Unknown Title';
 
@@ -1016,10 +1131,18 @@ export function SearchRow({movie, locale = 'en'}: {movie: SearchRowMovie; locale
       href={`/movies/${movie.uid}`}
       className="flex items-center gap-3 py-2 border-t-2 border-ink no-underline text-ink">
       <BigYear year={movie.year} className="text-2xl w-14 shrink-0" />
-      <PosterFrame posterUrl={movie.posterUrl} alt={`${title} poster`} className="w-9 shrink-0" />
-      <span className="flex-1 font-display font-extrabold text-sm leading-none">{title}</span>
+      <PosterFrame
+        posterUrl={movie.posterUrl}
+        alt={`${title} poster`}
+        className="w-9 shrink-0"
+      />
+      <span className="flex-1 font-display font-extrabold text-sm leading-none">
+        {title}
+      </span>
       {movie.hasWinner ? (
-        <span className="font-mono text-[9px] bg-accent text-accent-on px-1.5 py-0.5">★</span>
+        <span className="font-mono text-[9px] bg-brand text-brand-on px-1.5 py-0.5">
+          ★
+        </span>
       ) : null}
     </a>
   );
@@ -1034,6 +1157,7 @@ export function SearchRow({movie, locale = 'en'}: {movie: SearchRowMovie; locale
 ### Task 12: Masthead（マストヘッド）
 
 **Files:**
+
 - Create: `apps/front/app/components/editorial/masthead.tsx`, `masthead.test.tsx`
 - 参照: `molecules/language-selector.tsx`（言語切替を内包）、`ThemeToggle`
 
@@ -1048,8 +1172,13 @@ import {Masthead} from './masthead';
 describe('Masthead', () => {
   it('SHINE を h1 で、検索リンクとテーマトグルを描画する', () => {
     render(<Masthead locale="en" />);
-    expect(screen.getByRole('heading', {level: 1, name: 'SHINE'})).toBeInTheDocument();
-    expect(screen.getByRole('link', {name: /search/i})).toHaveAttribute('href', '/search');
+    expect(
+      screen.getByRole('heading', {level: 1, name: 'SHINE'})
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', {name: /search/i})).toHaveAttribute(
+      'href',
+      '/search'
+    );
     expect(screen.getByRole('button', {name: /theme/i})).toBeInTheDocument();
   });
 });
@@ -1074,7 +1203,7 @@ export function Masthead({locale = 'en'}: {locale?: string}) {
         <a
           href="/search"
           aria-label="Search"
-          className="font-mono text-xs font-bold bg-accent text-accent-on px-2.5 py-1 border-2 border-ink shadow-[3px_3px_0_var(--ink)]">
+          className="font-mono text-xs font-bold bg-brand text-brand-on px-2.5 py-1 border-2 border-ink shadow-[3px_3px_0_var(--ink)]">
           SEARCH
         </a>
         <ThemeToggle />
@@ -1098,11 +1227,13 @@ export function Masthead({locale = 'en'}: {locale?: string}) {
 ### Task 13: ホーム `/` 再構築
 
 **Files:**
+
 - Modify: `apps/front/app/routes/home.tsx`, `apps/front/app/routes/home.test.tsx`
 
 - [ ] **Step 1: home.test.tsx を新構造へ書き直す**
 
 ローダ系テスト（fetch 成功/失敗・locale 判定）は現行の期待を維持。コンポーネント描画テストを新 DOM に合わせて更新:
+
 - `screen.getByRole('heading', {level: 1, name: 'SHINE'})` が存在する。
 - 日替わり映画タイトル（`mockMovies.daily.title`）が描画される。
 - 週/月のタイトルも描画される。
@@ -1135,11 +1266,13 @@ git commit -m "feat(front): ホームを Editorial デザインへ再構築"
 ### Task 14: 映画詳細 `/movies/:id` 再構築
 
 **Files:**
+
 - Modify: `apps/front/app/routes/movies.$id.tsx`, `apps/front/app/routes/movies.$id.test.tsx`
 
 - [ ] **Step 1: movies.$id.test.tsx を書き直す**
 
 ローダ系テストは維持。描画テストを新構造に:
+
 - タイトル・年号（`BigYear`）が描画される。
 - 受賞ツリー（`AwardTree`）に組織名・カテゴリ・WINNER/NOMINEE が出る。
 - 配信メニュー（`WatchMenu`）に主要サービスリンクが出る。
@@ -1170,11 +1303,13 @@ git commit -m "feat(front): 映画詳細を Editorial デザインへ再構築"
 ### Task 15: 検索 `/search` 再構築
 
 **Files:**
+
 - Modify: `apps/front/app/routes/search.tsx`, `apps/front/app/routes/search.test.tsx`
 
 - [ ] **Step 1: search.test.tsx を書き直す**
 
 ローダ/検索ロジックのテストは維持。描画テストを新構造に:
+
 - 見出し `SEARCH` が出る。
 - 検索入力（`textbox`）と GO ボタンがある。
 - 結果が `SearchRow` 群（年号＋タイトル＋詳細リンク）で描画される。
@@ -1206,6 +1341,7 @@ git commit -m "feat(front): 検索を Editorial デザインへ再構築"
 ### Task 16: 旧 MovieCard の整理
 
 **Files:**
+
 - Modify/Delete: `apps/front/app/components/molecules/movie-card.tsx`, `movie-card.test.tsx`
 
 - [ ] **Step 1: 参照を確認**
@@ -1230,11 +1366,13 @@ Expected: 公開ページからの参照が無いこと（あれば `FilmCard` �
 ### Task 17: モバイル調整
 
 **Files:**
+
 - Modify: `home.tsx`, `movies.$id.tsx`, `search.tsx`（レスポンシブクラスのみ）
 
 - [ ] **Step 1: モバイル幅での破綻を点検**
 
 `pnpm run front:dev` を起動し、375px 幅で確認:
+
 - 巨大年号がはみ出さない（`text-4xl md:text-6xl` 等でモバイル縮小）。
 - hero＋2段積みがモバイルで縦積みになる。
 - オフセット影が画面外にはみ出して横スクロールを生まない（`overflow-x` 制御）。
@@ -1252,9 +1390,10 @@ Expected: 公開ページからの参照が無いこと（あれば `FilmCard` �
 - [ ] **Step 1: コントラスト検証（手動チェックリスト）**
 
 light/dark 両方で、以下が WCAG AA を満たすか確認（コントラストチェッカー使用）:
+
 - `--ink` on `--paper` / `--surface`（本文 4.5:1）
 - `--ink-muted` on `--paper` / `--surface`（メタ情報 4.5:1）
-- `--accent-on` on `--accent`（バッジ文字。大文字3:1）
+- `--brand-on` on `--brand`（バッジ文字。大文字3:1）
 - フォーカスリングの視認性
 
 満たさない値があれば `tokens.css` を調整（例: accent をさらに暗く / muted を濃く）。
@@ -1273,6 +1412,7 @@ OS の「視差効果を減らす」を ON にして、入場アニメ・ポス�
 pnpm run test:front
 pnpm lint:fix && pnpm check
 ```
+
 Expected: 全 PASS / lint クリーン。
 
 - [ ] **Step 5: Commit（調整があれば）** — `git commit -m "fix(front): a11y コントラスト/モーション最終調整"`
