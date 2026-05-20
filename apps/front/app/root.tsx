@@ -8,6 +8,7 @@ import {
 } from 'react-router';
 import type {Route} from './+types/root';
 import './app.css';
+import {NO_FLASH_SCRIPT} from '@/lib/theme';
 
 export const links: Route.LinksFunction = () => [
   {rel: 'preconnect', href: 'https://fonts.googleapis.com'},
@@ -60,10 +61,11 @@ export function Layout({children}: {children: React.ReactNode}) {
           sizes="180x180"
           href="/apple-touch-icon.png"
         />
+        <script dangerouslySetInnerHTML={{__html: NO_FLASH_SCRIPT}} />
         <Meta />
         <Links />
       </head>
-      <body className="m-0 w-full h-full bg-gray-50">
+      <body className="m-0 w-full h-full bg-paper text-ink font-body">
         {children}
         <ScrollRestoration />
         <Scripts />
