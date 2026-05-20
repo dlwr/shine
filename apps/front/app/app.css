@@ -47,6 +47,8 @@
   --color-ink-muted: var(--ink-muted);
   --color-brand: var(--brand);
   --color-brand-on: var(--brand-on);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
 }
 
 :root {
