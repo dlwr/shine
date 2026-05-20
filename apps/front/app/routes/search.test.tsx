@@ -240,11 +240,11 @@ describe('Search Component', () => {
         />,
       );
 
-      expect(screen.getByText('映画検索')).toBeInTheDocument();
+      expect(screen.getByRole('heading', {name: 'SEARCH'})).toBeInTheDocument();
       expect(
         screen.getByPlaceholderText('映画タイトルを入力...'),
       ).toBeInTheDocument();
-      expect(screen.getByRole('button', {name: '検索'})).toBeInTheDocument();
+      expect(screen.getByRole('button', {name: 'GO'})).toBeInTheDocument();
     });
 
     it('検索結果が正常に表示される', () => {
@@ -262,10 +262,13 @@ describe('Search Component', () => {
         />,
       );
 
-      expect(screen.getByText('「test」の検索結果')).toBeInTheDocument();
-      expect(screen.getByText('2件見つかりました')).toBeInTheDocument();
-      expect(screen.getByText('検索結果映画1')).toBeInTheDocument();
-      expect(screen.getByText('検索結果映画2')).toBeInTheDocument();
+      expect(screen.getByText('2 RESULTS')).toBeInTheDocument();
+      expect(
+        screen.getByRole('link', {name: /検索結果映画1/}),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('link', {name: /検索結果映画2/}),
+      ).toBeInTheDocument();
     });
 
     it('検索結果なしの場合は適切なメッセージが表示される', () => {
@@ -336,24 +339,6 @@ describe('Search Component', () => {
 
       expect(movieDetailLinks[0]).toHaveAttribute('href', '/movies/movie-1');
       expect(movieDetailLinks[1]).toHaveAttribute('href', '/movies/movie-2');
-    });
-
-    it('ホームページへの戻るリンクが表示される', () => {
-      const loaderData = createLoaderData();
-
-      render(
-        <Search
-          loaderData={loaderData}
-          actionData={createActionData()}
-          params={createParameters()}
-          matches={createMatches(loaderData)}
-        />,
-      );
-
-      const homeLinks = screen.getAllByRole('link', {name: /ホームに戻る/});
-      expect(homeLinks.length).toBeGreaterThanOrEqual(1);
-      expect(homeLinks[0]).toBeInTheDocument();
-      expect(homeLinks[0]).toHaveAttribute('href', '/');
     });
   });
 });
