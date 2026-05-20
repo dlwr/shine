@@ -313,20 +313,22 @@ describe('MovieDetail Component', () => {
         />,
       );
 
-      // 映画タイトルが表示される
-      expect(screen.getByText('パルム・ドール受賞作品')).toBeInTheDocument();
+      // 映画タイトルがh1として表示される
+      expect(
+        screen.getByRole('heading', {level: 1, name: 'パルム・ドール受賞作品'}),
+      ).toBeInTheDocument();
 
-      // 基本情報が表示される
-      expect(screen.getByText('2023年')).toBeInTheDocument();
-      const imdbElements = screen.getAllByText(/IMDb: tt\d+/);
-      expect(imdbElements.length).toBeGreaterThanOrEqual(1);
-      expect(imdbElements[0]).toHaveTextContent('IMDb: tt1234567');
+      // 年号がBigYearのaria-labelとして確認できる
+      expect(screen.getByLabelText('2023')).toBeInTheDocument();
 
-      // IMDbリンクが表示される
-      expect(screen.getByText('IMDbで見る')).toBeInTheDocument();
+      // IMDb情報がメタラインに表示される
+      expect(screen.getByText(/IMDb tt1234567/)).toBeInTheDocument();
 
-      // ポスター画像が表示される
-      const posterImage = screen.getByAltText('パルム・ドール受賞作品');
+      // WatchMenuのIMDbリンクが表示される
+      expect(screen.getByRole('link', {name: /IMDb/})).toBeInTheDocument();
+
+      // ポスター画像がPosterFrameのalt属性で表示される
+      const posterImage = screen.getByAltText('パルム・ドール受賞作品 poster');
       expect(posterImage).toBeInTheDocument();
       expect(posterImage).toHaveAttribute(
         'src',
@@ -347,19 +349,11 @@ describe('MovieDetail Component', () => {
         />,
       );
 
-      // 受賞情報
-      const winningElements = screen.getAllByText(/🏆.*受賞/);
-      expect(winningElements.length).toBeGreaterThanOrEqual(1);
-      expect(winningElements[0]).toHaveTextContent(
-        '🏆 Cannes Film Festival 2023 受賞',
-      );
+      // AwardTreeによる受賞表示
+      expect(screen.getByText(/WINNER/)).toBeInTheDocument();
 
-      // ノミネート情報
-      const nominationElements = screen.getAllByText(/🎬.*ノミネート/);
-      expect(nominationElements.length).toBeGreaterThanOrEqual(1);
-      expect(nominationElements[0]).toHaveTextContent(
-        '🎬 Academy Awards 2024 ノミネート',
-      );
+      // AwardTreeによるノミネート表示
+      expect(screen.getByText(/NOMINEE/)).toBeInTheDocument();
     });
 
     it('404エラー状態が正常に表示される', () => {
@@ -417,7 +411,7 @@ describe('MovieDetail Component', () => {
         />,
       );
 
-      const backLinks = screen.getAllByRole('link', {name: /ホームに戻る/});
+      const backLinks = screen.getAllByRole('link', {name: /SHINE/});
       expect(backLinks.length).toBeGreaterThanOrEqual(1);
       expect(backLinks[0]).toBeInTheDocument();
       expect(backLinks[0]).toHaveAttribute('href', '/');
