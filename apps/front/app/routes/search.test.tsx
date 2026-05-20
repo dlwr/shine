@@ -20,47 +20,35 @@ const createMockContext = (apiUrl = 'http://localhost:8787') => ({
 const mockSearchResults = {
   movies: [
     {
-      movieUid: 'movie-1',
-      movie: {
-        imdbId: 'tt1234567',
-        year: 2023,
-        duration: 120,
-      },
-      translations: [
-        {
-          languageCode: 'ja',
-          content: '検索結果映画1',
-        },
-      ],
+      uid: 'movie-1',
+      year: 2023,
+      originalLanguage: 'ja',
+      imdbId: 'tt1234567',
+      title: '検索結果映画1',
       posterUrls: [
         {
           url: 'https://example.com/poster1.jpg',
-          languageCode: 'ja',
           isPrimary: 1,
         },
       ],
+      hasNominations: true,
     },
     {
-      movieUid: 'movie-2',
-      movie: {
-        imdbId: 'tt7654321',
-        year: 2022,
-        duration: 110,
-      },
-      translations: [
-        {
-          languageCode: 'ja',
-          content: '検索結果映画2',
-        },
-      ],
+      uid: 'movie-2',
+      year: 2022,
+      originalLanguage: 'ja',
+      imdbId: 'tt7654321',
+      title: '検索結果映画2',
       posterUrls: [],
+      hasNominations: false,
     },
   ],
   pagination: {
-    page: 1,
-    limit: 20,
-    total: 2,
+    currentPage: 1,
     totalPages: 1,
+    totalCount: 2,
+    hasNextPage: false,
+    hasPrevPage: false,
   },
 };
 
@@ -277,10 +265,11 @@ describe('Search Component', () => {
         searchResults: {
           movies: [],
           pagination: {
-            page: 1,
-            limit: 20,
-            total: 0,
+            currentPage: 1,
             totalPages: 0,
+            totalCount: 0,
+            hasNextPage: false,
+            hasPrevPage: false,
           },
         },
       });

@@ -5,24 +5,21 @@ import {selectBestPoster} from '@/lib/poster';
 import type {PosterInfo} from '@/lib/poster';
 
 type SearchMovieData = {
-  movieUid: string;
-  movie: {
-    imdbId: string;
-    year: number;
-    duration: number;
-  };
-  translations?: Array<{
-    languageCode: string;
-    content: string;
-  }>;
+  uid: string;
+  year?: number;
+  originalLanguage?: string;
+  imdbId?: string;
+  title?: string;
   posterUrls?: PosterInfo[];
+  hasNominations?: boolean;
 };
 
 type SearchPaginationData = {
-  page: number;
-  limit: number;
-  total: number;
+  currentPage: number;
   totalPages: number;
+  totalCount: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
 };
 
 export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
@@ -135,7 +132,7 @@ export default function Search({loaderData}: Route.ComponentProps) {
         {searchResults && (
           <div>
             <p className="font-mono text-xs text-ink-muted mb-4">
-              {searchResults.pagination.total} RESULTS
+              {searchResults.pagination.totalCount} RESULTS
             </p>
 
             {searchResults.movies.length === 0 ? (
@@ -150,21 +147,17 @@ export default function Search({loaderData}: Route.ComponentProps) {
             ) : (
               <div>
                 {searchResults.movies.map(item => {
-                  const title =
-                    item.translations?.find(t => t.languageCode === locale)
-                      ?.content ??
-                    item.translations?.[0]?.content ??
-                    'Unknown Title';
                   const posterUrl = selectBestPoster(item.posterUrls, locale);
 
                   return (
                     <SearchRow
-                      key={item.movieUid}
+                      key={item.uid}
                       movie={{
-                        uid: item.movieUid,
-                        title,
-                        year: item.movie.year,
+                        uid: item.uid,
+                        title: item.title ?? 'Unknown Title',
+                        year: item.year,
                         posterUrl,
+                        hasWinner: item.hasNominations,
                       }}
                       locale={locale}
                     />
@@ -176,10 +169,10 @@ export default function Search({loaderData}: Route.ComponentProps) {
             {/* ページネーション */}
             {searchResults.pagination.totalPages > 1 && (
               <div className="mt-8 flex justify-center gap-2">
-                {searchResults.pagination.page > 1 && (
+                {searchResults.pagination.hasPrevPage && (
                   <a
                     href={`/search?q=${encodeURIComponent(searchQuery)}&page=${
-                      searchResults.pagination.page - 1
+                      searchResults.pagination.currentPage - 1
                     }`}
                     className="font-mono text-xs border-[2px] border-ink px-4 py-2">
                     前のページ
@@ -187,15 +180,14 @@ export default function Search({loaderData}: Route.ComponentProps) {
                 )}
 
                 <span className="font-mono text-xs px-4 py-2">
-                  {searchResults.pagination.page} /{' '}
+                  {searchResults.pagination.currentPage} /{' '}
                   {searchResults.pagination.totalPages}
                 </span>
 
-                {searchResults.pagination.page <
-                  searchResults.pagination.totalPages && (
+                {searchResults.pagination.hasNextPage && (
                   <a
                     href={`/search?q=${encodeURIComponent(searchQuery)}&page=${
-                      searchResults.pagination.page + 1
+                      searchResults.pagination.currentPage + 1
                     }`}
                     className="font-mono text-xs border-[2px] border-ink px-4 py-2">
                     次のページ
