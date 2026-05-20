@@ -98,7 +98,7 @@ export default function Search({loaderData}: Route.ComponentProps) {
   const locale = 'ja';
 
   return (
-    <div className="min-h-screen bg-surface text-ink">
+    <div className="min-h-screen bg-paper text-ink">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Masthead locale={locale} />
 

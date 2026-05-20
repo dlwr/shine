@@ -23,4 +23,26 @@ describe('FilmCard', () => {
     render(<FilmCard movie={movie} variant="compact" locale="en" />);
     expect(screen.getByText('PARASITE')).toBeInTheDocument();
   });
+
+  it('hero に label/index と受賞チップを描画する', () => {
+    render(
+      <FilmCard
+        movie={{
+          uid: 'm1',
+          title: 'PARASITE',
+          year: 2019,
+          nominations: [
+            {uid: 'n1', isWinner: true, category: {name: 'Best Picture'}},
+          ],
+        }}
+        variant="hero"
+        label="DAILY / 日替わり"
+        index="NO.001"
+        locale="en"
+      />,
+    );
+    expect(screen.getByText('DAILY / 日替わり')).toBeInTheDocument();
+    expect(screen.getByText('NO.001')).toBeInTheDocument();
+    expect(screen.getByText('★ WINNER')).toBeInTheDocument();
+  });
 });

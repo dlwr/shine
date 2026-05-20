@@ -644,8 +644,8 @@ function Movies({
 
   const periodLabels: Record<PeriodType, string> = {
     daily: locale === 'ja' ? 'DAILY / 日替わり' : 'DAILY',
-    weekly: 'WEEKLY',
-    monthly: 'MONTHLY',
+    weekly: locale === 'ja' ? 'WEEKLY / 週替わり' : 'WEEKLY',
+    monthly: locale === 'ja' ? 'MONTHLY / 月替わり' : 'MONTHLY',
   };
 
   return (
@@ -679,15 +679,13 @@ function Movies({
             <div
               key={period}
               className={`flex flex-col gap-2 ${isHero ? 'md:flex-[1.4]' : 'md:flex-1'} ${animClass}`}>
-              <span className="font-mono text-xs font-bold tracking-widest text-ink/50 uppercase">
-                {periodLabels[period]}
-              </span>
-
               {movie ? (
                 <FilmCard
                   movie={movie}
                   variant={isHero ? 'hero' : 'compact'}
                   locale={locale}
+                  label={periodLabels[period]}
+                  index={isHero ? 'NO.001' : undefined}
                 />
               ) : (
                 <p className="text-sm text-ink/50 font-mono">{noMovieLabel}</p>
