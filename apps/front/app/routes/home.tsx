@@ -2,15 +2,15 @@ import {useCallback, useEffect, useState} from 'react';
 import type {Dispatch, SetStateAction} from 'react';
 import type {Route} from './+types/home';
 import {Button} from '@/components/ui/button';
-import {MovieCard} from '@/components/molecules/movie-card';
-import type {MovieCardMovie} from '@/components/molecules/movie-card';
 import {AdminLogin} from '@/components/molecules/admin-login';
-import {LanguageSelector} from '@/components/molecules/language-selector';
+import {Masthead} from '@/components/editorial/masthead';
+import {FilmCard} from '@/components/editorial/film-card';
+import type {FilmCardMovie} from '@/components/editorial/film-card';
 
 type HighlightedMovies = {
-  daily?: MovieCardMovie;
-  weekly?: MovieCardMovie;
-  monthly?: MovieCardMovie;
+  daily?: FilmCardMovie;
+  weekly?: FilmCardMovie;
+  monthly?: FilmCardMovie;
 };
 
 type PeriodType = keyof HighlightedMovies;
@@ -271,13 +271,10 @@ export default function Home({loaderData}: Route.ComponentProps) {
   const t = labels[locale as keyof typeof labels] || labels.en;
 
   return (
-    <div className="m-0 w-full h-full bg-gray-50">
+    <div className="m-0 w-full h-full">
       <AdminLogin locale={locale} apiUrl={apiUrl} />
-      <main className="py-8">
-        <h1 className="text-center mb-4 text-5xl text-gray-900 font-bold">
-          SHINE
-        </h1>
-        <LanguageSelector locale={locale} />
+      <main className="max-w-5xl mx-auto px-4 py-6">
+        <Masthead locale={locale} />
         <Movies
           movies={movies}
           error={error}
@@ -645,55 +642,61 @@ function Movies({
       ? '現在表示できる映画がありません。'
       : 'No movie selected yet.';
 
-  return (
-    <section className="py-8">
-      <h2 className="text-center mb-8 text-2xl text-gray-800">
-        {labels.randomMovie}
-      </h2>
+  const periodLabels: Record<PeriodType, string> = {
+    daily: locale === 'ja' ? 'DAILY / 日替わり' : 'DAILY',
+    weekly: 'WEEKLY',
+    monthly: 'MONTHLY',
+  };
 
+  return (
+    <section className="py-4">
       {isDataLoading && (
         <div className="text-center mb-8">
-          <div className="inline-flex items-center px-4 py-2 text-gray-600">
-            <div className="animate-spin h-5 w-5 border-2 border-gray-400 border-t-transparent rounded-full mr-3"></div>
+          <div className="inline-flex items-center px-4 py-2 text-ink/60">
+            <div className="animate-spin h-5 w-5 border-2 border-ink/40 border-t-transparent rounded-full mr-3"></div>
             {locale === 'ja' ? 'データを読み込み中...' : 'Loading data...'}
           </div>
         </div>
       )}
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-center max-w-4xl mx-auto">
+        <div className="mb-4 p-4 border-2 border-red-600 text-red-600 font-mono text-sm">
           {locale === 'ja'
             ? `APIから映画データを取得できませんでした。フォールバック映画を表示しています。エラー: ${error}…`
             : `Failed to fetch movie data from API. Showing fallback movies. Error: ${error}…`}
         </div>
       )}
 
-      <div className="flex justify-center items-start gap-8 max-w-[90%] mx-auto px-4 flex-wrap md:flex-nowrap">
-        {SELECTION_PERIODS.map(period => {
+      <div className="flex flex-col md:flex-row gap-4">
+        {SELECTION_PERIODS.map((period, index) => {
           const movie = movies?.[period];
           const isLoading = Boolean(actionLoading[period]);
           const isSearchVisible = Boolean(searchOpen[period]);
+          const isHero = period === 'daily';
+          const animClass = `anim-rise anim-rise-${index + 1}`;
 
           return (
-            <div key={period} className="flex flex-col items-center">
-              <div className="bg-blue-600 text-white px-4 py-1 rounded-t font-bold mb-2">
-                {labels[period]}
-              </div>
+            <div
+              key={period}
+              className={`flex flex-col gap-2 ${isHero ? 'md:flex-[1.4]' : 'md:flex-1'} ${animClass}`}>
+              <span className="font-mono text-xs font-bold tracking-widest text-ink/50 uppercase">
+                {periodLabels[period]}
+              </span>
 
               {movie ? (
-                <MovieCard
+                <FilmCard
                   movie={movie}
+                  variant={isHero ? 'hero' : 'compact'}
                   locale={locale}
-                  adminToken={adminToken}
                 />
               ) : (
-                <p className="text-sm text-gray-500">{noMovieLabel}</p>
+                <p className="text-sm text-ink/50 font-mono">{noMovieLabel}</p>
               )}
 
               {adminToken && (
-                <div className="mt-4 flex w-full max-w-xs flex-col items-center gap-2">
+                <div className="flex flex-col gap-2">
                   <Button
-                    className="w-full bg-green-600 hover:bg-green-700"
+                    className="w-full border-2 border-ink font-mono text-xs"
                     size="sm"
                     onClick={() => {
                       void handleReselect(period);
@@ -701,7 +704,7 @@ function Movies({
                     disabled={isLoading}>
                     {isLoading ? (
                       <div className="flex items-center justify-center">
-                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ink border-t-transparent mr-2" />
                         {processingLabel}
                       </div>
                     ) : (
@@ -711,7 +714,7 @@ function Movies({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full"
+                    className="w-full border-2 border-ink font-mono text-xs"
                     onClick={() => {
                       setSearchOpen(previous => ({
                         ...previous,
@@ -725,7 +728,7 @@ function Movies({
               )}
 
               {adminToken && isSearchVisible && (
-                <div className="mt-2 w-full max-w-xs">
+                <div className="mt-2">
                   <ManualSelectionPanel
                     period={period}
                     locale={locale}

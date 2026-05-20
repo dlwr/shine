@@ -219,7 +219,7 @@ describe('Home Component', () => {
   });
 
   describe('Component', () => {
-    it('映画選択データが正常に表示される', () => {
+    it('h1 に SHINE が表示される', () => {
       const loaderData =
         cast<ComponentProperties['loaderData']>(createLoaderData());
 
@@ -232,14 +232,72 @@ describe('Home Component', () => {
         />,
       );
 
-      // 各セクションのタイトルが表示される
-      expect(screen.getByText('日替わり')).toBeInTheDocument();
-      expect(screen.getByText('週替わり')).toBeInTheDocument();
-      expect(screen.getByText('月替わり')).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', {level: 1, name: 'SHINE'}),
+      ).toBeInTheDocument();
+    });
 
-      // 映画タイトルが表示される
+    it('テーマトグルボタンが表示される', () => {
+      const loaderData =
+        cast<ComponentProperties['loaderData']>(createLoaderData());
+
+      render(
+        <Home
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={createParameters()}
+          matches={createMatches(loaderData)}
+        />,
+      );
+
+      expect(screen.getByRole('button', {name: /theme/i})).toBeInTheDocument();
+    });
+
+    it('日次映画タイトルが表示される', () => {
+      const loaderData =
+        cast<ComponentProperties['loaderData']>(createLoaderData());
+
+      render(
+        <Home
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={createParameters()}
+          matches={createMatches(loaderData)}
+        />,
+      );
+
       expect(screen.getByText('テスト映画')).toBeInTheDocument();
+    });
+
+    it('週次映画タイトルが表示される', () => {
+      const loaderData =
+        cast<ComponentProperties['loaderData']>(createLoaderData());
+
+      render(
+        <Home
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={createParameters()}
+          matches={createMatches(loaderData)}
+        />,
+      );
+
       expect(screen.getByText('週間映画')).toBeInTheDocument();
+    });
+
+    it('月次映画タイトルが表示される', () => {
+      const loaderData =
+        cast<ComponentProperties['loaderData']>(createLoaderData());
+
+      render(
+        <Home
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={createParameters()}
+          matches={createMatches(loaderData)}
+        />,
+      );
+
       expect(screen.getByText('月間映画')).toBeInTheDocument();
     });
 
@@ -264,61 +322,6 @@ describe('Home Component', () => {
           /APIから映画データを取得できませんでした。フォールバック映画を表示しています。エラー: APIへの接続に失敗しました/,
         ),
       ).toBeInTheDocument();
-    });
-
-    it('受賞情報がバッジとして表示される', () => {
-      const loaderData =
-        cast<ComponentProperties['loaderData']>(createLoaderData());
-
-      render(
-        <Home
-          loaderData={loaderData}
-          actionData={createActionData()}
-          params={createParameters()}
-          matches={createMatches(loaderData)}
-        />,
-      );
-
-      const oscarsElements = screen.getAllByText('Oscars');
-      expect(oscarsElements.length).toBeGreaterThanOrEqual(1);
-      expect(oscarsElements[0]).toBeInTheDocument();
-      // 2023年の年は複数箇所に表示されるため、ceremony contextで確認
-      const ceremonyElement = oscarsElements[0].closest('div');
-      expect(ceremonyElement).toHaveTextContent('2023');
-      const bestPictureElements = screen.getAllByText('Best Picture');
-      expect(bestPictureElements.length).toBeGreaterThanOrEqual(1);
-      expect(bestPictureElements[0]).toBeInTheDocument();
-      const awardElements = screen.getAllByText('受賞');
-      expect(awardElements.length).toBeGreaterThanOrEqual(1);
-      expect(awardElements[0]).toBeInTheDocument();
-    });
-
-    it('映画詳細ページへのリンクが正しく設定される', () => {
-      const loaderData =
-        cast<ComponentProperties['loaderData']>(createLoaderData());
-
-      render(
-        <Home
-          loaderData={loaderData}
-          actionData={createActionData()}
-          params={createParameters()}
-          matches={createMatches(loaderData)}
-        />,
-      );
-
-      const addArticleLinks = screen.getAllByText('+ リンクを追加');
-      expect(addArticleLinks[0].closest('a')).toHaveAttribute(
-        'href',
-        '/movies/movie-1',
-      );
-      expect(addArticleLinks[1].closest('a')).toHaveAttribute(
-        'href',
-        '/movies/movie-2',
-      );
-      expect(addArticleLinks[2].closest('a')).toHaveAttribute(
-        'href',
-        '/movies/movie-3',
-      );
     });
   });
 });
