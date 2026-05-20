@@ -183,3 +183,6 @@ shine.db-info
 shine.db-wal
 .dev copy.vars
 shine.db-shm
+
+# Visual brainstorming companion
+.superpowers/
