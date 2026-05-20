@@ -3,12 +3,12 @@
   --surface: #ffffff;
   --ink: #15140f;
   --ink-muted: #595650;
-  --accent: #e01e10;
-  --accent-on: #ffffff;
+  --brand: #e01e10;
+  --brand-on: #ffffff;
   --border-w: 3px;
   --border-w-sub: 2px;
-  --shadow-offset: 6px 6px 0 var(--accent);
-  --shadow-offset-sm: 5px 5px 0 var(--accent);
+  --shadow-offset: 6px 6px 0 var(--brand);
+  --shadow-offset-sm: 5px 5px 0 var(--brand);
   --poster-bg: linear-gradient(160deg, #2a2330, #0e0d12);
   --poster-glow: transparent;
 }
@@ -18,8 +18,8 @@
   --surface: #202027;
   --ink: #edeae3;
   --ink-muted: #a8a8a2;
-  --accent: #ff453a;
-  --accent-on: #15140f;
+  --brand: #ff453a;
+  --brand-on: #15140f;
   --poster-bg: linear-gradient(160deg, #3a2f1c, #0e0d12);
   --poster-glow: radial-gradient(
     circle,

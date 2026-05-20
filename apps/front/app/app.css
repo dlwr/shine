@@ -45,8 +45,8 @@
   --color-surface: var(--surface);
   --color-ink: var(--ink);
   --color-ink-muted: var(--ink-muted);
-  --color-accent: var(--accent);
-  --color-accent-on: var(--accent-on);
+  --color-brand: var(--brand);
+  --color-brand-on: var(--brand-on);
 }
 
 :root {
