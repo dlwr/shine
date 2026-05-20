@@ -2,6 +2,11 @@ import {Turnstile} from '@marsidev/react-turnstile';
 import {useCallback, useState, type ChangeEvent, type ElementType} from 'react';
 import {Form, redirect} from 'react-router';
 import type {Route} from './+types/movies.$id';
+import {AwardTree} from '@/components/editorial/award-tree';
+import {BigYear} from '@/components/editorial/big-year';
+import {MetaLine} from '@/components/editorial/meta-line';
+import {PosterFrame} from '@/components/editorial/poster-frame';
+import {WatchMenu} from '@/components/editorial/watch-menu';
 import {Button} from '@/components/ui/button';
 
 type CloudflareContext = {
@@ -182,7 +187,6 @@ function useArticleLinkForm(
   };
 }
 
-type Nomination = MovieDetailData['nominations'][number];
 type ArticleLink = MovieDetailData['articleLinks'][number];
 
 function MovieDetailErrorView({
@@ -196,124 +200,17 @@ function MovieDetailErrorView({
     status === 404 ? '映画が見つかりません' : 'エラーが発生しました';
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-xl font-bold text-red-600 mb-4">{title}</h1>
-        <p className="text-gray-700 mb-6">{error}</p>
+    <div className="min-h-screen bg-paper flex items-center justify-center">
+      <div className="max-w-md w-full bg-surface border-2 border-ink p-6">
+        <h1 className="text-xl font-bold text-brand mb-4">{title}</h1>
+        <p className="text-ink mb-6">{error}</p>
         <a
           href="/"
-          className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
-          ホームに戻る
+          className="inline-block border-2 border-ink px-4 py-2 font-mono text-sm shadow-[2px_2px_0_var(--ink)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all">
+          ← SHINE
         </a>
       </div>
     </div>
-  );
-}
-
-function MoviePosterSection({
-  posterUrl,
-  title,
-}: {
-  posterUrl?: string;
-  title: string;
-}) {
-  return (
-    <div className="lg:col-span-1">
-      {posterUrl && (
-        <img
-          src={posterUrl}
-          alt={title}
-          className="w-full max-w-sm mx-auto rounded-lg shadow-lg"
-        />
-      )}
-    </div>
-  );
-}
-
-function MovieHeader({
-  movieDetail,
-  title,
-}: {
-  movieDetail: MovieDetailData;
-  title: string;
-}) {
-  return (
-    <header>
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">{title}</h1>
-      <div className="flex flex-wrap gap-4 text-gray-600">
-        <span>{movieDetail.year}年</span>
-        <span>IMDb: {movieDetail.imdbId}</span>
-        {movieDetail.imdbUrl && (
-          <a
-            href={movieDetail.imdbUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800">
-            IMDbで見る
-          </a>
-        )}
-      </div>
-    </header>
-  );
-}
-
-function NominationBadgeList({
-  nominations,
-  variant,
-}: {
-  nominations: Nomination[];
-  variant: 'winner' | 'nominee';
-}) {
-  if (nominations.length === 0) {
-    return <></>;
-  }
-
-  const baseClass =
-    variant === 'winner'
-      ? 'inline-block bg-yellow-400 text-yellow-900 px-3 py-2 rounded-lg mr-2 mb-2'
-      : 'inline-block bg-gray-200 text-gray-800 px-3 py-2 rounded-lg mr-2 mb-2';
-  const emoji = variant === 'winner' ? '🏆' : '🎬';
-  const label = variant === 'winner' ? '受賞' : 'ノミネート';
-
-  return (
-    <>
-      {nominations.map((nomination, index) => (
-        <div key={index} className={baseClass}>
-          {emoji} {nomination.organization.name} {nomination.ceremony.year}{' '}
-          {label}
-          <div className="text-xs mt-1">{nomination.category.name}</div>
-        </div>
-      ))}
-    </>
-  );
-}
-
-function NominationsSection({
-  winningNominations,
-  nominees,
-}: {
-  winningNominations: Nomination[];
-  nominees: Nomination[];
-}) {
-  if (winningNominations.length === 0 && nominees.length === 0) {
-    return <></>;
-  }
-
-  return (
-    <section>
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">
-        受賞・ノミネート
-      </h2>
-      <div className="space-y-3">
-        {/* 受賞 */}
-        <NominationBadgeList
-          nominations={winningNominations}
-          variant="winner"
-        />
-        {/* ノミネート */}
-        <NominationBadgeList nominations={nominees} variant="nominee" />
-      </div>
-    </section>
   );
 }
 
@@ -353,44 +250,42 @@ function ArticleLinksSection({
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">関連記事</h2>
+      <p className="font-mono text-xs text-ink-muted mb-3">関連記事</p>
 
       {/* 記事リンク一覧 */}
-      <div className="space-y-4 mb-6">
+      <div className="space-y-2 mb-6">
         {links.length > 0 ? (
           links.map(article => (
             <div
               key={article.uid}
-              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <h3 className="font-medium text-gray-900 mb-2">
-                <a
-                  href={article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 transition-colors">
-                  {article.title}
-                </a>
-              </h3>
+              className="border-l-[3px] border-brand bg-surface px-3 py-1.5 text-sm">
+              <a
+                href={article.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-ink hover:text-brand transition-colors">
+                {article.title}
+              </a>
               {article.description && (
-                <p className="text-gray-600 text-sm mb-2">
+                <p className="text-ink-muted text-xs mt-0.5">
                   {article.description}
                 </p>
               )}
             </div>
           ))
         ) : (
-          <p className="text-gray-500">まだ関連記事が投稿されていません。</p>
+          <p className="text-ink-muted text-sm">
+            まだ関連記事が投稿されていません。
+          </p>
         )}
       </div>
 
       {/* 記事投稿フォーム */}
-      <div className="border-t border-gray-200 pt-6">
-        <h3 className="text-lg font-medium text-gray-800 mb-4">
-          記事を投稿する
-        </h3>
+      <div className="border-t border-ink/20 pt-6">
+        <h3 className="text-lg font-medium text-ink mb-4">記事を投稿する</h3>
 
         {submissionResult?.error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          <div className="mb-4 p-3 bg-brand/10 border border-brand text-brand">
             {submissionResult.error}
           </div>
         )}
@@ -406,7 +301,7 @@ function ArticleLinksSection({
           <div>
             <label
               htmlFor="url"
-              className="block text-sm font-medium text-gray-700 mb-1">
+              className="block text-sm font-medium text-ink mb-1">
               記事URL
             </label>
             <input
@@ -416,7 +311,7 @@ function ArticleLinksSection({
               value={formData.url}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border-2 border-ink focus:outline-none focus:ring-2 focus:ring-brand"
               placeholder="https://example.com/article"
             />
           </div>
@@ -424,10 +319,10 @@ function ArticleLinksSection({
           <div>
             <label
               htmlFor="title"
-              className="block text-sm font-medium text-gray-700 mb-1">
+              className="block text-sm font-medium text-ink mb-1">
               記事タイトル
               {isLoadingTitle && (
-                <span className="ml-2 text-sm text-blue-600">取得中...</span>
+                <span className="ml-2 text-sm text-ink-muted">取得中...</span>
               )}
             </label>
             <input
@@ -438,18 +333,18 @@ function ArticleLinksSection({
               onChange={handleInputChange}
               required
               maxLength={200}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border-2 border-ink focus:outline-none focus:ring-2 focus:ring-brand"
               placeholder="記事のタイトルを入力"
             />
             {titleError && (
-              <p className="mt-1 text-sm text-red-600">{titleError}</p>
+              <p className="mt-1 text-sm text-brand">{titleError}</p>
             )}
           </div>
 
           <div>
             <label
               htmlFor="description"
-              className="block text-sm font-medium text-gray-700 mb-1">
+              className="block text-sm font-medium text-ink mb-1">
               記事の説明（任意）
             </label>
             <textarea
@@ -459,7 +354,7 @@ function ArticleLinksSection({
               onChange={handleInputChange}
               maxLength={500}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border-2 border-ink focus:outline-none focus:ring-2 focus:ring-brand"
               placeholder="記事の簡単な説明を入力（任意）"
             />
           </div>
@@ -492,16 +387,16 @@ function ArticleLinksSection({
                   }}
                 />
                 {captchaError && (
-                  <p className="text-sm text-red-600">{captchaError}</p>
+                  <p className="text-sm text-brand">{captchaError}</p>
                 )}
               </div>
             ) : (
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-ink-muted">
                 ローカルテストモードのため認証はスキップされます。
               </p>
             )
           ) : (
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-brand">
               認証キーが設定されていないため投稿できません。管理者にお問い合わせください。
             </p>
           )}
@@ -675,47 +570,75 @@ export default function MovieDetail({
 
   const {movieDetail, turnstileSiteKey} = data;
   const title = movieDetail.title || 'タイトル不明';
-  const {posterUrl} = movieDetail;
-  const winningNominations =
-    movieDetail.nominations?.filter(nomination => nomination.isWinner) ?? [];
-  const nominees =
-    movieDetail.nominations?.filter(nomination => !nomination.isWinner) ?? [];
+
+  const metaItems: string[] = [];
+  if (movieDetail.imdbId) {
+    metaItems.push(`IMDb ${movieDetail.imdbId}`);
+  }
+
+  if (movieDetail.originalLanguage) {
+    metaItems.push(movieDetail.originalLanguage.toUpperCase());
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-paper">
+      <div className="max-w-3xl mx-auto px-4 py-8">
         <nav className="mb-8">
           <a
             href="/"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors">
-            ← ホームに戻る
+            className="font-mono text-xs text-ink-muted hover:text-ink transition-colors">
+            ← SHINE
           </a>
         </nav>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          <MoviePosterSection posterUrl={posterUrl} title={title} />
-
-          <div className="lg:col-span-2 space-y-6">
-            <MovieHeader movieDetail={movieDetail} title={title} />
-
-            <NominationsSection
-              winningNominations={winningNominations}
-              nominees={nominees}
-            />
-
-            <ArticleLinksSection
-              articleLinks={movieDetail.articleLinks}
-              isTestMode={isTestMode}
-              formData={formData}
-              handleInputChange={handleInputChange}
-              handleCaptchaTokenChange={handleCaptchaTokenChange}
-              isLoadingTitle={isLoadingTitle}
-              titleError={titleError}
-              submissionResult={submissionResult}
-              turnstileSiteKey={turnstileSiteKey}
-            />
+        {/* Hero */}
+        <div className="flex gap-5 mb-8 pb-8 border-b-2 border-ink">
+          <PosterFrame
+            posterUrl={movieDetail.posterUrl}
+            alt={`${title} poster`}
+            className="w-28 md:w-36 shrink-0"
+          />
+          <div className="flex flex-col justify-end gap-2">
+            <BigYear year={movieDetail.year} className="text-6xl md:text-7xl" />
+            <h1 className="font-display font-black text-2xl md:text-3xl tracking-tight">
+              {title}
+            </h1>
+            <MetaLine items={metaItems} />
           </div>
         </div>
+
+        {/* Awards */}
+        {movieDetail.nominations && movieDetail.nominations.length > 0 && (
+          <section className="mb-8">
+            <p className="font-mono text-xs text-ink-muted mb-3">AWARDS</p>
+            <AwardTree nominations={movieDetail.nominations} />
+          </section>
+        )}
+
+        {/* Watch */}
+        <section className="mb-8">
+          <p className="font-mono text-xs text-ink-muted mb-3">WATCH</p>
+          <WatchMenu
+            title={title}
+            year={movieDetail.year}
+            tmdbId={movieDetail.tmdbId}
+            imdbUrl={movieDetail.imdbUrl}
+            locale="ja"
+          />
+        </section>
+
+        {/* Article Links */}
+        <ArticleLinksSection
+          articleLinks={movieDetail.articleLinks}
+          isTestMode={isTestMode}
+          formData={formData}
+          handleInputChange={handleInputChange}
+          handleCaptchaTokenChange={handleCaptchaTokenChange}
+          isLoadingTitle={isLoadingTitle}
+          titleError={titleError}
+          submissionResult={submissionResult}
+          turnstileSiteKey={turnstileSiteKey}
+        />
       </div>
     </div>
   );

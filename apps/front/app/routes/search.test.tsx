@@ -20,47 +20,35 @@ const createMockContext = (apiUrl = 'http://localhost:8787') => ({
 const mockSearchResults = {
   movies: [
     {
-      movieUid: 'movie-1',
-      movie: {
-        imdbId: 'tt1234567',
-        year: 2023,
-        duration: 120,
-      },
-      translations: [
-        {
-          languageCode: 'ja',
-          content: '検索結果映画1',
-        },
-      ],
+      uid: 'movie-1',
+      year: 2023,
+      originalLanguage: 'ja',
+      imdbId: 'tt1234567',
+      title: '検索結果映画1',
       posterUrls: [
         {
           url: 'https://example.com/poster1.jpg',
-          languageCode: 'ja',
           isPrimary: 1,
         },
       ],
+      hasNominations: true,
     },
     {
-      movieUid: 'movie-2',
-      movie: {
-        imdbId: 'tt7654321',
-        year: 2022,
-        duration: 110,
-      },
-      translations: [
-        {
-          languageCode: 'ja',
-          content: '検索結果映画2',
-        },
-      ],
+      uid: 'movie-2',
+      year: 2022,
+      originalLanguage: 'ja',
+      imdbId: 'tt7654321',
+      title: '検索結果映画2',
       posterUrls: [],
+      hasNominations: false,
     },
   ],
   pagination: {
-    page: 1,
-    limit: 20,
-    total: 2,
+    currentPage: 1,
     totalPages: 1,
+    totalCount: 2,
+    hasNextPage: false,
+    hasPrevPage: false,
   },
 };
 
@@ -240,11 +228,11 @@ describe('Search Component', () => {
         />,
       );
 
-      expect(screen.getByText('映画検索')).toBeInTheDocument();
+      expect(screen.getByRole('heading', {name: 'SEARCH'})).toBeInTheDocument();
       expect(
         screen.getByPlaceholderText('映画タイトルを入力...'),
       ).toBeInTheDocument();
-      expect(screen.getByRole('button', {name: '検索'})).toBeInTheDocument();
+      expect(screen.getByRole('button', {name: 'GO'})).toBeInTheDocument();
     });
 
     it('検索結果が正常に表示される', () => {
@@ -262,10 +250,13 @@ describe('Search Component', () => {
         />,
       );
 
-      expect(screen.getByText('「test」の検索結果')).toBeInTheDocument();
-      expect(screen.getByText('2件見つかりました')).toBeInTheDocument();
-      expect(screen.getByText('検索結果映画1')).toBeInTheDocument();
-      expect(screen.getByText('検索結果映画2')).toBeInTheDocument();
+      expect(screen.getByText('2 RESULTS')).toBeInTheDocument();
+      expect(
+        screen.getByRole('link', {name: /検索結果映画1/}),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('link', {name: /検索結果映画2/}),
+      ).toBeInTheDocument();
     });
 
     it('検索結果なしの場合は適切なメッセージが表示される', () => {
@@ -274,10 +265,11 @@ describe('Search Component', () => {
         searchResults: {
           movies: [],
           pagination: {
-            page: 1,
-            limit: 20,
-            total: 0,
+            currentPage: 1,
             totalPages: 0,
+            totalCount: 0,
+            hasNextPage: false,
+            hasPrevPage: false,
           },
         },
       });
@@ -336,24 +328,6 @@ describe('Search Component', () => {
 
       expect(movieDetailLinks[0]).toHaveAttribute('href', '/movies/movie-1');
       expect(movieDetailLinks[1]).toHaveAttribute('href', '/movies/movie-2');
-    });
-
-    it('ホームページへの戻るリンクが表示される', () => {
-      const loaderData = createLoaderData();
-
-      render(
-        <Search
-          loaderData={loaderData}
-          actionData={createActionData()}
-          params={createParameters()}
-          matches={createMatches(loaderData)}
-        />,
-      );
-
-      const homeLinks = screen.getAllByRole('link', {name: /ホームに戻る/});
-      expect(homeLinks.length).toBeGreaterThanOrEqual(1);
-      expect(homeLinks[0]).toBeInTheDocument();
-      expect(homeLinks[0]).toHaveAttribute('href', '/');
     });
   });
 });

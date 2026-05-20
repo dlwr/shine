@@ -1,0 +1,49 @@
+:root {
+  --paper: #ece8df;
+  --surface: #ffffff;
+  --ink: #15140f;
+  --ink-muted: #595650;
+  --brand: #e01e10;
+  --brand-on: #ffffff;
+  --border-w: 3px;
+  --border-w-sub: 2px;
+  --shadow-offset: 6px 6px 0 var(--brand);
+  --shadow-offset-sm: 5px 5px 0 var(--brand);
+  --poster-bg: linear-gradient(160deg, #2a2330, #0e0d12);
+  --poster-glow: transparent;
+}
+
+.dark {
+  --paper: #18181d;
+  --surface: #202027;
+  --ink: #edeae3;
+  --ink-muted: #a8a8a2;
+  --brand: #ff453a;
+  --brand-on: #15140f;
+  --poster-bg: linear-gradient(160deg, #3a2f1c, #0e0d12);
+  --poster-glow: radial-gradient(
+    circle,
+    rgba(255, 233, 180, 0.28),
+    transparent 70%
+  );
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/space-grotesk.woff2') format('woff2');
+  font-weight: 300 700;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/jetbrains-mono.woff2') format('woff2');
+  font-weight: 400 700;
+  font-display: optional;
+}
+
+:root {
+  --font-display: 'Space Grotesk', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
