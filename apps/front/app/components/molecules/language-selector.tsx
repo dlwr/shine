@@ -1,6 +1,7 @@
 type Language = {
   code: string;
   name: string;
+  short: string;
 };
 
 type LanguageSelectorProperties = {
@@ -19,22 +20,22 @@ const getCurrentUrl = (newLocale: string): string => {
 
 export function LanguageSelector({locale}: LanguageSelectorProperties) {
   const languages: Language[] = [
-    {code: 'en', name: 'English'},
-    {code: 'ja', name: '日本語'},
+    {code: 'en', name: 'English', short: 'EN'},
+    {code: 'ja', name: '日本語', short: 'JA'},
   ];
 
   return (
-    <div className="flex gap-2 my-4 justify-center">
+    <div className="flex gap-1">
       {languages.map(lang => (
         <a
           key={lang.code}
           href={getCurrentUrl(lang.code)}
-          className={`px-4 py-2 border rounded text-sm no-underline transition-all duration-200 ${
-            locale === lang.code
-              ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:border-blue-700'
-              : 'text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+          aria-label={lang.name}
+          aria-current={locale === lang.code ? 'page' : undefined}
+          className={`font-mono text-xs font-bold border-2 border-ink px-2 py-1 no-underline ${
+            locale === lang.code ? 'bg-ink text-paper' : 'text-ink'
           }`}>
-          {lang.name}
+          {lang.short}
         </a>
       ))}
     </div>
