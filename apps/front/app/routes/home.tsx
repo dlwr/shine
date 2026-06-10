@@ -79,6 +79,7 @@ type MoviesLabels = {
   weekly: string;
   monthly: string;
   reselect: string;
+  edit: string;
 };
 
 export function meta(): Route.MetaDescriptors {
@@ -258,6 +259,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
       weekly: 'Weekly',
       monthly: 'Monthly',
       reselect: 'Re-select',
+      edit: 'Edit',
     },
     ja: {
       randomMovie: 'ランダム映画',
@@ -265,6 +267,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
       weekly: '週替わり',
       monthly: '月替わり',
       reselect: '再抽選',
+      edit: '編集',
     },
   };
 
@@ -690,6 +693,15 @@ function Movies({
 
               {adminToken && (
                 <div className="flex flex-col gap-2">
+                  {movie && (
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="w-full border-2 border-ink font-mono text-xs">
+                      <a href={`/admin/movies/${movie.uid}`}>{labels.edit}</a>
+                    </Button>
+                  )}
                   <Button
                     className="w-full border-2 border-ink font-mono text-xs"
                     size="sm"

@@ -301,6 +301,48 @@ describe('Home Component', () => {
       expect(screen.getByText('月間映画')).toBeInTheDocument();
     });
 
+    it('管理者ログイン時、カードに編集ページへのリンクが表示される', async () => {
+      localStorage.setItem('adminToken', 'test-token');
+
+      try {
+        const loaderData =
+          cast<ComponentProperties['loaderData']>(createLoaderData());
+
+        render(
+          <Home
+            loaderData={loaderData}
+            actionData={createActionData()}
+            params={createParameters()}
+            matches={createMatches(loaderData)}
+          />,
+        );
+
+        const editLinks = await screen.findAllByRole('link', {name: '編集'});
+        expect(editLinks).toHaveLength(3);
+        expect(editLinks[0]).toHaveAttribute('href', '/admin/movies/movie-1');
+      } finally {
+        localStorage.removeItem('adminToken');
+      }
+    });
+
+    it('未ログイン時、編集リンクは表示されない', () => {
+      const loaderData =
+        cast<ComponentProperties['loaderData']>(createLoaderData());
+
+      render(
+        <Home
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={createParameters()}
+          matches={createMatches(loaderData)}
+        />,
+      );
+
+      expect(
+        screen.queryByRole('link', {name: '編集'}),
+      ).not.toBeInTheDocument();
+    });
+
     it('エラー状態が正常に表示される', () => {
       const loaderData = cast<ComponentProperties['loaderData']>(
         createErrorLoaderData({
