@@ -42,6 +42,11 @@ export function WatchMenu({title, year, tmdbId, imdbUrl}: WatchMenuProperties) {
         imdbUrl ??
         `https://www.imdb.com/find?q=${encodeURIComponent(`${title} ${year ?? ''}`)}`,
     },
+    {
+      name: 'Google',
+      color: 'bg-white text-gray-900',
+      url: `https://www.google.com/search?q=${encodeURIComponent(`${title} ${year ?? ''} 映画`)}`,
+    },
   ];
 
   return (
