@@ -64,6 +64,26 @@ describe('MovieCard streaming menu', () => {
     expect(hiddenInput).toHaveAttribute('value', '別れる決心');
   });
 
+  it('shows GEO (ゲオ) search link with Japanese title in streaming menu', async () => {
+    render(<MovieCard movie={baseMovie} locale="ja" />);
+
+    const posterImage = screen.getByRole('img', {
+      name: `${baseMovie.title} poster`,
+    });
+    fireEvent.mouseEnter(posterImage.parentElement as HTMLElement);
+
+    expect(await screen.findByText('検索する')).toBeInTheDocument();
+
+    const geoLink = screen.getByText('GEO');
+    expect(geoLink).toHaveAttribute(
+      'href',
+      `https://ec.geo-online.co.jp/shop/goods/search.aspx?keyword=${encodeURIComponent(
+        baseMovie.title ?? '',
+      )}&search.x=0`,
+    );
+    expect(geoLink).toHaveAttribute('target', '_blank');
+  });
+
   it('uses Japanese title for TSUTAYA DISCAS search even in English locale', async () => {
     const movieWithTranslations: MovieCardMovie = {
       ...baseMovie,

@@ -21,4 +21,16 @@ describe('WatchMenu', () => {
     expect(google).toHaveAttribute('href', expect.stringContaining('Parasite'));
     expect(google).toHaveAttribute('href', expect.stringContaining('2019'));
   });
+
+  it('GEO（ゲオ）検索のリンクをタイトル入りで描画する', () => {
+    render(<WatchMenu title="Parasite" year={2019} locale="ja" />);
+    const geo = screen.getByRole('link', {name: /GEO/});
+    expect(geo).toHaveAttribute(
+      'href',
+      expect.stringContaining(
+        'https://ec.geo-online.co.jp/shop/goods/search.aspx',
+      ),
+    );
+    expect(geo).toHaveAttribute('href', expect.stringContaining('Parasite'));
+  });
 });

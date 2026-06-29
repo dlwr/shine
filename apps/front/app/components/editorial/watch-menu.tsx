@@ -47,6 +47,11 @@ export function WatchMenu({title, year, tmdbId, imdbUrl}: WatchMenuProperties) {
       color: 'bg-white text-gray-900',
       url: `https://www.google.com/search?q=${encodeURIComponent(`${title} ${year ?? ''} 映画`)}`,
     },
+    {
+      name: 'GEO',
+      color: 'bg-blue-700 text-white',
+      url: `https://ec.geo-online.co.jp/shop/goods/search.aspx?keyword=${encodeURIComponent(title)}&search.x=0`,
+    },
   ];
 
   return (
