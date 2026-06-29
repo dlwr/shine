@@ -64,7 +64,7 @@ describe('MovieCard streaming menu', () => {
     expect(hiddenInput).toHaveAttribute('value', '別れる決心');
   });
 
-  it('shows GEO (ゲオ) search link with Japanese title in streaming menu', async () => {
+  it('shows GEO (ゲオ) rental search as EUC-JP form with Japanese title', async () => {
     render(<MovieCard movie={baseMovie} locale="ja" />);
 
     const posterImage = screen.getByRole('img', {
@@ -74,14 +74,18 @@ describe('MovieCard streaming menu', () => {
 
     expect(await screen.findByText('検索する')).toBeInTheDocument();
 
-    const geoLink = screen.getByText('GEO');
-    expect(geoLink).toHaveAttribute(
-      'href',
-      `https://ec.geo-online.co.jp/shop/goods/search.aspx?keyword=${encodeURIComponent(
-        baseMovie.title ?? '',
-      )}&search.x=0`,
+    const form = screen.getByText('GEO').closest('form');
+    expect(form).not.toBeNull();
+    expect(form).toHaveAttribute(
+      'action',
+      'https://rental.geo-online.co.jp/search2/',
     );
-    expect(geoLink).toHaveAttribute('target', '_blank');
+    expect(form).toHaveAttribute('method', 'GET');
+    expect(form).toHaveAttribute('accept-charset', 'euc-jp');
+    expect(form).toHaveAttribute('target', '_blank');
+
+    const hiddenInput = form!.querySelector('input[name="q"]');
+    expect(hiddenInput).toHaveAttribute('value', '別れる決心');
   });
 
   it('uses Japanese title for TSUTAYA DISCAS search even in English locale', async () => {

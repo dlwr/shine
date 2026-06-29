@@ -47,12 +47,10 @@ export function WatchMenu({title, year, tmdbId, imdbUrl}: WatchMenuProperties) {
       color: 'bg-white text-gray-900',
       url: `https://www.google.com/search?q=${encodeURIComponent(`${title} ${year ?? ''} 映画`)}`,
     },
-    {
-      name: 'GEO',
-      color: 'bg-blue-700 text-white',
-      url: `https://ec.geo-online.co.jp/shop/goods/search.aspx?keyword=${encodeURIComponent(title)}&search.x=0`,
-    },
   ];
+
+  const buttonClass =
+    'border-2 border-ink px-2 py-1 font-mono text-[10px] font-bold shadow-[2px_2px_0_var(--ink)]';
 
   return (
     <div className="flex flex-wrap gap-1.5">
@@ -62,10 +60,23 @@ export function WatchMenu({title, year, tmdbId, imdbUrl}: WatchMenuProperties) {
           href={service.url}
           target="_blank"
           rel="noopener noreferrer"
-          className={`border-2 border-ink px-2 py-1 font-mono text-[10px] font-bold shadow-[2px_2px_0_var(--ink)] ${service.color}`}>
+          className={`${buttonClass} ${service.color}`}>
           {service.name}
         </a>
       ))}
+      <form
+        action="https://rental.geo-online.co.jp/search2/"
+        method="GET"
+        acceptCharset="euc-jp"
+        target="_blank"
+        className="contents">
+        <input type="hidden" name="q" value={title} />
+        <button
+          type="submit"
+          className={`${buttonClass} bg-blue-700 text-white`}>
+          GEO
+        </button>
+      </form>
     </div>
   );
 }

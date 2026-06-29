@@ -22,15 +22,20 @@ describe('WatchMenu', () => {
     expect(google).toHaveAttribute('href', expect.stringContaining('2019'));
   });
 
-  it('GEO（ゲオ）検索のリンクをタイトル入りで描画する', () => {
-    render(<WatchMenu title="Parasite" year={2019} locale="ja" />);
-    const geo = screen.getByRole('link', {name: /GEO/});
-    expect(geo).toHaveAttribute(
-      'href',
-      expect.stringContaining(
-        'https://ec.geo-online.co.jp/shop/goods/search.aspx',
-      ),
+  it('GEO（ゲオ）宅配レンタル検索をEUC-JP対応のフォームで描画する', () => {
+    render(<WatchMenu title="パラサイト" year={2019} locale="ja" />);
+    const geoButton = screen.getByRole('button', {name: /GEO/});
+    const form = geoButton.closest('form');
+    expect(form).not.toBeNull();
+    expect(form).toHaveAttribute(
+      'action',
+      'https://rental.geo-online.co.jp/search2/',
     );
-    expect(geo).toHaveAttribute('href', expect.stringContaining('Parasite'));
+    expect(form).toHaveAttribute('method', 'GET');
+    expect(form).toHaveAttribute('accept-charset', 'euc-jp');
+    expect(form).toHaveAttribute('target', '_blank');
+
+    const input = form!.querySelector('input[name="q"]');
+    expect(input).toHaveAttribute('value', 'パラサイト');
   });
 });

@@ -341,18 +341,22 @@ export function MovieCard({
                   TSUTAYA DISCAS
                 </button>
               </form>
-              <a
-                href={`https://ec.geo-online.co.jp/shop/goods/search.aspx?keyword=${encodeURIComponent(
-                  discasTitle,
-                )}&search.x=0`}
+              <form
+                action="https://rental.geo-online.co.jp/search2/"
+                method="GET"
+                acceptCharset="euc-jp"
                 target="_blank"
-                rel="noopener noreferrer"
-                className="block px-4 py-2.5 mt-2 bg-blue-700 text-white rounded-md text-center text-sm font-medium"
+                className="mt-2"
                 onClick={event => {
                   event.stopPropagation();
                 }}>
-                GEO
-              </a>
+                <input type="hidden" name="q" value={discasTitle} />
+                <button
+                  type="submit"
+                  className="w-full px-4 py-2.5 bg-blue-700 text-white rounded-md text-center text-sm font-medium">
+                  GEO
+                </button>
+              </form>
             </div>
           </div>
         )}
