@@ -77,6 +77,19 @@ export function WatchMenu({title, year, tmdbId, imdbUrl}: WatchMenuProperties) {
           GEO
         </button>
       </form>
+      <form
+        action="https://movie-tsutaya.tsite.jp/netdvd/dvd/searchDvdBd.do"
+        method="GET"
+        acceptCharset="Shift_JIS"
+        target="_blank"
+        className="contents">
+        <input type="hidden" name="k" value={title} />
+        <button
+          type="submit"
+          className={`${buttonClass} bg-sky-500 text-white`}>
+          TSUTAYA DISCAS
+        </button>
+      </form>
     </div>
   );
 }

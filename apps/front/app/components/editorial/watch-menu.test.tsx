@@ -38,4 +38,21 @@ describe('WatchMenu', () => {
     const input = form!.querySelector('input[name="q"]');
     expect(input).toHaveAttribute('value', 'パラサイト');
   });
+
+  it('TSUTAYA DISCAS検索をShift_JIS対応のフォームで描画する', () => {
+    render(<WatchMenu title="パラサイト" year={2019} locale="ja" />);
+    const button = screen.getByRole('button', {name: /TSUTAYA DISCAS/});
+    const form = button.closest('form');
+    expect(form).not.toBeNull();
+    expect(form).toHaveAttribute(
+      'action',
+      'https://movie-tsutaya.tsite.jp/netdvd/dvd/searchDvdBd.do',
+    );
+    expect(form).toHaveAttribute('method', 'GET');
+    expect(form).toHaveAttribute('accept-charset', 'Shift_JIS');
+    expect(form).toHaveAttribute('target', '_blank');
+
+    const input = form!.querySelector('input[name="k"]');
+    expect(input).toHaveAttribute('value', 'パラサイト');
+  });
 });
