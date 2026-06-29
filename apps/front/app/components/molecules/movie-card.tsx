@@ -341,6 +341,18 @@ export function MovieCard({
                   TSUTAYA DISCAS
                 </button>
               </form>
+              <a
+                href={`https://ec.geo-online.co.jp/shop/goods/search.aspx?keyword=${encodeURIComponent(
+                  discasTitle,
+                )}&search.x=0`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block px-4 py-2.5 mt-2 bg-blue-700 text-white rounded-md text-center text-sm font-medium"
+                onClick={event => {
+                  event.stopPropagation();
+                }}>
+                GEO
+              </a>
             </div>
           </div>
         )}
