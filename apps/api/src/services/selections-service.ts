@@ -1,4 +1,4 @@
-import {and, eq, isNull, sql} from '@shine/database';
+import {and, eq, isNull, notInArray, sql} from '@shine/database';
 import {articleLinks} from '@shine/database/schema/article-links';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
@@ -40,6 +40,7 @@ export class SelectionsService extends BaseService {
     type: SelectionType,
     locale: string,
     date = new Date(),
+    excludeMovieUids: string[] = [],
   ): Promise<MovieSelection> {
     const selectionDate = this.getSelectionDate(date, type);
 
@@ -62,6 +63,7 @@ export class SelectionsService extends BaseService {
       type,
       true,
       'random',
+      excludeMovieUids,
     );
     if (!movieUid) {
       throw new Error('No movies available for selection');
@@ -581,6 +583,7 @@ export class SelectionsService extends BaseService {
     type: SelectionType,
     persistSelection: boolean,
     seed: number | 'random',
+    excludeMovieUids: string[] = [],
   ): Promise<string | undefined> {
     // Movies with more nominations have proportionally higher chance of being selected
     const availableNominations = await this.database
@@ -590,7 +593,14 @@ export class SelectionsService extends BaseService {
       })
       .from(nominations)
       .innerJoin(movies, eq(movies.uid, nominations.movieUid))
-      .where(isNull(movies.deletedAt))
+      .where(
+        and(
+          isNull(movies.deletedAt),
+          excludeMovieUids.length > 0
+            ? notInArray(nominations.movieUid, excludeMovieUids)
+            : undefined,
+        ),
+      )
       .orderBy(nominations.movieUid, nominations.uid);
 
     if (availableNominations.length === 0) {

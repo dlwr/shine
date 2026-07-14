@@ -232,13 +232,25 @@ selectionsRoutes.post('/reselect', authMiddleware, async c => {
   try {
     const selectionsService = new SelectionsService(c.env);
     const body = await c.req.json();
-    const {type, locale = 'en'} = body;
+    const {type, locale = 'en', excludeMovieUids = []} = body;
 
     if (!type || !['daily', 'weekly', 'monthly'].includes(type)) {
       return c.json({error: 'Invalid selection type'}, 400);
     }
 
-    const movie = await selectionsService.reselectMovie(type, locale);
+    if (
+      !Array.isArray(excludeMovieUids) ||
+      excludeMovieUids.some(uid => typeof uid !== 'string')
+    ) {
+      return c.json({error: 'Invalid excludeMovieUids'}, 400);
+    }
+
+    const movie = await selectionsService.reselectMovie(
+      type,
+      locale,
+      new Date(),
+      excludeMovieUids,
+    );
 
     return c.json({
       type,
