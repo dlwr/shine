@@ -4,6 +4,7 @@ import type {SelectionCheckSummary} from '../ensure-selection';
 
 const okSummary: SelectionCheckSummary = {
   type: 'daily',
+  date: '2026-07-16',
   finalMovie: {uid: 'movie-1', title: 'ゴッドファーザー'},
   attempts: [
     {
@@ -52,6 +53,15 @@ describe('buildDiscordMessage', () => {
     const text = JSON.stringify(message);
     expect(text).toContain('ゴッドファーザー');
     expect(text).toContain('U-NEXT(見放題)');
+  });
+
+  it('labels each selection as the upcoming one with its target date', () => {
+    const message = buildDiscordMessage([okSummary], '2026-07-15');
+
+    const [embed] = message.embeds;
+    expect(embed.title).toContain('明日の映画');
+    expect(embed.title).toContain('2026-07-16');
+    expect(embed.title).toContain('ゴッドファーザー');
   });
 
   it('flags exhausted selections as warnings', () => {
