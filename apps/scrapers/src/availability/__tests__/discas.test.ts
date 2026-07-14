@@ -25,23 +25,48 @@ describe('parseDiscasTitles', () => {
 });
 
 function createSessionFetch(searchBytes: Buffer) {
+  // 実サイトの挙動を再現: top.doでJSESSIONID発行 →
+  // 検索はxdsyncへ302(追加Cookie発行) → 両Cookie持参で再度検索すると200
   return vi.fn(async (url: string, init?: RequestInit) => {
-    if (url.includes('top.do')) {
+    const cookie = new Headers(init?.headers).get('cookie') ?? '';
+
+    if (url.includes('top.do') && !cookie.includes('JSESSIONID=abc123')) {
       return new Response('', {
         status: 302,
         headers: {
           'set-cookie': 'JSESSIONID=abc123; Path=/',
-          location: 'https://movie-tsutaya.tsite.jp/netdvd/xdsync',
+          location: `https://movie-tsutaya.tsite.jp/netdvd/xdsync?next=${encodeURIComponent(url)}`,
         },
       });
     }
 
-    const cookie = new Headers(init?.headers).get('cookie') ?? '';
     if (!cookie.includes('JSESSIONID=abc123')) {
       return new Response('', {status: 500});
     }
 
-    return new Response(searchBytes);
+    if (url.includes('searchDvdBd.do') && !cookie.includes('xdid=tracked')) {
+      return new Response('', {
+        status: 302,
+        headers: {
+          'set-cookie': 'xdid=tracked; Path=/',
+          location: `https://movie-tsutaya.tsite.jp/netdvd/xdsync?next=${encodeURIComponent(url)}`,
+        },
+      });
+    }
+
+    if (url.includes('xdsync')) {
+      const next = new URL(url).searchParams.get('next') ?? '';
+      return new Response('', {
+        status: 302,
+        headers: {location: next},
+      });
+    }
+
+    if (url.includes('top.do')) {
+      return new Response('');
+    }
+
+    return new Response(new Uint8Array(searchBytes));
   });
 }
 
@@ -53,10 +78,10 @@ describe('checkDiscas', () => {
 
     expect(result.status).toBe('ok');
     expect(result.source).toBe('discas');
-    const searchCall = fetchSpy.mock.calls.find(([url]) =>
-      (url as string).includes('searchDvdBd.do'),
-    );
-    expect(searchCall?.[0]).toContain(
+    const searchUrl = fetchSpy.mock.calls
+      .map(([url]) => url)
+      .find(url => url.includes('searchDvdBd.do'));
+    expect(searchUrl).toContain(
       'k=%83%53%83%62%83%68%83%74%83%40%81%5B%83%55%81%5B',
     );
   });

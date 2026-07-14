@@ -25,19 +25,58 @@ export function parseDiscasTitles(html: string): string[] {
     .filter(title => title !== '');
 }
 
-async function establishSession(fetchImpl: FetchLike): Promise<string> {
-  const response = await fetchImpl(
-    'https://movie-tsutaya.tsite.jp/netdvd/dvd/top.do',
-    {
-      headers: {'User-Agent': USER_AGENT},
-      redirect: 'manual',
-    },
-  );
+class CookieJar {
+  private readonly cookies = new Map<string, string>();
 
-  return response.headers
-    .getSetCookie()
-    .map(cookie => cookie.split(';')[0])
-    .join('; ');
+  absorb(response: Response): void {
+    for (const setCookie of response.headers.getSetCookie()) {
+      const [pair] = setCookie.split(';');
+      const separatorIndex = pair.indexOf('=');
+      if (separatorIndex > 0) {
+        this.cookies.set(
+          pair.slice(0, separatorIndex).trim(),
+          pair.slice(separatorIndex + 1).trim(),
+        );
+      }
+    }
+  }
+
+  header(): string {
+    return [...this.cookies.entries()]
+      .map(([name, value]) => `${name}=${value}`)
+      .join('; ');
+  }
+}
+
+const MAX_REDIRECTS = 5;
+
+async function fetchWithSession(
+  url: string,
+  jar: CookieJar,
+  fetchImpl: FetchLike,
+): Promise<Response> {
+  let currentUrl = url;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    const response = await fetchImpl(currentUrl, {
+      headers: {
+        'User-Agent': USER_AGENT,
+        Cookie: jar.header(),
+        Referer: 'https://movie-tsutaya.tsite.jp/netdvd/dvd/top.do',
+      },
+      redirect: 'manual',
+    });
+    jar.absorb(response);
+
+    const location = response.headers.get('location');
+    if (response.status >= 300 && response.status < 400 && location) {
+      currentUrl = new URL(location, currentUrl).toString();
+      continue;
+    }
+
+    return response;
+  }
+
+  throw new Error(`Too many redirects for ${url}`);
 }
 
 export async function checkDiscas(
@@ -50,15 +89,14 @@ export async function checkDiscas(
   }
 
   try {
-    const cookie = await establishSession(fetchImpl);
+    const jar = new CookieJar();
+    await fetchWithSession(
+      'https://movie-tsutaya.tsite.jp/netdvd/dvd/top.do',
+      jar,
+      fetchImpl,
+    );
     const url = `https://movie-tsutaya.tsite.jp/netdvd/dvd/searchDvdBd.do?k=${encodeShiftJisQuery(query)}`;
-    const response = await fetchImpl(url, {
-      headers: {
-        'User-Agent': USER_AGENT,
-        Cookie: cookie,
-        Referer: 'https://movie-tsutaya.tsite.jp/netdvd/dvd/top.do',
-      },
-    });
+    const response = await fetchWithSession(url, jar, fetchImpl);
     if (!response.ok) {
       return {
         source: 'discas',
