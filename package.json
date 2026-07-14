@@ -25,7 +25,7 @@
     "scrapers:cannes-film-festival": "pnpm --filter @shine/scrapers tsx src/cannes-film-festival-cli.ts",
     "scrapers:movie-import": "pnpm --filter @shine/scrapers tsx src/movie-import-from-list-cli.ts",
     "scrapers:import-imdb-list": "pnpm --filter @shine/scrapers tsx src/import-imdb-list-cli.ts",
-    "scrapers:availability-check": "pnpm --filter @shine/scrapers tsx src/availability-check-cli.ts",
+    "scrapers:availability-check": "pnpm --filter @shine/scrapers run availability-check",
     "scrapers:assign-imdb-ids": "pnpm --filter @shine/scrapers run assign-imdb-ids",
     "scripts:soft-delete-orphan-movies": "tsx scripts/soft-delete-orphan-movies.ts",
     "db:studio": "node scripts/setup-database-environment.cjs drizzle-kit studio",
