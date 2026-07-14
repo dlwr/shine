@@ -1,0 +1,1 @@
+ALTER TABLE `article_links` DROP COLUMN `view_count`;

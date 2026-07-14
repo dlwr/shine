@@ -3,6 +3,7 @@ import {articleLinks} from '@shine/database/schema/article-links';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
+import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
@@ -330,6 +331,9 @@ export class AdminService extends BaseService {
   async deleteMovie(movieId: string): Promise<void> {
     await this.database.transaction(async trx => {
       await trx.delete(articleLinks).where(eq(articleLinks.movieUid, movieId));
+      await trx
+        .delete(movieAvailabilityChecks)
+        .where(eq(movieAvailabilityChecks.movieUid, movieId));
       await trx
         .delete(movieSelections)
         .where(eq(movieSelections.movieId, movieId));
@@ -1052,9 +1056,8 @@ export class AdminService extends BaseService {
         });
       html = await page.content();
     } finally {
-      await (reusedExistingSession
-        ? browser.disconnect()
-        : browser.close()
+      await (
+        reusedExistingSession ? browser.disconnect() : browser.close()
       ).catch(() => {
         // Session/browser may already be closed by the platform; ignore
       });

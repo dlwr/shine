@@ -2,6 +2,7 @@ export * from './article-links';
 export * from './award-categories';
 export * from './award-ceremonies';
 export * from './award-organizations';
+export * from './movie-availability-checks';
 export * from './movie-selections';
 export * from './movies';
 export * from './nominations';

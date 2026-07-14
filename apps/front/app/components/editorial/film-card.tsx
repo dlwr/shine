@@ -1,3 +1,4 @@
+import {AvailabilityBadges, type AvailabilityInfo} from './availability-badges';
 import {BigYear} from './big-year';
 import {PosterFrame} from './poster-frame';
 import {selectBestPoster, type PosterInfo} from '@/lib/poster';
@@ -18,6 +19,7 @@ export type FilmCardMovie = {
     isWinner: boolean;
     category: {name: string};
   }>;
+  availability?: AvailabilityInfo[];
 };
 
 function pickTitle(movie: FilmCardMovie, locale: string): string {
@@ -120,6 +122,10 @@ export function FilmCard({
             </span>
           ) : undefined}
         </div>
+        <AvailabilityBadges
+          availability={movie.availability}
+          className="mt-2"
+        />
       </div>
     </a>
   );

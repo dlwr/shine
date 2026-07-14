@@ -1,0 +1,205 @@
+{
+  "data": {
+    "webfront_videoFreewordSearch": {
+      "titles": [
+        {
+          "id": "SID0002596",
+          "titleName": "ゴッドファーザー",
+          "isNew": false,
+          "catchphrase": "あるマフィア一族を待ち受ける運命！映画史に名を刻む不朽の大傑作！",
+          "rate": 45,
+          "updateOfWeek": -1,
+          "lastEpisode": "",
+          "nfreeBadge": "",
+          "hasSubtitle": true,
+          "hasDub": true,
+          "hasSubtitleTrack": null,
+          "hasDubTrack": null,
+          "paymentBadgeList": [
+            {
+              "id": "SVOD",
+              "code": "SVOD",
+              "__typename": "PaymentBadge"
+            }
+          ],
+          "productLineupCodeList": ["LNPS_SVOD"],
+          "thumbnail": {
+            "standard": "imgc.nxtv.jp/img/info/tit/00002/SID0002596.png",
+            "secondary": "imgc.nxtv.jp/img/info/titspot/00002/SID0002596_fwxga.png",
+            "__typename": "Thumbnail"
+          },
+          "hasPackRights": false,
+          "hasMultiprice": false,
+          "minimumPrice": -1,
+          "isOriginal": false,
+          "isMaxService": false,
+          "exclusive": {
+            "isOnlyOn": false,
+            "typeCode": null,
+            "__typename": "ExclusiveInfo"
+          },
+          "__typename": "Title"
+        },
+        {
+          "id": "SID0002597",
+          "titleName": "ゴッドファーザー PART II",
+          "isNew": false,
+          "catchphrase": "ドンとなったマイケルと若き日のヴィトーを描き出す、映画史上最重要シリーズの第2弾",
+          "rate": 45,
+          "updateOfWeek": -1,
+          "lastEpisode": "",
+          "nfreeBadge": "",
+          "hasSubtitle": true,
+          "hasDub": true,
+          "hasSubtitleTrack": null,
+          "hasDubTrack": null,
+          "paymentBadgeList": [
+            {
+              "id": "SVOD",
+              "code": "SVOD",
+              "__typename": "PaymentBadge"
+            }
+          ],
+          "productLineupCodeList": ["LNPS_SVOD"],
+          "thumbnail": {
+            "standard": "imgc.nxtv.jp/img/info/tit/00002/SID0002597.png",
+            "secondary": "imgc.nxtv.jp/img/info/titspot/00002/SID0002597_fwxga.png",
+            "__typename": "Thumbnail"
+          },
+          "hasPackRights": false,
+          "hasMultiprice": false,
+          "minimumPrice": -1,
+          "isOriginal": false,
+          "isMaxService": false,
+          "exclusive": {
+            "isOnlyOn": false,
+            "typeCode": null,
+            "__typename": "ExclusiveInfo"
+          },
+          "__typename": "Title"
+        },
+        {
+          "id": "SID0053300",
+          "titleName": "ゴッドファーザー 最終章：マイケル・コルレオーネの最期",
+          "isNew": false,
+          "catchphrase": "『ゴッドファーザーPARTIII』の再編集版。コッポラが見せたかった本当の完結編！",
+          "rate": 45,
+          "updateOfWeek": -1,
+          "lastEpisode": "",
+          "nfreeBadge": "",
+          "hasSubtitle": true,
+          "hasDub": true,
+          "hasSubtitleTrack": null,
+          "hasDubTrack": null,
+          "paymentBadgeList": [
+            {
+              "id": "SVOD",
+              "code": "SVOD",
+              "__typename": "PaymentBadge"
+            }
+          ],
+          "productLineupCodeList": ["LNPS_SVOD"],
+          "thumbnail": {
+            "standard": "imgc.nxtv.jp/img/info/tit/00053/SID0053300.png",
+            "secondary": "imgc.nxtv.jp/img/info/titspot/00053/SID0053300_fwxga.png",
+            "__typename": "Thumbnail"
+          },
+          "hasPackRights": false,
+          "hasMultiprice": false,
+          "minimumPrice": -1,
+          "isOriginal": false,
+          "isMaxService": false,
+          "exclusive": {
+            "isOnlyOn": false,
+            "typeCode": null,
+            "__typename": "ExclusiveInfo"
+          },
+          "__typename": "Title"
+        },
+        {
+          "id": "SID0070634",
+          "titleName": "ジ・オファー / ゴッドファーザーに賭けた男",
+          "isNew": false,
+          "catchphrase": "歴史的傑作『ゴッドファーザー』の舞台裏を描く大波乱のエンターテイメント",
+          "rate": 50,
+          "updateOfWeek": -1,
+          "lastEpisode": "",
+          "nfreeBadge": "",
+          "hasSubtitle": true,
+          "hasDub": true,
+          "hasSubtitleTrack": null,
+          "hasDubTrack": null,
+          "paymentBadgeList": [
+            {
+              "id": "SVOD",
+              "code": "SVOD",
+              "__typename": "PaymentBadge"
+            }
+          ],
+          "productLineupCodeList": ["LNPS_SVOD"],
+          "thumbnail": {
+            "standard": "imgc.nxtv.jp/img/info/tit/00070/SID0070634.png",
+            "secondary": "imgc.nxtv.jp/img/info/titspot/00070/SID0070634_fwxga.png",
+            "__typename": "Thumbnail"
+          },
+          "hasPackRights": false,
+          "hasMultiprice": false,
+          "minimumPrice": -1,
+          "isOriginal": false,
+          "isMaxService": false,
+          "exclusive": {
+            "isOnlyOn": false,
+            "typeCode": null,
+            "__typename": "ExclusiveInfo"
+          },
+          "__typename": "Title"
+        },
+        {
+          "id": "SID0015854",
+          "titleName": "東京ゴッドファーザーズ",
+          "isNew": false,
+          "catchphrase": "「千年女優」など世界的評価を得つつも、46歳で急逝した伝説の映像作家・今敏監督作！",
+          "rate": 45,
+          "updateOfWeek": -1,
+          "lastEpisode": "",
+          "nfreeBadge": "",
+          "hasSubtitle": false,
+          "hasDub": false,
+          "hasSubtitleTrack": null,
+          "hasDubTrack": null,
+          "paymentBadgeList": [
+            {
+              "id": "SVOD",
+              "code": "SVOD",
+              "__typename": "PaymentBadge"
+            }
+          ],
+          "productLineupCodeList": ["LNPS_SVOD"],
+          "thumbnail": {
+            "standard": "imgc.nxtv.jp/img/info/tit/00015/SID0015854.png",
+            "secondary": "imgc.nxtv.jp/img/info/titspot/00015/SID0015854_fwxga.png",
+            "__typename": "Thumbnail"
+          },
+          "hasPackRights": false,
+          "hasMultiprice": false,
+          "minimumPrice": -1,
+          "isOriginal": false,
+          "isMaxService": false,
+          "exclusive": {
+            "isOnlyOn": false,
+            "typeCode": null,
+            "__typename": "ExclusiveInfo"
+          },
+          "__typename": "Title"
+        }
+      ],
+      "pageInfo": {
+        "page": 1,
+        "pages": 1,
+        "pageSize": 20,
+        "results": 20,
+        "__typename": "PortalPageInfo"
+      }
+    }
+  }
+}

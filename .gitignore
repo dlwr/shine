@@ -147,6 +147,9 @@ bun.lockb
 *.bak
 postgres_data/
 
+# Drizzle migrations must be tracked despite the global *.sql ignore
+!packages/database/migrations/*.sql
+
 # Project specific
 wiki.html
 drizzle/.wrangler/

@@ -57,6 +57,11 @@ export type MovieSelection = {
     title: string;
     description?: string;
   }>;
+  availability?: Array<{
+    source: string;
+    detail: string | undefined;
+    checkedAt: number;
+  }>;
 };
 
 export type DateSeedOptions = {

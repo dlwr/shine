@@ -1,8 +1,9 @@
-import {and, eq, isNull, sql} from '@shine/database';
+import {and, eq, isNull, notInArray, sql} from '@shine/database';
 import {articleLinks} from '@shine/database/schema/article-links';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
+import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
@@ -40,6 +41,7 @@ export class SelectionsService extends BaseService {
     type: SelectionType,
     locale: string,
     date = new Date(),
+    excludeMovieUids: string[] = [],
   ): Promise<MovieSelection> {
     const selectionDate = this.getSelectionDate(date, type);
 
@@ -62,6 +64,7 @@ export class SelectionsService extends BaseService {
       type,
       true,
       'random',
+      excludeMovieUids,
     );
     if (!movieUid) {
       throw new Error('No movies available for selection');
@@ -468,6 +471,8 @@ export class SelectionsService extends BaseService {
       ? `https://www.imdb.com/title/${movie.imdbId}/`
       : undefined;
 
+    const availability = await this.getMovieAvailability(movieId);
+
     return {
       uid: movie.uid,
       year: movie.year ?? 0,
@@ -507,7 +512,43 @@ export class SelectionsService extends BaseService {
         title: article.title,
         description: article.description || undefined,
       })),
+      availability,
     };
+  }
+
+  private async getMovieAvailability(movieId: string): Promise<
+    Array<{
+      source: string;
+      detail: string | undefined;
+      checkedAt: number;
+    }>
+  > {
+    const sourceOrder = ['tmdb', 'unext', 'discas', 'geo'];
+    const rows = await this.database
+      .select({
+        source: movieAvailabilityChecks.source,
+        status: movieAvailabilityChecks.status,
+        detail: movieAvailabilityChecks.detail,
+        checkedAt: movieAvailabilityChecks.checkedAt,
+      })
+      .from(movieAvailabilityChecks)
+      .where(eq(movieAvailabilityChecks.movieUid, movieId))
+      .orderBy(movieAvailabilityChecks.checkedAt);
+
+    // Latest record per source; expose only sources currently judged watchable
+    const latestBySource = new Map<string, (typeof rows)[number]>();
+    for (const row of rows) {
+      latestBySource.set(row.source, row);
+    }
+
+    return sourceOrder
+      .map(source => latestBySource.get(source))
+      .filter((row): row is NonNullable<typeof row> => row?.status === 'ok')
+      .map(row => ({
+        source: row.source,
+        detail: row.detail ?? undefined,
+        checkedAt: row.checkedAt,
+      }));
   }
 
   private resolveTitle(
@@ -581,6 +622,7 @@ export class SelectionsService extends BaseService {
     type: SelectionType,
     persistSelection: boolean,
     seed: number | 'random',
+    excludeMovieUids: string[] = [],
   ): Promise<string | undefined> {
     // Movies with more nominations have proportionally higher chance of being selected
     const availableNominations = await this.database
@@ -590,7 +632,14 @@ export class SelectionsService extends BaseService {
       })
       .from(nominations)
       .innerJoin(movies, eq(movies.uid, nominations.movieUid))
-      .where(isNull(movies.deletedAt))
+      .where(
+        and(
+          isNull(movies.deletedAt),
+          excludeMovieUids.length > 0
+            ? notInArray(nominations.movieUid, excludeMovieUids)
+            : undefined,
+        ),
+      )
       .orderBy(nominations.movieUid, nominations.uid);
 
     if (availableNominations.length === 0) {
