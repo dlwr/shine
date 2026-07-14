@@ -1,0 +1,1 @@
+ALTER TABLE `movies` ADD `release_date` text;

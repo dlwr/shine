@@ -1,0 +1,1 @@
+ALTER TABLE `award_ceremonies` ADD `imdb_event_url` text;
