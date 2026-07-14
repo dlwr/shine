@@ -24,6 +24,33 @@ describe('FilmCard', () => {
     expect(screen.getByText('PARASITE')).toBeInTheDocument();
   });
 
+  it('hero variant で視聴可否バッジを描画する', () => {
+    render(
+      <FilmCard
+        movie={{
+          ...movie,
+          availability: [
+            {
+              source: 'tmdb',
+              detail: 'U-NEXT(見放題)',
+              checkedAt: 1_784_067_000,
+            },
+            {source: 'geo', detail: 'Matched', checkedAt: 1_784_067_000},
+          ],
+        }}
+        variant="hero"
+        locale="ja"
+      />,
+    );
+    expect(screen.getByText('配信')).toBeInTheDocument();
+    expect(screen.getByText('ゲオ宅配レンタル')).toBeInTheDocument();
+  });
+
+  it('availabilityがなければバッジを描画しない', () => {
+    render(<FilmCard movie={movie} variant="hero" locale="ja" />);
+    expect(screen.queryByText('配信')).not.toBeInTheDocument();
+  });
+
   it('hero に label/index と受賞チップを描画する', () => {
     render(
       <FilmCard

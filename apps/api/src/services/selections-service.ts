@@ -3,6 +3,7 @@ import {articleLinks} from '@shine/database/schema/article-links';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
+import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
@@ -470,6 +471,8 @@ export class SelectionsService extends BaseService {
       ? `https://www.imdb.com/title/${movie.imdbId}/`
       : undefined;
 
+    const availability = await this.getMovieAvailability(movieId);
+
     return {
       uid: movie.uid,
       year: movie.year ?? 0,
@@ -509,7 +512,43 @@ export class SelectionsService extends BaseService {
         title: article.title,
         description: article.description || undefined,
       })),
+      availability,
     };
+  }
+
+  private async getMovieAvailability(movieId: string): Promise<
+    Array<{
+      source: string;
+      detail: string | undefined;
+      checkedAt: number;
+    }>
+  > {
+    const sourceOrder = ['tmdb', 'unext', 'discas', 'geo'];
+    const rows = await this.database
+      .select({
+        source: movieAvailabilityChecks.source,
+        status: movieAvailabilityChecks.status,
+        detail: movieAvailabilityChecks.detail,
+        checkedAt: movieAvailabilityChecks.checkedAt,
+      })
+      .from(movieAvailabilityChecks)
+      .where(eq(movieAvailabilityChecks.movieUid, movieId))
+      .orderBy(movieAvailabilityChecks.checkedAt);
+
+    // Latest record per source; expose only sources currently judged watchable
+    const latestBySource = new Map<string, (typeof rows)[number]>();
+    for (const row of rows) {
+      latestBySource.set(row.source, row);
+    }
+
+    return sourceOrder
+      .map(source => latestBySource.get(source))
+      .filter((row): row is NonNullable<typeof row> => row?.status === 'ok')
+      .map(row => ({
+        source: row.source,
+        detail: row.detail ?? undefined,
+        checkedAt: row.checkedAt,
+      }));
   }
 
   private resolveTitle(

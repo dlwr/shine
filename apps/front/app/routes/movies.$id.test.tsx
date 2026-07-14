@@ -336,6 +336,41 @@ describe('MovieDetail Component', () => {
       );
     });
 
+    it('視聴可否バッジが表示される', () => {
+      const loaderData = {
+        movieDetail: {
+          ...mockMovieDetail,
+          availability: [
+            {
+              source: 'tmdb',
+              detail: 'U-NEXT(見放題)',
+              checkedAt: 1_784_067_000,
+            },
+            {
+              source: 'discas',
+              detail: 'Matched: パルム・ドール受賞作品',
+              checkedAt: 1_784_067_000,
+            },
+          ],
+        },
+      };
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.getByText('配信')).toBeInTheDocument();
+      expect(
+        screen.getByTitle('Matched: パルム・ドール受賞作品'),
+      ).toHaveTextContent('TSUTAYA DISCAS');
+    });
+
     it('受賞・ノミネート情報が正しく表示される', () => {
       const loaderData = createLoaderData();
       const parameters = createParameters('movie-123');

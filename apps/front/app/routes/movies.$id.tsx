@@ -6,6 +6,7 @@ import {AwardTree} from '@/components/editorial/award-tree';
 import {BigYear} from '@/components/editorial/big-year';
 import {MetaLine} from '@/components/editorial/meta-line';
 import {PosterFrame} from '@/components/editorial/poster-frame';
+import {AvailabilityBadges} from '@/components/editorial/availability-badges';
 import {WatchMenu} from '@/components/editorial/watch-menu';
 import {Button} from '@/components/ui/button';
 
@@ -50,6 +51,11 @@ type MovieDetailData = {
     url: string;
     title: string;
     description?: string;
+  }>;
+  availability?: Array<{
+    source: string;
+    detail?: string;
+    checkedAt: number;
   }>;
 };
 type LoaderErrorResponse = {
@@ -618,6 +624,10 @@ export default function MovieDetail({
         {/* Watch */}
         <section className="mb-8">
           <p className="font-mono text-xs text-ink-muted mb-3">WATCH</p>
+          <AvailabilityBadges
+            availability={movieDetail.availability}
+            className="mb-3"
+          />
           <WatchMenu
             title={title}
             year={movieDetail.year}

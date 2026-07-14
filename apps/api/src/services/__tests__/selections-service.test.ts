@@ -101,6 +101,67 @@ describe('SelectionsService.reselectMovie with excludeMovieUids', () => {
     }
   });
 
+  it('includes latest ok availability records in the movie payload', async () => {
+    await seedNominatedMovie(database, 'movie-a', 'Movie A');
+    const {movieAvailabilityChecks} =
+      await import('@shine/database/schema/movie-availability-checks');
+    await database.insert(movieAvailabilityChecks).values([
+      {
+        movieUid: 'movie-a',
+        source: 'tmdb',
+        status: 'ok',
+        detail: 'U-NEXT(見放題)',
+        checkedAt: 1000,
+      },
+      {
+        movieUid: 'movie-a',
+        source: 'tmdb',
+        status: 'ok',
+        detail: 'Hulu(見放題)',
+        checkedAt: 2000,
+      },
+      {
+        movieUid: 'movie-a',
+        source: 'geo',
+        status: 'ng',
+        detail: 'No match',
+        checkedAt: 2000,
+      },
+      {
+        movieUid: 'movie-a',
+        source: 'discas',
+        status: 'ok',
+        detail: 'Matched: Movie A',
+        checkedAt: 2000,
+      },
+    ]);
+    const service = new SelectionsService(environment);
+
+    const movie = await service.reselectMovie(
+      'daily',
+      'en',
+      new Date('2026-07-15'),
+    );
+
+    expect(movie.availability).toEqual([
+      {source: 'tmdb', detail: 'Hulu(見放題)', checkedAt: 2000},
+      {source: 'discas', detail: 'Matched: Movie A', checkedAt: 2000},
+    ]);
+  });
+
+  it('returns an empty availability array when no checks exist', async () => {
+    await seedNominatedMovie(database, 'movie-a', 'Movie A');
+    const service = new SelectionsService(environment);
+
+    const movie = await service.reselectMovie(
+      'daily',
+      'en',
+      new Date('2026-07-15'),
+    );
+
+    expect(movie.availability).toEqual([]);
+  });
+
   it('reselects normally when excludeMovieUids is omitted', async () => {
     await seedNominatedMovie(database, 'movie-a', 'Movie A');
     const service = new SelectionsService(environment);
