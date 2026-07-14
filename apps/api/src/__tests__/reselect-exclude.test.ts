@@ -111,4 +111,23 @@ describe('POST /reselect with excludeMovieUids', () => {
     const body = (await response.json()) as {movie: {uid: string}};
     expect(body.movie.uid).toBe('movie-a');
   });
+
+  it('reselects for a future date when date is given', async () => {
+    const response = await postReselect({type: 'daily', date: '2099-01-02'});
+
+    expect(response.status).toBe(200);
+    const database = getDatabase(environment);
+    const {movieSelections} =
+      await import('@shine/database/schema/movie-selections');
+    const rows = await database
+      .select({selectionDate: movieSelections.selectionDate})
+      .from(movieSelections);
+    expect(rows).toEqual([{selectionDate: '2099-01-02'}]);
+  });
+
+  it('rejects an invalid date format', async () => {
+    const response = await postReselect({type: 'daily', date: '2099/01/02'});
+
+    expect(response.status).toBe(400);
+  });
 });

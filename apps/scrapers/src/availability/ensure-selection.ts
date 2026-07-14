@@ -16,6 +16,7 @@ export type SelectionCheckSummary = {
   finalMovie: {uid: string; title: string};
   attempts: SelectionAttempt[];
   exhausted: boolean;
+  date?: string;
 };
 
 export async function ensureAvailableSelection(options: {

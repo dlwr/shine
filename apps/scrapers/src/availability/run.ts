@@ -97,26 +97,47 @@ export function createApiClient(options: {
   }
 
   return {
-    async getSelections(): Promise<Record<SelectionType, string>> {
-      const response = await fetchImpl(`${options.apiUrl}/?locale=ja`);
+    async getNextSelections(): Promise<
+      Record<SelectionType, {uid: string; date: string}>
+    > {
+      const jwt = await login();
+      const response = await fetchImpl(
+        `${options.apiUrl}/admin/preview-selections?locale=ja`,
+        {headers: {Authorization: `Bearer ${jwt}`}},
+      );
       if (!response.ok) {
-        throw new Error(`Failed to fetch selections: HTTP ${response.status}`);
+        throw new Error(
+          `Failed to fetch next selections: HTTP ${response.status}`,
+        );
       }
 
       const body = (await response.json()) as Record<
-        SelectionType,
-        {uid: string}
+        'nextDaily' | 'nextWeekly' | 'nextMonthly',
+        {date: string; movie?: {uid: string}}
       >;
-      return {
-        daily: body.daily.uid,
-        weekly: body.weekly.uid,
-        monthly: body.monthly.uid,
-      };
+      const keys = {
+        daily: 'nextDaily',
+        weekly: 'nextWeekly',
+        monthly: 'nextMonthly',
+      } as const;
+
+      const result = {} as Record<SelectionType, {uid: string; date: string}>;
+      for (const type of Object.keys(keys) as SelectionType[]) {
+        const preview = body[keys[type]];
+        if (!preview?.movie?.uid) {
+          throw new Error(`No next selection for ${type}`);
+        }
+
+        result[type] = {uid: preview.movie.uid, date: preview.date};
+      }
+
+      return result;
     },
 
     async reselect(
       type: SelectionType,
       excludeMovieUids: string[],
+      date: string,
     ): Promise<string> {
       const jwt = await login();
       const response = await fetchImpl(`${options.apiUrl}/reselect`, {
@@ -125,7 +146,7 @@ export function createApiClient(options: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${jwt}`,
         },
-        body: JSON.stringify({type, locale: 'ja', excludeMovieUids}),
+        body: JSON.stringify({type, locale: 'ja', excludeMovieUids, date}),
       });
       if (!response.ok) {
         throw new Error(`Reselect failed: HTTP ${response.status}`);
@@ -209,24 +230,25 @@ export async function runAvailabilityCheck(options: {
       fetchImpl: options.fetchImpl,
     });
 
-  const selections = await client.getSelections();
+  const selections = await client.getNextSelections();
   const summaries: SelectionCheckSummary[] = [];
 
   for (const type of SELECTION_TYPES) {
+    const {uid, date} = selections[type];
     const summary = await ensureAvailableSelection({
       type,
-      initialMovieUid: selections[type],
+      initialMovieUid: uid,
       maxAttempts: options.maxAttempts,
-      loadMovie: async uid => loadMovieForCheck(database, uid),
+      loadMovie: async movieUid => loadMovieForCheck(database, movieUid),
       check: async movie =>
         checkMovieAvailability(database, movie, {
           sourceRunners,
           now: options.now,
         }),
       reselect: async (selectionType, excludeMovieUids) =>
-        client.reselect(selectionType, excludeMovieUids),
+        client.reselect(selectionType, excludeMovieUids, date),
     });
-    summaries.push(summary);
+    summaries.push({...summary, date});
   }
 
   return summaries;

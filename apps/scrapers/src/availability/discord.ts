@@ -2,9 +2,9 @@ import type {SelectionCheckSummary} from './ensure-selection';
 import type {FetchLike} from './types';
 
 const typeLabels = {
-  daily: '今日の映画',
-  weekly: '今週の映画',
-  monthly: '今月の映画',
+  daily: '明日の映画',
+  weekly: '来週の映画',
+  monthly: '来月の映画',
 } as const;
 
 export type DiscordMessage = {
@@ -72,7 +72,7 @@ export function buildDiscordMessage(
   return {
     content: `🎬 セレクション可用性チェック (${date})${hasWarning ? ' — ⚠️ 要確認' : ''}`,
     embeds: summaries.map(summary => ({
-      title: `${typeLabels[summary.type]}: ${summary.finalMovie.title}`,
+      title: `${typeLabels[summary.type]}${summary.date ? ` (${summary.date})` : ''}: ${summary.finalMovie.title}`,
       description: describeSummary(summary),
       color: summary.exhausted ? COLOR_WARNING : COLOR_OK,
     })),

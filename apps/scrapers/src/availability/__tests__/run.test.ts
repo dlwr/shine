@@ -68,10 +68,10 @@ describe('loadMovieForCheck', () => {
 });
 
 describe('createApiClient', () => {
-  const selectionsResponse = {
-    daily: {uid: 'movie-1', title: 'A'},
-    weekly: {uid: 'movie-2', title: 'B'},
-    monthly: {uid: 'movie-3', title: 'C'},
+  const previewResponse = {
+    nextDaily: {date: '2026-07-16', movie: {uid: 'movie-1', title: 'A'}},
+    nextWeekly: {date: '2026-07-17', movie: {uid: 'movie-2', title: 'B'}},
+    nextMonthly: {date: '2026-08-01', movie: {uid: 'movie-3', title: 'C'}},
   };
 
   function createFetchStub() {
@@ -80,20 +80,24 @@ describe('createApiClient', () => {
         return Response.json({token: 'jwt-token'});
       }
 
-      if (url.includes('/reselect')) {
-        const headers = new Headers(init?.headers);
-        if (headers.get('authorization') !== 'Bearer jwt-token') {
-          return Response.json({error: 'unauthorized'}, {status: 401});
-        }
+      const headers = new Headers(init?.headers);
+      if (headers.get('authorization') !== 'Bearer jwt-token') {
+        return Response.json({error: 'unauthorized'}, {status: 401});
+      }
 
+      if (url.includes('/reselect')) {
         return Response.json({type: 'daily', movie: {uid: 'movie-99'}});
       }
 
-      return Response.json(selectionsResponse);
+      if (url.includes('/admin/preview-selections')) {
+        return Response.json(previewResponse);
+      }
+
+      return Response.json({error: 'not found'}, {status: 404});
     });
   }
 
-  it('fetches current selections', async () => {
+  it('fetches next-period selections with dates', async () => {
     const fetchStub = createFetchStub();
     const client = createApiClient({
       apiUrl: 'https://api.example.com',
@@ -101,14 +105,14 @@ describe('createApiClient', () => {
       fetchImpl: fetchStub,
     });
 
-    const selections = await client.getSelections();
+    const selections = await client.getNextSelections();
 
-    expect(selections.daily).toBe('movie-1');
-    expect(selections.weekly).toBe('movie-2');
-    expect(selections.monthly).toBe('movie-3');
+    expect(selections.daily).toEqual({uid: 'movie-1', date: '2026-07-16'});
+    expect(selections.weekly).toEqual({uid: 'movie-2', date: '2026-07-17'});
+    expect(selections.monthly).toEqual({uid: 'movie-3', date: '2026-08-01'});
   });
 
-  it('logs in once and reselects with exclusions', async () => {
+  it('logs in once and reselects the target date with exclusions', async () => {
     const fetchStub = createFetchStub();
     const client = createApiClient({
       apiUrl: 'https://api.example.com',
@@ -116,8 +120,8 @@ describe('createApiClient', () => {
       fetchImpl: fetchStub,
     });
 
-    const newUid = await client.reselect('daily', ['movie-1']);
-    await client.reselect('daily', ['movie-1', 'movie-99']);
+    const newUid = await client.reselect('daily', ['movie-1'], '2026-07-16');
+    await client.reselect('daily', ['movie-1', 'movie-99'], '2026-07-16');
 
     expect(newUid).toBe('movie-99');
     const loginCalls = fetchStub.mock.calls.filter(([url]) =>
@@ -130,6 +134,7 @@ describe('createApiClient', () => {
     const body = JSON.parse((reselectCall?.[1] as RequestInit).body as string);
     expect(body.excludeMovieUids).toEqual(['movie-1']);
     expect(body.type).toBe('daily');
+    expect(body.date).toBe('2026-07-16');
   });
 
   it('throws when login fails', async () => {
@@ -142,6 +147,28 @@ describe('createApiClient', () => {
       fetchImpl: fetchStub,
     });
 
-    await expect(client.reselect('daily', [])).rejects.toThrow('401');
+    await expect(client.reselect('daily', [], '2026-07-16')).rejects.toThrow(
+      '401',
+    );
+  });
+
+  it('throws when a next selection has no movie', async () => {
+    const fetchStub = vi.fn(async (url: string) => {
+      if (url.endsWith('/auth/login')) {
+        return Response.json({token: 'jwt-token'});
+      }
+
+      return Response.json({
+        ...previewResponse,
+        nextDaily: {date: '2026-07-16'},
+      });
+    });
+    const client = createApiClient({
+      apiUrl: 'https://api.example.com',
+      adminPassword: 'secret',
+      fetchImpl: fetchStub,
+    });
+
+    await expect(client.getNextSelections()).rejects.toThrow('daily');
   });
 });

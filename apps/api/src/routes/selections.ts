@@ -232,7 +232,7 @@ selectionsRoutes.post('/reselect', authMiddleware, async c => {
   try {
     const selectionsService = new SelectionsService(c.env);
     const body = await c.req.json();
-    const {type, locale = 'en', excludeMovieUids = []} = body;
+    const {type, locale = 'en', excludeMovieUids = [], date} = body;
 
     if (!type || !['daily', 'weekly', 'monthly'].includes(type)) {
       return c.json({error: 'Invalid selection type'}, 400);
@@ -245,10 +245,18 @@ selectionsRoutes.post('/reselect', authMiddleware, async c => {
       return c.json({error: 'Invalid excludeMovieUids'}, 400);
     }
 
+    if (date !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(date))) {
+      return c.json({error: 'Date must be in YYYY-MM-DD format'}, 400);
+    }
+
+    const targetDate = date
+      ? new Date(`${String(date)}T00:00:00.000Z`)
+      : new Date();
+
     const movie = await selectionsService.reselectMovie(
       type,
       locale,
-      new Date(),
+      targetDate,
       excludeMovieUids,
     );
 

@@ -60,7 +60,7 @@ if (!environment.TURSO_DATABASE_URL || !environment.TURSO_AUTH_TOKEN) {
   process.exit(1);
 }
 
-if (!isDryRun && !adminPassword) {
+if (!adminPassword) {
   console.error('ADMIN_PASSWORD が設定されていません');
   process.exit(1);
 }
