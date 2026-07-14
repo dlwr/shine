@@ -47,7 +47,9 @@ describe('checkUnext', () => {
   });
 
   it('sends the apollo client headers required by the persisted query list', async () => {
-    const fetchSpy = vi.fn(
+    const fetchSpy = vi.fn<
+      (url: string, init?: RequestInit) => Promise<Response>
+    >(
       async () =>
         new Response(fixtureJson, {
           headers: {'Content-Type': 'application/json'},

@@ -9,7 +9,8 @@
     "academy-awards": "tsx src/academy-awards-cli.ts",
     "japan-academy-awards": "tsx src/japan-academy-awards-cli.ts",
     "assign-imdb-ids": "tsx src/assign-imdb-ids-cli.ts",
-    "import-imdb-list": "tsx src/import-imdb-list-cli.ts"
+    "import-imdb-list": "tsx src/import-imdb-list-cli.ts",
+    "availability-check": "tsx src/availability-check-cli.ts"
   },
   "dependencies": {
     "@shine/database": "workspace:*",

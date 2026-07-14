@@ -25,7 +25,9 @@ describe('parseGeoTitles', () => {
 });
 
 describe('checkGeo', () => {
-  const fetchFixture = vi.fn(async () => new Response(fixtureBytes));
+  const fetchFixture = vi.fn<
+    (url: string, init?: RequestInit) => Promise<Response>
+  >(async () => new Response(new Uint8Array(fixtureBytes)));
 
   it('returns ok when a search result matches a target title', async () => {
     const result = await checkGeo(['ゴッドファーザー'], fetchFixture);
@@ -35,7 +37,9 @@ describe('checkGeo', () => {
   });
 
   it('encodes the search query as EUC-JP in the request URL', async () => {
-    const fetchSpy = vi.fn(async () => new Response(fixtureBytes));
+    const fetchSpy = vi.fn<
+      (url: string, init?: RequestInit) => Promise<Response>
+    >(async () => new Response(new Uint8Array(fixtureBytes)));
     await checkGeo(['ゴッドファーザー'], fetchSpy);
 
     const requestedUrl = fetchSpy.mock.calls[0]?.[0] as string;

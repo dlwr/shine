@@ -15,7 +15,9 @@ const providersResponse = {
 
 describe('checkTmdbProviders', () => {
   it('returns ok with provider names when JP providers exist', async () => {
-    const fetchSpy = vi.fn(async () => Response.json(providersResponse));
+    const fetchSpy = vi.fn<
+      (url: string, init?: RequestInit) => Promise<Response>
+    >(async () => Response.json(providersResponse));
 
     const result = await checkTmdbProviders(238, 'api-key', fetchSpy);
 

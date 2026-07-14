@@ -13,3 +13,5 @@ node_modules/
 
 # Generated files
 .astro/
+# Non-UTF-8 test fixtures (EUC-JP / Shift_JIS)
+apps/scrapers/src/availability/__tests__/fixtures/
