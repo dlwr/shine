@@ -42,13 +42,13 @@ describe('FilmCard', () => {
         locale="ja"
       />,
     );
-    expect(screen.getByText('配信')).toBeInTheDocument();
-    expect(screen.getByText('ゲオ宅配レンタル')).toBeInTheDocument();
+    expect(screen.getByText('U-NEXT 見放題')).toBeInTheDocument();
+    expect(screen.getByText('宅配レンタル')).toBeInTheDocument();
   });
 
   it('availabilityがなければバッジを描画しない', () => {
     render(<FilmCard movie={movie} variant="hero" locale="ja" />);
-    expect(screen.queryByText('配信')).not.toBeInTheDocument();
+    expect(screen.queryByText('宅配レンタル')).not.toBeInTheDocument();
   });
 
   it('hero に label/index と受賞チップを描画する', () => {
