@@ -365,10 +365,11 @@ describe('MovieDetail Component', () => {
         />,
       );
 
-      expect(screen.getByText('配信')).toBeInTheDocument();
-      expect(
-        screen.getByTitle('Matched: パルム・ドール受賞作品'),
-      ).toHaveTextContent('TSUTAYA DISCAS');
+      expect(screen.getByText('U-NEXT 見放題')).toBeInTheDocument();
+      expect(screen.getByText('宅配レンタル')).toHaveAttribute(
+        'title',
+        'TSUTAYA DISCAS',
+      );
     });
 
     it('受賞・ノミネート情報が正しく表示される', () => {
