@@ -88,9 +88,5 @@
     "scrapers",
     "front"
   ],
-  "pnpm": {
-    "overrides": {
-      "node-domexception": "link:./packages/node-domexception"
-    }
-  }
+  "packageManager": "pnpm@10.26.2"
 }
