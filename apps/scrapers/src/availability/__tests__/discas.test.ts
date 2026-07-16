@@ -94,6 +94,30 @@ describe('checkDiscas', () => {
     expect(result.status).toBe('ng');
   });
 
+  it('returns ng when the search responds 404 (DISCASの0件ヒット時の挙動)', async () => {
+    const fetchSpy = createSessionFetch(fixtureBytes);
+    const notFoundFetch = vi.fn(async (url: string, init?: RequestInit) => {
+      const cookie = new Headers(init?.headers).get('cookie') ?? '';
+      if (
+        url.includes('searchDvdBd.do') &&
+        cookie.includes('JSESSIONID=abc123') &&
+        cookie.includes('xdid=tracked')
+      ) {
+        return new Response(undefined, {status: 404});
+      }
+
+      return fetchSpy(url, init);
+    });
+
+    const result = await checkDiscas(
+      ['zzzz存在しないタイトルzzzz'],
+      notFoundFetch,
+    );
+
+    expect(result.status).toBe('ng');
+    expect(result.detail).toContain('404');
+  });
+
   it('returns error when the search request fails', async () => {
     const failingFetch = vi.fn(async () => {
       throw new Error('connection reset');

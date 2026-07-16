@@ -97,6 +97,15 @@ export async function checkDiscas(
     );
     const url = `https://movie-tsutaya.tsite.jp/netdvd/dvd/searchDvdBd.do?k=${encodeShiftJisQuery(query)}`;
     const response = await fetchWithSession(url, jar, fetchImpl);
+    // DISCASは検索結果0件のとき404を返す
+    if (response.status === 404) {
+      return {
+        source: 'discas',
+        status: 'ng',
+        detail: 'No results (HTTP 404)',
+      };
+    }
+
     if (!response.ok) {
       return {
         source: 'discas',
