@@ -1,6 +1,8 @@
 packages:
   - apps/*
   - packages/*
+overrides:
+  node-domexception: link:./packages/node-domexception
 ignoredBuiltDependencies:
   - esbuild
   - sharp
