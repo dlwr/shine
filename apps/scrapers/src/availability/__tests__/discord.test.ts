@@ -83,6 +83,43 @@ describe('buildDiscordMessage', () => {
 
     expect(JSON.stringify(message)).toContain('unext');
   });
+
+  it('reports a fetched Japanese title', () => {
+    const summary: SelectionCheckSummary = {
+      ...okSummary,
+      attempts: [
+        {
+          ...okSummary.attempts[0],
+          fetchedJapaneseTitle: 'アモーレス・ペロス',
+        },
+      ],
+    };
+
+    const message = buildDiscordMessage([summary], '2026-07-15');
+
+    expect(JSON.stringify(message)).toContain(
+      '日本語タイトル取得: アモーレス・ペロス',
+    );
+  });
+
+  it('warns when a Japanese title could not be fetched', () => {
+    const summary: SelectionCheckSummary = {
+      ...okSummary,
+      attempts: [
+        {
+          ...okSummary.attempts[0],
+          title: 'Amores perros',
+          japaneseTitleMissing: true,
+        },
+      ],
+    };
+
+    const message = buildDiscordMessage([summary], '2026-07-15');
+
+    expect(JSON.stringify(message)).toContain(
+      '日本語タイトル未取得: Amores perros',
+    );
+  });
 });
 
 describe('sendDiscordNotification', () => {

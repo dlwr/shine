@@ -1,5 +1,27 @@
 import {describe, expect, it} from 'vitest';
-import {normalizeTitle, titleMatches} from '../title-match';
+import {hasJapaneseText, normalizeTitle, titleMatches} from '../title-match';
+
+describe('hasJapaneseText', () => {
+  it('detects katakana', () => {
+    expect(hasJapaneseText('アモーレス・ペロス')).toBe(true);
+  });
+
+  it('detects hiragana', () => {
+    expect(hasJapaneseText('となりのトトロ')).toBe(true);
+  });
+
+  it('detects kanji', () => {
+    expect(hasJapaneseText('七人の侍')).toBe(true);
+  });
+
+  it('returns false for Latin-only text', () => {
+    expect(hasJapaneseText('Amores perros')).toBe(false);
+  });
+
+  it('returns false for empty text', () => {
+    expect(hasJapaneseText('')).toBe(false);
+  });
+});
 
 describe('normalizeTitle', () => {
   it('lowercases and trims', () => {

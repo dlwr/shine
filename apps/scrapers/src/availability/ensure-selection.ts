@@ -2,13 +2,20 @@ import type {AvailabilityDecision, MovieToCheck} from './checker';
 
 export type SelectionType = 'daily' | 'weekly' | 'monthly';
 
-export type LoadedMovie = MovieToCheck & {displayTitle: string};
+export type LoadedMovie = MovieToCheck & {
+  displayTitle: string;
+  hasJapaneseTitle?: boolean;
+  fetchedJapaneseTitle?: string;
+  japaneseTitleMissing?: boolean;
+};
 
 export type SelectionAttempt = {
   movieUid: string;
   title: string;
   available: boolean;
   results: AvailabilityDecision['results'];
+  fetchedJapaneseTitle?: string;
+  japaneseTitleMissing?: boolean;
 };
 
 export type SelectionCheckSummary = {
@@ -44,6 +51,8 @@ export async function ensureAvailableSelection(options: {
       title: currentMovie.displayTitle,
       available: decision.available,
       results: decision.results,
+      fetchedJapaneseTitle: currentMovie.fetchedJapaneseTitle,
+      japaneseTitleMissing: currentMovie.japaneseTitleMissing,
     });
     checkedUids.push(currentUid);
 

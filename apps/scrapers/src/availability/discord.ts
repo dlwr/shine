@@ -39,6 +39,16 @@ function describeSummary(summary: SelectionCheckSummary): string {
     }
   }
 
+  for (const attempt of summary.attempts) {
+    if (attempt.fetchedJapaneseTitle) {
+      lines.push(`📝 日本語タイトル取得: ${attempt.fetchedJapaneseTitle}`);
+    }
+
+    if (attempt.japaneseTitleMissing) {
+      lines.push(`⚠️ 日本語タイトル未取得: ${attempt.title}`);
+    }
+  }
+
   const errors = summary.attempts
     .flatMap(attempt => attempt.results)
     .filter(result => result.status === 'error');

@@ -1,3 +1,7 @@
+export function hasJapaneseText(text: string): boolean {
+  return /[぀-ヿ一-鿿]/.test(text);
+}
+
 const editionSuffixPatterns = [
   /(?:デジタル)?[・\s]*(?:リストア|リマスター)版$/,
   /(?:4k)[・\s]*(?:レストア|リマスター)版?$/,
