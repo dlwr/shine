@@ -1,4 +1,4 @@
-import {and, eq, getDatabase} from '@shine/database';
+import {and, eq, getDatabase, ne} from '@shine/database';
 import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import type {
   AvailabilitySource,
@@ -74,13 +74,35 @@ async function loadFreshResult(
   return {source, status: latest.status, detail: latest.detail ?? undefined};
 }
 
+const DEFAULT_RETRY_DELAY_MS = 3000;
+
+const sleep = async (ms: number) =>
+  new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+
+export async function deleteNonOkChecks(
+  database: Database,
+  movieUid: string,
+): Promise<void> {
+  await database
+    .delete(movieAvailabilityChecks)
+    .where(
+      and(
+        eq(movieAvailabilityChecks.movieUid, movieUid),
+        ne(movieAvailabilityChecks.status, 'ok'),
+      ),
+    );
+}
+
 export async function checkMovieAvailability(
   database: Database,
   movie: MovieToCheck,
-  options: {sourceRunners: SourceRunners; now?: Date},
+  options: {sourceRunners: SourceRunners; now?: Date; retryDelayMs?: number},
 ): Promise<AvailabilityDecision> {
   const now = options.now ?? new Date();
   const nowEpoch = Math.floor(now.getTime() / 1000);
+  const retryDelayMs = options.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS;
   const results: AvailabilityDecision['results'] = [];
 
   for (const [source, runner] of Object.entries(options.sourceRunners) as Array<
@@ -92,7 +114,12 @@ export async function checkMovieAvailability(
       continue;
     }
 
-    const result = await runner(movie);
+    let result = await runner(movie);
+    if (result.status === 'error') {
+      await sleep(retryDelayMs);
+      result = await runner(movie);
+    }
+
     results.push({...result, fromCache: false});
     await database.insert(movieAvailabilityChecks).values({
       movieUid: movie.uid,

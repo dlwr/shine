@@ -7,7 +7,7 @@ import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability
 import {movies} from '@shine/database/schema/movies';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {checkMovieAvailability} from '../checker';
+import {checkMovieAvailability, deleteNonOkChecks} from '../checker';
 import type {SourceCheckResult} from '../types';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -172,6 +172,64 @@ describe('checkMovieAvailability', () => {
     expect(decision.available).toBe(true);
   });
 
+  it('retries once when a runner returns error and uses the retry result', async () => {
+    let calls = 0;
+    const runners = {
+      tmdb: vi.fn(async (): Promise<SourceCheckResult> => {
+        calls++;
+        return calls === 1
+          ? {source: 'tmdb', status: 'error', detail: 'fetch failed'}
+          : okResult('tmdb');
+      }),
+    };
+
+    const decision = await checkMovieAvailability(database, movie, {
+      sourceRunners: runners,
+      now,
+      retryDelayMs: 0,
+    });
+
+    expect(runners.tmdb).toHaveBeenCalledTimes(2);
+    expect(decision.available).toBe(true);
+    const rows = await database.select().from(movieAvailabilityChecks);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].status).toBe('ok');
+  });
+
+  it('reports error when the retry also fails', async () => {
+    const runners = {
+      tmdb: vi.fn(
+        async (): Promise<SourceCheckResult> => ({
+          source: 'tmdb',
+          status: 'error',
+          detail: 'fetch failed',
+        }),
+      ),
+    };
+
+    const decision = await checkMovieAvailability(database, movie, {
+      sourceRunners: runners,
+      now,
+      retryDelayMs: 0,
+    });
+
+    expect(runners.tmdb).toHaveBeenCalledTimes(2);
+    expect(decision.available).toBe(false);
+    expect(decision.results[0].status).toBe('error');
+  });
+
+  it('does not retry ng results', async () => {
+    const runners = {tmdb: vi.fn(async () => ngResult('tmdb'))};
+
+    await checkMovieAvailability(database, movie, {
+      sourceRunners: runners,
+      now,
+      retryDelayMs: 0,
+    });
+
+    expect(runners.tmdb).toHaveBeenCalledTimes(1);
+  });
+
   it('treats error results as unavailable but reports them', async () => {
     const runners = {
       unext: vi.fn(
@@ -190,5 +248,52 @@ describe('checkMovieAvailability', () => {
 
     expect(decision.available).toBe(false);
     expect(decision.results.some(r => r.status === 'error')).toBe(true);
+  });
+});
+
+describe('deleteNonOkChecks', () => {
+  let database: ReturnType<typeof getDatabase>;
+
+  beforeEach(async () => {
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
+    const environment: Environment = {
+      TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
+      TURSO_AUTH_TOKEN: '',
+    };
+    database = getDatabase(environment);
+    await migrate(database, {migrationsFolder});
+    await database.insert(movies).values([{uid: 'movie-a'}, {uid: 'movie-b'}]);
+  });
+
+  it('deletes ng and error records but keeps ok records', async () => {
+    await database.insert(movieAvailabilityChecks).values([
+      {movieUid: 'movie-a', source: 'tmdb', status: 'ok', checkedAt: nowEpoch},
+      {movieUid: 'movie-a', source: 'unext', status: 'ng', checkedAt: nowEpoch},
+      {
+        movieUid: 'movie-a',
+        source: 'discas',
+        status: 'error',
+        checkedAt: nowEpoch,
+      },
+    ]);
+
+    await deleteNonOkChecks(database, 'movie-a');
+
+    const rows = await database.select().from(movieAvailabilityChecks);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].status).toBe('ok');
+  });
+
+  it('does not touch other movies', async () => {
+    await database.insert(movieAvailabilityChecks).values([
+      {movieUid: 'movie-a', source: 'unext', status: 'ng', checkedAt: nowEpoch},
+      {movieUid: 'movie-b', source: 'unext', status: 'ng', checkedAt: nowEpoch},
+    ]);
+
+    await deleteNonOkChecks(database, 'movie-a');
+
+    const rows = await database.select().from(movieAvailabilityChecks);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].movieUid).toBe('movie-b');
   });
 });
