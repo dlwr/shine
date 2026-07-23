@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {getDatabase, type Environment} from '@shine/database';
+import {eq, getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
@@ -91,6 +91,24 @@ describe('loadMovieForCheck', () => {
     });
 
     const movie = await loadMovieForCheck(database, 'movie-b');
+
+    expect(movie.hasJapaneseTitle).toBe(false);
+  });
+
+  it('reports hasJapaneseTitle=false when the ja translation has no Japanese script', async () => {
+    await database.insert(movies).values({
+      uid: 'movie-c',
+      year: 2000,
+      imdbId: 'tt0245712',
+    });
+    await database.insert(translations).values({
+      resourceType: 'movie_title',
+      resourceUid: 'movie-c',
+      languageCode: 'ja',
+      content: 'Amores perros',
+    });
+
+    const movie = await loadMovieForCheck(database, 'movie-c');
 
     expect(movie.hasJapaneseTitle).toBe(false);
   });
@@ -190,6 +208,61 @@ describe('loadMovieEnsuringJapaneseTitle', () => {
 
     expect(movie.japaneseTitleMissing).toBe(true);
     expect(movie.titles[0]).toBe('Amores perros');
+  });
+
+  it('overwrites a non-Japanese ja translation using the fetched TMDb title', async () => {
+    await database.insert(translations).values({
+      resourceType: 'movie_title',
+      resourceUid: 'movie-b',
+      languageCode: 'ja',
+      content: 'Amores perros',
+    });
+    await database.insert(movieAvailabilityChecks).values({
+      movieUid: 'movie-b',
+      source: 'discas',
+      status: 'ng',
+      checkedAt: 100,
+    });
+    const refreshTmdbData = vi.fn(async () => {
+      // 管理APIは既存のja行をスキップするので何も変わらない
+    });
+    const fetchJapaneseTitle = vi.fn(async () => 'アモーレス・ペロス');
+    const saveJapaneseTitle = vi.fn(async (_uid: string, title: string) => {
+      await database
+        .update(translations)
+        .set({content: title})
+        .where(eq(translations.languageCode, 'ja'));
+    });
+
+    const movie = await loadMovieEnsuringJapaneseTitle(database, 'movie-b', {
+      refreshTmdbData,
+      fetchJapaneseTitle,
+      saveJapaneseTitle,
+    });
+
+    expect(saveJapaneseTitle).toHaveBeenCalledWith(
+      'movie-b',
+      'アモーレス・ペロス',
+    );
+    expect(movie.titles[0]).toBe('アモーレス・ペロス');
+    expect(movie.fetchedJapaneseTitle).toBe('アモーレス・ペロス');
+    const cacheRows = await database.select().from(movieAvailabilityChecks);
+    expect(cacheRows).toHaveLength(0);
+  });
+
+  it('does not save a fetched title that has no Japanese script', async () => {
+    const refreshTmdbData = vi.fn(async () => {});
+    const fetchJapaneseTitle = vi.fn(async () => 'Amores perros');
+    const saveJapaneseTitle = vi.fn(async () => {});
+
+    const movie = await loadMovieEnsuringJapaneseTitle(database, 'movie-b', {
+      refreshTmdbData,
+      fetchJapaneseTitle,
+      saveJapaneseTitle,
+    });
+
+    expect(saveJapaneseTitle).not.toHaveBeenCalled();
+    expect(movie.japaneseTitleMissing).toBe(true);
   });
 
   it('does not call the API when a Japanese title already exists', async () => {

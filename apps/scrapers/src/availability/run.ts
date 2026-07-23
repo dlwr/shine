@@ -1,7 +1,13 @@
 import {and, eq, getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
-import {findTMDBByImdbId, saveTMDBId} from '../common/tmdb-utilities';
+import {
+  fetchJapaneseTitleFromTMDB,
+  findTMDBByImdbId,
+  saveJapaneseTranslation,
+  saveTMDBId,
+} from '../common/tmdb-utilities';
+import {hasJapaneseText} from './title-match';
 import {
   checkMovieAvailability,
   deleteNonOkChecks,
@@ -67,7 +73,7 @@ export async function loadMovieForCheck(
     uid: movie.uid,
     titles,
     displayTitle: titles[0] ?? movie.uid,
-    hasJapaneseTitle: japaneseTitles.some(row => row.content.trim() !== ''),
+    hasJapaneseTitle: japaneseTitles.some(row => hasJapaneseText(row.content)),
     tmdbId: movie.tmdbId ?? undefined,
     imdbId: movie.imdbId ?? undefined,
     year: movie.year ?? undefined,
@@ -79,6 +85,11 @@ export async function loadMovieEnsuringJapaneseTitle(
   movieUid: string,
   options: {
     refreshTmdbData: (movieUid: string, imdbId: string) => Promise<void>;
+    fetchJapaneseTitle?: (
+      imdbId: string,
+      tmdbId: number | undefined,
+    ) => Promise<string | undefined>;
+    saveJapaneseTitle?: (movieUid: string, title: string) => Promise<void>;
   },
 ): Promise<LoadedMovie> {
   const movie = await loadMovieForCheck(database, movieUid);
@@ -95,6 +106,25 @@ export async function loadMovieEnsuringJapaneseTitle(
   } catch (error) {
     console.error(`Failed to refresh TMDb data for ${movieUid}:`, error);
     return {...movie, japaneseTitleMissing: true};
+  }
+
+  // 管理APIは既存の翻訳レコードを上書きしないため、
+  // ja行が日本語でない場合はTMDbのjaタイトルでupsertする
+  if (options.fetchJapaneseTitle && options.saveJapaneseTitle) {
+    try {
+      const title = await options.fetchJapaneseTitle(
+        movie.imdbId,
+        movie.tmdbId,
+      );
+      if (title && hasJapaneseText(title)) {
+        await options.saveJapaneseTitle(movieUid, title);
+      }
+    } catch (error) {
+      console.error(
+        `Failed to fetch Japanese title for ${movieUid}:`,
+        error,
+      );
+    }
   }
 
   const reloaded = await loadMovieForCheck(database, movieUid);
@@ -299,6 +329,10 @@ export async function runAvailabilityCheck(options: {
         loadMovieEnsuringJapaneseTitle(database, movieUid, {
           refreshTmdbData: async (uid, imdbId) =>
             client.refreshTmdbData(uid, imdbId),
+          fetchJapaneseTitle: async (imdbId, tmdbId) =>
+            fetchJapaneseTitleFromTMDB(imdbId, tmdbId, options.environment),
+          saveJapaneseTitle: async (uid, title) =>
+            saveJapaneseTranslation(uid, title, options.environment),
         }),
       check: async movie =>
         checkMovieAvailability(database, movie, {
