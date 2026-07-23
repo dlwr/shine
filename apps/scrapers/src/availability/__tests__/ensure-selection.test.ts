@@ -116,4 +116,37 @@ describe('ensureAvailableSelection', () => {
     expect(summary.finalMovie.uid).toBe('movie-10');
     expect(reselect).toHaveBeenCalledTimes(9);
   });
+
+  it('propagates Japanese-title info from the loaded movie to the attempt', async () => {
+    const check = vi.fn(async () => availabilityOf(true));
+    const summary = await ensureAvailableSelection({
+      type: 'daily',
+      initialMovieUid: 'movie-1',
+      async loadMovie(uid) {
+        return {
+          ...movieCatalog[uid],
+          fetchedJapaneseTitle: 'アモーレス・ペロス',
+        };
+      },
+      check,
+      reselect: vi.fn(),
+    });
+
+    expect(summary.attempts[0].fetchedJapaneseTitle).toBe('アモーレス・ペロス');
+  });
+
+  it('propagates japaneseTitleMissing to the attempt', async () => {
+    const check = vi.fn(async () => availabilityOf(true));
+    const summary = await ensureAvailableSelection({
+      type: 'daily',
+      initialMovieUid: 'movie-1',
+      async loadMovie(uid) {
+        return {...movieCatalog[uid], japaneseTitleMissing: true};
+      },
+      check,
+      reselect: vi.fn(),
+    });
+
+    expect(summary.attempts[0].japaneseTitleMissing).toBe(true);
+  });
 });
