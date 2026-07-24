@@ -34,17 +34,38 @@ export function normalizeTitle(title: string): string {
   return result;
 }
 
+function candidateVariants(candidate: string): string[] {
+  const variants = [candidate];
+  const parenSegments = [...candidate.matchAll(/[（(]([^）)]+)[）)]/g)];
+  if (parenSegments.length > 0) {
+    variants.push(
+      candidate.replaceAll(/[（(][^）)]*[）)]/g, ' '),
+      ...parenSegments.map(segment => segment[1]),
+    );
+  }
+
+  return variants;
+}
+
+function comparisonKey(title: string): string {
+  return normalizeTitle(title)
+    .replaceAll(' ', '')
+    .replace(/[!?]+$/, '');
+}
+
 export function titleMatches(
   candidate: string,
   targetTitles: string[],
 ): boolean {
-  const normalizedCandidate = normalizeTitle(candidate).replaceAll(' ', '');
-  if (normalizedCandidate === '') {
+  const candidateKeys = candidateVariants(candidate)
+    .map(variant => comparisonKey(variant))
+    .filter(key => key !== '');
+  if (candidateKeys.length === 0) {
     return false;
   }
 
   return targetTitles.some(target => {
-    const normalizedTarget = normalizeTitle(target).replaceAll(' ', '');
-    return normalizedTarget !== '' && normalizedTarget === normalizedCandidate;
+    const targetKey = comparisonKey(target);
+    return targetKey !== '' && candidateKeys.includes(targetKey);
   });
 }

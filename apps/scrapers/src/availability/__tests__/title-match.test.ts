@@ -93,4 +93,34 @@ describe('titleMatches', () => {
   it('ignores empty target titles', () => {
     expect(titleMatches('ゴッドファーザー', ['', '  '])).toBe(false);
   });
+
+  it('matches a parenthesized alternate title', () => {
+    expect(
+      titleMatches('ブードゥリアン（私はゾンビと歩いた！）', [
+        '私はゾンビと歩いた',
+      ]),
+    ).toBe(true);
+  });
+
+  it('matches the part outside parentheses', () => {
+    expect(
+      titleMatches('ブードゥリアン（私はゾンビと歩いた！）', [
+        'ブードゥリアン',
+      ]),
+    ).toBe(true);
+  });
+
+  it('ignores a trailing exclamation mark difference', () => {
+    expect(titleMatches('私はゾンビと歩いた！', ['私はゾンビと歩いた'])).toBe(
+      true,
+    );
+  });
+
+  it('does not match a different title inside parentheses', () => {
+    expect(
+      titleMatches('ブードゥリアン（私はゾンビと歩いた！）', [
+        'ゾンビと歩いた',
+      ]),
+    ).toBe(false);
+  });
 });
