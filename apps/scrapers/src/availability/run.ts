@@ -20,7 +20,6 @@ import {
   type SelectionType,
 } from './ensure-selection';
 import {checkDiscas} from './sources/discas';
-import {checkGeo} from './sources/geo';
 import {checkTmdbProviders} from './sources/tmdb';
 import {checkUnext} from './sources/unext';
 import type {FetchLike} from './types';
@@ -120,10 +119,7 @@ export async function loadMovieEnsuringJapaneseTitle(
         await options.saveJapaneseTitle(movieUid, title);
       }
     } catch (error) {
-      console.error(
-        `Failed to fetch Japanese title for ${movieUid}:`,
-        error,
-      );
+      console.error(`Failed to fetch Japanese title for ${movieUid}:`, error);
     }
   }
 
@@ -286,10 +282,6 @@ export function buildSourceRunners(options: {
     async discas(movie) {
       await sleep(waitMs);
       return checkDiscas(movie.titles, fetchImpl);
-    },
-    async geo(movie) {
-      await sleep(waitMs);
-      return checkGeo(movie.titles, fetchImpl);
     },
   };
 }

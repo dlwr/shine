@@ -9,6 +9,7 @@ import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {
+  buildSourceRunners,
   createApiClient,
   loadMovieEnsuringJapaneseTitle,
   loadMovieForCheck,
@@ -430,5 +431,14 @@ describe('createApiClient', () => {
     });
 
     await expect(client.getNextSelections()).rejects.toThrow('daily');
+  });
+});
+
+describe('buildSourceRunners', () => {
+  it('does not include geo (blocked with constant HTTP 403)', () => {
+    const runners = buildSourceRunners({
+      environment: {TURSO_DATABASE_URL: '', TURSO_AUTH_TOKEN: ''},
+    });
+    expect(Object.keys(runners)).toEqual(['tmdb', 'unext', 'discas']);
   });
 });
