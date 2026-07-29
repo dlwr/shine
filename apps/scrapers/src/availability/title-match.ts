@@ -36,10 +36,10 @@ export function normalizeTitle(title: string): string {
 
 function candidateVariants(candidate: string): string[] {
   const variants = [candidate];
-  const parenSegments = [...candidate.matchAll(/[（(]([^）)]+)[）)]/g)];
+  const parenSegments = [...candidate.matchAll(/[（(《]([^）)》]+)[）)》]/g)];
   if (parenSegments.length > 0) {
     variants.push(
-      candidate.replaceAll(/[（(][^）)]*[）)]/g, ' '),
+      candidate.replaceAll(/[（(《][^）)》]*[）)》]/g, ' '),
       ...parenSegments.map(segment => segment[1]),
     );
   }
