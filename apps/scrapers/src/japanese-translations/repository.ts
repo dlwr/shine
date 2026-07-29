@@ -4,6 +4,7 @@
 import {and, eq} from 'drizzle-orm';
 import {type getDatabase} from '@shine/database';
 import {movies, translations} from '@shine/database/schema/index';
+import {selectMoviesNeedingJapaneseTitle} from './select-targets';
 
 /**
  * 日本語翻訳用の型定義
@@ -29,13 +30,15 @@ export type Translation = {
 
 /**
  * 日本語翻訳が未登録の映画データを取得する
- * @param db D1データベース
+ * @param database Drizzleデータベース
  * @param limit 取得件数（0の場合は全件取得）
- * @returns 日本語翻訳が未登録の映画データ
+ * @param includeNonJapanese 原題がそのまま ja として保存されている映画も含める
+ * @returns 取得対象の映画データ
  */
 export async function getMoviesWithoutJapaneseTranslation(
   database: ReturnType<typeof getDatabase>,
   limit = 20,
+  includeNonJapanese = false,
 ): Promise<Movie[]> {
   // 英語タイトルを取得するために、まず英語の翻訳データを含む映画を取得
   const moviesWithEnglishTitlesQuery = database
@@ -76,6 +79,7 @@ export async function getMoviesWithoutJapaneseTranslation(
   const moviesWithJapaneseTitles = await database
     .select({
       movieUid: translations.resourceUid,
+      content: translations.content,
     })
     .from(translations)
     .where(
@@ -85,14 +89,10 @@ export async function getMoviesWithoutJapaneseTranslation(
       ),
     );
 
-  // 日本語翻訳が存在する映画UIDのセットを作成
-  const japaneseMovieUids = new Set(
-    moviesWithJapaneseTitles.map((movie: {movieUid: string}) => movie.movieUid),
-  );
-
-  // 日本語翻訳が存在しない映画のみをフィルタリング
-  const moviesWithoutJapanese = [...movieData.values()].filter(
-    (movie: Movie) => !japaneseMovieUids.has(movie.uid),
+  const moviesWithoutJapanese = selectMoviesNeedingJapaneseTitle(
+    [...movieData.values()] as Movie[],
+    moviesWithJapaneseTitles,
+    {includeNonJapanese},
   );
 
   // 英語タイトルを取得

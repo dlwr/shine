@@ -7,10 +7,12 @@ import {
   saveJapaneseTranslation,
   saveTMDBId,
 } from '../common/tmdb-utilities';
+import {fetchJapaneseAlternativeTitles} from './alternative-titles';
 import {hasJapaneseText} from './title-match';
 import {
   checkMovieAvailability,
   deleteNonOkChecks,
+  type MovieToCheck,
   type SourceRunners,
 } from './checker';
 import {
@@ -253,6 +255,27 @@ export function buildSourceRunners(options: {
   const fetchImpl = options.fetchImpl ?? fetch;
   const waitMs = options.waitMs ?? SCRAPE_WAIT_MS;
   const tmdbApiKey = options.environment.TMDB_API_KEY ?? '';
+  const alternativeTitlesCache = new Map<string, Promise<string[]>>();
+
+  // 検索クエリは先頭のタイトルが使われるため、別題は必ず後ろに足す
+  async function titlesForSearch(movie: MovieToCheck): Promise<string[]> {
+    if (!movie.tmdbId) {
+      return movie.titles;
+    }
+
+    let pending = alternativeTitlesCache.get(movie.uid);
+    if (!pending) {
+      pending = fetchJapaneseAlternativeTitles(
+        movie.tmdbId,
+        tmdbApiKey,
+        fetchImpl,
+      );
+      alternativeTitlesCache.set(movie.uid, pending);
+    }
+
+    const alternativeTitles = await pending;
+    return [...new Set([...movie.titles, ...alternativeTitles])];
+  }
 
   return {
     async tmdb(movie) {
@@ -277,11 +300,11 @@ export function buildSourceRunners(options: {
     },
     async unext(movie) {
       await sleep(waitMs);
-      return checkUnext(movie.titles, fetchImpl);
+      return checkUnext(await titlesForSearch(movie), fetchImpl);
     },
     async discas(movie) {
       await sleep(waitMs);
-      return checkDiscas(movie.titles, fetchImpl);
+      return checkDiscas(await titlesForSearch(movie), fetchImpl);
     },
   };
 }
