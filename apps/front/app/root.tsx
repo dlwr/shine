@@ -13,12 +13,16 @@ import {NO_FLASH_SCRIPT} from '@/lib/theme';
 import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
 import {SITE_URL} from '@/lib/meta';
 
-export function loader({request}: Route.LoaderArgs) {
+export function loader({context, request}: Route.LoaderArgs) {
   const {pathname} = new URL(request.url);
+  const environment = (
+    context.cloudflare as {env?: {PUBLIC_WEB_ANALYTICS_TOKEN?: string}}
+  )?.env;
 
   return {
     locale: getLocaleFromRequest(request),
     canonicalUrl: new URL(pathname, SITE_URL).toString(),
+    webAnalyticsToken: environment?.PUBLIC_WEB_ANALYTICS_TOKEN || undefined,
   };
 }
 
@@ -57,6 +61,7 @@ export function Layout({children}: {children: React.ReactNode}) {
   const rootData = useRouteLoaderData<typeof loader>('root');
   const locale = rootData?.locale ?? DEFAULT_LOCALE;
   const canonicalUrl = rootData?.canonicalUrl;
+  const webAnalyticsToken = rootData?.webAnalyticsToken;
 
   return (
     <html lang={locale} className="h-full">
@@ -90,6 +95,13 @@ export function Layout({children}: {children: React.ReactNode}) {
         {children}
         <ScrollRestoration />
         <Scripts />
+        {webAnalyticsToken && (
+          <script
+            defer
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon={JSON.stringify({token: webAnalyticsToken})}
+          />
+        )}
       </body>
     </html>
   );
