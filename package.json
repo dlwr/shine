@@ -21,7 +21,7 @@
     "scrapers:academy-awards": "pnpm --filter @shine/scrapers tsx src/academy-awards-cli.ts",
     "scrapers:japan-academy-awards": "pnpm --filter @shine/scrapers tsx src/japan-academy-awards-cli.ts",
     "scrapers:movie-posters": "pnpm --filter @shine/scrapers tsx src/movie-posters-cli.ts",
-    "scrapers:japanese-translations": "pnpm --filter @shine/scrapers tsx src/japanese-translations-cli.ts",
+    "scrapers:japanese-translations": "pnpm --filter @shine/scrapers run japanese-translations",
     "scrapers:cannes-film-festival": "pnpm --filter @shine/scrapers tsx src/cannes-film-festival-cli.ts",
     "scrapers:movie-import": "pnpm --filter @shine/scrapers tsx src/movie-import-from-list-cli.ts",
     "scrapers:import-imdb-list": "pnpm --filter @shine/scrapers tsx src/import-imdb-list-cli.ts",
