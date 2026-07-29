@@ -135,8 +135,17 @@ const createLoaderData = (
 ): LoaderResult => ({
   movieDetail: mockMovieDetail,
   turnstileSiteKey: 'test-site-key',
+  locale: 'ja',
   ...overrides,
 });
+
+const successMeta = () =>
+  meta(
+    createMetaArguments(
+      {movieDetail: mockMovieDetail, locale: 'ja'},
+      {id: 'movie-123'},
+    ),
+  );
 
 const createMatches = (
   loaderData: LoaderResult,
@@ -193,7 +202,7 @@ describe('MovieDetail Component', () => {
 
       const context = createMockContext();
       const parameters = {id: 'movie-123'};
-      const request = {signal: undefined} as unknown as Request;
+      const request = new Request('http://localhost:3000/movies/movie-123');
       const result = await loader(
         createLoaderArguments(context, request, parameters, {
           matches: createMatches(
@@ -206,12 +215,13 @@ describe('MovieDetail Component', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:8787/movies/movie-123',
         {
-          signal: undefined,
+          signal: request.signal,
         },
       );
       expect(result).toEqual({
         movieDetail: mockMovieDetail,
         turnstileSiteKey: 'test-site-key',
+        locale: 'ja',
       });
     });
 
@@ -224,7 +234,7 @@ describe('MovieDetail Component', () => {
 
       const context = createMockContext();
       const parameters = {id: 'non-existent'};
-      const request = {signal: undefined} as unknown as Request;
+      const request = new Request('http://localhost:3000/movies/non-existent');
       const result = await loader(
         createLoaderArguments(context, request, parameters, {
           matches: createMatches(
@@ -237,6 +247,7 @@ describe('MovieDetail Component', () => {
       expect(result).toEqual({
         error: '映画が見つかりませんでした',
         status: 404,
+        locale: 'ja',
       });
     });
 
@@ -246,7 +257,7 @@ describe('MovieDetail Component', () => {
 
       const context = createMockContext();
       const parameters = {id: 'movie-123'};
-      const request = {signal: undefined} as unknown as Request;
+      const request = new Request('http://localhost:3000/movies/movie-123');
       const result = await loader(
         createLoaderArguments(context, request, parameters, {
           matches: createMatches(
@@ -259,43 +270,110 @@ describe('MovieDetail Component', () => {
       expect(result).toEqual({
         error: 'APIへの接続に失敗しました',
         status: 500,
+        locale: 'ja',
       });
     });
   });
 
   describe('meta', () => {
-    it('映画データが正常な場合は映画タイトルを含むメタデータを返す', () => {
-      const loaderData = {
-        movieDetail: mockMovieDetail,
-      };
-
-      const result = meta(createMetaArguments(loaderData, {id: 'movie-123'}));
-
-      expect(result).toEqual([
-        {title: 'パルム・ドール受賞作品 (2023) | SHINE'},
-        {
-          name: 'description',
-          content:
-            'パルム・ドール受賞作品 (2023年) の詳細情報。受賞歴、ポスター、その他の情報をご覧いただけます。',
-        },
-      ]);
+    it('タイトルに映画名と製作年を含む', () => {
+      expect(successMeta()).toContainEqual({
+        title: 'パルム・ドール受賞作品 (2023) | SHINE',
+      });
     });
 
-    it('エラー状態の場合はデフォルトメタデータを返す', () => {
-      const loaderData = {
-        error: '映画が見つかりませんでした',
-        status: 404,
-      };
+    it('説明文に選出元の団体名を含む', () => {
+      expect(successMeta()).toContainEqual({
+        name: 'description',
+        content:
+          '『パルム・ドール受賞作品』(2023年)。Cannes・Oscarsに選出。いま配信・レンタルで観られるかをまとめています。',
+      });
+    });
 
-      const result = meta(createMetaArguments(loaderData, {id: 'movie-123'}));
+    it('og:imageに映画のポスターを返す', () => {
+      expect(successMeta()).toContainEqual({
+        property: 'og:image',
+        content: 'https://example.com/poster-large.jpg',
+      });
+    });
 
-      expect(result).toEqual([
-        {title: '映画が見つかりません | SHINE'},
-        {
-          name: 'description',
-          content: '指定された映画は見つかりませんでした。',
-        },
-      ]);
+    it('TMDbのポスターは共有用サイズへ書き換える', () => {
+      const result = meta(
+        createMetaArguments(
+          {
+            movieDetail: {
+              ...mockMovieDetail,
+              posterUrl: 'https://image.tmdb.org/t/p/w500/poster.jpg',
+            },
+            locale: 'ja',
+          },
+          {id: 'movie-123'},
+        ),
+      );
+
+      expect(result).toContainEqual({
+        property: 'og:image',
+        content: 'https://image.tmdb.org/t/p/w780/poster.jpg',
+      });
+    });
+
+    it('ポスターが無ければog:imageを含まない', () => {
+      const result = meta(
+        createMetaArguments(
+          {
+            movieDetail: {...mockMovieDetail, posterUrl: undefined},
+            locale: 'ja',
+          },
+          {id: 'movie-123'},
+        ),
+      );
+
+      expect(result).not.toContainEqual(
+        expect.objectContaining({property: 'og:image'}),
+      );
+    });
+
+    it('og:urlに映画詳細ページの絶対URLを返す', () => {
+      expect(successMeta()).toContainEqual({
+        property: 'og:url',
+        content: 'https://shine-film.com/movies/movie-123',
+      });
+    });
+
+    it('og:typeはarticleになる', () => {
+      expect(successMeta()).toContainEqual({
+        property: 'og:type',
+        content: 'article',
+      });
+    });
+
+    it('選出情報が無い場合は団体名を省いた説明文を返す', () => {
+      const result = meta(
+        createMetaArguments(
+          {
+            movieDetail: {...mockMovieDetail, nominations: []},
+            locale: 'ja',
+          },
+          {id: 'movie-123'},
+        ),
+      );
+
+      expect(result).toContainEqual({
+        name: 'description',
+        content:
+          '『パルム・ドール受賞作品』(2023年)。いま配信・レンタルで観られるかをまとめています。',
+      });
+    });
+
+    it('エラー状態の場合はエラー用のタイトルを返す', () => {
+      const result = meta(
+        createMetaArguments(
+          {error: '映画が見つかりませんでした', status: 404, locale: 'ja'},
+          {id: 'movie-123'},
+        ),
+      );
+
+      expect(result).toContainEqual({title: '映画が見つかりません | SHINE'});
     });
   });
 
@@ -338,6 +416,7 @@ describe('MovieDetail Component', () => {
 
     it('視聴可否バッジが表示される', () => {
       const loaderData = {
+        locale: 'ja' as const,
         movieDetail: {
           ...mockMovieDetail,
           availability: [

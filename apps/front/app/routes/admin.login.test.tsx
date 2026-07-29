@@ -170,8 +170,16 @@ describe('AdminLogin Component', () => {
                 id: 'root',
                 params: {},
                 pathname: '/',
-                data: undefined,
-                loaderData: undefined,
+                data: {
+                  locale: 'ja' as const,
+                  canonicalUrl: 'https://shine-film.com/',
+                  webAnalyticsToken: undefined,
+                },
+                loaderData: {
+                  locale: 'ja' as const,
+                  canonicalUrl: 'https://shine-film.com/',
+                  webAnalyticsToken: undefined,
+                },
                 handle: undefined,
               },
               {
@@ -210,8 +218,16 @@ describe('AdminLogin Component', () => {
                 id: 'root',
                 params: {},
                 pathname: '/',
-                data: undefined,
-                loaderData: undefined,
+                data: {
+                  locale: 'ja' as const,
+                  canonicalUrl: 'https://shine-film.com/',
+                  webAnalyticsToken: undefined,
+                },
+                loaderData: {
+                  locale: 'ja' as const,
+                  canonicalUrl: 'https://shine-film.com/',
+                  webAnalyticsToken: undefined,
+                },
                 handle: undefined,
               },
               {
@@ -249,8 +265,16 @@ describe('AdminLogin Component', () => {
                 id: 'root',
                 params: {},
                 pathname: '/',
-                data: undefined,
-                loaderData: undefined,
+                data: {
+                  locale: 'ja' as const,
+                  canonicalUrl: 'https://shine-film.com/',
+                  webAnalyticsToken: undefined,
+                },
+                loaderData: {
+                  locale: 'ja' as const,
+                  canonicalUrl: 'https://shine-film.com/',
+                  webAnalyticsToken: undefined,
+                },
                 handle: undefined,
               },
               {
@@ -292,8 +316,16 @@ describe('AdminLogin Component', () => {
                 id: 'root',
                 params: {},
                 pathname: '/',
-                data: undefined,
-                loaderData: undefined,
+                data: {
+                  locale: 'ja' as const,
+                  canonicalUrl: 'https://shine-film.com/',
+                  webAnalyticsToken: undefined,
+                },
+                loaderData: {
+                  locale: 'ja' as const,
+                  canonicalUrl: 'https://shine-film.com/',
+                  webAnalyticsToken: undefined,
+                },
                 handle: undefined,
               },
               {
@@ -328,8 +360,16 @@ describe('AdminLogin Component', () => {
                 id: 'root',
                 params: {},
                 pathname: '/',
-                data: undefined,
-                loaderData: undefined,
+                data: {
+                  locale: 'ja' as const,
+                  canonicalUrl: 'https://shine-film.com/',
+                  webAnalyticsToken: undefined,
+                },
+                loaderData: {
+                  locale: 'ja' as const,
+                  canonicalUrl: 'https://shine-film.com/',
+                  webAnalyticsToken: undefined,
+                },
                 handle: undefined,
               },
               {
@@ -370,8 +410,16 @@ describe('AdminLogin Component', () => {
                 id: 'root',
                 params: {},
                 pathname: '/',
-                data: undefined,
-                loaderData: undefined,
+                data: {
+                  locale: 'ja' as const,
+                  canonicalUrl: 'https://shine-film.com/',
+                  webAnalyticsToken: undefined,
+                },
+                loaderData: {
+                  locale: 'ja' as const,
+                  canonicalUrl: 'https://shine-film.com/',
+                  webAnalyticsToken: undefined,
+                },
                 handle: undefined,
               },
               {

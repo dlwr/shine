@@ -9,6 +9,8 @@ import {PosterFrame} from '@/components/editorial/poster-frame';
 import {AvailabilityBadges} from '@/components/editorial/availability-badges';
 import {WatchMenu} from '@/components/editorial/watch-menu';
 import {Button} from '@/components/ui/button';
+import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
+import {buildSocialMeta, upgradePosterForSharing} from '@/lib/meta';
 
 type CloudflareContext = {
   env?: {
@@ -61,11 +63,13 @@ type MovieDetailData = {
 type LoaderErrorResponse = {
   error: string;
   status?: number;
+  locale: Locale;
 };
 
 type LoaderSuccessResponse = {
   movieDetail: MovieDetailData;
   turnstileSiteKey?: string;
+  locale: Locale;
 };
 
 type LoaderData = LoaderErrorResponse | LoaderSuccessResponse;
@@ -416,30 +420,54 @@ function ArticleLinksSection({
   );
 }
 
-export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
+const MAX_DESCRIPTION_ORGANIZATIONS = 3;
+
+function summarizeOrganizations(
+  nominations: MovieDetailData['nominations'],
+): string {
+  const names = [
+    ...new Set(
+      nominations.map(
+        nomination =>
+          nomination.organization.shortName || nomination.organization.name,
+      ),
+    ),
+  ];
+
+  return names.slice(0, MAX_DESCRIPTION_ORGANIZATIONS).join('・');
+}
+
+export function meta({data, params}: Route.MetaArgs): Route.MetaDescriptors {
   const payload = data as LoaderData | undefined;
+  const locale = payload?.locale ?? DEFAULT_LOCALE;
+  const path = `/movies/${params.id}`;
 
   if (payload && isLoaderError(payload) && payload.error) {
-    return [
-      {title: '映画が見つかりません | SHINE'},
-      {
-        name: 'description',
-        content: '指定された映画は見つかりませんでした。',
-      },
-    ];
+    return buildSocialMeta({
+      title: '映画が見つかりません | SHINE',
+      description: '指定された映画は見つかりませんでした。',
+      path,
+      locale,
+    });
   }
 
   const movieDetail =
     payload && isLoaderSuccess(payload) ? payload.movieDetail : undefined;
   const title = movieDetail?.title || '映画詳細';
+  const year = movieDetail?.year || '';
+  const organizations = movieDetail
+    ? summarizeOrganizations(movieDetail.nominations)
+    : '';
+  const selection = organizations ? `${organizations}に選出。` : '';
 
-  return [
-    {title: `${title} (${movieDetail?.year || ''}) | SHINE`},
-    {
-      name: 'description',
-      content: `${title} (${movieDetail?.year || ''}年) の詳細情報。受賞歴、ポスター、その他の情報をご覧いただけます。`,
-    },
-  ];
+  return buildSocialMeta({
+    title: `${title} (${year}) | SHINE`,
+    description: `『${title}』(${year}年)。${selection}いま配信・レンタルで観られるかをまとめています。`,
+    path,
+    locale,
+    type: 'article',
+    imageUrl: upgradePosterForSharing(movieDetail?.posterUrl),
+  });
 }
 
 export async function loader({
@@ -447,6 +475,8 @@ export async function loader({
   params,
   request,
 }: Route.LoaderArgs): Promise<LoaderData> {
+  const locale = getLocaleFromRequest(request);
+
   try {
     const cloudflareEnvironment = (
       context.cloudflare as CloudflareContext | undefined
@@ -461,6 +491,7 @@ export async function loader({
       return {
         error: '映画が見つかりませんでした',
         status: 404,
+        locale,
       };
     }
 
@@ -468,16 +499,18 @@ export async function loader({
       return {
         error: 'データの取得に失敗しました',
         status: response.status,
+        locale,
       };
     }
 
     const movieDetail = (await response.json()) as MovieDetailData;
     const turnstileSiteKey = cloudflareEnvironment?.PUBLIC_TURNSTILE_SITE_KEY;
-    return {movieDetail, turnstileSiteKey};
+    return {movieDetail, turnstileSiteKey, locale};
   } catch {
     return {
       error: 'APIへの接続に失敗しました',
       status: 500,
+      locale,
     };
   }
 }
