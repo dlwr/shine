@@ -149,19 +149,19 @@ describe('Home Component', () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringMatching(
-          /^http:\/\/localhost:8787\/\?cache=.*&locale=en$/,
+          /^http:\/\/localhost:8787\/\?cache=.*&locale=ja$/,
         ),
         expect.objectContaining({
           headers: expect.objectContaining({
             'Cache-Control': 'no-store',
-            'Accept-Language': 'en',
+            'Accept-Language': 'ja,en;q=0.5',
           }),
         }),
       );
       expect(result).toEqual({
         movies: mockMovies,
         error: undefined,
-        locale: 'en',
+        locale: 'ja',
         apiUrl: 'http://localhost:8787',
       });
     });
@@ -177,7 +177,7 @@ describe('Home Component', () => {
       expect(result).toEqual({
         movies: undefined,
         error: 'Network error',
-        locale: 'en',
+        locale: 'ja',
         apiUrl: 'http://localhost:8787',
         shouldFetchOnClient: true,
       });
@@ -197,7 +197,7 @@ describe('Home Component', () => {
       expect(result).toEqual({
         movies: undefined,
         error: 'API request failed: 500',
-        locale: 'en',
+        locale: 'ja',
         apiUrl: 'http://localhost:8787',
         shouldFetchOnClient: true,
       });

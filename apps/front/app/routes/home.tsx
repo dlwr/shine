@@ -4,6 +4,7 @@ import type {Route} from './+types/home';
 import {Button} from '@/components/ui/button';
 import {AdminLogin} from '@/components/molecules/admin-login';
 import {Masthead} from '@/components/editorial/masthead';
+import {getLocaleFromRequest} from '@/lib/locale';
 import {FilmCard} from '@/components/editorial/film-card';
 import type {FilmCardMovie} from '@/components/editorial/film-card';
 
@@ -90,28 +91,6 @@ export function meta(): Route.MetaDescriptors {
       content: "The world's most organized movie database",
     },
   ];
-}
-
-function getLocaleFromRequest(request: Request): string {
-  const url = new URL(request.url);
-  const localeParameter = url.searchParams.get('locale');
-  if (localeParameter && ['en', 'ja'].includes(localeParameter)) {
-    return localeParameter;
-  }
-
-  const acceptLanguage = request.headers.get('accept-language');
-  if (acceptLanguage) {
-    const languages = acceptLanguage
-      .split(',')
-      .map(lang => lang.trim().split(';')[0].split('-')[0])
-      .filter(lang => ['en', 'ja'].includes(lang));
-
-    if (languages.length > 0) {
-      return languages[0];
-    }
-  }
-
-  return 'en';
 }
 
 export async function loader({context, request}: Route.LoaderArgs) {
