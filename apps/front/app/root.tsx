@@ -11,9 +11,19 @@ import type {Route} from './+types/root';
 import './app.css';
 import {NO_FLASH_SCRIPT} from '@/lib/theme';
 import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
+import {SITE_URL} from '@/lib/meta';
 
 export function loader({request}: Route.LoaderArgs) {
-  return {locale: getLocaleFromRequest(request)};
+  const {pathname} = new URL(request.url);
+
+  return {
+    locale: getLocaleFromRequest(request),
+    canonicalUrl: new URL(pathname, SITE_URL).toString(),
+  };
+}
+
+export function headers(): HeadersInit {
+  return {Vary: 'Accept-Language'};
 }
 
 export const links: Route.LinksFunction = () => [
@@ -46,12 +56,14 @@ export const links: Route.LinksFunction = () => [
 export function Layout({children}: {children: React.ReactNode}) {
   const rootData = useRouteLoaderData<typeof loader>('root');
   const locale = rootData?.locale ?? DEFAULT_LOCALE;
+  const canonicalUrl = rootData?.canonicalUrl;
 
   return (
     <html lang={locale} className="h-full">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
         <link rel="icon" type="image/x-icon" href="/favicon.ico" />
         <link
           rel="icon"

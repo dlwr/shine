@@ -1,7 +1,9 @@
 import {renderToStaticMarkup} from 'react-dom/server';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
-let mockRootLoaderData: {locale: string} | undefined = {locale: 'ja'};
+let mockRootLoaderData: {locale: string; canonicalUrl?: string} | undefined = {
+  locale: 'ja',
+};
 
 vi.mock('react-router', () => ({
   Links: () => {},
@@ -13,7 +15,10 @@ vi.mock('react-router', () => ({
   useRouteLoaderData: () => mockRootLoaderData,
 }));
 
-const {Layout, loader} = await import('./root');
+const {Layout, headers, loader} = await import('./root');
+
+const callLoader = (request: Request) =>
+  loader({request} as Parameters<typeof loader>[0]);
 
 describe('root loader', () => {
   it('Accept-Languageにenが指定されたらenを返す', () => {
@@ -21,17 +26,37 @@ describe('root loader', () => {
       headers: {'accept-language': 'en-US,en;q=0.9'},
     });
 
-    expect(loader({request} as Parameters<typeof loader>[0])).toEqual({
-      locale: 'en',
-    });
+    expect(callLoader(request).locale).toBe('en');
   });
 
   it('Accept-Languageがなければjaを返す', () => {
     const request = new Request('https://shine-film.com/');
 
-    expect(loader({request} as Parameters<typeof loader>[0])).toEqual({
-      locale: 'ja',
-    });
+    expect(callLoader(request).locale).toBe('ja');
+  });
+
+  it('canonical URLを正規ドメインで返す', () => {
+    const request = new Request(
+      'https://shine-front.yuta25.workers.dev/movies/abc',
+    );
+
+    expect(callLoader(request).canonicalUrl).toBe(
+      'https://shine-film.com/movies/abc',
+    );
+  });
+
+  it('canonical URLからクエリパラメータを取り除く', () => {
+    const request = new Request('https://shine-film.com/movies/abc?locale=en');
+
+    expect(callLoader(request).canonicalUrl).toBe(
+      'https://shine-film.com/movies/abc',
+    );
+  });
+});
+
+describe('root headers', () => {
+  it('Accept-Languageで内容が変わることを宣言する', () => {
+    expect(headers()).toEqual({Vary: 'Accept-Language'});
   });
 });
 
@@ -72,5 +97,34 @@ describe('root Layout', () => {
     );
 
     expect(markup).toContain('<html lang="ja"');
+  });
+
+  it('canonicalリンクを出力する', () => {
+    mockRootLoaderData = {
+      locale: 'ja',
+      canonicalUrl: 'https://shine-film.com/movies/abc',
+    };
+
+    const markup = renderToStaticMarkup(
+      <Layout>
+        <div />
+      </Layout>,
+    );
+
+    expect(markup).toContain(
+      '<link rel="canonical" href="https://shine-film.com/movies/abc"/>',
+    );
+  });
+
+  it('canonical URLが無ければcanonicalリンクを出力しない', () => {
+    mockRootLoaderData = {locale: 'ja'};
+
+    const markup = renderToStaticMarkup(
+      <Layout>
+        <div />
+      </Layout>,
+    );
+
+    expect(markup).not.toContain('rel="canonical"');
   });
 });

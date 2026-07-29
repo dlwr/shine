@@ -167,8 +167,14 @@ describe('AdminMovieEdit Route', () => {
               id: 'root',
               params: {},
               pathname: '/',
-              data: {locale: 'ja' as const},
-              loaderData: {locale: 'ja' as const},
+              data: {
+                locale: 'ja' as const,
+                canonicalUrl: 'https://shine-film.com/',
+              },
+              loaderData: {
+                locale: 'ja' as const,
+                canonicalUrl: 'https://shine-film.com/',
+              },
               handle: undefined,
             },
             {
@@ -210,8 +216,14 @@ describe('AdminMovieEdit Route', () => {
                 id: 'root',
                 params: {},
                 pathname: '/admin/movies/movie-123',
-                data: {locale: 'ja' as const},
-                loaderData: {locale: 'ja' as const},
+                data: {
+                  locale: 'ja' as const,
+                  canonicalUrl: 'https://shine-film.com/',
+                },
+                loaderData: {
+                  locale: 'ja' as const,
+                  canonicalUrl: 'https://shine-film.com/',
+                },
                 handle: undefined,
               },
               {
@@ -261,8 +273,14 @@ describe('AdminMovieEdit Route', () => {
                 id: 'root',
                 params: {},
                 pathname: '/admin/movies/movie-123',
-                data: {locale: 'ja' as const},
-                loaderData: {locale: 'ja' as const},
+                data: {
+                  locale: 'ja' as const,
+                  canonicalUrl: 'https://shine-film.com/',
+                },
+                loaderData: {
+                  locale: 'ja' as const,
+                  canonicalUrl: 'https://shine-film.com/',
+                },
                 handle: undefined,
               },
               {

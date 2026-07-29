@@ -1,0 +1,118 @@
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {loader as sitemapIndexLoader} from './sitemap-index';
+import {loader as sitemapMoviesLoader} from './sitemap-movies';
+
+globalThis.fetch = vi.fn();
+
+const cast = <T>(value?: unknown): T => value as T;
+
+const createContext = (apiUrl = 'http://localhost:8787') =>
+  cast<Parameters<typeof sitemapIndexLoader>[0]['context']>({
+    cloudflare: {env: {PUBLIC_API_URL: apiUrl}},
+  });
+
+const createIndexArguments = () =>
+  cast<Parameters<typeof sitemapIndexLoader>[0]>({
+    context: createContext(),
+    request: new Request('https://shine-film.com/sitemap.xml'),
+    params: {},
+  });
+
+const createMoviesArguments = (page: string) =>
+  cast<Parameters<typeof sitemapMoviesLoader>[0]>({
+    context: createContext(),
+    request: new Request(
+      `https://shine-film.com/sitemap/movies.xml?page=${page}`,
+    ),
+    params: {},
+  });
+
+const mockSearchResponse = (body: unknown, ok = true) => {
+  vi.mocked(fetch).mockResolvedValueOnce({
+    ok,
+    json: async () => body,
+  } as Response);
+};
+
+describe('sitemap.xml', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('映画の総件数から必要な数の子sitemapを列挙する', async () => {
+    mockSearchResponse({pagination: {totalCount: 250}});
+
+    const response = await sitemapIndexLoader(createIndexArguments());
+    const xml = await response.text();
+
+    expect(xml).toContain(
+      '<loc>https://shine-film.com/sitemap/movies.xml?page=1</loc>',
+    );
+    expect(xml).toContain(
+      '<loc>https://shine-film.com/sitemap/movies.xml?page=3</loc>',
+    );
+    expect(xml).not.toContain('page=4');
+  });
+
+  it('XMLのContent-Typeを返す', async () => {
+    mockSearchResponse({pagination: {totalCount: 10}});
+
+    const response = await sitemapIndexLoader(createIndexArguments());
+
+    expect(response.headers.get('content-type')).toContain('application/xml');
+  });
+
+  it('API取得に失敗しても200でsitemapindexを返す', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+    const response = await sitemapIndexLoader(createIndexArguments());
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain('<sitemapindex');
+  });
+});
+
+describe('sitemap/movies-:page.xml', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('指定ページの映画詳細URLを列挙する', async () => {
+    mockSearchResponse({
+      movies: [{uid: 'movie-1'}, {uid: 'movie-2'}],
+      pagination: {totalCount: 2},
+    });
+
+    const response = await sitemapMoviesLoader(createMoviesArguments('1'));
+    const xml = await response.text();
+
+    expect(xml).toContain('<loc>https://shine-film.com/movies/movie-1</loc>');
+    expect(xml).toContain('<loc>https://shine-film.com/movies/movie-2</loc>');
+  });
+
+  it('指定されたページ番号でAPIを呼ぶ', async () => {
+    mockSearchResponse({movies: [], pagination: {totalCount: 0}});
+
+    await sitemapMoviesLoader(createMoviesArguments('3'));
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('page=3'),
+      expect.anything(),
+    );
+  });
+
+  it('ページ番号が数値でなければ404を返す', async () => {
+    const response = await sitemapMoviesLoader(createMoviesArguments('abc'));
+
+    expect(response.status).toBe(404);
+  });
+
+  it('API取得に失敗しても200で空のurlsetを返す', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+    const response = await sitemapMoviesLoader(createMoviesArguments('1'));
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain('<urlset');
+  });
+});
