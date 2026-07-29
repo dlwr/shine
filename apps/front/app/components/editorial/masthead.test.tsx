@@ -15,4 +15,16 @@ describe('Masthead', () => {
     );
     expect(screen.getByRole('button', {name: /theme/i})).toBeInTheDocument();
   });
+
+  it('日本語ロケールでは日本語のタグラインを描画する', () => {
+    render(<Masthead locale="ja" />);
+
+    expect(screen.getByText(/毎日1本、埋もれた映画に/)).toBeInTheDocument();
+  });
+
+  it('英語ロケールでは英語のタグラインを描画する', () => {
+    render(<Masthead locale="en" />);
+
+    expect(screen.getByText(/A FORGOTTEN FILM/i)).toBeInTheDocument();
+  });
 });

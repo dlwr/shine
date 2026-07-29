@@ -4,6 +4,7 @@ import type {Route} from './+types/home';
 import {Button} from '@/components/ui/button';
 import {AdminLogin} from '@/components/molecules/admin-login';
 import {Masthead} from '@/components/editorial/masthead';
+import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
 import {buildSocialMeta} from '@/lib/meta';
 import {FilmCard} from '@/components/editorial/film-card';
@@ -284,6 +285,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
           onMoviesChange={setMovies}
           onError={setError}
         />
+        <SiteFooter locale={locale} />
       </main>
     </div>
   );

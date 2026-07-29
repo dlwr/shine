@@ -1,6 +1,7 @@
 import type {Route} from './+types/search';
 import {Masthead} from '@/components/editorial/masthead';
 import {SearchRow} from '@/components/editorial/search-row';
+import {SiteFooter} from '@/components/editorial/site-footer';
 import {selectBestPoster} from '@/lib/poster';
 import type {PosterInfo} from '@/lib/poster';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
@@ -208,6 +209,8 @@ export default function Search({loaderData}: Route.ComponentProps) {
             )}
           </div>
         )}
+
+        <SiteFooter locale={locale} />
       </div>
     </div>
   );

@@ -8,7 +8,15 @@ function today(): string {
   return `${d.getFullYear()}.${mm}.${dd}`;
 }
 
+const TAGLINES = {
+  ja: ['毎日1本、埋もれた映画に', '光を当てる'],
+  en: ['A FORGOTTEN FILM,', 'EVERY DAY'],
+} as const;
+
 export function Masthead({locale = 'en'}: {locale?: string}) {
+  const [taglineTop, taglineBottom] =
+    TAGLINES[locale as keyof typeof TAGLINES] ?? TAGLINES.en;
+
   return (
     <header className="flex items-end justify-between border-b-2 border-ink pb-2.5 mb-6">
       <h1 className="font-display font-black text-4xl md:text-5xl tracking-[-0.06em] leading-none text-ink">
@@ -16,9 +24,9 @@ export function Masthead({locale = 'en'}: {locale?: string}) {
       </h1>
       <div className="flex items-center gap-3">
         <p className="hidden md:block text-right font-mono text-[10px] leading-tight text-ink-muted">
-          THE WORLD&apos;S MOST ORGANIZED
+          {taglineTop}
           <br />
-          MOVIE DATABASE — {today()}
+          {taglineBottom} — {today()}
         </p>
         <LanguageSelector locale={locale} />
         <a

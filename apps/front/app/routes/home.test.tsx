@@ -244,6 +244,24 @@ describe('Home Component', () => {
   });
 
   describe('Component', () => {
+    it('サイトの説明がフッターに表示される', () => {
+      const loaderData =
+        cast<ComponentProperties['loaderData']>(createLoaderData());
+
+      render(
+        <Home
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={createParameters()}
+          matches={createMatches(loaderData)}
+        />,
+      );
+
+      expect(
+        screen.getByText(/毎日・毎週・毎月それぞれ1本ずつ/),
+      ).toBeInTheDocument();
+    });
+
     it('h1 に SHINE が表示される', () => {
       const loaderData =
         cast<ComponentProperties['loaderData']>(createLoaderData());

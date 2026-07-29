@@ -8,6 +8,7 @@ import {MetaLine} from '@/components/editorial/meta-line';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import {AvailabilityBadges} from '@/components/editorial/availability-badges';
 import {WatchMenu} from '@/components/editorial/watch-menu';
+import {SiteFooter} from '@/components/editorial/site-footer';
 import {Button} from '@/components/ui/button';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {buildSocialMeta, upgradePosterForSharing} from '@/lib/meta';
@@ -682,6 +683,7 @@ export default function MovieDetail({
           submissionResult={submissionResult}
           turnstileSiteKey={turnstileSiteKey}
         />
+        <SiteFooter locale="ja" />
       </div>
     </div>
   );
