@@ -132,7 +132,7 @@ describe('titleMatches', () => {
     ).toBe(true);
   });
 
-  it('matches the content inside double angle brackets', () => {
-    expect(titleMatches('無防備都市《ローマ》', ['ローマ'])).toBe(true);
+  it('does not match a different film named inside double angle brackets', () => {
+    expect(titleMatches('無防備都市《ローマ》', ['ローマ'])).toBe(false);
   });
 });

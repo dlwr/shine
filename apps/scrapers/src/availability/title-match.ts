@@ -34,15 +34,23 @@ export function normalizeTitle(title: string): string {
   return result;
 }
 
+// 《》は版表記などの注釈にしか使われないため、除去のみ行い中身は照合しない
+const annotationPattern = /[（(《][^）)》]*[）)》]/g;
+const parenthesizedTitlePattern = /[（(]([^）)]+)[）)]/g;
+
 function candidateVariants(candidate: string): string[] {
   const variants = [candidate];
-  const parenSegments = [...candidate.matchAll(/[（(《]([^）)》]+)[）)》]/g)];
-  if (parenSegments.length > 0) {
-    variants.push(
-      candidate.replaceAll(/[（(《][^）)》]*[）)》]/g, ' '),
-      ...parenSegments.map(segment => segment[1]),
-    );
+
+  const withoutAnnotations = candidate.replaceAll(annotationPattern, ' ');
+  if (withoutAnnotations !== candidate) {
+    variants.push(withoutAnnotations);
   }
+
+  variants.push(
+    ...[...candidate.matchAll(parenthesizedTitlePattern)].map(
+      segment => segment[1],
+    ),
+  );
 
   return variants;
 }
