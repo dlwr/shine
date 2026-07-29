@@ -3,29 +3,11 @@
 /**
  * 日本アカデミー賞スクレイピングのCLIエントリーポイント
  */
-import path from 'node:path';
-import {config} from 'dotenv';
-import {type Environment} from '@shine/database';
 import japanAcademyAwards from './japan-academy-awards';
+import {buildEnvironment, loadEnvironmentFiles} from './common/environment';
 
-// 環境変数を読み込み（まずはデフォルトの場所から試行）
-config();
-// もしくはプロジェクトルートから明示的に読み込み
-if (!process.env.TURSO_DATABASE_URL_DEV) {
-  const environmentPath = path.resolve(process.cwd(), '../.env');
-  config({path: environmentPath});
-}
-
-// 環境変数から設定を取得
-const environment: Environment = {
-  TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL_DEV || '',
-  TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN_DEV || '',
-  TMDB_API_KEY: process.env.TMDB_API_KEY || '',
-  TMDB_LEAD_ACCESS_TOKEN: process.env.TMDB_LEAD_ACCESS_TOKEN || '',
-  OMDB_API_KEY: process.env.OMDB_API_KEY || '',
-  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || '',
-  JWT_SECRET: process.env.JWT_SECRET || '',
-};
+loadEnvironmentFiles();
+const environment = buildEnvironment(process.env);
 
 const arguments_ = process.argv.slice(2);
 const shouldSeed = arguments_.includes('--seed');

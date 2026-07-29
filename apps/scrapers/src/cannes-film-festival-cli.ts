@@ -1,27 +1,15 @@
 /**
  * カンヌ映画祭スクレイピングのCLIエントリーポイント
  */
-import path from 'node:path';
-import {config} from 'dotenv';
-import {type Environment} from '@shine/database';
 import cannesFilmFestival from './cannes-film-festival';
+import {
+  assertDatabaseEnvironment,
+  buildEnvironment,
+  loadEnvironmentFiles,
+} from './common/environment';
 
-// 環境変数を読み込み（まずはデフォルトの場所から試行）
-config();
-// もしくはプロジェクトルートから明示的に読み込み
-if (!process.env.TURSO_DATABASE_URL_DEV) {
-  const environmentPath = path.resolve(process.cwd(), '../.env');
-  config({path: environmentPath});
-}
-
-// 環境変数から設定を取得
-const environment: Environment = {
-  TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL_DEV || '',
-  TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN_DEV || '',
-  TMDB_API_KEY: process.env.TMDB_API_KEY || '',
-  TMDB_LEAD_ACCESS_TOKEN: process.env.TMDB_LEAD_ACCESS_TOKEN || '',
-  OMDB_API_KEY: process.env.OMDB_API_KEY || '',
-};
+loadEnvironmentFiles();
+const environment = buildEnvironment(process.env);
 
 /**
  * カンヌ映画祭スクレイピングのメイン処理
@@ -63,13 +51,7 @@ async function main() {
     }
 
     // 環境変数の確認
-    if (!environment.TURSO_DATABASE_URL || !environment.TURSO_AUTH_TOKEN) {
-      console.error('データベース接続情報が不足しています。');
-      console.error(
-        'TURSO_DATABASE_URL_DEV と TURSO_AUTH_TOKEN_DEV を設定してください。',
-      );
-      throw new Error('Missing database connection info');
-    }
+    assertDatabaseEnvironment(environment);
 
     if (!environment.TMDB_API_KEY) {
       console.warn(

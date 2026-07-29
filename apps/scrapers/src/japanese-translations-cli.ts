@@ -1,32 +1,24 @@
 /**
  * 日本語翻訳スクレイピングのCLIエントリーポイント
  */
-import path from 'node:path';
-import {config} from 'dotenv';
-import {getDatabase, type Environment} from '@shine/database';
+import {getDatabase} from '@shine/database';
 import {
   getMoviesWithoutJapaneseTranslation,
   saveJapaneseTranslation,
 } from './japanese-translations/repository';
 import {fetchJapaneseTitleFromTMDB} from './japanese-translations/scrapers/tmdb-scraper';
 import {scrapeJapaneseTitleFromWikipedia} from './japanese-translations/scrapers/wikipedia-scraper';
+import {
+  assertDatabaseEnvironment,
+  buildEnvironment,
+  loadEnvironmentFiles,
+} from './common/environment';
 
-// 環境変数を読み込み（availability-check-cli と同じ探索順）
-config();
-config({path: path.resolve(process.cwd(), '.dev.vars')});
-config({path: path.resolve(process.cwd(), '../../.dev.vars')});
+loadEnvironmentFiles();
+const environment = buildEnvironment(process.env);
 
 // 処理するバッチサイズ（デフォルト）
 const DEFAULT_BATCH_SIZE = 20;
-
-// 環境変数から設定を取得
-const environment: Environment = {
-  TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL || '',
-  TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN || '',
-  TMDB_API_KEY: process.env.TMDB_API_KEY || '',
-  TMDB_LEAD_ACCESS_TOKEN: process.env.TMDB_LEAD_ACCESS_TOKEN || '',
-  OMDB_API_KEY: process.env.OMDB_API_KEY || '',
-};
 
 /**
  * 日本語翻訳スクレイピングのメイン処理
@@ -61,13 +53,7 @@ async function main() {
     }
 
     // 環境変数の確認
-    if (!environment.TURSO_DATABASE_URL || !environment.TURSO_AUTH_TOKEN) {
-      console.error('データベース接続情報が不足しています。');
-      console.error(
-        'TURSO_DATABASE_URL と TURSO_AUTH_TOKEN を設定してください。',
-      );
-      throw new Error('Missing database connection info');
-    }
+    assertDatabaseEnvironment(environment);
 
     // データベース接続
     const database = getDatabase(environment);
