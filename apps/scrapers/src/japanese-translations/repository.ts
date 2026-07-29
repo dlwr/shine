@@ -11,7 +11,8 @@ import {selectMoviesNeedingJapaneseTitle} from './select-targets';
  */
 export type Movie = {
   uid: string;
-  imdbId: string;
+  /** movies.imdb_id は NULL 許容。無効値のまま外部検索に渡さないこと */
+  imdbId: string | undefined;
   englishTitle: string;
   year?: number;
   tmdbId: number | undefined;
@@ -47,6 +48,7 @@ export async function getMoviesWithoutJapaneseTranslation(
       imdbId: movies.imdbId,
       year: movies.year,
       tmdbId: movies.tmdbId,
+      englishTitle: translations.content,
     })
     .from(movies)
     .innerJoin(
@@ -65,13 +67,19 @@ export async function getMoviesWithoutJapaneseTranslation(
       : await moviesWithEnglishTitlesQuery.limit(limit * 5);
 
   // 映画UIDと英語タイトルのマッピングを作成
-  const movieData = new Map();
+  // englishTitle は上のJOINで取得済み（1件ずつ引き直すとN+1になる）
+  const movieData = new Map<string, Movie>();
   for (const movie of moviesWithEnglishTitles) {
+    if (!movie.englishTitle) {
+      continue;
+    }
+
     movieData.set(movie.movieUid, {
       uid: movie.movieUid,
-      imdbId: movie.imdbId,
-      year: movie.year,
-      tmdbId: movie.tmdbId,
+      imdbId: movie.imdbId ?? undefined,
+      year: movie.year ?? undefined,
+      tmdbId: movie.tmdbId ?? undefined,
+      englishTitle: movie.englishTitle,
     });
   }
 
@@ -90,56 +98,14 @@ export async function getMoviesWithoutJapaneseTranslation(
     );
 
   const moviesWithoutJapanese = selectMoviesNeedingJapaneseTitle(
-    [...movieData.values()] as Movie[],
+    [...movieData.values()],
     moviesWithJapaneseTitles,
     {includeNonJapanese},
   );
 
-  // 英語タイトルを取得
-  const result = [];
-  const moviesToProcess =
-    limit === 0 ? moviesWithoutJapanese : moviesWithoutJapanese.slice(0, limit);
-
-  for (const movie of moviesToProcess) {
-    const englishTitle = await getMovieTitle(database, movie.uid, 'en');
-    if (englishTitle) {
-      result.push({
-        ...movie,
-        englishTitle,
-      });
-    }
-  }
-
-  return result;
-}
-
-/**
- * 映画のタイトルを言語コードで取得する
- * @param drizzleDb Drizzleデータベース
- * @param movieUid 映画UID
- * @param languageCode 言語コード
- * @returns 映画タイトル
- */
-async function getMovieTitle(
-  database: ReturnType<typeof getDatabase>,
-  movieUid: string,
-  languageCode: string,
-): Promise<string | undefined> {
-  const result = await database
-    .select({
-      content: translations.content,
-    })
-    .from(translations)
-    .where(
-      and(
-        eq(translations.resourceType, 'movie_title'),
-        eq(translations.resourceUid, movieUid),
-        eq(translations.languageCode, languageCode),
-      ),
-    )
-    .limit(1);
-
-  return result.length > 0 ? result[0].content : undefined;
+  return limit === 0
+    ? moviesWithoutJapanese
+    : moviesWithoutJapanese.slice(0, limit);
 }
 
 /**

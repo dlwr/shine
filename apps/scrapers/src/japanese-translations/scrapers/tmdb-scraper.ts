@@ -1,6 +1,7 @@
 import {eq} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
+import {isValidImdbId} from './imdb-id';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -12,7 +13,7 @@ const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
  * @returns 日本語タイトル（見つからない場合はundefined）
  */
 export async function fetchJapaneseTitleFromTMDB(
-  imdbId: string,
+  imdbId: string | undefined,
   tmdbId: number | undefined,
   environment: Environment,
 ): Promise<string | undefined> {
@@ -28,6 +29,11 @@ export async function fetchJapaneseTitleFromTMDB(
 
     // TMDB IDがない場合は、IMDb IDから検索
     if (!movieTmdbId) {
+      if (!isValidImdbId(imdbId)) {
+        console.log(`  Skipped TMDb lookup: no TMDb ID and invalid IMDb ID`);
+        return undefined;
+      }
+
       console.log(`  TMDB ID not found, searching by IMDb ID: ${imdbId}`);
 
       const findUrl = new URL(`${TMDB_API_BASE_URL}/find/${imdbId}`);
