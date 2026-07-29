@@ -130,6 +130,9 @@ const createMatches = (
 const createActionData = (): ComponentProperties['actionData'] =>
   cast<ComponentProperties['actionData']>();
 
+const createMetaArguments = (locale: 'ja' | 'en'): Route.MetaArgs =>
+  cast<Route.MetaArgs>({data: {locale}});
+
 describe('Home Component', () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -205,16 +208,38 @@ describe('Home Component', () => {
   });
 
   describe('meta', () => {
-    it('正しいメタデータを返す', () => {
-      const result = meta();
+    it('日本語ロケールでは日本語のタイトルを返す', () => {
+      expect(meta(createMetaArguments('ja'))).toContainEqual({
+        title: 'SHINE — 毎日1本、埋もれた映画に光を当てる',
+      });
+    });
 
-      expect(result).toEqual([
-        {title: 'SHINE'},
-        {
-          name: 'description',
-          content: "The world's most organized movie database",
-        },
-      ]);
+    it('英語ロケールでは英語のタイトルを返す', () => {
+      expect(meta(createMetaArguments('en'))).toContainEqual({
+        title: 'SHINE — A forgotten film, every day',
+      });
+    });
+
+    it('日本語ロケールでは日本語の説明文を返す', () => {
+      expect(meta(createMetaArguments('ja'))).toContainEqual({
+        name: 'description',
+        content:
+          'カンヌ・アカデミー賞・日本アカデミー賞などの受賞作や名作リストから、毎日・毎週・毎月1本ずつ映画を選びます。いま配信やレンタルで観られるかも一緒に。',
+      });
+    });
+
+    it('ロケールに対応するog:localeを返す', () => {
+      expect(meta(createMetaArguments('ja'))).toContainEqual({
+        property: 'og:locale',
+        content: 'ja_JP',
+      });
+    });
+
+    it('og:urlにサイトのトップURLを返す', () => {
+      expect(meta(createMetaArguments('ja'))).toContainEqual({
+        property: 'og:url',
+        content: 'https://shine-film.com/',
+      });
     });
   });
 

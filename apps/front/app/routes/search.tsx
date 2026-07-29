@@ -3,6 +3,8 @@ import {Masthead} from '@/components/editorial/masthead';
 import {SearchRow} from '@/components/editorial/search-row';
 import {selectBestPoster} from '@/lib/poster';
 import type {PosterInfo} from '@/lib/poster';
+import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
+import {buildSocialMeta} from '@/lib/meta';
 
 type SearchMovieData = {
   uid: string;
@@ -23,21 +25,26 @@ type SearchPaginationData = {
 };
 
 export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
-  const {searchQuery} = data as {searchQuery: string};
+  const {searchQuery, locale} = data as {searchQuery: string; locale?: Locale};
 
-  if (searchQuery) {
-    return [
-      {title: `「${searchQuery}」の検索結果 | SHINE`},
-      {
-        name: 'description',
-        content: `「${searchQuery}」の検索結果 - SHINE映画データベース`,
-      },
-    ];
-  }
+  const copy = searchQuery
+    ? {
+        title: `「${searchQuery}」の検索結果 | SHINE`,
+        description: `「${searchQuery}」に一致する映画を SHINE で探す。`,
+      }
+    : {
+        title: '映画を検索 | SHINE',
+        description:
+          'タイトル・年代・受賞歴から、SHINE に収録された映画を検索できます。',
+      };
 
   return [
-    {title: '映画検索 | SHINE'},
-    {name: 'description', content: 'SHINE映画データベースで映画を検索'},
+    ...buildSocialMeta({
+      ...copy,
+      path: '/search',
+      locale: locale ?? DEFAULT_LOCALE,
+    }),
+    {name: 'robots', content: 'noindex, follow'},
   ];
 }
 
@@ -46,11 +53,13 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const searchQuery = url.searchParams.get('q') || '';
   const page = url.searchParams.get('page') || '1';
   const limit = url.searchParams.get('limit') || '20';
+  const locale = getLocaleFromRequest(request);
 
   if (!searchQuery) {
     return {
       searchQuery: '',
       searchResults: undefined,
+      locale,
     };
   }
 
@@ -73,11 +82,13 @@ export async function loader({context, request}: Route.LoaderArgs) {
     return {
       searchQuery,
       searchResults,
+      locale,
     };
   } catch {
     return {
       searchQuery,
       error: '検索に失敗しました',
+      locale,
     };
   }
 }

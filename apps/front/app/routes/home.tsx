@@ -4,7 +4,8 @@ import type {Route} from './+types/home';
 import {Button} from '@/components/ui/button';
 import {AdminLogin} from '@/components/molecules/admin-login';
 import {Masthead} from '@/components/editorial/masthead';
-import {getLocaleFromRequest} from '@/lib/locale';
+import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
+import {buildSocialMeta} from '@/lib/meta';
 import {FilmCard} from '@/components/editorial/film-card';
 import type {FilmCardMovie} from '@/components/editorial/film-card';
 
@@ -83,14 +84,29 @@ type MoviesLabels = {
   edit: string;
 };
 
-export function meta(): Route.MetaDescriptors {
-  return [
-    {title: 'SHINE'},
-    {
-      name: 'description',
-      content: "The world's most organized movie database",
-    },
-  ];
+const HOME_COPY = {
+  ja: {
+    title: 'SHINE — 毎日1本、埋もれた映画に光を当てる',
+    description:
+      'カンヌ・アカデミー賞・日本アカデミー賞などの受賞作や名作リストから、毎日・毎週・毎月1本ずつ映画を選びます。いま配信やレンタルで観られるかも一緒に。',
+  },
+  en: {
+    title: 'SHINE — A forgotten film, every day',
+    description:
+      'One overlooked film a day, a week, and a month — drawn from Cannes, the Academy Awards and curated lists, with where to watch it right now.',
+  },
+} as const;
+
+export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
+  const locale = data?.locale ?? DEFAULT_LOCALE;
+  const copy = HOME_COPY[locale];
+
+  return buildSocialMeta({
+    title: copy.title,
+    description: copy.description,
+    path: '/',
+    locale,
+  });
 }
 
 export async function loader({context, request}: Route.LoaderArgs) {

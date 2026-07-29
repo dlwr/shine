@@ -99,6 +99,7 @@ describe('Search Component', () => {
   ): LoaderData => ({
     searchQuery: '',
     searchResults: undefined,
+    locale: 'ja',
     ...overrides,
   });
 
@@ -136,32 +137,34 @@ describe('Search Component', () => {
 
       const context = createMockContext();
       const url = new URL('http://localhost:3000/search?q=test');
-      const request = {url} as unknown as Request;
+      const request = new Request(url);
 
       const result = await loader(createLoaderArguments(context, request, {}));
 
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:8787/movies/search?q=test&page=1&limit=20',
         {
-          signal: undefined,
+          signal: request.signal,
         },
       );
       expect(result).toEqual({
         searchQuery: 'test',
         searchResults: mockSearchResults,
+        locale: 'ja',
       });
     });
 
     it('検索クエリなしの場合は空の結果を返す', async () => {
       const context = createMockContext();
       const url = new URL('http://localhost:3000/search');
-      const request = {url} as unknown as Request;
+      const request = new Request(url);
 
       const result = await loader(createLoaderArguments(context, request, {}));
 
       expect(result).toEqual({
         searchQuery: '',
         searchResults: undefined,
+        locale: 'ja',
       });
     });
 
@@ -171,47 +174,73 @@ describe('Search Component', () => {
 
       const context = createMockContext();
       const url = new URL('http://localhost:3000/search?q=test');
-      const request = {url} as unknown as Request;
+      const request = new Request(url);
 
       const result = await loader(createLoaderArguments(context, request, {}));
 
       expect(result).toEqual({
         searchQuery: 'test',
         error: '検索に失敗しました',
+        locale: 'ja',
       });
     });
   });
 
   describe('meta', () => {
-    it('検索クエリありの場合は検索クエリを含むメタデータを返す', () => {
+    it('検索クエリありの場合は検索クエリを含むタイトルを返す', () => {
       const loaderData = cast<LoaderData>({
         searchQuery: 'test movie',
         searchResults: mockSearchResults,
+        locale: 'ja',
       });
 
       const result = meta(createMetaArguments(loaderData, '?q=test%20movie'));
 
-      expect(result).toEqual([
-        {title: '「test movie」の検索結果 | SHINE'},
-        {
-          name: 'description',
-          content: '「test movie」の検索結果 - SHINE映画データベース',
-        },
-      ]);
+      expect(result).toContainEqual({
+        title: '「test movie」の検索結果 | SHINE',
+      });
     });
 
-    it('検索クエリなしの場合はデフォルトメタデータを返す', () => {
+    it('検索クエリなしの場合はデフォルトのタイトルを返す', () => {
       const loaderData = cast<LoaderData>({
         searchQuery: '',
         searchResults: undefined,
+        locale: 'ja',
       });
 
       const result = meta(createMetaArguments(loaderData, '?q=test%20movie'));
 
-      expect(result).toEqual([
-        {title: '映画検索 | SHINE'},
-        {name: 'description', content: 'SHINE映画データベースで映画を検索'},
-      ]);
+      expect(result).toContainEqual({title: '映画を検索 | SHINE'});
+    });
+
+    it('検索結果ページは検索エンジンにインデックスさせない', () => {
+      const loaderData = cast<LoaderData>({
+        searchQuery: 'test movie',
+        searchResults: mockSearchResults,
+        locale: 'ja',
+      });
+
+      const result = meta(createMetaArguments(loaderData, '?q=test%20movie'));
+
+      expect(result).toContainEqual({
+        name: 'robots',
+        content: 'noindex, follow',
+      });
+    });
+
+    it('og:urlに検索ページのURLを返す', () => {
+      const loaderData = cast<LoaderData>({
+        searchQuery: '',
+        searchResults: undefined,
+        locale: 'ja',
+      });
+
+      const result = meta(createMetaArguments(loaderData, ''));
+
+      expect(result).toContainEqual({
+        property: 'og:url',
+        content: 'https://shine-film.com/search',
+      });
     });
   });
 
