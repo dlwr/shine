@@ -5,10 +5,16 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useRouteLoaderData,
 } from 'react-router';
 import type {Route} from './+types/root';
 import './app.css';
 import {NO_FLASH_SCRIPT} from '@/lib/theme';
+import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
+
+export function loader({request}: Route.LoaderArgs) {
+  return {locale: getLocaleFromRequest(request)};
+}
 
 export const links: Route.LinksFunction = () => [
   {rel: 'preconnect', href: 'https://fonts.googleapis.com'},
@@ -38,8 +44,11 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({children}: {children: React.ReactNode}) {
+  const rootData = useRouteLoaderData<typeof loader>('root');
+  const locale = rootData?.locale ?? DEFAULT_LOCALE;
+
   return (
-    <html lang="en" className="h-full">
+    <html lang={locale} className="h-full">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

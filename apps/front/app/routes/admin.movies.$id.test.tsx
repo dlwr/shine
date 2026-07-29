@@ -167,8 +167,8 @@ describe('AdminMovieEdit Route', () => {
               id: 'root',
               params: {},
               pathname: '/',
-              data: undefined,
-              loaderData: undefined,
+              data: {locale: 'ja' as const},
+              loaderData: {locale: 'ja' as const},
               handle: undefined,
             },
             {
@@ -210,8 +210,8 @@ describe('AdminMovieEdit Route', () => {
                 id: 'root',
                 params: {},
                 pathname: '/admin/movies/movie-123',
-                data: undefined,
-                loaderData: undefined,
+                data: {locale: 'ja' as const},
+                loaderData: {locale: 'ja' as const},
                 handle: undefined,
               },
               {
@@ -261,8 +261,8 @@ describe('AdminMovieEdit Route', () => {
                 id: 'root',
                 params: {},
                 pathname: '/admin/movies/movie-123',
-                data: undefined,
-                loaderData: undefined,
+                data: {locale: 'ja' as const},
+                loaderData: {locale: 'ja' as const},
                 handle: undefined,
               },
               {
