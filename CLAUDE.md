@@ -41,8 +41,9 @@ pnpm run front:dev
 pnpm run scrapers:academy-awards
 pnpm run scrapers:cannes-film-festival [year]  # Optional year parameter
 pnpm run scrapers:japanese-translations
-pnpm run scrapers:movie-posters
+pnpm run scrapers:japan-academy-awards
 pnpm run scrapers:movie-import
+pnpm run scrapers:availability-check
 ```
 
 ### Database Operations
