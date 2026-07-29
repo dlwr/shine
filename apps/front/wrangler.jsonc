@@ -14,8 +14,8 @@
       "vars": {
         "PUBLIC_API_URL": "https://shine-api.yuta25.workers.dev",
         "PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAACBZwqj0sn-sCTK5",
-        // Cloudflare ダッシュボードの Web Analytics で発行したトークンを設定すると計測が有効になる
-        "PUBLIC_WEB_ANALYTICS_TOKEN": "",
+        // Cloudflare Web Analytics の siteTag。beacon の token として使う
+        "PUBLIC_WEB_ANALYTICS_TOKEN": "9602f73a32304a60b7a170124731564a",
       },
     },
   },
