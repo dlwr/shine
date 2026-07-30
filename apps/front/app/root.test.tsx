@@ -199,3 +199,38 @@ describe('root Layout', () => {
     expect(markup).not.toContain('cloudflareinsights.com');
   });
 });
+
+const PUBLIC_FILES = new Set(
+  Object.keys(import.meta.glob('../public/**/*')).map(file =>
+    file.replace('../public', ''),
+  ),
+);
+
+const ICON_LINK_PATTERN =
+  /<link[^>]*rel="(?:icon|apple-touch-icon)"[^>]*href="([^"]+)"/g;
+
+function iconHrefs(): string[] {
+  const markup = renderToStaticMarkup(
+    <Layout>
+      <div />
+    </Layout>,
+  );
+
+  return [...markup.matchAll(ICON_LINK_PATTERN)].map(([, href]) => href);
+}
+
+describe('root Layout のアイコン', () => {
+  beforeEach(() => {
+    mockRootLoaderData = {locale: 'ja'};
+  });
+
+  it('アイコンのlinkを出力する', () => {
+    expect(iconHrefs()).not.toEqual([]);
+  });
+
+  it('アイコンのlinkが全部public配下に実在する', () => {
+    const missing = iconHrefs().filter(href => !PUBLIC_FILES.has(href));
+
+    expect(missing).toEqual([]);
+  });
+});

@@ -545,7 +545,7 @@ Track recent changes and updates to keep CLAUDE.md synchronized with the codebas
 - **Security**: Always implement rate limiting for public submission endpoints
 - **TailwindCSS**: Use utility-first approach, preserve custom CSS only for complex animations/interactions
 - **Component Styling**: Follow responsive patterns like `text-xl md:text-2xl` and `p-5 md:p-6`
-- **Favicon Management**: Use ImageMagick to generate multiple favicon formats from source assets; maintain 16x16, 32x32, ICO, and Apple touch icon variants
+- **Favicon Management**: `apps/front/public/favicon.svg` is the master; `favicon.ico` (16/32/48 frames) and `apple-touch-icon.png` (opaque 180x180) are rasterized from it
 - **Database Foreign Key Constraints and Cascading Deletes**:
   - **Critical**: When implementing delete operations for core entities (movies, awards, etc.), always verify ALL foreign key references across the entire schema
   - Most tables do NOT have `onDelete: 'cascade'` configured, requiring manual deletion of related data
