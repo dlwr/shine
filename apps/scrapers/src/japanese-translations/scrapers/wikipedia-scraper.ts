@@ -8,6 +8,7 @@ import {
   extractWikipediaJsonLD,
   parseHTML,
 } from '../../common/parser-utilities';
+import {isValidImdbId} from './imdb-id';
 
 /**
  * IMDb IDからWikipedia日本語版の映画タイトルを取得
@@ -15,8 +16,15 @@ import {
  * @returns 日本語タイトル (見つからない場合はundefined)
  */
 export async function scrapeJapaneseTitleFromWikipedia(
-  imdbId: string,
+  imdbId: string | undefined,
 ): Promise<string | undefined> {
+  // IMDb ID が無いまま検索すると ?search=null で「Null」の記事にヒットし、
+  // それを邦題として保存してしまうため、必ず形式を検証してから進む
+  if (!isValidImdbId(imdbId)) {
+    console.log(`Skipped Wikipedia lookup for invalid IMDb ID: ${imdbId}`);
+    return undefined;
+  }
+
   try {
     // まずIMDb IDで日本語版Wikipediaを検索
     const searchUrl = `https://ja.wikipedia.org/w/index.php?search=${imdbId}`;

@@ -123,4 +123,16 @@ describe('titleMatches', () => {
       ]),
     ).toBe(false);
   });
+
+  it('matches a title decorated with a double angle bracket edition', () => {
+    expect(
+      titleMatches('エルミタージュ幻想《ニューマスター版》', [
+        'エルミタージュ幻想',
+      ]),
+    ).toBe(true);
+  });
+
+  it('does not match a different film named inside double angle brackets', () => {
+    expect(titleMatches('無防備都市《ローマ》', ['ローマ'])).toBe(false);
+  });
 });

@@ -29,6 +29,7 @@ async function main() {
     const arguments_ = process.argv.slice(2);
     const limitIndex = arguments_.indexOf('--limit');
     const isAllMode = arguments_.includes('--all');
+    const includeNonJapanese = arguments_.includes('--include-non-japanese');
 
     let batchSize = DEFAULT_BATCH_SIZE;
 
@@ -59,10 +60,15 @@ async function main() {
     const database = getDatabase(environment);
 
     // 日本語翻訳が未登録の映画データを取得
-    console.log('日本語翻訳が未登録の映画を検索中...');
+    console.log(
+      includeNonJapanese
+        ? '日本語翻訳が未登録、または原題のまま保存されている映画を検索中...'
+        : '日本語翻訳が未登録の映画を検索中...',
+    );
     const movies = await getMoviesWithoutJapaneseTranslation(
       database,
       batchSize,
+      includeNonJapanese,
     );
 
     if (movies.length === 0) {
@@ -166,6 +172,9 @@ function showUsage() {
   console.log('  --limit <数値>  処理する映画の件数を指定 (デフォルト: 20)');
   console.log(
     '  --all           全件処理モード（日本語翻訳がないすべての映画を処理）',
+  );
+  console.log(
+    '  --include-non-japanese  原題がそのまま ja として保存されている映画も取得し直す',
   );
   console.log('  --help, -h      このヘルプを表示');
   console.log('');
