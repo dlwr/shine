@@ -11,22 +11,22 @@ export type CacheMetrics = {
 };
 
 export class EdgeCache {
-  private readonly cache = (caches as unknown as {default: Cache}).default;
+  private readonly cache: Cache;
   private readonly metrics: CacheMetrics = {hits: 0, misses: 0, hitRate: 0};
-  private get isDevelopment() {
-    return true; // Always disable cache in development
+
+  constructor(cacheStorage?: Cache) {
+    this.cache =
+      cacheStorage ?? (caches as unknown as {default: Cache}).default;
+  }
+
+  // Cache API keys must be valid request URLs; map logical keys onto one
+  private keyToUrl(key: string): string {
+    return `https://edge-cache.internal/${encodeURIComponent(key)}`;
   }
 
   async getResponse(key: string): Promise<Response | undefined> {
-    // Allow caching for preview keys even in development
-    if (this.isDevelopment && !key.startsWith('preview-')) {
-      this.metrics.misses++;
-      this.updateHitRate();
-      return undefined;
-    }
-
     try {
-      const cached = await this.cache.match(key);
+      const cached = await this.cache.match(this.keyToUrl(key));
       if (cached) {
         this.metrics.hits++;
         this.updateHitRate();
@@ -45,11 +45,6 @@ export class EdgeCache {
   }
 
   async put(key: string, response: Response, ttl?: number): Promise<void> {
-    // Allow caching for preview keys even in development
-    if (this.isDevelopment && !key.startsWith('preview-')) {
-      return;
-    }
-
     try {
       const responseToCache = response.clone();
 
@@ -61,9 +56,9 @@ export class EdgeCache {
           statusText: responseToCache.statusText,
           headers,
         });
-        await this.cache.put(key, cachedResponse);
+        await this.cache.put(this.keyToUrl(key), cachedResponse);
       } else {
-        await this.cache.put(key, responseToCache);
+        await this.cache.put(this.keyToUrl(key), responseToCache);
       }
     } catch (error) {
       console.error('Cache put error:', error);
@@ -71,11 +66,6 @@ export class EdgeCache {
   }
 
   async set(key: string, data: unknown, ttl = 3600): Promise<void> {
-    // Allow caching for preview keys even in development
-    if (this.isDevelopment && !key.startsWith('preview-')) {
-      return;
-    }
-
     try {
       const response = Response.json(
         {data, cachedAt: Date.now()},
@@ -86,7 +76,7 @@ export class EdgeCache {
           },
         },
       );
-      await this.cache.put(key, response);
+      await this.cache.put(this.keyToUrl(key), response);
     } catch (error) {
       console.error('Cache set error:', error);
     }
@@ -95,15 +85,8 @@ export class EdgeCache {
   async get(
     key: string,
   ): Promise<{data: unknown; cachedAt: number} | undefined> {
-    // Allow caching for preview keys even in development
-    if (this.isDevelopment && !key.startsWith('preview-')) {
-      this.metrics.misses++;
-      this.updateHitRate();
-      return undefined;
-    }
-
     try {
-      const cached = await this.cache.match(key);
+      const cached = await this.cache.match(this.keyToUrl(key));
       if (cached) {
         const result: {
           data: unknown;
@@ -126,12 +109,8 @@ export class EdgeCache {
   }
 
   async delete(key: string): Promise<boolean> {
-    if (this.isDevelopment && !key.startsWith('preview-')) {
-      return true;
-    }
-
     try {
-      return await this.cache.delete(key);
+      return await this.cache.delete(this.keyToUrl(key));
     } catch (error) {
       console.error('Cache delete error:', error);
       return false;
@@ -139,14 +118,13 @@ export class EdgeCache {
   }
 
   async deleteByPattern(pattern: string): Promise<number> {
-    if (this.isDevelopment && !pattern.includes('preview-')) {
-      return 0;
-    }
-
     try {
+      // Note: cache.keys() is unsupported on Cloudflare Workers; this only
+      // works in tests. Prefer explicit key deletion.
       const keys = await this.cache.keys();
+      const encodedPattern = encodeURIComponent(pattern);
       const deletePromises = keys
-        .filter(request => request.url.includes(pattern))
+        .filter(request => request.url.includes(encodedPattern))
         .map(async request => this.cache.delete(request));
 
       const results = await Promise.all(deletePromises);
@@ -169,6 +147,17 @@ export class EdgeCache {
   }
 }
 
+export const CACHEABLE_LOCALES = ['en', 'ja'] as const;
+export type CacheableLocale = (typeof CACHEABLE_LOCALES)[number];
+
+// Cached payloads are locale-dependent; only cache locales we can purge later
+export const normalizeCacheLocale = (
+  locale: string,
+): CacheableLocale | undefined => {
+  const language = locale.split('-')[0] as CacheableLocale;
+  return CACHEABLE_LOCALES.includes(language) ? language : undefined;
+};
+
 export const getCacheKeyForSelection = (
   type: string,
   date: string,
@@ -178,10 +167,17 @@ export const getCacheKeyForSelection = (
 export const getCacheKeyForMovie = (
   movieId: string,
   includeDetails = false,
+  locale: string = 'ja',
 ): string => {
   const suffix = includeDetails ? 'full' : 'basic';
-  return `movie:${movieId}:${suffix}:v1`;
+  return `movie:${movieId}:${suffix}:${locale}:v2`;
 };
+
+export const getMovieCacheKeysForAllLocales = (movieId: string): string[] =>
+  CACHEABLE_LOCALES.flatMap(locale => [
+    getCacheKeyForMovie(movieId, true, locale),
+    getCacheKeyForMovie(movieId, false, locale),
+  ]);
 
 export const getCacheKeyForSearch = (
   query: string,

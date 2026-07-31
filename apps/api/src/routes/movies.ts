@@ -15,6 +15,8 @@ import {MoviesService} from '../services';
 import {
   checkETag,
   createCachedResponse,
+  getMovieCacheKeysForAllLocales,
+  normalizeCacheLocale,
   createETag,
   EdgeCache,
   getCacheKeyForMovie,
@@ -132,8 +134,11 @@ moviesRoutes.get('/:id', async c => {
     const locale = c.req.query('locale') || 'ja';
 
     // Check cache first
-    const cacheKey = getCacheKeyForMovie(movieId, true);
-    const cachedResponse = await cache.get(cacheKey);
+    const cacheLocale = normalizeCacheLocale(locale);
+    const cacheKey = cacheLocale
+      ? getCacheKeyForMovie(movieId, true, cacheLocale)
+      : undefined;
+    const cachedResponse = cacheKey ? await cache.get(cacheKey) : undefined;
 
     if (cachedResponse) {
       console.log('Cache hit for movie details:', movieId);
@@ -180,8 +185,10 @@ moviesRoutes.get('/:id', async c => {
       'X-Cache-Status': 'MISS',
     });
 
-    // Store in cache
-    await cache.put(cacheKey, response, ttl);
+    // Store in cache (reader expects the {data, cachedAt} envelope from set())
+    if (cacheKey) {
+      await cache.set(cacheKey, result, ttl);
+    }
 
     return response;
   } catch (error) {
@@ -233,11 +240,11 @@ moviesRoutes.post('/:id/translations', authMiddleware, async c => {
     );
 
     // Invalidate movie details cache
-    await Promise.all([
-      cache.delete(getCacheKeyForMovie(movieId, true)),
-      cache.delete(getCacheKeyForMovie(movieId, false)),
-      cache.deleteByPattern('selections:all:'), // Invalidate main selections that might include this movie
-    ]);
+    await Promise.all(
+      getMovieCacheKeysForAllLocales(movieId).map(async key =>
+        cache.delete(key),
+      ),
+    );
 
     console.log(
       `Cache invalidated for movie ${movieId} after translation update`,
@@ -268,11 +275,11 @@ moviesRoutes.delete('/:id/translations/:lang', authMiddleware, async c => {
     await moviesService.deleteMovieTranslation(movieId, languageCode);
 
     // Invalidate movie details cache
-    await Promise.all([
-      cache.delete(getCacheKeyForMovie(movieId, true)),
-      cache.delete(getCacheKeyForMovie(movieId, false)),
-      cache.deleteByPattern('selections:all:'),
-    ]);
+    await Promise.all(
+      getMovieCacheKeysForAllLocales(movieId).map(async key =>
+        cache.delete(key),
+      ),
+    );
 
     console.log(
       `Cache invalidated for movie ${movieId} after translation deletion`,
