@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import {Button} from '@/components/ui/button.tsx';
+import {clearAdminToken, getAdminToken, setAdminToken} from '@/lib/admin-fetch';
 
 type AdminLoginProperties = {
   locale: string;
@@ -15,8 +16,7 @@ export function AdminLogin({locale, apiUrl}: AdminLoginProperties) {
 
   useEffect(() => {
     if (globalThis.window !== undefined) {
-      const token = localStorage.getItem('adminToken') ?? undefined;
-      setIsLoggedIn(Boolean(token));
+      setIsLoggedIn(Boolean(getAdminToken()));
     }
   }, []);
 
@@ -69,11 +69,10 @@ export function AdminLogin({locale, apiUrl}: AdminLoginProperties) {
 
       if (response.ok) {
         const {token} = (await response.json()) as {token: string};
-        localStorage.setItem('adminToken', token);
+        setAdminToken(token);
         setIsLoggedIn(true);
         setShowModal(false);
         setPassword('');
-        globalThis.dispatchEvent(new Event('adminLogin'));
       } else {
         setError(true);
       }
@@ -86,9 +85,8 @@ export function AdminLogin({locale, apiUrl}: AdminLoginProperties) {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken');
+    clearAdminToken();
     setIsLoggedIn(false);
-    globalThis.dispatchEvent(new Event('adminLogout'));
   };
 
   const handleOpenChange = (open: boolean) => {
