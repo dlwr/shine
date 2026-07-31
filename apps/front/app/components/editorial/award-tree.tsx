@@ -1,3 +1,5 @@
+import {awardSlugForOrganization} from '@/lib/award-links';
+
 export type AwardNomination = {
   uid: string;
   isWinner: boolean;
@@ -42,10 +44,23 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
       {Object.values(byOrg).map(group =>
         Object.values(group.ceremonies).map(({ceremony, items}) => (
           <div key={`${group.organization.uid}-${ceremony.uid}`}>
-            <div className="bg-ink px-3 py-1 font-display text-xs font-extrabold uppercase text-paper">
-              {group.organization.shortName ?? group.organization.name} ·{' '}
-              {ceremony.year}
-            </div>
+            {(() => {
+              const headerText = `${
+                group.organization.shortName ?? group.organization.name
+              } · ${ceremony.year}`;
+              const slug = awardSlugForOrganization(group.organization.name);
+              return slug ? (
+                <a
+                  href={`/awards/${slug}`}
+                  className="block bg-ink px-3 py-1 font-display text-xs font-extrabold uppercase text-paper no-underline">
+                  {headerText}
+                </a>
+              ) : (
+                <div className="bg-ink px-3 py-1 font-display text-xs font-extrabold uppercase text-paper">
+                  {headerText}
+                </div>
+              );
+            })()}
             {items.map(nomination => (
               <div
                 key={nomination.uid}

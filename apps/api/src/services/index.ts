@@ -1,4 +1,5 @@
 export {AdminService} from './admin-service';
+export {AwardsService, awardPageDefinitions} from './awards-service';
 export {BaseService} from './base-service';
 export {MoviesService} from './movies-service';
 export {SelectionsService} from './selections-service';

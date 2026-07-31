@@ -1,4 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {loader as sitemapAwardsLoader} from './sitemap-awards';
 import {loader as sitemapIndexLoader} from './sitemap-index';
 import {loader as sitemapMoviesLoader} from './sitemap-movies';
 
@@ -62,6 +63,16 @@ describe('sitemap.xml', () => {
     expect(response.headers.get('content-type')).toContain('application/xml');
   });
 
+  it('賞のsitemapを列挙する', async () => {
+    mockSearchResponse({pagination: {totalCount: 10}});
+
+    const response = await sitemapIndexLoader(createIndexArguments());
+
+    expect(await response.text()).toContain(
+      '<loc>https://shine-film.com/sitemap/awards.xml</loc>',
+    );
+  });
+
   it('API取得に失敗しても200でsitemapindexを返す', async () => {
     vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
 
@@ -114,5 +125,50 @@ describe('sitemap/movies-:page.xml', () => {
 
     expect(response.status).toBe(200);
     expect(await response.text()).toContain('<urlset');
+  });
+});
+
+const createAwardsArguments = () =>
+  cast<Parameters<typeof sitemapAwardsLoader>[0]>({
+    context: createContext(),
+    request: new Request('https://shine-film.com/sitemap/awards.xml'),
+    params: {},
+  });
+
+describe('sitemap/awards.xml', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('賞一覧と各賞ページのURLを列挙する', async () => {
+    mockSearchResponse({
+      awards: [
+        {slug: 'palme-dor'},
+        {slug: 'academy-best-picture'},
+        {slug: 'japan-academy-best-picture'},
+      ],
+    });
+
+    const response = await sitemapAwardsLoader(createAwardsArguments());
+    const xml = await response.text();
+
+    expect(xml).toContain('<loc>https://shine-film.com/awards</loc>');
+    expect(xml).toContain('<loc>https://shine-film.com/awards/palme-dor</loc>');
+    expect(xml).toContain(
+      '<loc>https://shine-film.com/awards/academy-best-picture</loc>',
+    );
+    expect(xml).toContain(
+      '<loc>https://shine-film.com/awards/japan-academy-best-picture</loc>',
+    );
+  });
+
+  it('API取得に失敗しても200で/awardsのみのurlsetを返す', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+    const response = await sitemapAwardsLoader(createAwardsArguments());
+    const xml = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(xml).toContain('<loc>https://shine-film.com/awards</loc>');
   });
 });

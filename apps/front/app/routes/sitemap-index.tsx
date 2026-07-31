@@ -9,10 +9,13 @@ import {
 export async function loader({context, request}: Route.LoaderArgs) {
   const totalCount = await fetchMovieTotalCount(context, request.signal);
   const pageCount = Math.ceil(totalCount / MOVIES_PER_SITEMAP);
-  const paths = Array.from(
-    {length: pageCount},
-    (_, index) => `/sitemap/movies.xml?page=${index + 1}`,
-  );
+  const paths = [
+    '/sitemap/awards.xml',
+    ...Array.from(
+      {length: pageCount},
+      (_, index) => `/sitemap/movies.xml?page=${index + 1}`,
+    ),
+  ];
 
   return sitemapResponse(buildSitemapIndex(paths));
 }

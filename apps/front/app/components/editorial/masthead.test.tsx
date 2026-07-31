@@ -16,6 +16,14 @@ describe('Masthead', () => {
     expect(screen.getByRole('button', {name: /theme/i})).toBeInTheDocument();
   });
 
+  it('AWARDS リンクを描画する', () => {
+    render(<Masthead locale="ja" />);
+    expect(screen.getByRole('link', {name: /awards/i})).toHaveAttribute(
+      'href',
+      '/awards',
+    );
+  });
+
   it('日本語ロケールでは日本語のタグラインを描画する', () => {
     render(<Masthead locale="ja" />);
 
