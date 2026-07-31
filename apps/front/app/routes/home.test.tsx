@@ -241,6 +241,20 @@ describe('Home Component', () => {
         content: 'https://shine-film.com/',
       });
     });
+
+    it('og:imageにブランドカードを返す', () => {
+      expect(meta(createMetaArguments('ja'))).toContainEqual({
+        property: 'og:image',
+        content: 'https://shine-film.com/og/home.png',
+      });
+    });
+
+    it('twitter:cardはsummary_large_imageになる', () => {
+      expect(meta(createMetaArguments('ja'))).toContainEqual({
+        name: 'twitter:card',
+        content: 'summary_large_image',
+      });
+    });
   });
 
   describe('Component', () => {

@@ -31,7 +31,7 @@ function parseTmdbOfferings(detail: string): Array<{
     }));
 }
 
-function buildBadges(availability: AvailabilityInfo[]): Badge[] {
+export function buildBadges(availability: AvailabilityInfo[]): Badge[] {
   const badges: Badge[] = [];
 
   const tmdb = availability.find(entry => entry.source === 'tmdb');

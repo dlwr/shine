@@ -290,34 +290,21 @@ describe('MovieDetail Component', () => {
       });
     });
 
-    it('og:imageに映画のポスターを返す', () => {
+    it('og:imageに生成カードのURLを返す', () => {
       expect(successMeta()).toContainEqual({
         property: 'og:image',
-        content: 'https://example.com/poster-large.jpg',
+        content: 'https://shine-film.com/og/movie.png?id=movie-123',
       });
     });
 
-    it('TMDbのポスターは共有用サイズへ書き換える', () => {
-      const result = meta(
-        createMetaArguments(
-          {
-            movieDetail: {
-              ...mockMovieDetail,
-              posterUrl: 'https://image.tmdb.org/t/p/w500/poster.jpg',
-            },
-            locale: 'ja',
-          },
-          {id: 'movie-123'},
-        ),
-      );
-
-      expect(result).toContainEqual({
-        property: 'og:image',
-        content: 'https://image.tmdb.org/t/p/w780/poster.jpg',
+    it('twitter:cardはsummary_large_imageになる', () => {
+      expect(successMeta()).toContainEqual({
+        name: 'twitter:card',
+        content: 'summary_large_image',
       });
     });
 
-    it('ポスターが無ければog:imageを含まない', () => {
+    it('ポスターが無くてもog:imageは生成カードを返す', () => {
       const result = meta(
         createMetaArguments(
           {
@@ -328,9 +315,10 @@ describe('MovieDetail Component', () => {
         ),
       );
 
-      expect(result).not.toContainEqual(
-        expect.objectContaining({property: 'og:image'}),
-      );
+      expect(result).toContainEqual({
+        property: 'og:image',
+        content: 'https://shine-film.com/og/movie.png?id=movie-123',
+      });
     });
 
     it('og:urlに映画詳細ページの絶対URLを返す', () => {

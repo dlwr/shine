@@ -11,7 +11,7 @@ import {WatchMenu} from '@/components/editorial/watch-menu';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {Button} from '@/components/ui/button';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
-import {buildSocialMeta, upgradePosterForSharing} from '@/lib/meta';
+import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 
 type CloudflareContext = {
   env?: {
@@ -467,7 +467,8 @@ export function meta({data, params}: Route.MetaArgs): Route.MetaDescriptors {
     path,
     locale,
     type: 'article',
-    imageUrl: upgradePosterForSharing(movieDetail?.posterUrl),
+    imageUrl: `${SITE_URL}/og/movie.png?id=${params.id}`,
+    largeImage: true,
   });
 }
 
