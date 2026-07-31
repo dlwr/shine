@@ -368,6 +368,8 @@ paths:
                     description: JWT token (valid for 24 hours)
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -417,7 +419,107 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+    post:
+      summary: Create movie from IMDb ID (admin)
+      description: Create a new movie from an IMDb ID, optionally importing TMDb data (posters and translations)
+      operationId: adminCreateMovie
+      tags:
+        - Admin - Movies
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieCreateRequest'
+      responses:
+        '201':
+          description: Movie successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieCreateResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /admin/movies/{id}:
+    get:
+      summary: Get movie details (admin)
+      description: Retrieve movie details for admin including all translations, posters, and nominations
+      operationId: adminGetMovie
+      tags:
+        - Admin - Movies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Movie unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successfully retrieved movie details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminMovieDetails'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update movie basic info (admin)
+      description: Update movie year, original language, and media type
+      operationId: adminUpdateMovie
+      tags:
+        - Admin - Movies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Movie unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieUpdateRequest'
+      responses:
+        '200':
+          description: Movie successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
     delete:
       summary: Delete movie (admin)
       description: Delete a movie and all related data (cascading delete)
@@ -667,6 +769,681 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /admin/movies/{id}/external-id-search:
+    get:
+      summary: Search external movie IDs (admin)
+      description: Search TMDb for candidate external IDs (TMDb/IMDb) matching a movie
+      operationId: adminSearchExternalMovieIds
+      tags:
+        - Admin - Movies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Movie unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: query
+          in: query
+          description: Search query (defaults to the movie's stored title)
+          required: false
+          schema:
+            type: string
+        - name: language
+          in: query
+          description: Search language (ja or en prefixed values)
+          required: false
+          schema:
+            type: string
+        - name: year
+          in: query
+          description: Release year to bias search results
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          description: Maximum number of results
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Successfully retrieved external ID candidates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalIdSearchResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          description: TMDb API key is not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/movies/{id}/auto-fetch-tmdb:
+    post:
+      summary: Auto-fetch TMDb data using IMDb ID (admin)
+      description: Detect the TMDb ID from the movie's IMDb ID, then import posters and translations from TMDb
+      operationId: adminAutoFetchTmdb
+      tags:
+        - Admin - Movies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Movie unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: TMDb data successfully fetched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutoFetchTmdbResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/movies/{id}/refresh-tmdb:
+    post:
+      summary: Refresh TMDb data (admin)
+      description: Re-import posters and translations from TMDb using the movie's stored TMDb ID
+      operationId: adminRefreshTmdb
+      tags:
+        - Admin - Movies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Movie unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: TMDb data successfully refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TmdbIdUpdateResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/movies/{sourceId}/merge/{targetId}:
+    post:
+      summary: Merge movies (admin)
+      description: Merge the source movie's data (nominations, translations, posters, article links) into the target movie and delete the source movie
+      operationId: adminMergeMovies
+      tags:
+        - Admin - Movies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sourceId
+          in: path
+          description: Source movie unique identifier (deleted after merge)
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: targetId
+          in: path
+          description: Target movie unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Movies successfully merged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MergeMoviesResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/movies/{movieId}/nominations:
+    post:
+      summary: Add nomination to movie (admin)
+      description: Add an award nomination for a movie
+      operationId: adminAddNomination
+      tags:
+        - Admin - Nominations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: movieId
+          in: path
+          description: Movie unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NominationCreateRequest'
+      responses:
+        '200':
+          description: Nomination successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NominationRecord'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/nominations/{nominationId}:
+    put:
+      summary: Update nomination (admin)
+      description: Update the winner flag and special mention of a nomination
+      operationId: adminUpdateNomination
+      tags:
+        - Admin - Nominations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: nominationId
+          in: path
+          description: Nomination unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NominationUpdateRequest'
+      responses:
+        '200':
+          description: Nomination successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete nomination (admin)
+      description: Delete an award nomination
+      operationId: adminDeleteNomination
+      tags:
+        - Admin - Nominations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: nominationId
+          in: path
+          description: Nomination unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Nomination successfully deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/article-links/{id}:
+    delete:
+      summary: Delete article link (admin)
+      description: Permanently delete an article link
+      operationId: adminDeleteArticleLink
+      tags:
+        - Admin - Articles
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Article link unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Article link successfully deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/ceremonies:
+    get:
+      summary: List award ceremonies (admin)
+      description: Retrieve all award ceremonies with organization info and nominated movie counts
+      operationId: adminListCeremonies
+      tags:
+        - Admin - Awards
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved ceremonies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CeremoniesListResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create award ceremony (admin)
+      description: Create a new award ceremony for an organization
+      operationId: adminCreateCeremony
+      tags:
+        - Admin - Awards
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CeremonyRequest'
+      responses:
+        '201':
+          description: Ceremony successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CeremonyDetail'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/ceremonies/{ceremonyUid}:
+    get:
+      summary: Get award ceremony detail (admin)
+      description: Retrieve a ceremony with its nominations
+      operationId: adminGetCeremony
+      tags:
+        - Admin - Awards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ceremonyUid
+          in: path
+          description: Ceremony unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successfully retrieved ceremony detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CeremonyDetail'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update award ceremony (admin)
+      description: Update an award ceremony
+      operationId: adminUpdateCeremony
+      tags:
+        - Admin - Awards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ceremonyUid
+          in: path
+          description: Ceremony unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CeremonyRequest'
+      responses:
+        '200':
+          description: Ceremony successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CeremonyDetail'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete award ceremony (admin)
+      description: Delete a ceremony and all of its nominations
+      operationId: adminDeleteCeremony
+      tags:
+        - Admin - Awards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ceremonyUid
+          in: path
+          description: Ceremony unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ceremony successfully deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/ceremonies/{ceremonyUid}/sync-imdb:
+    post:
+      summary: Sync ceremony nominations from IMDb (admin)
+      description: Import nominations for a ceremony category from its configured IMDb event page
+      operationId: adminSyncCeremonyFromImdb
+      tags:
+        - Admin - Awards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ceremonyUid
+          in: path
+          description: Ceremony unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - categoryUid
+              properties:
+                categoryUid:
+                  type: string
+                  format: uuid
+                  description: Award category to sync nominations into
+      responses:
+        '200':
+          description: Nominations successfully synced from IMDb
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Operation success status
+                  ceremony:
+                    $ref: '#/components/schemas/CeremonyDetail'
+                  stats:
+                    type: object
+                    description: Sync statistics (created/updated/skipped counts)
+                required:
+                  - success
+                  - ceremony
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: IMDb event page could not be parsed or matched to movies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Failed to fetch the IMDb event page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/awards:
+    get:
+      summary: Get awards data for nomination editing (admin)
+      description: Retrieve all award organizations, ceremonies, and categories
+      operationId: adminGetAwardsData
+      tags:
+        - Admin - Awards
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved awards data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AwardsDataResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/preview-selections:
+    get:
+      summary: Preview next period selections (admin)
+      description: Preview the movies that will be selected for the next daily, weekly, and monthly periods
+      operationId: adminPreviewSelections
+      tags:
+        - Admin - Selections
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: locale
+          in: query
+          description: Language preference for movie titles
+          required: false
+          schema:
+            type: string
+            enum: [en, ja]
+            default: en
+      responses:
+        '200':
+          description: Successfully retrieved selection previews
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreviewSelectionsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/override-selection:
+    post:
+      summary: Override movie selection (admin)
+      description: Set a specific movie as the selection for a given date and period type
+      operationId: adminOverrideSelection
+      tags:
+        - Admin - Selections
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OverrideSelectionRequest'
+      responses:
+        '200':
+          description: Selection successfully overridden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/cleanup-future-selections:
+    delete:
+      summary: Clean up future selections (admin)
+      description: Delete movie selections scheduled for future dates
+      operationId: adminCleanupFutureSelections
+      tags:
+        - Admin - Selections
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Future selections successfully deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupFutureSelectionsResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/random-movie-preview:
+    post:
+      summary: Generate random movie preview (admin)
+      description: Generate a random movie preview for a specific date and period type without writing a selection
+      operationId: adminRandomMoviePreview
+      tags:
+        - Admin - Selections
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RandomMoviePreviewRequest'
+      responses:
+        '200':
+          description: Successfully generated movie preview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieWithDetails'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -693,27 +1470,23 @@ components:
           pattern: '^[a-z]{2}$'
           description: ISO 639-1 language code
         imdbId:
-          type: string
+          type: [string, 'null']
           pattern: '^tt\d{7,8}$'
-          nullable: true
           description: IMDb identifier (tt format)
         tmdbId:
-          type: integer
+          type: [integer, 'null']
           minimum: 1
-          nullable: true
           description: TMDb identifier
         title:
           type: string
           description: Movie title (localized)
         posterUrl:
-          type: string
+          type: [string, 'null']
           format: uri
-          nullable: true
           description: Primary poster image URL
         imdbUrl:
-          type: string
+          type: [string, 'null']
           format: uri
-          nullable: true
           description: IMDb page URL
         hasAwards:
           type: boolean
@@ -757,19 +1530,16 @@ components:
           format: uri
           description: Poster image URL
         width:
-          type: integer
+          type: [integer, 'null']
           minimum: 1
-          nullable: true
           description: Image width in pixels
         height:
-          type: integer
+          type: [integer, 'null']
           minimum: 1
-          nullable: true
           description: Image height in pixels
         languageCode:
-          type: string
+          type: [string, 'null']
           pattern: '^[a-z]{2}$'
-          nullable: true
           description: Language-specific poster
         sourceType:
           type: string
@@ -813,8 +1583,7 @@ components:
           type: boolean
           description: Whether this nomination won the award
         specialMention:
-          type: string
-          nullable: true
+          type: [string, 'null']
           description: Special mention or note about the nomination
         category:
           $ref: '#/components/schemas/AwardCategory'
@@ -875,8 +1644,7 @@ components:
           type: string
           description: Organization full name
         shortName:
-          type: string
-          nullable: true
+          type: [string, 'null']
           description: Organization short name or abbreviation
       required:
         - uid
@@ -897,8 +1665,7 @@ components:
           type: string
           description: Article title
         description:
-          type: string
-          nullable: true
+          type: [string, 'null']
           description: Article description
         submittedAt:
           type: string
@@ -1028,20 +1795,16 @@ components:
       type: object
       properties:
         query:
-          type: string
-          nullable: true
+          type: [string, 'null']
           description: Applied search query
         year:
-          type: integer
-          nullable: true
+          type: [integer, 'null']
           description: Applied year filter
         language:
-          type: string
-          nullable: true
+          type: [string, 'null']
           description: Applied language filter
         hasAwards:
-          type: boolean
-          nullable: true
+          type: [boolean, 'null']
           description: Applied awards filter
 
     ArticleLinkSubmission:
@@ -1056,9 +1819,8 @@ components:
           maxLength: 200
           description: Article title
         description:
-          type: string
+          type: [string, 'null']
           maxLength: 500
-          nullable: true
           description: Article description
         captchaToken:
           type: string
@@ -1118,12 +1880,10 @@ components:
           type: boolean
           description: Operation success status
         refreshResults:
-          type: object
-          nullable: true
+          type: [object, 'null']
           properties:
             tmdbId:
-              type: integer
-              nullable: true
+              type: [integer, 'null']
               description: Auto-detected TMDb ID
             postersAdded:
               type: integer
@@ -1156,8 +1916,7 @@ components:
           type: boolean
           description: Operation success status
         refreshResults:
-          type: object
-          nullable: true
+          type: [object, 'null']
           properties:
             postersAdded:
               type: integer
@@ -1177,19 +1936,16 @@ components:
           format: uri
           description: Poster image URL
         width:
-          type: integer
+          type: [integer, 'null']
           minimum: 1
-          nullable: true
           description: Image width in pixels
         height:
-          type: integer
+          type: [integer, 'null']
           minimum: 1
-          nullable: true
           description: Image height in pixels
         languageCode:
-          type: string
+          type: [string, 'null']
           pattern: '^[a-z]{2}$'
-          nullable: true
           description: Language-specific poster
         isPrimary:
           type: boolean
@@ -1226,6 +1982,16 @@ components:
           enum: [en, ja]
           default: en
           description: Language preference
+        date:
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}$'
+          description: Target date for the reselection (YYYY-MM-DD, defaults to today)
+        excludeMovieUids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Movie UIDs to exclude from the reselection
       required:
         - type
 
@@ -1240,6 +2006,627 @@ components:
       required:
         - type
         - movie
+
+    MovieCreateRequest:
+      type: object
+      properties:
+        imdbId:
+          type: string
+          pattern: '^tt\d{7,8}$'
+          description: IMDb identifier in tt format
+        refreshData:
+          type: boolean
+          default: true
+          description: Whether to import posters and translations from TMDb
+      required:
+        - imdbId
+
+    MovieCreateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Operation success status
+        movie:
+          type: object
+          properties:
+            uid:
+              type: string
+              format: uuid
+              description: Unique identifier for the created movie
+            imdbId:
+              type: string
+              description: IMDb identifier
+            tmdbId:
+              type: integer
+              description: TMDb identifier
+            year:
+              type: integer
+              description: Release year
+            originalLanguage:
+              type: string
+              description: ISO 639-1 language code
+          required:
+            - uid
+        imports:
+          type: object
+          properties:
+            translationsAdded:
+              type: integer
+              description: Number of translations imported
+            postersAdded:
+              type: integer
+              description: Number of posters imported
+      required:
+        - success
+        - movie
+
+    MovieUpdateRequest:
+      type: object
+      properties:
+        year:
+          type: integer
+          minimum: 1888
+          maximum: 2100
+          description: Release year
+        originalLanguage:
+          type: string
+          pattern: '^[a-z]{2}$'
+          description: ISO 639-1 language code
+        mediaType:
+          type: string
+          enum: [movie, tv]
+          description: Media type
+
+    AdminMovieDetails:
+      type: object
+      properties:
+        uid:
+          type: string
+          format: uuid
+          description: Unique identifier for the movie
+        year:
+          type: [integer, 'null']
+          description: Release year
+        originalLanguage:
+          type: string
+          description: ISO 639-1 language code
+        imdbId:
+          type: [string, 'null']
+          description: IMDb identifier (tt format)
+        tmdbId:
+          type: [integer, 'null']
+          description: TMDb identifier
+        mediaType:
+          type: string
+          enum: [movie, tv]
+          description: Media type
+        translations:
+          type: array
+          items:
+            type: object
+            properties:
+              uid:
+                type: string
+                format: uuid
+              languageCode:
+                type: string
+              content:
+                type: string
+              isDefault:
+                type: integer
+                description: 1 if this is the default translation
+          description: All movie title translations
+        posters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Poster'
+          description: All poster images for the movie
+        nominations:
+          type: array
+          items:
+            type: object
+            properties:
+              uid:
+                type: string
+                format: uuid
+              isWinner:
+                type: integer
+              specialMention:
+                type: [string, 'null']
+              categoryUid:
+                type: string
+                format: uuid
+              categoryName:
+                type: string
+              ceremonyUid:
+                type: string
+                format: uuid
+              ceremonyNumber:
+                type: [integer, 'null']
+              ceremonyYear:
+                type: integer
+              organizationUid:
+                type: string
+                format: uuid
+              organizationName:
+                type: string
+              organizationShortName:
+                type: [string, 'null']
+          description: Awards and nominations with full details
+      required:
+        - uid
+        - originalLanguage
+
+    ExternalIdSearchResponse:
+      type: object
+      properties:
+        usedQuery:
+          type: string
+          description: Query used for the TMDb search
+        usedYear:
+          type: integer
+          description: Year used to bias search results
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              tmdbId:
+                type: integer
+                description: TMDb identifier
+              imdbId:
+                type: string
+                description: IMDb identifier
+              title:
+                type: string
+                description: Localized title
+              originalTitle:
+                type: string
+                description: Original title
+              releaseDate:
+                type: string
+                description: Release date (YYYY-MM-DD)
+              overview:
+                type: string
+                description: Movie overview
+              originalLanguage:
+                type: string
+                description: ISO 639-1 language code
+              posterPath:
+                type: string
+                description: TMDb poster path
+              popularity:
+                type: number
+                description: TMDb popularity score
+              voteAverage:
+                type: number
+                description: TMDb vote average
+              voteCount:
+                type: integer
+                description: TMDb vote count
+              yearDifference:
+                type: integer
+                description: Absolute difference from the movie's stored year
+            required:
+              - tmdbId
+              - title
+          description: Candidate matches from TMDb
+      required:
+        - usedQuery
+        - results
+
+    AutoFetchTmdbResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Operation success status
+        fetchResults:
+          type: object
+          properties:
+            tmdbIdSet:
+              type: boolean
+              description: Whether a TMDb ID was newly detected and saved
+            postersAdded:
+              type: integer
+              description: Number of posters added
+            translationsAdded:
+              type: integer
+              description: Number of translations added
+      required:
+        - success
+        - fetchResults
+
+    MergeMoviesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Operation success status
+        message:
+          type: string
+          description: Merge result message
+      required:
+        - success
+        - message
+
+    NominationCreateRequest:
+      type: object
+      properties:
+        ceremonyUid:
+          type: string
+          format: uuid
+          description: Award ceremony identifier
+        categoryUid:
+          type: string
+          format: uuid
+          description: Award category identifier
+        isWinner:
+          type: boolean
+          default: false
+          description: Whether the nomination won the award
+        specialMention:
+          type: string
+          description: Special mention or note about the nomination
+      required:
+        - ceremonyUid
+        - categoryUid
+
+    NominationUpdateRequest:
+      type: object
+      properties:
+        isWinner:
+          type: boolean
+          description: Whether the nomination won the award
+        specialMention:
+          type: string
+          description: Special mention or note about the nomination
+
+    NominationRecord:
+      type: object
+      properties:
+        uid:
+          type: string
+          format: uuid
+          description: Unique identifier for the nomination
+        movieUid:
+          type: string
+          format: uuid
+          description: Associated movie identifier
+        ceremonyUid:
+          type: string
+          format: uuid
+          description: Award ceremony identifier
+        categoryUid:
+          type: string
+          format: uuid
+          description: Award category identifier
+        isWinner:
+          type: integer
+          description: 1 if the nomination won the award
+        specialMention:
+          type: [string, 'null']
+          description: Special mention or note about the nomination
+        createdAt:
+          type: integer
+          description: Creation timestamp (unix seconds)
+        updatedAt:
+          type: integer
+          description: Last update timestamp (unix seconds)
+      required:
+        - uid
+        - movieUid
+        - ceremonyUid
+        - categoryUid
+        - isWinner
+
+    CeremonyRequest:
+      type: object
+      properties:
+        organizationUid:
+          type: string
+          format: uuid
+          description: Award organization identifier
+        year:
+          type: integer
+          minimum: 1880
+          maximum: 9999
+          description: Ceremony year
+        ceremonyNumber:
+          type: integer
+          description: Ceremony number (e.g., 95th Academy Awards)
+        startDate:
+          type: integer
+          description: Start date (unix seconds)
+        endDate:
+          type: integer
+          description: End date (unix seconds)
+        location:
+          type: string
+          description: Ceremony location
+        description:
+          type: string
+          description: Ceremony description
+        imdbEventUrl:
+          type: string
+          format: uri
+          description: IMDb event page URL used for nomination sync
+      required:
+        - organizationUid
+        - year
+
+    CeremonySummary:
+      type: object
+      properties:
+        uid:
+          type: string
+          format: uuid
+          description: Unique identifier for the ceremony
+        organizationUid:
+          type: string
+          format: uuid
+          description: Award organization identifier
+        organizationName:
+          type: string
+          description: Organization name
+        organizationCountry:
+          type: [string, 'null']
+          description: Organization country
+        year:
+          type: integer
+          description: Ceremony year
+        ceremonyNumber:
+          type: [integer, 'null']
+          description: Ceremony number
+        startDate:
+          type: [integer, 'null']
+          description: Start date (unix seconds)
+        endDate:
+          type: [integer, 'null']
+          description: End date (unix seconds)
+        location:
+          type: [string, 'null']
+          description: Ceremony location
+        description:
+          type: [string, 'null']
+          description: Ceremony description
+        imdbEventUrl:
+          type: [string, 'null']
+          description: IMDb event page URL
+        createdAt:
+          type: integer
+          description: Creation timestamp (unix seconds)
+        updatedAt:
+          type: integer
+          description: Last update timestamp (unix seconds)
+      required:
+        - uid
+        - organizationUid
+        - organizationName
+        - year
+
+    CeremoniesListResponse:
+      type: object
+      properties:
+        ceremonies:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/CeremonySummary'
+              - type: object
+                properties:
+                  movieCount:
+                    type: integer
+                    description: Number of distinct nominated movies
+          description: Award ceremonies
+      required:
+        - ceremonies
+
+    CeremonyDetail:
+      allOf:
+        - $ref: '#/components/schemas/CeremonySummary'
+        - type: object
+          properties:
+            nominations:
+              type: array
+              items:
+                type: object
+                properties:
+                  uid:
+                    type: string
+                    format: uuid
+                  movieUid:
+                    type: string
+                    format: uuid
+                  movieTitle:
+                    type: string
+                  movieYear:
+                    type: [integer, 'null']
+                  movieOriginalLanguage:
+                    type: string
+                  categoryUid:
+                    type: string
+                    format: uuid
+                  categoryName:
+                    type: string
+                  isWinner:
+                    type: integer
+                  specialMention:
+                    type: [string, 'null']
+              description: Nominations for the ceremony
+
+    AwardsDataResponse:
+      type: object
+      properties:
+        organizations:
+          type: array
+          items:
+            type: object
+            properties:
+              uid:
+                type: string
+                format: uuid
+              name:
+                type: string
+              country:
+                type: [string, 'null']
+            required:
+              - uid
+              - name
+          description: Award organizations
+        ceremonies:
+          type: array
+          items:
+            type: object
+            properties:
+              uid:
+                type: string
+                format: uuid
+              organizationUid:
+                type: string
+                format: uuid
+              year:
+                type: integer
+              ceremonyNumber:
+                type: [integer, 'null']
+              organizationName:
+                type: string
+              imdbEventUrl:
+                type: [string, 'null']
+            required:
+              - uid
+              - organizationUid
+              - year
+              - organizationName
+          description: Award ceremonies
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              uid:
+                type: string
+                format: uuid
+              organizationUid:
+                type: string
+                format: uuid
+              name:
+                type: string
+              organizationName:
+                type: string
+            required:
+              - uid
+              - organizationUid
+              - name
+              - organizationName
+          description: Award categories
+      required:
+        - organizations
+        - ceremonies
+        - categories
+
+    PreviewSelectionsResponse:
+      type: object
+      properties:
+        nextDaily:
+          $ref: '#/components/schemas/SelectionPreview'
+        nextWeekly:
+          $ref: '#/components/schemas/SelectionPreview'
+        nextMonthly:
+          $ref: '#/components/schemas/SelectionPreview'
+      required:
+        - nextDaily
+        - nextWeekly
+        - nextMonthly
+
+    SelectionPreview:
+      type: object
+      properties:
+        date:
+          type: string
+          description: Selection date (YYYY-MM-DD)
+        movie:
+          $ref: '#/components/schemas/MovieWithDetails'
+      required:
+        - date
+
+    OverrideSelectionRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [daily, weekly, monthly]
+          description: Selection period type
+        date:
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}$'
+          description: Target selection date (YYYY-MM-DD)
+        movieId:
+          type: string
+          format: uuid
+          description: Movie to set as the selection
+      required:
+        - type
+        - date
+        - movieId
+
+    CleanupFutureSelectionsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Operation success status
+        currentDates:
+          type: object
+          properties:
+            daily:
+              type: string
+              description: Current daily selection date
+            weekly:
+              type: string
+              description: Current weekly selection date
+            monthly:
+              type: string
+              description: Current monthly selection date
+          description: Current selection dates per period
+        deletedCount:
+          type: object
+          properties:
+            daily:
+              type: integer
+              description: Deleted future daily selections
+            weekly:
+              type: integer
+              description: Deleted future weekly selections
+            monthly:
+              type: integer
+              description: Deleted future monthly selections
+          description: Number of deleted selections per period
+      required:
+        - success
+        - currentDates
+        - deletedCount
+
+    RandomMoviePreviewRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [daily, weekly, monthly]
+          description: Selection period type
+        date:
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}$'
+          description: Target date (YYYY-MM-DD)
+        locale:
+          type: string
+          enum: [en, ja]
+          default: en
+          description: Language preference
+      required:
+        - type
+        - date
 
     SuccessResponse:
       type: object
@@ -1260,8 +2647,7 @@ components:
           type: string
           description: Error code
         details:
-          type: object
-          nullable: true
+          type: [object, 'null']
           description: Additional error details
       required:
         - error
@@ -1353,3 +2739,7 @@ tags:
     description: Admin operations for article link management
   - name: Admin - Selections
     description: Admin operations for movie selection management
+  - name: Admin - Nominations
+    description: Admin operations for nomination management
+  - name: Admin - Awards
+    description: Admin operations for award organizations, ceremonies, and categories
