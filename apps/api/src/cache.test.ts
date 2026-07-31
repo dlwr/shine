@@ -32,10 +32,12 @@ describe('Cache Utilities', () => {
       const movieId = 'test-movie-123';
       const basicKey = getCacheKeyForMovie(movieId, false);
       const fullKey = getCacheKeyForMovie(movieId, true);
+      const englishKey = getCacheKeyForMovie(movieId, false, 'en');
 
-      expect(basicKey).toBe(`movie:${movieId}:basic:v1`);
-      expect(fullKey).toBe(`movie:${movieId}:full:v1`);
+      expect(basicKey).toBe(`movie:${movieId}:basic:ja:v2`);
+      expect(fullKey).toBe(`movie:${movieId}:full:ja:v2`);
       expect(basicKey).not.toBe(fullKey);
+      expect(englishKey).not.toBe(basicKey);
     });
   });
 
@@ -190,9 +192,9 @@ describe('Cache Utilities', () => {
       // Test with invalid key that might cause errors
       const invalidKey = '';
 
-      // Should not throw errors, should return undefined/true in development
+      // Should not throw errors
       await expect(cache.get(invalidKey)).resolves.toBeUndefined();
-      await expect(cache.delete(invalidKey)).resolves.toBe(true); // Returns true in development mode
+      await expect(cache.delete(invalidKey)).resolves.toBe(false);
     });
   });
 
