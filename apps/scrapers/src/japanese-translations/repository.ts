@@ -22,7 +22,7 @@ export type Movie = {
  * 翻訳データの型定義
  */
 export type Translation = {
-  resourceType: string;
+  resourceType: 'movie_title' | 'movie_description';
   resourceUid: string;
   languageCode: string;
   content: string;

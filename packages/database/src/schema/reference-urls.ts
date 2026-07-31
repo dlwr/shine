@@ -1,5 +1,11 @@
 import {sql} from 'drizzle-orm';
-import {integer, sqliteTable, text, unique} from 'drizzle-orm/sqlite-core';
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  unique,
+} from 'drizzle-orm/sqlite-core';
 import {generateUUID} from '@shine/utils';
 import {movies} from './movies';
 
@@ -27,14 +33,11 @@ export const referenceUrls = sqliteTable(
       .notNull()
       .default(sql`(unixepoch())`),
   },
-  table => [unique().on(table.movieUid, table.sourceType, table.languageCode)],
+  table => [
+    unique().on(table.movieUid, table.sourceType, table.languageCode),
+    index('reference_urls_movie_language_idx').on(
+      table.movieUid,
+      table.languageCode,
+    ),
+  ],
 );
-
-export const referenceUrlsIndexes = {
-  movieUidIdx:
-    'CREATE INDEX reference_urls_movie_uid_idx ON reference_urls (movie_uid)',
-  movieLanguageIdx:
-    'CREATE INDEX reference_urls_movie_language_idx ON reference_urls (movie_uid, language_code)',
-  movieSourceLanguageIdx:
-    'CREATE INDEX reference_urls_movie_source_language_idx ON reference_urls (movie_uid, source_type, language_code)',
-};

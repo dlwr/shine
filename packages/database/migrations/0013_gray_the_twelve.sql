@@ -1,0 +1,2 @@
+CREATE INDEX `nominations_ceremony_category_idx` ON `nominations` (`ceremony_uid`,`category_uid`);--> statement-breakpoint
+CREATE INDEX `reference_urls_movie_language_idx` ON `reference_urls` (`movie_uid`,`language_code`);
