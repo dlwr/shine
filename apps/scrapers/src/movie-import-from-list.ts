@@ -9,6 +9,11 @@ import {nominations} from '@shine/database/schema/nominations';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {generateUUID} from '@shine/utils';
+import {fetchJsonWithRetry} from './common/fetch-utilities';
+import {
+  fetchTMDBConfiguration,
+  type TMDBConfiguration,
+} from './common/tmdb-utilities';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -37,13 +42,6 @@ type TMDBSearchResponse = {
   total_results: number;
 };
 
-type TMDBConfiguration = {
-  images: {
-    secure_base_url: string;
-    poster_sizes: string[];
-  };
-};
-
 let environment_: Environment;
 let TMDB_API_KEY: string;
 let tmdbConfiguration: TMDBConfiguration | undefined;
@@ -69,7 +67,8 @@ export async function importMoviesFromList(
   }
 
   // TMDB設定を取得
-  await fetchTMDBConfiguration();
+  tmdbConfiguration = await fetchTMDBConfiguration(TMDB_API_KEY);
+  console.log('TMDB configuration loaded');
 
   // JSONファイルを読み込み
   const fileContent = readFileSync(filePath, 'utf8');
@@ -394,12 +393,9 @@ async function searchMovieOnTMDB(
     searchUrl.searchParams.append('query', title);
     searchUrl.searchParams.append('language', 'ja');
 
-    const response = await fetch(searchUrl.toString());
-    if (!response.ok) {
-      throw new Error(`TMDB API error: ${response.statusText}`);
-    }
-
-    const data: TMDBSearchResponse = await response.json();
+    const data = await fetchJsonWithRetry<TMDBSearchResponse>(
+      searchUrl.toString(),
+    );
 
     if (data.results.length === 0) {
       return undefined;
@@ -552,26 +548,5 @@ async function updateExistingMovie(
         sourceType: 'tmdb',
       });
     }
-  }
-}
-
-/**
- * TMDB設定を取得
- */
-async function fetchTMDBConfiguration(): Promise<void> {
-  try {
-    const configUrl = new URL(`${TMDB_API_BASE_URL}/configuration`);
-    configUrl.searchParams.append('api_key', TMDB_API_KEY);
-
-    const response = await fetch(configUrl.toString());
-    if (!response.ok) {
-      throw new Error(`TMDB configuration API error: ${response.statusText}`);
-    }
-
-    tmdbConfiguration = await response.json();
-    console.log('TMDB configuration loaded');
-  } catch (error) {
-    console.error('Error fetching TMDB configuration:', error);
-    throw error;
   }
 }

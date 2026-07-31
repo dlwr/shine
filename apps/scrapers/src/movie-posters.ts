@@ -2,18 +2,12 @@ import {eq, sql} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {posterUrls} from '@shine/database/schema/poster-urls';
-
-const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
-
-type TMDBMovieImages = {
-  id: number;
-  posters: Array<{
-    file_path: string;
-    width: number;
-    height: number;
-    iso_639_1: string | undefined;
-  }>;
-};
+import {
+  fetchTMDBImages,
+  fetchTMDBMovieImages,
+  savePosterUrls,
+  saveTMDBId,
+} from './common/tmdb-utilities';
 
 type MovieWithImdbId = {
   uid: string;
@@ -129,146 +123,6 @@ async function getMoviesWithImdbId(limit = 10): Promise<MovieWithImdbId[]> {
   return filterMoviesWithImdbId(normalizeMovies(moviesWithImdbIdNoTmdb));
 }
 
-async function fetchMovieImages(
-  imdbId: string,
-): Promise<{images: TMDBMovieImages; tmdbId: number} | undefined> {
-  if (!TMDB_API_KEY) {
-    console.error('TMDb API key is not set');
-    return undefined;
-  }
-
-  try {
-    const findUrl = new URL(`${TMDB_API_BASE_URL}/find/${imdbId}`);
-    findUrl.searchParams.append('api_key', TMDB_API_KEY);
-    findUrl.searchParams.append('external_source', 'imdb_id');
-
-    const findResponse = await fetch(findUrl.toString());
-    if (!findResponse.ok) {
-      throw new Error(`TMDb API error: ${findResponse.statusText}`);
-    }
-
-    const findData: {
-      movie_results?: Array<{id: number}>;
-    } = await findResponse.json();
-    const movieResults = findData.movie_results;
-
-    if (!movieResults || movieResults.length === 0) {
-      console.log(`No TMDb match found for IMDb ID: ${imdbId}`);
-      return undefined;
-    }
-
-    const tmdbId = movieResults[0].id;
-
-    const imagesUrl = new URL(`${TMDB_API_BASE_URL}/movie/${tmdbId}/images`);
-    imagesUrl.searchParams.append('api_key', TMDB_API_KEY);
-
-    const imagesResponse = await fetch(imagesUrl.toString());
-    if (!imagesResponse.ok) {
-      throw new Error(`TMDb API error: ${imagesResponse.statusText}`);
-    }
-
-    const images: TMDBMovieImages = await imagesResponse.json();
-    return {images, tmdbId};
-  } catch (error) {
-    console.error(`Error fetching TMDb images for IMDb ID ${imdbId}:`, error);
-    return undefined;
-  }
-}
-
-async function saveTMDBId(movieUid: string, tmdbId: number): Promise<void> {
-  const database = getDatabase(environment_);
-
-  try {
-    // 既存のTMDB IDをチェック（この映画に対して）
-    const existingMovie = await database
-      .select({tmdbId: movies.tmdbId})
-      .from(movies)
-      .where(eq(movies.uid, movieUid))
-      .limit(1);
-
-    // 既にTMDB IDが設定されている場合は何もしない（差分チェック）
-    if (existingMovie.length > 0 && existingMovie[0].tmdbId === tmdbId) {
-      console.log(`  ! TMDB ID は既に存在します: ${existingMovie[0].tmdbId}`);
-      return;
-    }
-
-    // 他の映画で同じTMDB IDが使用されていないかチェック
-    const duplicateMovie = await database
-      .select({uid: movies.uid, tmdbId: movies.tmdbId})
-      .from(movies)
-      .where(eq(movies.tmdbId, tmdbId))
-      .limit(1);
-
-    if (duplicateMovie.length > 0) {
-      console.log(
-        `  ! TMDB ID ${tmdbId} は他の映画で既に使用されています (${duplicateMovie[0].uid})`,
-      );
-      return;
-    }
-
-    // TMDB IDを更新（実際に更新が必要な場合のみ）
-    await database.update(movies).set({tmdbId}).where(eq(movies.uid, movieUid));
-
-    console.log(`  ✓ TMDB ID を保存しました: ${tmdbId}`);
-  } catch (error) {
-    console.error(`Error saving TMDB ID for movie ${movieUid}:`, error);
-  }
-}
-
-async function savePosterUrls(
-  movieUid: string,
-  posters: TMDBMovieImages['posters'],
-): Promise<number> {
-  if (!posters || posters.length === 0) {
-    return 0;
-  }
-
-  const database = getDatabase(environment_);
-
-  try {
-    const existingPosters = await database
-      .select({url: posterUrls.url})
-      .from(posterUrls)
-      .where(eq(posterUrls.movieUid, movieUid));
-
-    const existingUrls = new Set(existingPosters.map(p => p.url));
-
-    // バッチ挿入用の配列
-    const posterUrlsBatch: Array<typeof posterUrls.$inferInsert> = [];
-    let savedCount = 0;
-
-    for (const poster of posters) {
-      const url = `https://image.tmdb.org/t/p/original${poster.file_path}`;
-
-      if (existingUrls.has(url)) {
-        continue;
-      }
-
-      posterUrlsBatch.push({
-        movieUid,
-        url,
-        width: poster.width,
-        height: poster.height,
-        languageCode: poster.iso_639_1 || undefined,
-        sourceType: 'tmdb',
-        isPrimary: savedCount === 0 ? 1 : 0,
-      });
-
-      savedCount++;
-    }
-
-    // バッチ挿入
-    if (posterUrlsBatch.length > 0) {
-      await database.insert(posterUrls).values(posterUrlsBatch);
-    }
-
-    return savedCount;
-  } catch (error) {
-    console.error(`Error saving poster URLs for movie ${movieUid}:`, error);
-    throw error;
-  }
-}
-
 async function fetchAndStorePosterUrls(limit = 10): Promise<{
   processed: number;
   success: number;
@@ -321,14 +175,17 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
 
     try {
       // 既にTMDB IDがある映画の場合、ポスター取得のみ行う
-      if (movie.tmdbId === null) {
+      if (movie.tmdbId === undefined) {
         // TMDB IDがない場合は、IMDb IDから検索
         console.log('  TMDb API からポスター情報を取得中...');
-        const movieData = await fetchMovieImages(movie.imdbId);
+        const movieData = await fetchTMDBMovieImages(
+          movie.imdbId,
+          TMDB_API_KEY!,
+        );
 
         if (movieData) {
           // TMDB ID を保存
-          await saveTMDBId(movie.uid, movieData.tmdbId);
+          await saveTMDBId(movie.imdbId, movieData.tmdbId, environment_);
 
           if (
             !movieData.images.posters ||
@@ -345,6 +202,7 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
             const savedCount = await savePosterUrls(
               movie.uid,
               movieData.images.posters,
+              environment_,
             );
             result.postersAdded = savedCount;
 
@@ -366,17 +224,17 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
         console.log(`  既存のTMDB ID を使用: ${movie.tmdbId}`);
 
         // TMDB IDから直接ポスター情報を取得
-        const imagesUrl = new URL(
-          `${TMDB_API_BASE_URL}/movie/${movie.tmdbId}/images`,
+        const images = await fetchTMDBImages(
+          movie.tmdbId,
+          'movie',
+          TMDB_API_KEY!,
         );
-        imagesUrl.searchParams.append('api_key', TMDB_API_KEY!);
 
-        const imagesResponse = await fetch(imagesUrl.toString());
-        if (!imagesResponse.ok) {
-          throw new Error(`TMDb API error: ${imagesResponse.statusText}`);
+        if (!images) {
+          throw new Error(
+            `Failed to fetch TMDb images for TMDb ID ${movie.tmdbId}`,
+          );
         }
-
-        const images: TMDBMovieImages = await imagesResponse.json();
 
         if (!images.posters || images.posters.length === 0) {
           result.error = 'No posters found';
@@ -387,7 +245,11 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
             `  ポスター候補: ${images.posters.length}枚見つかりました`,
           );
           console.log('  データベースに保存中...');
-          const savedCount = await savePosterUrls(movie.uid, images.posters);
+          const savedCount = await savePosterUrls(
+            movie.uid,
+            images.posters,
+            environment_,
+          );
           result.postersAdded = savedCount;
 
           if (savedCount > 0) {

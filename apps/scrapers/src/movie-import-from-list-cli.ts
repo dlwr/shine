@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import {importMoviesFromList} from './movie-import-from-list';
-import {loadEnvironmentFiles} from './common/environment';
+import {buildEnvironment, loadEnvironmentFiles} from './common/environment';
 
 loadEnvironmentFiles();
 
@@ -28,7 +28,8 @@ async function main(): Promise<void> {
     console.log(
       'Example: movie-import-from-list-cli ./tmp/1000_movies.json "Best 1000 Movies" --dry-run',
     );
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
   const filePath = arguments_[0];
@@ -43,26 +44,23 @@ async function main(): Promise<void> {
   // 必要な環境変数をチェック
   if (!tursoUrl) {
     console.error('Error: TURSO_DATABASE_URL environment variable is required');
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
   if (!tursoToken) {
     console.error('Error: TURSO_AUTH_TOKEN environment variable is required');
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
   if (!tmdbKey) {
     console.error('Error: TMDB_API_KEY environment variable is required');
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
-  const environment = {
-    TURSO_DATABASE_URL: tursoUrl,
-    TURSO_AUTH_TOKEN: tursoToken,
-    TMDB_API_KEY: tmdbKey,
-    TMDB_LEAD_ACCESS_TOKEN: process.env.TMDB_LEAD_ACCESS_TOKEN || '',
-    OMDB_API_KEY: process.env.OMDB_API_KEY || '',
-  };
+  const environment = buildEnvironment(process.env);
 
   try {
     console.log(`Starting import from: ${filePath}`);
@@ -86,7 +84,8 @@ async function main(): Promise<void> {
     console.log('Import completed successfully!');
   } catch (error) {
     console.error('Import failed:', error);
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 }
 

@@ -1,6 +1,7 @@
 /**
  * 日本語翻訳スクレイピングのCLIエントリーポイント
  */
+import {Command, InvalidArgumentError} from 'commander';
 import {getDatabase} from '@shine/database';
 import {
   getMoviesWithoutJapaneseTranslation,
@@ -20,174 +21,181 @@ const environment = buildEnvironment(process.env);
 // 処理するバッチサイズ（デフォルト）
 const DEFAULT_BATCH_SIZE = 20;
 
+function parseLimit(value: string): number {
+  const parsed = Number.parseInt(value, 10);
+
+  if (Number.isNaN(parsed) || parsed <= 0) {
+    throw new InvalidArgumentError(
+      '無効なバッチサイズです。正の整数を指定してください。',
+    );
+  }
+
+  return parsed;
+}
+
 /**
  * 日本語翻訳スクレイピングのメイン処理
  */
-async function main() {
-  try {
-    // コマンドライン引数を解析
-    const arguments_ = process.argv.slice(2);
-    const limitIndex = arguments_.indexOf('--limit');
-    const isAllMode = arguments_.includes('--all');
-    const includeNonJapanese = arguments_.includes('--include-non-japanese');
+async function main(options: {
+  limit?: number;
+  all: boolean;
+  includeNonJapanese: boolean;
+}): Promise<void> {
+  const {all: isAllMode, includeNonJapanese} = options;
 
-    let batchSize = DEFAULT_BATCH_SIZE;
+  let batchSize = options.limit ?? DEFAULT_BATCH_SIZE;
 
-    if (isAllMode) {
-      batchSize = 0; // 全件処理
-      console.log('日本語翻訳スクレイピングを開始します (全件処理モード)');
-    } else if (limitIndex !== -1 && arguments_[limitIndex + 1]) {
-      batchSize = Number.parseInt(arguments_[limitIndex + 1], 10);
+  if (isAllMode) {
+    batchSize = 0; // 全件処理
+    console.log('日本語翻訳スクレイピングを開始します (全件処理モード)');
+  } else {
+    console.log(
+      `日本語翻訳スクレイピングを開始します (バッチサイズ: ${batchSize})`,
+    );
+  }
 
-      if (Number.isNaN(batchSize) || batchSize <= 0) {
-        console.error('無効なバッチサイズです。正の整数を指定してください。');
-        throw new Error('Invalid batch size');
+  // 環境変数の確認
+  assertDatabaseEnvironment(environment);
+
+  // データベース接続
+  const database = getDatabase(environment);
+
+  // 日本語翻訳が未登録の映画データを取得
+  console.log(
+    includeNonJapanese
+      ? '日本語翻訳が未登録、または原題のまま保存されている映画を検索中...'
+      : '日本語翻訳が未登録の映画を検索中...',
+  );
+  const movies = await getMoviesWithoutJapaneseTranslation(
+    database,
+    batchSize,
+    includeNonJapanese,
+  );
+
+  if (movies.length === 0) {
+    console.log('日本語翻訳が必要な映画が見つかりませんでした。');
+    return;
+  }
+
+  console.log(
+    `${movies.length}件の映画が見つかりました。スクレイピングを開始します。`,
+  );
+  console.log('─'.repeat(80));
+
+  let successCount = 0;
+  let notFoundCount = 0;
+  let errorCount = 0;
+
+  // 各映画に対して処理を実行
+  for (let index = 0; index < movies.length; index++) {
+    const movie = movies[index];
+    const progress = `[${index + 1}/${movies.length}]`;
+
+    try {
+      console.log(
+        `${progress} 処理中: ${movie.englishTitle} (${
+          movie.year || '年不明'
+        }) - IMDb: ${movie.imdbId}`,
+      );
+
+      // TMDBから日本語タイトルを取得
+      let japaneseTitle = await fetchJapaneseTitleFromTMDB(
+        movie.imdbId,
+        movie.tmdbId,
+        environment,
+      );
+
+      // TMDBで見つからなかった場合はWikipediaで検索（フォールバック）
+      if (!japaneseTitle) {
+        console.log('  TMDBで見つからなかったため、Wikipediaで検索中...');
+        japaneseTitle = await scrapeJapaneseTitleFromWikipedia(movie.imdbId);
       }
 
-      console.log(
-        `日本語翻訳スクレイピングを開始します (バッチサイズ: ${batchSize})`,
-      );
-    } else {
-      console.log(
-        `日本語翻訳スクレイピングを開始します (バッチサイズ: ${batchSize})`,
-      );
-    }
-
-    // 環境変数の確認
-    assertDatabaseEnvironment(environment);
-
-    // データベース接続
-    const database = getDatabase(environment);
-
-    // 日本語翻訳が未登録の映画データを取得
-    console.log(
-      includeNonJapanese
-        ? '日本語翻訳が未登録、または原題のまま保存されている映画を検索中...'
-        : '日本語翻訳が未登録の映画を検索中...',
-    );
-    const movies = await getMoviesWithoutJapaneseTranslation(
-      database,
-      batchSize,
-      includeNonJapanese,
-    );
-
-    if (movies.length === 0) {
-      console.log('日本語翻訳が必要な映画が見つかりませんでした。');
-      return;
-    }
-
-    console.log(
-      `${movies.length}件の映画が見つかりました。スクレイピングを開始します。`,
-    );
-    console.log('─'.repeat(80));
-
-    let successCount = 0;
-    let notFoundCount = 0;
-    let errorCount = 0;
-
-    // 各映画に対して処理を実行
-    for (let index = 0; index < movies.length; index++) {
-      const movie = movies[index];
-      const progress = `[${index + 1}/${movies.length}]`;
-
-      try {
-        console.log(
-          `${progress} 処理中: ${movie.englishTitle} (${
-            movie.year || '年不明'
-          }) - IMDb: ${movie.imdbId}`,
-        );
-
-        // TMDBから日本語タイトルを取得
-        let japaneseTitle = await fetchJapaneseTitleFromTMDB(
-          movie.imdbId,
-          movie.tmdbId,
-          environment,
-        );
-
-        // TMDBで見つからなかった場合はWikipediaで検索（フォールバック）
-        if (!japaneseTitle) {
-          console.log('  TMDBで見つからなかったため、Wikipediaで検索中...');
-          japaneseTitle = await scrapeJapaneseTitleFromWikipedia(movie.imdbId);
-        }
-
-        if (japaneseTitle) {
-          // 日本語翻訳をデータベースに保存
-          await saveJapaneseTranslation(database, {
-            resourceType: 'movie_title',
-            resourceUid: movie.uid,
-            languageCode: 'ja',
-            content: japaneseTitle,
-          });
-
-          console.log(
-            `✅ ${progress} 成功: ${movie.englishTitle} → ${japaneseTitle}`,
-          );
-          successCount++;
-        } else {
-          console.log(`❌ ${progress} 見つからず: ${movie.englishTitle}`);
-          notFoundCount++;
-        }
-      } catch (error) {
-        console.error(
-          `💥 ${progress} エラー: ${movie.englishTitle} - ${
-            error instanceof Error ? error.message : String(error)
-          }`,
-        );
-        errorCount++;
-      }
-
-      // 連続リクエストを避けるための待機（最後の処理以外）
-      if (index < movies.length - 1) {
-        await new Promise(resolve => {
-          setTimeout(resolve, 1000);
+      if (japaneseTitle) {
+        // 日本語翻訳をデータベースに保存
+        await saveJapaneseTranslation(database, {
+          resourceType: 'movie_title',
+          resourceUid: movie.uid,
+          languageCode: 'ja',
+          content: japaneseTitle,
         });
+
+        console.log(
+          `✅ ${progress} 成功: ${movie.englishTitle} → ${japaneseTitle}`,
+        );
+        successCount++;
+      } else {
+        console.log(`❌ ${progress} 見つからず: ${movie.englishTitle}`);
+        notFoundCount++;
       }
-    }
-
-    // 結果の表示
-    console.log('─'.repeat(80));
-    console.log('スクレイピング完了');
-    console.log(`✅ 成功: ${successCount}件`);
-    console.log(`❌ 見つからず: ${notFoundCount}件`);
-    console.log(`💥 エラー: ${errorCount}件`);
-    console.log(`📊 合計: ${movies.length}件`);
-
-    if (successCount > 0) {
-      console.log(
-        `\n${successCount}件の日本語翻訳をデータベースに保存しました。`,
+    } catch (error) {
+      console.error(
+        `💥 ${progress} エラー: ${movie.englishTitle} - ${
+          error instanceof Error ? error.message : String(error)
+        }`,
       );
+      errorCount++;
     }
-  } catch (error) {
-    console.error('スクレイピング処理中にエラーが発生しました:', error);
-    throw error;
+
+    // 連続リクエストを避けるための待機（最後の処理以外）
+    if (index < movies.length - 1) {
+      await new Promise(resolve => {
+        setTimeout(resolve, 1000);
+      });
+    }
+  }
+
+  // 結果の表示
+  console.log('─'.repeat(80));
+  console.log('スクレイピング完了');
+  console.log(`✅ 成功: ${successCount}件`);
+  console.log(`❌ 見つからず: ${notFoundCount}件`);
+  console.log(`💥 エラー: ${errorCount}件`);
+  console.log(`📊 合計: ${movies.length}件`);
+
+  if (successCount > 0) {
+    console.log(
+      `\n${successCount}件の日本語翻訳をデータベースに保存しました。`,
+    );
   }
 }
 
-// 使用方法の表示
-function showUsage() {
-  console.log('使用方法:');
-  console.log('  pnpm run scrape:japanese-translations [オプション]');
-  console.log('');
-  console.log('オプション:');
-  console.log('  --limit <数値>  処理する映画の件数を指定 (デフォルト: 20)');
-  console.log(
-    '  --all           全件処理モード（日本語翻訳がないすべての映画を処理）',
-  );
-  console.log(
-    '  --include-non-japanese  原題がそのまま ja として保存されている映画も取得し直す',
-  );
-  console.log('  --help, -h      このヘルプを表示');
-  console.log('');
-  console.log('例:');
-  console.log('  pnpm run scrape:japanese-translations');
-  console.log('  pnpm run scrape:japanese-translations --limit 50');
-  console.log('  pnpm run scrape:japanese-translations --all');
-}
+const program = new Command();
 
-// ヘルプオプションの処理
-if (process.argv.includes('--help') || process.argv.includes('-h')) {
-  showUsage();
-} else {
-  // メイン処理を実行
-  await main();
+program
+  .name('japanese-translations-cli')
+  .description(
+    '日本語翻訳が未登録の映画にTMDB/Wikipediaから日本語タイトルを取得して保存します',
+  )
+  .option(
+    '--limit <number>',
+    '処理する映画の件数を指定 (デフォルト: 20)',
+    parseLimit,
+  )
+  .option(
+    '--all',
+    '全件処理モード（日本語翻訳がないすべての映画を処理）',
+    false,
+  )
+  .option(
+    '--include-non-japanese',
+    '原題がそのまま ja として保存されている映画も取得し直す',
+    false,
+  )
+  .addHelpText(
+    'after',
+    `
+例:
+  pnpm run scrape:japanese-translations
+  pnpm run scrape:japanese-translations --limit 50
+  pnpm run scrape:japanese-translations --all
+`,
+  )
+  .action(main);
+
+try {
+  await program.parseAsync(process.argv);
+} catch (error) {
+  console.error('スクレイピング処理中にエラーが発生しました:', error);
+  process.exitCode = 1;
 }

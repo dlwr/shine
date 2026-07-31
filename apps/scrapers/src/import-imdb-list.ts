@@ -12,6 +12,11 @@ import {posterUrls} from '@shine/database/schema/poster-urls';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import {generateUUID} from '@shine/utils';
+import {
+  fetchTMDBConfiguration,
+  findTMDBByImdbId,
+  type TMDBConfiguration,
+} from './common/tmdb-utilities';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -22,13 +27,6 @@ type CsvMovieRow = {
   Year?: string;
   'Release Date'?: string;
   Description?: string;
-};
-
-type TmdbConfiguration = {
-  images: {
-    secure_base_url: string;
-    poster_sizes: string[];
-  };
 };
 
 type TmdbMovieDetails = {
@@ -83,8 +81,7 @@ type ImportOptions = {
 };
 
 let tmdbApiKey: string;
-let tmdbConfiguration: TmdbConfiguration | undefined;
-let releaseDateColumnAvailable: boolean | undefined;
+let tmdbConfiguration: TMDBConfiguration | undefined;
 type AwardContext = {
   organizationUid: string;
   ceremonyUid: string;
@@ -423,21 +420,7 @@ export async function importMoviesFromCsv({
 }
 
 async function ensureTmdbConfiguration(): Promise<void> {
-  if (tmdbConfiguration) {
-    return;
-  }
-
-  const url = new URL(`${TMDB_API_BASE_URL}/configuration`);
-  url.searchParams.set('api_key', tmdbApiKey);
-
-  const response = await fetch(url.toString());
-  if (!response.ok) {
-    throw new Error(
-      `Failed to load TMDb configuration: ${response.statusText}`,
-    );
-  }
-
-  tmdbConfiguration = (await response.json()) as TmdbConfiguration;
+  tmdbConfiguration ??= await fetchTMDBConfiguration(tmdbApiKey);
 }
 
 async function findOrCreateOrganization(
@@ -565,36 +548,21 @@ async function getAwardContext(
 async function fetchMovieByImdbId(
   imdbId: string,
 ): Promise<TmdbMovieDetails | undefined> {
-  const findUrl = new URL(`${TMDB_API_BASE_URL}/find/${imdbId}`);
-  findUrl.searchParams.set('api_key', tmdbApiKey);
-  findUrl.searchParams.set('external_source', 'imdb_id');
-  findUrl.searchParams.set('language', 'en-US');
-
-  const response = await fetch(findUrl.toString());
-  if (!response.ok) {
-    throw new Error(`TMDb find endpoint error: ${response.statusText}`);
+  const findResult = await findTMDBByImdbId(imdbId, tmdbApiKey);
+  if (!findResult) {
+    return undefined;
   }
 
-  const data = (await response.json()) as {
-    movie_results?: TmdbMovieSearchResult[];
-    tv_results?: TmdbMultiSearchResult[];
-  };
-
-  for (const baseMovie of data.movie_results ?? []) {
-    const details = await fetchMovieDetails(baseMovie.id);
-    if (details) {
-      return details;
-    }
+  if (findResult.mediaType === 'movie') {
+    return fetchMovieDetails(findResult.tmdbId);
   }
 
-  for (const baseTv of data.tv_results ?? []) {
-    const tvDetails = await fetchTvDetails(baseTv.id);
-    if (tvDetails) {
-      return {
-        ...tvDetails,
-        imdb_id: imdbId,
-      };
-    }
+  const tvDetails = await fetchTvDetails(findResult.tmdbId);
+  if (tvDetails) {
+    return {
+      ...tvDetails,
+      imdb_id: imdbId,
+    };
   }
 
   return undefined;
@@ -782,18 +750,6 @@ type ExistingMovieRecord = {
   tmdbId?: number;
 };
 
-function toSqlArguments(
-  values: Array<string | number | null | undefined>,
-): Array<string | number | null> {
-  return values.map(value => {
-    if (value === undefined) {
-      // eslint-disable-next-line unicorn/no-null
-      return null;
-    }
-    return value;
-  });
-}
-
 async function insertMovieWithTranslations({
   database,
   imdbId,
@@ -822,66 +778,17 @@ async function insertMovieWithTranslations({
 
   const mediaType = tmdbMovie.media_type === 'tv' ? 'tv' : 'movie';
 
-  const movieBaseValues: typeof movies.$inferInsert = {
+  const movieValues: typeof movies.$inferInsert = {
     uid: movieUid,
     imdbId,
     originalLanguage: tmdbMovie.original_language ?? 'en',
     year: normalizedYear,
     mediaType,
     ...(tmdbId === undefined ? {} : {tmdbId}),
+    ...(releaseDate === undefined ? {} : {releaseDate}),
   };
 
-  const baseArguments = toSqlArguments([
-    movieBaseValues.uid,
-    movieBaseValues.originalLanguage,
-    movieBaseValues.year,
-    imdbId,
-    tmdbId,
-    mediaType,
-  ]);
-
-  const isReleaseDateColumnAvailable = releaseDateColumnAvailable ?? true;
-  const shouldIncludeReleaseDate =
-    Boolean(releaseDate) && isReleaseDateColumnAvailable;
-
-  if (shouldIncludeReleaseDate) {
-    try {
-      await database.$client.execute({
-        sql: `
-          INSERT INTO movies (
-            uid, original_language, year, imdb_id, tmdb_id, media_type, release_date
-          )
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `,
-        args: [...baseArguments, releaseDate!],
-      });
-      releaseDateColumnAvailable = true;
-    } catch (error) {
-      if (isMissingReleaseDateColumnError(error)) {
-        releaseDateColumnAvailable = false;
-        console.warn(
-          "  WARN: 'release_date' column not found in movies table. Re-trying without release date.",
-        );
-        await database.$client.execute({
-          sql: `
-            INSERT INTO movies (uid, original_language, year, imdb_id, tmdb_id, media_type)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `,
-          args: baseArguments,
-        });
-      } else {
-        throw error;
-      }
-    }
-  } else {
-    await database.$client.execute({
-      sql: `
-        INSERT INTO movies (uid, original_language, year, imdb_id, tmdb_id, media_type)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `,
-      args: baseArguments,
-    });
-  }
+  await database.insert(movies).values(movieValues);
 
   await insertTranslations({
     database,
@@ -1127,14 +1034,4 @@ async function ensureNomination({
     console.log('  Created nomination.');
   }
   return true;
-}
-
-function isMissingReleaseDateColumnError(error: unknown): boolean {
-  const message =
-    error instanceof Error
-      ? `${error.message}\n${String((error as {cause?: unknown}).cause ?? '')}`
-      : String(error);
-  return /(no such column|has no column named)\s*:?\s*release_date/i.test(
-    message,
-  );
 }
