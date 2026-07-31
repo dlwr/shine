@@ -113,16 +113,13 @@ describe('POST /movies/:id/availability/check', () => {
       },
     ]);
 
-    const request = () =>
-      moviesRoutes.request(
+    let lastStatus = 0;
+    for (let index = 0; index < 31; index++) {
+      const response = await moviesRoutes.request(
         '/movie-a/availability/check',
         {method: 'POST', headers: {'cf-connecting-ip': '203.0.113.7'}},
         environment,
       );
-
-    let lastStatus = 0;
-    for (let index = 0; index < 31; index++) {
-      const response = await request();
       lastStatus = response.status;
     }
 

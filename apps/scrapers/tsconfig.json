@@ -10,6 +10,7 @@
   },
   "include": [
     "src/**/*",
+    "../../packages/availability/src/**/*",
     "../../packages/database/src/**/*",
     "../../packages/utils/src/**/*"
   ],
