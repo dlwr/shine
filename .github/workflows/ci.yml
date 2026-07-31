@@ -54,6 +54,9 @@ jobs:
       - name: Test
         run: pnpm run test
 
+      - name: Validate OpenAPI spec
+        run: pnpm run docs:validate
+
       - name: Build - API
         run: pnpm --filter @shine/api run build
 
