@@ -10,6 +10,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
+import {saveJapaneseTranslation} from './common/tmdb-utilities';
 
 const WIKIPEDIA_BASE_URL = 'https://en.wikipedia.org';
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
@@ -1386,7 +1387,7 @@ function appendJapaneseTitle(
     resourceUid: movieUid,
     languageCode: 'ja',
     content: movieDetails.japaneseTitle,
-    isDefault: 0,
+    isDefault: 1,
   });
 }
 
@@ -1438,33 +1439,6 @@ async function saveTranslations(
     .insert(translations)
     .values(translationsBatch)
     .onConflictDoNothing();
-}
-
-async function upsertJapaneseTitleTranslation(
-  database: DatabaseClient,
-  movieUid: string,
-  japaneseTitle: string,
-) {
-  await database
-    .insert(translations)
-    .values({
-      resourceType: 'movie_title',
-      resourceUid: movieUid,
-      languageCode: 'ja',
-      content: japaneseTitle,
-      isDefault: 0,
-    })
-    .onConflictDoUpdate({
-      target: [
-        translations.resourceType,
-        translations.resourceUid,
-        translations.languageCode,
-      ],
-      set: {
-        content: japaneseTitle,
-        updatedAt: Math.floor(Date.now() / 1000),
-      },
-    });
 }
 
 async function saveReferenceUrl(
@@ -1660,10 +1634,10 @@ async function processMovie(
     await saveTranslations(database, movieResolution.translations);
 
     if (movieDetails.japaneseTitle) {
-      await upsertJapaneseTitleTranslation(
-        database,
+      await saveJapaneseTranslation(
         movieResolution.movieUid,
         movieDetails.japaneseTitle,
+        environment_,
       );
     }
 
