@@ -82,7 +82,6 @@ type ImportOptions = {
 
 let tmdbApiKey: string;
 let tmdbConfiguration: TMDBConfiguration | undefined;
-let releaseDateColumnAvailable: boolean | undefined;
 type AwardContext = {
   organizationUid: string;
   ceremonyUid: string;
@@ -742,18 +741,6 @@ type ExistingMovieRecord = {
   tmdbId?: number;
 };
 
-function toSqlArguments(
-  values: Array<string | number | null | undefined>,
-): Array<string | number | null> {
-  return values.map(value => {
-    if (value === undefined) {
-      // eslint-disable-next-line unicorn/no-null
-      return null;
-    }
-    return value;
-  });
-}
-
 async function insertMovieWithTranslations({
   database,
   imdbId,
@@ -782,66 +769,17 @@ async function insertMovieWithTranslations({
 
   const mediaType = tmdbMovie.media_type === 'tv' ? 'tv' : 'movie';
 
-  const movieBaseValues: typeof movies.$inferInsert = {
+  const movieValues: typeof movies.$inferInsert = {
     uid: movieUid,
     imdbId,
     originalLanguage: tmdbMovie.original_language ?? 'en',
     year: normalizedYear,
     mediaType,
     ...(tmdbId === undefined ? {} : {tmdbId}),
+    ...(releaseDate === undefined ? {} : {releaseDate}),
   };
 
-  const baseArguments = toSqlArguments([
-    movieBaseValues.uid,
-    movieBaseValues.originalLanguage,
-    movieBaseValues.year,
-    imdbId,
-    tmdbId,
-    mediaType,
-  ]);
-
-  const isReleaseDateColumnAvailable = releaseDateColumnAvailable ?? true;
-  const shouldIncludeReleaseDate =
-    Boolean(releaseDate) && isReleaseDateColumnAvailable;
-
-  if (shouldIncludeReleaseDate) {
-    try {
-      await database.$client.execute({
-        sql: `
-          INSERT INTO movies (
-            uid, original_language, year, imdb_id, tmdb_id, media_type, release_date
-          )
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `,
-        args: [...baseArguments, releaseDate!],
-      });
-      releaseDateColumnAvailable = true;
-    } catch (error) {
-      if (isMissingReleaseDateColumnError(error)) {
-        releaseDateColumnAvailable = false;
-        console.warn(
-          "  WARN: 'release_date' column not found in movies table. Re-trying without release date.",
-        );
-        await database.$client.execute({
-          sql: `
-            INSERT INTO movies (uid, original_language, year, imdb_id, tmdb_id, media_type)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `,
-          args: baseArguments,
-        });
-      } else {
-        throw error;
-      }
-    }
-  } else {
-    await database.$client.execute({
-      sql: `
-        INSERT INTO movies (uid, original_language, year, imdb_id, tmdb_id, media_type)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `,
-      args: baseArguments,
-    });
-  }
+  await database.insert(movies).values(movieValues);
 
   await insertTranslations({
     database,
@@ -1087,14 +1025,4 @@ async function ensureNomination({
     console.log('  Created nomination.');
   }
   return true;
-}
-
-function isMissingReleaseDateColumnError(error: unknown): boolean {
-  const message =
-    error instanceof Error
-      ? `${error.message}\n${String((error as {cause?: unknown}).cause ?? '')}`
-      : String(error);
-  return /(no such column|has no column named)\s*:?\s*release_date/i.test(
-    message,
-  );
 }
