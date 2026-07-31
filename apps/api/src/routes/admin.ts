@@ -14,6 +14,7 @@ import {inArray, sql} from 'drizzle-orm';
 import {authMiddleware} from '../auth';
 import {sanitizeText, sanitizeUrl} from '../middleware/sanitizer';
 import {AdminService} from '../services';
+import {syncTmdbData, type TmdbSyncResult} from '../services/tmdb-sync';
 import {parsePagination} from '../utils/pagination';
 
 type Database = ReturnType<typeof getDatabase>;
@@ -306,16 +307,6 @@ const loadCeremonyDetail = async (database: Database, ceremonyUid: string) => {
         : undefined,
     },
   };
-};
-
-type TMDBMovieImages = {
-  id: number;
-  posters: Array<{
-    file_path: string;
-    width: number;
-    height: number;
-    iso_639_1: string | undefined;
-  }>;
 };
 
 export const adminRoutes = new Hono<{Bindings: Environment}>();
@@ -839,156 +830,20 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
       .where(eq(movies.uid, movieId));
 
     // If refreshData is true and tmdbId is provided, fetch additional data from TMDb
-    const refreshResults = {
+    let refreshResults: TmdbSyncResult = {
       postersAdded: 0,
       translationsAdded: 0,
     };
 
     if (refreshData && typeof tmdbId === 'number' && c.env.TMDB_API_KEY) {
       try {
-        // Import TMDb utilities
-        const {fetchTMDBMovieTranslations, savePosterUrls} =
-          await import('@shine/scrapers/common/tmdb-utilities');
-
-        // Fetch and save posters using TMDb ID directly
-        const updateEndpoint = updateMediaType;
-        const imagesUrl = new URL(
-          `https://api.themoviedb.org/3/${updateEndpoint}/${tmdbId}/images`,
-        );
-        imagesUrl.searchParams.append('api_key', c.env.TMDB_API_KEY);
-
-        const imagesResponse = await fetch(imagesUrl.toString());
-        if (imagesResponse.ok) {
-          const images: TMDBMovieImages = await imagesResponse.json();
-          if (images.posters && images.posters.length > 0) {
-            const savedPosters = await savePosterUrls(
-              movieId,
-              images.posters,
-              c.env,
-            );
-            refreshResults.postersAdded = savedPosters;
-          }
-        }
-
-        // Fetch and save translations using TMDb Translations API
-        let translationsAdded = 0;
-        const database = getDatabase(c.env);
-        const {translations} =
-          await import('@shine/database/schema/translations');
-
-        // Get all translations from TMDb
-        const translationsData = await fetchTMDBMovieTranslations(
+        refreshResults = await syncTmdbData(
+          database,
+          movieId,
           tmdbId,
-          c.env.TMDB_API_KEY,
           updateMediaType,
+          c.env,
         );
-
-        console.log(
-          `Translations data for TMDb ID ${tmdbId}:`,
-          translationsData?.translations?.length || 0,
-          'translations found',
-        );
-
-        if (translationsData?.translations) {
-          // Also get basic movie info for original language
-          const movieResponse = await fetch(
-            `https://api.themoviedb.org/3/${updateEndpoint}/${tmdbId}?api_key=${c.env.TMDB_API_KEY}`,
-          );
-          const movieData: {
-            original_language?: string;
-            original_title?: string;
-            original_name?: string;
-          } = await movieResponse.json();
-          const originalTitle =
-            updateMediaType === 'tv'
-              ? movieData.original_name
-              : movieData.original_title;
-
-          // Always update original language from TMDb
-          if (movieData.original_language) {
-            await database
-              .update(movies)
-              .set({
-                originalLanguage: movieData.original_language,
-                updatedAt: Math.floor(Date.now() / 1000),
-              })
-              .where(eq(movies.uid, movieId));
-          }
-
-          // First, reset all isDefault flags for this movie
-          await database
-            .update(translations)
-            .set({
-              isDefault: 0,
-              updatedAt: Math.floor(Date.now() / 1000),
-            })
-            .where(
-              and(
-                eq(translations.resourceUid, movieId),
-                eq(translations.resourceType, 'movie_title'),
-              ),
-            );
-
-          // If the movie's original language is Japanese, add the original title as Japanese translation
-          if (movieData.original_language === 'ja' && originalTitle) {
-            await database
-              .insert(translations)
-              .values({
-                resourceType: 'movie_title',
-                resourceUid: movieId,
-                languageCode: 'ja',
-                content: originalTitle,
-                isDefault: 1, // Original language is default
-              })
-              .onConflictDoUpdate({
-                target: [
-                  translations.resourceType,
-                  translations.resourceUid,
-                  translations.languageCode,
-                ],
-                set: {
-                  content: originalTitle,
-                  isDefault: 1,
-                  updatedAt: Math.floor(Date.now() / 1000),
-                },
-              });
-            translationsAdded++;
-          }
-
-          // Add all translations
-          for (const translation of translationsData.translations) {
-            const translatedTitle =
-              translation.data?.title || translation.data?.name;
-            if (translation.iso_639_1 && translatedTitle) {
-              const isOriginalLanguage =
-                translation.iso_639_1 === movieData.original_language;
-              await database
-                .insert(translations)
-                .values({
-                  resourceType: 'movie_title',
-                  resourceUid: movieId,
-                  languageCode: translation.iso_639_1,
-                  content: translatedTitle,
-                  isDefault: isOriginalLanguage ? 1 : 0,
-                })
-                .onConflictDoUpdate({
-                  target: [
-                    translations.resourceType,
-                    translations.resourceUid,
-                    translations.languageCode,
-                  ],
-                  set: {
-                    content: translatedTitle,
-                    isDefault: isOriginalLanguage ? 1 : 0,
-                    updatedAt: Math.floor(Date.now() / 1000),
-                  },
-                });
-              translationsAdded++;
-            }
-          }
-        }
-
-        refreshResults.translationsAdded = translationsAdded;
       } catch (refreshError) {
         console.warn('Error during data refresh:', refreshError);
         // Continue without failing the main operation
@@ -1730,7 +1585,7 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
 
     try {
       // Import TMDb utilities
-      const {findTMDBByImdbId, fetchTMDBMovieTranslations, savePosterUrls} =
+      const {findTMDBByImdbId} =
         await import('@shine/scrapers/common/tmdb-utilities');
 
       let movieTmdbId: number | undefined = tmdbId ?? undefined;
@@ -1787,137 +1642,15 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
         fetchResults.tmdbIdSet = true;
       }
 
-      // Fetch and save posters using TMDb ID
-      const tmdbEndpoint = detectedMediaType;
-      const imagesUrl = new URL(
-        `https://api.themoviedb.org/3/${tmdbEndpoint}/${movieTmdbId}/images`,
-      );
-      imagesUrl.searchParams.append('api_key', tmdbApiKey);
-
-      const imagesResponse = await fetch(imagesUrl.toString());
-      if (imagesResponse.ok) {
-        const images: TMDBMovieImages = await imagesResponse.json();
-        if (images.posters && images.posters.length > 0) {
-          const savedPosters = await savePosterUrls(
-            movieId,
-            images.posters,
-            c.env,
-          );
-          fetchResults.postersAdded = savedPosters;
-        }
-      }
-
-      // Fetch and save translations using TMDb Translations API
-      let translationsAdded = 0;
-      const {translations} =
-        await import('@shine/database/schema/translations');
-
-      // Get all translations from TMDb
-      const translationsData = await fetchTMDBMovieTranslations(
+      const syncResult = await syncTmdbData(
+        database,
+        movieId,
         movieTmdbId,
-        tmdbApiKey,
         detectedMediaType,
+        c.env,
       );
-
-      // Also get basic movie info for original title
-      const movieResponse = await fetch(
-        `https://api.themoviedb.org/3/${tmdbEndpoint}/${movieTmdbId}?api_key=${tmdbApiKey}`,
-      );
-      const movieData: {
-        original_language?: string;
-        original_title?: string;
-        original_name?: string;
-      } = await movieResponse.json();
-      const originalTitle =
-        detectedMediaType === 'tv'
-          ? movieData.original_name
-          : movieData.original_title;
-
-      // Always update original language from TMDb
-      if (movieData.original_language) {
-        await database
-          .update(movies)
-          .set({
-            originalLanguage: movieData.original_language,
-            updatedAt: Math.floor(Date.now() / 1000),
-          })
-          .where(eq(movies.uid, movieId));
-      }
-
-      if (translationsData?.translations) {
-        // First, reset all isDefault flags for this movie
-        await database
-          .update(translations)
-          .set({
-            isDefault: 0,
-            updatedAt: Math.floor(Date.now() / 1000),
-          })
-          .where(
-            and(
-              eq(translations.resourceUid, movieId),
-              eq(translations.resourceType, 'movie_title'),
-            ),
-          );
-        // If the movie's original language is Japanese, add the original title as Japanese translation
-        if (movieData.original_language === 'ja' && originalTitle) {
-          await database
-            .insert(translations)
-            .values({
-              resourceType: 'movie_title',
-              resourceUid: movieId,
-              languageCode: 'ja',
-              content: originalTitle,
-              isDefault: 1, // Original language is default
-            })
-            .onConflictDoUpdate({
-              target: [
-                translations.resourceType,
-                translations.resourceUid,
-                translations.languageCode,
-              ],
-              set: {
-                content: originalTitle,
-                isDefault: 1,
-                updatedAt: Math.floor(Date.now() / 1000),
-              },
-            });
-          translationsAdded++;
-        }
-
-        // Add all translations
-        for (const translation of translationsData.translations) {
-          const translatedTitle =
-            translation.data?.title || translation.data?.name;
-          if (translation.iso_639_1 && translatedTitle) {
-            const isOriginalLanguage =
-              translation.iso_639_1 === movieData.original_language;
-            await database
-              .insert(translations)
-              .values({
-                resourceType: 'movie_title',
-                resourceUid: movieId,
-                languageCode: translation.iso_639_1,
-                content: translatedTitle,
-                isDefault: isOriginalLanguage ? 1 : 0,
-              })
-              .onConflictDoUpdate({
-                target: [
-                  translations.resourceType,
-                  translations.resourceUid,
-                  translations.languageCode,
-                ],
-                set: {
-                  content: translatedTitle,
-                  isDefault: isOriginalLanguage ? 1 : 0,
-                  updatedAt: Math.floor(Date.now() / 1000),
-                },
-              });
-            translationsAdded++;
-          }
-        }
-      }
-
-      fetchResults.translationsAdded = translationsAdded;
+      fetchResults.postersAdded = syncResult.postersAdded;
+      fetchResults.translationsAdded = syncResult.translationsAdded;
 
       return c.json({
         success: true,
@@ -1975,147 +1708,14 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
       return c.json({error: 'TMDb API key not configured'}, 500);
     }
 
-    const refreshResults = {
-      postersAdded: 0,
-      translationsAdded: 0,
-    };
-
     try {
-      // Import TMDb utilities
-      const {fetchTMDBMovieTranslations, savePosterUrls} =
-        await import('@shine/scrapers/common/tmdb-utilities');
-
-      // Fetch and save posters using TMDb ID
-      const refreshEndpoint = refreshMediaType;
-      const imagesUrl = new URL(
-        `https://api.themoviedb.org/3/${refreshEndpoint}/${tmdbId}/images`,
-      );
-      imagesUrl.searchParams.append('api_key', c.env.TMDB_API_KEY);
-
-      const imagesResponse = await fetch(imagesUrl.toString());
-      if (imagesResponse.ok) {
-        const images: TMDBMovieImages = await imagesResponse.json();
-        if (images.posters && images.posters.length > 0) {
-          const savedPosters = await savePosterUrls(
-            movieId,
-            images.posters,
-            c.env,
-          );
-          refreshResults.postersAdded = savedPosters;
-        }
-      }
-
-      // Fetch and save translations using TMDb Translations API
-      let translationsAdded = 0;
-      const {translations} =
-        await import('@shine/database/schema/translations');
-
-      // Get all translations from TMDb
-      const translationsData = await fetchTMDBMovieTranslations(
+      const refreshResults = await syncTmdbData(
+        database,
+        movieId,
         tmdbId,
-        c.env.TMDB_API_KEY,
         refreshMediaType,
+        c.env,
       );
-
-      // Also get basic movie info for original language
-      const movieResponse = await fetch(
-        `https://api.themoviedb.org/3/${refreshEndpoint}/${tmdbId}?api_key=${c.env.TMDB_API_KEY}`,
-      );
-      const movieData: {
-        original_language?: string;
-        original_title?: string;
-        original_name?: string;
-      } = await movieResponse.json();
-      const originalTitle =
-        refreshMediaType === 'tv'
-          ? movieData.original_name
-          : movieData.original_title;
-
-      // Always update original language from TMDb
-      if (movieData.original_language) {
-        await database
-          .update(movies)
-          .set({
-            originalLanguage: movieData.original_language,
-            updatedAt: Math.floor(Date.now() / 1000),
-          })
-          .where(eq(movies.uid, movieId));
-      }
-
-      if (translationsData?.translations) {
-        // First, reset all isDefault flags for this movie
-        await database
-          .update(translations)
-          .set({
-            isDefault: 0,
-            updatedAt: Math.floor(Date.now() / 1000),
-          })
-          .where(
-            and(
-              eq(translations.resourceUid, movieId),
-              eq(translations.resourceType, 'movie_title'),
-            ),
-          );
-        // If the movie's original language is Japanese, add the original title as Japanese translation
-        if (movieData.original_language === 'ja' && originalTitle) {
-          await database
-            .insert(translations)
-            .values({
-              resourceType: 'movie_title',
-              resourceUid: movieId,
-              languageCode: 'ja',
-              content: originalTitle,
-              isDefault: 1, // Original language is default
-            })
-            .onConflictDoUpdate({
-              target: [
-                translations.resourceType,
-                translations.resourceUid,
-                translations.languageCode,
-              ],
-              set: {
-                content: originalTitle,
-                isDefault: 1,
-                updatedAt: Math.floor(Date.now() / 1000),
-              },
-            });
-          translationsAdded++;
-        }
-
-        // Add all translations
-        for (const translation of translationsData.translations) {
-          const translatedTitle =
-            translation.data?.title || translation.data?.name;
-          if (translation.iso_639_1 && translatedTitle) {
-            const isOriginalLanguage =
-              translation.iso_639_1 === movieData.original_language;
-            await database
-              .insert(translations)
-              .values({
-                resourceType: 'movie_title',
-                resourceUid: movieId,
-                languageCode: translation.iso_639_1,
-                content: translatedTitle,
-                isDefault: isOriginalLanguage ? 1 : 0,
-              })
-              .onConflictDoUpdate({
-                target: [
-                  translations.resourceType,
-                  translations.resourceUid,
-                  translations.languageCode,
-                ],
-                set: {
-                  content: translatedTitle,
-                  isDefault: isOriginalLanguage ? 1 : 0,
-                  updatedAt: Math.floor(Date.now() / 1000),
-                },
-              });
-            translationsAdded++;
-          }
-        }
-      }
-
-      refreshResults.translationsAdded = translationsAdded;
 
       return c.json({
         success: true,
