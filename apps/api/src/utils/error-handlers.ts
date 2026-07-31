@@ -2,10 +2,6 @@ import type {Context} from 'hono';
 import {
   type ApiErrorResponse,
   type AuthenticationError,
-  type ConflictError,
-  type DatabaseError,
-  type ExternalApiError,
-  type NotFoundError,
   type RateLimitError,
   type ValidationError,
   ErrorCodes,
@@ -21,47 +17,6 @@ export function createValidationError(
     details: validationErrors,
   };
   return c.json(errorResponse, 400);
-}
-
-export function createDatabaseError(
-  c: Context,
-  operation: string,
-  table?: string,
-  originalError?: unknown,
-): Response {
-  console.error(
-    `Database error in ${operation}${table ? ` on table ${table}` : ''}:`,
-    originalError,
-  );
-
-  const errorResponse: DatabaseError = {
-    error: 'Database operation failed',
-    code: ErrorCodes.DATABASE_ERROR,
-    details: {
-      operation,
-      table,
-    },
-  };
-  return c.json(errorResponse, 500);
-}
-
-export function createExternalApiError(
-  c: Context,
-  service: string,
-  statusCode?: number,
-  originalError?: unknown,
-): Response {
-  console.error(`External API error for ${service}:`, originalError);
-
-  const errorResponse: ExternalApiError = {
-    error: `External service ${service} is unavailable`,
-    code: ErrorCodes.EXTERNAL_API_ERROR,
-    details: {
-      service,
-      statusCode,
-    },
-  };
-  return c.json(errorResponse, 503);
 }
 
 export function createRateLimitError(
@@ -101,38 +56,6 @@ export function createAuthenticationError(
     details: {reason},
   };
   return c.json(errorResponse, 401);
-}
-
-export function createNotFoundError(
-  c: Context,
-  resource: string,
-  identifier: string,
-): Response {
-  const errorResponse: NotFoundError = {
-    error: `${resource} not found`,
-    code: ErrorCodes.NOT_FOUND,
-    details: {
-      resource,
-      identifier,
-    },
-  };
-  return c.json(errorResponse, 404);
-}
-
-export function createConflictError(
-  c: Context,
-  resource: string,
-  constraint: string,
-): Response {
-  const errorResponse: ConflictError = {
-    error: `${resource} already exists`,
-    code: ErrorCodes.CONFLICT,
-    details: {
-      resource,
-      constraint,
-    },
-  };
-  return c.json(errorResponse, 409);
 }
 
 export function createInternalServerError(
