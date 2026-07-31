@@ -77,7 +77,7 @@ describe('AdminLogin Component', () => {
         request,
         params: {},
         unstable_pattern: '/admin/login',
-      } as Route.ActionArgs);
+      } as unknown as Route.ActionArgs);
 
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:8787/auth/login',
@@ -114,7 +114,7 @@ describe('AdminLogin Component', () => {
         request,
         params: {},
         unstable_pattern: '/admin/login',
-      } as Route.ActionArgs);
+      } as unknown as Route.ActionArgs);
 
       expect(result).toEqual({
         error: 'パスワードが正しくありません',
@@ -136,7 +136,7 @@ describe('AdminLogin Component', () => {
         request,
         params: {},
         unstable_pattern: '/admin/login',
-      } as Route.ActionArgs);
+      } as unknown as Route.ActionArgs);
 
       expect(result).toEqual({
         error: 'ログインに失敗しました',
