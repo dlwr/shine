@@ -64,6 +64,40 @@ export type MovieSelection = {
   }>;
 };
 
+export type AwardMovieEntry = {
+  uid: string;
+  title: string | undefined;
+  movieYear: number | undefined;
+  posterUrl: string | undefined;
+  isWinner: boolean;
+};
+
+export type AwardYearGroup = {
+  year: number;
+  ceremonyNumber: number | undefined;
+  movies: AwardMovieEntry[];
+};
+
+export type AwardDetail = {
+  slug: string;
+  name: string;
+  organization: string;
+  description: string;
+  grouping: 'year' | 'list';
+  years: AwardYearGroup[];
+};
+
+export type AwardSummary = {
+  slug: string;
+  name: string;
+  organization: string;
+  description: string;
+  grouping: 'year' | 'list';
+  movieCount: number;
+  firstYear: number;
+  lastYear: number;
+};
+
 export type DateSeedOptions = {
   locale: string;
   date?: Date;
