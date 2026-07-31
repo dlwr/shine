@@ -119,6 +119,20 @@ export function buildMovieCardHtml({
 </div>`;
 }
 
+export const BANNER_WIDTH = 1500;
+export const BANNER_HEIGHT = 500;
+
+/** SNSプロフィール用バナー(3:1) */
+export function buildBannerHtml(): string {
+  return `<div style="display:flex;width:${BANNER_WIDTH}px;height:${BANNER_HEIGHT}px;background:${COLORS.paper};border:14px solid ${COLORS.ink};padding:40px 60px;align-items:center;justify-content:space-between;">
+  <div style="display:flex;flex-direction:column;">
+    <div style="display:flex;font-size:150px;font-weight:700;letter-spacing:-9px;color:${COLORS.ink};line-height:0.9;">SHINE</div>
+    <div style="display:flex;font-size:38px;font-weight:700;color:${COLORS.ink};margin-top:24px;">${TAGLINE}</div>
+  </div>
+  <div style="display:flex;background:${COLORS.brand};color:${COLORS.brandOn};border:3px solid ${COLORS.ink};padding:10px 26px;font-size:30px;font-weight:700;">shine-film.com</div>
+</div>`;
+}
+
 export function buildHomeCardHtml(): string {
   return `<div style="display:flex;width:${OG_WIDTH}px;height:${OG_HEIGHT}px;background:${COLORS.paper};border:16px solid ${COLORS.ink};padding:60px;flex-direction:column;justify-content:space-between;">
   <div style="display:flex;font-size:200px;font-weight:700;letter-spacing:-12px;color:${COLORS.ink};line-height:0.9;">SHINE</div>

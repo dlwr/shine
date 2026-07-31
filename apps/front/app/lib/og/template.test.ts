@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {
+  buildBannerHtml,
   buildHomeCardHtml,
   buildMovieCardHtml,
   escapeHtml,
@@ -110,5 +111,15 @@ describe('buildHomeCardHtml', () => {
 
   it('日本語のタグラインを含む', () => {
     expect(buildHomeCardHtml()).toContain('毎日1本、埋もれた映画に光を当てる');
+  });
+});
+
+describe('buildBannerHtml', () => {
+  it('SHINEのロゴタイトルを含む', () => {
+    expect(buildBannerHtml()).toContain('SHINE');
+  });
+
+  it('日本語のタグラインを含む', () => {
+    expect(buildBannerHtml()).toContain('毎日1本、埋もれた映画に光を当てる');
   });
 });

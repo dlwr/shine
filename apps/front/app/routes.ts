@@ -9,6 +9,7 @@ export default [
   route('sitemap/movies.xml', 'routes/sitemap-movies.tsx'),
   route('og/movie.png', 'routes/og-movie.tsx'),
   route('og/home.png', 'routes/og-home.tsx'),
+  route('og/banner.png', 'routes/og-banner.tsx'),
   route('admin/login', 'routes/admin.login.tsx'),
   route('admin/movies', 'routes/admin.movies.tsx'),
   route('admin/movies/:id', 'routes/admin.movies.$id.tsx'),
