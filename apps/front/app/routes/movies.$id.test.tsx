@@ -408,6 +408,39 @@ describe('MovieDetail Component', () => {
       );
     });
 
+    it('視聴可否が未チェックならオンデマンドチェックの結果を表示する', async () => {
+      const mockFetch = vi.mocked(fetch);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          available: true,
+          availability: [
+            {source: 'tmdb', detail: 'U-NEXT(見放題)', checkedAt: 1},
+          ],
+        }),
+      } as Response);
+
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.getByText('配信状況を確認中…')).toBeInTheDocument();
+
+      expect(await screen.findByText('U-NEXT 見放題')).toBeInTheDocument();
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:8787/movies/movie-123/availability/check',
+        {method: 'POST'},
+      );
+    });
+
     it('視聴可否バッジが表示される', () => {
       const loaderData = {
         locale: 'ja' as const,
