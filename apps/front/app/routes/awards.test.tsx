@@ -124,7 +124,10 @@ describe('Awards index page', () => {
       const palmeLink = screen.getByRole('link', {name: /パルム・ドール/});
       expect(palmeLink).toHaveAttribute('href', '/awards/palme-dor');
       const academyLink = screen.getByRole('link', {name: /作品賞/});
-      expect(academyLink).toHaveAttribute('href', '/awards/academy-best-picture');
+      expect(academyLink).toHaveAttribute(
+        'href',
+        '/awards/academy-best-picture',
+      );
     });
   });
 });
