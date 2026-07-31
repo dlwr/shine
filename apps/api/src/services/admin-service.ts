@@ -187,7 +187,9 @@ export class AdminService extends BaseService {
       const tmdbData = await this.fetchTMDBDataByImdbId(normalizedImdbId);
 
       if (!tmdbData) {
-        throw new TmdbDataNotFoundError('Could not find TMDB data for that IMDb ID');
+        throw new TmdbDataNotFoundError(
+          'Could not find TMDB data for that IMDb ID',
+        );
       }
 
       tmdbMovieId = tmdbData.tmdbId;
@@ -936,7 +938,9 @@ export class AdminService extends BaseService {
 
     const imdbEventUrl = ceremony.imdbEventUrl?.trim();
     if (!imdbEventUrl) {
-      throw new ValidationError('Ceremony does not have an IMDb event URL configured');
+      throw new ValidationError(
+        'Ceremony does not have an IMDb event URL configured',
+      );
     }
 
     const categoryRows = await this.database
@@ -955,7 +959,9 @@ export class AdminService extends BaseService {
     }
 
     if (category.organizationUid !== ceremony.organizationUid) {
-      throw new ValidationError('Category does not belong to the ceremony organization');
+      throw new ValidationError(
+        'Category does not belong to the ceremony organization',
+      );
     }
 
     const normalizedUrl = ensureTrailingSlash(imdbEventUrl);

@@ -163,7 +163,7 @@ function useArticleLinkForm(
         setIsLoadingTitle(false);
       }
     },
-    [isTestMode],
+    [apiUrl],
   );
 
   const handleInputChange = useCallback(

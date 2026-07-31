@@ -64,7 +64,12 @@ describe('syncTmdbData', () => {
               return {
                 id: 42,
                 posters: [
-                  {file_path: '/a.jpg', width: 500, height: 750, iso_639_1: 'en'},
+                  {
+                    file_path: '/a.jpg',
+                    width: 500,
+                    height: 750,
+                    iso_639_1: 'en',
+                  },
                 ],
               };
             },
@@ -123,7 +128,10 @@ describe('syncTmdbData', () => {
     await syncTmdbData(database, 'movie-a', 42, 'movie', environment);
 
     const [en] = await database
-      .select({content: translations.content, isDefault: translations.isDefault})
+      .select({
+        content: translations.content,
+        isDefault: translations.isDefault,
+      })
       .from(translations)
       .where(
         and(
@@ -139,7 +147,10 @@ describe('syncTmdbData', () => {
     await syncTmdbData(database, 'movie-a', 42, 'movie', environment);
 
     const [ja] = await database
-      .select({content: translations.content, isDefault: translations.isDefault})
+      .select({
+        content: translations.content,
+        isDefault: translations.isDefault,
+      })
       .from(translations)
       .where(
         and(

@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "28d8c043-f876-47ba-a763-0a299ea56622",
-  "prevId": "8c298168-41fc-4087-935d-88a4c2fff21b",
+  "id": "645143d0-9b62-45f8-9228-2a8bbd8e4a93",
+  "prevId": "28d8c043-f876-47ba-a763-0a299ea56622",
   "tables": {
     "article_links": {
       "name": "article_links",
@@ -181,9 +181,9 @@
         }
       },
       "indexes": {
-        "award_categories_name_unique": {
-          "name": "award_categories_name_unique",
-          "columns": ["name"],
+        "award_categories_organizationUid_name_unique": {
+          "name": "award_categories_organizationUid_name_unique",
+          "columns": ["organization_uid", "name"],
           "isUnique": true
         },
         "award_categories_organizationUid_shortName_unique": {

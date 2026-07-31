@@ -114,9 +114,7 @@ type CeremonyInput = {
   imdbEventUrl?: string;
 };
 
-type ParseCeremonyBodyResult =
-  | {data: CeremonyInput}
-  | {error: string};
+type ParseCeremonyBodyResult = {data: CeremonyInput} | {error: string};
 
 const parseCeremonyBody = (body: {
   organizationUid?: unknown;
@@ -200,7 +198,9 @@ const findCeremonyConflict = async (
     eq(awardCeremonies.year, year),
   ];
   if (excludeCeremonyUid) {
-    duplicateYearConditions.push(not(eq(awardCeremonies.uid, excludeCeremonyUid)));
+    duplicateYearConditions.push(
+      not(eq(awardCeremonies.uid, excludeCeremonyUid)),
+    );
   }
 
   const duplicateYear = await database
@@ -504,27 +504,31 @@ adminCeremoniesRoutes.get('/ceremonies', authMiddleware, async c => {
   }
 });
 
-adminCeremoniesRoutes.get('/ceremonies/:ceremonyUid', authMiddleware, async c => {
-  try {
-    const ceremonyUid = c.req.param('ceremonyUid');
+adminCeremoniesRoutes.get(
+  '/ceremonies/:ceremonyUid',
+  authMiddleware,
+  async c => {
+    try {
+      const ceremonyUid = c.req.param('ceremonyUid');
 
-    if (!ceremonyUid) {
-      return c.json({error: 'Ceremony UID is required'}, 400);
+      if (!ceremonyUid) {
+        return c.json({error: 'Ceremony UID is required'}, 400);
+      }
+
+      const database = getDatabase(c.env);
+      const detail = await loadCeremonyDetail(database, ceremonyUid);
+
+      if (!detail) {
+        return c.json({error: 'Ceremony not found'}, 404);
+      }
+
+      return c.json(detail);
+    } catch (error) {
+      console.error('Error fetching ceremony detail:', error);
+      return c.json({error: 'Internal server error'}, 500);
     }
-
-    const database = getDatabase(c.env);
-    const detail = await loadCeremonyDetail(database, ceremonyUid);
-
-    if (!detail) {
-      return c.json({error: 'Ceremony not found'}, 404);
-    }
-
-    return c.json(detail);
-  } catch (error) {
-    console.error('Error fetching ceremony detail:', error);
-    return c.json({error: 'Internal server error'}, 500);
-  }
-});
+  },
+);
 
 adminCeremoniesRoutes.post('/ceremonies', authMiddleware, async c => {
   try {
@@ -555,59 +559,63 @@ adminCeremoniesRoutes.post('/ceremonies', authMiddleware, async c => {
   }
 });
 
-adminCeremoniesRoutes.put('/ceremonies/:ceremonyUid', authMiddleware, async c => {
-  try {
-    const ceremonyUid = c.req.param('ceremonyUid');
+adminCeremoniesRoutes.put(
+  '/ceremonies/:ceremonyUid',
+  authMiddleware,
+  async c => {
+    try {
+      const ceremonyUid = c.req.param('ceremonyUid');
 
-    if (!ceremonyUid) {
-      return c.json({error: 'Ceremony UID is required'}, 400);
+      if (!ceremonyUid) {
+        return c.json({error: 'Ceremony UID is required'}, 400);
+      }
+
+      const body = await c.req.json();
+
+      const parsed = parseCeremonyBody(body);
+      if ('error' in parsed) {
+        return c.json({error: parsed.error}, 400);
+      }
+
+      const database = getDatabase(c.env);
+
+      const ceremonyExists = await database
+        .select({uid: awardCeremonies.uid})
+        .from(awardCeremonies)
+        .where(eq(awardCeremonies.uid, ceremonyUid))
+        .limit(1);
+
+      if (ceremonyExists.length === 0) {
+        return c.json({error: 'Ceremony not found'}, 404);
+      }
+
+      const conflict = await findCeremonyConflict(
+        database,
+        parsed.data,
+        ceremonyUid,
+      );
+      if (conflict) {
+        return c.json({error: conflict.error}, conflict.status);
+      }
+
+      const now = Math.floor(Date.now() / 1000);
+
+      await database
+        .update(awardCeremonies)
+        .set({
+          ...parsed.data,
+          updatedAt: now,
+        })
+        .where(eq(awardCeremonies.uid, ceremonyUid));
+
+      const detail = await loadCeremonyDetail(database, ceremonyUid);
+      return c.json(detail);
+    } catch (error) {
+      console.error('Error updating ceremony:', error);
+      return c.json({error: 'Internal server error'}, 500);
     }
-
-    const body = await c.req.json();
-
-    const parsed = parseCeremonyBody(body);
-    if ('error' in parsed) {
-      return c.json({error: parsed.error}, 400);
-    }
-
-    const database = getDatabase(c.env);
-
-    const ceremonyExists = await database
-      .select({uid: awardCeremonies.uid})
-      .from(awardCeremonies)
-      .where(eq(awardCeremonies.uid, ceremonyUid))
-      .limit(1);
-
-    if (ceremonyExists.length === 0) {
-      return c.json({error: 'Ceremony not found'}, 404);
-    }
-
-    const conflict = await findCeremonyConflict(
-      database,
-      parsed.data,
-      ceremonyUid,
-    );
-    if (conflict) {
-      return c.json({error: conflict.error}, conflict.status);
-    }
-
-    const now = Math.floor(Date.now() / 1000);
-
-    await database
-      .update(awardCeremonies)
-      .set({
-        ...parsed.data,
-        updatedAt: now,
-      })
-      .where(eq(awardCeremonies.uid, ceremonyUid));
-
-    const detail = await loadCeremonyDetail(database, ceremonyUid);
-    return c.json(detail);
-  } catch (error) {
-    console.error('Error updating ceremony:', error);
-    return c.json({error: 'Internal server error'}, 500);
-  }
-});
+  },
+);
 
 adminCeremoniesRoutes.post(
   '/ceremonies/:ceremonyUid/sync-imdb',
@@ -680,40 +688,44 @@ adminCeremoniesRoutes.post(
   },
 );
 
-adminCeremoniesRoutes.delete('/ceremonies/:ceremonyUid', authMiddleware, async c => {
-  try {
-    const ceremonyUid = c.req.param('ceremonyUid');
+adminCeremoniesRoutes.delete(
+  '/ceremonies/:ceremonyUid',
+  authMiddleware,
+  async c => {
+    try {
+      const ceremonyUid = c.req.param('ceremonyUid');
 
-    if (!ceremonyUid) {
-      return c.json({error: 'Ceremony UID is required'}, 400);
+      if (!ceremonyUid) {
+        return c.json({error: 'Ceremony UID is required'}, 400);
+      }
+
+      const database = getDatabase(c.env);
+
+      const ceremonyExists = await database
+        .select({uid: awardCeremonies.uid})
+        .from(awardCeremonies)
+        .where(eq(awardCeremonies.uid, ceremonyUid))
+        .limit(1);
+
+      if (ceremonyExists.length === 0) {
+        return c.json({error: 'Ceremony not found'}, 404);
+      }
+
+      await database
+        .delete(nominations)
+        .where(eq(nominations.ceremonyUid, ceremonyUid));
+
+      await database
+        .delete(awardCeremonies)
+        .where(eq(awardCeremonies.uid, ceremonyUid));
+
+      return c.json({success: true});
+    } catch (error) {
+      console.error('Error deleting ceremony:', error);
+      return c.json({error: 'Internal server error'}, 500);
     }
-
-    const database = getDatabase(c.env);
-
-    const ceremonyExists = await database
-      .select({uid: awardCeremonies.uid})
-      .from(awardCeremonies)
-      .where(eq(awardCeremonies.uid, ceremonyUid))
-      .limit(1);
-
-    if (ceremonyExists.length === 0) {
-      return c.json({error: 'Ceremony not found'}, 404);
-    }
-
-    await database
-      .delete(nominations)
-      .where(eq(nominations.ceremonyUid, ceremonyUid));
-
-    await database
-      .delete(awardCeremonies)
-      .where(eq(awardCeremonies.uid, ceremonyUid));
-
-    return c.json({success: true});
-  } catch (error) {
-    console.error('Error deleting ceremony:', error);
-    return c.json({error: 'Internal server error'}, 500);
-  }
-});
+  },
+);
 
 // Get award organizations, ceremonies, and categories for nomination editing
 adminCeremoniesRoutes.get('/awards', authMiddleware, async c => {

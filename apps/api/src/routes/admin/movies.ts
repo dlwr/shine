@@ -44,76 +44,80 @@ adminMoviesRoutes.get('/movies/:id', authMiddleware, async c => {
   }
 });
 
-adminMoviesRoutes.get('/movies/:id/external-id-search', authMiddleware, async c => {
-  try {
-    const adminService = new AdminService(c.env);
-    const movieId = c.req.param('id');
-    if (!movieId) {
-      return c.json({error: 'Missing id parameter'}, 400);
-    }
+adminMoviesRoutes.get(
+  '/movies/:id/external-id-search',
+  authMiddleware,
+  async c => {
+    try {
+      const adminService = new AdminService(c.env);
+      const movieId = c.req.param('id');
+      if (!movieId) {
+        return c.json({error: 'Missing id parameter'}, 400);
+      }
 
-    const rawQuery = c.req.query('query');
-    const rawLanguage = c.req.query('language');
-    const rawYear = c.req.query('year');
-    const rawLimit = c.req.query('limit');
+      const rawQuery = c.req.query('query');
+      const rawLanguage = c.req.query('language');
+      const rawYear = c.req.query('year');
+      const rawLimit = c.req.query('limit');
 
-    const query = rawQuery ? sanitizeText(rawQuery) : undefined;
+      const query = rawQuery ? sanitizeText(rawQuery) : undefined;
 
-    const language = (() => {
-      if (!rawLanguage) {
+      const language = (() => {
+        if (!rawLanguage) {
+          return;
+        }
+
+        const sanitized = sanitizeText(rawLanguage);
+
+        if (/^ja/i.test(sanitized)) {
+          return 'ja-JP';
+        }
+
+        if (/^en/i.test(sanitized)) {
+          return 'en-US';
+        }
+
         return;
+      })();
+
+      const year = rawYear ? Number.parseInt(rawYear, 10) : undefined;
+      const limit = rawLimit ? Number.parseInt(rawLimit, 10) : undefined;
+
+      if (year !== undefined && Number.isNaN(year)) {
+        return c.json({error: 'Invalid year parameter'}, 400);
       }
 
-      const sanitized = sanitizeText(rawLanguage);
-
-      if (/^ja/i.test(sanitized)) {
-        return 'ja-JP';
+      if (limit !== undefined && (Number.isNaN(limit) || limit < 1)) {
+        return c.json({error: 'Invalid limit parameter'}, 400);
       }
 
-      if (/^en/i.test(sanitized)) {
-        return 'en-US';
+      const result = await adminService.searchExternalMovieIds(movieId, {
+        query,
+        language,
+        year,
+        limit,
+      });
+
+      return c.json(result);
+    } catch (error) {
+      console.error('Error searching external IDs:', error);
+
+      if (error instanceof NotFoundError) {
+        return c.json({error: error.message}, 404);
       }
 
-      return;
-    })();
+      if (error instanceof ValidationError) {
+        return c.json({error: error.message}, 400);
+      }
 
-    const year = rawYear ? Number.parseInt(rawYear, 10) : undefined;
-    const limit = rawLimit ? Number.parseInt(rawLimit, 10) : undefined;
+      if (error instanceof TmdbConfigurationError) {
+        return c.json({error: 'TMDb API key is not configured'}, 503);
+      }
 
-    if (year !== undefined && Number.isNaN(year)) {
-      return c.json({error: 'Invalid year parameter'}, 400);
+      return c.json({error: 'Internal server error'}, 500);
     }
-
-    if (limit !== undefined && (Number.isNaN(limit) || limit < 1)) {
-      return c.json({error: 'Invalid limit parameter'}, 400);
-    }
-
-    const result = await adminService.searchExternalMovieIds(movieId, {
-      query,
-      language,
-      year,
-      limit,
-    });
-
-    return c.json(result);
-  } catch (error) {
-    console.error('Error searching external IDs:', error);
-
-    if (error instanceof NotFoundError) {
-      return c.json({error: error.message}, 404);
-    }
-
-    if (error instanceof ValidationError) {
-      return c.json({error: error.message}, 400);
-    }
-
-    if (error instanceof TmdbConfigurationError) {
-      return c.json({error: 'TMDb API key is not configured'}, 503);
-    }
-
-    return c.json({error: 'Internal server error'}, 500);
-  }
-});
+  },
+);
 
 // Get all movies for admin
 adminMoviesRoutes.get('/movies', authMiddleware, async c => {
@@ -251,9 +255,7 @@ adminMoviesRoutes.put('/movies/:id', authMiddleware, async c => {
       return c.json({error: 'Movie not found'}, 404);
     }
 
-    const updateData: Partial<typeof movies.$inferInsert> = {
-      updatedAt: Math.floor(Date.now() / 1000),
-    };
+    const updateData: Partial<typeof movies.$inferInsert> = {};
 
     // Validate year if provided
     if (year !== undefined) {
@@ -298,10 +300,12 @@ adminMoviesRoutes.put('/movies/:id', authMiddleware, async c => {
     }
 
     // Update movie
-    await database
-      .update(movies)
-      .set(updateData)
-      .where(eq(movies.uid, movieId));
+    if (Object.keys(updateData).length > 0) {
+      await database
+        .update(movies)
+        .set(updateData)
+        .where(eq(movies.uid, movieId));
+    }
 
     return c.json({success: true});
   } catch (error) {
@@ -412,7 +416,6 @@ adminMoviesRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
       .set({
         tmdbId: typeof tmdbId === 'number' ? tmdbId : undefined,
         mediaType: updateMediaType,
-        updatedAt: Math.floor(Date.now() / 1000),
       })
       .where(eq(movies.uid, movieId));
 
@@ -448,137 +451,139 @@ adminMoviesRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
 });
 
 // Auto-fetch TMDb data using IMDb ID
-adminMoviesRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
-  try {
-    const database = getDatabase(c.env);
-    const movieId = c.req.param('id');
-    if (!movieId) {
-      return c.json({error: 'Missing id parameter'}, 400);
-    }
-
-    // Check if movie exists and has IMDb ID
-    const movie = await database
-      .select({
-        uid: movies.uid,
-        imdbId: movies.imdbId,
-        tmdbId: movies.tmdbId,
-        originalLanguage: movies.originalLanguage,
-        mediaType: movies.mediaType,
-      })
-      .from(movies)
-      .where(eq(movies.uid, movieId))
-      .limit(1);
-
-    if (movie.length === 0) {
-      return c.json({error: 'Movie not found'}, 404);
-    }
-
-    const {imdbId, tmdbId} = movie[0];
-    if (!imdbId) {
-      return c.json({error: 'Movie does not have an IMDb ID'}, 400);
-    }
-
-    const tmdbApiKey = c.env.TMDB_API_KEY;
-    if (!tmdbApiKey || tmdbApiKey === '') {
-      return c.json({error: 'TMDb API key not configured'}, 500);
-    }
-
-    const fetchResults = {
-      tmdbIdSet: false,
-      postersAdded: 0,
-      translationsAdded: 0,
-    };
-
+adminMoviesRoutes.post(
+  '/movies/:id/auto-fetch-tmdb',
+  authMiddleware,
+  async c => {
     try {
-      // Import TMDb utilities
-      const {findTMDBByImdbId} =
-        await import('@shine/scrapers/common/tmdb-utilities');
-
-      let movieTmdbId: number | undefined = tmdbId ?? undefined;
-      let detectedMediaType: 'movie' | 'tv' =
-        (movie[0].mediaType as 'movie' | 'tv') || 'movie';
-
-      // Find TMDb ID if not already set
-      if (!movieTmdbId) {
-        const findResult = await findTMDBByImdbId(imdbId, tmdbApiKey);
-
-        if (!findResult) {
-          return c.json({error: 'TMDb映画が見つかりませんでした'}, 404);
-        }
-
-        movieTmdbId = findResult.tmdbId;
-        detectedMediaType = findResult.mediaType;
-
-        // Check if TMDb ID is already used by another movie
-        const existingMovie = await database
-          .select({uid: movies.uid})
-          .from(movies)
-          .where(
-            and(eq(movies.tmdbId, movieTmdbId), not(eq(movies.uid, movieId))),
-          )
-          .limit(1);
-
-        if (existingMovie.length > 0) {
-          return c.json(
-            {error: 'このTMDb IDは既に他の映画で使用されています'},
-            409,
-          );
-        }
-
-        // Save TMDb ID and mediaType to database
-        try {
-          await database
-            .update(movies)
-            .set({
-              tmdbId: movieTmdbId,
-              mediaType: detectedMediaType,
-              updatedAt: Math.floor(Date.now() / 1000),
-            })
-            .where(eq(movies.uid, movieId));
-        } catch (databaseError) {
-          console.error('Database update error:', {
-            error: databaseError,
-            movieId,
-            tmdbId: movieTmdbId,
-            updatedAt: Math.floor(Date.now() / 1000),
-          });
-          throw databaseError;
-        }
-
-        fetchResults.tmdbIdSet = true;
+      const database = getDatabase(c.env);
+      const movieId = c.req.param('id');
+      if (!movieId) {
+        return c.json({error: 'Missing id parameter'}, 400);
       }
 
-      const syncResult = await syncTmdbData(
-        database,
-        movieId,
-        movieTmdbId,
-        detectedMediaType,
-        c.env,
-      );
-      fetchResults.postersAdded = syncResult.postersAdded;
-      fetchResults.translationsAdded = syncResult.translationsAdded;
+      // Check if movie exists and has IMDb ID
+      const movie = await database
+        .select({
+          uid: movies.uid,
+          imdbId: movies.imdbId,
+          tmdbId: movies.tmdbId,
+          originalLanguage: movies.originalLanguage,
+          mediaType: movies.mediaType,
+        })
+        .from(movies)
+        .where(eq(movies.uid, movieId))
+        .limit(1);
 
-      return c.json({
-        success: true,
-        fetchResults,
-      });
-    } catch (fetchError) {
-      console.error('Error during TMDb auto-fetch:', fetchError);
-      const errorMessage =
-        fetchError instanceof Error ? fetchError.message : 'Unknown error';
-      return c.json(
-        {
-          error: 'TMDbデータの自動取得に失敗しました',
-          details: errorMessage,
-        },
-        500,
-      );
+      if (movie.length === 0) {
+        return c.json({error: 'Movie not found'}, 404);
+      }
+
+      const {imdbId, tmdbId} = movie[0];
+      if (!imdbId) {
+        return c.json({error: 'Movie does not have an IMDb ID'}, 400);
+      }
+
+      const tmdbApiKey = c.env.TMDB_API_KEY;
+      if (!tmdbApiKey || tmdbApiKey === '') {
+        return c.json({error: 'TMDb API key not configured'}, 500);
+      }
+
+      const fetchResults = {
+        tmdbIdSet: false,
+        postersAdded: 0,
+        translationsAdded: 0,
+      };
+
+      try {
+        // Import TMDb utilities
+        const {findTMDBByImdbId} =
+          await import('@shine/scrapers/common/tmdb-utilities');
+
+        let movieTmdbId: number | undefined = tmdbId ?? undefined;
+        let detectedMediaType: 'movie' | 'tv' =
+          (movie[0].mediaType as 'movie' | 'tv') || 'movie';
+
+        // Find TMDb ID if not already set
+        if (!movieTmdbId) {
+          const findResult = await findTMDBByImdbId(imdbId, tmdbApiKey);
+
+          if (!findResult) {
+            return c.json({error: 'TMDb映画が見つかりませんでした'}, 404);
+          }
+
+          movieTmdbId = findResult.tmdbId;
+          detectedMediaType = findResult.mediaType;
+
+          // Check if TMDb ID is already used by another movie
+          const existingMovie = await database
+            .select({uid: movies.uid})
+            .from(movies)
+            .where(
+              and(eq(movies.tmdbId, movieTmdbId), not(eq(movies.uid, movieId))),
+            )
+            .limit(1);
+
+          if (existingMovie.length > 0) {
+            return c.json(
+              {error: 'このTMDb IDは既に他の映画で使用されています'},
+              409,
+            );
+          }
+
+          // Save TMDb ID and mediaType to database
+          try {
+            await database
+              .update(movies)
+              .set({
+                tmdbId: movieTmdbId,
+                mediaType: detectedMediaType,
+              })
+              .where(eq(movies.uid, movieId));
+          } catch (databaseError) {
+            console.error('Database update error:', {
+              error: databaseError,
+              movieId,
+              tmdbId: movieTmdbId,
+            });
+            throw databaseError;
+          }
+
+          fetchResults.tmdbIdSet = true;
+        }
+
+        const syncResult = await syncTmdbData(
+          database,
+          movieId,
+          movieTmdbId,
+          detectedMediaType,
+          c.env,
+        );
+        fetchResults.postersAdded = syncResult.postersAdded;
+        fetchResults.translationsAdded = syncResult.translationsAdded;
+
+        return c.json({
+          success: true,
+          fetchResults,
+        });
+      } catch (fetchError) {
+        console.error('Error during TMDb auto-fetch:', fetchError);
+        const errorMessage =
+          fetchError instanceof Error ? fetchError.message : 'Unknown error';
+        return c.json(
+          {
+            error: 'TMDbデータの自動取得に失敗しました',
+            details: errorMessage,
+          },
+          500,
+        );
+      }
+    } catch (error) {
+      console.error('Error auto-fetching TMDb data:', error);
+      return c.json({error: 'Internal server error'}, 500);
     }
-  } catch (error) {
-    console.error('Error auto-fetching TMDb data:', error);
-    return c.json({error: 'Internal server error'}, 500);
-  }
-});
+  },
+);
 
 // Refresh TMDb data (posters and translations)
 adminMoviesRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
@@ -781,9 +786,7 @@ adminMoviesRoutes.post(
 
         // Update target movie with merged metadata (preserve existing if target has data)
 
-        const updateData: Partial<typeof movies.$inferInsert> = {
-          updatedAt: Math.floor(Date.now() / 1000),
-        };
+        const updateData: Partial<typeof movies.$inferInsert> = {};
 
         if (!targetMovie.imdbId && sourceMovie.imdbId) {
           // Check if IMDb ID is already used by another movie
@@ -821,7 +824,7 @@ adminMoviesRoutes.post(
           }
         }
 
-        if (Object.keys(updateData).length > 1) {
+        if (Object.keys(updateData).length > 0) {
           await tx
             .update(movies)
             .set(updateData)

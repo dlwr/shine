@@ -143,7 +143,11 @@ const createLoaderData = (
 const successMeta = () =>
   meta(
     createMetaArguments(
-      {movieDetail: mockMovieDetail, locale: 'ja', apiUrl: 'http://localhost:8787'},
+      {
+        movieDetail: mockMovieDetail,
+        locale: 'ja',
+        apiUrl: 'http://localhost:8787',
+      },
       {id: 'movie-123'},
     ),
   );

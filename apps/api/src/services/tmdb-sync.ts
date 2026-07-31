@@ -69,7 +69,6 @@ export async function syncTmdbData(
       .update(movies)
       .set({
         originalLanguage: movieData.original_language,
-        updatedAt: Math.floor(Date.now() / 1000),
       })
       .where(eq(movies.uid, movieUid));
   }
@@ -79,7 +78,6 @@ export async function syncTmdbData(
       .update(translations)
       .set({
         isDefault: 0,
-        updatedAt: Math.floor(Date.now() / 1000),
       })
       .where(
         and(
