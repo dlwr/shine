@@ -2,43 +2,41 @@
 
 ## Project Structure & Module Organization
 
-- The repo is a pnpm workspace with `api`, `front`, and `scrapers` packages alongside shared `src/` database logic.
-- `src/` hosts Drizzle ORM schema, migrations, and shared utilities; database setup scripts live in `scripts/`.
-- Cloudflare Worker code sits in `apps/api/src` with route files under `routes/` and middleware/services folders; tests reside in `apps/api/tests` and `apps/api/src/__tests__`.
-- The Remix front end lives in `front/app` (routes named with Remix dot-segments), static assets in `front/public`, and worker builds in `front/build`.
+- The repo is a pnpm workspace: `apps/api`, `apps/front`, `apps/scrapers`, plus shared packages `packages/database` (Drizzle schema, migrations, seeds), `packages/utils`, and `packages/types`. One-off DB scripts live in `scripts/`.
+- Cloudflare Worker code sits in `apps/api/src` with route files under `routes/` and middleware/services folders; tests reside in `apps/api/src/__tests__`.
+- The React Router v7 front end lives in `apps/front/app` (routes named with dot-segments), static assets in `apps/front/public`, and worker builds in `apps/front/build`.
 - Scraper CLIs are in `apps/scrapers/src` with per-festival directories and matching `__tests__`; run outputs to `data/` and `tmp/`.
 
 ## Build, Test, and Development Commands
 
-- Use `pnpm install` to sync workspaces (Node >=18).
-- `pnpm dev` boots API (`wrangler`) and front dev server concurrently; run package-specific dev with `pnpm api:dev` or `pnpm --filter front run dev`.
-- Execute `pnpm front:build` for production Remix assets, and `pnpm api:deploy:dev` / `pnpm front:deploy:dev` for Cloudflare previews.
-- Run `pnpm test` for the Vitest suite, or scoped variants: `pnpm test:api`, `pnpm test:front`, `pnpm test:scrapers`; append `--watch` locally.
-- Database migrations rely on `pnpm db:generate` and `pnpm db:migrate`; studio launches via `pnpm db:studio`.
+- Use `pnpm install` to sync workspaces (Node 22, see `.tool-versions`).
+- `pnpm dev` boots API (`wrangler`) and front dev server concurrently; run package-specific dev with `pnpm api:dev` or `pnpm front:dev`. Note: `pnpm --filter @shine/api run dev` skips the DB environment setup that the root scripts perform — prefer the root scripts.
+- Execute `pnpm front:build` for production assets, and `pnpm api:deploy:prod` / `pnpm front:deploy:prod` to deploy (production only; the dev environment is not used).
+- Run `pnpm test` for the Vitest suite, or scoped variants: `pnpm test:api`, `pnpm test:front`, `pnpm test:scrapers`.
+- Database migrations rely on `pnpm db:generate` and `pnpm db:migrate` (`:prod` variants for production); studio launches via `pnpm db:studio`.
 
 ## Coding Style & Naming Conventions
 
-- TypeScript modules use ESLint (flat config) + Prettier; format before pushing with `pnpm lint` or `pnpm lint:fix`.
-- Prefer tabs for indentation (existing codebase style) and single quotes; keep files ESM (`type: module`).
-- Follow domain-driven naming: PascalCase for React components/services, camelCase for helpers, dot-separated Remix route filenames (e.g. `admin.movies.$id.tsx`).
-- Shared types live in `packages/types` and feature-specific folders; co-locate tests as `.test.ts`/`.test.tsx`.
+- TypeScript modules use ESLint (flat config) + Prettier; format before pushing with `pnpm lint:fix` (runs eslint --fix and prettier --write).
+- Indentation is 2 spaces (Prettier default) with single quotes; keep files ESM (`type: module`).
+- Follow domain-driven naming: PascalCase for React components/services, camelCase for helpers, dot-separated route filenames (e.g. `admin.movies.$id.tsx`).
+- Shared types live in `packages/types`; co-locate tests as `.test.ts`/`.test.tsx`.
 
 ## Testing Guidelines
 
-- Vitest is configured via `vitest.config.ts` and `vitest.front.config.ts`; front-end tests rely on JSDOM/MSW, API tests run against Cloudflare Workers shim.
-- Use descriptive `*.test.ts(x)` names mirroring source folders; integration tests for routes belong in `front/app/routes` alongside page files.
-- Collect coverage with `pnpm test -- --coverage`; review reports under `coverage/` and `test-results/`.
-- For data pipelines, add fixture seeds under `scrapers/src/__tests__/fixtures` and validate idempotency.
+- Vitest is configured via `vitest.config.ts` (node + jsdom projects); CI runs `pnpm test`.
+- Use descriptive `*.test.ts(x)` names mirroring source folders; route tests live in `apps/front/app/routes` alongside page files.
+- API tests that need a real database use a libsql `file:` URL with `migrate()` (see `apps/api/src/__tests__/reselect-exclude.test.ts` for the pattern).
+- For data pipelines, add fixture seeds under `apps/scrapers/src/__tests__` and validate idempotency.
 
 ## Commit & Pull Request Guidelines
 
 - Commit history follows Conventional Commits (`feat`, `fix`, `chore`, optional scope like `fix(api): …`); keep summaries imperative and ≤72 chars.
 - Reference issues in the body (`Refs #123`) and detail database or schema updates explicitly.
-- Pull requests should summarize scope, list test commands executed, and include screenshots or cURL examples for UI/API changes.
-- Ensure schema or OpenAPI adjustments update `api/openapi.yml` and regenerate artifacts (`pnpm docs:bundle`) before review.
+- Pull requests should summarize scope concisely (no boilerplate Summary/Test Plan sections).
+- Ensure schema or OpenAPI adjustments update `apps/api/openapi.yml` and pass `pnpm docs:validate` before review.
 
 ## Environment & Configuration Notes
 
-- Cloudflare credentials and LibSQL URLs are loaded via `.env` variables consumed by `scripts/setup-database-environment.cjs`; never commit secrets.
+- Turso credentials and API keys are loaded from `.dev.vars` at the repo root via `scripts/setup-database-environment.cjs` (API/DB) and `apps/scrapers/src/common/environment.ts` (scraper CLIs); never commit secrets.
 - When using the scrapers, populate `tmp/` instead of `data/` until outputs are vetted, and clean transient artifacts before submitting PRs.
-- Always use context7 when I need code generation, setup or configuration steps, or library/API documentation. This means you should automatically use the Context7 MCP tools to resolve library id and get library docs without me having to explicitly ask.
