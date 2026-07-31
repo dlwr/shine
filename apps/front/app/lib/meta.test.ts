@@ -105,6 +105,43 @@ describe('buildSocialMeta', () => {
     });
   });
 
+  it('largeImage指定時はtwitter:cardがsummary_large_imageになる', () => {
+    const result = buildSocialMeta({
+      ...baseInput,
+      imageUrl: 'https://shine-film.com/og/movie.png?id=abc',
+      largeImage: true,
+    });
+
+    expect(result).toContainEqual({
+      name: 'twitter:card',
+      content: 'summary_large_image',
+    });
+  });
+
+  it('largeImage指定時はog:imageの寸法を返す', () => {
+    const result = buildSocialMeta({
+      ...baseInput,
+      imageUrl: 'https://shine-film.com/og/movie.png?id=abc',
+      largeImage: true,
+    });
+
+    expect(result).toContainEqual({
+      property: 'og:image:width',
+      content: '1200',
+    });
+    expect(result).toContainEqual({
+      property: 'og:image:height',
+      content: '630',
+    });
+  });
+
+  it('imageUrlが無ければlargeImageを指定してもsummaryのまま', () => {
+    expect(buildSocialMeta({...baseInput, largeImage: true})).toContainEqual({
+      name: 'twitter:card',
+      content: 'summary',
+    });
+  });
+
   it('canonicalリンクにできるようog:urlはpathの先頭スラッシュ有無に依存しない', () => {
     expect(buildSocialMeta({...baseInput, path: 'movies/abc'})).toContainEqual({
       property: 'og:url',

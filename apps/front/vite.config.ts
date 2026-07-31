@@ -20,4 +20,10 @@ export default defineConfig({
       '@routes': `${dirname}/app/routes`,
     },
   },
+  // Workers-ogのwasm importはViteの事前バンドルで壊れるため除外し、workerdに直接解決させる
+  ssr: {
+    optimizeDeps: {
+      exclude: ['workers-og'],
+    },
+  },
 });

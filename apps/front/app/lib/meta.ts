@@ -16,12 +16,17 @@ export function upgradePosterForSharing(url?: string): string | undefined {
   return url?.replace(TMDB_SIZED_POSTER_PATTERN, '$1w780$2');
 }
 
+export const OG_IMAGE_WIDTH = 1200;
+export const OG_IMAGE_HEIGHT = 630;
+
 type SocialMetaInput = {
   title: string;
   description: string;
   path: string;
   locale: Locale;
   imageUrl?: string;
+  /** 1200x630の生成カードを使うときに指定。twitter:cardと寸法が切り替わる */
+  largeImage?: boolean;
   type?: 'website' | 'article';
 };
 
@@ -31,9 +36,11 @@ export function buildSocialMeta({
   path,
   locale,
   imageUrl,
+  largeImage = false,
   type = 'website',
 }: SocialMetaInput): MetaDescriptor[] {
   const url = new URL(path, SITE_URL).toString();
+  const useLargeCard = Boolean(imageUrl) && largeImage;
 
   const descriptors: MetaDescriptor[] = [
     {title},
@@ -44,13 +51,23 @@ export function buildSocialMeta({
     {property: 'og:url', content: url},
     {property: 'og:site_name', content: SITE_NAME},
     {property: 'og:locale', content: OPEN_GRAPH_LOCALES[locale]},
-    {name: 'twitter:card', content: 'summary'},
+    {
+      name: 'twitter:card',
+      content: useLargeCard ? 'summary_large_image' : 'summary',
+    },
   ];
 
   if (imageUrl) {
     descriptors.push(
       {property: 'og:image', content: imageUrl},
       {name: 'twitter:image', content: imageUrl},
+    );
+  }
+
+  if (useLargeCard) {
+    descriptors.push(
+      {property: 'og:image:width', content: String(OG_IMAGE_WIDTH)},
+      {property: 'og:image:height', content: String(OG_IMAGE_HEIGHT)},
     );
   }
 

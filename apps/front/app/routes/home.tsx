@@ -6,7 +6,7 @@ import {AdminLogin} from '@/components/molecules/admin-login';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
-import {buildSocialMeta} from '@/lib/meta';
+import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {FilmCard} from '@/components/editorial/film-card';
 import type {FilmCardMovie} from '@/components/editorial/film-card';
 
@@ -107,6 +107,8 @@ export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
     description: copy.description,
     path: '/',
     locale,
+    imageUrl: `${SITE_URL}/og/home.png`,
+    largeImage: true,
   });
 }
 

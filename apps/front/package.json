@@ -28,7 +28,8 @@
     "react-hook-form": "^7.71.2",
     "react-router": "^7.13.1",
     "sonner": "^2.0.7",
-    "tailwind-merge": "^3.5.0"
+    "tailwind-merge": "^3.5.0",
+    "workers-og": "^0.0.27"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.27.0",
