@@ -11,6 +11,7 @@ import {AvailabilityBadges} from '@/components/editorial/availability-badges';
 import {WatchMenu} from '@/components/editorial/watch-menu';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {Button} from '@/components/ui/button';
+import {useOnDemandAvailability} from '@/hooks/use-on-demand-availability';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 
@@ -592,6 +593,14 @@ export default function MovieDetail({
     submissionResult,
   } = useArticleLinkForm(isTestMode, actionData, apiUrl);
 
+  const successData = isLoaderSuccess(data) ? data : undefined;
+  const {availability, checking: availabilityChecking} =
+    useOnDemandAvailability({
+      movieUid: successData?.movieDetail.uid ?? '',
+      apiUrl,
+      initial: successData?.movieDetail.availability,
+    });
+
   if (isLoaderError(data)) {
     return (
       <MovieDetailErrorView
@@ -655,10 +664,13 @@ export default function MovieDetail({
         {/* Watch */}
         <section className="mb-8">
           <p className="font-mono text-xs text-ink-muted mb-3">WATCH</p>
-          <AvailabilityBadges
-            availability={movieDetail.availability}
-            className="mb-3"
-          />
+          {availabilityChecking ? (
+            <p className="font-mono text-xs text-ink-muted mb-3">
+              配信状況を確認中…
+            </p>
+          ) : (
+            <AvailabilityBadges availability={availability} className="mb-3" />
+          )}
           <WatchMenu
             title={title}
             year={movieDetail.year}

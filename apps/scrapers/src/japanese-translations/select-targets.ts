@@ -1,4 +1,4 @@
-import {hasJapaneseText} from '../availability/title-match';
+import {hasJapaneseText} from '@shine/availability';
 import {type Movie} from './repository';
 
 type ExistingJapaneseTitle = {

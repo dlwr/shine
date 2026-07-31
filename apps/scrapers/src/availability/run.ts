@@ -7,24 +7,24 @@ import {
   saveJapaneseTranslation,
   saveTMDBId,
 } from '../common/tmdb-utilities';
-import {fetchJapaneseAlternativeTitles} from './alternative-titles';
-import {hasJapaneseText} from './title-match';
+import {fetchJapaneseAlternativeTitles} from '@shine/availability';
+import {hasJapaneseText} from '@shine/availability';
 import {
   checkMovieAvailability,
   deleteNonOkChecks,
   type MovieToCheck,
   type SourceRunners,
-} from './checker';
+} from '@shine/availability';
 import {
   ensureAvailableSelection,
   type LoadedMovie,
   type SelectionCheckSummary,
   type SelectionType,
 } from './ensure-selection';
-import {checkDiscas} from './sources/discas';
-import {checkTmdbProviders} from './sources/tmdb';
-import {checkUnext} from './sources/unext';
-import type {FetchLike} from './types';
+import {checkDiscas} from '@shine/availability';
+import {checkTmdbProviders} from '@shine/availability';
+import {checkUnext} from '@shine/availability';
+import type {FetchLike} from '@shine/availability';
 
 type Database = ReturnType<typeof getDatabase>;
 

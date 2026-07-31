@@ -11,7 +11,11 @@ import {movies} from '@shine/database/schema/movies';
 import {Hono} from 'hono';
 import {authMiddleware} from '../auth';
 import {sanitizeText, sanitizeUrl} from '../middleware/sanitizer';
-import {MoviesService} from '../services';
+import {
+  AvailabilityService,
+  buildOnDemandRunners,
+  MoviesService,
+} from '../services';
 import {
   checkETag,
   createCachedResponse,
@@ -456,6 +460,58 @@ moviesRoutes.get('/:id/article-links', async c => {
     return c.json(articles);
   } catch (error) {
     console.error('Error fetching article links:', error);
+    return c.json({error: 'Internal server error'}, 500);
+  }
+});
+
+const AVAILABILITY_RATE_LIMIT = 30;
+const AVAILABILITY_RATE_WINDOW_MS = 60 * 60 * 1000;
+const AVAILABILITY_RATE_LOG_MAX_ENTRIES = 10_000;
+const availabilityRequestLog = new Map<
+  string,
+  {windowStart: number; count: number}
+>();
+
+function isAvailabilityRateLimited(ip: string, now = Date.now()): boolean {
+  if (availabilityRequestLog.size > AVAILABILITY_RATE_LOG_MAX_ENTRIES) {
+    availabilityRequestLog.clear();
+  }
+
+  const entry = availabilityRequestLog.get(ip);
+  if (!entry || now - entry.windowStart > AVAILABILITY_RATE_WINDOW_MS) {
+    availabilityRequestLog.set(ip, {windowStart: now, count: 1});
+    return false;
+  }
+
+  entry.count++;
+  return entry.count > AVAILABILITY_RATE_LIMIT;
+}
+
+moviesRoutes.post('/:id/availability/check', async c => {
+  const ip =
+    c.req.header('cf-connecting-ip') ||
+    c.req.header('x-forwarded-for') ||
+    c.req.header('x-real-ip') ||
+    'unknown';
+
+  if (isAvailabilityRateLimited(ip)) {
+    return c.json({error: 'Rate limit exceeded. Please try again later.'}, 429);
+  }
+
+  try {
+    const service = new AvailabilityService(c.env);
+    const result = await service.checkMovie(
+      c.req.param('id'),
+      buildOnDemandRunners(c.env),
+    );
+
+    if (!result) {
+      return c.json({error: 'Movie not found'}, 404);
+    }
+
+    return c.json(result);
+  } catch (error) {
+    console.error('Error checking availability:', error);
     return c.json({error: 'Internal server error'}, 500);
   }
 });

@@ -96,6 +96,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@shine/availability':
+        specifier: workspace:*
+        version: link:../../packages/availability
       '@shine/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -206,6 +209,9 @@ importers:
 
   apps/scrapers:
     dependencies:
+      '@shine/availability':
+        specifier: workspace:*
+        version: link:../../packages/availability
       '@shine/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -234,6 +240,18 @@ importers:
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
+
+  packages/availability:
+    dependencies:
+      '@shine/database':
+        specifier: workspace:*
+        version: link:../database
+      cheerio:
+        specifier: ^1.2.0
+        version: 1.2.0
+      iconv-lite:
+        specifier: ^0.7.3
+        version: 0.7.3
 
   packages/database:
     dependencies:

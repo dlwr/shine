@@ -1,5 +1,5 @@
 import type {SelectionCheckSummary} from './ensure-selection';
-import type {FetchLike} from './types';
+import type {FetchLike} from '@shine/availability';
 
 const typeLabels = {
   daily: '明日の映画',

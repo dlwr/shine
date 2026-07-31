@@ -15,6 +15,10 @@ export default defineConfig({
       ),
       '@shine/utils': path.resolve(dirname, './packages/utils/src/index.ts'),
       '@shine/types': path.resolve(dirname, './packages/types/src/index.ts'),
+      '@shine/availability': path.resolve(
+        dirname,
+        './packages/availability/src/index.ts',
+      ),
     },
   },
   test: {
@@ -38,6 +42,7 @@ export default defineConfig({
             'apps/api/src/**/*.test.ts',
             'apps/scrapers/src/**/*.test.ts',
             'packages/database/**/*.test.ts',
+            'packages/availability/**/*.test.ts',
           ],
           environment: 'node',
           globals: true,

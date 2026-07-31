@@ -16,6 +16,7 @@
     "sns-post": "tsx src/sns-post-cli.ts"
   },
   "dependencies": {
+    "@shine/availability": "workspace:*",
     "@shine/database": "workspace:*",
     "@shine/utils": "workspace:*",
     "cheerio": "^1.2.0",
