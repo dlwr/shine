@@ -16,6 +16,7 @@ export async function createJWT(secret: string): Promise<string> {
   const jwt = await new SignJWT({role: 'admin'})
     .setProtectedHeader({alg: JWT_ALGORITHM})
     .setIssuedAt()
+    .setExpirationTime('7d')
     .sign(secretKey);
 
   return jwt;
@@ -29,7 +30,7 @@ export async function verifyJWT(
     const encoder = new TextEncoder();
     const secretKey = encoder.encode(secret);
 
-    await jwtVerify(token, secretKey);
+    await jwtVerify(token, secretKey, {algorithms: [JWT_ALGORITHM]});
     return true;
   } catch {
     return false;
