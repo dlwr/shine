@@ -961,7 +961,7 @@ async function insertTranslations({
     tmdbMovie.localizedTitle ||
     (tmdbMovie.title === englishTitle ? undefined : tmdbMovie.title);
 
-  const values = [];
+  const values: Array<typeof translations.$inferInsert> = [];
 
   if (englishTitle) {
     values.push({
