@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react';
 import AdminNav from '@/components/admin-nav';
 import TranslationManager from '../components/translation-manager';
 import PosterManager from '../components/poster-manager';
-import MovieInfoEditor from '../components/movie-info-editor';
+import MovieInfoEditor from '@/components/admin/movie-info/movie-info-editor';
 import NominationManager from '../components/nomination-manager';
 import ArticleLinkManager from '../components/article-link-manager';
 import type {Route} from './+types/admin.movies.$id';
