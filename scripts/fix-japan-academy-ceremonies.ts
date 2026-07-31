@@ -1,13 +1,13 @@
-import {config as loadEnv} from 'dotenv';
+import {config as loadEnvironment} from 'dotenv';
 
 import {getDatabase, type Environment} from '@shine/database';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {asc, eq} from 'drizzle-orm';
 
-loadEnv({path: '.dev.vars', override: true});
+loadEnvironment({path: '.dev.vars', override: true});
 if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
-  loadEnv();
+  loadEnvironment();
 }
 
 type CeremonyRecord = {
@@ -79,7 +79,7 @@ async function main() {
   const seenYears: number[] = [];
 
   for (const ceremony of ceremonies) {
-    if (ceremony.year == null) {
+    if (ceremony.year == undefined) {
       continue;
     }
 
@@ -183,7 +183,9 @@ async function main() {
   }
 }
 
-main().catch(error => {
+try {
+  await main();
+} catch (error) {
   console.error(error);
-  process.exit(1);
-});
+  process.exitCode = 1;
+}

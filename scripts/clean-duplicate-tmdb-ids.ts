@@ -6,7 +6,7 @@ import {movies} from '@shine/database/schema/movies';
 config({path: '.dev.vars'});
 
 async function cleanDuplicateTmdbIds() {
-  const db = getDatabase({
+  const database = getDatabase({
     TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL!,
     TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN!,
     TMDB_API_KEY: process.env.TMDB_API_KEY!,
@@ -16,7 +16,7 @@ async function cleanDuplicateTmdbIds() {
 
   console.log('Finding duplicate TMDb IDs...');
 
-  const duplicates = await db
+  const duplicates = await database
     .select({
       tmdbId: movies.tmdbId,
       count: count(movies.uid),
@@ -31,11 +31,15 @@ async function cleanDuplicateTmdbIds() {
   let cleaned = 0;
 
   for (const duplicate of duplicates) {
+    if (duplicate.tmdbId === null) {
+      continue;
+    }
+
     console.log(
       `\nProcessing TMDb ID ${String(duplicate.tmdbId)} (${duplicate.count} movies)`,
     );
 
-    const conflictingMovies = await db
+    const conflictingMovies = await database
       .select({
         uid: movies.uid,
         imdbId: movies.imdbId,
@@ -55,8 +59,9 @@ async function cleanDuplicateTmdbIds() {
     );
 
     for (const movie of toClean) {
-      await db
+      await database
         .update(movies)
+        // eslint-disable-next-line unicorn/no-null -- undefinedだとdrizzleが列更新をスキップする
         .set({tmdbId: null})
         .where(eq(movies.uid, movie.uid));
 
@@ -70,7 +75,7 @@ async function cleanDuplicateTmdbIds() {
   console.log(`\n✅ Cleaned up ${cleaned} duplicate TMDb IDs`);
 
   // 最終確認
-  const remainingDuplicates = await db
+  const remainingDuplicates = await database
     .select({
       tmdbId: movies.tmdbId,
       count: count(movies.uid),

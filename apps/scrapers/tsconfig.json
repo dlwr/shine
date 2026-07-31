@@ -13,15 +13,5 @@
     "../../packages/database/src/**/*",
     "../../packages/utils/src/**/*"
   ],
-  "exclude": ["node_modules", "dist"],
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": "node",
-    "transpileOnly": true,
-    "compilerOptions": {
-      "module": "ESNext",
-      "target": "ES2022",
-      "allowImportingTsExtensions": false
-    }
-  }
+  "exclude": ["node_modules", "dist"]
 }

@@ -6,7 +6,7 @@ import {movies} from '@shine/database/schema/movies';
 config({path: '.dev.vars'});
 
 async function findDuplicateTmdbIds() {
-  const db = getDatabase({
+  const database = getDatabase({
     TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL!,
     TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN!,
     TMDB_API_KEY: process.env.TMDB_API_KEY!,
@@ -16,7 +16,7 @@ async function findDuplicateTmdbIds() {
 
   console.log('Checking for duplicate TMDb IDs...');
 
-  const duplicates = await db
+  const duplicates = await database
     .select({
       tmdbId: movies.tmdbId,
       count: count(movies.uid),
@@ -29,11 +29,15 @@ async function findDuplicateTmdbIds() {
   console.log(`Found ${duplicates.length} duplicate TMDb IDs`);
 
   for (const duplicate of duplicates) {
+    if (duplicate.tmdbId === null) {
+      continue;
+    }
+
     console.log(
       `\nTMDb ID ${duplicate.tmdbId} is used by ${duplicate.count} movies:`,
     );
 
-    const conflictingMovies = await db
+    const conflictingMovies = await database
       .select({
         uid: movies.uid,
         imdbId: movies.imdbId,

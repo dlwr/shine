@@ -7,7 +7,7 @@ import {movies} from '@shine/database/schema/movies';
 config({path: '.dev.vars'});
 
 async function checkMissingTmdbIds() {
-  const db = getDatabase({
+  const database = getDatabase({
     TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL!,
     TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN!,
     TMDB_API_KEY: process.env.TMDB_API_KEY!,
@@ -15,7 +15,7 @@ async function checkMissingTmdbIds() {
     OMDB_API_KEY: process.env.OMDB_API_KEY!,
   });
 
-  const moviesWithImdbButNoTmdb = await db
+  const moviesWithImdbButNoTmdb = await database
     .select({
       uid: movies.uid,
       imdbId: movies.imdbId,
@@ -33,7 +33,7 @@ async function checkMissingTmdbIds() {
     console.log(`- ${movie.uid}: IMDb ${movie.imdbId}, Year ${movie.year}`);
   }
 
-  const duplicateTmdbIds = await db
+  const duplicateTmdbIds = await database
     .select({
       tmdbId: movies.tmdbId,
       count: count(movies.uid),
