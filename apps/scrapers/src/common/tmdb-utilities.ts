@@ -6,6 +6,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
+import {fetchJsonWithRetry} from './fetch-utilities';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -104,12 +105,9 @@ export async function fetchTMDBMovieTranslations(
     );
     translationsUrl.searchParams.append('api_key', tmdbApiKey);
 
-    const response = await fetch(translationsUrl.toString());
-    if (!response.ok) {
-      throw new Error(`TMDb API error: ${response.statusText}`);
-    }
-
-    const data: TMDBTranslationsResponse = await response.json();
+    const data = await fetchJsonWithRetry<TMDBTranslationsResponse>(
+      translationsUrl.toString(),
+    );
     return data;
   } catch (error) {
     console.error(
@@ -136,12 +134,9 @@ export async function searchTMDBMovie(
     searchUrlWithYear.searchParams.append('year', year.toString());
     searchUrlWithYear.searchParams.append('language', 'en-US');
 
-    const responseWithYear = await fetch(searchUrlWithYear.toString());
-    if (!responseWithYear.ok) {
-      throw new Error(`TMDb API error: ${responseWithYear.statusText}`);
-    }
-
-    const dataWithYear: TMDBSearchResponse = await responseWithYear.json();
+    const dataWithYear = await fetchJsonWithRetry<TMDBSearchResponse>(
+      searchUrlWithYear.toString(),
+    );
 
     // 年パラメータ付きで結果があった場合
     if (dataWithYear.results.length > 0) {
@@ -161,12 +156,9 @@ export async function searchTMDBMovie(
     searchUrlNoYear.searchParams.append('query', title);
     searchUrlNoYear.searchParams.append('language', 'en-US');
 
-    const responseNoYear = await fetch(searchUrlNoYear.toString());
-    if (!responseNoYear.ok) {
-      throw new Error(`TMDb API error: ${responseNoYear.statusText}`);
-    }
-
-    const dataNoYear: TMDBSearchResponse = await responseNoYear.json();
+    const dataNoYear = await fetchJsonWithRetry<TMDBSearchResponse>(
+      searchUrlNoYear.toString(),
+    );
 
     // 年パラメータなしでも結果をフィルタリング
     const matches = dataNoYear.results.filter(movie => {
@@ -204,12 +196,9 @@ export async function fetchTMDBMovieDetails(
     detailsUrl.searchParams.append('api_key', tmdbApiKey);
     detailsUrl.searchParams.append('language', language);
 
-    const response = await fetch(detailsUrl.toString());
-    if (!response.ok) {
-      throw new Error(`TMDb API error: ${response.statusText}`);
-    }
-
-    const data: TMDBMovieData = await response.json();
+    const data = await fetchJsonWithRetry<TMDBMovieData>(
+      detailsUrl.toString(),
+    );
     return data;
   } catch (error) {
     console.error(
@@ -233,13 +222,9 @@ export async function fetchTMDBTvDetails(
     detailsUrl.searchParams.append('api_key', tmdbApiKey);
     detailsUrl.searchParams.append('language', language);
 
-    const response = await fetch(detailsUrl.toString());
-    if (!response.ok) {
-      throw new Error(`TMDb API error: ${response.statusText}`);
-    }
-
-    const data: TMDBTvData & {translations?: TMDBMovieData['translations']} =
-      await response.json();
+    const data = await fetchJsonWithRetry<
+      TMDBTvData & {translations?: TMDBMovieData['translations']}
+    >(detailsUrl.toString());
     return {
       id: data.id,
       title: data.name,
@@ -283,12 +268,9 @@ export async function findTMDBByImdbId(
     findUrl.searchParams.append('api_key', tmdbApiKey);
     findUrl.searchParams.append('external_source', 'imdb_id');
 
-    const response = await fetch(findUrl.toString());
-    if (!response.ok) {
-      throw new Error(`TMDb API error: ${response.statusText}`);
-    }
-
-    const data: TMDBFindResponse = await response.json();
+    const data = await fetchJsonWithRetry<TMDBFindResponse>(
+      findUrl.toString(),
+    );
 
     if (data.movie_results && data.movie_results.length > 0) {
       return {tmdbId: data.movie_results[0].id, mediaType: 'movie'};
@@ -395,12 +377,9 @@ export async function fetchTMDBMovieImages(
     );
     imagesUrl.searchParams.append('api_key', tmdbApiKey);
 
-    const imagesResponse = await fetch(imagesUrl.toString());
-    if (!imagesResponse.ok) {
-      throw new Error(`TMDb API error: ${imagesResponse.statusText}`);
-    }
-
-    const images: TMDBMovieImages = await imagesResponse.json();
+    const images = await fetchJsonWithRetry<TMDBMovieImages>(
+      imagesUrl.toString(),
+    );
     return {images, tmdbId, mediaType};
   } catch (error) {
     console.error(`Error fetching TMDb images for IMDb ID ${imdbId}:`, error);
