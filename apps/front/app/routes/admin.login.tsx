@@ -2,6 +2,7 @@ import {useEffect} from 'react';
 import {useNavigate} from 'react-router';
 import type {Route} from './+types/admin.login';
 import {Button} from '@/components/ui/button';
+import {resolveApiUrl} from '@/lib/api';
 
 export function meta(): Route.MetaDescriptors {
   return [
@@ -21,9 +22,7 @@ export async function action({context, request}: Route.ActionArgs) {
     const formData = await request.formData();
     const password = formData.get('password') as string;
 
-    const apiUrl =
-      (context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
-        .PUBLIC_API_URL || 'http://localhost:8787';
+    const apiUrl = resolveApiUrl(context);
     const response = await fetch(`${apiUrl}/auth/login`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},

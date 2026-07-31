@@ -9,6 +9,7 @@ import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {FilmCard} from '@/components/editorial/film-card';
 import type {FilmCardMovie} from '@/components/editorial/film-card';
+import {resolveApiUrl} from '@/lib/api';
 
 type HighlightedMovies = {
   daily?: FilmCardMovie;
@@ -114,9 +115,7 @@ export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
 
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
-  const apiUrl =
-    (context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
-      .PUBLIC_API_URL || 'http://localhost:8787';
+  const apiUrl = resolveApiUrl(context);
 
   try {
     // Cloudflare Workers環境ではfetchが利用可能

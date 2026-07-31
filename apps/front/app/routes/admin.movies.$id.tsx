@@ -6,6 +6,7 @@ import MovieInfoEditor from '../components/movie-info-editor';
 import NominationManager from '../components/nomination-manager';
 import ArticleLinkManager from '../components/article-link-manager';
 import type {Route} from './+types/admin.movies.$id';
+import {resolveApiUrl} from '@/lib/api';
 
 export type Translation = {
   uid: string;
@@ -82,9 +83,7 @@ export async function loader({context, params}: Route.LoaderArgs) {
     throw new Response('Movie ID is required', {status: 400});
   }
 
-  const apiUrl =
-    (context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
-      .PUBLIC_API_URL || 'http://localhost:8787';
+  const apiUrl = resolveApiUrl(context);
 
   return {
     apiUrl,

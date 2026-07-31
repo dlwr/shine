@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/card';
 import {Input} from '@/components/ui/input';
 import type {Route} from './+types/admin.movies.selections';
+import {resolveApiUrl} from '@/lib/api';
 
 type SelectionData = {
   date: string;
@@ -108,9 +109,7 @@ export function meta(): Route.MetaDescriptors {
 
 export async function loader({context}: Route.LoaderArgs) {
   return {
-    apiUrl:
-      (context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
-        .PUBLIC_API_URL || 'http://localhost:8787',
+    apiUrl: resolveApiUrl(context),
   };
 }
 

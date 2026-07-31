@@ -12,6 +12,7 @@ import {
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import type {Route} from './+types/admin.movies';
+import {resolveApiUrl} from '@/lib/api';
 
 type Movie = {
   uid: string;
@@ -51,12 +52,6 @@ type CreateMovieResponse = {
   error?: string;
 };
 
-type CloudflareContext = {
-  env?: {
-    PUBLIC_API_URL?: string;
-  };
-};
-
 type SearchTimeoutGlobal = typeof globalThis & {
   searchTimeout?: ReturnType<typeof setTimeout>;
 };
@@ -86,11 +81,8 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const limit = url.searchParams.get('limit') || '20';
   const search = url.searchParams.get('search') || '';
 
-  const cloudflareEnvironment = (
-    context.cloudflare as CloudflareContext | undefined
-  )?.env;
   return {
-    apiUrl: cloudflareEnvironment?.PUBLIC_API_URL ?? 'http://localhost:8787',
+    apiUrl: resolveApiUrl(context),
     page: Number.parseInt(page, 10),
     limit: Number.parseInt(limit, 10),
     search,

@@ -5,6 +5,7 @@ import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Textarea} from '@/components/ui/textarea';
 import type {Route} from './+types/admin.ceremonies.$uid';
+import {resolveApiUrl} from '@/lib/api';
 
 type LoaderData = {
   apiUrl: string;
@@ -166,12 +167,8 @@ export async function loader({context, params}: Route.LoaderArgs) {
     throw new Response('Not Found', {status: 404});
   }
 
-  const cloudflareEnvironment = (
-    context.cloudflare as {env?: {PUBLIC_API_URL?: string}} | undefined
-  )?.env;
-
   return {
-    apiUrl: cloudflareEnvironment?.PUBLIC_API_URL ?? 'http://localhost:8787',
+    apiUrl: resolveApiUrl(context),
     ceremonyUid,
   };
 }
