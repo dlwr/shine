@@ -6,7 +6,8 @@
     {"path": "./apps/scrapers"},
     {"path": "./packages/database"},
     {"path": "./packages/utils"},
-    {"path": "./packages/types"}
+    {"path": "./packages/types"},
+    {"path": "./scripts"}
   ],
   "compilerOptions": {
     "composite": true,

@@ -7,9 +7,12 @@ import {movieSelections} from '../packages/database/src/schema/movie-selections.
 
 config({path: '.dev.vars'});
 
-const requiredEnvVars = ['TURSO_DATABASE_URL', 'TURSO_AUTH_TOKEN'] as const;
+const requiredEnvironmentVariables = [
+  'TURSO_DATABASE_URL',
+  'TURSO_AUTH_TOKEN',
+] as const;
 
-for (const key of requiredEnvVars) {
+for (const key of requiredEnvironmentVariables) {
   if (!process.env[key]) {
     throw new Error(
       `${key} is required. Please add it to .dev.vars or the environment.`,
@@ -17,7 +20,7 @@ for (const key of requiredEnvVars) {
   }
 }
 
-const db = getDatabase({
+const database = getDatabase({
   TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL!,
   TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN!,
   TMDB_API_KEY: process.env.TMDB_API_KEY,
@@ -30,7 +33,7 @@ async function softDeleteOrphanMovies() {
     '🔍 Scanning for movies without nominations (and not already deleted)...',
   );
 
-  const orphanMovies = await db
+  const orphanMovies = await database
     .select({
       uid: movies.uid,
       imdbId: movies.imdbId,
@@ -51,7 +54,7 @@ async function softDeleteOrphanMovies() {
   );
   const now = Math.floor(Date.now() / 1000);
 
-  await db.transaction(async trx => {
+  await database.transaction(async trx => {
     for (const movie of orphanMovies) {
       await trx
         .update(movies)

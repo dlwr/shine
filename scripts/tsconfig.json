@@ -1,13 +1,14 @@
 {
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "allowJs": true,
-    "checkJs": false,
-    "module": "node16",
-    "moduleResolution": "node16",
-    "target": "es2022",
-    "types": ["node"],
-    "noEmit": true,
-    "esModuleInterop": true
+    "composite": true,
+    "types": ["node", "@cloudflare/workers-types"]
   },
-  "include": ["./**/*.cjs"]
+  "include": [
+    "./**/*.ts",
+    "./**/*.cjs",
+    "../packages/database/src/**/*",
+    "../packages/utils/src/**/*"
+  ],
+  "exclude": ["node_modules"]
 }

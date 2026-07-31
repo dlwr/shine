@@ -4,6 +4,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 import eslintPluginUnicorn from 'eslint-plugin-unicorn';
+import reactHooks from 'eslint-plugin-react-hooks';
 const ignores = [
   '**/.wrangler/**',
   '**/dist/**',
@@ -11,7 +12,6 @@ const ignores = [
   '**/*.mjs',
   '**/*.js',
   '**/*.cjs',
-  '**/.astro/**',
   '**/worker-configuration.d.ts',
   '**/build/**',
   '**/test-results/**',
@@ -19,13 +19,8 @@ const ignores = [
   '**/coverage/**',
   '**/.cache/**',
   '**/tmp/**',
-  '**/scripts/**',
   '**/package.json',
 ];
-
-const projectRules = {};
-
-const stylisticRules = {};
 
 export default tseslint.config(
   {
@@ -42,11 +37,13 @@ export default tseslint.config(
       },
     },
   },
-  eslintConfigPrettier,
   {
+    files: ['**/*.tsx'],
+    plugins: {'react-hooks': reactHooks},
     rules: {
-      ...projectRules,
-      ...stylisticRules,
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'error',
     },
-  }
+  },
+  eslintConfigPrettier
 );
