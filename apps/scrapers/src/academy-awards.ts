@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import {type Element} from 'domhandler';
-import {and, eq} from 'drizzle-orm';
+import {and, eq, isNull} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
@@ -527,7 +527,7 @@ async function processMovieForBatch(
           eq(translations.isDefault, 1),
         ),
       )
-      .where(eq(translations.content, title));
+      .where(and(eq(translations.content, title), isNull(movies.deletedAt)));
 
     let movieUid: string;
     const translationsBatch: Array<typeof translations.$inferInsert> = [];
@@ -682,7 +682,7 @@ async function processMovie(
           eq(translations.isDefault, 1),
         ),
       )
-      .where(eq(translations.content, title));
+      .where(and(eq(translations.content, title), isNull(movies.deletedAt)));
 
     let movieUid: string;
 

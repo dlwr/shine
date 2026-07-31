@@ -142,14 +142,21 @@ export async function importMoviesFromCsv({
             uid: movies.uid,
             imdbId: movies.imdbId,
             tmdbId: movies.tmdbId,
+            deletedAt: movies.deletedAt,
           })
           .from(movies)
           .where(and(isNotNull(movies.imdbId), inArray(movies.imdbId, imdbIds)))
       : [];
 
   const existingByImdbId = new Map<string, ExistingMovieRecord>();
+  const softDeletedImdbIds = new Set<string>();
   for (const movie of existingMovies) {
     if (!movie.imdbId) {
+      continue;
+    }
+
+    if (movie.deletedAt !== null) {
+      softDeletedImdbIds.add(movie.imdbId);
       continue;
     }
 
@@ -171,7 +178,9 @@ export async function importMoviesFromCsv({
   const newRecords: CsvMovieRow[] = [];
   for (const record of uniqueRecords) {
     const imdbId = record.Const.trim();
-    if (existingByImdbId.has(imdbId)) {
+    if (softDeletedImdbIds.has(imdbId)) {
+      console.log(`Skipping soft-deleted movie: ${imdbId}`);
+    } else if (existingByImdbId.has(imdbId)) {
       existingRecords.push(record);
     } else {
       newRecords.push(record);

@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import {type Element} from 'domhandler';
-import {and, eq} from 'drizzle-orm';
+import {and, eq, isNull} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
@@ -1043,7 +1043,12 @@ async function updateWinnerStatus(
           eq(translations.isDefault, 1),
         ),
       )
-      .where(eq(translations.content, movieInfo.title));
+      .where(
+        and(
+          eq(translations.content, movieInfo.title),
+          isNull(movies.deletedAt),
+        ),
+      );
 
     if (existingMovies.length === 0) {
       console.log(`Movie not found in database: ${movieInfo.title}`);
@@ -1318,7 +1323,9 @@ async function resolveMovieUid(
         eq(translations.isDefault, 1),
       ),
     )
-    .where(eq(translations.content, movieInfo.title));
+    .where(
+      and(eq(translations.content, movieInfo.title), isNull(movies.deletedAt)),
+    );
 
   if (existingMovies.length > 0) {
     const existingMovie = existingMovies[0].movies;
