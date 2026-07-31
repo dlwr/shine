@@ -34,7 +34,9 @@ describe('NominationTable', () => {
 
     const winnerRow = screen.getByText('七人の侍').closest('tr');
     expect(winnerRow).not.toBeNull();
-    expect(within(winnerRow as HTMLElement).getByText('受賞')).toBeInTheDocument();
+    expect(
+      within(winnerRow as HTMLElement).getByText('受賞'),
+    ).toBeInTheDocument();
     expect(screen.getByText('ノミネート')).toBeInTheDocument();
   });
 

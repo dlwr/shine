@@ -143,9 +143,7 @@ describe('CeremonyForm', () => {
       organizations: [],
     });
 
-    const form = screen
-      .getByRole('button', {name: '保存する'})
-      .closest('form');
+    const form = screen.getByRole('button', {name: '保存する'}).closest('form');
     fireEvent.submit(form as HTMLFormElement);
 
     await waitFor(() => {

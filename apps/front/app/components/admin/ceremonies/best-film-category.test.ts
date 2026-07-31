@@ -1,5 +1,8 @@
 import {describe, expect, it} from 'vitest';
-import {findBestFilmCategory, normalizeCategoryName} from './best-film-category';
+import {
+  findBestFilmCategory,
+  normalizeCategoryName,
+} from './best-film-category';
 import type {AwardsCategory} from './types';
 
 const category = (

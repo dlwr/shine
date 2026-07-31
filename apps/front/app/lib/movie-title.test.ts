@@ -1,11 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import {resolveMovieTitle} from './movie-title';
 
-const translation = (
-  languageCode: string,
-  content: string,
-  isDefault = 0,
-) => ({
+const translation = (languageCode: string, content: string, isDefault = 0) => ({
   languageCode,
   content,
   isDefault,

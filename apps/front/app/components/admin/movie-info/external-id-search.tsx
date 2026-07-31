@@ -362,9 +362,7 @@ export function ExternalIdSearch({
                 onClick={() => {
                   setIdSearchQuery(preferredSearchQuery);
                   setIdSearchLanguage(preferredSearchLanguage);
-                  setIdSearchYear(
-                    movieData.year ? String(movieData.year) : '',
-                  );
+                  setIdSearchYear(movieData.year ? String(movieData.year) : '');
                   setIdSearchResults([]);
                   setIdSearchError(undefined);
                   setIdSearchUsedQuery(undefined);
@@ -426,9 +424,7 @@ export function ExternalIdSearch({
                           )}
                         <div className="text-xs text-gray-500 space-x-2">
                           <span>TMDb: {result.tmdbId}</span>
-                          {result.imdbId && (
-                            <span>IMDb: {result.imdbId}</span>
-                          )}
+                          {result.imdbId && <span>IMDb: {result.imdbId}</span>}
                         </div>
                         {typeof result.yearDifference === 'number' &&
                           movieData.year && (
@@ -483,13 +479,11 @@ export function ExternalIdSearch({
             </div>
           )}
 
-          {!searchingIds &&
-            idSearchResults.length === 0 &&
-            !idSearchError && (
-              <p className="text-sm text-gray-600">
-                キーワードを入力して「検索」を押すと候補が表示されます。
-              </p>
-            )}
+          {!searchingIds && idSearchResults.length === 0 && !idSearchError && (
+            <p className="text-sm text-gray-600">
+              キーワードを入力して「検索」を押すと候補が表示されます。
+            </p>
+          )}
         </div>
       )}
     </div>

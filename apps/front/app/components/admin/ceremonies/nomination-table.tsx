@@ -53,9 +53,7 @@ export function NominationTable({
                 </div>
                 <div className="text-xs text-gray-500">
                   UID: {nomination.movie.uid}
-                  {nomination.movie.year
-                    ? ` / ${nomination.movie.year}年`
-                    : ''}
+                  {nomination.movie.year ? ` / ${nomination.movie.year}年` : ''}
                 </div>
               </td>
               <td className="px-4 py-3 text-sm text-gray-900">

@@ -86,11 +86,7 @@ export function CeremonyForm({
   }, [ceremonyDetail]);
 
   useEffect(() => {
-    if (
-      isNew &&
-      formState.organizationUid === '' &&
-      organizations.length > 0
-    ) {
+    if (isNew && formState.organizationUid === '' && organizations.length > 0) {
       setFormState(current => ({
         ...current,
         organizationUid: organizations[0]?.uid ?? '',
@@ -318,8 +314,7 @@ export function CeremonyForm({
                 className="mt-1"
               />
               <span className="mt-1 text-xs text-gray-500">
-                IMDb のイベントページへの完全な URL
-                を入力してください（任意）。
+                IMDb のイベントページへの完全な URL を入力してください（任意）。
               </span>
             </label>
 

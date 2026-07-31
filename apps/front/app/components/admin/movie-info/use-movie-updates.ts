@@ -1,10 +1,6 @@
 import {useCallback} from 'react';
 import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
-import type {
-  MovieDetails,
-  PerformImdbUpdate,
-  PerformTmdbUpdate,
-} from './types';
+import type {MovieDetails, PerformImdbUpdate, PerformTmdbUpdate} from './types';
 
 type UseMovieUpdatesOptions = {
   apiUrl: string;

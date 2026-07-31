@@ -112,9 +112,7 @@ export function AddNominationForm({
           部門
           <select
             value={newNominationCategoryUid}
-            onChange={event =>
-              setNewNominationCategoryUid(event.target.value)
-            }
+            onChange={event => setNewNominationCategoryUid(event.target.value)}
             className="mt-1 rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             required
             disabled={categories.length === 0}>
@@ -131,9 +129,7 @@ export function AddNominationForm({
           <input
             type="checkbox"
             checked={newNominationIsWinner}
-            onChange={event =>
-              setNewNominationIsWinner(event.target.checked)
-            }
+            onChange={event => setNewNominationIsWinner(event.target.checked)}
             className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
           />
           受賞として登録
@@ -145,9 +141,7 @@ export function AddNominationForm({
         <Input
           type="text"
           value={newNominationSpecialMention}
-          onChange={event =>
-            setNewNominationSpecialMention(event.target.value)
-          }
+          onChange={event => setNewNominationSpecialMention(event.target.value)}
           placeholder="コメント等（任意）"
           className="mt-1"
         />
