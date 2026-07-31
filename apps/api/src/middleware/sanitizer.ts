@@ -1,12 +1,3 @@
-import DOMPurify from 'dompurify';
-
-export const sanitizeHtml = (input: string): string =>
-  DOMPurify.sanitize(input, {
-    ALLOWED_TAGS: [],
-    ALLOWED_ATTR: [],
-    KEEP_CONTENT: true,
-  });
-
 export const sanitizeText = (input: string): string =>
   input
     .replaceAll(/[<>]/g, '')
