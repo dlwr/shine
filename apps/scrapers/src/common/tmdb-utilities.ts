@@ -72,6 +72,13 @@ export type TMDBSearchResponse = {
   }>;
 };
 
+export type TMDBConfiguration = {
+  images: {
+    secure_base_url: string;
+    poster_sizes: string[];
+  };
+};
+
 export type TMDBTranslationsResponse = {
   id: number;
   translations: Array<{
@@ -89,6 +96,27 @@ export type TMDBTranslationsResponse = {
     };
   }>;
 };
+
+let cachedConfiguration: TMDBConfiguration | undefined;
+
+/**
+ * TMDb APIの画像設定を取得(プロセス内でキャッシュ)
+ */
+export async function fetchTMDBConfiguration(
+  tmdbApiKey: string,
+): Promise<TMDBConfiguration> {
+  if (cachedConfiguration) {
+    return cachedConfiguration;
+  }
+
+  const configUrl = new URL(`${TMDB_API_BASE_URL}/configuration`);
+  configUrl.searchParams.append('api_key', tmdbApiKey);
+
+  cachedConfiguration = await fetchJsonWithRetry<TMDBConfiguration>(
+    configUrl.toString(),
+  );
+  return cachedConfiguration;
+}
 
 /**
  * TMDb APIから映画の翻訳情報を取得
@@ -355,6 +383,27 @@ export async function fetchJapaneseTitleFromTMDB(
 }
 
 /**
+ * TMDb IDから画像情報を取得
+ */
+export async function fetchTMDBImages(
+  tmdbId: number,
+  mediaType: 'movie' | 'tv',
+  tmdbApiKey: string,
+): Promise<TMDBMovieImages | undefined> {
+  try {
+    const imagesUrl = new URL(
+      `${TMDB_API_BASE_URL}/${mediaType}/${tmdbId}/images`,
+    );
+    imagesUrl.searchParams.append('api_key', tmdbApiKey);
+
+    return await fetchJsonWithRetry<TMDBMovieImages>(imagesUrl.toString());
+  } catch (error) {
+    console.error(`Error fetching TMDb images for TMDb ID ${tmdbId}:`, error);
+    return undefined;
+  }
+}
+
+/**
  * TMDb APIから映画のポスター情報を取得
  */
 export async function fetchTMDBMovieImages(
@@ -364,27 +413,18 @@ export async function fetchTMDBMovieImages(
   | {images: TMDBMovieImages; tmdbId: number; mediaType: 'movie' | 'tv'}
   | undefined
 > {
-  try {
-    const findResult = await findTMDBByImdbId(imdbId, tmdbApiKey);
-    if (!findResult) {
-      return undefined;
-    }
-
-    const {tmdbId, mediaType} = findResult;
-    const endpoint = mediaType;
-    const imagesUrl = new URL(
-      `${TMDB_API_BASE_URL}/${endpoint}/${tmdbId}/images`,
-    );
-    imagesUrl.searchParams.append('api_key', tmdbApiKey);
-
-    const images = await fetchJsonWithRetry<TMDBMovieImages>(
-      imagesUrl.toString(),
-    );
-    return {images, tmdbId, mediaType};
-  } catch (error) {
-    console.error(`Error fetching TMDb images for IMDb ID ${imdbId}:`, error);
+  const findResult = await findTMDBByImdbId(imdbId, tmdbApiKey);
+  if (!findResult) {
     return undefined;
   }
+
+  const {tmdbId, mediaType} = findResult;
+  const images = await fetchTMDBImages(tmdbId, mediaType, tmdbApiKey);
+  if (!images) {
+    return undefined;
+  }
+
+  return {images, tmdbId, mediaType};
 }
 
 /**
