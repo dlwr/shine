@@ -1,4 +1,3 @@
-import {config} from 'dotenv';
 import {Command} from 'commander';
 import {and, eq, isNull} from 'drizzle-orm';
 import {getDatabase} from '@shine/database';
@@ -7,9 +6,9 @@ import {
   searchTMDBMovie,
   fetchTMDBMovieDetails,
 } from './common/tmdb-utilities.js';
+import {loadEnvironmentFiles} from './common/environment.js';
 
-// Load environment variables
-config({path: '../.dev.vars'});
+loadEnvironmentFiles();
 
 const program = new Command();
 

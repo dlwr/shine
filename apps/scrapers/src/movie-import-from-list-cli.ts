@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 
-import {config} from 'dotenv';
 import {importMoviesFromList} from './movie-import-from-list';
+import {loadEnvironmentFiles} from './common/environment';
 
-// .envファイルを読み込み
-config({path: '../.dev.vars'});
+loadEnvironmentFiles();
 
 async function main(): Promise<void> {
   const arguments_ = process.argv.slice(2);
