@@ -6,6 +6,7 @@ import {selectBestPoster} from '@/lib/poster';
 import type {PosterInfo} from '@/lib/poster';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {buildSocialMeta} from '@/lib/meta';
+import {resolveApiUrl} from '@/lib/api';
 
 type SearchMovieData = {
   uid: string;
@@ -65,9 +66,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
   }
 
   try {
-    const apiUrl =
-      (context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
-        .PUBLIC_API_URL || 'http://localhost:8787';
+    const apiUrl = resolveApiUrl(context);
     const response = await fetch(
       `${apiUrl}/movies/search?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${limit}`,
       {

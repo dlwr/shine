@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {render, screen} from '@testing-library/react';
+import {render, screen, waitFor} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Home, {loader, meta} from './home';
 import type {Route} from './+types/home';
@@ -418,9 +418,37 @@ describe('Home Component', () => {
 
       expect(
         screen.getByText(
-          /APIから映画データを取得できませんでした。フォールバック映画を表示しています。エラー: APIへの接続に失敗しました/,
+          /APIから映画データを取得できませんでした。エラー: APIへの接続に失敗しました/,
         ),
       ).toBeInTheDocument();
+    });
+
+    it('クライアント再取得に失敗してもダミー映画を表示しない', async () => {
+      const mockFetch = vi.mocked(globalThis.fetch);
+      mockFetch.mockRejectedValue(new Error('Network error'));
+
+      const loaderData = cast<ComponentProperties['loaderData']>(
+        createErrorLoaderData(),
+      );
+
+      render(
+        <Home
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={createParameters()}
+          matches={createMatches(loaderData)}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/APIから映画データを取得できませんでした/),
+        ).toBeInTheDocument();
+      });
+
+      expect(
+        screen.queryByText(/The Shawshank Redemption/),
+      ).not.toBeInTheDocument();
     });
   });
 });
