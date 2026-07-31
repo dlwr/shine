@@ -7,19 +7,15 @@
  * TMDb / U-NEXT / TSUTAYA DISCAS / GEO で確認し、観られなければ
  * APIの /reselect で再抽選する(上限10回)。結果はDiscordに通知する。
  */
-import path from 'node:path';
 import process from 'node:process';
-import {config} from 'dotenv';
-import {type Environment} from '@shine/database';
 import {
   buildDiscordMessage,
   sendDiscordNotification,
 } from './availability/discord';
 import {runAvailabilityCheck} from './availability/run';
+import {buildEnvironment, loadEnvironmentFiles} from './common/environment';
 
-config();
-config({path: path.resolve(process.cwd(), '.dev.vars')});
-config({path: path.resolve(process.cwd(), '../../.dev.vars')});
+loadEnvironmentFiles();
 
 const arguments_ = new Set(process.argv.slice(2));
 const isDryRun = arguments_.has('--dry-run');
@@ -44,15 +40,11 @@ Environment variables:
   process.exit(0);
 }
 
-const environment: Environment = {
-  TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL || '',
-  TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN || '',
-  TMDB_API_KEY: process.env.TMDB_API_KEY || '',
-};
+const environment = buildEnvironment(process.env);
 
 const apiUrl =
   process.env.SHINE_API_URL || 'https://shine-api.yuta25.workers.dev';
-const adminPassword = process.env.ADMIN_PASSWORD || '';
+const adminPassword = environment.ADMIN_PASSWORD || '';
 const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL || '';
 
 if (!environment.TURSO_DATABASE_URL || !environment.TURSO_AUTH_TOKEN) {

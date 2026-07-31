@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 
-import {config} from 'dotenv';
 import {importMoviesFromList} from './movie-import-from-list';
+import {buildEnvironment, loadEnvironmentFiles} from './common/environment';
 
-// .envファイルを読み込み
-config({path: '../.dev.vars'});
+loadEnvironmentFiles();
 
 async function main(): Promise<void> {
   const arguments_ = process.argv.slice(2);
@@ -57,13 +56,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const environment = {
-    TURSO_DATABASE_URL: tursoUrl,
-    TURSO_AUTH_TOKEN: tursoToken,
-    TMDB_API_KEY: tmdbKey,
-    TMDB_LEAD_ACCESS_TOKEN: process.env.TMDB_LEAD_ACCESS_TOKEN || '',
-    OMDB_API_KEY: process.env.OMDB_API_KEY || '',
-  };
+  const environment = buildEnvironment(process.env);
 
   try {
     console.log(`Starting import from: ${filePath}`);
