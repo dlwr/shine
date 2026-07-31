@@ -74,7 +74,7 @@ export function validateExternalUrl(rawUrl: string): UrlValidationResult {
     return {ok: false, reason: 'Non-default ports are not allowed'};
   }
 
-  const hostname = url.hostname.toLowerCase();
+  const hostname = url.hostname.toLowerCase().replace(/\.+$/, '');
 
   if (
     BLOCKED_HOSTNAMES.has(hostname) ||
