@@ -1,10 +1,10 @@
-import {config} from 'dotenv';
 import {and, isNotNull, isNull, eq, not} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {findTMDBByImdbId} from './common/tmdb-utilities';
+import {loadEnvironmentFiles} from './common/environment';
 
-config({path: '.dev.vars'});
+loadEnvironmentFiles();
 
 const environment: Environment = {
   TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL!,
@@ -25,7 +25,13 @@ async function assignTmdbIds() {
       year: movies.year,
     })
     .from(movies)
-    .where(and(isNotNull(movies.imdbId), isNull(movies.tmdbId)));
+    .where(
+      and(
+        isNotNull(movies.imdbId),
+        isNull(movies.tmdbId),
+        isNull(movies.deletedAt),
+      ),
+    );
 
   console.log(`Found ${moviesWithoutTmdbId.length} movies to process`);
 

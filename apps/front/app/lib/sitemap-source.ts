@@ -1,22 +1,15 @@
+import {resolveApiUrl} from './api';
+
 export const MOVIES_PER_SITEMAP = 100;
 
 const SITEMAP_CACHE_CONTROL = 'public, max-age=3600';
-
-type CloudflareContext = {
-  cloudflare?: {env?: {PUBLIC_API_URL?: string}};
-};
 
 type SearchResponse = {
   movies?: Array<{uid: string}>;
   pagination?: {totalCount?: number};
 };
 
-export function resolveApiUrl(context: unknown): string {
-  return (
-    (context as CloudflareContext)?.cloudflare?.env?.PUBLIC_API_URL ??
-    'http://localhost:8787'
-  );
-}
+export {resolveApiUrl} from './api';
 
 async function fetchSearchPage(
   context: unknown,

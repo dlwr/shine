@@ -2,6 +2,7 @@ import {Turnstile} from '@marsidev/react-turnstile';
 import {useCallback, useState, type ChangeEvent, type ElementType} from 'react';
 import {Form, redirect} from 'react-router';
 import type {Route} from './+types/movies.$id';
+import {resolveApiUrl} from '@/lib/api';
 import {AwardTree} from '@/components/editorial/award-tree';
 import {BigYear} from '@/components/editorial/big-year';
 import {MetaLine} from '@/components/editorial/meta-line';
@@ -71,6 +72,7 @@ type LoaderSuccessResponse = {
   movieDetail: MovieDetailData;
   turnstileSiteKey?: string;
   locale: Locale;
+  apiUrl?: string;
 };
 
 type LoaderData = LoaderErrorResponse | LoaderSuccessResponse;
@@ -110,6 +112,7 @@ function useIsTestMode(): boolean {
 function useArticleLinkForm(
   isTestMode: boolean,
   actionData: Route.ComponentProps['actionData'],
+  apiUrl: string,
 ): ArticleLinkFormReturn {
   const [formData, setFormData] = useState<ArticleLinkFormState>({
     url: '',
@@ -137,9 +140,6 @@ function useArticleLinkForm(
       setTitleError('');
 
       try {
-        const apiUrl = isTestMode
-          ? 'http://localhost:8787'
-          : 'https://shine-api.yuta25.workers.dev';
         const response = await fetch(`${apiUrl}/fetch-url-title`, {
           method: 'POST',
           headers: {
@@ -163,7 +163,7 @@ function useArticleLinkForm(
         setIsLoadingTitle(false);
       }
     },
-    [isTestMode],
+    [apiUrl],
   );
 
   const handleInputChange = useCallback(
@@ -483,8 +483,7 @@ export async function loader({
     const cloudflareEnvironment = (
       context.cloudflare as CloudflareContext | undefined
     )?.env;
-    const apiUrl =
-      cloudflareEnvironment?.PUBLIC_API_URL ?? 'http://localhost:8787';
+    const apiUrl = resolveApiUrl(context);
     const response = await fetch(`${apiUrl}/movies/${params.id}`, {
       signal: request.signal, // React Router v7推奨：abortシグナル
     });
@@ -507,7 +506,7 @@ export async function loader({
 
     const movieDetail = (await response.json()) as MovieDetailData;
     const turnstileSiteKey = cloudflareEnvironment?.PUBLIC_TURNSTILE_SITE_KEY;
-    return {movieDetail, turnstileSiteKey, locale};
+    return {movieDetail, turnstileSiteKey, locale, apiUrl};
   } catch {
     return {
       error: 'APIへの接続に失敗しました',
@@ -519,11 +518,7 @@ export async function loader({
 
 export async function action({context, params, request}: Route.ActionArgs) {
   try {
-    const cloudflareEnvironment = (
-      context.cloudflare as CloudflareContext | undefined
-    )?.env;
-    const apiUrl =
-      cloudflareEnvironment?.PUBLIC_API_URL ?? 'http://localhost:8787';
+    const apiUrl = resolveApiUrl(context);
     const formData = await request.formData();
 
     const url = formData.get('url') as string;
@@ -585,6 +580,9 @@ export default function MovieDetail({
   actionData,
 }: Route.ComponentProps) {
   const isTestMode = useIsTestMode();
+  const data = loaderData as LoaderData;
+  const apiUrl =
+    ('apiUrl' in data ? data.apiUrl : undefined) ?? 'http://localhost:8787';
   const {
     formData,
     handleInputChange,
@@ -592,9 +590,7 @@ export default function MovieDetail({
     isLoadingTitle,
     titleError,
     submissionResult,
-  } = useArticleLinkForm(isTestMode, actionData);
-
-  const data = loaderData as LoaderData;
+  } = useArticleLinkForm(isTestMode, actionData, apiUrl);
 
   if (isLoaderError(data)) {
     return (

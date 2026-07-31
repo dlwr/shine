@@ -84,7 +84,7 @@ export default {
 
       // バッチ処理用の配列
       const translationsBatch: Array<{
-        resourceType: string;
+        resourceType: 'movie_title' | 'movie_description';
         resourceUid: string;
         languageCode: string;
         content: string;

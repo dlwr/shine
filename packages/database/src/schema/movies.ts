@@ -19,7 +19,8 @@ export const movies = sqliteTable(
       .default(sql`(unixepoch())`),
     updatedAt: integer()
       .notNull()
-      .default(sql`(unixepoch())`),
+      .default(sql`(unixepoch())`)
+      .$onUpdate(() => Math.floor(Date.now() / 1000)),
     deletedAt: integer('deleted_at'),
   },
   table => [

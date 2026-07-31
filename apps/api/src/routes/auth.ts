@@ -1,9 +1,11 @@
 import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
-import {createJWT} from '../auth';
+import {createJWT, passwordsMatch} from '../auth';
+import {loginRateLimiter} from '../login-rate-limiter';
 import {
   createAuthenticationError,
   createInternalServerError,
+  createRateLimitError,
   createValidationError,
 } from '../utils/error-handlers';
 
@@ -11,6 +13,15 @@ export const authRoutes = new Hono<{Bindings: Environment}>();
 
 authRoutes.post('/login', async c => {
   try {
+    const clientIp = c.req.header('CF-Connecting-IP') ?? 'unknown';
+    if (loginRateLimiter.isBlocked(clientIp)) {
+      return createRateLimitError(
+        c,
+        Date.now() + loginRateLimiter.windowMs,
+        loginRateLimiter.limit,
+      );
+    }
+
     const {password} = await c.req.json();
 
     if (!password) {
@@ -35,10 +46,12 @@ authRoutes.post('/login', async c => {
       );
     }
 
-    if (password !== c.env.ADMIN_PASSWORD) {
+    if (!(await passwordsMatch(password, c.env.ADMIN_PASSWORD))) {
+      loginRateLimiter.recordFailure(clientIp);
       return createAuthenticationError(c, 'INVALID_CREDENTIALS');
     }
 
+    loginRateLimiter.clear(clientIp);
     const token = await createJWT(c.env.JWT_SECRET);
     return c.json({token});
   } catch (error) {

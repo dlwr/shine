@@ -7,7 +7,13 @@ import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
-import {EdgeCache, getCacheKeyForMovie} from '../utils/cache';
+import {
+  EdgeCache,
+  getCacheKeyForMovie,
+  getCacheTTL,
+  getMovieCacheKeysForAllLocales,
+  normalizeCacheLocale,
+} from '../utils/cache';
 import {BaseService} from './base-service';
 import type {MovieSelection, SearchOptions} from '@shine/types';
 
@@ -186,10 +192,13 @@ export class MoviesService extends BaseService {
     movieId: string,
     locale = 'ja',
   ): Promise<MovieSelection> {
-    const cacheKey = getCacheKeyForMovie(movieId);
+    const cacheLocale = normalizeCacheLocale(locale);
+    const cacheKey = cacheLocale
+      ? getCacheKeyForMovie(movieId, false, cacheLocale)
+      : undefined;
 
     // Try to get cached result
-    const cached = await this.cache.get(cacheKey);
+    const cached = cacheKey ? await this.cache.get(cacheKey) : undefined;
     if (cached?.data) {
       return cached.data as MovieSelection;
     }
@@ -332,10 +341,9 @@ export class MoviesService extends BaseService {
     };
 
     // Cache result
-    const response = Response.json(movieDetails, {
-      headers: {'Content-Type': 'application/json'},
-    });
-    await this.cache.put(cacheKey, response);
+    if (cacheKey) {
+      await this.cache.set(cacheKey, movieDetails, getCacheTTL.movie.basic);
+    }
 
     return movieDetails;
   }
@@ -364,7 +372,7 @@ export class MoviesService extends BaseService {
       if (isDefault) {
         await trx
           .update(translations)
-          .set({isDefault: 0, updatedAt: now})
+          .set({isDefault: 0})
           .where(
             and(
               eq(translations.resourceUid, movieId),
@@ -393,7 +401,6 @@ export class MoviesService extends BaseService {
             .set({
               content: title,
               isDefault: isDefault ? 1 : 0,
-              updatedAt: now,
             })
             .where(eq(translations.uid, existingTitle[0].uid))
         : await trx.insert(translations).values({
@@ -403,7 +410,6 @@ export class MoviesService extends BaseService {
             content: title,
             isDefault: isDefault ? 1 : 0,
             createdAt: now,
-            updatedAt: now,
           }));
 
       // Add or update description translation if provided
@@ -426,7 +432,6 @@ export class MoviesService extends BaseService {
               .update(translations)
               .set({
                 content: description,
-                updatedAt: now,
               })
               .where(eq(translations.uid, existingDescription[0].uid))
           : await trx.insert(translations).values({
@@ -435,14 +440,16 @@ export class MoviesService extends BaseService {
               languageCode,
               content: description,
               createdAt: now,
-              updatedAt: now,
             }));
       }
     });
 
     // Invalidate cache
-    const cacheKey = getCacheKeyForMovie(movieId);
-    await this.cache.delete(cacheKey);
+    await Promise.all(
+      getMovieCacheKeysForAllLocales(movieId).map(async key =>
+        this.cache.delete(key),
+      ),
+    );
   }
 
   async deleteMovieTranslation(
@@ -461,7 +468,10 @@ export class MoviesService extends BaseService {
       );
 
     // Invalidate cache
-    const cacheKey = getCacheKeyForMovie(movieId);
-    await this.cache.delete(cacheKey);
+    await Promise.all(
+      getMovieCacheKeysForAllLocales(movieId).map(async key =>
+        this.cache.delete(key),
+      ),
+    );
   }
 }

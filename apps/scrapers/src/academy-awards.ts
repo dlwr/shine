@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import {type Element} from 'domhandler';
-import {and, eq} from 'drizzle-orm';
+import {and, eq, isNull} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
@@ -133,7 +133,6 @@ async function getOrCreateCeremony(
       target: [awardCeremonies.organizationUid, awardCeremonies.year],
       set: {
         ceremonyNumber: year - 1928 + 1,
-        updatedAt: Math.floor(Date.now() / 1000),
       },
     })
     .returning();
@@ -527,7 +526,7 @@ async function processMovieForBatch(
           eq(translations.isDefault, 1),
         ),
       )
-      .where(eq(translations.content, title));
+      .where(and(eq(translations.content, title), isNull(movies.deletedAt)));
 
     let movieUid: string;
     const translationsBatch: Array<typeof translations.$inferInsert> = [];
@@ -542,7 +541,6 @@ async function processMovieForBatch(
           .update(movies)
           .set({
             imdbId,
-            updatedAt: Math.floor(Date.now() / 1000),
           })
           .where(eq(movies.uid, movieUid));
         console.log(`Updated IMDb ID for ${title}: ${imdbId}`);
@@ -682,7 +680,7 @@ async function processMovie(
           eq(translations.isDefault, 1),
         ),
       )
-      .where(eq(translations.content, title));
+      .where(and(eq(translations.content, title), isNull(movies.deletedAt)));
 
     let movieUid: string;
 
@@ -697,7 +695,6 @@ async function processMovie(
           .update(movies)
           .set({
             imdbId,
-            updatedAt: Math.floor(Date.now() / 1000),
           })
           .where(eq(movies.uid, movieUid));
         console.log(`Updated IMDb ID for ${title}: ${imdbId}`);
@@ -802,7 +799,6 @@ async function processMovie(
         ],
         set: {
           isWinner: isWinner ? 1 : 0,
-          updatedAt: Math.floor(Date.now() / 1000),
         },
       });
 

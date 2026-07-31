@@ -1,5 +1,11 @@
 import {sql} from 'drizzle-orm';
-import {integer, sqliteTable, text, unique} from 'drizzle-orm/sqlite-core';
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  unique,
+} from 'drizzle-orm/sqlite-core';
 import {generateUUID} from '@shine/utils';
 import {awardCategories} from './award-categories';
 import {awardCeremonies} from './award-ceremonies';
@@ -27,7 +33,14 @@ export const nominations = sqliteTable(
       .default(sql`(unixepoch())`),
     updatedAt: integer()
       .notNull()
-      .default(sql`(unixepoch())`),
+      .default(sql`(unixepoch())`)
+      .$onUpdate(() => Math.floor(Date.now() / 1000)),
   },
-  table => [unique().on(table.movieUid, table.ceremonyUid, table.categoryUid)],
+  table => [
+    unique().on(table.movieUid, table.ceremonyUid, table.categoryUid),
+    index('nominations_ceremony_category_idx').on(
+      table.ceremonyUid,
+      table.categoryUid,
+    ),
+  ],
 );

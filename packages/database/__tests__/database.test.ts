@@ -1,177 +1,278 @@
-import Database from 'better-sqlite3';
-import {afterEach, beforeEach, describe, expect, it} from 'vitest';
+import {mkdtempSync, rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createClient, type Client} from '@libsql/client';
+import {eq, sql} from 'drizzle-orm';
+import {drizzle, type LibSQLDatabase} from 'drizzle-orm/libsql';
+import {migrate} from 'drizzle-orm/libsql/migrator';
+import {afterAll, beforeAll, describe, expect, it} from 'vitest';
+import {
+  awardCategories,
+  awardOrganizations,
+  movies,
+  translations,
+} from '../src/schema/index';
 
-describe('Database Basic Tests', () => {
-  let sqlite: Database.Database;
+const migrationsFolder = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../migrations',
+);
 
-  beforeEach(() => {
-    // Create in-memory SQLite database for testing
-    sqlite = new Database(':memory:');
+const isUniqueViolation = (error: unknown): boolean => {
+  let current: unknown = error;
+  while (current instanceof Error) {
+    if (current.message.includes('UNIQUE')) {
+      return true;
+    }
+
+    current = current.cause;
+  }
+
+  return false;
+};
+
+describe('Database Schema', () => {
+  let temporaryDirectory: string;
+  let client: Client;
+  let database: LibSQLDatabase;
+
+  beforeAll(async () => {
+    temporaryDirectory = mkdtempSync(path.join(tmpdir(), 'shine-db-test-'));
+    client = createClient({
+      url: `file:${path.join(temporaryDirectory, 'test.db')}`,
+    });
+    database = drizzle({client, casing: 'snake_case'});
+    await migrate(database, {migrationsFolder});
   });
 
-  afterEach(() => {
-    sqlite.close();
+  afterAll(() => {
+    client.close();
+    rmSync(temporaryDirectory, {recursive: true, force: true});
   });
 
-  describe('SQLite Connection', () => {
-    it('should create in-memory database', () => {
-      expect(sqlite).toBeDefined();
-      expect(sqlite.open).toBe(true);
+  describe('migrations', () => {
+    it('creates all schema tables', async () => {
+      const result = await client.execute(
+        `SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name`,
+      );
+      const tableNames = result.rows.map(row => row.name as string);
+
+      const expectedTables = [
+        'article_links',
+        'award_categories',
+        'award_ceremonies',
+        'award_organizations',
+        'movie_availability_checks',
+        'movie_selections',
+        'movies',
+        'nominations',
+        'poster_urls',
+        'reference_urls',
+        'translations',
+      ];
+
+      for (const table of expectedTables) {
+        expect(tableNames).toContain(table);
+      }
+    });
+  });
+
+  describe('movies unique constraints', () => {
+    it('rejects duplicate imdbId', async () => {
+      await database.insert(movies).values({imdbId: 'tt0000001'});
+
+      await expect(
+        database.insert(movies).values({imdbId: 'tt0000001'}),
+      ).rejects.toSatisfy(isUniqueViolation);
     });
 
-    it('should execute basic SQL commands', () => {
-      sqlite.exec(`
-        CREATE TABLE test_table (
-          id INTEGER PRIMARY KEY,
-          name TEXT NOT NULL
-        );
-      `);
+    it('rejects duplicate tmdbId', async () => {
+      await database.insert(movies).values({tmdbId: 12_345});
 
-      const insert = sqlite.prepare('INSERT INTO test_table (name) VALUES (?)');
-      const result = insert.run('test name');
-
-      expect(result.changes).toBe(1);
-      expect(result.lastInsertRowid).toBe(1);
+      await expect(
+        database.insert(movies).values({tmdbId: 12_345}),
+      ).rejects.toSatisfy(isUniqueViolation);
     });
+  });
 
-    it('should query data from tables', () => {
-      sqlite.exec(`
-        CREATE TABLE movies_test (
-          uid TEXT PRIMARY KEY,
-          title TEXT NOT NULL,
-          year INTEGER
-        );
-      `);
-
-      const insert = sqlite.prepare(
-        'INSERT INTO movies_test (uid, title, year) VALUES (?, ?, ?)',
-      );
-      insert.run('test-1', 'Test Movie', 2024);
-
-      const select = sqlite.prepare('SELECT * FROM movies_test WHERE uid = ?');
-      const row = select.get('test-1') as
-        | {uid: string; title: string; year: number}
-        | undefined;
-
-      expect(row).toBeDefined();
-      expect(row?.title).toBe('Test Movie');
-      expect(row?.year).toBe(2024);
-    });
-
-    it('should enforce unique constraints', () => {
-      sqlite.exec(`
-        CREATE TABLE unique_test (
-          id INTEGER PRIMARY KEY,
-          email TEXT UNIQUE
-        );
-      `);
-
-      const insert = sqlite.prepare(
-        'INSERT INTO unique_test (email) VALUES (?)',
-      );
-      insert.run('test@example.com');
-
-      expect(() => {
-        insert.run('test@example.com');
-      }).toThrow();
-    });
-
-    it('should handle foreign key relationships', () => {
-      sqlite.exec(`
-        PRAGMA foreign_keys = ON;
-        
-        CREATE TABLE authors (
-          id INTEGER PRIMARY KEY,
-          name TEXT NOT NULL
-        );
-        
-        CREATE TABLE books (
-          id INTEGER PRIMARY KEY,
-          title TEXT NOT NULL,
-          author_id INTEGER,
-          FOREIGN KEY (author_id) REFERENCES authors (id)
-        );
-      `);
-
-      const insertAuthor = sqlite.prepare(
-        'INSERT INTO authors (name) VALUES (?)',
-      );
-      const authorResult = insertAuthor.run('Test Author');
-
-      const insertBook = sqlite.prepare(
-        'INSERT INTO books (title, author_id) VALUES (?, ?)',
-      );
-      insertBook.run('Test Book', authorResult.lastInsertRowid);
-
-      const selectBook = sqlite.prepare(`
-        SELECT b.title, a.name as author_name 
-        FROM books b 
-        JOIN authors a ON b.author_id = a.id
-      `);
-      const book = selectBook.get() as
-        | {title: string; author_name: string}
-        | undefined;
-
-      expect(book?.title).toBe('Test Book');
-      expect(book?.author_name).toBe('Test Author');
-    });
-
-    it('should handle transactions', () => {
-      sqlite.exec(`
-        CREATE TABLE transaction_test (
-          id INTEGER PRIMARY KEY,
-          value INTEGER
-        );
-      `);
-
-      const insert = sqlite.prepare(
-        'INSERT INTO transaction_test (value) VALUES (?)',
-      );
-
-      const transaction = sqlite.transaction((values: number[]) => {
-        for (const value of values) {
-          insert.run(value);
-        }
+  describe('translations composite unique constraint', () => {
+    it('rejects duplicate (resourceType, resourceUid, languageCode)', async () => {
+      await database.insert(translations).values({
+        resourceType: 'movie_title',
+        resourceUid: 'movie-1',
+        languageCode: 'ja',
+        content: 'タイトル',
       });
 
-      transaction([1, 2, 3, 4, 5]);
-
-      const count = sqlite
-        .prepare('SELECT COUNT(*) as count FROM transaction_test')
-        .get() as {count: number};
-      expect(count.count).toBe(5);
+      await expect(
+        database.insert(translations).values({
+          resourceType: 'movie_title',
+          resourceUid: 'movie-1',
+          languageCode: 'ja',
+          content: '別タイトル',
+        }),
+      ).rejects.toSatisfy(isUniqueViolation);
     });
 
-    it('should validate data types', () => {
-      sqlite.exec(`
-        CREATE TABLE type_test (
-          id INTEGER PRIMARY KEY,
-          text_field TEXT,
-          integer_field INTEGER,
-          real_field REAL
-        );
-      `);
+    it('allows same resource in another language', async () => {
+      await database.insert(translations).values({
+        resourceType: 'movie_title',
+        resourceUid: 'movie-1',
+        languageCode: 'en',
+        content: 'Title',
+      });
 
-      const insert = sqlite.prepare(`
-        INSERT INTO type_test (text_field, integer_field, real_field) 
-        VALUES (?, ?, ?)
-      `);
-      insert.run('test string', 42, 3.14);
+      const rows = await database
+        .select()
+        .from(translations)
+        .where(eq(translations.resourceUid, 'movie-1'));
+      expect(rows).toHaveLength(2);
+    });
+  });
 
-      const select = sqlite.prepare('SELECT * FROM type_test');
-      const row = select.get() as {
-        id: number;
-        text_field: string;
-        integer_field: number;
-        real_field: number;
-      };
+  describe('updatedAt $onUpdate', () => {
+    it('auto-updates updatedAt on update()', async () => {
+      const [inserted] = await database
+        .insert(movies)
+        .values({imdbId: 'tt0000002'})
+        .returning();
 
-      expect(typeof row.text_field).toBe('string');
-      expect(typeof row.integer_field).toBe('number');
-      expect(typeof row.real_field).toBe('number');
-      expect(row.text_field).toBe('test string');
-      expect(row.integer_field).toBe(42);
-      expect(row.real_field).toBe(3.14);
+      await client.execute({
+        sql: `UPDATE movies SET updated_at = 100 WHERE uid = ?`,
+        args: [inserted.uid],
+      });
+
+      await database
+        .update(movies)
+        .set({year: 2000})
+        .where(eq(movies.uid, inserted.uid));
+
+      const [updated] = await database
+        .select()
+        .from(movies)
+        .where(eq(movies.uid, inserted.uid));
+      expect(updated.updatedAt).toBeGreaterThan(100);
+    });
+
+    it('auto-updates updatedAt on onConflictDoUpdate()', async () => {
+      const [inserted] = await database
+        .insert(translations)
+        .values({
+          resourceType: 'movie_title',
+          resourceUid: 'movie-2',
+          languageCode: 'ja',
+          content: '旧タイトル',
+        })
+        .returning();
+
+      await client.execute({
+        sql: `UPDATE translations SET updated_at = 100 WHERE uid = ?`,
+        args: [inserted.uid],
+      });
+
+      await database
+        .insert(translations)
+        .values({
+          resourceType: 'movie_title',
+          resourceUid: 'movie-2',
+          languageCode: 'ja',
+          content: '新タイトル',
+        })
+        .onConflictDoUpdate({
+          target: [
+            translations.resourceType,
+            translations.resourceUid,
+            translations.languageCode,
+          ],
+          set: {content: '新タイトル'},
+        });
+
+      const [updated] = await database
+        .select()
+        .from(translations)
+        .where(eq(translations.uid, inserted.uid));
+      expect(updated.content).toBe('新タイトル');
+      expect(updated.updatedAt).toBeGreaterThan(100);
+    });
+
+    it('does not change updatedAt without an update', async () => {
+      const [inserted] = await database
+        .insert(movies)
+        .values({imdbId: 'tt0000003'})
+        .returning();
+
+      await client.execute({
+        sql: `UPDATE movies SET updated_at = 100 WHERE uid = ?`,
+        args: [inserted.uid],
+      });
+
+      const [selected] = await database
+        .select()
+        .from(movies)
+        .where(eq(movies.uid, inserted.uid));
+      expect(selected.updatedAt).toBe(100);
+    });
+  });
+
+  describe('award_categories scoped unique constraint', () => {
+    it('allows the same category name in different organizations', async () => {
+      const [organizationA] = await database
+        .insert(awardOrganizations)
+        .values({name: 'Org A', shortName: 'A'})
+        .returning();
+      const [organizationB] = await database
+        .insert(awardOrganizations)
+        .values({name: 'Org B', shortName: 'B'})
+        .returning();
+
+      await database.insert(awardCategories).values({
+        organizationUid: organizationA.uid,
+        name: 'Best Picture',
+      });
+      await database.insert(awardCategories).values({
+        organizationUid: organizationB.uid,
+        name: 'Best Picture',
+      });
+
+      const rows = await database
+        .select()
+        .from(awardCategories)
+        .where(eq(awardCategories.name, 'Best Picture'));
+      expect(rows).toHaveLength(2);
+    });
+
+    it('rejects the same category name within one organization', async () => {
+      const [organization] = await database
+        .select()
+        .from(awardOrganizations)
+        .where(eq(awardOrganizations.name, 'Org A'));
+
+      await expect(
+        database.insert(awardCategories).values({
+          organizationUid: organization.uid,
+          name: 'Best Picture',
+        }),
+      ).rejects.toSatisfy(isUniqueViolation);
+    });
+  });
+
+  describe('defaults', () => {
+    it('fills createdAt and updatedAt on insert', async () => {
+      const before = Math.floor(Date.now() / 1000);
+      const [inserted] = await database
+        .insert(movies)
+        .values({imdbId: 'tt0000004'})
+        .returning();
+
+      expect(inserted.createdAt).toBeGreaterThanOrEqual(before);
+      expect(inserted.updatedAt).toBeGreaterThanOrEqual(before);
+      await expect(
+        database
+          .select({value: sql<number>`1`})
+          .from(movies)
+          .where(eq(movies.uid, inserted.uid)),
+      ).resolves.toHaveLength(1);
     });
   });
 });

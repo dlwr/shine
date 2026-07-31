@@ -9,6 +9,7 @@ import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {FilmCard} from '@/components/editorial/film-card';
 import type {FilmCardMovie} from '@/components/editorial/film-card';
+import {resolveApiUrl} from '@/lib/api';
 
 type HighlightedMovies = {
   daily?: FilmCardMovie;
@@ -114,9 +115,7 @@ export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
 
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
-  const apiUrl =
-    (context.cloudflare as {env: {PUBLIC_API_URL?: string}}).env
-      .PUBLIC_API_URL || 'http://localhost:8787';
+  const apiUrl = resolveApiUrl(context);
 
   try {
     // Cloudflare Workers環境ではfetchが利用可能
@@ -232,15 +231,6 @@ export default function Home({loaderData}: Route.ComponentProps) {
           setError(
             error_ instanceof Error ? error_.message : 'Unknown error occurred',
           );
-          setMovies({
-            daily: {uid: '1', title: 'The Shawshank Redemption', year: 1994},
-            weekly: {uid: '1', title: 'The Shawshank Redemption', year: 1994},
-            monthly: {
-              uid: '1',
-              title: 'The Shawshank Redemption',
-              year: 1994,
-            },
-          });
         } finally {
           setLoading(false);
         }
@@ -664,8 +654,8 @@ function Movies({
       {error && (
         <div className="mb-4 p-4 border-2 border-red-600 text-red-600 font-mono text-sm">
           {locale === 'ja'
-            ? `APIから映画データを取得できませんでした。フォールバック映画を表示しています。エラー: ${error}…`
-            : `Failed to fetch movie data from API. Showing fallback movies. Error: ${error}…`}
+            ? `APIから映画データを取得できませんでした。エラー: ${error}`
+            : `Failed to fetch movie data from API. Error: ${error}`}
         </div>
       )}
 

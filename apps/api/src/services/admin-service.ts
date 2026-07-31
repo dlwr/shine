@@ -18,6 +18,15 @@ import {generateUUID} from '@shine/utils';
 import puppeteer from '@cloudflare/puppeteer';
 import {BaseService} from './base-service';
 import {
+  ConflictError,
+  ExternalFetchError,
+  NotFoundError,
+  TmdbConfigurationError,
+  TmdbDataNotFoundError,
+  UnprocessableContentError,
+  ValidationError,
+} from './errors';
+import {
   type ImdbNextData,
   extractImdbNominations,
   normalizeCategoryName,
@@ -151,11 +160,11 @@ export class AdminService extends BaseService {
     const normalizedImdbId = imdbId.trim();
 
     if (!normalizedImdbId) {
-      throw new Error('IMDb ID is required');
+      throw new ValidationError('IMDb ID is required');
     }
 
     if (!/^tt\d+$/.test(normalizedImdbId)) {
-      throw new Error('Invalid IMDb ID format');
+      throw new ValidationError("IMDB ID must be in format 'tt1234567'");
     }
 
     const existingMovie = await this.database
@@ -165,7 +174,7 @@ export class AdminService extends BaseService {
       .limit(1);
 
     if (existingMovie.length > 0) {
-      throw new Error('IMDb ID already exists for another movie');
+      throw new ConflictError('IMDB ID is already used by another movie');
     }
 
     const {fetchTMDBData = true} = options;
@@ -178,7 +187,9 @@ export class AdminService extends BaseService {
       const tmdbData = await this.fetchTMDBDataByImdbId(normalizedImdbId);
 
       if (!tmdbData) {
-        throw new Error('TMDB data not found for IMDb ID');
+        throw new TmdbDataNotFoundError(
+          'Could not find TMDB data for that IMDb ID',
+        );
       }
 
       tmdbMovieId = tmdbData.tmdbId;
@@ -193,7 +204,7 @@ export class AdminService extends BaseService {
           .limit(1);
 
         if (existingByTmdb.length > 0) {
-          throw new Error('TMDB ID already exists for another movie');
+          throw new ConflictError('TMDB ID is already used by another movie');
         }
       }
     }
@@ -277,7 +288,6 @@ export class AdminService extends BaseService {
             .update(movies)
             .set({
               tmdbId: tmdbMovieId,
-              updatedAt: Math.floor(Date.now() / 1000),
             })
             .where(eq(movies.uid, newMovie.uid));
         }
@@ -365,7 +375,7 @@ export class AdminService extends BaseService {
       .limit(1);
 
     if (movieResult.length === 0) {
-      throw new Error('Movie not found');
+      throw new NotFoundError('Movie not found');
     }
 
     const movie = movieResult[0];
@@ -489,7 +499,7 @@ export class AdminService extends BaseService {
 
     // Validate IMDb ID format (can be empty for removal)
     if (imdbId && !/^tt\d+$/.test(imdbId)) {
-      throw new Error('Invalid IMDb ID format');
+      throw new ValidationError("IMDB ID must be in format 'tt1234567'");
     }
 
     // Check if movie exists
@@ -500,7 +510,7 @@ export class AdminService extends BaseService {
       .limit(1);
 
     if (movieExists.length === 0) {
-      throw new Error('Movie not found');
+      throw new NotFoundError('Movie not found');
     }
 
     // Check for duplicate IMDb ID if setting one
@@ -512,7 +522,7 @@ export class AdminService extends BaseService {
         .limit(1);
 
       if (existingMovie.length > 0) {
-        throw new Error('IMDb ID already exists for another movie');
+        throw new ConflictError('IMDB ID is already used by another movie');
       }
     }
 
@@ -539,7 +549,6 @@ export class AdminService extends BaseService {
               .update(movies)
               .set({
                 originalLanguage: tmdbData.movie.original_language,
-                updatedAt: Math.floor(Date.now() / 1000),
               })
               .where(eq(movies.uid, movieId));
           }
@@ -555,7 +564,6 @@ export class AdminService extends BaseService {
         imdbId,
         ...(tmdbId && {tmdbId}),
         ...(detectedMediaType && {mediaType: detectedMediaType}),
-        updatedAt: Math.floor(Date.now() / 1000),
       })
       .where(eq(movies.uid, movieId));
 
@@ -591,7 +599,7 @@ export class AdminService extends BaseService {
     const tmdbApiKey = this.env.TMDB_API_KEY;
 
     if (!tmdbApiKey) {
-      throw new Error('TMDb API key not configured');
+      throw new TmdbConfigurationError();
     }
 
     const [movie] = await this.database
@@ -604,7 +612,7 @@ export class AdminService extends BaseService {
       .limit(1);
 
     if (!movie) {
-      throw new Error('Movie not found');
+      throw new NotFoundError('Movie not found');
     }
 
     const translationsForMovie = await this.database
@@ -639,7 +647,7 @@ export class AdminService extends BaseService {
     const query = sanitizedQuery || preferredTranslation?.content?.trim();
 
     if (!query) {
-      throw new Error('Unable to determine search query');
+      throw new ValidationError('Search query is required');
     }
 
     const searchLanguage = (() => {
@@ -798,7 +806,6 @@ export class AdminService extends BaseService {
         sourceType: source,
         isPrimary: isPrimary ? 1 : 0,
         createdAt: Math.floor(Date.now() / 1000),
-        updatedAt: Math.floor(Date.now() / 1000),
       })
       .returning();
 
@@ -844,7 +851,6 @@ export class AdminService extends BaseService {
         .update(nominations)
         .set({
           movieUid: targetMovieId,
-          updatedAt: Math.floor(Date.now() / 1000),
         })
         .where(eq(nominations.movieUid, sourceMovieId));
 
@@ -853,7 +859,6 @@ export class AdminService extends BaseService {
         .update(movieSelections)
         .set({
           movieId: targetMovieId,
-          updatedAt: Math.floor(Date.now() / 1000),
         })
         .where(eq(movieSelections.movieId, sourceMovieId));
 
@@ -868,7 +873,6 @@ export class AdminService extends BaseService {
         .update(referenceUrls)
         .set({
           movieUid: targetMovieId,
-          updatedAt: Math.floor(Date.now() / 1000),
         })
         .where(eq(referenceUrls.movieUid, sourceMovieId));
 
@@ -878,7 +882,6 @@ export class AdminService extends BaseService {
             .update(translations)
             .set({
               resourceUid: targetMovieId,
-              updatedAt: Math.floor(Date.now() / 1000),
             })
             .where(eq(translations.resourceUid, sourceMovieId))
         : await trx
@@ -891,7 +894,6 @@ export class AdminService extends BaseService {
             .update(posterUrls)
             .set({
               movieUid: targetMovieId,
-              updatedAt: Math.floor(Date.now() / 1000),
             })
             .where(eq(posterUrls.movieUid, sourceMovieId))
         : await trx
@@ -916,7 +918,7 @@ export class AdminService extends BaseService {
     const trimmedCategoryUid = options.categoryUid?.trim();
 
     if (!trimmedCategoryUid) {
-      throw new Error('Category UID is required');
+      throw new ValidationError('Category UID is required');
     }
 
     const ceremonyRows = await this.database
@@ -931,12 +933,14 @@ export class AdminService extends BaseService {
 
     const ceremony = ceremonyRows[0];
     if (!ceremony) {
-      throw new Error('Ceremony not found');
+      throw new NotFoundError('Ceremony not found');
     }
 
     const imdbEventUrl = ceremony.imdbEventUrl?.trim();
     if (!imdbEventUrl) {
-      throw new Error('Ceremony does not have an IMDb event URL configured');
+      throw new ValidationError(
+        'Ceremony does not have an IMDb event URL configured',
+      );
     }
 
     const categoryRows = await this.database
@@ -951,17 +955,19 @@ export class AdminService extends BaseService {
 
     const category = categoryRows[0];
     if (!category) {
-      throw new Error('Category not found');
+      throw new NotFoundError('Category not found');
     }
 
     if (category.organizationUid !== ceremony.organizationUid) {
-      throw new Error('Category does not belong to the ceremony organization');
+      throw new ValidationError(
+        'Category does not belong to the ceremony organization',
+      );
     }
 
     const normalizedUrl = ensureTrailingSlash(imdbEventUrl);
 
     if (!this.env.BROWSER) {
-      throw new Error(
+      throw new ExternalFetchError(
         'Browser Rendering binding is not configured. Add [browser] binding to wrangler.toml.',
       );
     }
@@ -1033,13 +1039,13 @@ export class AdminService extends BaseService {
           lastError instanceof Error &&
           lastError.message.includes('Session closed')
         ) {
-          throw new Error(
+          throw new ExternalFetchError(
             'Failed to fetch IMDb event page: browser session closed unexpectedly (Cloudflare Browser Rendering may be at concurrent session limit; retry in a moment)',
             {cause: lastError},
           );
         }
 
-        throw new Error(
+        throw new ExternalFetchError(
           `Failed to fetch IMDb event page: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
           {cause: lastError},
         );
@@ -1066,7 +1072,7 @@ export class AdminService extends BaseService {
     const markerIndex = html.indexOf(marker);
 
     if (markerIndex === -1) {
-      throw new Error(
+      throw new UnprocessableContentError(
         'IMDb event page format is not supported (missing __NEXT_DATA__ payload)',
       );
     }
@@ -1075,7 +1081,7 @@ export class AdminService extends BaseService {
     const endIndex = html.indexOf('</script>', startIndex);
 
     if (endIndex === -1) {
-      throw new Error(
+      throw new UnprocessableContentError(
         'IMDb event page format is not supported (unterminated __NEXT_DATA__ payload)',
       );
     }
@@ -1152,7 +1158,7 @@ export class AdminService extends BaseService {
       extractImdbNominations(nextData, targetNames);
 
     if (imdbNominations.length === 0) {
-      throw new Error(
+      throw new UnprocessableContentError(
         `IMDb event page did not provide nominations for category "${category.name}"`,
       );
     }
@@ -1192,9 +1198,8 @@ export class AdminService extends BaseService {
           error instanceof Error ? error.message : error,
         );
         if (
-          error instanceof Error &&
-          (error.message === 'TMDB API key not configured' ||
-            error.message === 'TMDB data not found for IMDb ID')
+          error instanceof TmdbConfigurationError ||
+          error instanceof TmdbDataNotFoundError
         ) {
           const fallback = await this.createMovieFromImdbId(nomination.imdbId, {
             fetchTMDBData: false,
@@ -1204,10 +1209,7 @@ export class AdminService extends BaseService {
           continue;
         }
 
-        if (
-          error instanceof Error &&
-          error.message === 'IMDb ID already exists for another movie'
-        ) {
+        if (error instanceof ConflictError) {
           const recheck = await this.database
             .select({uid: movies.uid})
             .from(movies)
@@ -1250,7 +1252,6 @@ export class AdminService extends BaseService {
         categoryUid: category.uid,
         isWinner: nomination.isWinner ? 1 : 0,
         createdAt: now,
-        updatedAt: now,
       };
 
       if (nomination.notes && nomination.notes !== '') {
@@ -1261,7 +1262,7 @@ export class AdminService extends BaseService {
     }
 
     if (nominationRecords.length === 0) {
-      throw new Error(
+      throw new UnprocessableContentError(
         'IMDb nominations could not be matched to any movies (missing IMDb IDs)',
       );
     }
@@ -1298,7 +1299,7 @@ export class AdminService extends BaseService {
   > {
     const apiKey = this.env.TMDB_API_KEY;
     if (!apiKey) {
-      throw new Error('TMDB API key not configured');
+      throw new TmdbConfigurationError();
     }
 
     const {findTMDBByImdbId} =
@@ -1377,7 +1378,6 @@ export class AdminService extends BaseService {
       sourceType: 'tmdb',
       isPrimary: 0,
       createdAt: Math.floor(Date.now() / 1000),
-      updatedAt: Math.floor(Date.now() / 1000),
     });
 
     return 1;
@@ -1399,7 +1399,6 @@ export class AdminService extends BaseService {
       .update(translations)
       .set({
         isDefault: 0,
-        updatedAt: now,
       })
       .where(
         and(
@@ -1429,7 +1428,6 @@ export class AdminService extends BaseService {
           content: tmdbData.original_title,
           isDefault: 1,
           createdAt: now,
-          updatedAt: now,
         });
         addedCount++;
       }
@@ -1465,7 +1463,6 @@ export class AdminService extends BaseService {
           content: title,
           isDefault: isOriginalLanguage ? 1 : 0,
           createdAt: now,
-          updatedAt: now,
         });
         addedCount++;
         continue;
@@ -1479,7 +1476,6 @@ export class AdminService extends BaseService {
         .update(translations)
         .set({
           isDefault: 1,
-          updatedAt: now,
         })
         .where(translationQuery);
     }

@@ -6,6 +6,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
+import {fetchJsonWithRetry} from './fetch-utilities';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -71,6 +72,13 @@ export type TMDBSearchResponse = {
   }>;
 };
 
+export type TMDBConfiguration = {
+  images: {
+    secure_base_url: string;
+    poster_sizes: string[];
+  };
+};
+
 export type TMDBTranslationsResponse = {
   id: number;
   translations: Array<{
@@ -89,6 +97,27 @@ export type TMDBTranslationsResponse = {
   }>;
 };
 
+let cachedConfiguration: TMDBConfiguration | undefined;
+
+/**
+ * TMDb APIの画像設定を取得(プロセス内でキャッシュ)
+ */
+export async function fetchTMDBConfiguration(
+  tmdbApiKey: string,
+): Promise<TMDBConfiguration> {
+  if (cachedConfiguration) {
+    return cachedConfiguration;
+  }
+
+  const configUrl = new URL(`${TMDB_API_BASE_URL}/configuration`);
+  configUrl.searchParams.append('api_key', tmdbApiKey);
+
+  cachedConfiguration = await fetchJsonWithRetry<TMDBConfiguration>(
+    configUrl.toString(),
+  );
+  return cachedConfiguration;
+}
+
 /**
  * TMDb APIから映画の翻訳情報を取得
  */
@@ -104,12 +133,9 @@ export async function fetchTMDBMovieTranslations(
     );
     translationsUrl.searchParams.append('api_key', tmdbApiKey);
 
-    const response = await fetch(translationsUrl.toString());
-    if (!response.ok) {
-      throw new Error(`TMDb API error: ${response.statusText}`);
-    }
-
-    const data: TMDBTranslationsResponse = await response.json();
+    const data = await fetchJsonWithRetry<TMDBTranslationsResponse>(
+      translationsUrl.toString(),
+    );
     return data;
   } catch (error) {
     console.error(
@@ -136,12 +162,9 @@ export async function searchTMDBMovie(
     searchUrlWithYear.searchParams.append('year', year.toString());
     searchUrlWithYear.searchParams.append('language', 'en-US');
 
-    const responseWithYear = await fetch(searchUrlWithYear.toString());
-    if (!responseWithYear.ok) {
-      throw new Error(`TMDb API error: ${responseWithYear.statusText}`);
-    }
-
-    const dataWithYear: TMDBSearchResponse = await responseWithYear.json();
+    const dataWithYear = await fetchJsonWithRetry<TMDBSearchResponse>(
+      searchUrlWithYear.toString(),
+    );
 
     // 年パラメータ付きで結果があった場合
     if (dataWithYear.results.length > 0) {
@@ -161,12 +184,9 @@ export async function searchTMDBMovie(
     searchUrlNoYear.searchParams.append('query', title);
     searchUrlNoYear.searchParams.append('language', 'en-US');
 
-    const responseNoYear = await fetch(searchUrlNoYear.toString());
-    if (!responseNoYear.ok) {
-      throw new Error(`TMDb API error: ${responseNoYear.statusText}`);
-    }
-
-    const dataNoYear: TMDBSearchResponse = await responseNoYear.json();
+    const dataNoYear = await fetchJsonWithRetry<TMDBSearchResponse>(
+      searchUrlNoYear.toString(),
+    );
 
     // 年パラメータなしでも結果をフィルタリング
     const matches = dataNoYear.results.filter(movie => {
@@ -204,12 +224,7 @@ export async function fetchTMDBMovieDetails(
     detailsUrl.searchParams.append('api_key', tmdbApiKey);
     detailsUrl.searchParams.append('language', language);
 
-    const response = await fetch(detailsUrl.toString());
-    if (!response.ok) {
-      throw new Error(`TMDb API error: ${response.statusText}`);
-    }
-
-    const data: TMDBMovieData = await response.json();
+    const data = await fetchJsonWithRetry<TMDBMovieData>(detailsUrl.toString());
     return data;
   } catch (error) {
     console.error(
@@ -233,13 +248,9 @@ export async function fetchTMDBTvDetails(
     detailsUrl.searchParams.append('api_key', tmdbApiKey);
     detailsUrl.searchParams.append('language', language);
 
-    const response = await fetch(detailsUrl.toString());
-    if (!response.ok) {
-      throw new Error(`TMDb API error: ${response.statusText}`);
-    }
-
-    const data: TMDBTvData & {translations?: TMDBMovieData['translations']} =
-      await response.json();
+    const data = await fetchJsonWithRetry<
+      TMDBTvData & {translations?: TMDBMovieData['translations']}
+    >(detailsUrl.toString());
     return {
       id: data.id,
       title: data.name,
@@ -283,12 +294,7 @@ export async function findTMDBByImdbId(
     findUrl.searchParams.append('api_key', tmdbApiKey);
     findUrl.searchParams.append('external_source', 'imdb_id');
 
-    const response = await fetch(findUrl.toString());
-    if (!response.ok) {
-      throw new Error(`TMDb API error: ${response.statusText}`);
-    }
-
-    const data: TMDBFindResponse = await response.json();
+    const data = await fetchJsonWithRetry<TMDBFindResponse>(findUrl.toString());
 
     if (data.movie_results && data.movie_results.length > 0) {
       return {tmdbId: data.movie_results[0].id, mediaType: 'movie'};
@@ -373,6 +379,27 @@ export async function fetchJapaneseTitleFromTMDB(
 }
 
 /**
+ * TMDb IDから画像情報を取得
+ */
+export async function fetchTMDBImages(
+  tmdbId: number,
+  mediaType: 'movie' | 'tv',
+  tmdbApiKey: string,
+): Promise<TMDBMovieImages | undefined> {
+  try {
+    const imagesUrl = new URL(
+      `${TMDB_API_BASE_URL}/${mediaType}/${tmdbId}/images`,
+    );
+    imagesUrl.searchParams.append('api_key', tmdbApiKey);
+
+    return await fetchJsonWithRetry<TMDBMovieImages>(imagesUrl.toString());
+  } catch (error) {
+    console.error(`Error fetching TMDb images for TMDb ID ${tmdbId}:`, error);
+    return undefined;
+  }
+}
+
+/**
  * TMDb APIから映画のポスター情報を取得
  */
 export async function fetchTMDBMovieImages(
@@ -382,30 +409,18 @@ export async function fetchTMDBMovieImages(
   | {images: TMDBMovieImages; tmdbId: number; mediaType: 'movie' | 'tv'}
   | undefined
 > {
-  try {
-    const findResult = await findTMDBByImdbId(imdbId, tmdbApiKey);
-    if (!findResult) {
-      return undefined;
-    }
-
-    const {tmdbId, mediaType} = findResult;
-    const endpoint = mediaType;
-    const imagesUrl = new URL(
-      `${TMDB_API_BASE_URL}/${endpoint}/${tmdbId}/images`,
-    );
-    imagesUrl.searchParams.append('api_key', tmdbApiKey);
-
-    const imagesResponse = await fetch(imagesUrl.toString());
-    if (!imagesResponse.ok) {
-      throw new Error(`TMDb API error: ${imagesResponse.statusText}`);
-    }
-
-    const images: TMDBMovieImages = await imagesResponse.json();
-    return {images, tmdbId, mediaType};
-  } catch (error) {
-    console.error(`Error fetching TMDb images for IMDb ID ${imdbId}:`, error);
+  const findResult = await findTMDBByImdbId(imdbId, tmdbApiKey);
+  if (!findResult) {
     return undefined;
   }
+
+  const {tmdbId, mediaType} = findResult;
+  const images = await fetchTMDBImages(tmdbId, mediaType, tmdbApiKey);
+  if (!images) {
+    return undefined;
+  }
+
+  return {images, tmdbId, mediaType};
 }
 
 /**
@@ -421,13 +436,22 @@ export async function saveTMDBId(
   try {
     // IMDb IDで映画を検索
     const movie = await database
-      .select({uid: movies.uid, tmdbId: movies.tmdbId})
+      .select({
+        uid: movies.uid,
+        tmdbId: movies.tmdbId,
+        deletedAt: movies.deletedAt,
+      })
       .from(movies)
       .where(eq(movies.imdbId, imdbId))
       .limit(1);
 
     if (movie.length === 0) {
       console.error(`  Movie not found with IMDb ID: ${imdbId}`);
+      return;
+    }
+
+    if (movie[0].deletedAt !== null) {
+      console.log(`  Movie is soft-deleted, skipping: ${imdbId}`);
       return;
     }
 
@@ -490,7 +514,6 @@ export async function saveJapaneseTranslation(
         ],
         set: {
           content: japaneseTitle,
-          updatedAt: Math.floor(Date.now() / 1000),
         },
       });
 

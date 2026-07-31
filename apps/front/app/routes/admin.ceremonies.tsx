@@ -11,6 +11,7 @@ import {
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import type {Route} from './+types/admin.ceremonies';
+import {resolveApiUrl} from '@/lib/api';
 
 type CeremonyListItem = {
   uid: string;
@@ -41,12 +42,8 @@ export function meta() {
 }
 
 export async function loader({context}: Route.LoaderArgs) {
-  const cloudflareEnvironment = (
-    context.cloudflare as {env?: {PUBLIC_API_URL?: string}} | undefined
-  )?.env;
-
   return {
-    apiUrl: cloudflareEnvironment?.PUBLIC_API_URL ?? 'http://localhost:8787',
+    apiUrl: resolveApiUrl(context),
   };
 }
 

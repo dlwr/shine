@@ -10,11 +10,9 @@
     "@shine/database": "workspace:*",
     "@shine/scrapers": "workspace:*",
     "@shine/types": "workspace:*",
-    "dompurify": "^3.3.2",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.12.7",
-    "jose": "^6.2.1",
-    "zod": "^4.3.6"
+    "jose": "^6.2.1"
   },
   "devDependencies": {
     "@cloudflare/puppeteer": "^1.0.6"

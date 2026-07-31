@@ -136,13 +136,18 @@ const createLoaderData = (
   movieDetail: mockMovieDetail,
   turnstileSiteKey: 'test-site-key',
   locale: 'ja',
+  apiUrl: 'http://localhost:8787',
   ...overrides,
 });
 
 const successMeta = () =>
   meta(
     createMetaArguments(
-      {movieDetail: mockMovieDetail, locale: 'ja'},
+      {
+        movieDetail: mockMovieDetail,
+        locale: 'ja',
+        apiUrl: 'http://localhost:8787',
+      },
       {id: 'movie-123'},
     ),
   );
@@ -222,6 +227,7 @@ describe('MovieDetail Component', () => {
         movieDetail: mockMovieDetail,
         turnstileSiteKey: 'test-site-key',
         locale: 'ja',
+        apiUrl: 'http://localhost:8787',
       });
     });
 

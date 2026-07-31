@@ -4,7 +4,10 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   test:
@@ -41,11 +44,17 @@ jobs:
       - name: Lint
         run: pnpm run lint
 
+      - name: Format check
+        run: pnpm run format
+
       - name: Type check
         run: pnpm run type-check
 
       - name: Test
         run: pnpm run test
+
+      - name: Validate OpenAPI spec
+        run: pnpm run docs:validate
 
       - name: Build - API
         run: pnpm --filter @shine/api run build

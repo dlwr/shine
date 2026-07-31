@@ -1,10 +1,6 @@
 import {ImageResponse} from 'workers-og';
 import {loadGoogleFont} from '@/lib/og/assets';
-import {
-  BANNER_HEIGHT,
-  BANNER_WIDTH,
-  buildBannerHtml,
-} from '@/lib/og/template';
+import {BANNER_HEIGHT, BANNER_WIDTH, buildBannerHtml} from '@/lib/og/template';
 
 const CACHE_CONTROL = 'public, max-age=604800';
 

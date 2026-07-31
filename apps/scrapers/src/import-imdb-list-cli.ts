@@ -1,21 +1,8 @@
-import {existsSync} from 'node:fs';
-import path from 'node:path';
-import {config as loadEnvironment} from 'dotenv';
 import {Command} from 'commander';
 import {importMoviesFromCsv} from './import-imdb-list';
+import {buildEnvironment, loadEnvironmentFiles} from './common/environment';
 
-const environmentCandidates = [
-  '.env',
-  '.dev.vars',
-  '../.dev.vars',
-  '../../.dev.vars',
-];
-for (const candidate of environmentCandidates) {
-  const resolvedPath = path.resolve(process.cwd(), candidate);
-  if (existsSync(resolvedPath)) {
-    loadEnvironment({path: resolvedPath, override: false});
-  }
-}
+loadEnvironmentFiles();
 
 function finiteNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value)
@@ -76,13 +63,7 @@ program
     try {
       await importMoviesFromCsv({
         filePath: csvFile,
-        environment: {
-          TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL!,
-          TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN!,
-          TMDB_API_KEY: process.env.TMDB_API_KEY,
-          TMDB_LEAD_ACCESS_TOKEN: process.env.TMDB_LEAD_ACCESS_TOKEN,
-          OMDB_API_KEY: process.env.OMDB_API_KEY,
-        },
+        environment: buildEnvironment(process.env),
         dryRun,
         limit,
         throttleMs: throttle,
