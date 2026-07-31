@@ -10,6 +10,12 @@ import {inArray, sql} from 'drizzle-orm';
 import {authMiddleware} from '../../auth';
 import {sanitizeText, sanitizeUrl} from '../../middleware/sanitizer';
 import {AdminService} from '../../services';
+import {
+  ExternalFetchError,
+  NotFoundError,
+  UnprocessableContentError,
+  ValidationError,
+} from '../../services/errors';
 
 export const adminCeremoniesRoutes = new Hono<{Bindings: Environment}>();
 
@@ -653,39 +659,20 @@ adminCeremoniesRoutes.post(
     } catch (error) {
       console.error('Error syncing ceremony from IMDb:', error);
 
-      if (error instanceof Error) {
-        if (
-          error.message === 'Ceremony not found' ||
-          error.message === 'Category not found'
-        ) {
-          return c.json({error: error.message}, 404);
-        }
+      if (error instanceof NotFoundError) {
+        return c.json({error: error.message}, 404);
+      }
 
-        if (
-          error.message ===
-            'Ceremony does not have an IMDb event URL configured' ||
-          error.message ===
-            'Category does not belong to the ceremony organization' ||
-          error.message === 'Category UID is required'
-        ) {
-          return c.json({error: error.message}, 400);
-        }
+      if (error instanceof ValidationError) {
+        return c.json({error: error.message}, 400);
+      }
 
-        if (error.message.startsWith('Failed to fetch IMDb event page')) {
-          return c.json({error: error.message}, 502);
-        }
+      if (error instanceof ExternalFetchError) {
+        return c.json({error: error.message}, 502);
+      }
 
-        if (
-          error.message.startsWith('IMDb event page') ||
-          error.message ===
-            'IMDb nominations could not be matched to any movies (missing IMDb IDs)'
-        ) {
-          return c.json({error: error.message}, 422);
-        }
-
-        if (error.message.includes('Browser Rendering')) {
-          return c.json({error: error.message}, 502);
-        }
+      if (error instanceof UnprocessableContentError) {
+        return c.json({error: error.message}, 422);
       }
 
       return c.json({error: 'Internal server error'}, 500);

@@ -10,6 +10,12 @@ import {Hono} from 'hono';
 import {authMiddleware} from '../../auth';
 import {sanitizeText} from '../../middleware/sanitizer';
 import {AdminService} from '../../services';
+import {
+  ConflictError,
+  NotFoundError,
+  TmdbConfigurationError,
+  ValidationError,
+} from '../../services/errors';
 import {syncTmdbData, type TmdbSyncResult} from '../../services/tmdb-sync';
 import {parsePagination} from '../../utils/pagination';
 
@@ -30,8 +36,8 @@ adminMoviesRoutes.get('/movies/:id', authMiddleware, async c => {
   } catch (error) {
     console.error('Error fetching movie details for admin:', error);
 
-    if (error instanceof Error && error.message === 'Movie not found') {
-      return c.json({error: 'Movie not found'}, 404);
+    if (error instanceof NotFoundError) {
+      return c.json({error: error.message}, 404);
     }
 
     return c.json({error: 'Internal server error'}, 500);
@@ -93,18 +99,16 @@ adminMoviesRoutes.get('/movies/:id/external-id-search', authMiddleware, async c 
   } catch (error) {
     console.error('Error searching external IDs:', error);
 
-    if (error instanceof Error) {
-      if (error.message === 'Movie not found') {
-        return c.json({error: 'Movie not found'}, 404);
-      }
+    if (error instanceof NotFoundError) {
+      return c.json({error: error.message}, 404);
+    }
 
-      if (error.message === 'Unable to determine search query') {
-        return c.json({error: 'Search query is required'}, 400);
-      }
+    if (error instanceof ValidationError) {
+      return c.json({error: error.message}, 400);
+    }
 
-      if (error.message === 'TMDb API key not configured') {
-        return c.json({error: 'TMDb API key is not configured'}, 503);
-      }
+    if (error instanceof TmdbConfigurationError) {
+      return c.json({error: 'TMDb API key is not configured'}, 503);
     }
 
     return c.json({error: 'Internal server error'}, 500);
@@ -192,29 +196,16 @@ adminMoviesRoutes.post('/movies', authMiddleware, async c => {
   } catch (error) {
     console.error('Error creating movie:', error);
 
-    if (error instanceof Error) {
-      if (error.message === 'IMDb ID is required') {
-        return c.json({error: 'IMDb ID is required'}, 400);
-      }
+    if (error instanceof ValidationError) {
+      return c.json({error: error.message}, 400);
+    }
 
-      if (error.message === 'Invalid IMDb ID format') {
-        return c.json({error: "IMDB ID must be in format 'tt1234567'"}, 400);
-      }
+    if (error instanceof ConflictError) {
+      return c.json({error: error.message}, 409);
+    }
 
-      if (error.message === 'IMDb ID already exists for another movie') {
-        return c.json({error: 'IMDB ID is already used by another movie'}, 409);
-      }
-
-      if (error.message === 'TMDB data not found for IMDb ID') {
-        return c.json(
-          {error: 'Could not find TMDB data for that IMDb ID'},
-          404,
-        );
-      }
-
-      if (error.message === 'TMDB ID already exists for another movie') {
-        return c.json({error: 'TMDB ID is already used by another movie'}, 409);
-      }
+    if (error instanceof NotFoundError) {
+      return c.json({error: error.message}, 404);
     }
 
     return c.json({error: 'Internal server error'}, 500);
@@ -342,18 +333,16 @@ adminMoviesRoutes.put('/movies/:id/imdb-id', authMiddleware, async c => {
   } catch (error) {
     console.error('Error updating IMDB ID:', error);
 
-    if (error instanceof Error) {
-      if (error.message === 'Movie not found') {
-        return c.json({error: 'Movie not found'}, 404);
-      }
+    if (error instanceof NotFoundError) {
+      return c.json({error: error.message}, 404);
+    }
 
-      if (error.message === 'Invalid IMDb ID format') {
-        return c.json({error: "IMDB ID must be in format 'tt1234567'"}, 400);
-      }
+    if (error instanceof ValidationError) {
+      return c.json({error: error.message}, 400);
+    }
 
-      if (error.message === 'IMDb ID already exists for another movie') {
-        return c.json({error: 'IMDB ID is already used by another movie'}, 409);
-      }
+    if (error instanceof ConflictError) {
+      return c.json({error: error.message}, 409);
     }
 
     return c.json({error: 'Internal server error'}, 500);
