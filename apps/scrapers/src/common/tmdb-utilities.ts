@@ -224,9 +224,7 @@ export async function fetchTMDBMovieDetails(
     detailsUrl.searchParams.append('api_key', tmdbApiKey);
     detailsUrl.searchParams.append('language', language);
 
-    const data = await fetchJsonWithRetry<TMDBMovieData>(
-      detailsUrl.toString(),
-    );
+    const data = await fetchJsonWithRetry<TMDBMovieData>(detailsUrl.toString());
     return data;
   } catch (error) {
     console.error(
@@ -296,9 +294,7 @@ export async function findTMDBByImdbId(
     findUrl.searchParams.append('api_key', tmdbApiKey);
     findUrl.searchParams.append('external_source', 'imdb_id');
 
-    const data = await fetchJsonWithRetry<TMDBFindResponse>(
-      findUrl.toString(),
-    );
+    const data = await fetchJsonWithRetry<TMDBFindResponse>(findUrl.toString());
 
     if (data.movie_results && data.movie_results.length > 0) {
       return {tmdbId: data.movie_results[0].id, mediaType: 'movie'};

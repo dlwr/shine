@@ -154,7 +154,9 @@ async function main(options: {
   console.log(`📊 合計: ${movies.length}件`);
 
   if (successCount > 0) {
-    console.log(`\n${successCount}件の日本語翻訳をデータベースに保存しました。`);
+    console.log(
+      `\n${successCount}件の日本語翻訳をデータベースに保存しました。`,
+    );
   }
 }
 
@@ -162,7 +164,9 @@ const program = new Command();
 
 program
   .name('japanese-translations-cli')
-  .description('日本語翻訳が未登録の映画にTMDB/Wikipediaから日本語タイトルを取得して保存します')
+  .description(
+    '日本語翻訳が未登録の映画にTMDB/Wikipediaから日本語タイトルを取得して保存します',
+  )
   .option(
     '--limit <number>',
     '処理する映画の件数を指定 (デフォルト: 20)',

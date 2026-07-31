@@ -65,7 +65,10 @@ describe('tmdb-utilities save functions (libsql integration)', () => {
       await savePosterUrls('movie-1', posters, environment);
       const savedCount = await savePosterUrls(
         'movie-1',
-        [...posters, {file_path: '/c.jpg', width: 300, height: 450, iso_639_1: 'ja'}],
+        [
+          ...posters,
+          {file_path: '/c.jpg', width: 300, height: 450, iso_639_1: 'ja'},
+        ],
         environment,
       );
 

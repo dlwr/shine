@@ -20,7 +20,10 @@ program
     'Seed the database with Japan Academy Awards organization and categories',
     false,
   )
-  .option('--year <year>', 'Scrape data for a specific year (e.g., --year 2023)')
+  .option(
+    '--year <year>',
+    'Scrape data for a specific year (e.g., --year 2023)',
+  )
   .option(
     '--dry-run',
     'Show what would be scraped without making database changes',
