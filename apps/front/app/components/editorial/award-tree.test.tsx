@@ -37,4 +37,29 @@ describe('AwardTree', () => {
     const {container} = render(<AwardTree nominations={[]} />);
     expect(container.firstChild).toBeNull();
   });
+
+  it('賞ページがある組織のヘッダは /awards/:slug へリンクする', () => {
+    render(<AwardTree nominations={noms} />);
+    expect(screen.getByRole('link', {name: /Oscars · 1995/})).toHaveAttribute(
+      'href',
+      '/awards/academy-best-picture',
+    );
+  });
+
+  it('賞ページがない組織のヘッダはリンクしない', () => {
+    render(
+      <AwardTree
+        nominations={[
+          {
+            uid: 'n3',
+            isWinner: false,
+            category: {name: 'Some Prize'},
+            ceremony: {uid: 'c2', year: 2000},
+            organization: {uid: 'o2', name: 'Unknown Org'},
+          },
+        ]}
+      />,
+    );
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
 });
