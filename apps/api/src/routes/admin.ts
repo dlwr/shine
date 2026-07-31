@@ -101,6 +101,147 @@ const parseOptionalUrl = (value: unknown): string | undefined => {
   return sanitizeUrl(trimmed);
 };
 
+type CeremonyInput = {
+  organizationUid: string;
+  year: number;
+  ceremonyNumber?: number;
+  startDate?: number;
+  endDate?: number;
+  location?: string;
+  description?: string;
+  imdbEventUrl?: string;
+};
+
+type ParseCeremonyBodyResult =
+  | {data: CeremonyInput}
+  | {error: string};
+
+const parseCeremonyBody = (body: {
+  organizationUid?: unknown;
+  year?: unknown;
+  ceremonyNumber?: unknown;
+  startDate?: unknown;
+  endDate?: unknown;
+  location?: unknown;
+  description?: unknown;
+  imdbEventUrl?: unknown;
+}): ParseCeremonyBodyResult => {
+  const rawOrganizationUid = body.organizationUid;
+  if (
+    typeof rawOrganizationUid !== 'string' ||
+    rawOrganizationUid.trim() === ''
+  ) {
+    return {error: 'organizationUid is required'};
+  }
+
+  const organizationUid = sanitizeText(rawOrganizationUid).trim();
+  if (organizationUid === '') {
+    return {error: 'organizationUid is required'};
+  }
+
+  const year = parseYear(body.year);
+  if (year === undefined) {
+    return {error: 'year must be a valid number (1880-9999)'};
+  }
+
+  const ceremonyNumber = parseCeremonyNumber(body.ceremonyNumber);
+  const startDate = parseUnixTimestamp(body.startDate);
+  const endDate = parseUnixTimestamp(body.endDate);
+
+  if (startDate !== undefined && endDate !== undefined && endDate < startDate) {
+    return {error: 'endDate must be the same as or after startDate'};
+  }
+
+  const location = sanitizeOptionalText(body.location);
+  const description = sanitizeOptionalText(body.description);
+
+  let imdbEventUrl: string | undefined;
+  try {
+    imdbEventUrl = parseOptionalUrl(body.imdbEventUrl);
+  } catch {
+    return {error: 'imdbEventUrl must be a valid http(s) URL'};
+  }
+
+  return {
+    data: {
+      organizationUid,
+      year,
+      ceremonyNumber,
+      startDate,
+      endDate,
+      location,
+      description,
+      imdbEventUrl,
+    },
+  };
+};
+
+const findCeremonyConflict = async (
+  database: Database,
+  input: CeremonyInput,
+  excludeCeremonyUid?: string,
+): Promise<{error: string; status: 404 | 409} | undefined> => {
+  const {organizationUid, year, ceremonyNumber} = input;
+
+  const organizationResult = await database
+    .select({uid: awardOrganizations.uid})
+    .from(awardOrganizations)
+    .where(eq(awardOrganizations.uid, organizationUid))
+    .limit(1);
+
+  if (organizationResult.length === 0) {
+    return {error: 'Organization not found', status: 404};
+  }
+
+  const duplicateYearConditions = [
+    eq(awardCeremonies.organizationUid, organizationUid),
+    eq(awardCeremonies.year, year),
+  ];
+  if (excludeCeremonyUid) {
+    duplicateYearConditions.push(not(eq(awardCeremonies.uid, excludeCeremonyUid)));
+  }
+
+  const duplicateYear = await database
+    .select({uid: awardCeremonies.uid})
+    .from(awardCeremonies)
+    .where(and(...duplicateYearConditions))
+    .limit(1);
+
+  if (duplicateYear.length > 0) {
+    return {
+      error: '同じ主催団体・開催年のセレモニーが既に存在します',
+      status: 409,
+    };
+  }
+
+  if (ceremonyNumber !== undefined) {
+    const duplicateNumberConditions = [
+      eq(awardCeremonies.organizationUid, organizationUid),
+      eq(awardCeremonies.ceremonyNumber, ceremonyNumber),
+    ];
+    if (excludeCeremonyUid) {
+      duplicateNumberConditions.push(
+        not(eq(awardCeremonies.uid, excludeCeremonyUid)),
+      );
+    }
+
+    const duplicateNumber = await database
+      .select({uid: awardCeremonies.uid})
+      .from(awardCeremonies)
+      .where(and(...duplicateNumberConditions))
+      .limit(1);
+
+    if (duplicateNumber.length > 0) {
+      return {
+        error: '同じ主催団体・回数のセレモニーが既に存在します',
+        status: 409,
+      };
+    }
+  }
+
+  return undefined;
+};
+
 const loadCeremonyDetail = async (database: Database, ceremonyUid: string) => {
   const ceremonyResult = await database
     .select({
@@ -938,111 +1079,21 @@ adminRoutes.post('/ceremonies', authMiddleware, async c => {
   try {
     const body = await c.req.json();
 
-    const rawOrganizationUid = body.organizationUid;
-    if (
-      typeof rawOrganizationUid !== 'string' ||
-      rawOrganizationUid.trim() === ''
-    ) {
-      return c.json({error: 'organizationUid is required'}, 400);
-    }
-
-    const organizationUid = sanitizeText(rawOrganizationUid).trim();
-    if (organizationUid === '') {
-      return c.json({error: 'organizationUid is required'}, 400);
-    }
-
-    const year = parseYear(body.year);
-    if (year === undefined) {
-      return c.json({error: 'year must be a valid number (1880-9999)'}, 400);
-    }
-
-    const ceremonyNumber = parseCeremonyNumber(body.ceremonyNumber);
-    const startDate = parseUnixTimestamp(body.startDate);
-    const endDate = parseUnixTimestamp(body.endDate);
-
-    if (
-      startDate !== undefined &&
-      endDate !== undefined &&
-      endDate < startDate
-    ) {
-      return c.json(
-        {error: 'endDate must be the same as or after startDate'},
-        400,
-      );
-    }
-
-    const location = sanitizeOptionalText(body.location);
-    const description = sanitizeOptionalText(body.description);
-
-    let imdbEventUrl: string | undefined;
-    try {
-      imdbEventUrl = parseOptionalUrl(body.imdbEventUrl);
-    } catch {
-      return c.json({error: 'imdbEventUrl must be a valid http(s) URL'}, 400);
+    const parsed = parseCeremonyBody(body);
+    if ('error' in parsed) {
+      return c.json({error: parsed.error}, 400);
     }
 
     const database = getDatabase(c.env);
 
-    const organizationResult = await database
-      .select({uid: awardOrganizations.uid})
-      .from(awardOrganizations)
-      .where(eq(awardOrganizations.uid, organizationUid))
-      .limit(1);
-
-    if (organizationResult.length === 0) {
-      return c.json({error: 'Organization not found'}, 404);
-    }
-
-    const duplicateYear = await database
-      .select({uid: awardCeremonies.uid})
-      .from(awardCeremonies)
-      .where(
-        and(
-          eq(awardCeremonies.organizationUid, organizationUid),
-          eq(awardCeremonies.year, year),
-        ),
-      )
-      .limit(1);
-
-    if (duplicateYear.length > 0) {
-      return c.json(
-        {error: '同じ主催団体・開催年のセレモニーが既に存在します'},
-        409,
-      );
-    }
-
-    if (ceremonyNumber !== undefined) {
-      const duplicateNumber = await database
-        .select({uid: awardCeremonies.uid})
-        .from(awardCeremonies)
-        .where(
-          and(
-            eq(awardCeremonies.organizationUid, organizationUid),
-            eq(awardCeremonies.ceremonyNumber, ceremonyNumber),
-          ),
-        )
-        .limit(1);
-
-      if (duplicateNumber.length > 0) {
-        return c.json(
-          {error: '同じ主催団体・回数のセレモニーが既に存在します'},
-          409,
-        );
-      }
+    const conflict = await findCeremonyConflict(database, parsed.data);
+    if (conflict) {
+      return c.json({error: conflict.error}, conflict.status);
     }
 
     const [inserted] = await database
       .insert(awardCeremonies)
-      .values({
-        organizationUid,
-        year,
-        ceremonyNumber,
-        startDate,
-        endDate,
-        location,
-        description,
-        imdbEventUrl,
-      })
+      .values(parsed.data)
       .returning({uid: awardCeremonies.uid});
 
     const detail = await loadCeremonyDetail(database, inserted.uid);
@@ -1063,47 +1114,9 @@ adminRoutes.put('/ceremonies/:ceremonyUid', authMiddleware, async c => {
 
     const body = await c.req.json();
 
-    const rawOrganizationUid = body.organizationUid;
-    if (
-      typeof rawOrganizationUid !== 'string' ||
-      rawOrganizationUid.trim() === ''
-    ) {
-      return c.json({error: 'organizationUid is required'}, 400);
-    }
-
-    const organizationUid = sanitizeText(rawOrganizationUid).trim();
-    if (organizationUid === '') {
-      return c.json({error: 'organizationUid is required'}, 400);
-    }
-
-    const year = parseYear(body.year);
-    if (year === undefined) {
-      return c.json({error: 'year must be a valid number (1880-9999)'}, 400);
-    }
-
-    const ceremonyNumber = parseCeremonyNumber(body.ceremonyNumber);
-    const startDate = parseUnixTimestamp(body.startDate);
-    const endDate = parseUnixTimestamp(body.endDate);
-
-    if (
-      startDate !== undefined &&
-      endDate !== undefined &&
-      endDate < startDate
-    ) {
-      return c.json(
-        {error: 'endDate must be the same as or after startDate'},
-        400,
-      );
-    }
-
-    const location = sanitizeOptionalText(body.location);
-    const description = sanitizeOptionalText(body.description);
-
-    let imdbEventUrl: string | undefined;
-    try {
-      imdbEventUrl = parseOptionalUrl(body.imdbEventUrl);
-    } catch {
-      return c.json({error: 'imdbEventUrl must be a valid http(s) URL'}, 400);
+    const parsed = parseCeremonyBody(body);
+    if ('error' in parsed) {
+      return c.json({error: parsed.error}, 400);
     }
 
     const database = getDatabase(c.env);
@@ -1118,54 +1131,13 @@ adminRoutes.put('/ceremonies/:ceremonyUid', authMiddleware, async c => {
       return c.json({error: 'Ceremony not found'}, 404);
     }
 
-    const organizationResult = await database
-      .select({uid: awardOrganizations.uid})
-      .from(awardOrganizations)
-      .where(eq(awardOrganizations.uid, organizationUid))
-      .limit(1);
-
-    if (organizationResult.length === 0) {
-      return c.json({error: 'Organization not found'}, 404);
-    }
-
-    const duplicateYear = await database
-      .select({uid: awardCeremonies.uid})
-      .from(awardCeremonies)
-      .where(
-        and(
-          eq(awardCeremonies.organizationUid, organizationUid),
-          eq(awardCeremonies.year, year),
-          not(eq(awardCeremonies.uid, ceremonyUid)),
-        ),
-      )
-      .limit(1);
-
-    if (duplicateYear.length > 0) {
-      return c.json(
-        {error: '同じ主催団体・開催年のセレモニーが既に存在します'},
-        409,
-      );
-    }
-
-    if (ceremonyNumber !== undefined) {
-      const duplicateNumber = await database
-        .select({uid: awardCeremonies.uid})
-        .from(awardCeremonies)
-        .where(
-          and(
-            eq(awardCeremonies.organizationUid, organizationUid),
-            eq(awardCeremonies.ceremonyNumber, ceremonyNumber),
-            not(eq(awardCeremonies.uid, ceremonyUid)),
-          ),
-        )
-        .limit(1);
-
-      if (duplicateNumber.length > 0) {
-        return c.json(
-          {error: '同じ主催団体・回数のセレモニーが既に存在します'},
-          409,
-        );
-      }
+    const conflict = await findCeremonyConflict(
+      database,
+      parsed.data,
+      ceremonyUid,
+    );
+    if (conflict) {
+      return c.json({error: conflict.error}, conflict.status);
     }
 
     const now = Math.floor(Date.now() / 1000);
@@ -1173,14 +1145,7 @@ adminRoutes.put('/ceremonies/:ceremonyUid', authMiddleware, async c => {
     await database
       .update(awardCeremonies)
       .set({
-        organizationUid,
-        year,
-        ceremonyNumber,
-        startDate,
-        endDate,
-        location,
-        description,
-        imdbEventUrl,
+        ...parsed.data,
         updatedAt: now,
       })
       .where(eq(awardCeremonies.uid, ceremonyUid));
