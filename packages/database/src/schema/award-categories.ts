@@ -29,7 +29,7 @@ export const awardCategories = sqliteTable(
       .$onUpdate(() => Math.floor(Date.now() / 1000)),
   },
   table => [
-    unique().on(table.name),
+    unique().on(table.organizationUid, table.name),
     unique().on(table.organizationUid, table.shortName),
   ],
 );
