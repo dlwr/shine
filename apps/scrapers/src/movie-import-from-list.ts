@@ -324,6 +324,13 @@ async function processMovieForBatch(
       .limit(1);
   }
 
+  if (existingMovie?.deletedAt) {
+    console.log(
+      `  Movie is soft-deleted, skipping: ${tmdbMovie.title} (UID: ${existingMovie.uid})`,
+    );
+    return undefined;
+  }
+
   let movieUid: string;
   const translationsBatch: Array<typeof translations.$inferInsert> = [];
   let posterUrlData: typeof posterUrls.$inferInsert | undefined;

@@ -421,13 +421,22 @@ export async function saveTMDBId(
   try {
     // IMDb IDで映画を検索
     const movie = await database
-      .select({uid: movies.uid, tmdbId: movies.tmdbId})
+      .select({
+        uid: movies.uid,
+        tmdbId: movies.tmdbId,
+        deletedAt: movies.deletedAt,
+      })
       .from(movies)
       .where(eq(movies.imdbId, imdbId))
       .limit(1);
 
     if (movie.length === 0) {
       console.error(`  Movie not found with IMDb ID: ${imdbId}`);
+      return;
+    }
+
+    if (movie[0].deletedAt !== null) {
+      console.log(`  Movie is soft-deleted, skipping: ${imdbId}`);
       return;
     }
 

@@ -46,8 +46,12 @@ async function assignImdbIds() {
 
     // Build complete query with all conditions
     const whereClause = options.year
-      ? and(isNull(movies.imdbId), eq(movies.year, options.year))
-      : isNull(movies.imdbId);
+      ? and(
+          isNull(movies.imdbId),
+          isNull(movies.deletedAt),
+          eq(movies.year, options.year),
+        )
+      : and(isNull(movies.imdbId), isNull(movies.deletedAt));
 
     const baseQuery = database
       .select({

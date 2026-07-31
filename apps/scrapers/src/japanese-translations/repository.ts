@@ -1,7 +1,7 @@
 /**
  * 日本語翻訳データの取得と保存を行うリポジトリモジュール
  */
-import {and, eq} from 'drizzle-orm';
+import {and, eq, isNull} from 'drizzle-orm';
 import {type getDatabase} from '@shine/database';
 import {movies, translations} from '@shine/database/schema/index';
 import {selectMoviesNeedingJapaneseTitle} from './select-targets';
@@ -58,7 +58,8 @@ export async function getMoviesWithoutJapaneseTranslation(
         eq(translations.resourceUid, movies.uid),
         eq(translations.languageCode, 'en'),
       ),
-    );
+    )
+    .where(isNull(movies.deletedAt));
 
   // Limitが0の場合は全件取得、それ以外は指定された件数の5倍取得（後でフィルタリング）
   const moviesWithEnglishTitles =

@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import type {AnyNode} from 'domhandler';
-import {and, eq} from 'drizzle-orm';
+import {and, eq, isNull} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
@@ -597,7 +597,12 @@ async function processMovieForBatch(movieInfo: MovieInfo): Promise<
           eq(translations.isDefault, 1),
         ),
       )
-      .where(eq(translations.content, movieInfo.title));
+      .where(
+        and(
+          eq(translations.content, movieInfo.title),
+          isNull(movies.deletedAt),
+        ),
+      );
 
     // IMDb IDでも検索
     let existingMovieByImdbId;
@@ -607,6 +612,13 @@ async function processMovieForBatch(movieInfo: MovieInfo): Promise<
         .from(movies)
         .where(eq(movies.imdbId, imdbId));
       existingMovieByImdbId = result[0];
+
+      if (existingMovieByImdbId?.deletedAt) {
+        console.log(
+          `Movie is soft-deleted, skipping: ${movieInfo.title} (${imdbId})`,
+        );
+        return undefined;
+      }
     }
 
     // どちらかで既存の映画が見つかった場合
@@ -801,7 +813,12 @@ async function processMovie(movieInfo: MovieInfo) {
           eq(translations.isDefault, 1),
         ),
       )
-      .where(eq(translations.content, movieInfo.title));
+      .where(
+        and(
+          eq(translations.content, movieInfo.title),
+          isNull(movies.deletedAt),
+        ),
+      );
 
     // IMDb IDでも検索
     let existingMovieByImdbId;
@@ -811,6 +828,13 @@ async function processMovie(movieInfo: MovieInfo) {
         .from(movies)
         .where(eq(movies.imdbId, imdbId));
       existingMovieByImdbId = result[0];
+
+      if (existingMovieByImdbId?.deletedAt) {
+        console.log(
+          `Movie is soft-deleted, skipping: ${movieInfo.title} (${imdbId})`,
+        );
+        return;
+      }
     }
 
     // どちらかで既存の映画が見つかった場合

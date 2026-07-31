@@ -87,7 +87,7 @@ async function getMoviesWithImdbId(limit = 10): Promise<MovieWithImdbId[]> {
     .from(movies)
     .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
     .where(
-      sql`${movies.imdbId} IS NOT NULL AND ${posterUrls.uid} IS NULL AND ${movies.tmdbId} IS NULL`,
+      sql`${movies.imdbId} IS NOT NULL AND ${posterUrls.uid} IS NULL AND ${movies.tmdbId} IS NULL AND ${movies.deletedAt} IS NULL`,
     )
     .limit(limit);
 
@@ -105,7 +105,7 @@ async function getMoviesWithImdbId(limit = 10): Promise<MovieWithImdbId[]> {
     .from(movies)
     .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
     .where(
-      sql`${movies.imdbId} IS NOT NULL AND ${posterUrls.uid} IS NULL AND ${movies.tmdbId} IS NOT NULL`,
+      sql`${movies.imdbId} IS NOT NULL AND ${posterUrls.uid} IS NULL AND ${movies.tmdbId} IS NOT NULL AND ${movies.deletedAt} IS NULL`,
     )
     .limit(limit);
 
@@ -121,7 +121,9 @@ async function getMoviesWithImdbId(limit = 10): Promise<MovieWithImdbId[]> {
   const moviesWithImdbIdNoTmdb = await database
     .select({uid: movies.uid, imdbId: movies.imdbId, tmdbId: movies.tmdbId})
     .from(movies)
-    .where(sql`${movies.imdbId} IS NOT NULL AND ${movies.tmdbId} IS NULL`)
+    .where(
+      sql`${movies.imdbId} IS NOT NULL AND ${movies.tmdbId} IS NULL AND ${movies.deletedAt} IS NULL`,
+    )
     .limit(limit);
 
   return filterMoviesWithImdbId(normalizeMovies(moviesWithImdbIdNoTmdb));

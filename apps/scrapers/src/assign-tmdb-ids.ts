@@ -25,7 +25,13 @@ async function assignTmdbIds() {
       year: movies.year,
     })
     .from(movies)
-    .where(and(isNotNull(movies.imdbId), isNull(movies.tmdbId)));
+    .where(
+      and(
+        isNotNull(movies.imdbId),
+        isNull(movies.tmdbId),
+        isNull(movies.deletedAt),
+      ),
+    );
 
   console.log(`Found ${moviesWithoutTmdbId.length} movies to process`);
 
