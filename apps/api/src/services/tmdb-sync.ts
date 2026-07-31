@@ -1,4 +1,4 @@
-import {and, eq, getDatabase, type Environment} from '@shine/database';
+import {and, eq, getDatabase, sql, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import type {TMDBMovieImages} from '@shine/scrapers/common/tmdb-utilities';
@@ -89,29 +89,16 @@ export async function syncTmdbData(
       );
 
     let translationsAdded = 0;
+    const rowsByLanguage = new Map<string, typeof translations.$inferInsert>();
 
     if (movieData.original_language === 'ja' && originalTitle) {
-      await database
-        .insert(translations)
-        .values({
-          resourceType: 'movie_title',
-          resourceUid: movieUid,
-          languageCode: 'ja',
-          content: originalTitle,
-          isDefault: 1,
-        })
-        .onConflictDoUpdate({
-          target: [
-            translations.resourceType,
-            translations.resourceUid,
-            translations.languageCode,
-          ],
-          set: {
-            content: originalTitle,
-            isDefault: 1,
-            updatedAt: Math.floor(Date.now() / 1000),
-          },
-        });
+      rowsByLanguage.set('ja', {
+        resourceType: 'movie_title',
+        resourceUid: movieUid,
+        languageCode: 'ja',
+        content: originalTitle,
+        isDefault: 1,
+      });
       translationsAdded++;
     }
 
@@ -120,29 +107,36 @@ export async function syncTmdbData(
       if (translation.iso_639_1 && translatedTitle) {
         const isOriginalLanguage =
           translation.iso_639_1 === movieData.original_language;
-        await database
-          .insert(translations)
-          .values({
-            resourceType: 'movie_title',
-            resourceUid: movieUid,
-            languageCode: translation.iso_639_1,
-            content: translatedTitle,
-            isDefault: isOriginalLanguage ? 1 : 0,
-          })
-          .onConflictDoUpdate({
-            target: [
-              translations.resourceType,
-              translations.resourceUid,
-              translations.languageCode,
-            ],
-            set: {
-              content: translatedTitle,
-              isDefault: isOriginalLanguage ? 1 : 0,
-              updatedAt: Math.floor(Date.now() / 1000),
-            },
-          });
+        rowsByLanguage.set(translation.iso_639_1, {
+          resourceType: 'movie_title',
+          resourceUid: movieUid,
+          languageCode: translation.iso_639_1,
+          content: translatedTitle,
+          isDefault: isOriginalLanguage ? 1 : 0,
+        });
         translationsAdded++;
       }
+    }
+
+    const rows = [...rowsByLanguage.values()];
+    const chunkSize = 50;
+    const now = Math.floor(Date.now() / 1000);
+    for (let index = 0; index < rows.length; index += chunkSize) {
+      await database
+        .insert(translations)
+        .values(rows.slice(index, index + chunkSize))
+        .onConflictDoUpdate({
+          target: [
+            translations.resourceType,
+            translations.resourceUid,
+            translations.languageCode,
+          ],
+          set: {
+            content: sql`excluded.content`,
+            isDefault: sql`excluded.is_default`,
+            updatedAt: now,
+          },
+        });
     }
 
     result.translationsAdded = translationsAdded;
