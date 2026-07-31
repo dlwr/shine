@@ -21,19 +21,16 @@ export const movieSelections = sqliteTable(
       .default(sql`(unixepoch())`),
     updatedAt: integer('updated_at')
       .notNull()
-      .default(sql`(unixepoch())`),
+      .default(sql`(unixepoch())`)
+      .$onUpdate(() => Math.floor(Date.now() / 1000)),
   },
-  table => ({
-    selectionTypeIdx: index('movie_selections_selection_type_idx').on(
-      table.selectionType,
-    ),
-    selectionDateIdx: index('movie_selections_selection_date_idx').on(
-      table.selectionDate,
-    ),
-    movieIdIdx: index('movie_selections_movie_id_idx').on(table.movieId),
-    typeAndDateIdx: index('movie_selections_type_date_idx').on(
+  table => [
+    index('movie_selections_selection_type_idx').on(table.selectionType),
+    index('movie_selections_selection_date_idx').on(table.selectionDate),
+    index('movie_selections_movie_id_idx').on(table.movieId),
+    index('movie_selections_type_date_idx').on(
       table.selectionType,
       table.selectionDate,
     ),
-  }),
+  ],
 );

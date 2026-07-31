@@ -514,7 +514,6 @@ export async function saveJapaneseTranslation(
         ],
         set: {
           content: japaneseTitle,
-          updatedAt: Math.floor(Date.now() / 1000),
         },
       });
 

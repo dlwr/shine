@@ -30,7 +30,8 @@ export const posterUrls = sqliteTable(
       .default(sql`(unixepoch())`),
     updatedAt: integer()
       .notNull()
-      .default(sql`(unixepoch())`),
+      .default(sql`(unixepoch())`)
+      .$onUpdate(() => Math.floor(Date.now() / 1000)),
   },
   table => [
     index('poster_urls_movie_idx').on(table.movieUid),
