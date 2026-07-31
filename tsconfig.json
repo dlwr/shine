@@ -5,6 +5,7 @@
     {"path": "./apps/api"},
     {"path": "./apps/scrapers"},
     {"path": "./packages/database"},
+    {"path": "./packages/availability"},
     {"path": "./packages/utils"},
     {"path": "./packages/types"},
     {"path": "./scripts"}

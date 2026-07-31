@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from 'vitest';
-import type {AvailabilityDecision, MovieToCheck} from '../checker';
+import type {AvailabilityDecision, MovieToCheck} from '@shine/availability';
 import {ensureAvailableSelection} from '../ensure-selection';
 
 type TestMovie = MovieToCheck & {displayTitle: string};

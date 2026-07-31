@@ -1,4 +1,4 @@
-import type {AvailabilityDecision, MovieToCheck} from './checker';
+import type {AvailabilityDecision, MovieToCheck} from '@shine/availability';
 
 export type SelectionType = 'daily' | 'weekly' | 'monthly';
 

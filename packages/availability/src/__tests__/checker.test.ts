@@ -13,7 +13,7 @@ import type {SourceCheckResult} from '../types';
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
   currentDirectory,
-  '../../../../../packages/database/migrations',
+  '../../../../packages/database/migrations',
 );
 
 const DAY_SECONDS = 24 * 60 * 60;
