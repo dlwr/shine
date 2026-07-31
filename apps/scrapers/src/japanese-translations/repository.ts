@@ -145,13 +145,11 @@ export async function saveJapaneseTranslation(
         content: translation.content,
         isDefault: translation.isDefault || 0,
         createdAt: now,
-        updatedAt: now,
       })
     : database
         .update(translations)
         .set({
           content: translation.content,
-          updatedAt: now,
         })
         .where(
           and(
@@ -204,7 +202,6 @@ export async function saveJapaneseTranslationsBatch(
         content: translation.content,
         isDefault: translation.isDefault || 0,
         createdAt: now,
-        updatedAt: now,
       });
     } else {
       // 既存の場合は更新（バッチ更新は複雑なので個別に実行）
@@ -212,7 +209,6 @@ export async function saveJapaneseTranslationsBatch(
         .update(translations)
         .set({
           content: translation.content,
-          updatedAt: now,
         })
         .where(
           and(

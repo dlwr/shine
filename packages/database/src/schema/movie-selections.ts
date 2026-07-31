@@ -21,7 +21,8 @@ export const movieSelections = sqliteTable(
       .default(sql`(unixepoch())`),
     updatedAt: integer('updated_at')
       .notNull()
-      .default(sql`(unixepoch())`),
+      .default(sql`(unixepoch())`)
+      .$onUpdate(() => Math.floor(Date.now() / 1000)),
   },
   table => ({
     selectionTypeIdx: index('movie_selections_selection_type_idx').on(

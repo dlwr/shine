@@ -133,7 +133,6 @@ async function getOrCreateCeremony(
       target: [awardCeremonies.organizationUid, awardCeremonies.year],
       set: {
         ceremonyNumber: year - 1928 + 1,
-        updatedAt: Math.floor(Date.now() / 1000),
       },
     })
     .returning();
@@ -542,7 +541,6 @@ async function processMovieForBatch(
           .update(movies)
           .set({
             imdbId,
-            updatedAt: Math.floor(Date.now() / 1000),
           })
           .where(eq(movies.uid, movieUid));
         console.log(`Updated IMDb ID for ${title}: ${imdbId}`);
@@ -697,7 +695,6 @@ async function processMovie(
           .update(movies)
           .set({
             imdbId,
-            updatedAt: Math.floor(Date.now() / 1000),
           })
           .where(eq(movies.uid, movieUid));
         console.log(`Updated IMDb ID for ${title}: ${imdbId}`);
@@ -802,7 +799,6 @@ async function processMovie(
         ],
         set: {
           isWinner: isWinner ? 1 : 0,
-          updatedAt: Math.floor(Date.now() / 1000),
         },
       });
 

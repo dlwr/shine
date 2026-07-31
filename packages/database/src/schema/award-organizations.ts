@@ -17,5 +17,6 @@ export const awardOrganizations = sqliteTable('award_organizations', {
     .default(sql`(unixepoch())`),
   updatedAt: integer()
     .notNull()
-    .default(sql`(unixepoch())`),
+    .default(sql`(unixepoch())`)
+    .$onUpdate(() => Math.floor(Date.now() / 1000)),
 });

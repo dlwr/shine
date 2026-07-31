@@ -277,7 +277,6 @@ export class AdminService extends BaseService {
             .update(movies)
             .set({
               tmdbId: tmdbMovieId,
-              updatedAt: Math.floor(Date.now() / 1000),
             })
             .where(eq(movies.uid, newMovie.uid));
         }
@@ -539,7 +538,6 @@ export class AdminService extends BaseService {
               .update(movies)
               .set({
                 originalLanguage: tmdbData.movie.original_language,
-                updatedAt: Math.floor(Date.now() / 1000),
               })
               .where(eq(movies.uid, movieId));
           }
@@ -555,7 +553,6 @@ export class AdminService extends BaseService {
         imdbId,
         ...(tmdbId && {tmdbId}),
         ...(detectedMediaType && {mediaType: detectedMediaType}),
-        updatedAt: Math.floor(Date.now() / 1000),
       })
       .where(eq(movies.uid, movieId));
 
@@ -798,7 +795,6 @@ export class AdminService extends BaseService {
         sourceType: source,
         isPrimary: isPrimary ? 1 : 0,
         createdAt: Math.floor(Date.now() / 1000),
-        updatedAt: Math.floor(Date.now() / 1000),
       })
       .returning();
 
@@ -844,7 +840,6 @@ export class AdminService extends BaseService {
         .update(nominations)
         .set({
           movieUid: targetMovieId,
-          updatedAt: Math.floor(Date.now() / 1000),
         })
         .where(eq(nominations.movieUid, sourceMovieId));
 
@@ -853,7 +848,6 @@ export class AdminService extends BaseService {
         .update(movieSelections)
         .set({
           movieId: targetMovieId,
-          updatedAt: Math.floor(Date.now() / 1000),
         })
         .where(eq(movieSelections.movieId, sourceMovieId));
 
@@ -868,7 +862,6 @@ export class AdminService extends BaseService {
         .update(referenceUrls)
         .set({
           movieUid: targetMovieId,
-          updatedAt: Math.floor(Date.now() / 1000),
         })
         .where(eq(referenceUrls.movieUid, sourceMovieId));
 
@@ -878,7 +871,6 @@ export class AdminService extends BaseService {
             .update(translations)
             .set({
               resourceUid: targetMovieId,
-              updatedAt: Math.floor(Date.now() / 1000),
             })
             .where(eq(translations.resourceUid, sourceMovieId))
         : await trx
@@ -891,7 +883,6 @@ export class AdminService extends BaseService {
             .update(posterUrls)
             .set({
               movieUid: targetMovieId,
-              updatedAt: Math.floor(Date.now() / 1000),
             })
             .where(eq(posterUrls.movieUid, sourceMovieId))
         : await trx
@@ -1250,7 +1241,6 @@ export class AdminService extends BaseService {
         categoryUid: category.uid,
         isWinner: nomination.isWinner ? 1 : 0,
         createdAt: now,
-        updatedAt: now,
       };
 
       if (nomination.notes && nomination.notes !== '') {
@@ -1377,7 +1367,6 @@ export class AdminService extends BaseService {
       sourceType: 'tmdb',
       isPrimary: 0,
       createdAt: Math.floor(Date.now() / 1000),
-      updatedAt: Math.floor(Date.now() / 1000),
     });
 
     return 1;
@@ -1399,7 +1388,6 @@ export class AdminService extends BaseService {
       .update(translations)
       .set({
         isDefault: 0,
-        updatedAt: now,
       })
       .where(
         and(
@@ -1429,7 +1417,6 @@ export class AdminService extends BaseService {
           content: tmdbData.original_title,
           isDefault: 1,
           createdAt: now,
-          updatedAt: now,
         });
         addedCount++;
       }
@@ -1465,7 +1452,6 @@ export class AdminService extends BaseService {
           content: title,
           isDefault: isOriginalLanguage ? 1 : 0,
           createdAt: now,
-          updatedAt: now,
         });
         addedCount++;
         continue;
@@ -1479,7 +1465,6 @@ export class AdminService extends BaseService {
         .update(translations)
         .set({
           isDefault: 1,
-          updatedAt: now,
         })
         .where(translationQuery);
     }

@@ -364,7 +364,7 @@ export class MoviesService extends BaseService {
       if (isDefault) {
         await trx
           .update(translations)
-          .set({isDefault: 0, updatedAt: now})
+          .set({isDefault: 0})
           .where(
             and(
               eq(translations.resourceUid, movieId),
@@ -393,7 +393,6 @@ export class MoviesService extends BaseService {
             .set({
               content: title,
               isDefault: isDefault ? 1 : 0,
-              updatedAt: now,
             })
             .where(eq(translations.uid, existingTitle[0].uid))
         : await trx.insert(translations).values({
@@ -403,7 +402,6 @@ export class MoviesService extends BaseService {
             content: title,
             isDefault: isDefault ? 1 : 0,
             createdAt: now,
-            updatedAt: now,
           }));
 
       // Add or update description translation if provided
@@ -426,7 +424,6 @@ export class MoviesService extends BaseService {
               .update(translations)
               .set({
                 content: description,
-                updatedAt: now,
               })
               .where(eq(translations.uid, existingDescription[0].uid))
           : await trx.insert(translations).values({
@@ -435,7 +432,6 @@ export class MoviesService extends BaseService {
               languageCode,
               content: description,
               createdAt: now,
-              updatedAt: now,
             }));
       }
     });

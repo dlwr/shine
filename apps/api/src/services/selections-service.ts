@@ -234,7 +234,6 @@ export class SelectionsService extends BaseService {
       selectionType: type,
       selectionDate,
       createdAt: Math.floor(Date.now() / 1000),
-      updatedAt: Math.floor(Date.now() / 1000),
     });
 
     // Clear cache
@@ -662,7 +661,6 @@ export class SelectionsService extends BaseService {
           selectionType: type,
           selectionDate,
           createdAt: Math.floor(Date.now() / 1000),
-          updatedAt: Math.floor(Date.now() / 1000),
         });
       } catch {
         // Selection might already exist due to race condition, ignore

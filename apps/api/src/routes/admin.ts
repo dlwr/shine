@@ -671,9 +671,7 @@ adminRoutes.put('/movies/:id', authMiddleware, async c => {
       return c.json({error: 'Movie not found'}, 404);
     }
 
-    const updateData: Partial<typeof movies.$inferInsert> = {
-      updatedAt: Math.floor(Date.now() / 1000),
-    };
+    const updateData: Partial<typeof movies.$inferInsert> = {};
 
     // Validate year if provided
     if (year !== undefined) {
@@ -718,10 +716,12 @@ adminRoutes.put('/movies/:id', authMiddleware, async c => {
     }
 
     // Update movie
-    await database
-      .update(movies)
-      .set(updateData)
-      .where(eq(movies.uid, movieId));
+    if (Object.keys(updateData).length > 0) {
+      await database
+        .update(movies)
+        .set(updateData)
+        .where(eq(movies.uid, movieId));
+    }
 
     return c.json({success: true});
   } catch (error) {
@@ -834,7 +834,6 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
       .set({
         tmdbId: typeof tmdbId === 'number' ? tmdbId : undefined,
         mediaType: updateMediaType,
-        updatedAt: Math.floor(Date.now() / 1000),
       })
       .where(eq(movies.uid, movieId));
 
@@ -910,7 +909,6 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
               .update(movies)
               .set({
                 originalLanguage: movieData.original_language,
-                updatedAt: Math.floor(Date.now() / 1000),
               })
               .where(eq(movies.uid, movieId));
           }
@@ -920,7 +918,6 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
             .update(translations)
             .set({
               isDefault: 0,
-              updatedAt: Math.floor(Date.now() / 1000),
             })
             .where(
               and(
@@ -949,7 +946,6 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
                 set: {
                   content: originalTitle,
                   isDefault: 1,
-                  updatedAt: Math.floor(Date.now() / 1000),
                 },
               });
             translationsAdded++;
@@ -980,7 +976,6 @@ adminRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
                   set: {
                     content: translatedTitle,
                     isDefault: isOriginalLanguage ? 1 : 0,
-                    updatedAt: Math.floor(Date.now() / 1000),
                   },
                 });
               translationsAdded++;
@@ -1313,8 +1308,6 @@ adminRoutes.put('/ceremonies/:ceremonyUid', authMiddleware, async c => {
       }
     }
 
-    const now = Math.floor(Date.now() / 1000);
-
     await database
       .update(awardCeremonies)
       .set({
@@ -1326,7 +1319,6 @@ adminRoutes.put('/ceremonies/:ceremonyUid', authMiddleware, async c => {
         location,
         description,
         imdbEventUrl,
-        updatedAt: now,
       })
       .where(eq(awardCeremonies.uid, ceremonyUid));
 
@@ -1645,7 +1637,6 @@ adminRoutes.put('/nominations/:nominationId', authMiddleware, async c => {
       .set({
         isWinner: isWinner ? 1 : 0,
         specialMention: specialMention || undefined,
-        updatedAt: Math.floor(Date.now() / 1000),
       })
       .where(eq(nominations.uid, nominationId));
 
@@ -1771,7 +1762,6 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
             .set({
               tmdbId: movieTmdbId,
               mediaType: detectedMediaType,
-              updatedAt: Math.floor(Date.now() / 1000),
             })
             .where(eq(movies.uid, movieId));
         } catch (databaseError) {
@@ -1779,7 +1769,6 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
             error: databaseError,
             movieId,
             tmdbId: movieTmdbId,
-            updatedAt: Math.floor(Date.now() / 1000),
           });
           throw databaseError;
         }
@@ -1839,7 +1828,6 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
           .update(movies)
           .set({
             originalLanguage: movieData.original_language,
-            updatedAt: Math.floor(Date.now() / 1000),
           })
           .where(eq(movies.uid, movieId));
       }
@@ -1850,7 +1838,6 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
           .update(translations)
           .set({
             isDefault: 0,
-            updatedAt: Math.floor(Date.now() / 1000),
           })
           .where(
             and(
@@ -1878,7 +1865,6 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
               set: {
                 content: originalTitle,
                 isDefault: 1,
-                updatedAt: Math.floor(Date.now() / 1000),
               },
             });
           translationsAdded++;
@@ -1909,7 +1895,6 @@ adminRoutes.post('/movies/:id/auto-fetch-tmdb', authMiddleware, async c => {
                 set: {
                   content: translatedTitle,
                   isDefault: isOriginalLanguage ? 1 : 0,
-                  updatedAt: Math.floor(Date.now() / 1000),
                 },
               });
             translationsAdded++;
@@ -2037,7 +2022,6 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
           .update(movies)
           .set({
             originalLanguage: movieData.original_language,
-            updatedAt: Math.floor(Date.now() / 1000),
           })
           .where(eq(movies.uid, movieId));
       }
@@ -2048,7 +2032,6 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
           .update(translations)
           .set({
             isDefault: 0,
-            updatedAt: Math.floor(Date.now() / 1000),
           })
           .where(
             and(
@@ -2076,7 +2059,6 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
               set: {
                 content: originalTitle,
                 isDefault: 1,
-                updatedAt: Math.floor(Date.now() / 1000),
               },
             });
           translationsAdded++;
@@ -2107,7 +2089,6 @@ adminRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
                 set: {
                   content: translatedTitle,
                   isDefault: isOriginalLanguage ? 1 : 0,
-                  updatedAt: Math.floor(Date.now() / 1000),
                 },
               });
             translationsAdded++;
@@ -2275,9 +2256,7 @@ adminRoutes.post(
 
         // Update target movie with merged metadata (preserve existing if target has data)
 
-        const updateData: Partial<typeof movies.$inferInsert> = {
-          updatedAt: Math.floor(Date.now() / 1000),
-        };
+        const updateData: Partial<typeof movies.$inferInsert> = {};
 
         if (!targetMovie.imdbId && sourceMovie.imdbId) {
           // Check if IMDb ID is already used by another movie
@@ -2315,7 +2294,7 @@ adminRoutes.post(
           }
         }
 
-        if (Object.keys(updateData).length > 1) {
+        if (Object.keys(updateData).length > 0) {
           await tx
             .update(movies)
             .set(updateData)

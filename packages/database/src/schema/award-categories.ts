@@ -25,7 +25,8 @@ export const awardCategories = sqliteTable(
       .default(sql`(unixepoch())`),
     updatedAt: integer()
       .notNull()
-      .default(sql`(unixepoch())`),
+      .default(sql`(unixepoch())`)
+      .$onUpdate(() => Math.floor(Date.now() / 1000)),
   },
   table => [
     unique().on(table.name),
