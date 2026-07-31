@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {type PosterInfo, selectBestPoster} from '@/lib/poster';
+import {resolveMovieTitle} from '@/lib/movie-title';
 
 export {type PosterInfo, selectBestPoster} from '@/lib/poster';
 
@@ -77,47 +78,12 @@ function selectJapaneseTitle(movie: MovieCardMovie): string | undefined {
 }
 
 function selectBestTitle(movie: MovieCardMovie, locale: string): string {
-  if (movie.title) {
-    return movie.title;
-  }
-
-  const translations = movie.translations ?? [];
-  if (translations.length > 0) {
-    const languageCode = locale.split('-')[0];
-
-    const localeMatch = translations.find(
-      translation => translation.languageCode === languageCode,
-    );
-    if (localeMatch) {
-      return localeMatch.content;
-    }
-
-    const defaultTranslation = translations.find(
-      translation => translation.isDefault === 1,
-    );
-    if (defaultTranslation) {
-      return defaultTranslation.content;
-    }
-
-    const jaTranslation = translations.find(
-      translation => translation.languageCode === 'ja',
-    );
-    if (jaTranslation) {
-      return jaTranslation.content;
-    }
-
-    const enTranslation = translations.find(
-      translation => translation.languageCode === 'en',
-    );
-    if (enTranslation) {
-      return enTranslation.content;
-    }
-
-    return translations[0]?.content ?? 'Unknown Title';
-  }
-
   const yearLabel = movie.year ? ` (${movie.year})` : '';
-  return `Unknown Title${yearLabel}`;
+  return resolveMovieTitle(movie, {
+    locale,
+    preferredLanguages: ['ja', 'en'],
+    noTranslationsFallback: `Unknown Title${yearLabel}`,
+  });
 }
 
 export function MovieCard({

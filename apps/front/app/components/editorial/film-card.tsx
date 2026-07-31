@@ -2,6 +2,7 @@ import {AvailabilityBadges, type AvailabilityInfo} from './availability-badges';
 import {BigYear} from './big-year';
 import {PosterFrame} from './poster-frame';
 import {selectBestPoster, type PosterInfo} from '@/lib/poster';
+import {resolveMovieTitle} from '@/lib/movie-title';
 
 export type FilmCardMovie = {
   uid: string;
@@ -23,18 +24,7 @@ export type FilmCardMovie = {
 };
 
 function pickTitle(movie: FilmCardMovie, locale: string): string {
-  if (movie.title) {
-    return movie.title;
-  }
-
-  const translations = movie.translations ?? [];
-  const code = locale.split('-')[0];
-  return (
-    translations.find(t => t.languageCode === code)?.content ??
-    translations.find(t => t.isDefault === 1)?.content ??
-    translations[0]?.content ??
-    'Unknown Title'
-  );
+  return resolveMovieTitle(movie, {locale});
 }
 
 export function FilmCard({

@@ -8,6 +8,7 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
 import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
+import {resolveMovieTitle} from '@/lib/movie-title';
 import {FilmCard} from '@/components/editorial/film-card';
 import type {FilmCardMovie} from '@/components/editorial/film-card';
 
@@ -47,34 +48,10 @@ function createSelectionCacheKey() {
 }
 
 function getLocalizedMovieTitle(movie: SearchMovie, locale: string) {
-  if (movie.title && movie.title.trim().length > 0) {
-    return movie.title;
-  }
-
-  if (!movie.translations || movie.translations.length === 0) {
-    return locale === 'ja' ? 'タイトル不明' : 'Untitled';
-  }
-
-  const translationForLocale = movie.translations.find(
-    translation => translation.languageCode === locale,
-  );
-
-  if (translationForLocale?.content) {
-    return translationForLocale.content;
-  }
-
-  const defaultTranslation = movie.translations.find(
-    translation => translation.isDefault === 1,
-  );
-
-  if (defaultTranslation?.content) {
-    return defaultTranslation.content;
-  }
-
-  return (
-    movie.translations[0]?.content ||
-    (locale === 'ja' ? 'タイトル不明' : 'Untitled')
-  );
+  return resolveMovieTitle(movie, {
+    locale,
+    fallback: locale === 'ja' ? 'タイトル不明' : 'Untitled',
+  });
 }
 
 type MoviesLabels = {
