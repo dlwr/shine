@@ -1,5 +1,6 @@
 import {useState} from 'react';
 import type {Dispatch, SetStateAction} from 'react';
+import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
 
 type ArticleLink = {
   uid: string;
@@ -50,19 +51,15 @@ export default function ArticleLinkManager<
       return;
     }
 
-    const token = globalThis.localStorage.getItem('adminToken');
-    if (!token) {
+    if (!getAdminToken()) {
       return;
     }
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/article-links/${articleId}`,
         {
           method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         },
       );
 
@@ -85,19 +82,15 @@ export default function ArticleLinkManager<
       return;
     }
 
-    const token = globalThis.localStorage.getItem('adminToken');
-    if (!token) {
+    if (!getAdminToken()) {
       return;
     }
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/article-links/${articleId}/spam`,
         {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         },
       );
 

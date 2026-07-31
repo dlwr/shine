@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/card';
 import {Input} from '@/components/ui/input';
 import type {Route} from './+types/admin.movies.selections';
+import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
 
 type SelectionData = {
   date: string;
@@ -158,7 +159,7 @@ export default function AdminMovieSelections({
         return;
       }
 
-      const token = globalThis.localStorage.getItem('adminToken');
+      const token = getAdminToken();
       if (!token) {
         globalThis.location.href = '/admin/login';
         return;
@@ -169,16 +170,11 @@ export default function AdminMovieSelections({
       setError(undefined);
 
       try {
-        const response = await fetch(
+        const response = await adminFetch(
           `${apiUrl}/admin/preview-selections?locale=${locale}`,
-          {
-            headers: {Authorization: `Bearer ${token}`},
-          },
         );
 
         if (response.status === 401) {
-          globalThis.localStorage.removeItem('adminToken');
-          globalThis.location.href = '/admin/login';
           return;
         }
 
@@ -209,10 +205,8 @@ export default function AdminMovieSelections({
     const timeoutId = setTimeout(async () => {
       setSearchLoading(true);
       try {
-        const token = globalThis.localStorage.getItem('adminToken');
-        const response = await fetch(
+        const response = await adminFetch(
           `${apiUrl}/admin/movies?search=${encodeURIComponent(searchQuery)}&limit=20`,
-          {headers: {Authorization: `Bearer ${token}`}},
         );
 
         if (response.ok) {
@@ -238,19 +232,20 @@ export default function AdminMovieSelections({
   const generateRandomMovie = async () => {
     setRandomLoading(true);
     try {
-      const token = globalThis.localStorage.getItem('adminToken');
-      const response = await fetch(`${apiUrl}/admin/random-movie-preview`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+      const response = await adminFetch(
+        `${apiUrl}/admin/random-movie-preview`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: overrideType,
+            date: getSelectionDate(),
+            locale,
+          }),
         },
-        body: JSON.stringify({
-          type: overrideType,
-          date: getSelectionDate(),
-          locale,
-        }),
-      });
+      );
 
       if (response.ok) {
         const data = (await response.json()) as SearchMovie;
@@ -269,12 +264,10 @@ export default function AdminMovieSelections({
     }
 
     try {
-      const token = globalThis.localStorage.getItem('adminToken');
-      const response = await fetch(`${apiUrl}/admin/override-selection`, {
+      const response = await adminFetch(`${apiUrl}/admin/override-selection`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           type: overrideType,

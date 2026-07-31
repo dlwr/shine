@@ -11,6 +11,7 @@ import {
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import type {Route} from './+types/admin.ceremonies';
+import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
 
 type CeremonyListItem = {
   uid: string;
@@ -144,9 +145,7 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
         return;
       }
 
-      const token = globalThis.localStorage?.getItem('adminToken');
-
-      if (!token) {
+      if (!getAdminToken()) {
         globalThis.location.href = '/admin/login';
         return;
       }
@@ -155,13 +154,9 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
       setError(undefined);
 
       try {
-        const response = await fetch(`${apiUrl}/admin/ceremonies`, {
-          headers: {Authorization: `Bearer ${token}`},
-        });
+        const response = await adminFetch(`${apiUrl}/admin/ceremonies`);
 
         if (response.status === 401) {
-          globalThis.localStorage?.removeItem('adminToken');
-          globalThis.location.href = '/admin/login';
           return;
         }
 

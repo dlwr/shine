@@ -1,5 +1,6 @@
 import {useCallback, useEffect, useMemo, useState} from 'react';
 import type {FormEvent} from 'react';
+import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
 
 type MovieDetails = {
   uid: string;
@@ -195,17 +196,15 @@ export default function MovieInfoEditor({
       return;
     }
 
-    const token = globalThis.localStorage?.getItem('adminToken');
-    if (!token) {
+    if (!getAdminToken()) {
       globalThis.location.href = '/admin/login';
       return;
     }
 
     try {
-      const response = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
+      const response = await adminFetch(`${apiUrl}/admin/movies/${movieId}`, {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -214,8 +213,6 @@ export default function MovieInfoEditor({
       });
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -226,9 +223,9 @@ export default function MovieInfoEditor({
         throw new Error(errorData.error || 'Failed to update year');
       }
 
-      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
-        headers: {Authorization: `Bearer ${token}`},
-      });
+      const movieResponse = await adminFetch(
+        `${apiUrl}/admin/movies/${movieId}`,
+      );
 
       if (movieResponse.ok) {
         const data = (await movieResponse.json()) as MovieDetails;
@@ -252,8 +249,7 @@ export default function MovieInfoEditor({
     imdbIdValue: string | undefined,
     options: {fetchTmdbData?: boolean} = {},
   ) => {
-    const token = globalThis.localStorage?.getItem('adminToken');
-    if (!token) {
+    if (!getAdminToken()) {
       globalThis.location.href = '/admin/login';
       return false;
     }
@@ -265,12 +261,11 @@ export default function MovieInfoEditor({
     };
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/movies/${movieId}/imdb-id`,
         {
           method: 'PUT',
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(body),
@@ -278,8 +273,6 @@ export default function MovieInfoEditor({
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return false;
       }
 
@@ -290,9 +283,9 @@ export default function MovieInfoEditor({
         throw new Error(errorData.error || 'Failed to update IMDb ID');
       }
 
-      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
-        headers: {Authorization: `Bearer ${token}`},
-      });
+      const movieResponse = await adminFetch(
+        `${apiUrl}/admin/movies/${movieId}`,
+      );
 
       if (movieResponse.ok) {
         const data = (await movieResponse.json()) as MovieDetails;
@@ -311,8 +304,7 @@ export default function MovieInfoEditor({
     tmdbIdValue: number | undefined,
     options: {refreshData?: boolean} = {},
   ) => {
-    const token = globalThis.localStorage?.getItem('adminToken');
-    if (!token) {
+    if (!getAdminToken()) {
       globalThis.location.href = '/admin/login';
       return false;
     }
@@ -323,12 +315,11 @@ export default function MovieInfoEditor({
     };
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/movies/${movieId}/tmdb-id`,
         {
           method: 'PUT',
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(body),
@@ -336,8 +327,6 @@ export default function MovieInfoEditor({
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return false;
       }
 
@@ -352,9 +341,9 @@ export default function MovieInfoEditor({
         throw new Error(errorData.error || 'Failed to update TMDb ID');
       }
 
-      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
-        headers: {Authorization: `Bearer ${token}`},
-      });
+      const movieResponse = await adminFetch(
+        `${apiUrl}/admin/movies/${movieId}`,
+      );
 
       if (movieResponse.ok) {
         const data = (await movieResponse.json()) as MovieDetails;
@@ -458,8 +447,7 @@ export default function MovieInfoEditor({
       parameters.set('year', String(parsedYear));
     }
 
-    const token = globalThis.localStorage?.getItem('adminToken');
-    if (!token) {
+    if (!getAdminToken()) {
       globalThis.location.href = '/admin/login';
       return;
     }
@@ -471,16 +459,11 @@ export default function MovieInfoEditor({
     setIdSearchUsedYear(undefined);
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/movies/${movieId}/external-id-search?${parameters.toString()}`,
-        {
-          headers: {Authorization: `Bearer ${token}`},
-        },
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -596,8 +579,7 @@ export default function MovieInfoEditor({
       return;
     }
 
-    const token = globalThis.localStorage?.getItem('adminToken');
-    if (!token) {
+    if (!getAdminToken()) {
       globalThis.location.href = '/admin/login';
       return;
     }
@@ -606,19 +588,14 @@ export default function MovieInfoEditor({
     setTmdbRefreshError(undefined);
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/movies/${movieId}/refresh-tmdb`,
         {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         },
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -629,9 +606,9 @@ export default function MovieInfoEditor({
         throw new Error(errorData.error || 'Failed to refresh TMDb data');
       }
 
-      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
-        headers: {Authorization: `Bearer ${token}`},
-      });
+      const movieResponse = await adminFetch(
+        `${apiUrl}/admin/movies/${movieId}`,
+      );
 
       if (movieResponse.ok) {
         const data = (await movieResponse.json()) as MovieDetails;
@@ -655,8 +632,7 @@ export default function MovieInfoEditor({
       return;
     }
 
-    const token = globalThis.localStorage?.getItem('adminToken');
-    if (!token) {
+    if (!getAdminToken()) {
       globalThis.location.href = '/admin/login';
       return;
     }
@@ -665,19 +641,14 @@ export default function MovieInfoEditor({
     setAutoFetchError(undefined);
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/movies/${movieId}/auto-fetch-tmdb`,
         {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         },
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -697,9 +668,9 @@ export default function MovieInfoEditor({
         };
       };
 
-      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
-        headers: {Authorization: `Bearer ${token}`},
-      });
+      const movieResponse = await adminFetch(
+        `${apiUrl}/admin/movies/${movieId}`,
+      );
 
       if (movieResponse.ok) {
         const data = (await movieResponse.json()) as MovieDetails;
@@ -1208,8 +1179,7 @@ function MediaTypeToggle({
     if (updating) return;
 
     const newType = movieData.mediaType === 'tv' ? 'movie' : 'tv';
-    const token = globalThis.localStorage?.getItem('adminToken');
-    if (!token) {
+    if (!getAdminToken()) {
       globalThis.location.href = '/admin/login';
       return;
     }
@@ -1218,18 +1188,15 @@ function MediaTypeToggle({
     setError(undefined);
 
     try {
-      const response = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
+      const response = await adminFetch(`${apiUrl}/admin/movies/${movieId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({mediaType: newType}),
       });
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 

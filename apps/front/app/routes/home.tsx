@@ -5,6 +5,7 @@ import {Button} from '@/components/ui/button';
 import {AdminLogin} from '@/components/molecules/admin-login';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
+import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
 import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {FilmCard} from '@/components/editorial/film-card';
@@ -183,10 +184,10 @@ export default function Home({loaderData}: Route.ComponentProps) {
 
   useEffect(() => {
     if (globalThis.window !== undefined) {
-      setAdminToken(localStorage.getItem('adminToken') || undefined);
+      setAdminToken(getAdminToken());
 
       const handleAdminLogin = () => {
-        setAdminToken(localStorage.getItem('adminToken') || undefined);
+        setAdminToken(getAdminToken());
       };
 
       const handleAdminLogout = () => {
@@ -297,7 +298,6 @@ function ManualSelectionPanel({
   period,
   locale,
   apiUrl,
-  adminToken,
   onClose,
   onOverrideSuccess,
   onOverrideLoadingChange,
@@ -306,7 +306,6 @@ function ManualSelectionPanel({
   period: PeriodType;
   locale: string;
   apiUrl: string;
-  adminToken: string;
   onClose: () => void;
   onOverrideSuccess: () => Promise<void> | void;
   onOverrideLoadingChange: (value: boolean) => void;
@@ -332,9 +331,8 @@ function ManualSelectionPanel({
 
     const timeoutId = setTimeout(async () => {
       try {
-        const response = await fetch(
+        const response = await adminFetch(
           `${apiUrl}/admin/movies?search=${encodeURIComponent(query)}&limit=20`,
-          {headers: {Authorization: `Bearer ${adminToken}`}},
         );
 
         if (!response.ok) {
@@ -365,7 +363,7 @@ function ManualSelectionPanel({
       cancelled = true;
       clearTimeout(timeoutId);
     };
-  }, [query, apiUrl, adminToken, locale]);
+  }, [query, apiUrl, locale]);
 
   const processingLabel = locale === 'ja' ? '処理中...' : 'Processing...';
   const searchPlaceholder =
@@ -394,11 +392,10 @@ function ManualSelectionPanel({
     setError(undefined);
 
     try {
-      const response = await fetch(`${apiUrl}/admin/override-selection`, {
+      const response = await adminFetch(`${apiUrl}/admin/override-selection`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify({
           type: period,
@@ -574,11 +571,10 @@ function Movies({
       setActionLoading(previous => ({...previous, [type]: true}));
 
       try {
-        const response = await fetch(`${apiUrl}/reselect`, {
+        const response = await adminFetch(`${apiUrl}/reselect`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${adminToken}`,
           },
           body: JSON.stringify({
             type,
@@ -739,7 +735,6 @@ function Movies({
                     period={period}
                     locale={locale}
                     apiUrl={apiUrl}
-                    adminToken={adminToken}
                     onClose={() => {
                       setSearchOpen(previous => ({
                         ...previous,

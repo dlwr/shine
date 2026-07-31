@@ -6,6 +6,7 @@ import MovieInfoEditor from '../components/movie-info-editor';
 import NominationManager from '../components/nomination-manager';
 import ArticleLinkManager from '../components/article-link-manager';
 import type {Route} from './+types/admin.movies.$id';
+import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
 
 export type Translation = {
   uid: string;
@@ -105,8 +106,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
         return;
       }
 
-      const token = globalThis.localStorage.getItem('adminToken');
-      if (!token) {
+      if (!getAdminToken()) {
         globalThis.location.href = '/admin/login';
         return;
       }
@@ -115,13 +115,9 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
       setError(undefined);
 
       try {
-        const response = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
-          headers: {Authorization: `Bearer ${token}`},
-        });
+        const response = await adminFetch(`${apiUrl}/admin/movies/${movieId}`);
 
         if (response.status === 401) {
-          globalThis.localStorage.removeItem('adminToken');
-          globalThis.location.href = '/admin/login';
           return;
         }
 

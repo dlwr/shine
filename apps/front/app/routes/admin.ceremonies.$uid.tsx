@@ -5,6 +5,7 @@ import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Textarea} from '@/components/ui/textarea';
 import type {Route} from './+types/admin.ceremonies.$uid';
+import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
 
 type LoaderData = {
   apiUrl: string;
@@ -141,7 +142,7 @@ const ensureToken = () => {
     return;
   }
 
-  const token = globalThis.localStorage?.getItem('adminToken');
+  const token = getAdminToken();
   if (!token) {
     globalThis.location.href = '/admin/login';
     return;
@@ -387,8 +388,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
   const isSyncButtonDisabled = isSyncingFromImdb || !canSyncFromImdb;
 
   const fetchAwardsData = useCallback(async () => {
-    const token = ensureToken();
-    if (!token) {
+    if (!ensureToken()) {
       return;
     }
 
@@ -396,13 +396,9 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
     setAwardsError(undefined);
 
     try {
-      const response = await fetch(`${apiUrl}/admin/awards`, {
-        headers: {Authorization: `Bearer ${token}`},
-      });
+      const response = await adminFetch(`${apiUrl}/admin/awards`);
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -428,10 +424,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
   }, [apiUrl]);
 
   const fetchCeremony = useCallback(
-    async (
-      token: string,
-      options?: {syncForm?: boolean; showSpinner?: boolean},
-    ) => {
+    async (options?: {syncForm?: boolean; showSpinner?: boolean}) => {
       const {syncForm = true, showSpinner = true} = options ?? {};
 
       if (showSpinner) {
@@ -440,16 +433,11 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       setDetailError(undefined);
 
       try {
-        const response = await fetch(
+        const response = await adminFetch(
           `${apiUrl}/admin/ceremonies/${ceremonyUid}`,
-          {
-            headers: {Authorization: `Bearer ${token}`},
-          },
         );
 
         if (response.status === 401) {
-          globalThis.localStorage?.removeItem('adminToken');
-          globalThis.location.href = '/admin/login';
           return;
         }
 
@@ -502,12 +490,11 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       return;
     }
 
-    const token = ensureToken();
-    if (!token) {
+    if (!ensureToken()) {
       return;
     }
 
-    void fetchCeremony(token, {syncForm: true, showSpinner: true});
+    void fetchCeremony({syncForm: true, showSpinner: true});
   }, [fetchCeremony, isNew]);
 
   useEffect(() => {
@@ -574,8 +561,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       return;
     }
 
-    const token = ensureToken();
-    if (!token) {
+    if (!ensureToken()) {
       return;
     }
 
@@ -598,14 +584,13 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
             : formState.imdbEventUrl,
       };
 
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/ceremonies${
           isNew ? '' : `/${ceremonyDetail?.ceremony.uid ?? ceremonyUid}`
         }`,
         {
           method: isNew ? 'POST' : 'PUT',
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(payload),
@@ -613,8 +598,6 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -681,8 +664,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       }
     }
 
-    const token = ensureToken();
-    if (!token) {
+    if (!ensureToken()) {
       return;
     }
 
@@ -690,17 +672,14 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
     setDeleteError(undefined);
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/ceremonies/${ceremonyDetail.ceremony.uid}`,
         {
           method: 'DELETE',
-          headers: {Authorization: `Bearer ${token}`},
         },
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -735,22 +714,18 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       return;
     }
 
-    const token = ensureToken();
-    if (!token) {
+    if (!ensureToken()) {
       return;
     }
 
     setIsSearchingMovies(true);
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/movies?limit=10&search=${encodeURIComponent(trimmedQuery)}`,
-        {headers: {Authorization: `Bearer ${token}`}},
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -795,20 +770,18 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       return;
     }
 
-    const token = ensureToken();
-    if (!token) {
+    if (!ensureToken()) {
       return;
     }
 
     setIsAddingNomination(true);
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/movies/${selectedMovie.uid}/nominations`,
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -824,8 +797,6 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -836,12 +807,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
         throw new Error(data.error || '映画の追加に失敗しました。');
       }
 
-      const tokenAfter = ensureToken();
-      if (!tokenAfter) {
-        return;
-      }
-
-      await fetchCeremony(tokenAfter, {syncForm: false, showSpinner: true});
+      await fetchCeremony({syncForm: false, showSpinner: true});
       setNominationMessage('映画を追加しました。');
       setSelectedMovie(undefined);
       setMovieSearchQuery('');
@@ -868,23 +834,19 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       }
     }
 
-    const token = ensureToken();
-    if (!token) {
+    if (!ensureToken()) {
       return;
     }
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/nominations/${nominationUid}`,
         {
           method: 'DELETE',
-          headers: {Authorization: `Bearer ${token}`},
         },
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -895,12 +857,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
         throw new Error(data.error || '紐付けの削除に失敗しました。');
       }
 
-      const tokenAfter = ensureToken();
-      if (!tokenAfter) {
-        return;
-      }
-
-      await fetchCeremony(tokenAfter, {syncForm: false, showSpinner: false});
+      await fetchCeremony({syncForm: false, showSpinner: false});
     } catch (error) {
       const message =
         error instanceof Error ? error.message : '紐付けの削除に失敗しました。';
@@ -925,8 +882,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       return;
     }
 
-    const token = ensureToken();
-    if (!token) {
+    if (!ensureToken()) {
       return;
     }
 
@@ -934,12 +890,11 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
     setNominationMessage(undefined);
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/ceremonies/${ceremonyDetail.ceremony.uid}/sync-imdb`,
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({categoryUid: selectedSyncCategory.uid}),
@@ -947,8 +902,6 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -971,12 +924,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
         throw new Error(data.error || 'IMDbリストとの同期に失敗しました。');
       }
 
-      const tokenAfter = ensureToken();
-      if (!tokenAfter) {
-        return;
-      }
-
-      await fetchCeremony(tokenAfter, {syncForm: false, showSpinner: true});
+      await fetchCeremony({syncForm: false, showSpinner: true});
 
       if (data.stats) {
         const {

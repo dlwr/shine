@@ -12,6 +12,7 @@ import {
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import type {Route} from './+types/admin.movies';
+import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
 
 type Movie = {
   uid: string;
@@ -122,8 +123,7 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
         return;
       }
 
-      const token = globalThis.localStorage.getItem('adminToken');
-      if (!token) {
+      if (!getAdminToken()) {
         globalThis.location.href = '/admin/login';
         return;
       }
@@ -135,16 +135,11 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
         const searchParameter = search
           ? `&search=${encodeURIComponent(search)}`
           : '';
-        const response = await fetch(
+        const response = await adminFetch(
           `${apiUrl}/admin/movies?page=${page}&limit=${limit}${searchParameter}`,
-          {
-            headers: {Authorization: `Bearer ${token}`},
-          },
         );
 
         if (response.status === 401) {
-          globalThis.localStorage.removeItem('adminToken');
-          globalThis.location.href = '/admin/login';
           return;
         }
 
@@ -373,22 +368,16 @@ const deleteMovie = async (
     return false;
   }
 
-  const token = globalThis.localStorage?.getItem('adminToken');
-  if (!token) {
+  if (!getAdminToken()) {
     return false;
   }
 
   try {
-    const response = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
+    const response = await adminFetch(`${apiUrl}/admin/movies/${movieId}`, {
       method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     });
 
     if (response.status === 401) {
-      globalThis.localStorage?.removeItem('adminToken');
-      globalThis.location.href = '/admin/login';
       return false;
     }
 
@@ -435,18 +424,16 @@ const mergeMovies = async (
   sourceTitle: string,
   apiUrl: string,
 ) => {
-  const token = globalThis.localStorage?.getItem('adminToken');
-  if (!token) {
+  if (!getAdminToken()) {
     return false;
   }
 
   try {
-    const response = await fetch(
+    const response = await adminFetch(
       `${apiUrl}/admin/movies/${sourceId}/merge/${targetId}`,
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       },
@@ -528,8 +515,7 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
       return;
     }
 
-    const token = globalThis.localStorage?.getItem('adminToken');
-    if (!token) {
+    if (!getAdminToken()) {
       globalThis.location.href = '/admin/login';
       return;
     }
@@ -539,10 +525,9 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
     setCreateSuccess(undefined);
 
     try {
-      const response = await fetch(`${apiUrl}/admin/movies`, {
+      const response = await adminFetch(`${apiUrl}/admin/movies`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -552,8 +537,6 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
       });
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
