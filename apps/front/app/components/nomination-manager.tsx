@@ -2,6 +2,7 @@ import {useEffect, useMemo, useState} from 'react';
 import {Link} from 'react-router';
 import type {ChangeEvent, FormEvent} from 'react';
 import type {MovieDetails, Nomination} from '../routes/admin.movies.$id';
+import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
 
 type NominationManagerProperties = {
   movieId: string;
@@ -39,7 +40,7 @@ type AwardsData = {
 };
 
 const ensureToken = () => {
-  const token = globalThis.localStorage?.getItem('adminToken');
+  const token = getAdminToken();
   if (!token) {
     globalThis.location.href = '/admin/login';
     return;
@@ -136,8 +137,7 @@ export default function NominationManager({
         return;
       }
 
-      const token = globalThis.localStorage?.getItem('adminToken');
-      if (!token) {
+      if (!getAdminToken()) {
         globalThis.location.href = '/admin/login';
         return;
       }
@@ -146,13 +146,9 @@ export default function NominationManager({
       setAwardsError(undefined);
 
       try {
-        const response = await fetch(`${apiUrl}/admin/awards`, {
-          headers: {Authorization: `Bearer ${token}`},
-        });
+        const response = await adminFetch(`${apiUrl}/admin/awards`);
 
         if (response.status === 401) {
-          globalThis.localStorage?.removeItem('adminToken');
-          globalThis.location.href = '/admin/login';
           return;
         }
 
@@ -215,10 +211,8 @@ export default function NominationManager({
     setNominationError(undefined);
   };
 
-  const refreshMovieData = async (token: string) => {
-    const response = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
-      headers: {Authorization: `Bearer ${token}`},
-    });
+  const refreshMovieData = async () => {
+    const response = await adminFetch(`${apiUrl}/admin/movies/${movieId}`);
 
     if (response.ok) {
       const movie = (await response.json()) as MovieDetails;
@@ -250,20 +244,18 @@ export default function NominationManager({
       return;
     }
 
-    const token = ensureToken();
-    if (!token) {
+    if (!ensureToken()) {
       return;
     }
 
     setIsAdding(true);
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/movies/${movieId}/nominations`,
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -279,8 +271,6 @@ export default function NominationManager({
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -291,7 +281,7 @@ export default function NominationManager({
         throw new Error(errorData.error || 'ノミネートの追加に失敗しました');
       }
 
-      await refreshMovieData(token);
+      await refreshMovieData();
       resetAddForm();
       setShowAddForm(false);
       globalThis.alert?.('ノミネートを追加しました');
@@ -322,8 +312,7 @@ export default function NominationManager({
       return;
     }
 
-    const token = ensureToken();
-    if (!token) {
+    if (!ensureToken()) {
       return;
     }
 
@@ -331,12 +320,11 @@ export default function NominationManager({
     setNominationError(undefined);
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/nominations/${editingNominationId}`,
         {
           method: 'PUT',
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -350,8 +338,6 @@ export default function NominationManager({
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -362,7 +348,7 @@ export default function NominationManager({
         throw new Error(errorData.error || 'ノミネートの更新に失敗しました');
       }
 
-      await refreshMovieData(token);
+      await refreshMovieData();
       setEditingNominationId(undefined);
       globalThis.alert?.('ノミネートを更新しました');
     } catch (error) {
@@ -386,8 +372,7 @@ export default function NominationManager({
       return;
     }
 
-    const token = ensureToken();
-    if (!token) {
+    if (!ensureToken()) {
       return;
     }
 
@@ -395,17 +380,14 @@ export default function NominationManager({
     setNominationError(undefined);
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/nominations/${nomination.uid}`,
         {
           method: 'DELETE',
-          headers: {Authorization: `Bearer ${token}`},
         },
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -416,7 +398,7 @@ export default function NominationManager({
         throw new Error(errorData.error || 'ノミネートの削除に失敗しました');
       }
 
-      await refreshMovieData(token);
+      await refreshMovieData();
       globalThis.alert?.('ノミネートを削除しました');
     } catch (error) {
       const message =

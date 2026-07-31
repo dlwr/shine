@@ -3,6 +3,7 @@ import {useNavigate} from 'react-router';
 import type {Route} from './+types/admin.login';
 import {Button} from '@/components/ui/button';
 import {resolveApiUrl} from '@/lib/api';
+import {getAdminToken, setAdminToken} from '@/lib/admin-fetch';
 
 export function meta(): Route.MetaDescriptors {
   return [
@@ -52,11 +53,8 @@ export default function AdminLogin({actionData}: Route.ComponentProps) {
 
   // ログイン済みかチェック
   useEffect(() => {
-    if (globalThis.window !== undefined) {
-      const existingToken = localStorage.getItem('adminToken');
-      if (existingToken) {
-        navigate('/admin/movies', {replace: true});
-      }
+    if (globalThis.window !== undefined && getAdminToken()) {
+      navigate('/admin/movies', {replace: true});
     }
   }, [navigate]);
 
@@ -67,11 +65,8 @@ export default function AdminLogin({actionData}: Route.ComponentProps) {
       actionData?.token &&
       globalThis.window !== undefined
     ) {
-      localStorage.setItem('adminToken', actionData.token);
+      setAdminToken(actionData.token);
       console.log('Token saved, redirecting to /admin/movies');
-
-      // イベント発火でother componentsに通知
-      globalThis.dispatchEvent(new Event('adminLogin'));
 
       navigate('/admin/movies', {replace: true});
     }

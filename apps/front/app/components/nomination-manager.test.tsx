@@ -110,11 +110,14 @@ describe('NominationManager', () => {
       expect(screen.getAllByRole('combobox')).toHaveLength(3);
     });
 
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      'http://localhost:8787/admin/awards',
-      expect.objectContaining({
-        headers: {Authorization: 'Bearer admin-token'},
-      }),
+    const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>;
+    const awardsCall = fetchMock.mock.calls.find(
+      ([input]) => input === 'http://localhost:8787/admin/awards',
+    );
+    expect(awardsCall).toBeDefined();
+    const awardsInit = awardsCall?.[1] as RequestInit | undefined;
+    expect(new Headers(awardsInit?.headers).get('authorization')).toBe(
+      'Bearer admin-token',
     );
   });
 });

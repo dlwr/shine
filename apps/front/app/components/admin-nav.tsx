@@ -1,5 +1,6 @@
 import {useLocation} from 'react-router';
 import {Button} from '@/components/ui/button';
+import {clearAdminToken} from '@/lib/admin-fetch';
 
 const navItems = [
   {href: '/', label: 'トップページ'},
@@ -10,7 +11,7 @@ const navItems = [
 
 const handleLogout = () => {
   if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
-    globalThis.localStorage.removeItem('adminToken');
+    clearAdminToken();
     globalThis.location.href = '/admin/login';
   }
 };

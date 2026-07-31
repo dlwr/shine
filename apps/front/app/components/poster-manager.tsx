@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
 
 type PosterUrl = {
   uid: string;
@@ -63,19 +64,17 @@ export default function PosterManager({
       return;
     }
 
-    const token = globalThis.localStorage?.getItem('adminToken');
-    if (!token) {
+    if (!getAdminToken()) {
       globalThis.location.href = '/admin/login';
       return;
     }
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/movies/${movieId}/posters`,
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -94,8 +93,6 @@ export default function PosterManager({
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -106,9 +103,9 @@ export default function PosterManager({
         throw new Error(errorData.error || 'Failed to add poster');
       }
 
-      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
-        headers: {Authorization: `Bearer ${token}`},
-      });
+      const movieResponse = await adminFetch(
+        `${apiUrl}/admin/movies/${movieId}`,
+      );
 
       if (movieResponse.ok) {
         const data = (await movieResponse.json()) as MovieDetails;
@@ -140,26 +137,20 @@ export default function PosterManager({
       return;
     }
 
-    const token = globalThis.localStorage?.getItem('adminToken');
-    if (!token) {
+    if (!getAdminToken()) {
       globalThis.location.href = '/admin/login';
       return;
     }
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/admin/movies/${movieId}/posters/${posterId}`,
         {
           method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         },
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -170,9 +161,9 @@ export default function PosterManager({
         throw new Error(errorData.error || 'Failed to delete poster');
       }
 
-      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
-        headers: {Authorization: `Bearer ${token}`},
-      });
+      const movieResponse = await adminFetch(
+        `${apiUrl}/admin/movies/${movieId}`,
+      );
 
       if (movieResponse.ok) {
         const data = (await movieResponse.json()) as MovieDetails;

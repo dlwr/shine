@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
 
 type Translation = {
   uid: string;
@@ -65,29 +66,28 @@ export default function TranslationManager({
       return;
     }
 
-    const token = globalThis.localStorage?.getItem('adminToken');
-    if (!token) {
+    if (!getAdminToken()) {
       globalThis.location.href = '/admin/login';
       return;
     }
 
     try {
-      const response = await fetch(`${apiUrl}/movies/${movieId}/translations`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      const response = await adminFetch(
+        `${apiUrl}/movies/${movieId}/translations`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            languageCode: newTranslation.languageCode.trim(),
+            content: newTranslation.content.trim(),
+            isDefault: newTranslation.isDefault,
+          }),
         },
-        body: JSON.stringify({
-          languageCode: newTranslation.languageCode.trim(),
-          content: newTranslation.content.trim(),
-          isDefault: newTranslation.isDefault,
-        }),
-      });
+      );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -98,9 +98,9 @@ export default function TranslationManager({
         throw new Error(errorData.error || 'Failed to add translation');
       }
 
-      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
-        headers: {Authorization: `Bearer ${token}`},
-      });
+      const movieResponse = await adminFetch(
+        `${apiUrl}/admin/movies/${movieId}`,
+      );
 
       if (movieResponse.ok) {
         const data = (await movieResponse.json()) as MovieDetails;
@@ -130,29 +130,28 @@ export default function TranslationManager({
       return;
     }
 
-    const token = globalThis.localStorage?.getItem('adminToken');
-    if (!token) {
+    if (!getAdminToken()) {
       globalThis.location.href = '/admin/login';
       return;
     }
 
     try {
-      const response = await fetch(`${apiUrl}/movies/${movieId}/translations`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      const response = await adminFetch(
+        `${apiUrl}/movies/${movieId}/translations`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            languageCode: languageCode.trim(),
+            content: content.trim(),
+            isDefault,
+          }),
         },
-        body: JSON.stringify({
-          languageCode: languageCode.trim(),
-          content: content.trim(),
-          isDefault,
-        }),
-      });
+      );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -163,9 +162,9 @@ export default function TranslationManager({
         throw new Error(errorData.error || 'Failed to update translation');
       }
 
-      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
-        headers: {Authorization: `Bearer ${token}`},
-      });
+      const movieResponse = await adminFetch(
+        `${apiUrl}/admin/movies/${movieId}`,
+      );
 
       if (movieResponse.ok) {
         const data = (await movieResponse.json()) as MovieDetails;
@@ -189,26 +188,20 @@ export default function TranslationManager({
       return;
     }
 
-    const token = globalThis.localStorage?.getItem('adminToken');
-    if (!token) {
+    if (!getAdminToken()) {
       globalThis.location.href = '/admin/login';
       return;
     }
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `${apiUrl}/movies/${movieId}/translations/${languageCode}`,
         {
           method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         },
       );
 
       if (response.status === 401) {
-        globalThis.localStorage?.removeItem('adminToken');
-        globalThis.location.href = '/admin/login';
         return;
       }
 
@@ -219,9 +212,9 @@ export default function TranslationManager({
         throw new Error(errorData.error || 'Failed to delete translation');
       }
 
-      const movieResponse = await fetch(`${apiUrl}/admin/movies/${movieId}`, {
-        headers: {Authorization: `Bearer ${token}`},
-      });
+      const movieResponse = await adminFetch(
+        `${apiUrl}/admin/movies/${movieId}`,
+      );
 
       if (movieResponse.ok) {
         const data = (await movieResponse.json()) as MovieDetails;

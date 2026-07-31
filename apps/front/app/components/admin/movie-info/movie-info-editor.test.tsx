@@ -129,10 +129,9 @@ describe('MovieInfoEditor 外部ID検索', () => {
         }
 
         if (url.endsWith('/tmdb-id') && method === 'PUT') {
-          expect(init?.headers).toMatchObject({
-            Authorization: 'Bearer admin-token',
-            'Content-Type': 'application/json',
-          });
+          const headers = new Headers(init?.headers);
+          expect(headers.get('authorization')).toBe('Bearer admin-token');
+          expect(headers.get('content-type')).toBe('application/json');
           return Promise.resolve({
             ok: true,
             status: 200,
@@ -189,13 +188,15 @@ describe('MovieInfoEditor 外部ID検索', () => {
       );
     });
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining(
+    const searchCall = fetchMock.mock.calls.find(([input]) =>
+      String(input).includes(
         `/admin/movies/${movieData.uid}/external-id-search`,
       ),
-      expect.objectContaining({
-        headers: {Authorization: 'Bearer admin-token'},
-      }),
+    );
+    expect(searchCall).toBeDefined();
+    const searchInit = searchCall?.[1] as RequestInit | undefined;
+    expect(new Headers(searchInit?.headers).get('authorization')).toBe(
+      'Bearer admin-token',
     );
   });
 });
