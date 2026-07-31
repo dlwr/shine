@@ -51,7 +51,7 @@
     "scrapers:sns-post": "pnpm --filter @shine/scrapers run sns-post"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260310.1",
+    "@cloudflare/workers-types": "^4.20260702.1",
     "@eslint/js": "^10.0.1",
     "@redocly/cli": "^2.20.4",
     "@types/node": "^26.1.2",
