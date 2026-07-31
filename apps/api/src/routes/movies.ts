@@ -20,6 +20,7 @@ import {
   getCacheKeyForMovie,
   getCacheTTL,
 } from '../utils/cache';
+import {parsePagination} from '../utils/pagination';
 
 export const moviesRoutes = new Hono<{Bindings: Environment}>();
 
@@ -71,8 +72,7 @@ async function verifyTurnstileToken(
 moviesRoutes.get('/search', async c => {
   try {
     const moviesService = new MoviesService(c.env);
-    const page = Number(c.req.query('page') || 1);
-    const limit = Math.min(Number(c.req.query('limit') || 20), 100);
+    const {page, limit} = parsePagination(c);
     const rawQuery = c.req.query('q');
     const yearFilter = c.req.query('year');
     const languageFilter = c.req.query('language');

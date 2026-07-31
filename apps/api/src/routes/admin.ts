@@ -14,6 +14,7 @@ import {inArray, sql} from 'drizzle-orm';
 import {authMiddleware} from '../auth';
 import {sanitizeText, sanitizeUrl} from '../middleware/sanitizer';
 import {AdminService} from '../services';
+import {parsePagination} from '../utils/pagination';
 
 type Database = ReturnType<typeof getDatabase>;
 
@@ -419,8 +420,7 @@ adminRoutes.get('/movies/:id/external-id-search', authMiddleware, async c => {
 adminRoutes.get('/movies', authMiddleware, async c => {
   try {
     const adminService = new AdminService(c.env);
-    const page = Number(c.req.query('page') || 1);
-    const limit = Math.min(Number(c.req.query('limit') || 50), 100);
+    const {page, limit} = parsePagination(c, {defaultLimit: 50});
     const rawSearch = c.req.query('search');
     const search = rawSearch ? sanitizeText(rawSearch) : undefined;
 
