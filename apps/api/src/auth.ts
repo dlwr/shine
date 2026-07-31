@@ -22,6 +22,26 @@ export async function createJWT(secret: string): Promise<string> {
   return jwt;
 }
 
+export async function passwordsMatch(
+  provided: string,
+  expected: string,
+): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const [providedHash, expectedHash] = await Promise.all([
+    crypto.subtle.digest('SHA-256', encoder.encode(provided)),
+    crypto.subtle.digest('SHA-256', encoder.encode(expected)),
+  ]);
+
+  const providedView = new Uint8Array(providedHash);
+  const expectedView = new Uint8Array(expectedHash);
+  let difference = 0;
+  for (const [index, byte] of providedView.entries()) {
+    difference |= byte ^ expectedView[index];
+  }
+
+  return difference === 0;
+}
+
 export async function verifyJWT(
   token: string,
   secret: string,
