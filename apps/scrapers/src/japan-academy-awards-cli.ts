@@ -4,10 +4,15 @@
  * 日本アカデミー賞スクレイピングのCLIエントリーポイント
  */
 import japanAcademyAwards from './japan-academy-awards';
-import {buildEnvironment, loadEnvironmentFiles} from './common/environment';
+import {
+  assertDatabaseEnvironment,
+  buildEnvironment,
+  loadEnvironmentFiles,
+} from './common/environment';
 
 loadEnvironmentFiles();
 const environment = buildEnvironment(process.env);
+assertDatabaseEnvironment(environment);
 
 const arguments_ = process.argv.slice(2);
 const shouldSeed = arguments_.includes('--seed');
@@ -56,7 +61,14 @@ try {
       ? 'http://localhost/seed?dry-run=true'
       : 'http://localhost/seed';
     const seedRequest = new Request(seedUrl);
-    await japanAcademyAwards.fetch(seedRequest, environment);
+    const seedResponse = await japanAcademyAwards.fetch(
+      seedRequest,
+      environment,
+    );
+    if (!seedResponse.ok) {
+      throw new Error(`Seeding failed: ${await seedResponse.text()}`);
+    }
+
     console.log('Seeding completed successfully');
   }
 
@@ -73,7 +85,11 @@ try {
 
   const url = `${baseUrl}?${searchParameters.toString()}`;
   const request = new Request(url);
-  await japanAcademyAwards.fetch(request, environment);
+  const response = await japanAcademyAwards.fetch(request, environment);
+  if (!response.ok) {
+    throw new Error(`Scraping failed: ${await response.text()}`);
+  }
+
   console.log('Scraping completed successfully');
 } catch (error) {
   console.error('Error:', error);
