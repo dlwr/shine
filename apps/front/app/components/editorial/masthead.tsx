@@ -18,11 +18,11 @@ export function Masthead({locale = 'en'}: {locale?: string}) {
     TAGLINES[locale as keyof typeof TAGLINES] ?? TAGLINES.en;
 
   return (
-    <header className="flex items-end justify-between border-b-2 border-ink pb-2.5 mb-6">
+    <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2.5 border-b-2 border-ink pb-2.5 mb-6">
       <h1 className="font-display font-black text-4xl md:text-5xl tracking-[-0.06em] leading-none text-ink">
         SHINE
       </h1>
-      <div className="flex items-center gap-3">
+      <div className="ml-auto flex items-center gap-2 md:gap-3">
         <p className="hidden md:block text-right font-mono text-[10px] leading-tight text-ink-muted">
           {taglineTop}
           <br />
