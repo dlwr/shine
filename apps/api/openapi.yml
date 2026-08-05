@@ -60,6 +60,60 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /selections/daily/history:
+    get:
+      summary: Get recent daily selections
+      description: Returns recent daily movie selections in reverse chronological order, e.g. for RSS feeds
+      operationId: getDailySelectionHistory
+      tags:
+        - Movies
+      security: []
+      parameters:
+        - name: locale
+          in: query
+          description: Language preference for movie titles
+          required: false
+          schema:
+            type: string
+            enum: [en, ja]
+            default: ja
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 30
+            default: 14
+      responses:
+        '200':
+          description: Successfully retrieved daily selection history
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [uid, title, selectionDate]
+                      properties:
+                        uid:
+                          type: string
+                          format: uuid
+                        title:
+                          type: string
+                        year:
+                          type: integer
+                        selectionDate:
+                          type: string
+                          format: date
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /movies/search:
     get:
       summary: Search movies
