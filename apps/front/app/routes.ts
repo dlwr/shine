@@ -7,6 +7,7 @@ export default [
   route('awards', 'routes/awards.tsx'),
   route('awards/:slug', 'routes/awards.$slug.tsx'),
   route('robots.txt', 'routes/robots.tsx'),
+  route('feed.xml', 'routes/feed.tsx'),
   route('sitemap.xml', 'routes/sitemap-index.tsx'),
   route('sitemap/movies.xml', 'routes/sitemap-movies.tsx'),
   route('sitemap/awards.xml', 'routes/sitemap-awards.tsx'),
