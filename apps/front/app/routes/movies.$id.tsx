@@ -69,8 +69,16 @@ type LoaderErrorResponse = {
   locale: Locale;
 };
 
+type RelatedMovie = {
+  uid: string;
+  title: string;
+  year?: number;
+  posterUrl?: string;
+};
+
 type LoaderSuccessResponse = {
   movieDetail: MovieDetailData;
+  relatedMovies?: RelatedMovie[];
   turnstileSiteKey?: string;
   locale: Locale;
   apiUrl?: string;
@@ -499,6 +507,29 @@ export function meta({data, params}: Route.MetaArgs): Route.MetaDescriptors {
   ];
 }
 
+async function fetchRelatedMovies(
+  apiUrl: string,
+  movieId: string,
+  locale: Locale,
+  signal?: AbortSignal,
+): Promise<RelatedMovie[]> {
+  try {
+    const response = await fetch(
+      `${apiUrl}/movies/${movieId}/related?locale=${locale}&limit=6`,
+      {signal},
+    );
+
+    if (!response?.ok) {
+      return [];
+    }
+
+    const body = (await response.json()) as {movies?: RelatedMovie[]};
+    return body.movies ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export async function loader({
   context,
   params,
@@ -511,9 +542,12 @@ export async function loader({
       context.cloudflare as CloudflareContext | undefined
     )?.env;
     const apiUrl = resolveApiUrl(context);
-    const response = await fetch(`${apiUrl}/movies/${params.id}`, {
-      signal: request.signal, // React Router v7推奨：abortシグナル
-    });
+    const [response, relatedMovies] = await Promise.all([
+      fetch(`${apiUrl}/movies/${params.id}`, {
+        signal: request.signal, // React Router v7推奨：abortシグナル
+      }),
+      fetchRelatedMovies(apiUrl, params.id, locale, request.signal),
+    ]);
 
     if (response.status === 404) {
       return {
@@ -533,7 +567,7 @@ export async function loader({
 
     const movieDetail = (await response.json()) as MovieDetailData;
     const turnstileSiteKey = cloudflareEnvironment?.PUBLIC_TURNSTILE_SITE_KEY;
-    return {movieDetail, turnstileSiteKey, locale, apiUrl};
+    return {movieDetail, relatedMovies, turnstileSiteKey, locale, apiUrl};
   } catch {
     return {
       error: 'APIへの接続に失敗しました',
@@ -641,6 +675,7 @@ export default function MovieDetail({
   }
 
   const {movieDetail, turnstileSiteKey} = data;
+  const relatedMovies = data.relatedMovies ?? [];
   const title = movieDetail.title || 'タイトル不明';
 
   const metaItems: string[] = [];
@@ -705,6 +740,35 @@ export default function MovieDetail({
             locale="ja"
           />
         </section>
+
+        {/* Related Movies */}
+        {relatedMovies.length > 0 && (
+          <section className="mb-8">
+            <p className="font-mono text-xs text-ink-muted mb-3">関連映画</p>
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+              {relatedMovies.map(relatedMovie => (
+                <a
+                  key={relatedMovie.uid}
+                  href={`/movies/${relatedMovie.uid}`}
+                  className="no-underline text-ink">
+                  <PosterFrame
+                    posterUrl={relatedMovie.posterUrl}
+                    alt={`${relatedMovie.title} poster`}
+                    className="w-full"
+                  />
+                  <span className="block font-display font-bold text-xs leading-tight mt-1.5">
+                    {relatedMovie.title}
+                  </span>
+                  {relatedMovie.year && (
+                    <span className="block font-mono text-[10px] text-ink-muted mt-0.5">
+                      {relatedMovie.year}
+                    </span>
+                  )}
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Article Links */}
         <ArticleLinksSection
