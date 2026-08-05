@@ -1,5 +1,6 @@
 const MAX_ORGANIZATIONS = 2;
 const MAX_POST_LENGTH = 300;
+const HASHTAG = '#青空映画部';
 
 type DailyPostInput = {
   title: string;
@@ -25,8 +26,12 @@ export function buildDailyPostText({
     lines.push(`▶ ${availabilityLabels.join(' / ')}`);
   }
 
-  const text = lines.join('\n');
-  return [...text].length <= MAX_POST_LENGTH
-    ? text
-    : [...text].slice(0, MAX_POST_LENGTH - 1).join('') + '…';
+  const body = lines.join('\n');
+  const maxBodyLength = MAX_POST_LENGTH - [...`\n${HASHTAG}`].length;
+  const truncatedBody =
+    [...body].length <= maxBodyLength
+      ? body
+      : [...body].slice(0, maxBodyLength - 1).join('') + '…';
+
+  return `${truncatedBody}\n${HASHTAG}`;
 }

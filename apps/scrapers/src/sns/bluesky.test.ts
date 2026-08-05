@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {buildPostRecord} from './bluesky';
+import {buildPostRecord, detectTagFacets} from './bluesky';
 
 const base = {
   text: '今日の1本 —『ハウスメイド』(2010)',
@@ -56,5 +56,49 @@ describe('buildPostRecord', () => {
     const record = buildPostRecord(base);
 
     expect('thumb' in record.embed.external).toBe(false);
+  });
+
+  it('本文にハッシュタグがあればfacetsを付ける', () => {
+    const record = buildPostRecord({...base, text: 'こんにちは #青空映画部'});
+
+    expect(record.facets).toEqual([
+      {
+        index: {byteStart: 16, byteEnd: 32},
+        features: [{$type: 'app.bsky.richtext.facet#tag', tag: '青空映画部'}],
+      },
+    ]);
+  });
+
+  it('ハッシュタグが無ければfacetsキー自体を含めない', () => {
+    const record = buildPostRecord(base);
+
+    expect('facets' in record).toBe(false);
+  });
+});
+
+describe('detectTagFacets', () => {
+  it('UTF-8バイトオフセットでタグ位置を返す', () => {
+    const facets = detectTagFacets('abc #tag def');
+
+    expect(facets).toEqual([
+      {
+        index: {byteStart: 4, byteEnd: 8},
+        features: [{$type: 'app.bsky.richtext.facet#tag', tag: 'tag'}],
+      },
+    ]);
+  });
+
+  it('複数のタグを検出する', () => {
+    const facets = detectTagFacets('#foo #bar');
+
+    expect(facets).toHaveLength(2);
+    expect(facets[1]).toEqual({
+      index: {byteStart: 5, byteEnd: 9},
+      features: [{$type: 'app.bsky.richtext.facet#tag', tag: 'bar'}],
+    });
+  });
+
+  it('タグが無ければ空配列を返す', () => {
+    expect(detectTagFacets('タグなし本文')).toEqual([]);
   });
 });
