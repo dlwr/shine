@@ -23,6 +23,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const slugs = await fetchAwardSlugs(context, request.signal);
   const entries: SitemapEntry[] = [
     {path: '/awards', changefreq: 'weekly'},
+    {path: '/daily', changefreq: 'daily'},
     ...slugs.map(slug => ({
       path: `/awards/${slug}`,
       changefreq: 'weekly' as const,
