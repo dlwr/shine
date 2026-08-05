@@ -369,6 +369,62 @@ describe('MovieDetail Component', () => {
 
       expect(result).toContainEqual({title: '映画が見つかりません | SHINE'});
     });
+
+    it('schema.org MovieのJSON-LDを返す', () => {
+      const jsonLd = successMeta().find(
+        descriptor => 'script:ld+json' in descriptor,
+      ) as {'script:ld+json': Record<string, unknown>} | undefined;
+
+      expect(jsonLd?.['script:ld+json']).toMatchObject({
+        '@context': 'https://schema.org',
+        '@type': 'Movie',
+        name: 'パルム・ドール受賞作品',
+        url: 'https://shine-film.com/movies/movie-123',
+        image: 'https://example.com/poster-large.jpg',
+        datePublished: '2023',
+        sameAs: 'https://www.imdb.com/title/tt1234567/',
+      });
+    });
+
+    it('JSON-LDのawardには受賞したノミネーションだけを含める', () => {
+      const jsonLd = successMeta().find(
+        descriptor => 'script:ld+json' in descriptor,
+      ) as {'script:ld+json': Record<string, unknown>};
+
+      expect(jsonLd['script:ld+json'].award).toEqual([
+        "Cannes Film Festival Palme d'Or (2023)",
+      ]);
+    });
+
+    it('ポスターが無ければJSON-LDにimageキーを含めない', () => {
+      const result = meta(
+        createMetaArguments(
+          {
+            movieDetail: {...mockMovieDetail, posterUrl: undefined},
+            locale: 'ja',
+          },
+          {id: 'movie-123'},
+        ),
+      );
+      const jsonLd = result.find(
+        descriptor => 'script:ld+json' in descriptor,
+      ) as {'script:ld+json': Record<string, unknown>};
+
+      expect('image' in jsonLd['script:ld+json']).toBe(false);
+    });
+
+    it('エラー状態の場合はJSON-LDを返さない', () => {
+      const result = meta(
+        createMetaArguments(
+          {error: '映画が見つかりませんでした', status: 404, locale: 'ja'},
+          {id: 'movie-123'},
+        ),
+      );
+
+      expect(result.some(descriptor => 'script:ld+json' in descriptor)).toBe(
+        false,
+      );
+    });
   });
 
   describe('Component', () => {
