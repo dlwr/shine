@@ -208,6 +208,68 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /movies/{id}/related:
+    get:
+      summary: Get related movies
+      description: Returns movies sharing an award category with the given movie, winners first
+      operationId: getRelatedMovies
+      tags:
+        - Movies
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: locale
+          in: query
+          description: Language preference for movie titles
+          required: false
+          schema:
+            type: string
+            enum: [en, ja]
+            default: ja
+        - name: limit
+          in: query
+          description: Maximum number of movies to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+            default: 6
+      responses:
+        '200':
+          description: Successfully retrieved related movies
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [movies]
+                properties:
+                  movies:
+                    type: array
+                    items:
+                      type: object
+                      required: [uid, title]
+                      properties:
+                        uid:
+                          type: string
+                          format: uuid
+                        title:
+                          type: string
+                        year:
+                          type: integer
+                        posterUrl:
+                          type: string
+                          format: uri
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /movies/{id}/article-links:
     get:
       summary: Get movie article links
