@@ -79,6 +79,21 @@ const mockMovieDetail = {
   ],
 };
 
+const mockRelatedMovies = [
+  {
+    uid: 'related-1',
+    title: '関連映画A',
+    year: 2022,
+    posterUrl: 'https://example.com/related-a.jpg',
+  },
+  {
+    uid: 'related-2',
+    title: '関連映画B',
+    year: 2021,
+    posterUrl: undefined,
+  },
+];
+
 // Fetchのモック
 globalThis.fetch = vi.fn();
 
@@ -204,6 +219,10 @@ describe('MovieDetail Component', () => {
         ok: true,
         json: async () => mockMovieDetail,
       } as Response);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({movies: mockRelatedMovies}),
+      } as Response);
 
       const context = createMockContext();
       const parameters = {id: 'movie-123'};
@@ -223,11 +242,44 @@ describe('MovieDetail Component', () => {
           signal: request.signal,
         },
       );
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:8787/movies/movie-123/related?locale=ja&limit=6',
+        {
+          signal: request.signal,
+        },
+      );
       expect(result).toEqual({
         movieDetail: mockMovieDetail,
+        relatedMovies: mockRelatedMovies,
         turnstileSiteKey: 'test-site-key',
         locale: 'ja',
         apiUrl: 'http://localhost:8787',
+      });
+    });
+
+    it('関連映画の取得に失敗しても詳細は返す', async () => {
+      const mockFetch = vi.mocked(fetch);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockMovieDetail,
+      } as Response);
+      mockFetch.mockRejectedValueOnce(new Error('Network error'));
+
+      const context = createMockContext();
+      const parameters = {id: 'movie-123'};
+      const request = new Request('http://localhost:3000/movies/movie-123');
+      const result = await loader(
+        createLoaderArguments(context, request, parameters, {
+          matches: createMatches(
+            createLoaderData(),
+            createParameters(parameters.id),
+          ),
+        }),
+      );
+
+      expect(result).toMatchObject({
+        movieDetail: mockMovieDetail,
+        relatedMovies: [],
       });
     });
 
@@ -428,6 +480,40 @@ describe('MovieDetail Component', () => {
   });
 
   describe('Component', () => {
+    it('関連映画のリンクを表示する', () => {
+      const loaderData = createLoaderData({relatedMovies: mockRelatedMovies});
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      const link = screen.getByRole('link', {name: /関連映画A/});
+      expect(link).toHaveAttribute('href', '/movies/related-1');
+      expect(screen.getByText('関連映画')).toBeInTheDocument();
+    });
+
+    it('関連映画が無ければセクションを出さない', () => {
+      const loaderData = createLoaderData({relatedMovies: []});
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.queryByText('関連映画')).not.toBeInTheDocument();
+    });
+
     it('映画詳細データが正常に表示される', () => {
       const loaderData = createLoaderData();
       const parameters = createParameters('movie-123');
