@@ -439,6 +439,29 @@ function summarizeOrganizations(
   return names.slice(0, MAX_DESCRIPTION_ORGANIZATIONS).join('・');
 }
 
+function buildMovieJsonLd(
+  movieDetail: MovieDetailData,
+): Record<string, unknown> {
+  const awards = movieDetail.nominations
+    .filter(nomination => nomination.isWinner)
+    .map(
+      nomination =>
+        `${nomination.organization.name} ${nomination.category.name} (${nomination.ceremony.year})`,
+    );
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Movie',
+    name: movieDetail.title,
+    url: `${SITE_URL}/movies/${movieDetail.uid}`,
+    ...(movieDetail.posterUrl ? {image: movieDetail.posterUrl} : {}),
+    ...(movieDetail.description ? {description: movieDetail.description} : {}),
+    ...(movieDetail.year ? {datePublished: String(movieDetail.year)} : {}),
+    ...(movieDetail.imdbUrl ? {sameAs: movieDetail.imdbUrl} : {}),
+    ...(awards.length > 0 ? {award: awards} : {}),
+  };
+}
+
 export function meta({data, params}: Route.MetaArgs): Route.MetaDescriptors {
   const payload = data as LoaderData | undefined;
   const locale = payload?.locale ?? DEFAULT_LOCALE;
@@ -462,15 +485,18 @@ export function meta({data, params}: Route.MetaArgs): Route.MetaDescriptors {
     : '';
   const selection = organizations ? `${organizations}に選出。` : '';
 
-  return buildSocialMeta({
-    title: `${title} (${year}) | SHINE`,
-    description: `『${title}』(${year}年)。${selection}いま配信・レンタルで観られるかをまとめています。`,
-    path,
-    locale,
-    type: 'article',
-    imageUrl: `${SITE_URL}/og/movie.png?id=${params.id}`,
-    largeImage: true,
-  });
+  return [
+    ...buildSocialMeta({
+      title: `${title} (${year}) | SHINE`,
+      description: `『${title}』(${year}年)。${selection}いま配信・レンタルで観られるかをまとめています。`,
+      path,
+      locale,
+      type: 'article',
+      imageUrl: `${SITE_URL}/og/movie.png?id=${params.id}`,
+      largeImage: true,
+    }),
+    ...(movieDetail ? [{'script:ld+json': buildMovieJsonLd(movieDetail)}] : []),
+  ];
 }
 
 export async function loader({
