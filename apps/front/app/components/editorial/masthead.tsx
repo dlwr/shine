@@ -30,6 +30,12 @@ export function Masthead({locale = 'en'}: {locale?: string}) {
         </p>
         <LanguageSelector locale={locale} />
         <a
+          href="/daily"
+          aria-label="Daily picks"
+          className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-ink text-ink">
+          DAILY
+        </a>
+        <a
           href="/awards"
           aria-label="Awards"
           className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-ink text-ink">
