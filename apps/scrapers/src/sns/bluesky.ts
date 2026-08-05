@@ -24,16 +24,38 @@ type PostRecordInput = {
   thumb?: BlobReference;
 };
 
+export type TagFacet = {
+  index: {byteStart: number; byteEnd: number};
+  features: Array<{$type: 'app.bsky.richtext.facet#tag'; tag: string}>;
+};
+
 export type PostRecord = {
   $type: 'app.bsky.feed.post';
   text: string;
   createdAt: string;
   langs: string[];
+  facets?: TagFacet[];
   embed: {
     $type: 'app.bsky.embed.external';
     external: ExternalLink & {thumb?: BlobReference};
   };
 };
+
+export function detectTagFacets(text: string): TagFacet[] {
+  const encoder = new TextEncoder();
+  const facets: TagFacet[] = [];
+
+  for (const match of text.matchAll(/#([^\s#]+)/g)) {
+    const byteStart = encoder.encode(text.slice(0, match.index)).length;
+    const byteEnd = byteStart + encoder.encode(match[0]).length;
+    facets.push({
+      index: {byteStart, byteEnd},
+      features: [{$type: 'app.bsky.richtext.facet#tag', tag: match[1]}],
+    });
+  }
+
+  return facets;
+}
 
 export function buildPostRecord({
   text,
@@ -41,11 +63,13 @@ export function buildPostRecord({
   link,
   thumb,
 }: PostRecordInput): PostRecord {
+  const facets = detectTagFacets(text);
   return {
     $type: 'app.bsky.feed.post',
     text,
     createdAt,
     langs: ['ja'],
+    ...(facets.length > 0 ? {facets} : {}),
     embed: {
       $type: 'app.bsky.embed.external',
       external: {...link, ...(thumb ? {thumb} : {})},

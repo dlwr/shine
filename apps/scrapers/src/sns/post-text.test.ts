@@ -58,4 +58,18 @@ describe('buildDailyPostText', () => {
 
     expect([...text].length).toBeLessThanOrEqual(300);
   });
+
+  it('末尾に #青空映画部 タグを付ける', () => {
+    expect(buildDailyPostText(base)).toMatch(/#青空映画部$/);
+  });
+
+  it('切り詰めが起きてもタグは末尾に残る', () => {
+    const text = buildDailyPostText({
+      ...base,
+      title: 'あ'.repeat(400),
+    });
+
+    expect([...text].length).toBeLessThanOrEqual(300);
+    expect(text).toMatch(/#青空映画部$/);
+  });
 });
