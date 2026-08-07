@@ -1,15 +1,16 @@
 #!/usr/bin/env -S tsx
 
 /**
- * 今日のデイリーセレクションをBlueskyへ投稿するCLI。
+ * 今日のデイリーセレクションをBlueskyとXへ投稿するCLI。
  *
  * 使い方:
  *   pnpm run sns-post --dry-run   投稿せず本文とカード情報を表示
  *   pnpm run sns-post             実際に投稿する
  *
- * 必要な環境変数(実投稿時):
+ * 必要な環境変数(実投稿時、設定があるサービスにだけ投稿する):
  *   BLUESKY_IDENTIFIER   例: shine-film.com
  *   BLUESKY_APP_PASSWORD アプリパスワード
+ *   X_API_KEY / X_API_KEY_SECRET / X_ACCESS_TOKEN / X_ACCESS_TOKEN_SECRET
  */
 import process from 'node:process';
 import {loadEnvironmentFiles} from './common/environment';
@@ -23,7 +24,8 @@ import {
   publishPost,
   uploadBlob,
 } from './sns/bluesky';
-import {buildDailyPostText} from './sns/post-text';
+import {buildDailyPostText, buildXPostText} from './sns/post-text';
+import {postTweet, type XCredentials} from './sns/x';
 
 loadEnvironmentFiles();
 
@@ -65,6 +67,59 @@ async function fetchOgImage(
   return response.ok ? response.arrayBuffer() : undefined;
 }
 
+function getXCredentials(): XCredentials | undefined {
+  const consumerKey = process.env.X_API_KEY;
+  const consumerSecret = process.env.X_API_KEY_SECRET;
+  const accessToken = process.env.X_ACCESS_TOKEN;
+  const accessTokenSecret = process.env.X_ACCESS_TOKEN_SECRET;
+
+  return consumerKey && consumerSecret && accessToken && accessTokenSecret
+    ? {consumerKey, consumerSecret, accessToken, accessTokenSecret}
+    : undefined;
+}
+
+async function postToBluesky(
+  text: string,
+  movieUid: string,
+  link: {uri: string; title: string; description: string},
+): Promise<void> {
+  const identifier = process.env.BLUESKY_IDENTIFIER;
+  const password = process.env.BLUESKY_APP_PASSWORD;
+  if (!identifier || !password) {
+    console.log('Bluesky: 認証情報が無いためスキップします');
+    return;
+  }
+
+  const session = await createSession(identifier, password);
+  const ogImage = await fetchOgImage(movieUid);
+  const thumb = ogImage
+    ? await uploadBlob(session, ogImage, 'image/png')
+    : undefined;
+
+  const result = await publishPost(
+    session,
+    buildPostRecord({
+      text,
+      createdAt: new Date().toISOString(),
+      link,
+      thumb,
+    }),
+  );
+
+  console.log(`Bluesky: 投稿しました ${result.uri}`);
+}
+
+async function postToX(text: string): Promise<void> {
+  const credentials = getXCredentials();
+  if (!credentials) {
+    console.log('X: 認証情報が無いためスキップします');
+    return;
+  }
+
+  const result = await postTweet(credentials, text);
+  console.log(`X: 投稿しました https://x.com/i/status/${result.id}`);
+}
+
 async function main() {
   const isDryRun = process.argv.includes('--dry-run');
 
@@ -80,11 +135,16 @@ async function main() {
   ];
   const availabilityLabels = buildAvailabilityLabels(movie.availability ?? []);
 
-  const text = buildDailyPostText({
+  const postInput = {
     title,
     year: movie.year,
     organizations: organizations.slice(0, MAX_TEXT_ORGANIZATIONS),
     availabilityLabels: availabilityLabels.slice(0, MAX_TEXT_AVAILABILITY),
+  };
+  const text = buildDailyPostText(postInput);
+  const xText = buildXPostText({
+    ...postInput,
+    url: `${SITE_URL}/movies/${movie.uid}`,
   });
 
   const link = {
@@ -93,43 +153,38 @@ async function main() {
     description: `『${title}』をいま観られるかをまとめています。`,
   };
 
-  console.log('--- 投稿内容 ---');
+  console.log('--- Bluesky投稿内容 ---');
   console.log(text);
   console.log('--- リンクカード ---');
   console.log(`uri:   ${link.uri}`);
   console.log(`title: ${link.title}`);
   console.log(`thumb: ${SITE_URL}/og/movie.png?id=${movie.uid}`);
+  console.log('--- X投稿内容 ---');
+  console.log(xText);
 
   if (isDryRun) {
     console.log('\n(dry-run: 投稿していません)');
     return;
   }
 
-  const identifier = process.env.BLUESKY_IDENTIFIER;
-  const password = process.env.BLUESKY_APP_PASSWORD;
-  if (!identifier || !password) {
-    throw new Error(
-      'BLUESKY_IDENTIFIER と BLUESKY_APP_PASSWORD を設定してください。',
-    );
+  const errors: Error[] = [];
+  try {
+    await postToBluesky(text, movie.uid, link);
+  } catch (error) {
+    errors.push(error as Error);
+    console.error('Bluesky: 投稿に失敗しました:', error);
   }
 
-  const session = await createSession(identifier, password);
-  const ogImage = await fetchOgImage(movie.uid);
-  const thumb = ogImage
-    ? await uploadBlob(session, ogImage, 'image/png')
-    : undefined;
+  try {
+    await postToX(xText);
+  } catch (error) {
+    errors.push(error as Error);
+    console.error('X: 投稿に失敗しました:', error);
+  }
 
-  const result = await publishPost(
-    session,
-    buildPostRecord({
-      text,
-      createdAt: new Date().toISOString(),
-      link,
-      thumb,
-    }),
-  );
-
-  console.log(`\n投稿しました: ${result.uri}`);
+  if (errors.length > 0) {
+    throw new Error(`${errors.length}件の投稿が失敗しました`);
+  }
 }
 
 try {
