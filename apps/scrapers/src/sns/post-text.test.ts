@@ -87,10 +87,11 @@ describe('buildXPostText', () => {
     url: 'https://shine-film.com/movies/abc-123',
   };
 
-  it('本文の末尾にURLを含む', () => {
+  it('本文の末尾にスキームを外したURLを含む(リンク付き投稿の従量課金を避ける)', () => {
     const text = buildXPostText(xBase);
 
-    expect(text).toMatch(/https:\/\/shine-film\.com\/movies\/abc-123$/);
+    expect(text).toMatch(/\nshine-film\.com\/movies\/abc-123$/);
+    expect(text).not.toContain('https://');
   });
 
   it('タイトルと選出元と視聴可否を含む', () => {
@@ -105,14 +106,13 @@ describe('buildXPostText', () => {
     expect(buildXPostText(xBase)).not.toContain('#');
   });
 
-  it('長いタイトルでも本文のweighted長がURL込み280以内に収まる', () => {
+  it('長いタイトルでも全体のweighted長が280以内に収まる', () => {
     const text = buildXPostText({
       ...xBase,
       title: 'あ'.repeat(300),
     });
 
-    const withoutUrl = text.replace(/\nhttps:\/\/\S+$/, '');
-    expect(xWeightedLength(withoutUrl) + 1 + 23).toBeLessThanOrEqual(280);
-    expect(text).toMatch(/https:\/\/shine-film\.com\/movies\/abc-123$/);
+    expect(xWeightedLength(text)).toBeLessThanOrEqual(280);
+    expect(text).toMatch(/\nshine-film\.com\/movies\/abc-123$/);
   });
 });

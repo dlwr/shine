@@ -53,7 +53,9 @@ export function xWeightedLength(text: string): number {
 
 export function buildXPostText(input: DailyPostInput & {url: string}): string {
   const body = buildBodyLines(input);
-  const maxBodyWeight = X_MAX_WEIGHTED_LENGTH - X_URL_WEIGHT - 1;
+  const bareUrl = input.url.replace(/^https?:\/\//, '');
+  const urlWeight = Math.max(X_URL_WEIGHT, xWeightedLength(bareUrl));
+  const maxBodyWeight = X_MAX_WEIGHTED_LENGTH - urlWeight - 1;
 
   let truncatedBody = body;
   if (xWeightedLength(body) > maxBodyWeight) {
@@ -73,5 +75,5 @@ export function buildXPostText(input: DailyPostInput & {url: string}): string {
     truncatedBody = characters.slice(0, endIndex).join('') + '…';
   }
 
-  return `${truncatedBody}\n${input.url}`;
+  return `${truncatedBody}\n${bareUrl}`;
 }
