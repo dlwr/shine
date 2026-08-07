@@ -46,7 +46,18 @@ export class MoviesService extends BaseService {
         year: movies.year,
         originalLanguage: movies.originalLanguage,
         imdbId: movies.imdbId,
-        title: translations.content,
+        title: sql<string | null>`
+					(
+					  SELECT content
+					  FROM translations
+					  WHERE translations.resource_uid = movies.uid
+					    AND translations.resource_type = 'movie_title'
+					  ORDER BY (translations.language_code = 'ja') DESC,
+					    translations.is_default DESC,
+					    (translations.language_code = 'en') DESC
+					  LIMIT 1
+					)
+				`.as('title'),
         hasNominations: sql`
 					(
 					  SELECT COUNT(*) > 0
@@ -80,7 +91,7 @@ export class MoviesService extends BaseService {
         const filtered =
           conditions.length > 0 ? joined.where(and(...conditions)) : joined;
 
-        return filtered.groupBy(movies.uid, translations.content);
+        return filtered.groupBy(movies.uid);
       }
 
       if (conditions.length > 0) {
@@ -212,7 +223,19 @@ export class MoviesService extends BaseService {
         imdbId: movies.imdbId,
         tmdbId: movies.tmdbId,
         mediaType: movies.mediaType,
-        title: translations.content,
+        title: sql<string | null>`
+					(
+					  SELECT content
+					  FROM translations
+					  WHERE translations.resource_uid = movies.uid
+					    AND translations.resource_type = 'movie_title'
+					  ORDER BY (translations.language_code = ${locale}) DESC,
+					    translations.is_default DESC,
+					    (translations.language_code = 'ja') DESC,
+					    (translations.language_code = 'en') DESC
+					  LIMIT 1
+					)
+				`.as('title'),
         description: sql`
 					(
 					  SELECT content
@@ -234,14 +257,6 @@ export class MoviesService extends BaseService {
 				`.as('posterUrl'),
       })
       .from(movies)
-      .leftJoin(
-        translations,
-        and(
-          eq(translations.resourceUid, movies.uid),
-          eq(translations.resourceType, 'movie_title'),
-          eq(translations.languageCode, locale),
-        ),
-      )
       .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
       .limit(1);
 
