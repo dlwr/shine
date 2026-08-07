@@ -1,6 +1,8 @@
 const MAX_ORGANIZATIONS = 2;
 const MAX_POST_LENGTH = 300;
 const HASHTAG = '#青空映画部';
+const X_MAX_WEIGHTED_LENGTH = 280;
+const X_URL_WEIGHT = 23;
 
 type DailyPostInput = {
   title: string;
@@ -9,7 +11,7 @@ type DailyPostInput = {
   availabilityLabels: string[];
 };
 
-export function buildDailyPostText({
+function buildBodyLines({
   title,
   year,
   organizations,
@@ -26,7 +28,11 @@ export function buildDailyPostText({
     lines.push(`▶ ${availabilityLabels.join(' / ')}`);
   }
 
-  const body = lines.join('\n');
+  return lines.join('\n');
+}
+
+export function buildDailyPostText(input: DailyPostInput): string {
+  const body = buildBodyLines(input);
   const maxBodyLength = MAX_POST_LENGTH - [...`\n${HASHTAG}`].length;
   const truncatedBody =
     [...body].length <= maxBodyLength
@@ -34,4 +40,38 @@ export function buildDailyPostText({
       : [...body].slice(0, maxBodyLength - 1).join('') + '…';
 
   return `${truncatedBody}\n${HASHTAG}`;
+}
+
+export function xWeightedLength(text: string): number {
+  let length = 0;
+  for (const character of text) {
+    length += character.codePointAt(0)! < 0x11_00 ? 1 : 2;
+  }
+
+  return length;
+}
+
+export function buildXPostText(input: DailyPostInput & {url: string}): string {
+  const body = buildBodyLines(input);
+  const maxBodyWeight = X_MAX_WEIGHTED_LENGTH - X_URL_WEIGHT - 1;
+
+  let truncatedBody = body;
+  if (xWeightedLength(body) > maxBodyWeight) {
+    const characters = [...body];
+    let weight = 2;
+    let endIndex = 0;
+    for (const [index, character] of characters.entries()) {
+      const characterWeight = character.codePointAt(0)! < 0x11_00 ? 1 : 2;
+      if (weight + characterWeight > maxBodyWeight) {
+        break;
+      }
+
+      weight += characterWeight;
+      endIndex = index + 1;
+    }
+
+    truncatedBody = characters.slice(0, endIndex).join('') + '…';
+  }
+
+  return `${truncatedBody}\n${input.url}`;
 }
