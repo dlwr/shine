@@ -104,5 +104,40 @@ describe('タイトルのフォールバック', () => {
       expect(result.movies).toHaveLength(1);
       expect(result.movies[0].title).toBe('The Racket');
     });
+
+    it('日本語タイトルで検索できる', async () => {
+      const service = new MoviesService(environment);
+      const result = await service.searchMovies({
+        page: 1,
+        limit: 10,
+        query: '日本語タイトル',
+      });
+
+      expect(result.movies.map(movie => movie.uid)).toEqual(['movie-ja']);
+    });
+
+    it('ja以外の言語のタイトルでも検索にヒットする', async () => {
+      const service = new MoviesService(environment);
+      const result = await service.searchMovies({
+        page: 1,
+        limit: 10,
+        query: 'Racket',
+      });
+
+      expect(result.movies.map(movie => movie.uid)).toEqual([
+        'movie-en-default',
+      ]);
+    });
+
+    it('検索結果の総数もヒットした映画数と一致する', async () => {
+      const service = new MoviesService(environment);
+      const result = await service.searchMovies({
+        page: 1,
+        limit: 10,
+        query: 'Racket',
+      });
+
+      expect(result.pagination.totalCount).toBe(1);
+    });
   });
 });

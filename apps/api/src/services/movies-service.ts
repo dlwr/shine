@@ -1,4 +1,4 @@
-import {and, eq, inArray, isNull, like, sql} from '@shine/database';
+import {and, eq, inArray, isNull, sql} from '@shine/database';
 import {articleLinks} from '@shine/database/schema/article-links';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
@@ -28,7 +28,15 @@ export class MoviesService extends BaseService {
     const conditions = [isNull(movies.deletedAt)];
 
     if (query) {
-      conditions.push(like(translations.content, `%${query}%`));
+      conditions.push(sql`
+				EXISTS (
+				  SELECT 1
+				  FROM translations
+				  WHERE translations.resource_uid = movies.uid
+				    AND translations.resource_type = 'movie_title'
+				    AND translations.content LIKE ${`%${query}%`}
+				)
+			`);
     }
 
     if (year && !Number.isNaN(Number(year))) {
@@ -66,15 +74,7 @@ export class MoviesService extends BaseService {
 					)
 				`.as('hasNominations'),
       })
-      .from(movies)
-      .leftJoin(
-        translations,
-        and(
-          eq(translations.resourceUid, movies.uid),
-          eq(translations.resourceType, 'movie_title'),
-          eq(translations.languageCode, 'ja'),
-        ),
-      );
+      .from(movies);
 
     type BaseQuery = typeof baseQuery;
     type SearchResultRow = Awaited<ReturnType<BaseQuery['execute']>>[number];
@@ -104,15 +104,7 @@ export class MoviesService extends BaseService {
     // Build count query
     const baseCountQuery = this.database
       .select({count: sql`COUNT(DISTINCT movies.uid)`.as('count')})
-      .from(movies)
-      .leftJoin(
-        translations,
-        and(
-          eq(translations.resourceUid, movies.uid),
-          eq(translations.resourceType, 'movie_title'),
-          eq(translations.languageCode, 'ja'),
-        ),
-      );
+      .from(movies);
 
     const countQuery = (() => {
       const withAwards =
