@@ -34,8 +34,8 @@ describe('Cache Utilities', () => {
       const fullKey = getCacheKeyForMovie(movieId, true);
       const englishKey = getCacheKeyForMovie(movieId, false, 'en');
 
-      expect(basicKey).toBe(`movie:${movieId}:basic:ja:v2`);
-      expect(fullKey).toBe(`movie:${movieId}:full:ja:v2`);
+      expect(basicKey).toBe(`movie:${movieId}:basic:ja:v3`);
+      expect(fullKey).toBe(`movie:${movieId}:full:ja:v3`);
       expect(basicKey).not.toBe(fullKey);
       expect(englishKey).not.toBe(basicKey);
     });
