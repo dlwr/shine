@@ -1,4 +1,4 @@
-import type {Route} from './+types/daily';
+import type {Route} from './+types/monthly';
 import {
   buildArchiveMeta,
   loadSelectionArchive,
@@ -8,13 +8,14 @@ import {
 } from '@/lib/selection-archive';
 
 const CONFIG: SelectionArchiveConfig = {
-  type: 'daily',
-  path: '/daily',
-  heading: 'DAILY PICKS',
-  subtitle: '「今日の1本」の過去のセレクション',
-  metaTitle: '今日の1本 アーカイブ | SHINE',
+  type: 'monthly',
+  path: '/monthly',
+  heading: 'MONTHLY PICKS',
+  subtitle: '「今月の1本」の過去のセレクション',
+  metaTitle: '今月の1本 アーカイブ | SHINE',
   metaDescription:
-    '映画賞や名作リストに選ばれた映画から毎日1本を紹介する「今日の1本」の過去のセレクション一覧。',
+    '映画賞や名作リストに選ばれた映画から毎月1本を紹介する「今月の1本」の過去のセレクション一覧。',
+  formatDate: selectionDate => selectionDate.slice(0, 7),
 };
 
 export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
@@ -26,7 +27,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
   return loadSelectionArchive(CONFIG, context, request);
 }
 
-export default function DailyArchive({loaderData}: Route.ComponentProps) {
+export default function MonthlyArchive({loaderData}: Route.ComponentProps) {
   const {items, locale} = loaderData as SelectionArchiveData;
   return <SelectionArchivePage config={CONFIG} items={items} locale={locale} />;
 }

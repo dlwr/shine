@@ -1,8 +1,8 @@
 import '@testing-library/jest-dom';
 import {render, screen} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import DailyArchivePage, {loader, meta} from './daily';
-import type {Route} from './+types/daily';
+import WeeklyArchivePage, {loader, meta} from './weekly';
+import type {Route} from './+types/weekly';
 
 globalThis.fetch = vi.fn();
 
@@ -20,19 +20,19 @@ const mockHistory = {
       uid: 'movie-1',
       title: '脱出',
       year: 1972,
-      selectionDate: '2026-08-05',
+      selectionDate: '2026-08-07',
     },
     {
       uid: 'movie-2',
       title: 'エンター・ザ・ボイド',
       year: 2009,
-      selectionDate: '2026-08-04',
+      selectionDate: '2026-07-31',
     },
     {
       uid: 'movie-3',
       title: '東への道',
       year: 1920,
-      selectionDate: '2026-08-03',
+      selectionDate: '2026-07-24',
     },
   ],
 };
@@ -60,13 +60,13 @@ const createComponentProperties = (): ComponentProperties =>
     matches: [],
   });
 
-describe('Daily archive page', () => {
+describe('Weekly archive page', () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
   describe('loader', () => {
-    it('APIから日次セレクション履歴を取得する', async () => {
+    it('APIから週次セレクション履歴を取得する', async () => {
       const mockFetch = vi.mocked(fetch);
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -74,13 +74,13 @@ describe('Daily archive page', () => {
         json: async () => mockHistory,
       } as Response);
 
-      const request = new Request('http://localhost:3000/daily');
+      const request = new Request('http://localhost:3000/weekly');
       const result = await loader(
         createLoaderArguments(createMockContext(), request),
       );
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8787/selections/daily/history?locale=ja&limit=30',
+        'http://localhost:8787/selections/weekly/history?locale=ja&limit=30',
         {signal: request.signal},
       );
       expect(result).toEqual({items: mockHistory.items, locale: 'ja'});
@@ -93,7 +93,7 @@ describe('Daily archive page', () => {
         status: 500,
       } as Response);
 
-      const request = new Request('http://localhost:3000/daily');
+      const request = new Request('http://localhost:3000/weekly');
 
       await expect(
         loader(createLoaderArguments(createMockContext(), request)),
@@ -108,46 +108,40 @@ describe('Daily archive page', () => {
           data: {items: mockHistory.items, locale: 'ja'},
           params: {},
           location: {
-            pathname: '/daily',
+            pathname: '/weekly',
             search: '',
             hash: '',
             state: undefined,
-            key: 'daily-test',
+            key: 'weekly-test',
           },
           matches: [],
         }),
       );
 
-      expect(result).toContainEqual({title: '今日の1本 アーカイブ | SHINE'});
+      expect(result).toContainEqual({title: '今週の1本 アーカイブ | SHINE'});
     });
   });
 
   describe('component', () => {
     it('映画タイトルと詳細ページへのリンクを表示する', () => {
-      render(<DailyArchivePage {...createComponentProperties()} />);
+      render(<WeeklyArchivePage {...createComponentProperties()} />);
 
       const link = screen.getByRole('link', {name: /脱出/});
       expect(link).toHaveAttribute('href', '/movies/movie-1');
     });
 
-    it('セレクション日付を表示する', () => {
-      render(<DailyArchivePage {...createComponentProperties()} />);
+    it('週の開始日を表示する', () => {
+      render(<WeeklyArchivePage {...createComponentProperties()} />);
 
-      expect(screen.getByText('2026-08-05')).toBeInTheDocument();
-    });
-
-    it('全アイテムを表示する', () => {
-      render(<DailyArchivePage {...createComponentProperties()} />);
-
-      expect(screen.getAllByRole('link', {name: /『/})).toHaveLength(3);
+      expect(screen.getByText('2026-08-07')).toBeInTheDocument();
     });
 
     it('他のアーカイブへのリンクを表示する', () => {
-      render(<DailyArchivePage {...createComponentProperties()} />);
+      render(<WeeklyArchivePage {...createComponentProperties()} />);
 
-      expect(screen.getByRole('link', {name: 'WEEKLY'})).toHaveAttribute(
+      expect(screen.getByRole('link', {name: 'DAILY'})).toHaveAttribute(
         'href',
-        '/weekly',
+        '/daily',
       );
       expect(screen.getByRole('link', {name: 'MONTHLY'})).toHaveAttribute(
         'href',
