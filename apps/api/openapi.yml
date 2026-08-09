@@ -60,15 +60,22 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /selections/daily/history:
+  /selections/{type}/history:
     get:
-      summary: Get recent daily selections
-      description: Returns recent daily movie selections in reverse chronological order, e.g. for RSS feeds
-      operationId: getDailySelectionHistory
+      summary: Get recent selections per type
+      description: Returns recent movie selections of the given type in reverse chronological order, e.g. for archive pages or RSS feeds
+      operationId: getSelectionHistory
       tags:
         - Movies
       security: []
       parameters:
+        - name: type
+          in: path
+          description: Selection period type
+          required: true
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
         - name: locale
           in: query
           description: Language preference for movie titles
@@ -88,7 +95,7 @@ paths:
             default: 14
       responses:
         '200':
-          description: Successfully retrieved daily selection history
+          description: Successfully retrieved selection history
           content:
             application/json:
               schema:
@@ -111,6 +118,8 @@ paths:
                         selectionDate:
                           type: string
                           format: date
+        '400':
+          $ref: '#/components/responses/ValidationError'
         '500':
           $ref: '#/components/responses/InternalServerError'
 

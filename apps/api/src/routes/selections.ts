@@ -227,9 +227,14 @@ selectionsRoutes.get('/', async c => {
   }
 });
 
-// Public: recent daily selections (for RSS feed etc.)
-selectionsRoutes.get('/selections/daily/history', async c => {
+// Public: recent selections per type (for archive pages, RSS feed etc.)
+selectionsRoutes.get('/selections/:type/history', async c => {
   try {
+    const type = c.req.param('type');
+    if (type !== 'daily' && type !== 'weekly' && type !== 'monthly') {
+      return c.json({error: 'Invalid selection type'}, 400);
+    }
+
     const database = getDatabase(c.env);
     const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
     const limitParameter = Number(c.req.query('limit') ?? '14');
@@ -237,7 +242,7 @@ selectionsRoutes.get('/selections/daily/history', async c => {
       Number.isInteger(limitParameter) && limitParameter > 0
         ? Math.min(limitParameter, 30)
         : 14;
-    const today = getSelectionDate(new Date(), 'daily');
+    const today = getSelectionDate(new Date(), type);
 
     const rows = await database
       .select({
@@ -263,7 +268,7 @@ selectionsRoutes.get('/selections/daily/history', async c => {
       .innerJoin(movies, eq(movieSelections.movieId, movies.uid))
       .where(
         and(
-          eq(movieSelections.selectionType, 'daily'),
+          eq(movieSelections.selectionType, type),
           sql`${movieSelections.selectionDate} <= ${today}`,
           isNull(movies.deletedAt),
         ),
@@ -278,9 +283,9 @@ selectionsRoutes.get('/selections/daily/history', async c => {
       selectionDate: row.selectionDate,
     }));
 
-    return createCachedResponse({items}, getCacheTTL.selections.daily);
+    return createCachedResponse({items}, getCacheTTL.selections[type]);
   } catch (error) {
-    console.error('Error fetching daily selection history:', error);
+    console.error('Error fetching selection history:', error);
     return c.json({error: 'Internal server error'}, 500);
   }
 });

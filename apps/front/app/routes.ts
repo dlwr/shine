@@ -5,6 +5,8 @@ export default [
   route('search', 'routes/search.tsx'),
   route('movies/:id', 'routes/movies.$id.tsx'),
   route('daily', 'routes/daily.tsx'),
+  route('weekly', 'routes/weekly.tsx'),
+  route('monthly', 'routes/monthly.tsx'),
   route('awards', 'routes/awards.tsx'),
   route('awards/:slug', 'routes/awards.$slug.tsx'),
   route('robots.txt', 'routes/robots.tsx'),
