@@ -28,6 +28,10 @@ describe('robots.txt', () => {
     expect(await robotsBody()).not.toContain('Disallow: /search');
   });
 
+  it('React Routerのマニフェストをクロール対象から除外する', async () => {
+    expect(await robotsBody()).toContain('Disallow: /__manifest');
+  });
+
   it('プレーンテキストとして返す', () => {
     expect(loader().headers.get('content-type')).toContain('text/plain');
   });
