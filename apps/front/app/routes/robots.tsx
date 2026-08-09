@@ -5,6 +5,7 @@ import {SITE_URL} from '@/lib/meta';
 const ROBOTS_TXT = `User-agent: *
 Allow: /
 Disallow: /admin
+Disallow: /__manifest
 
 Sitemap: ${SITE_URL}/sitemap.xml
 `;
