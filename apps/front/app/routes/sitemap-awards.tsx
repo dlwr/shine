@@ -24,6 +24,8 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const entries: SitemapEntry[] = [
     {path: '/awards', changefreq: 'weekly'},
     {path: '/daily', changefreq: 'daily'},
+    {path: '/weekly', changefreq: 'weekly'},
+    {path: '/monthly', changefreq: 'monthly'},
     ...slugs.map(slug => ({
       path: `/awards/${slug}`,
       changefreq: 'weekly' as const,
