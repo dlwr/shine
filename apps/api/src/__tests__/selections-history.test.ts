@@ -33,6 +33,21 @@ function toDateString(daysAgo: number): string {
     .padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
 }
 
+function toWeeklyDateString(weeksAgo: number): string {
+  const date = new Date();
+  const daysSinceFriday = (date.getDay() - 5 + 7) % 7;
+  return toDateString(daysSinceFriday + weeksAgo * 7);
+}
+
+function toMonthlyDateString(monthsAgo: number): string {
+  const date = new Date();
+  date.setDate(1);
+  date.setMonth(date.getMonth() - monthsAgo);
+  return `${date.getFullYear()}-${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, '0')}-01`;
+}
+
 async function createTestEnvironment(): Promise<Environment> {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
   const environment: Environment = {
@@ -96,8 +111,33 @@ async function createTestEnvironment(): Promise<Environment> {
     },
     {
       selectionType: 'weekly',
-      selectionDate: toDateString(0),
+      selectionDate: toWeeklyDateString(0),
       movieId: 'movie-2',
+    },
+    {
+      selectionType: 'weekly',
+      selectionDate: toWeeklyDateString(1),
+      movieId: 'movie-1',
+    },
+    {
+      selectionType: 'weekly',
+      selectionDate: toWeeklyDateString(2),
+      movieId: 'movie-3',
+    },
+    {
+      selectionType: 'monthly',
+      selectionDate: toMonthlyDateString(0),
+      movieId: 'movie-3',
+    },
+    {
+      selectionType: 'monthly',
+      selectionDate: toMonthlyDateString(1),
+      movieId: 'movie-2',
+    },
+    {
+      selectionType: 'monthly',
+      selectionDate: toMonthlyDateString(2),
+      movieId: 'movie-1',
     },
   ]);
 
@@ -188,5 +228,111 @@ describe('GET /selections/daily/history', () => {
 
     const body = (await response.json()) as HistoryResponse;
     expect(body.items.map(item => item.uid)).toEqual(['movie-1', 'movie-3']);
+  });
+});
+
+describe('GET /selections/weekly/history', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+  });
+
+  it('週次セレクションを日付の新しい順に返す', async () => {
+    const response = await selectionsRoutes.request(
+      '/selections/weekly/history?locale=ja',
+      {},
+      environment,
+    );
+
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as HistoryResponse;
+    expect(body.items.map(item => item.selectionDate)).toEqual([
+      toWeeklyDateString(0),
+      toWeeklyDateString(1),
+      toWeeklyDateString(2),
+    ]);
+  });
+
+  it('来週以降のセレクションは含めない', async () => {
+    const database = getDatabase(environment);
+    await database.insert(movieSelections).values({
+      selectionType: 'weekly',
+      selectionDate: toWeeklyDateString(-1),
+      movieId: 'movie-1',
+    });
+
+    const response = await selectionsRoutes.request(
+      '/selections/weekly/history',
+      {},
+      environment,
+    );
+
+    const body = (await response.json()) as HistoryResponse;
+    expect(
+      body.items.every(item => item.selectionDate <= toWeeklyDateString(0)),
+    ).toBe(true);
+  });
+});
+
+describe('GET /selections/monthly/history', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+  });
+
+  it('月次セレクションを日付の新しい順に返す', async () => {
+    const response = await selectionsRoutes.request(
+      '/selections/monthly/history?locale=ja',
+      {},
+      environment,
+    );
+
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as HistoryResponse;
+    expect(body.items.map(item => item.selectionDate)).toEqual([
+      toMonthlyDateString(0),
+      toMonthlyDateString(1),
+      toMonthlyDateString(2),
+    ]);
+  });
+
+  it('来月以降のセレクションは含めない', async () => {
+    const database = getDatabase(environment);
+    await database.insert(movieSelections).values({
+      selectionType: 'monthly',
+      selectionDate: toMonthlyDateString(-1),
+      movieId: 'movie-1',
+    });
+
+    const response = await selectionsRoutes.request(
+      '/selections/monthly/history',
+      {},
+      environment,
+    );
+
+    const body = (await response.json()) as HistoryResponse;
+    expect(
+      body.items.every(item => item.selectionDate <= toMonthlyDateString(0)),
+    ).toBe(true);
+  });
+});
+
+describe('GET /selections/:type/history のtype検証', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+  });
+
+  it('不正なtypeは400を返す', async () => {
+    const response = await selectionsRoutes.request(
+      '/selections/yearly/history',
+      {},
+      environment,
+    );
+
+    expect(response.status).toBe(400);
   });
 });
