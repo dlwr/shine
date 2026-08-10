@@ -117,17 +117,17 @@ CSS 変数で定義し、`.dark` クラスで上書きする（既存 `app.css` 
 
 公開ページ用プリミティブを新設し `apps/front/app/components/editorial/` に置く。各々は単一責務・SSR セーフ。
 
-| コンポーネント | 役割                                                                             | 主な props                   |
+| コンポーネント | 役割 | 主な props |
 | -------------- | -------------------------------------------------------------------------------- | ---------------------------- | -------------------- |
-| `Masthead`     | サイト上部のマストヘッド（ロゴ・タグライン・日付・言語・テーマトグル・検索導線） | `locale`, `apiUrl`           |
-| `BigYear`      | 巨大年号（下2桁をアクセント色に）                                                | `year`, `size`               |
-| `MetaLine`     | 等幅メタ情報行                                                                   | `items: string[]`            |
-| `FilmCard`     | セレクション/詳細で使う映画カード（光るポスター＋年号＋タイトル＋受賞チップ）    | `movie`, `variant: 'hero'    | 'compact'`, `locale` |
-| `PosterFrame`  | 枠＋影＋（ダーク時）発光を持つポスター枠                                         | `posterUrl`, `alt`           |
-| `AwardTree`    | 組織→開催回→カテゴリの受賞ツリー                                                 | `nominations`, `adminToken?` |
-| `WatchMenu`    | 配信サービス検索メニュー（ブランド色維持・枠/影統一）                            | `movie`, `locale`            |
-| `SearchRow`    | 検索結果のエディトリアル行                                                       | `movie`, `locale`            |
-| `ThemeToggle`  | ダーク/ライト切替ボタン                                                          | —                            |
+| `Masthead` | サイト上部のマストヘッド（ロゴ・タグライン・日付・言語・テーマトグル・検索導線） | `locale`, `apiUrl` |
+| `BigYear` | 巨大年号（下2桁をアクセント色に） | `year`, `size` |
+| `MetaLine` | 等幅メタ情報行 | `items: string[]` |
+| `FilmCard` | セレクション/詳細で使う映画カード（光るポスター＋年号＋タイトル＋受賞チップ） | `movie`, `variant: 'hero'    | 'compact'`, `locale` |
+| `PosterFrame` | 枠＋影＋（ダーク時）発光を持つポスター枠 | `posterUrl`, `alt` |
+| `AwardTree` | 組織→開催回→カテゴリの受賞ツリー | `nominations`, `adminToken?` |
+| `WatchMenu` | 配信サービス検索メニュー（ブランド色維持・枠/影統一） | `movie`, `locale` |
+| `SearchRow` | 検索結果のエディトリアル行 | `movie`, `locale` |
+| `ThemeToggle` | ダーク/ライト切替ボタン | — |
 
 - 既存の `MovieCard` は段階的に `FilmCard` ＋ サブコンポーネントへ置換する。`molecules/movie-card.tsx` のロジック（タイトル選定 `selectBestTitle`、ポスター選定）は再利用する。
 - shadcn/ui の `ui/*` は管理画面とフォーム部品で引き続き使用。公開ページからは原則使わない。
