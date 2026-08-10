@@ -15,7 +15,7 @@
         "PUBLIC_API_URL": "https://shine-api.yuta25.workers.dev",
         "PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAACBZwqj0sn-sCTK5",
         // Cloudflare Web Analytics の siteTag。beacon の token として使う
-        "PUBLIC_WEB_ANALYTICS_TOKEN": "9602f73a32304a60b7a170124731564a",
+        "PUBLIC_WEB_ANALYTICS_TOKEN": "c0dd704af80b4024bf03df608f5e6123",
       },
     },
   },
