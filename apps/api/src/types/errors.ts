@@ -35,10 +35,7 @@ export type AuthenticationError = {
 };
 
 export type ApiErrorResponse =
-  | ApiError
-  | ValidationError
-  | RateLimitError
-  | AuthenticationError;
+  ApiError | ValidationError | RateLimitError | AuthenticationError;
 
 export const ErrorCodes = {
   VALIDATION_ERROR: 'VALIDATION_ERROR',

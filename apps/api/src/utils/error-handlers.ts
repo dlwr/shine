@@ -38,10 +38,7 @@ export function createRateLimitError(
 export function createAuthenticationError(
   c: Context,
   reason:
-    | 'INVALID_TOKEN'
-    | 'EXPIRED_TOKEN'
-    | 'MISSING_TOKEN'
-    | 'INVALID_CREDENTIALS',
+    'INVALID_TOKEN' | 'EXPIRED_TOKEN' | 'MISSING_TOKEN' | 'INVALID_CREDENTIALS',
 ): Response {
   const messages = {
     INVALID_TOKEN: 'Invalid authentication token',
