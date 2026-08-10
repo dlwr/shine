@@ -47,6 +47,24 @@ export class MoviesService extends BaseService {
       conditions.push(eq(movies.originalLanguage, language));
     }
 
+    if (hasAwards === true) {
+      conditions.push(sql`
+				EXISTS (
+				  SELECT 1
+				  FROM nominations
+				  WHERE nominations.movie_uid = movies.uid
+				)
+			`);
+    } else if (hasAwards === false) {
+      conditions.push(sql`
+				NOT EXISTS (
+				  SELECT 1
+				  FROM nominations
+				  WHERE nominations.movie_uid = movies.uid
+				)
+			`);
+    }
+
     // Base query with movie and translation data
     const baseQuery = this.database
       .select({
@@ -79,46 +97,12 @@ export class MoviesService extends BaseService {
     type BaseQuery = typeof baseQuery;
     type SearchResultRow = Awaited<ReturnType<BaseQuery['execute']>>[number];
 
-    // Build final query with conditions
-    const finalQuery = (() => {
-      if (String(hasAwards) === 'true') {
-        // Join nominations for awards filter
-        const joined = baseQuery.innerJoin(
-          nominations,
-          eq(nominations.movieUid, movies.uid),
-        );
+    const finalQuery = baseQuery.where(and(...conditions));
 
-        const filtered =
-          conditions.length > 0 ? joined.where(and(...conditions)) : joined;
-
-        return filtered.groupBy(movies.uid);
-      }
-
-      if (conditions.length > 0) {
-        return baseQuery.where(and(...conditions));
-      }
-
-      return baseQuery;
-    })();
-
-    // Build count query
-    const baseCountQuery = this.database
-      .select({count: sql`COUNT(DISTINCT movies.uid)`.as('count')})
-      .from(movies);
-
-    const countQuery = (() => {
-      const withAwards =
-        String(hasAwards) === 'true'
-          ? baseCountQuery.innerJoin(
-              nominations,
-              eq(nominations.movieUid, movies.uid),
-            )
-          : baseCountQuery;
-
-      return conditions.length > 0
-        ? withAwards.where(and(...conditions))
-        : withAwards;
-    })();
+    const countQuery = this.database
+      .select({count: sql`COUNT(*)`.as('count')})
+      .from(movies)
+      .where(and(...conditions));
 
     // Run search and count queries in parallel
     const [searchResults, totalCountResult] = await Promise.all([
