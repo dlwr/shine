@@ -198,13 +198,11 @@ describe('checkMovieAvailability', () => {
 
   it('reports error when the retry also fails', async () => {
     const runners = {
-      tmdb: vi.fn(
-        async (): Promise<SourceCheckResult> => ({
-          source: 'tmdb',
-          status: 'error',
-          detail: 'fetch failed',
-        }),
-      ),
+      tmdb: vi.fn(async (): Promise<SourceCheckResult> => ({
+        source: 'tmdb',
+        status: 'error',
+        detail: 'fetch failed',
+      })),
     };
 
     const decision = await checkMovieAvailability(database, movie, {
@@ -232,13 +230,11 @@ describe('checkMovieAvailability', () => {
 
   it('treats error results as unavailable but reports them', async () => {
     const runners = {
-      unext: vi.fn(
-        async (): Promise<SourceCheckResult> => ({
-          source: 'unext',
-          status: 'error',
-          detail: 'boom',
-        }),
-      ),
+      unext: vi.fn(async (): Promise<SourceCheckResult> => ({
+        source: 'unext',
+        status: 'error',
+        detail: 'boom',
+      })),
     };
 
     const decision = await checkMovieAvailability(database, movie, {
