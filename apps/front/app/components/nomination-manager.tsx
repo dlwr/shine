@@ -1,8 +1,10 @@
 import {useEffect, useMemo, useState} from 'react';
 import {Link} from 'react-router';
 import type {ChangeEvent, FormEvent} from 'react';
-import type {MovieDetails, Nomination} from '../routes/admin.movies.$id';
+import type {MovieDetails} from '../routes/admin.movies.$id';
 import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+
+type Nomination = MovieDetails['nominations'][number];
 
 type NominationManagerProperties = {
   movieId: string;
