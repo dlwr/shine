@@ -82,6 +82,7 @@ describe('MoviesService.getMovieDetails nominations', () => {
     expect(details?.nominations[0].organization.slug).toBe(
       'academy-best-picture',
     );
+    expect(details?.nominations[0].organization.hasYearPages).toBe(true);
   });
 
   it('leaves the slug undefined for organizations without an award page', async () => {
@@ -91,5 +92,6 @@ describe('MoviesService.getMovieDetails nominations', () => {
     const details = await service.getMovieDetails('movie-a', 'en');
 
     expect(details?.nominations[0].organization.slug).toBeUndefined();
+    expect(details?.nominations[0].organization.hasYearPages).toBe(false);
   });
 });

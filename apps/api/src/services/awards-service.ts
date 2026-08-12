@@ -12,12 +12,18 @@ import type {
   AwardYearGroup,
 } from '@shine/types';
 
-export function awardSlugForOrganizationName(
-  organizationName: string,
-): string | undefined {
-  return awardPageDefinitions.find(
-    definition => definition.organizationName === organizationName,
-  )?.slug;
+export function awardPageLinkForOrganizationName(organizationName: string): {
+  slug: string | undefined;
+  hasYearPages: boolean;
+} {
+  const definition = awardPageDefinitions.find(
+    entry => entry.organizationName === organizationName,
+  );
+
+  return {
+    slug: definition?.slug,
+    hasYearPages: definition?.grouping === 'year',
+  };
 }
 
 type AwardPageDefinition = {

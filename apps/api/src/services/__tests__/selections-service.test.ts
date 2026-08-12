@@ -243,6 +243,7 @@ describe('SelectionsService nomination payload', () => {
     );
 
     expect(movie.nominations[0].organization.slug).toBe('palme-dor');
+    expect(movie.nominations[0].organization.hasYearPages).toBe(true);
   });
 
   it('leaves the slug undefined for organizations without an award page', async () => {

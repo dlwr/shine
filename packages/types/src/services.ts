@@ -50,6 +50,7 @@ export type MovieSelection = {
       name: string;
       shortName: string | undefined;
       slug: string | undefined;
+      hasYearPages: boolean;
     };
   }>;
   articleLinks: Array<{
