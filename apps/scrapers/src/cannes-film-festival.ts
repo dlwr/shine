@@ -13,7 +13,6 @@ import {translations} from '@shine/database/schema/translations';
 import {
   fetchTMDBConfiguration,
   fetchTMDBMovieDetails,
-  saveJapaneseTranslation,
   searchTMDBMovie,
   type TMDBConfiguration,
 } from './common/tmdb-utilities';
@@ -1298,63 +1297,6 @@ async function collectPosterUrls(
   return results;
 }
 
-async function saveTranslations(
-  database: DatabaseClient,
-  translationsBatch: Array<typeof translations.$inferInsert>,
-) {
-  if (translationsBatch.length === 0) {
-    return;
-  }
-
-  await database
-    .insert(translations)
-    .values(translationsBatch)
-    .onConflictDoNothing();
-}
-
-async function saveReferenceUrl(
-  database: DatabaseClient,
-  referenceUrlData: typeof referenceUrls.$inferInsert,
-) {
-  await database
-    .insert(referenceUrls)
-    .values(referenceUrlData)
-    .onConflictDoNothing();
-}
-
-async function upsertNominationEntry(
-  database: DatabaseClient,
-  nominationData: typeof nominations.$inferInsert,
-) {
-  await database
-    .insert(nominations)
-    .values(nominationData)
-    .onConflictDoUpdate({
-      target: [
-        nominations.movieUid,
-        nominations.ceremonyUid,
-        nominations.categoryUid,
-      ],
-      set: {
-        isWinner: nominationData.isWinner,
-      },
-    });
-}
-
-async function savePosterUrls(
-  database: DatabaseClient,
-  posterUrlsBatch: Array<typeof posterUrls.$inferInsert>,
-) {
-  if (posterUrlsBatch.length === 0) {
-    return;
-  }
-
-  await database
-    .insert(posterUrls)
-    .values(posterUrlsBatch)
-    .onConflictDoNothing();
-}
-
 function buildReferenceUrlData(
   movieInfo: MovieInfo,
   movieUid: string,
@@ -1471,72 +1413,5 @@ async function processMovieForBatch(
   } catch (error) {
     console.error(`Error processing movie ${movieInfo.title}:`, error);
     return undefined;
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function processMovie(
-  movieInfo: MovieInfo,
-  ceremonyUid: string,
-  main: MainData,
-) {
-  try {
-    if (isDryRun) {
-      console.log(
-        `[DRY RUN] Would process movie: ${movieInfo.title} (${movieInfo.year}) - ${
-          movieInfo.isWinner ? 'Winner' : 'Nominee'
-        }`,
-      );
-      return;
-    }
-
-    const database = getDatabase(environment_);
-    const movieDetails = await fetchMovieDetails(
-      movieInfo.title,
-      movieInfo.year,
-    );
-    const movieResolution = await resolveMovieUid(
-      database,
-      movieInfo,
-      movieDetails,
-    );
-
-    await saveTranslations(database, movieResolution.translations);
-
-    if (movieDetails.japaneseTitle) {
-      await saveJapaneseTranslation(
-        movieResolution.movieUid,
-        movieDetails.japaneseTitle,
-        environment_,
-      );
-    }
-
-    const referenceUrlData = buildReferenceUrlData(
-      movieInfo,
-      movieResolution.movieUid,
-    );
-    if (referenceUrlData) {
-      await saveReferenceUrl(database, referenceUrlData);
-    }
-
-    const nominationData = buildNominationData(
-      movieInfo,
-      movieResolution.movieUid,
-      ceremonyUid,
-      main,
-    );
-    await upsertNominationEntry(database, nominationData);
-
-    const posterUrlsBatch = await collectPosterUrls(
-      movieDetails,
-      movieResolution.movieUid,
-      ['w342', 'w780'],
-    );
-    await savePosterUrls(database, posterUrlsBatch);
-
-    logProcessedMovie(movieInfo, movieDetails, movieResolution.wasExisting);
-  } catch (error) {
-    console.error(`Error processing movie ${movieInfo.title}:`, error);
-    throw error;
   }
 }
