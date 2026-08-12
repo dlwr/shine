@@ -5,7 +5,12 @@ import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {BaseService} from './base-service';
-import type {AwardDetail, AwardSummary, AwardYearGroup} from '@shine/types';
+import type {
+  AwardDetail,
+  AwardSummary,
+  AwardYearDetail,
+  AwardYearGroup,
+} from '@shine/types';
 
 export function awardSlugForOrganizationName(
   organizationName: string,
@@ -215,6 +220,40 @@ export class AwardsService extends BaseService {
       description: definition.description,
       grouping: definition.grouping,
       years,
+    };
+  }
+
+  async getAwardYear(
+    slug: string,
+    year: number,
+  ): Promise<AwardYearDetail | undefined> {
+    const definition = awardPageDefinitions.find(entry => entry.slug === slug);
+    if (!definition || definition.grouping !== 'year') {
+      return undefined;
+    }
+
+    const award = await this.getAwardBySlug(slug);
+    if (!award) {
+      return undefined;
+    }
+
+    const index = award.years.findIndex(group => group.year === year);
+    if (index === -1) {
+      return undefined;
+    }
+
+    const group = award.years[index];
+
+    return {
+      slug: award.slug,
+      name: award.name,
+      organization: award.organization,
+      description: award.description,
+      year: group.year,
+      ceremonyNumber: group.ceremonyNumber,
+      movies: group.movies,
+      previousYear: award.years[index + 1]?.year,
+      nextYear: award.years[index - 1]?.year,
     };
   }
 

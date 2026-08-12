@@ -279,6 +279,87 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /awards:
+    get:
+      summary: List award pages
+      description: Returns all award and editorial list pages that have nominations
+      operationId: listAwards
+      tags:
+        - Awards
+      security: []
+      responses:
+        '200':
+          description: Successfully retrieved award pages
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [awards]
+                properties:
+                  awards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AwardSummary'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /awards/{slug}:
+    get:
+      summary: Get an award page
+      description: Returns the movies of an award or editorial list grouped by ceremony year
+      operationId: getAwardBySlug
+      tags:
+        - Awards
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved the award page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AwardDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /awards/{slug}/{year}:
+    get:
+      summary: Get a single ceremony year of an award
+      description: Returns one ceremony year of a year-grouped award, with neighboring ceremony years for navigation
+      operationId: getAwardYear
+      tags:
+        - Awards
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved the award year
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AwardYearDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /movies/{id}/article-links:
     get:
       summary: Get movie article links
@@ -1758,6 +1839,127 @@ components:
         - number
         - year
 
+    AwardMovieEntry:
+      type: object
+      properties:
+        uid:
+          type: string
+          format: uuid
+        title:
+          type: string
+        movieYear:
+          type: integer
+        posterUrl:
+          type: string
+          format: uri
+        isWinner:
+          type: boolean
+      required:
+        - uid
+        - isWinner
+
+    AwardYearGroup:
+      type: object
+      properties:
+        year:
+          type: integer
+        ceremonyNumber:
+          type: integer
+        movies:
+          type: array
+          items:
+            $ref: '#/components/schemas/AwardMovieEntry'
+      required:
+        - year
+        - movies
+
+    AwardSummary:
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        organization:
+          type: string
+        description:
+          type: string
+        grouping:
+          type: string
+          enum: [year, list]
+        movieCount:
+          type: integer
+        firstYear:
+          type: integer
+        lastYear:
+          type: integer
+      required:
+        - slug
+        - name
+        - organization
+        - description
+        - grouping
+        - movieCount
+        - firstYear
+        - lastYear
+
+    AwardDetail:
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        organization:
+          type: string
+        description:
+          type: string
+        grouping:
+          type: string
+          enum: [year, list]
+        years:
+          type: array
+          items:
+            $ref: '#/components/schemas/AwardYearGroup'
+      required:
+        - slug
+        - name
+        - organization
+        - description
+        - grouping
+        - years
+
+    AwardYearDetail:
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        organization:
+          type: string
+        description:
+          type: string
+        year:
+          type: integer
+        ceremonyNumber:
+          type: integer
+        movies:
+          type: array
+          items:
+            $ref: '#/components/schemas/AwardMovieEntry'
+        previousYear:
+          type: integer
+        nextYear:
+          type: integer
+      required:
+        - slug
+        - name
+        - organization
+        - description
+        - year
+        - movies
+
     AwardOrganization:
       type: object
       properties:
@@ -2849,6 +3051,8 @@ components:
             code: 'INTERNAL_ERROR'
 
 tags:
+  - name: Awards
+    description: Award and editorial list pages
   - name: Movies
     description: Movie information and search operations
   - name: Articles

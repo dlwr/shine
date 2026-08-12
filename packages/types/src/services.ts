@@ -88,6 +88,18 @@ export type AwardDetail = {
   years: AwardYearGroup[];
 };
 
+export type AwardYearDetail = {
+  slug: string;
+  name: string;
+  organization: string;
+  description: string;
+  year: number;
+  ceremonyNumber: number | undefined;
+  movies: AwardMovieEntry[];
+  previousYear: number | undefined;
+  nextYear: number | undefined;
+};
+
 export type AwardSummary = {
   slug: string;
   name: string;

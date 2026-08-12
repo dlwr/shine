@@ -341,3 +341,120 @@ describe('awardSlugForOrganizationName', () => {
     expect(awardSlugForOrganizationName('Unknown Org')).toBeUndefined();
   });
 });
+
+describe('AwardsService.getAwardYear', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+  let service: AwardsService;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+    service = new AwardsService(environment);
+  });
+
+  async function seedThreeCannesYears(): Promise<void> {
+    await seedCannes(database);
+    await seedCannesCeremony(database, 'ceremony-2019', 2019, 72);
+    await seedCannesCeremony(database, 'ceremony-2021', 2021, 74);
+    await seedCannesCeremony(database, 'ceremony-2023', 2023, 76);
+    await seedMovie(database, 'movie-a', 'A Nominee');
+    await seedMovie(database, 'movie-b', 'B Winner');
+    await seedMovie(database, 'movie-c', 'C Other Year');
+    await seedMovie(database, 'movie-d', 'D Other Year');
+    await database.insert(nominations).values([
+      {
+        movieUid: 'movie-a',
+        ceremonyUid: 'ceremony-2021',
+        categoryUid: 'cat-palme',
+      },
+      {
+        movieUid: 'movie-b',
+        ceremonyUid: 'ceremony-2021',
+        categoryUid: 'cat-palme',
+        isWinner: 1,
+      },
+      {
+        movieUid: 'movie-c',
+        ceremonyUid: 'ceremony-2019',
+        categoryUid: 'cat-palme',
+      },
+      {
+        movieUid: 'movie-d',
+        ceremonyUid: 'ceremony-2023',
+        categoryUid: 'cat-palme',
+      },
+    ]);
+  }
+
+  it('returns the requested year with the winner first', async () => {
+    await seedThreeCannesYears();
+
+    const result = await service.getAwardYear('palme-dor', 2021);
+
+    expect(result).toMatchObject({
+      slug: 'palme-dor',
+      year: 2021,
+      ceremonyNumber: 74,
+    });
+    expect(result?.movies.map(movie => movie.uid)).toEqual([
+      'movie-b',
+      'movie-a',
+    ]);
+  });
+
+  it('returns the neighboring ceremony years across gaps', async () => {
+    await seedThreeCannesYears();
+
+    const result = await service.getAwardYear('palme-dor', 2021);
+
+    expect(result?.previousYear).toBe(2019);
+    expect(result?.nextYear).toBe(2023);
+  });
+
+  it('leaves neighbors undefined at the range edges', async () => {
+    await seedThreeCannesYears();
+
+    const oldest = await service.getAwardYear('palme-dor', 2019);
+    const newest = await service.getAwardYear('palme-dor', 2023);
+
+    expect(oldest?.previousYear).toBeUndefined();
+    expect(oldest?.nextYear).toBe(2021);
+    expect(newest?.previousYear).toBe(2021);
+    expect(newest?.nextYear).toBeUndefined();
+  });
+
+  it('returns undefined for a year without a ceremony', async () => {
+    await seedThreeCannesYears();
+
+    const result = await service.getAwardYear('palme-dor', 2020);
+
+    expect(result).toBeUndefined();
+  });
+
+  it('returns undefined for a list-grouping award', async () => {
+    await database.insert(awardOrganizations).values({
+      uid: 'org-1001',
+      name: '1001 Movies You Must See Before You Die',
+    });
+    await database.insert(awardCategories).values({
+      uid: 'cat-1001',
+      organizationUid: 'org-1001',
+      name: 'Selected Films',
+    });
+    await database.insert(awardCeremonies).values({
+      uid: 'ceremony-1001',
+      organizationUid: 'org-1001',
+      year: 2021,
+    });
+    await seedMovie(database, 'movie-a', 'Movie A');
+    await database.insert(nominations).values({
+      movieUid: 'movie-a',
+      ceremonyUid: 'ceremony-1001',
+      categoryUid: 'cat-1001',
+    });
+
+    const result = await service.getAwardYear('1001-movies', 2021);
+
+    expect(result).toBeUndefined();
+  });
+});
