@@ -12,7 +12,7 @@ import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
-import {AwardsService} from '../awards-service';
+import {AwardsService, awardSlugForOrganizationName} from '../awards-service';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -327,5 +327,17 @@ describe('AwardsService.listAwards', () => {
       firstYear: 2021,
       lastYear: 2023,
     });
+  });
+});
+
+describe('awardSlugForOrganizationName', () => {
+  it('returns the slug for an organization with an award page', () => {
+    expect(awardSlugForOrganizationName('Cannes Film Festival')).toBe(
+      'palme-dor',
+    );
+  });
+
+  it('returns undefined for an organization without an award page', () => {
+    expect(awardSlugForOrganizationName('Unknown Org')).toBeUndefined();
   });
 });

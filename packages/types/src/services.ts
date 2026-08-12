@@ -49,6 +49,7 @@ export type MovieSelection = {
       uid: string;
       name: string;
       shortName: string | undefined;
+      slug: string | undefined;
     };
   }>;
   articleLinks: Array<{

@@ -9,21 +9,31 @@ const noms: AwardNomination[] = [
     isWinner: true,
     category: {name: 'Best Actor'},
     ceremony: {uid: 'c1', year: 1995},
-    organization: {uid: 'o1', name: 'Academy Awards', shortName: 'Oscars'},
+    organization: {
+      uid: 'o1',
+      name: 'Some New Award',
+      shortName: 'SNA',
+      slug: 'some-new-award',
+    },
   },
   {
     uid: 'n2',
     isWinner: false,
     category: {name: 'Best Picture'},
     ceremony: {uid: 'c1', year: 1995},
-    organization: {uid: 'o1', name: 'Academy Awards', shortName: 'Oscars'},
+    organization: {
+      uid: 'o1',
+      name: 'Some New Award',
+      shortName: 'SNA',
+      slug: 'some-new-award',
+    },
   },
 ];
 
 describe('AwardTree', () => {
   it('組織ヘッダとカテゴリ行を描画する', () => {
     render(<AwardTree nominations={noms} />);
-    expect(screen.getByText(/Oscars|Academy Awards/)).toBeInTheDocument();
+    expect(screen.getByText(/SNA|Some New Award/)).toBeInTheDocument();
     expect(screen.getByText('Best Actor')).toBeInTheDocument();
   });
 
@@ -38,15 +48,15 @@ describe('AwardTree', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('賞ページがある組織のヘッダは /awards/:slug へリンクする', () => {
+  it('slugを持つ組織のヘッダは /awards/:slug へリンクする', () => {
     render(<AwardTree nominations={noms} />);
-    expect(screen.getByRole('link', {name: /Oscars · 1995/})).toHaveAttribute(
+    expect(screen.getByRole('link', {name: /SNA · 1995/})).toHaveAttribute(
       'href',
-      '/awards/academy-best-picture',
+      '/awards/some-new-award',
     );
   });
 
-  it('賞ページがない組織のヘッダはリンクしない', () => {
+  it('slugがない組織のヘッダはリンクしない', () => {
     render(
       <AwardTree
         nominations={[

@@ -1,11 +1,9 @@
-import {awardSlugForOrganization} from '@/lib/award-links';
-
 export type AwardNomination = {
   uid: string;
   isWinner: boolean;
   category: {name: string};
   ceremony: {uid: string; year: number; number?: number};
-  organization: {uid: string; name: string; shortName?: string};
+  organization: {uid: string; name: string; shortName?: string; slug?: string};
 };
 
 type Grouped = {
@@ -48,7 +46,7 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
               const headerText = `${
                 group.organization.shortName ?? group.organization.name
               } · ${ceremony.year}`;
-              const slug = awardSlugForOrganization(group.organization.name);
+              const slug = group.organization.slug;
               return slug ? (
                 <a
                   href={`/awards/${slug}`}

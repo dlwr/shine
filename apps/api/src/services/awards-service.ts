@@ -7,6 +7,14 @@ import {nominations} from '@shine/database/schema/nominations';
 import {BaseService} from './base-service';
 import type {AwardDetail, AwardSummary, AwardYearGroup} from '@shine/types';
 
+export function awardSlugForOrganizationName(
+  organizationName: string,
+): string | undefined {
+  return awardPageDefinitions.find(
+    definition => definition.organizationName === organizationName,
+  )?.slug;
+}
+
 type AwardPageDefinition = {
   slug: string;
   organizationName: string;

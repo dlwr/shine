@@ -198,3 +198,63 @@ describe('SelectionsService selection persistence', () => {
     expect(rows).toHaveLength(1);
   });
 });
+
+describe('SelectionsService nomination payload', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+  });
+
+  it('includes the award page slug for organizations that have one', async () => {
+    await database
+      .insert(awardOrganizations)
+      .values({uid: 'org-cannes', name: 'Cannes Film Festival'});
+    await database.insert(awardCeremonies).values({
+      uid: 'ceremony-cannes',
+      organizationUid: 'org-cannes',
+      year: 2020,
+    });
+    await database.insert(awardCategories).values({
+      uid: 'category-palme',
+      organizationUid: 'org-cannes',
+      name: "Palme d'Or",
+    });
+    await database.insert(movies).values({uid: 'movie-c', year: 2020});
+    await database.insert(translations).values({
+      resourceType: 'movie_title',
+      resourceUid: 'movie-c',
+      languageCode: 'en',
+      content: 'Movie C',
+      isDefault: 1,
+    });
+    await database.insert(nominations).values({
+      movieUid: 'movie-c',
+      ceremonyUid: 'ceremony-cannes',
+      categoryUid: 'category-palme',
+    });
+    const service = new SelectionsService(environment);
+
+    const movie = await service.reselectMovie(
+      'daily',
+      'en',
+      new Date('2026-07-15'),
+    );
+
+    expect(movie.nominations[0].organization.slug).toBe('palme-dor');
+  });
+
+  it('leaves the slug undefined for organizations without an award page', async () => {
+    await seedNominatedMovie(database, 'movie-a', 'Movie A');
+    const service = new SelectionsService(environment);
+
+    const movie = await service.reselectMovie(
+      'daily',
+      'en',
+      new Date('2026-07-15'),
+    );
+
+    expect(movie.nominations[0].organization.slug).toBeUndefined();
+  });
+});
