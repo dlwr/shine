@@ -1976,6 +1976,9 @@ components:
         slug:
           type: [string, 'null']
           description: Slug of the award page on the frontend (/awards/{slug}), if one exists
+        hasYearPages:
+          type: boolean
+          description: Whether per-year pages (/awards/{slug}/{year}) exist for this organization's award
       required:
         - uid
         - name

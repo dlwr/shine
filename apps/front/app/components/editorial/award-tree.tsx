@@ -3,7 +3,13 @@ export type AwardNomination = {
   isWinner: boolean;
   category: {name: string};
   ceremony: {uid: string; year: number; number?: number};
-  organization: {uid: string; name: string; shortName?: string; slug?: string};
+  organization: {
+    uid: string;
+    name: string;
+    shortName?: string;
+    slug?: string;
+    hasYearPages?: boolean;
+  };
 };
 
 type Grouped = {
@@ -47,9 +53,13 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
                 group.organization.shortName ?? group.organization.name
               } · ${ceremony.year}`;
               const slug = group.organization.slug;
-              return slug ? (
+              const href =
+                slug && group.organization.hasYearPages
+                  ? `/awards/${slug}/${ceremony.year}`
+                  : slug && `/awards/${slug}`;
+              return href ? (
                 <a
-                  href={`/awards/${slug}`}
+                  href={href}
                   className="block bg-ink px-3 py-1 font-display text-xs font-extrabold uppercase text-paper no-underline">
                   {headerText}
                 </a>

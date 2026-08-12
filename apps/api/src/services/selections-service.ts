@@ -24,7 +24,7 @@ import {
   normalizeCacheLocale,
 } from '../utils/cache';
 import {simpleHash} from '../utils/hash';
-import {awardSlugForOrganizationName} from './awards-service';
+import {awardPageLinkForOrganizationName} from './awards-service';
 import {BaseService} from './base-service';
 import type {DateSeedOptions, MovieSelection} from '@shine/types';
 
@@ -541,7 +541,7 @@ export class SelectionsService extends BaseService {
           uid: nom.organizationUid,
           name: nom.organizationName,
           shortName: nom.organizationShortName ?? undefined,
-          slug: awardSlugForOrganizationName(nom.organizationName),
+          ...awardPageLinkForOrganizationName(nom.organizationName),
         },
       })),
       articleLinks: topArticles.map(article => ({

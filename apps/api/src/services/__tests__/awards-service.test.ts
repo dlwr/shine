@@ -12,7 +12,10 @@ import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
-import {AwardsService, awardSlugForOrganizationName} from '../awards-service';
+import {
+  AwardsService,
+  awardPageLinkForOrganizationName,
+} from '../awards-service';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -330,15 +333,26 @@ describe('AwardsService.listAwards', () => {
   });
 });
 
-describe('awardSlugForOrganizationName', () => {
-  it('returns the slug for an organization with an award page', () => {
-    expect(awardSlugForOrganizationName('Cannes Film Festival')).toBe(
-      'palme-dor',
-    );
+describe('awardPageLinkForOrganizationName', () => {
+  it('returns the slug and year-page availability for a year-grouped award', () => {
+    expect(awardPageLinkForOrganizationName('Cannes Film Festival')).toEqual({
+      slug: 'palme-dor',
+      hasYearPages: true,
+    });
   });
 
-  it('returns undefined for an organization without an award page', () => {
-    expect(awardSlugForOrganizationName('Unknown Org')).toBeUndefined();
+  it('returns hasYearPages false for a list-grouped award', () => {
+    expect(awardPageLinkForOrganizationName('Variety')).toEqual({
+      slug: 'variety-top-100',
+      hasYearPages: false,
+    });
+  });
+
+  it('returns no slug for an organization without an award page', () => {
+    expect(awardPageLinkForOrganizationName('Unknown Org')).toEqual({
+      slug: undefined,
+      hasYearPages: false,
+    });
   });
 });
 

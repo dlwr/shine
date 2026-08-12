@@ -14,6 +14,7 @@ const noms: AwardNomination[] = [
       name: 'Some New Award',
       shortName: 'SNA',
       slug: 'some-new-award',
+      hasYearPages: true,
     },
   },
   {
@@ -26,6 +27,7 @@ const noms: AwardNomination[] = [
       name: 'Some New Award',
       shortName: 'SNA',
       slug: 'some-new-award',
+      hasYearPages: true,
     },
   },
 ];
@@ -48,11 +50,36 @@ describe('AwardTree', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('slugを持つ組織のヘッダは /awards/:slug へリンクする', () => {
+  it('年別ページを持つ組織のヘッダは /awards/:slug/:year へリンクする', () => {
     render(<AwardTree nominations={noms} />);
     expect(screen.getByRole('link', {name: /SNA · 1995/})).toHaveAttribute(
       'href',
-      '/awards/some-new-award',
+      '/awards/some-new-award/1995',
+    );
+  });
+
+  it('年別ページがない組織のヘッダは /awards/:slug へリンクする', () => {
+    render(
+      <AwardTree
+        nominations={[
+          {
+            uid: 'n4',
+            isWinner: false,
+            category: {name: 'Top 100'},
+            ceremony: {uid: 'c3', year: 2022},
+            organization: {
+              uid: 'o3',
+              name: 'Variety',
+              slug: 'variety-top-100',
+              hasYearPages: false,
+            },
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByRole('link', {name: /Variety · 2022/})).toHaveAttribute(
+      'href',
+      '/awards/variety-top-100',
     );
   });
 
