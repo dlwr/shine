@@ -173,6 +173,35 @@ describe('syncTmdbData', () => {
     expect(languages).toEqual(new Set(['en', 'fr', 'ja']));
   });
 
+  it('throws when the TMDb movie details request fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string | URL) => {
+        const url = String(input);
+        if (url.includes('/images')) {
+          return {
+            ok: true,
+            async json() {
+              return {id: 42, posters: []};
+            },
+          };
+        }
+
+        return {
+          ok: false,
+          status: 401,
+          async json() {
+            return {status_message: 'Invalid API key'};
+          },
+        };
+      }),
+    );
+
+    await expect(
+      syncTmdbData(database, 'movie-a', 42, 'movie', environment),
+    ).rejects.toThrow('TMDb movie details request failed: 401');
+  });
+
   it('throws when the TMDb API key is not configured', async () => {
     await expect(
       syncTmdbData(database, 'movie-a', 42, 'movie', {

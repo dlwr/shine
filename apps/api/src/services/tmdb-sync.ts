@@ -56,6 +56,12 @@ export async function syncTmdbData(
   const movieResponse = await fetch(
     `https://api.themoviedb.org/3/${mediaType}/${tmdbId}?api_key=${tmdbApiKey}`,
   );
+  if (!movieResponse.ok) {
+    throw new Error(
+      `TMDb movie details request failed: ${movieResponse.status}`,
+    );
+  }
+
   const movieData: {
     original_language?: string;
     original_title?: string;
