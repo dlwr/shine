@@ -187,6 +187,23 @@ async function fetchMainData(): Promise<MainData> {
   return mainData;
 }
 
+// 1946年開始、1948年と1950年は未開催（2020年は中止だが第73回として数える）
+export function cannesCeremonyNumber(year: number): number | undefined {
+  if (year === 1946 || year === 1947) {
+    return year - 1945;
+  }
+
+  if (year === 1949) {
+    return 3;
+  }
+
+  if (year >= 1951) {
+    return year - 1947;
+  }
+
+  return undefined;
+}
+
 async function getOrCreateCeremony(
   year: number,
   organizationUid: string,
@@ -197,12 +214,12 @@ async function getOrCreateCeremony(
     .values({
       organizationUid,
       year,
-      ceremonyNumber: year - 1946 + 1, // カンヌ映画祭は1946年開始
+      ceremonyNumber: cannesCeremonyNumber(year),
     })
     .onConflictDoUpdate({
       target: [awardCeremonies.organizationUid, awardCeremonies.year],
       set: {
-        ceremonyNumber: year - 1946 + 1,
+        ceremonyNumber: cannesCeremonyNumber(year),
       },
     })
     .returning();
