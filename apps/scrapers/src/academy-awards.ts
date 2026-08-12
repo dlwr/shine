@@ -18,6 +18,7 @@ import {
   savePosterUrls,
   saveTMDBId,
 } from './common/tmdb-utilities';
+import {fetchWithRetry} from './common/fetch-utilities';
 
 const WIKIPEDIA_BASE_URL = 'https://en.wikipedia.org';
 const ACADEMY_AWARDS_URL = `${WIKIPEDIA_BASE_URL}/wiki/Academy_Award_for_Best_Picture`;
@@ -145,14 +146,7 @@ async function getOrCreateCeremony(
 export async function scrapeAcademyAwards() {
   try {
     console.log('Fetching data from Wikipedia...');
-    const response = await fetch(ACADEMY_AWARDS_URL);
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch Academy Awards page: ${response.status}`,
-      );
-    }
-
-    const html = await response.text();
+    const html = await fetchWithRetry(ACADEMY_AWARDS_URL);
     const $ = cheerio.load(html);
 
     const allTables = [...$('table.wikitable.sortable')];

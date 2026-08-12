@@ -1,6 +1,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {
   buildUrl,
+  FetchHttpError,
   fetchJsonWithRetry,
   fetchWithRetry,
 } from '../common/fetch-utilities';
@@ -146,6 +147,21 @@ describe('Fetch Utilities', () => {
       ).rejects.toThrow('HTTP error! Status: 404');
 
       expect(fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should expose the HTTP status on the thrown error', async () => {
+      const mockErrorResponse = {
+        ok: false,
+        status: 404,
+      };
+      vi.mocked(fetch).mockResolvedValue(
+        mockErrorResponse as unknown as Response,
+      );
+
+      const promise = fetchWithRetry('https://example.com', {}, 3, 10);
+
+      await expect(promise).rejects.toBeInstanceOf(FetchHttpError);
+      await expect(promise).rejects.toMatchObject({status: 404});
     });
 
     it('should respect Retry-After header (seconds) on 429', async () => {

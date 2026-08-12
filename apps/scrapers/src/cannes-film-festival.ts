@@ -16,6 +16,7 @@ import {
   searchTMDBMovie,
   type TMDBConfiguration,
 } from './common/tmdb-utilities';
+import {FetchHttpError, fetchWithRetry} from './common/fetch-utilities';
 
 const WIKIPEDIA_BASE_URL = 'https://en.wikipedia.org';
 
@@ -437,14 +438,18 @@ async function scrapeYearPage(year: number): Promise<MovieInfo[]> {
   const yearUrl = `${WIKIPEDIA_BASE_URL}/wiki/${year}_Cannes_Film_Festival`;
 
   console.log(`Fetching ${yearUrl}...`);
-  const response = await fetch(yearUrl);
+  let html: string;
+  try {
+    html = await fetchWithRetry(yearUrl);
+  } catch (error) {
+    if (error instanceof FetchHttpError && error.status === 404) {
+      console.log(`Page not found for ${year}, skipping...`);
+      return [];
+    }
 
-  if (!response.ok) {
-    console.log(`Page not found for ${year}, skipping...`);
-    return [];
+    throw error;
   }
 
-  const html = await response.text();
   const $ = cheerio.load(html);
 
   const movies: MovieInfo[] = [];
@@ -1009,14 +1014,18 @@ async function fetchPalmeDOrWinner(
   const yearUrl = `${WIKIPEDIA_BASE_URL}/wiki/${year}_Cannes_Film_Festival`;
 
   console.log(`Fetching ${yearUrl}...`);
-  const response = await fetch(yearUrl);
+  let html: string;
+  try {
+    html = await fetchWithRetry(yearUrl);
+  } catch (error) {
+    if (error instanceof FetchHttpError && error.status === 404) {
+      console.log(`Page not found for ${year}, skipping...`);
+      return undefined;
+    }
 
-  if (!response.ok) {
-    console.log(`Page not found for ${year}, skipping...`);
-    return undefined;
+    throw error;
   }
 
-  const html = await response.text();
   const $ = cheerio.load(html);
 
   return findPalmeDOrWinner($, year);

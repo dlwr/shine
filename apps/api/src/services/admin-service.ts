@@ -14,7 +14,6 @@ import type {
   TMDBMovieData,
   TMDBTvData,
 } from '@shine/scrapers/common/tmdb-utilities';
-import {generateUUID} from '@shine/utils';
 import puppeteer from '@cloudflare/puppeteer';
 import {BaseService} from './base-service';
 import {
@@ -238,23 +237,10 @@ export class AdminService extends BaseService {
 
     movieValues.mediaType = detectedMediaType;
 
-    let newMovie: typeof movies.$inferSelect | undefined;
-
-    try {
-      [newMovie] = await this.database
-        .insert(movies)
-        .values(movieValues)
-        .returning();
-    } catch (error) {
-      if (this.isMissingColumnError(error, 'release_date')) {
-        newMovie = await this.insertMovieWithoutReleaseDate(
-          movieValues,
-          normalizedImdbId,
-        );
-      } else {
-        throw error;
-      }
-    }
+    const [newMovie] = await this.database
+      .insert(movies)
+      .values(movieValues)
+      .returning();
 
     if (!newMovie) {
       throw new Error('Failed to create movie');
@@ -1481,128 +1467,5 @@ export class AdminService extends BaseService {
     }
 
     return addedCount;
-  }
-
-  private isMissingColumnError(error: unknown, column: string): boolean {
-    if (!(error instanceof Error)) {
-      return false;
-    }
-
-    const message = error.message ?? '';
-    if (
-      message.includes(`column named ${column}`) ||
-      message.includes(`no such column: ${column}`) ||
-      message.includes(`has no column named ${column}`)
-    ) {
-      return true;
-    }
-
-    const cause = (error as {cause?: unknown}).cause;
-    if (cause) {
-      return this.isMissingColumnError(cause, column);
-    }
-
-    return false;
-  }
-
-  private async insertMovieWithoutReleaseDate(
-    movieValues: typeof movies.$inferInsert,
-    imdbId: string,
-  ): Promise<typeof movies.$inferSelect> {
-    const uid = generateUUID();
-    const now = Math.floor(Date.now() / 1000);
-    const originalLanguage = movieValues.originalLanguage ?? 'en';
-    /* eslint-disable unicorn/no-null -- libSQL raw args require null, not undefined */
-    const year = typeof movieValues.year === 'number' ? movieValues.year : null;
-    const tmdbIdValue =
-      typeof movieValues.tmdbId === 'number' ? movieValues.tmdbId : null;
-    /* eslint-enable unicorn/no-null */
-
-    type LibsqlExecuteResult = {
-      rows?: Array<Record<string, unknown>>;
-    };
-    type LibsqlClient = {
-      execute: (input: {
-        sql: string;
-        args?: unknown[];
-      }) => Promise<LibsqlExecuteResult>;
-    };
-
-    const client = (
-      this.database as unknown as {
-        session?: {client?: LibsqlClient};
-      }
-    )?.session?.client;
-
-    if (!client?.execute) {
-      throw new Error('Database client does not support raw execute');
-    }
-
-    await client.execute({
-      sql: `
-        INSERT INTO movies (
-          uid,
-          original_language,
-          year,
-          imdb_id,
-          tmdb_id,
-          created_at,
-          updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
-      `,
-      args: [uid, originalLanguage, year, imdbId, tmdbIdValue, now, now],
-    });
-
-    const inserted = await client.execute({
-      sql: `
-        SELECT
-          uid,
-          original_language,
-          year,
-          imdb_id,
-          tmdb_id,
-          created_at,
-          updated_at
-        FROM movies
-        WHERE uid = ?
-        LIMIT 1
-      `,
-      args: [uid],
-    });
-
-    const row = inserted.rows?.[0];
-
-    if (!row || typeof row.uid !== 'string') {
-      throw new Error('Failed to create movie');
-    }
-
-    const result: Partial<typeof movies.$inferSelect> = {
-      uid: row.uid as string,
-      originalLanguage:
-        typeof row.original_language === 'string'
-          ? (row.original_language as string)
-          : originalLanguage,
-      imdbId:
-        typeof row.imdb_id === 'string' ? (row.imdb_id as string) : imdbId,
-      createdAt:
-        typeof row.created_at === 'number' ? (row.created_at as number) : now,
-      updatedAt:
-        typeof row.updated_at === 'number' ? (row.updated_at as number) : now,
-    };
-
-    if (typeof row.year === 'number') {
-      result.year = row.year as number;
-    }
-
-    if (typeof row.tmdb_id === 'number') {
-      result.tmdbId = row.tmdb_id as number;
-    }
-
-    if (typeof (row as Record<string, unknown>).release_date === 'string') {
-      result.releaseDate = (row as Record<string, unknown>)
-        .release_date as string;
-    }
-
-    return result as typeof movies.$inferSelect;
   }
 }
