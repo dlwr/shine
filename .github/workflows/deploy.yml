@@ -33,7 +33,7 @@ jobs:
 
       - name: Checkout
         if: steps.token.outputs.available == 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
