@@ -9,6 +9,7 @@ export default [
   route('monthly', 'routes/monthly.tsx'),
   route('awards', 'routes/awards.tsx'),
   route('awards/:slug', 'routes/awards.$slug.tsx'),
+  route('awards/:slug/:year', 'routes/awards.$slug.$year.tsx'),
   route('robots.txt', 'routes/robots.tsx'),
   route('feed.xml', 'routes/feed.tsx'),
   route('sitemap.xml', 'routes/sitemap-index.tsx'),
