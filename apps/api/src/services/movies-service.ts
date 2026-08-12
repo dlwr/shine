@@ -14,6 +14,7 @@ import {
   getMovieCacheKeysForAllLocales,
   normalizeCacheLocale,
 } from '../utils/cache';
+import {awardSlugForOrganizationName} from './awards-service';
 import {BaseService} from './base-service';
 import type {MovieSelection, SearchOptions} from '@shine/types';
 
@@ -321,6 +322,7 @@ export class MoviesService extends BaseService {
           uid: nom.organizationUid,
           name: nom.organizationName,
           shortName: nom.organizationShortName ?? undefined,
+          slug: awardSlugForOrganizationName(nom.organizationName),
         },
       })),
       articleLinks: topArticles.map(article => ({

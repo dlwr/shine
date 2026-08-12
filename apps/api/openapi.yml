@@ -1771,6 +1771,9 @@ components:
         shortName:
           type: [string, 'null']
           description: Organization short name or abbreviation
+        slug:
+          type: [string, 'null']
+          description: Slug of the award page on the frontend (/awards/{slug}), if one exists
       required:
         - uid
         - name
