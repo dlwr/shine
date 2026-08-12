@@ -35,3 +35,24 @@ awardsRoutes.get('/:slug', async c => {
 
   return createCachedResponse(award, AWARDS_CACHE_TTL, {ETag: etag});
 });
+
+awardsRoutes.get('/:slug/:year', async c => {
+  const year = Number.parseInt(c.req.param('year'), 10);
+  if (!Number.isInteger(year)) {
+    return c.json({error: 'Award not found'}, 404);
+  }
+
+  const service = new AwardsService(c.env);
+  const award = await service.getAwardYear(c.req.param('slug'), year);
+
+  if (!award) {
+    return c.json({error: 'Award not found'}, 404);
+  }
+
+  const etag = createETag(award);
+  if (checkETag(c.req, etag)) {
+    return new Response(undefined, {status: 304, headers: {ETag: etag}});
+  }
+
+  return createCachedResponse(award, AWARDS_CACHE_TTL, {ETag: etag});
+});

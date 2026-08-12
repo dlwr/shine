@@ -112,7 +112,7 @@ export async function loader({context, request, params}: Route.LoaderArgs) {
   return {award, locale};
 }
 
-function MovieRow({movie}: {movie: AwardMovieEntryData}) {
+export function MovieRow({movie}: {movie: AwardMovieEntryData}) {
   const title = movie.title ?? 'Unknown Title';
 
   if (movie.isWinner) {
@@ -200,7 +200,11 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
               <section key={group.year}>
                 <div className="flex items-baseline gap-3 border-t-[3px] border-ink pt-2 mb-2">
                   <h2 className="font-display font-black text-3xl md:text-4xl tracking-[-0.06em] leading-none">
-                    {group.year}
+                    <a
+                      href={`/awards/${award.slug}/${group.year}`}
+                      className="text-ink no-underline">
+                      {group.year}
+                    </a>
                   </h2>
                   {group.ceremonyNumber && (
                     <span className="font-mono text-[10px] text-ink-muted">
