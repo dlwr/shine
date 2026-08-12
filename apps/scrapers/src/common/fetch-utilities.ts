@@ -4,6 +4,13 @@
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 
+export class FetchHttpError extends Error {
+  constructor(readonly status: number) {
+    super(`HTTP error! Status: ${status}`);
+    this.name = 'FetchHttpError';
+  }
+}
+
 async function sleep(ms: number): Promise<void> {
   await new Promise(resolve => {
     setTimeout(resolve, ms);
@@ -102,7 +109,7 @@ export async function fetchWithRetry(
       continue;
     }
 
-    throw new Error(`HTTP error! Status: ${status}`);
+    throw new FetchHttpError(status);
   }
 }
 

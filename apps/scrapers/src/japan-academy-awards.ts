@@ -16,6 +16,7 @@ import {
   savePosterUrls,
   saveTMDBId,
 } from './common/tmdb-utilities';
+import {fetchJsonWithRetry, fetchWithRetry} from './common/fetch-utilities';
 
 const WIKIPEDIA_BASE_URL = 'https://ja.wikipedia.org';
 const MAIN_AWARDS_URL = 'https://ja.wikipedia.org/wiki/日本アカデミー賞作品賞';
@@ -212,13 +213,7 @@ export async function scrapeJapanAcademyAwardsYear(year: number) {
 
 async function scrapeMainAwardsPage() {
   console.log(`Fetching ${MAIN_AWARDS_URL}...`);
-  const response = await fetch(MAIN_AWARDS_URL);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch main awards page: ${response.status}`);
-  }
-
-  const html = await response.text();
+  const html = await fetchWithRetry(MAIN_AWARDS_URL);
   const $ = cheerio.load(html);
 
   const movies = extractAllMoviesFromMainPage($);
@@ -279,13 +274,7 @@ async function scrapeMainAwardsPage() {
 
 async function scrapeMainAwardsPageForYear(targetYear: number) {
   console.log(`Fetching ${MAIN_AWARDS_URL}...`);
-  const response = await fetch(MAIN_AWARDS_URL);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch main awards page: ${response.status}`);
-  }
-
-  const html = await response.text();
+  const html = await fetchWithRetry(MAIN_AWARDS_URL);
   const $ = cheerio.load(html);
 
   const movies = extractAllMoviesFromMainPage($).filter(
@@ -779,14 +768,9 @@ async function fetchEnglishTitleFromTMDB(
     findUrl.searchParams.append('api_key', TMDB_API_KEY_LOCAL);
     findUrl.searchParams.append('external_source', 'imdb_id');
 
-    const response = await fetch(findUrl.toString());
-    if (!response.ok) {
-      return undefined;
-    }
-
-    const data: {
+    const data = await fetchJsonWithRetry<{
       movie_results?: Array<{title: string}>;
-    } = await response.json();
+    }>(findUrl.toString());
     const movieResults = data.movie_results;
 
     if (!movieResults || movieResults.length === 0) {
