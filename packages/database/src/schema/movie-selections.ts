@@ -1,5 +1,11 @@
 import {sql} from 'drizzle-orm';
-import {index, integer, sqliteTable, text} from 'drizzle-orm/sqlite-core';
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from 'drizzle-orm/sqlite-core';
 import {generateUUID} from '@shine/utils';
 import {movies} from './movies';
 
@@ -28,7 +34,7 @@ export const movieSelections = sqliteTable(
     index('movie_selections_selection_type_idx').on(table.selectionType),
     index('movie_selections_selection_date_idx').on(table.selectionDate),
     index('movie_selections_movie_id_idx').on(table.movieId),
-    index('movie_selections_type_date_idx').on(
+    uniqueIndex('movie_selections_type_date_unique_idx').on(
       table.selectionType,
       table.selectionDate,
     ),

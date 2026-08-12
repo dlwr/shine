@@ -6,6 +6,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
+import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {translations} from '@shine/database/schema/translations';
@@ -172,5 +173,28 @@ describe('SelectionsService.reselectMovie with excludeMovieUids', () => {
       new Date('2026-07-15'),
     );
     expect(movie.uid).toBe('movie-a');
+  });
+});
+
+describe('SelectionsService selection persistence', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+  });
+
+  it('does not create duplicate rows when the same period is persisted twice', async () => {
+    await seedNominatedMovie(database, 'movie-a', 'Movie A');
+    const service = new SelectionsService(environment);
+    const date = new Date('2026-07-15');
+
+    await service['selectMovieFromNominations'](date, 'daily', true, 42);
+    await service['selectMovieFromNominations'](date, 'daily', true, 42);
+
+    const rows = await database
+      .select({uid: movieSelections.uid})
+      .from(movieSelections);
+    expect(rows).toHaveLength(1);
   });
 });
