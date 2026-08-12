@@ -1,38 +1,8 @@
 import {useState} from 'react';
 import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+import type {MovieDetails} from '@/components/admin/movie-info/types';
 
-type PosterUrl = {
-  uid: string;
-  url: string;
-  width: number | undefined;
-  height: number | undefined;
-  languageCode: string | undefined;
-  source: string | undefined;
-  isPrimary: number;
-};
-
-type MovieDetails = {
-  uid: string;
-  year: number;
-  originalLanguage: string;
-  imdbId: string | undefined;
-  tmdbId: number | undefined;
-  translations: Array<{
-    uid: string;
-    languageCode: string;
-    content: string;
-    isDefault: number;
-  }>;
-  nominations: Array<{
-    uid: string;
-    isWinner: boolean;
-    specialMention: string | undefined;
-    category: {uid: string; name: string};
-    ceremony: {uid: string; number: number; year: number};
-    organization: {uid: string; name: string; shortName: string};
-  }>;
-  posters: PosterUrl[];
-};
+type PosterUrl = MovieDetails['posters'][number];
 
 type PosterManagerProperties = {
   movieId: string;

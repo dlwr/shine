@@ -8,43 +8,7 @@ import ArticleLinkManager from '../components/article-link-manager';
 import type {Route} from './+types/admin.movies.$id';
 import {resolveApiUrl} from '@/lib/api';
 import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
-
-export type Translation = {
-  uid: string;
-  languageCode: string;
-  content: string;
-  isDefault: number;
-};
-
-export type Nomination = {
-  uid: string;
-  isWinner: boolean;
-  specialMention: string | undefined;
-  category: {
-    uid: string;
-    name: string;
-  };
-  ceremony: {
-    uid: string;
-    number: number;
-    year: number;
-  };
-  organization: {
-    uid: string;
-    name: string;
-    shortName: string;
-  };
-};
-
-type PosterUrl = {
-  uid: string;
-  url: string;
-  width: number | undefined;
-  height: number | undefined;
-  languageCode: string | undefined;
-  source: string | undefined;
-  isPrimary: number;
-};
+import type {MovieDetails as BaseMovieDetails} from '@/components/admin/movie-info/types';
 
 type ArticleLink = {
   uid: string;
@@ -54,16 +18,7 @@ type ArticleLink = {
   isSpam: boolean;
 };
 
-export type MovieDetails = {
-  uid: string;
-  year: number;
-  originalLanguage: string;
-  imdbId: string | undefined;
-  tmdbId: number | undefined;
-  mediaType?: 'movie' | 'tv';
-  translations: Translation[];
-  nominations: Nomination[];
-  posters: PosterUrl[];
+export type MovieDetails = BaseMovieDetails & {
   articleLinks?: ArticleLink[];
 };
 

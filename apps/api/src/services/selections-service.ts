@@ -700,16 +700,20 @@ export class SelectionsService extends BaseService {
     if (persistSelection) {
       const selectionDate = this.getSelectionDate(date, type);
 
-      try {
-        await this.database.insert(movieSelections).values({
+      await this.database
+        .insert(movieSelections)
+        .values({
           movieId: selectedMovieUid,
           selectionType: type,
           selectionDate,
           createdAt: Math.floor(Date.now() / 1000),
+        })
+        .onConflictDoNothing({
+          target: [
+            movieSelections.selectionType,
+            movieSelections.selectionDate,
+          ],
         });
-      } catch {
-        // Selection might already exist due to race condition, ignore
-      }
     }
 
     return selectedMovieUid;
