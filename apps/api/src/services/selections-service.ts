@@ -709,7 +709,10 @@ export class SelectionsService extends BaseService {
           createdAt: Math.floor(Date.now() / 1000),
         })
         .onConflictDoNothing({
-          target: [movieSelections.selectionType, movieSelections.selectionDate],
+          target: [
+            movieSelections.selectionType,
+            movieSelections.selectionDate,
+          ],
         });
     }
 

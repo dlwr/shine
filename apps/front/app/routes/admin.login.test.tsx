@@ -9,7 +9,7 @@ type AdminLoginComponentProperties = Route.ComponentProps;
 
 // UseNavigateのモック
 const mockNavigate = vi.fn();
-vi.mock('react-router', async (importOriginal) => ({
+vi.mock('react-router', async importOriginal => ({
   ...(await importOriginal<typeof import('react-router')>()),
   useNavigate: () => mockNavigate,
 }));

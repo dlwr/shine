@@ -8,7 +8,7 @@ import type {Route} from './+types/admin.movies';
 // UseSearchParamsのモック
 const mockSearchParameters = new URLSearchParams();
 const mockSetSearchParameters = vi.fn();
-vi.mock('react-router', async (importOriginal) => ({
+vi.mock('react-router', async importOriginal => ({
   ...(await importOriginal<typeof import('react-router')>()),
   useSearchParams: () => [mockSearchParameters, mockSetSearchParameters],
   useLocation: () => ({
