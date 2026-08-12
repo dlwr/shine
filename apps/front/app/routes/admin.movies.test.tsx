@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import {fireEvent, render, screen} from '@testing-library/react';
-import {MemoryRouter} from 'react-router-dom';
+import {MemoryRouter} from 'react-router';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import AdminMovies, {loader, meta} from './admin.movies';
 import type {Route} from './+types/admin.movies';
@@ -8,7 +8,8 @@ import type {Route} from './+types/admin.movies';
 // UseSearchParamsのモック
 const mockSearchParameters = new URLSearchParams();
 const mockSetSearchParameters = vi.fn();
-vi.mock('react-router', () => ({
+vi.mock('react-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('react-router')>()),
   useSearchParams: () => [mockSearchParameters, mockSetSearchParameters],
   useLocation: () => ({
     pathname: '/admin/movies',
