@@ -7,6 +7,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {BaseService} from './base-service';
 import type {
   AwardDetail,
+  AwardMovieEntry,
   AwardSummary,
   AwardYearDetail,
   AwardYearGroup,
@@ -238,28 +239,103 @@ export class AwardsService extends BaseService {
       return undefined;
     }
 
-    const award = await this.getAwardBySlug(slug);
-    if (!award) {
+    const categoryUids = await this.resolveCategoryUids(definition);
+    if (categoryUids.length === 0) {
       return undefined;
     }
 
-    const index = award.years.findIndex(group => group.year === year);
-    if (index === -1) {
+    const rows = await this.database
+      .select({
+        movieUid: movies.uid,
+        movieYear: movies.year,
+        isWinner: nominations.isWinner,
+        ceremonyNumber: awardCeremonies.ceremonyNumber,
+        jaTitle: sql<string | null>`(
+          SELECT content FROM translations
+          WHERE translations.resource_uid = movies.uid
+            AND translations.resource_type = 'movie_title'
+            AND translations.language_code = 'ja'
+          LIMIT 1
+        )`.as('jaTitle'),
+        defaultTitle: sql<string | null>`(
+          SELECT content FROM translations
+          WHERE translations.resource_uid = movies.uid
+            AND translations.resource_type = 'movie_title'
+          ORDER BY translations.is_default DESC
+          LIMIT 1
+        )`.as('defaultTitle'),
+        posterUrl: sql<string | null>`(
+          SELECT url FROM poster_urls
+          WHERE poster_urls.movie_uid = movies.uid
+          ORDER BY poster_urls.is_primary DESC
+          LIMIT 1
+        )`.as('posterUrl'),
+      })
+      .from(nominations)
+      .innerJoin(
+        awardCeremonies,
+        eq(nominations.ceremonyUid, awardCeremonies.uid),
+      )
+      .innerJoin(movies, eq(nominations.movieUid, movies.uid))
+      .where(
+        and(
+          inArray(nominations.categoryUid, categoryUids),
+          eq(awardCeremonies.year, year),
+          isNull(movies.deletedAt),
+        ),
+      );
+
+    if (rows.length === 0) {
       return undefined;
     }
 
-    const group = award.years[index];
+    const movieEntries: AwardMovieEntry[] = [];
+    for (const row of rows) {
+      const existing = movieEntries.find(movie => movie.uid === row.movieUid);
+      if (existing) {
+        existing.isWinner = existing.isWinner || row.isWinner === 1;
+        continue;
+      }
+
+      movieEntries.push({
+        uid: row.movieUid,
+        title: row.jaTitle ?? row.defaultTitle ?? undefined,
+        movieYear: row.movieYear ?? undefined,
+        posterUrl: row.posterUrl ?? undefined,
+        isWinner: row.isWinner === 1,
+      });
+    }
+
+    movieEntries.sort((a, b) => Number(b.isWinner) - Number(a.isWinner));
+
+    const yearRows = await this.database
+      .selectDistinct({year: awardCeremonies.year})
+      .from(nominations)
+      .innerJoin(
+        awardCeremonies,
+        eq(nominations.ceremonyUid, awardCeremonies.uid),
+      )
+      .innerJoin(movies, eq(nominations.movieUid, movies.uid))
+      .where(
+        and(
+          inArray(nominations.categoryUid, categoryUids),
+          isNull(movies.deletedAt),
+        ),
+      );
+
+    const years = yearRows.map(row => row.year).toSorted((a, b) => a - b);
+    const index = years.indexOf(year);
 
     return {
-      slug: award.slug,
-      name: award.name,
-      organization: award.organization,
-      description: award.description,
-      year: group.year,
-      ceremonyNumber: group.ceremonyNumber,
-      movies: group.movies,
-      previousYear: award.years[index + 1]?.year,
-      nextYear: award.years[index - 1]?.year,
+      slug: definition.slug,
+      name: definition.name,
+      organization: definition.organization,
+      description: definition.description,
+      year,
+      ceremonyNumber: rows[0].ceremonyNumber ?? undefined,
+      movies: movieEntries,
+      previousYear: index > 0 ? years[index - 1] : undefined,
+      nextYear: index < years.length - 1 ? years[index + 1] : undefined,
     };
   }
 
