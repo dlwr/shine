@@ -2,6 +2,7 @@ import {
   and,
   eq,
   getDatabase,
+  inArray,
   isNull,
   sql,
   type Environment,
@@ -237,30 +238,10 @@ moviesRoutes.get('/:id/related', async c => {
 
     const targetYear = target[0].year ?? 0;
 
-    const rows = await database
+    const candidates = await database
       .select({
         uid: movies.uid,
         year: movies.year,
-        localeTitle: sql<string | undefined>`(
-          SELECT content FROM translations
-          WHERE resource_type = 'movie_title'
-            AND resource_uid = ${movies.uid}
-            AND language_code = ${locale}
-          LIMIT 1
-        )`,
-        defaultTitle: sql<string | undefined>`(
-          SELECT content FROM translations
-          WHERE resource_type = 'movie_title'
-            AND resource_uid = ${movies.uid}
-            AND is_default = 1
-          LIMIT 1
-        )`,
-        posterUrl: sql<string | undefined>`(
-          SELECT url FROM poster_urls
-          WHERE movie_uid = ${movies.uid}
-          ORDER BY is_primary DESC
-          LIMIT 1
-        )`,
       })
       .from(nominations)
       .innerJoin(movies, eq(nominations.movieUid, movies.uid))
@@ -280,12 +261,47 @@ moviesRoutes.get('/:id/related', async c => {
       )
       .limit(limit);
 
-    const relatedMovies = rows.map(row => ({
-      uid: row.uid,
-      title: row.localeTitle ?? row.defaultTitle ?? 'Unknown Title',
-      year: row.year ?? undefined,
-      posterUrl: row.posterUrl ?? undefined,
-    }));
+    const candidateUids = candidates.map(row => row.uid);
+    const rows =
+      candidateUids.length > 0
+        ? await database
+            .select({
+              uid: movies.uid,
+              localeTitle: sql<string | undefined>`(
+                SELECT content FROM translations
+                WHERE resource_type = 'movie_title'
+                  AND resource_uid = movies.uid
+                  AND language_code = ${locale}
+                LIMIT 1
+              )`,
+              defaultTitle: sql<string | undefined>`(
+                SELECT content FROM translations
+                WHERE resource_type = 'movie_title'
+                  AND resource_uid = movies.uid
+                  AND is_default = 1
+                LIMIT 1
+              )`,
+              posterUrl: sql<string | undefined>`(
+                SELECT url FROM poster_urls
+                WHERE movie_uid = movies.uid
+                ORDER BY is_primary DESC
+                LIMIT 1
+              )`,
+            })
+            .from(movies)
+            .where(inArray(movies.uid, candidateUids))
+        : [];
+
+    const rowsByUid = new Map(rows.map(row => [row.uid, row]));
+    const relatedMovies = candidates.map(candidate => {
+      const row = rowsByUid.get(candidate.uid);
+      return {
+        uid: candidate.uid,
+        title: row?.localeTitle ?? row?.defaultTitle ?? 'Unknown Title',
+        year: candidate.year ?? undefined,
+        posterUrl: row?.posterUrl ?? undefined,
+      };
+    });
 
     const result = {movies: relatedMovies};
     await cache.set(cacheKey, result, getCacheTTL.movie.related);
