@@ -219,6 +219,12 @@ moviesRoutes.get('/:id/related', async c => {
         ? Math.min(limitParameter, 12)
         : 6;
 
+    const cacheKey = `movie:${movieId}:related:${locale}:${limit}:v1`;
+    const cached = await cache.get(cacheKey);
+    if (cached) {
+      return c.json(cached.data as Record<string, unknown>);
+    }
+
     const target = await database
       .select({uid: movies.uid, year: movies.year})
       .from(movies)
@@ -281,10 +287,10 @@ moviesRoutes.get('/:id/related', async c => {
       posterUrl: row.posterUrl ?? undefined,
     }));
 
-    return createCachedResponse(
-      {movies: relatedMovies},
-      getCacheTTL.movie.full,
-    );
+    const result = {movies: relatedMovies};
+    await cache.set(cacheKey, result, getCacheTTL.movie.related);
+
+    return createCachedResponse(result, getCacheTTL.movie.related);
   } catch (error) {
     console.error('Error fetching related movies:', error);
     return c.json({error: 'Internal server error'}, 500);
