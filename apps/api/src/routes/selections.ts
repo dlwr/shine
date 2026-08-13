@@ -22,11 +22,14 @@ import {
   checkETag,
   createCachedResponse,
   createETag,
+  EdgeCache,
   getCacheTTL,
 } from '../utils/cache';
 import {simpleHash} from '../utils/hash';
 
 export const selectionsRoutes = new Hono<{Bindings: Environment}>();
+
+const historyCache = new EdgeCache();
 
 function getSelectionDate(
   date: Date,
@@ -244,6 +247,12 @@ selectionsRoutes.get('/selections/:type/history', async c => {
         : 14;
     const today = getSelectionDate(new Date(), type);
 
+    const cacheKey = `selections:history:${type}:${locale}:${limit}:${today}:v1`;
+    const cached = await historyCache.get(cacheKey);
+    if (cached) {
+      return c.json(cached.data as Record<string, unknown>);
+    }
+
     const rows = await database
       .select({
         uid: movies.uid,
@@ -282,6 +291,8 @@ selectionsRoutes.get('/selections/:type/history', async c => {
       year: row.year ?? undefined,
       selectionDate: row.selectionDate,
     }));
+
+    await historyCache.set(cacheKey, {items}, getCacheTTL.selections[type]);
 
     return createCachedResponse({items}, getCacheTTL.selections[type]);
   } catch (error) {
