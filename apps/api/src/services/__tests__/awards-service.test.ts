@@ -445,6 +445,15 @@ describe('AwardsService.getAwardYear', () => {
     expect(result).toBeUndefined();
   });
 
+  it('skips ceremony years without nominations in the category', async () => {
+    await seedThreeCannesYears();
+    await seedCannesCeremony(database, 'ceremony-2022', 2022, 75);
+
+    const result = await service.getAwardYear('palme-dor', 2021);
+
+    expect(result?.nextYear).toBe(2023);
+  });
+
   it('returns undefined for a list-grouping award', async () => {
     await database.insert(awardOrganizations).values({
       uid: 'org-1001',
