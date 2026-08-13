@@ -254,7 +254,7 @@ export const getCacheTTL = {
   movie: {
     basic: 3600, // 1 hour
     full: 86_400, // 24 hours
-    related: 604_800, // 1 week
+    related: 2_592_000, // 30 days
   },
   search: {
     common: 1800, // 30 minutes
