@@ -25,6 +25,7 @@ export type Environment = {
   JWT_SECRET?: string;
   TURNSTILE_SECRET_KEY?: string;
   BROWSER?: Fetcher;
+  CACHE_KV?: KVNamespace;
 };
 
 export const getDatabase = (environment: Environment) => {

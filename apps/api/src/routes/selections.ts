@@ -29,8 +29,6 @@ import {simpleHash} from '../utils/hash';
 
 export const selectionsRoutes = new Hono<{Bindings: Environment}>();
 
-const historyCache = new EdgeCache();
-
 function getSelectionDate(
   date: Date,
   type: 'daily' | 'weekly' | 'monthly',
@@ -247,6 +245,7 @@ selectionsRoutes.get('/selections/:type/history', async c => {
         : 14;
     const today = getSelectionDate(new Date(), type);
 
+    const historyCache = new EdgeCache(undefined, c.env.CACHE_KV);
     const cacheKey = `selections:history:${type}:${locale}:${limit}:${today}:v1`;
     const cached = await historyCache.get(cacheKey);
     if (cached) {

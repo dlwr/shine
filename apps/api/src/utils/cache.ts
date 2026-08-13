@@ -11,12 +11,17 @@ export type CacheMetrics = {
 };
 
 export class EdgeCache {
-  private readonly cache: Cache;
+  private readonly cacheStorage?: Cache;
+  private readonly kv?: KVNamespace;
   private readonly metrics: CacheMetrics = {hits: 0, misses: 0, hitRate: 0};
 
-  constructor(cacheStorage?: Cache) {
-    this.cache =
-      cacheStorage ?? (caches as unknown as {default: Cache}).default;
+  constructor(cacheStorage?: Cache, kv?: KVNamespace) {
+    this.cacheStorage = cacheStorage;
+    this.kv = kv;
+  }
+
+  private get cache(): Cache {
+    return this.cacheStorage ?? (caches as unknown as {default: Cache}).default;
   }
 
   // Cache API keys must be valid request URLs; map logical keys onto one
@@ -67,6 +72,13 @@ export class EdgeCache {
 
   async set(key: string, data: unknown, ttl = 3600): Promise<void> {
     try {
+      if (this.kv) {
+        await this.kv.put(key, JSON.stringify({data, cachedAt: Date.now()}), {
+          expirationTtl: ttl,
+        });
+        return;
+      }
+
       const response = Response.json(
         {data, cachedAt: Date.now()},
         {
@@ -86,6 +98,16 @@ export class EdgeCache {
     key: string,
   ): Promise<{data: unknown; cachedAt: number} | undefined> {
     try {
+      if (this.kv) {
+        const cached = (await this.kv.get(key, 'json')) as {
+          data: unknown;
+          cachedAt: number;
+        } | null;
+        this.metrics[cached ? 'hits' : 'misses']++;
+        this.updateHitRate();
+        return cached ?? undefined;
+      }
+
       const cached = await this.cache.match(this.keyToUrl(key));
       if (cached) {
         const result: {
@@ -110,6 +132,11 @@ export class EdgeCache {
 
   async delete(key: string): Promise<boolean> {
     try {
+      if (this.kv) {
+        await this.kv.delete(key);
+        return true;
+      }
+
       return await this.cache.delete(this.keyToUrl(key));
     } catch (error) {
       console.error('Cache delete error:', error);

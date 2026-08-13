@@ -13,11 +13,19 @@ name = "shine-api"
 [env.development.browser]
 binding = "BROWSER"
 
+[[env.development.kv_namespaces]]
+binding = "CACHE_KV"
+id = "62b23e51b6614819adbc5454a0930687"
+
 [env.production]
 name = "shine-api"
 
 [env.production.browser]
 binding = "BROWSER"
+
+[[env.production.kv_namespaces]]
+binding = "CACHE_KV"
+id = "62b23e51b6614819adbc5454a0930687"
 # TURSO_DATABASE_URL and TURSO_AUTH_TOKEN should be set via:
 # wrangler secret put TURSO_DATABASE_URL --env production
 # wrangler secret put TURSO_AUTH_TOKEN --env production
