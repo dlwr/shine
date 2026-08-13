@@ -10,7 +10,7 @@ import {
 
 export const awardsRoutes = new Hono<{Bindings: Environment}>();
 
-const AWARDS_CACHE_TTL = 21_600;
+const AWARDS_CACHE_TTL = 86_400;
 const cache = new EdgeCache();
 
 awardsRoutes.get('/', async c => {

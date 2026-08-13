@@ -288,9 +288,9 @@ moviesRoutes.get('/:id/related', async c => {
     }));
 
     const result = {movies: relatedMovies};
-    await cache.set(cacheKey, result, getCacheTTL.movie.full);
+    await cache.set(cacheKey, result, getCacheTTL.movie.related);
 
-    return createCachedResponse(result, getCacheTTL.movie.full);
+    return createCachedResponse(result, getCacheTTL.movie.related);
   } catch (error) {
     console.error('Error fetching related movies:', error);
     return c.json({error: 'Internal server error'}, 500);
