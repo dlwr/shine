@@ -15,6 +15,7 @@ import {beforeEach, describe, expect, it} from 'vitest';
 import {
   AwardsService,
   awardPageLinkForOrganizationName,
+  paginateAwardDetail,
 } from '../awards-service';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -181,6 +182,7 @@ describe('AwardsService.getAwardBySlug', () => {
       movieUid: 'movie-a',
       ceremonyUid: 'ceremony-2023',
       categoryUid: 'cat-palme',
+      isWinner: 1,
     });
 
     const result = await service.getAwardBySlug('palme-dor');
@@ -196,6 +198,7 @@ describe('AwardsService.getAwardBySlug', () => {
       movieUid: 'movie-a',
       ceremonyUid: 'ceremony-2023',
       categoryUid: 'cat-palme',
+      isWinner: 1,
     });
 
     const result = await service.getAwardBySlug('palme-dor');
@@ -219,6 +222,7 @@ describe('AwardsService.getAwardBySlug', () => {
       movieUid: 'movie-a',
       ceremonyUid: 'ceremony-2023',
       categoryUid: 'cat-palme',
+      isWinner: 1,
     });
 
     const result = await service.getAwardBySlug('palme-dor');
@@ -263,11 +267,187 @@ describe('AwardsService.getAwardBySlug', () => {
     const result = await service.getAwardBySlug('japan-academy-best-picture');
 
     const yearGroup = result?.years[0];
-    expect(yearGroup?.movies).toHaveLength(2);
+    expect(yearGroup?.filmCount).toBe(2);
+    expect(yearGroup?.movies).toHaveLength(1);
     expect(yearGroup?.movies[0]).toMatchObject({
       uid: 'movie-winner',
       isWinner: true,
     });
+  });
+});
+
+describe('AwardsService.getAwardBySlug 年別グルーピング', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+  let service: AwardsService;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+    service = new AwardsService(environment);
+    await seedCannes(database);
+    await seedCannesCeremony(database, 'ceremony-2023', 2023, 76);
+    await seedMovie(database, 'movie-winner', 'Anatomy of a Fall');
+    await seedMovie(database, 'movie-a', 'The Zone of Interest');
+    await seedMovie(database, 'movie-b', 'Perfect Days');
+    await database.insert(nominations).values([
+      {
+        movieUid: 'movie-winner',
+        ceremonyUid: 'ceremony-2023',
+        categoryUid: 'cat-palme',
+        isWinner: 1,
+      },
+      {
+        movieUid: 'movie-a',
+        ceremonyUid: 'ceremony-2023',
+        categoryUid: 'cat-palme',
+      },
+      {
+        movieUid: 'movie-b',
+        ceremonyUid: 'ceremony-2023',
+        categoryUid: 'cat-palme',
+      },
+    ]);
+  });
+
+  it('受賞作のみを返す', async () => {
+    const result = await service.getAwardBySlug('palme-dor');
+
+    expect(result?.years[0]?.movies.map(movie => movie.uid)).toEqual([
+      'movie-winner',
+    ]);
+  });
+
+  it('出品作の総数をfilmCountで返す', async () => {
+    const result = await service.getAwardBySlug('palme-dor');
+
+    expect(result?.years[0]?.filmCount).toBe(3);
+  });
+
+  it('受賞作がない回も回次と件数を返す', async () => {
+    await seedCannesCeremony(database, 'ceremony-1968', 1968, 21);
+    await seedMovie(database, 'movie-c', 'Aborted Year Film');
+    await database.insert(nominations).values({
+      movieUid: 'movie-c',
+      ceremonyUid: 'ceremony-1968',
+      categoryUid: 'cat-palme',
+    });
+
+    const result = await service.getAwardBySlug('palme-dor');
+
+    const group = result?.years.find(entry => entry.year === 1968);
+    expect(group?.movies).toEqual([]);
+    expect(group?.filmCount).toBe(1);
+    expect(group?.ceremonyNumber).toBe(21);
+  });
+
+  it('ページ情報は返さない', async () => {
+    const result = await service.getAwardBySlug('palme-dor');
+
+    expect(result?.pagination).toBeUndefined();
+  });
+});
+
+describe('AwardsService.getAwardBySlug リスト型のページ分割', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+  let service: AwardsService;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+    service = new AwardsService(environment);
+    await database.insert(awardOrganizations).values({
+      uid: 'org-1001',
+      name: '1001 Movies You Must See Before You Die',
+    });
+    await database.insert(awardCategories).values({
+      uid: 'cat-1001',
+      organizationUid: 'org-1001',
+      name: 'Selected Films',
+    });
+    await database
+      .insert(awardCeremonies)
+      .values({uid: 'ceremony-1001', organizationUid: 'org-1001', year: 2025});
+
+    for (let index = 0; index < 150; index++) {
+      const uid = `movie-${String(index).padStart(3, '0')}`;
+      await seedMovie(database, uid, `Film ${index}`, {year: 2000 + index});
+      await database.insert(nominations).values({
+        movieUid: uid,
+        ceremonyUid: 'ceremony-1001',
+        categoryUid: 'cat-1001',
+      });
+    }
+  });
+
+  it('サービスは全件を返しページ情報を持たない', async () => {
+    const result = await service.getAwardBySlug('1001-movies');
+
+    expect(result?.years[0]?.movies).toHaveLength(150);
+    expect(result?.pagination).toBeUndefined();
+  });
+
+  it('1ページ目は100件を返す', async () => {
+    const full = await service.getAwardBySlug('1001-movies');
+    const result = paginateAwardDetail(full!, 1);
+
+    expect(result?.years[0]?.movies).toHaveLength(100);
+    expect(result?.pagination).toMatchObject({
+      page: 1,
+      perPage: 100,
+      totalCount: 150,
+      totalPages: 2,
+    });
+  });
+
+  it('2ページ目は残りを返す', async () => {
+    const full = await service.getAwardBySlug('1001-movies');
+    const result = paginateAwardDetail(full!, 2);
+
+    expect(result?.years[0]?.movies).toHaveLength(50);
+    expect(result?.pagination?.page).toBe(2);
+  });
+
+  it('ページをまたいで重複しない', async () => {
+    const full = await service.getAwardBySlug('1001-movies');
+    const uids = [
+      ...(paginateAwardDetail(full!, 1)?.years[0]?.movies ?? []),
+      ...(paginateAwardDetail(full!, 2)?.years[0]?.movies ?? []),
+    ].map(movie => movie.uid);
+
+    expect(new Set(uids).size).toBe(150);
+  });
+
+  it('公開年の新しい順に並べる', async () => {
+    const full = await service.getAwardBySlug('1001-movies');
+    const years = (full?.years[0]?.movies ?? []).map(movie => movie.movieYear);
+
+    expect(years).toEqual(years.toSorted((a, b) => (b ?? 0) - (a ?? 0)));
+  });
+
+  it('範囲外のページはundefinedを返す', async () => {
+    const full = await service.getAwardBySlug('1001-movies');
+
+    expect(paginateAwardDetail(full!, 3)).toBeUndefined();
+  });
+
+  it('filmCountは総数を返す', async () => {
+    const full = await service.getAwardBySlug('1001-movies');
+    const result = paginateAwardDetail(full!, 2);
+
+    expect(result?.years[0]?.filmCount).toBe(150);
+  });
+
+  it('年別グルーピングの賞はそのまま返す', async () => {
+    const award = {
+      slug: 'palme-dor',
+      name: 'x',
+      organization: 'y',
+      description: 'z',
+      grouping: 'year' as const,
+      years: [{year: 2023, ceremonyNumber: 76, filmCount: 21, movies: []}],
+    };
+
+    expect(paginateAwardDetail(award, 1)).toBe(award);
   });
 });
 

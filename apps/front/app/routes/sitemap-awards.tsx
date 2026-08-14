@@ -7,6 +7,11 @@ type AwardListing = {
   grouping: 'year' | 'list';
 };
 
+type AwardDetailShape = {
+  years?: Array<{year: number}>;
+  pagination?: {totalPages: number};
+};
+
 async function fetchAwards(
   context: unknown,
   signal?: AbortSignal,
@@ -24,33 +29,49 @@ async function fetchAwards(
   }
 }
 
-async function fetchAwardYears(
+async function fetchAwardDetail(
   context: unknown,
   slug: string,
   signal?: AbortSignal,
-): Promise<number[]> {
+): Promise<AwardDetailShape> {
   try {
     const response = await fetch(`${resolveApiUrl(context)}/awards/${slug}`, {
       signal,
     });
     if (!response.ok) {
-      return [];
+      return {};
     }
 
-    const body = (await response.json()) as {years?: Array<{year: number}>};
-    return (body.years ?? []).map(group => group.year);
+    return (await response.json()) as AwardDetailShape;
   } catch {
-    return [];
+    return {};
   }
+}
+
+function subPageEntries(
+  award: AwardListing,
+  detail: AwardDetailShape,
+): SitemapEntry[] {
+  if (award.grouping === 'year') {
+    return (detail.years ?? []).map(group => ({
+      path: `/awards/${award.slug}/${group.year}`,
+      changefreq: 'monthly',
+    }));
+  }
+
+  const totalPages = detail.pagination?.totalPages ?? 1;
+  return Array.from({length: Math.max(0, totalPages - 1)}, (_, index) => ({
+    path: `/awards/${award.slug}?page=${index + 2}`,
+    changefreq: 'weekly',
+  }));
 }
 
 export async function loader({context, request}: Route.LoaderArgs) {
   const awards = await fetchAwards(context, request.signal);
-  const yearAwards = awards.filter(award => award.grouping === 'year');
-  const yearLists = await Promise.all(
-    yearAwards.map(async award => ({
-      slug: award.slug,
-      years: await fetchAwardYears(context, award.slug, request.signal),
+  const details = await Promise.all(
+    awards.map(async award => ({
+      award,
+      detail: await fetchAwardDetail(context, award.slug, request.signal),
     })),
   );
 
@@ -63,12 +84,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
       path: `/awards/${award.slug}`,
       changefreq: 'weekly' as const,
     })),
-    ...yearLists.flatMap(({slug, years}) =>
-      years.map(year => ({
-        path: `/awards/${slug}/${year}`,
-        changefreq: 'monthly' as const,
-      })),
-    ),
+    ...details.flatMap(({award, detail}) => subPageEntries(award, detail)),
   ];
 
   return sitemapResponse(buildUrlSet(entries));

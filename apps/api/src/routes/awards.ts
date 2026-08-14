@@ -1,6 +1,8 @@
 import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
+import type {AwardDetail} from '@shine/types';
 import {AwardsService} from '../services';
+import {paginateAwardDetail} from '../services/awards-service';
 import {
   checkETag,
   createCachedResponse,
@@ -14,7 +16,7 @@ const AWARDS_CACHE_TTL = 604_800;
 
 awardsRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = 'awards:list:v1';
+  const cacheKey = 'awards:list:v2';
   const cached = await cache.get(cacheKey);
   const result = (cached?.data as {awards: unknown[]} | undefined) ?? {
     awards: await new AwardsService(c.env).listAwards(),
@@ -35,17 +37,29 @@ awardsRoutes.get('/', async c => {
 awardsRoutes.get('/:slug', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
   const slug = c.req.param('slug');
-  const cacheKey = `awards:${slug}:v1`;
-  const cached = await cache.get(cacheKey);
-  const award =
-    cached?.data ?? (await new AwardsService(c.env).getAwardBySlug(slug));
+  const pageParameter = Number.parseInt(c.req.query('page') ?? '1', 10);
+  const page =
+    Number.isInteger(pageParameter) && pageParameter > 0 ? pageParameter : 1;
 
-  if (!award) {
+  // ページはキャッシュキーに含めない。利用者入力でキー空間が広がるのを避けるため、
+  // 全件を1キーに載せて読み出し後に切り出す
+  const cacheKey = `awards:${slug}:v2`;
+  const cached = await cache.get(cacheKey);
+  const full =
+    (cached?.data as AwardDetail | undefined) ??
+    (await new AwardsService(c.env).getAwardBySlug(slug));
+
+  if (!full) {
     return c.json({error: 'Award not found'}, 404);
   }
 
   if (!cached) {
-    await cache.set(cacheKey, award, AWARDS_CACHE_TTL);
+    await cache.set(cacheKey, full, AWARDS_CACHE_TTL);
+  }
+
+  const award = paginateAwardDetail(full, page);
+  if (!award) {
+    return c.json({error: 'Award not found'}, 404);
   }
 
   const etag = createETag(award);

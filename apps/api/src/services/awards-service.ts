@@ -151,6 +151,75 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
   },
 ];
 
+const AWARD_LIST_PAGE_SIZE = 100;
+
+function flattenListAward(years: AwardYearGroup[]): AwardYearGroup[] {
+  const byUid = new Map<string, AwardMovieEntry>();
+  for (const group of years) {
+    for (const movie of group.movies) {
+      const existing = byUid.get(movie.uid);
+      if (existing) {
+        existing.isWinner = existing.isWinner || movie.isWinner;
+        continue;
+      }
+
+      byUid.set(movie.uid, movie);
+    }
+  }
+
+  const movies = [...byUid.values()].toSorted(
+    (a, b) =>
+      (b.movieYear ?? 0) - (a.movieYear ?? 0) || (a.uid < b.uid ? -1 : 1),
+  );
+
+  return [
+    {
+      year: years[0].year,
+      ceremonyNumber: years[0].ceremonyNumber,
+      filmCount: movies.length,
+      movies,
+    },
+  ];
+}
+
+/**
+ * リスト型の賞をページに切り出す。範囲外のページはundefined(=404)。
+ * キャッシュ済みの全件データに対して適用する前提の純粋関数
+ */
+export function paginateAwardDetail(
+  award: AwardDetail,
+  page: number,
+): AwardDetail | undefined {
+  if (award.grouping !== 'list') {
+    return award;
+  }
+
+  const [group] = award.years;
+  const totalCount = group?.filmCount ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / AWARD_LIST_PAGE_SIZE));
+  if (page > totalPages) {
+    return undefined;
+  }
+
+  const start = (page - 1) * AWARD_LIST_PAGE_SIZE;
+
+  return {
+    ...award,
+    years: [
+      {
+        ...group,
+        movies: group.movies.slice(start, start + AWARD_LIST_PAGE_SIZE),
+      },
+    ],
+    pagination: {
+      page,
+      perPage: AWARD_LIST_PAGE_SIZE,
+      totalCount,
+      totalPages,
+    },
+  };
+}
+
 export class AwardsService extends BaseService {
   async getAwardBySlug(slug: string): Promise<AwardDetail | undefined> {
     const definition = awardPageDefinitions.find(entry => entry.slug === slug);
@@ -215,6 +284,7 @@ export class AwardsService extends BaseService {
         group = {
           year: row.ceremonyYear,
           ceremonyNumber: row.ceremonyNumber ?? undefined,
+          filmCount: 0,
           movies: [],
         };
         groups.set(row.ceremonyYear, group);
@@ -237,17 +307,29 @@ export class AwardsService extends BaseService {
 
     const years = [...groups.values()].toSorted((a, b) => b.year - a.year);
     for (const group of years) {
+      group.filmCount = group.movies.length;
       group.movies.sort((a, b) => Number(b.isWinner) - Number(a.isWinner));
     }
 
-    return {
+    const base = {
       slug: definition.slug,
       name: definition.name,
       organization: definition.organization,
       description: definition.description,
       grouping: definition.grouping,
-      years,
     };
+
+    if (definition.grouping === 'year') {
+      return {
+        ...base,
+        years: years.map(group => ({
+          ...group,
+          movies: group.movies.filter(movie => movie.isWinner),
+        })),
+      };
+    }
+
+    return {...base, years: flattenListAward(years)};
   }
 
   async getAwardYear(
