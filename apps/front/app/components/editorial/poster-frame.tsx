@@ -1,8 +1,12 @@
+import {posterUrlForDisplay, type PosterDisplaySize} from '@/lib/poster-size';
+
 type PosterFrameProperties = {
   posterUrl?: string;
   alt: string;
   placeholderLabel?: string;
   className?: string;
+  priority?: boolean;
+  displaySize?: PosterDisplaySize;
 };
 
 export function PosterFrame({
@@ -10,7 +14,11 @@ export function PosterFrame({
   alt,
   placeholderLabel = 'No Poster',
   className = '',
+  priority = false,
+  displaySize = 'w500',
 }: PosterFrameProperties) {
+  const source = posterUrlForDisplay(posterUrl, displaySize);
+
   return (
     <div className={`relative ${className}`}>
       <div
@@ -21,10 +29,13 @@ export function PosterFrame({
       <div
         className="poster-glow-target relative aspect-2/3 overflow-hidden border-2 border-ink"
         style={{background: 'var(--poster-bg)'}}>
-        {posterUrl ? (
+        {source ? (
           <img
-            src={posterUrl}
+            src={source}
             alt={alt}
+            loading={priority ? 'eager' : 'lazy'}
+            decoding={priority ? 'auto' : 'async'}
+            fetchPriority={priority ? 'high' : 'auto'}
             className="h-full w-full object-cover"
           />
         ) : (

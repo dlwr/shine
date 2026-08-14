@@ -704,6 +704,8 @@ export default function MovieDetail({
             posterUrl={movieDetail.posterUrl}
             alt={`${title} poster`}
             className="w-28 md:w-36 shrink-0"
+            priority
+            displaySize="w342"
           />
           <div className="flex flex-col justify-end gap-2">
             <BigYear year={movieDetail.year} className="text-6xl md:text-7xl" />
@@ -755,6 +757,7 @@ export default function MovieDetail({
                     posterUrl={relatedMovie.posterUrl}
                     alt={`${relatedMovie.title} poster`}
                     className="w-full"
+                    displaySize="w342"
                   />
                   <span className="block font-display font-bold text-xs leading-tight mt-1.5">
                     {relatedMovie.title}

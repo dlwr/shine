@@ -33,12 +33,14 @@ export function FilmCard({
   locale = 'en',
   label,
   index,
+  priority = false,
 }: {
   movie: FilmCardMovie;
   variant: 'hero' | 'compact';
   locale?: string;
   label?: string;
   index?: string;
+  priority?: boolean;
 }) {
   const title = pickTitle(movie, locale);
   const posterUrl =
@@ -69,6 +71,8 @@ export function FilmCard({
             posterUrl={posterUrl}
             alt={`${title} poster`}
             className="w-16 shrink-0"
+            priority={priority}
+            displaySize="w185"
           />
           <div className="min-w-0">
             <BigYear year={movie.year} className="text-4xl" />
@@ -98,6 +102,7 @@ export function FilmCard({
           posterUrl={posterUrl}
           alt={`${title} poster`}
           className="w-full"
+          priority={priority}
         />
         <div className="mt-3 flex items-end justify-between gap-2">
           <div className="min-w-0">
