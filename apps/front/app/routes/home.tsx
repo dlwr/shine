@@ -648,6 +648,7 @@ function Movies({
                   locale={locale}
                   label={periodLabels[period]}
                   index={`NO.00${index + 1}`}
+                  priority
                 />
               ) : (
                 <p className="text-sm text-ink/50 font-mono">{noMovieLabel}</p>

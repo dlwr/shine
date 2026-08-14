@@ -3,6 +3,7 @@ type PosterFrameProperties = {
   alt: string;
   placeholderLabel?: string;
   className?: string;
+  priority?: boolean;
 };
 
 export function PosterFrame({
@@ -10,6 +11,7 @@ export function PosterFrame({
   alt,
   placeholderLabel = 'No Poster',
   className = '',
+  priority = false,
 }: PosterFrameProperties) {
   return (
     <div className={`relative ${className}`}>
@@ -25,6 +27,9 @@ export function PosterFrame({
           <img
             src={posterUrl}
             alt={alt}
+            loading={priority ? 'eager' : 'lazy'}
+            decoding={priority ? 'auto' : 'async'}
+            fetchPriority={priority ? 'high' : 'auto'}
             className="h-full w-full object-cover"
           />
         ) : (

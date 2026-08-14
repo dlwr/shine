@@ -704,6 +704,7 @@ export default function MovieDetail({
             posterUrl={movieDetail.posterUrl}
             alt={`${title} poster`}
             className="w-28 md:w-36 shrink-0"
+            priority
           />
           <div className="flex flex-col justify-end gap-2">
             <BigYear year={movieDetail.year} className="text-6xl md:text-7xl" />

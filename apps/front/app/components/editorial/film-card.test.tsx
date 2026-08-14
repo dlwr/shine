@@ -24,6 +24,16 @@ describe('FilmCard', () => {
     expect(screen.getByText('PARASITE')).toBeInTheDocument();
   });
 
+  it('既定ではポスターを遅延読み込みする', () => {
+    render(<FilmCard movie={movie} variant="hero" locale="en" />);
+    expect(screen.getByAltText(/PARASITE/)).toHaveAttribute('loading', 'lazy');
+  });
+
+  it('priority を渡すとポスターを即時読み込みする', () => {
+    render(<FilmCard movie={movie} variant="hero" locale="en" priority />);
+    expect(screen.getByAltText(/PARASITE/)).toHaveAttribute('loading', 'eager');
+  });
+
   it('hero variant で視聴可否バッジを描画する', () => {
     render(
       <FilmCard
