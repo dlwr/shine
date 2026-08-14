@@ -14,6 +14,7 @@
     "japanese-translations": "tsx src/japanese-translations-cli.ts",
     "cannes-film-festival": "tsx src/cannes-film-festival-cli.ts",
     "venice-film-festival": "tsx src/venice-film-festival-cli.ts",
+    "berlin-film-festival": "tsx src/berlin-film-festival-cli.ts",
     "sns-post": "tsx src/sns-post-cli.ts"
   },
   "dependencies": {
