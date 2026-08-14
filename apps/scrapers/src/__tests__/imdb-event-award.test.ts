@@ -245,6 +245,47 @@ describe('extractAwardEditions', () => {
     expect(editions.map(entry => entry.year)).toEqual([1980]);
   });
 
+  it('winnerCorrectionsで誤った受賞フラグを訂正する', () => {
+    const data = collectedData([
+      edition(2006, [
+        nomination('tt0430576', 'Grbavica', true),
+        nomination('tt0445620', 'Paradise Now', true),
+      ]),
+    ]);
+
+    const editions = extractAwardEditions(data, {
+      ...testConfig,
+      winnerCorrections: [{year: 2006, imdbId: 'tt0445620', isWinner: false}],
+    });
+
+    const films = editions[0].films;
+    expect(films).toHaveLength(2);
+    expect(films.find(film => film.imdbId === 'tt0445620')?.isWinner).toBe(
+      false,
+    );
+    expect(films.find(film => film.imdbId === 'tt0430576')?.isWinner).toBe(
+      true,
+    );
+  });
+
+  it('winnerCorrectionsは指定年以外に影響しない', () => {
+    const data = collectedData([
+      edition(2005, [
+        nomination('tt0445620', 'Paradise Now', true),
+        nomination('tt0430576', 'Grbavica'),
+      ]),
+    ]);
+
+    const editions = extractAwardEditions(data, {
+      ...testConfig,
+      winnerCorrections: [{year: 2006, imdbId: 'tt0445620', isWinner: false}],
+    });
+
+    expect(
+      editions[0].films.find(film => film.imdbId === 'tt0445620')?.isWinner,
+    ).toBe(true);
+  });
+
   it('minimumFilmsPerEditionが1なら1作品だけの回も残す', () => {
     const data = collectedData([
       edition(1953, [nomination('tt0046268', 'Le salaire de la peur', true)]),

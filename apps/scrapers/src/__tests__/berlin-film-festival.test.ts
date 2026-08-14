@@ -65,6 +65,9 @@ const data = JSON.parse(
 ) as ImdbEventCollectedData;
 const editions = extractAwardEditions(data, berlinConfig);
 
+const isMainCategory = (category: string | null) =>
+  category === null || category === 'Best Film' || category === 'Competition';
+
 const winnersOf = (year: number) =>
   editions
     .find(entry => entry.year === year)
@@ -120,6 +123,38 @@ describe('収集済みデータ', () => {
 
     expect(shortFilmIds.size).toBeGreaterThan(0);
     expect([...shortFilmIds].filter(id => importedIds.has(id))).toEqual([]);
+  });
+
+  it('主要カテゴリをまたぐ受賞はどの年にも存在しない', () => {
+    const corrected = new Set(
+      (berlinConfig.winnerCorrections ?? []).map(
+        entry => `${entry.year}:${entry.imdbId}`,
+      ),
+    );
+
+    const offenders = data.editions
+      .map(edition => {
+        const categoriesWithWinners = edition.targetAward
+          .flatMap(award => award.categories)
+          .filter(category => isMainCategory(category.category))
+          .filter(category =>
+            category.nominations.some(
+              entry =>
+                entry.isWinner &&
+                entry.titles.some(
+                  title => !corrected.has(`${edition.year}:${title.imdbId}`),
+                ),
+            ),
+          );
+        return {year: edition.year, count: categoriesWithWinners.length};
+      })
+      .filter(entry => entry.count > 1);
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('2006年の受賞はGrbavicaのみ', () => {
+    expect(winnersOf(2006)).toEqual(['Grbavica']);
   });
 
   it('imdbIdはすべてtt形式', () => {

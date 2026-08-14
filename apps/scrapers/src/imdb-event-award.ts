@@ -24,6 +24,11 @@ export type ImdbEventAwardConfig = {
   ceremonyNumber: (year: number) => number | undefined;
   isCompetitionCategory: (category: string | null) => boolean;
   minimumFilmsPerEdition: number;
+  winnerCorrections?: Array<{
+    year: number;
+    imdbId: string;
+    isWinner: boolean;
+  }>;
 };
 
 export type ImdbEventNominationTitle = {
@@ -110,6 +115,17 @@ export function extractAwardEditions(
             });
           }
         }
+      }
+    }
+
+    for (const correction of config.winnerCorrections ?? []) {
+      if (correction.year !== edition.year) {
+        continue;
+      }
+
+      const film = filmsByImdbId.get(correction.imdbId);
+      if (film) {
+        film.isWinner = correction.isWinner;
       }
     }
 

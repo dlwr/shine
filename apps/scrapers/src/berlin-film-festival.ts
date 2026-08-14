@@ -19,4 +19,7 @@ export const berlinConfig: ImdbEventAwardConfig = {
   isCompetitionCategory: category =>
     category === null || !/short/i.test(category),
   minimumFilmsPerEdition: 1,
+  // IMDbはParadise Now(2005年コンペ出品・受賞なし)を2006年の受賞作として
+  // 二重登録している。2006年の金熊賞はGrbavicaのみ
+  winnerCorrections: [{year: 2006, imdbId: 'tt0445620', isWinner: false}],
 };
