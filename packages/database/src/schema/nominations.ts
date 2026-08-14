@@ -42,5 +42,9 @@ export const nominations = sqliteTable(
       table.ceremonyUid,
       table.categoryUid,
     ),
+    index('nominations_category_movie_idx').on(
+      table.categoryUid,
+      table.movieUid,
+    ),
   ],
 );
