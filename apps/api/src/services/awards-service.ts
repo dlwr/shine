@@ -59,6 +59,16 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
     grouping: 'year',
   },
   {
+    slug: 'berlin-golden-bear',
+    organizationName: 'Berlin International Film Festival',
+    categoryNames: ['Golden Bear'],
+    name: '金熊賞',
+    organization: 'ベルリン国際映画祭',
+    description:
+      'ベルリン国際映画祭の最高賞・金熊賞の歴代受賞作とコンペティション部門出品作の一覧。',
+    grouping: 'year',
+  },
+  {
     slug: 'academy-best-picture',
     organizationName: 'Academy Awards',
     categoryNames: ['Academy Award for Best Picture'],

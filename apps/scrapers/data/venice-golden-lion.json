@@ -5,7 +5,7 @@
     {
       "year": 1932,
       "awardNames": ["Audience Referendum"],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1934,
@@ -21,7 +21,7 @@
         "Best World Premiere",
         "Corporations Ministry Cup"
       ],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1935,
@@ -46,7 +46,7 @@
         "Tourism Supervision Cup",
         "Best Italian Documentary"
       ],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1936,
@@ -62,7 +62,7 @@
         "Fascist Party Cup",
         "Propaganda Ministry Cup"
       ],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1937,
@@ -81,7 +81,7 @@
         "Best World Premiere",
         "Popular Culture Ministry Cup"
       ],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1938,
@@ -96,7 +96,7 @@
         "Education Ministry Cup",
         "Popular Culture Ministry Cup"
       ],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1939,
@@ -107,12 +107,12 @@
         "Fascist Party Cup",
         "Agriculture Ministry Cup"
       ],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1940,
       "awardNames": ["Mussolini Cup", "Volpi Cup"],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1941,
@@ -127,7 +127,7 @@
         "Fascist Party Cup",
         "Popular Culture Ministry Cup"
       ],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1942,
@@ -140,7 +140,7 @@
         "Medal",
         "International Film Chamber Award"
       ],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1946,
@@ -150,7 +150,7 @@
         "International Critics Award",
         "International Critics Award - Special Mention"
       ],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1947,
@@ -161,7 +161,7 @@
         "ENIC Cup",
         "Grand International Award"
       ],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1948,
@@ -178,7 +178,7 @@
         "International Award - Documentary",
         "International Award - Short Film"
       ],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1949,
@@ -190,7 +190,7 @@
         "International Award - Documentary",
         "International Award - Short Film"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -622,7 +622,7 @@
         "International Award - Documentary",
         "International Award - Short Film"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -1119,7 +1119,7 @@
         "Italian Film Critics Award",
         "Volpi Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -1474,7 +1474,7 @@
         "OCIC Award",
         "Pasinetti Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -1860,7 +1860,7 @@
         "Pasinetti Award",
         "Bronze Lion"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -2209,7 +2209,7 @@
         "Pasinetti Award",
         "Absolute Grand Prize"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -2608,7 +2608,7 @@
         "Pasinetti Award",
         "Most Promising New Director"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -3043,7 +3043,7 @@
         "Pasinetti Award",
         "Best Foreign Documentary"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -3250,7 +3250,7 @@
         "Pasinetti Award",
         "Best Short Film - Special Mention"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -3469,7 +3469,7 @@
         "Pasinetti Award",
         "Italian Cinema Clubs Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -3650,7 +3650,7 @@
         "Pasinetti Award",
         "Golden Plate"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -3841,7 +3841,7 @@
         "OCIC Award",
         "Pasinetti Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -4029,7 +4029,7 @@
         "Award of the City of Imola",
         "Award of the City of Venice"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -4221,7 +4221,7 @@
         "Award of the City of Venice",
         "Catholic Cinema Clubs Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -4411,7 +4411,7 @@
         "Lion of San Marco - Grand Prize",
         "Award of the City of Venice"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -4649,7 +4649,7 @@
         "Lion of San Marco - Grand Prize",
         "Award of the City of Venice"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -4814,7 +4814,7 @@
         "Award of the City of Imola",
         "Plaque Lion St. Marc"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -4991,7 +4991,7 @@
         "Award of the City of Venice",
         "Cineforum 66 Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -5179,7 +5179,7 @@
         "Pasinetti Award",
         "Golden Rudder"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -5410,7 +5410,7 @@
         "Honorable Mention",
         "Pasinetti Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -5729,7 +5729,7 @@
         "Luis Buñuel Award",
         "CIDALC Award"
       ],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1970,
@@ -5739,7 +5739,7 @@
         "\"Lino Miccichè\" First Feature Award",
         "Silver Medal"
       ],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1971,
@@ -5752,7 +5752,7 @@
         "Golden Rudder",
         "CIDALC Award"
       ],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1972,
@@ -5767,7 +5767,7 @@
         "Best Color Film",
         "Venezia Giovani Prize"
       ],
-      "goldenLion": []
+      "targetAward": []
     },
     {
       "year": 1979,
@@ -5778,7 +5778,7 @@
         "Pasinetti Award",
         "Pietro Bianchi Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -5819,7 +5819,7 @@
         "Special Jury Citation",
         "AGIS Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -5961,7 +5961,7 @@
         "AGIS Award",
         "Alitalia Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -6212,7 +6212,7 @@
         "Golden Phoenix",
         "Best Artistic Collaboration"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -6568,7 +6568,7 @@
         "De Sica Award",
         "Technical Prize"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -6835,7 +6835,7 @@
         "Venezia Genti - Best Short Film",
         "Technical Prize"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -7153,7 +7153,7 @@
         "Venezia Genti - Best Short Film",
         "Special Lion for the Overall Work"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -7459,7 +7459,7 @@
         "Venice Authors Prize - Special Mention",
         "De Sica Award - Special Mention"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -7752,7 +7752,7 @@
         "Cinecritica Award",
         "Award of the Society for Psychology"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -8052,7 +8052,7 @@
         "Children and Cinema Award - Special Mention",
         "Cinecritica Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -8335,7 +8335,7 @@
         "Kodak-Cinecritica Award",
         "La Navicella Venezia Cinema Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -8630,7 +8630,7 @@
         "Gingerly Award",
         "Photographers Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -8913,7 +8913,7 @@
         "Elvira Notari Prize",
         "Photographers Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -9182,7 +9182,7 @@
         "Kodak-Cinecritica Award",
         "Special Prize on Occasion of the Festival's Jubilee"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -9470,7 +9470,7 @@
         "AIACE Award",
         "Special Volpi Cup"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -9733,7 +9733,7 @@
         "Leoncino d'Oro Agiscuola Award",
         "FIPRESCI Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -9981,7 +9981,7 @@
         "AIACE Award",
         "Telepiù Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -10210,7 +10210,7 @@
         "Kodak Award",
         "AIACE Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -10448,7 +10448,7 @@
         "Enzo Serafin Award",
         "Kodak Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -10695,7 +10695,7 @@
         "Max Factor Award",
         "Best First Film"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -10970,7 +10970,7 @@
         "Silver Lion - Short Film",
         "Best Short Film - Special Mention"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -11231,7 +11231,7 @@
         "Silver Lion - Short Film",
         "Best Short Film - Special Mention"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -11509,7 +11509,7 @@
         "Silver Lion - Short Film",
         "Best Short Film - Special Mention"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -11784,7 +11784,7 @@
         "Silver Lion - Short Film",
         "Best Short Film - Special Mention"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -12074,7 +12074,7 @@
         "Silver Lion - Short Film",
         "Best Short Film - Special Mention"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -12357,7 +12357,7 @@
         "Best Short Film - Special Mention",
         "Fedeora Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -12664,7 +12664,7 @@
         "Best Short Film - Special Mention",
         "Fedeora Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -12962,7 +12962,7 @@
         "Fedeora Award",
         "Corto Cortissimo Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -13267,7 +13267,7 @@
         "Fedeora Award",
         "Corto Cortissimo Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -13585,7 +13585,7 @@
         "Best Short Film - Special Mention",
         "Fedeora Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -13881,7 +13881,7 @@
         "International Critics Award",
         "Fedeora Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -14222,7 +14222,7 @@
         "Fedeora Award",
         "Fedeora Award - Special Mention"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -14556,7 +14556,7 @@
         "Premio Laguna Sud (Venice Days)",
         "Orizzonti Award for Best Short Film"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -14901,7 +14901,7 @@
         "Bisato d'Oro",
         "Best Innovative Budget Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -15176,7 +15176,7 @@
         "Best Innovative Budget Award",
         "S.I.A.E. Award for Emrging Talent"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -15474,7 +15474,7 @@
         "AKAI International Film Fest Award",
         "AKAI International Film Fest Award - Special Mention"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -15776,7 +15776,7 @@
         "Saturnia Prize",
         "S.I.A.E. Award for Emrging Talent"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -16067,7 +16067,7 @@
         "NuovoImaie Award",
         "MigrArti Prize"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -16347,7 +16347,7 @@
         "Best VR Story",
         "GdA Director's Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -16649,7 +16649,7 @@
         "GdA Director's Award",
         "Grand Jury Prize for Best VR Immersive Work"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -16955,7 +16955,7 @@
         "Best VR Immersive User Experience",
         "Venice Award for Best Virtual Reality"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -17250,7 +17250,7 @@
         "Giornate degli Autori Award",
         "SIAE Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -17520,7 +17520,7 @@
         "Premio per l'inclusione Edipo Re (Giornate degli Autori)",
         "Premio Ulisse Terra di Cinema"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -17820,7 +17820,7 @@
         "Giornate Degli Autori's People Choice Award",
         "amfAR Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -18152,7 +18152,7 @@
         "Cinema & Arts Award",
         "Cinema & Arts Award - Special Mention"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -18491,7 +18491,7 @@
         "Premio Speciale Film Impresa Award",
         "Starlight international Cinema Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -18797,7 +18797,7 @@
         "CinemaSarà Award",
         "Premio Carlo Lizzani"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
@@ -19053,7 +19053,7 @@
         "Venice Immersive Grand Prize",
         "Armani Beauty Audience Award"
       ],
-      "goldenLion": [
+      "targetAward": [
         {
           "categories": [
             {
