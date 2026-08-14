@@ -10,7 +10,7 @@ const OPEN_GRAPH_LOCALES: Record<Locale, string> = {
 };
 
 const TMDB_SIZED_POSTER_PATTERN =
-  /^(https:\/\/image\.tmdb\.org\/t\/p\/)w\d+(\/)/;
+  /^(https:\/\/image\.tmdb\.org\/t\/p\/)(?:original|w\d+)(\/)/;
 
 export function upgradePosterForSharing(url?: string): string | undefined {
   return url?.replace(TMDB_SIZED_POSTER_PATTERN, '$1w780$2');
