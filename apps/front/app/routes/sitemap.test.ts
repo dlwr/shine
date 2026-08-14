@@ -143,11 +143,14 @@ describe('sitemap/awards.xml', () => {
   it('賞一覧と各賞ページのURLを列挙する', async () => {
     mockSearchResponse({
       awards: [
-        {slug: 'palme-dor'},
-        {slug: 'academy-best-picture'},
-        {slug: 'japan-academy-best-picture'},
+        {slug: 'palme-dor', grouping: 'year'},
+        {slug: 'academy-best-picture', grouping: 'year'},
+        {slug: 'japan-academy-best-picture', grouping: 'year'},
       ],
     });
+    mockSearchResponse({years: [{year: 2023}]});
+    mockSearchResponse({years: [{year: 2023}]});
+    mockSearchResponse({years: [{year: 2023}]});
 
     const response = await sitemapAwardsLoader(createAwardsArguments());
     const xml = await response.text();
@@ -160,6 +163,35 @@ describe('sitemap/awards.xml', () => {
     expect(xml).toContain(
       '<loc>https://shine-film.com/awards/japan-academy-best-picture</loc>',
     );
+  });
+
+  it('リスト型の賞は2ページ目以降のURLも列挙する', async () => {
+    mockSearchResponse({awards: [{slug: '1001-movies', grouping: 'list'}]});
+    mockSearchResponse({pagination: {totalPages: 3}});
+
+    const response = await sitemapAwardsLoader(createAwardsArguments());
+    const xml = await response.text();
+
+    expect(xml).toContain(
+      '<loc>https://shine-film.com/awards/1001-movies</loc>',
+    );
+    expect(xml).toContain(
+      '<loc>https://shine-film.com/awards/1001-movies?page=2</loc>',
+    );
+    expect(xml).toContain(
+      '<loc>https://shine-film.com/awards/1001-movies?page=3</loc>',
+    );
+    expect(xml).not.toContain('?page=4');
+  });
+
+  it('1ページに収まるリスト型の賞はページURLを出さない', async () => {
+    mockSearchResponse({awards: [{slug: 'variety-top-100', grouping: 'list'}]});
+    mockSearchResponse({pagination: {totalPages: 1}});
+
+    const response = await sitemapAwardsLoader(createAwardsArguments());
+    const xml = await response.text();
+
+    expect(xml).not.toContain('?page=');
   });
 
   it('API取得に失敗しても200で/awardsのみのurlsetを返す', async () => {

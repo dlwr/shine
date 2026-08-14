@@ -15,6 +15,7 @@ import {beforeEach, describe, expect, it} from 'vitest';
 import {
   AwardsService,
   awardPageLinkForOrganizationName,
+  paginateAwardDetail,
 } from '../awards-service';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -378,8 +379,16 @@ describe('AwardsService.getAwardBySlug リスト型のページ分割', () => {
     }
   });
 
-  it('1ページ目は100件を返す', async () => {
+  it('サービスは全件を返しページ情報を持たない', async () => {
     const result = await service.getAwardBySlug('1001-movies');
+
+    expect(result?.years[0]?.movies).toHaveLength(150);
+    expect(result?.pagination).toBeUndefined();
+  });
+
+  it('1ページ目は100件を返す', async () => {
+    const full = await service.getAwardBySlug('1001-movies');
+    const result = paginateAwardDetail(full!, 1);
 
     expect(result?.years[0]?.movies).toHaveLength(100);
     expect(result?.pagination).toMatchObject({
@@ -391,43 +400,54 @@ describe('AwardsService.getAwardBySlug リスト型のページ分割', () => {
   });
 
   it('2ページ目は残りを返す', async () => {
-    const result = await service.getAwardBySlug('1001-movies', {page: 2});
+    const full = await service.getAwardBySlug('1001-movies');
+    const result = paginateAwardDetail(full!, 2);
 
     expect(result?.years[0]?.movies).toHaveLength(50);
     expect(result?.pagination?.page).toBe(2);
   });
 
   it('ページをまたいで重複しない', async () => {
-    const first = await service.getAwardBySlug('1001-movies');
-    const second = await service.getAwardBySlug('1001-movies', {page: 2});
-
+    const full = await service.getAwardBySlug('1001-movies');
     const uids = [
-      ...(first?.years[0]?.movies ?? []),
-      ...(second?.years[0]?.movies ?? []),
+      ...(paginateAwardDetail(full!, 1)?.years[0]?.movies ?? []),
+      ...(paginateAwardDetail(full!, 2)?.years[0]?.movies ?? []),
     ].map(movie => movie.uid);
 
     expect(new Set(uids).size).toBe(150);
   });
 
   it('公開年の新しい順に並べる', async () => {
-    const result = await service.getAwardBySlug('1001-movies');
+    const full = await service.getAwardBySlug('1001-movies');
+    const years = (full?.years[0]?.movies ?? []).map(movie => movie.movieYear);
 
-    const years = (result?.years[0]?.movies ?? []).map(
-      movie => movie.movieYear,
-    );
     expect(years).toEqual(years.toSorted((a, b) => (b ?? 0) - (a ?? 0)));
   });
 
-  it('範囲外のページは最終ページに丸める', async () => {
-    const result = await service.getAwardBySlug('1001-movies', {page: 99});
+  it('範囲外のページはundefinedを返す', async () => {
+    const full = await service.getAwardBySlug('1001-movies');
 
-    expect(result?.pagination?.page).toBe(2);
+    expect(paginateAwardDetail(full!, 3)).toBeUndefined();
   });
 
   it('filmCountは総数を返す', async () => {
-    const result = await service.getAwardBySlug('1001-movies', {page: 2});
+    const full = await service.getAwardBySlug('1001-movies');
+    const result = paginateAwardDetail(full!, 2);
 
     expect(result?.years[0]?.filmCount).toBe(150);
+  });
+
+  it('年別グルーピングの賞はそのまま返す', async () => {
+    const award = {
+      slug: 'palme-dor',
+      name: 'x',
+      organization: 'y',
+      description: 'z',
+      grouping: 'year' as const,
+      years: [{year: 2023, ceremonyNumber: 76, filmCount: 21, movies: []}],
+    };
+
+    expect(paginateAwardDetail(award, 1)).toBe(award);
   });
 });
 

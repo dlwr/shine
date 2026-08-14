@@ -8,7 +8,6 @@ import {BaseService} from './base-service';
 import type {
   AwardDetail,
   AwardMovieEntry,
-  AwardPagination,
   AwardSummary,
   AwardYearDetail,
   AwardYearGroup,
@@ -152,31 +151,64 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
   },
 ];
 
-export const AWARD_LIST_PAGE_SIZE = 100;
+const AWARD_LIST_PAGE_SIZE = 100;
 
-function paginateListAward(
-  years: AwardYearGroup[],
-  requestedPage: number | undefined,
-): {years: AwardYearGroup[]; pagination: AwardPagination} {
-  const allMovies = years
-    .flatMap(group => group.movies)
-    .toSorted(
-      (a, b) =>
-        (b.movieYear ?? 0) - (a.movieYear ?? 0) || a.uid.localeCompare(b.uid),
-    );
+function flattenListAward(years: AwardYearGroup[]): AwardYearGroup[] {
+  const byUid = new Map<string, AwardMovieEntry>();
+  for (const group of years) {
+    for (const movie of group.movies) {
+      const existing = byUid.get(movie.uid);
+      if (existing) {
+        existing.isWinner = existing.isWinner || movie.isWinner;
+        continue;
+      }
 
-  const totalCount = allMovies.length;
+      byUid.set(movie.uid, movie);
+    }
+  }
+
+  const movies = [...byUid.values()].toSorted(
+    (a, b) =>
+      (b.movieYear ?? 0) - (a.movieYear ?? 0) || (a.uid < b.uid ? -1 : 1),
+  );
+
+  return [
+    {
+      year: years[0].year,
+      ceremonyNumber: years[0].ceremonyNumber,
+      filmCount: movies.length,
+      movies,
+    },
+  ];
+}
+
+/**
+ * リスト型の賞をページに切り出す。範囲外のページはundefined(=404)。
+ * キャッシュ済みの全件データに対して適用する前提の純粋関数
+ */
+export function paginateAwardDetail(
+  award: AwardDetail,
+  page: number,
+): AwardDetail | undefined {
+  if (award.grouping !== 'list') {
+    return award;
+  }
+
+  const [group] = award.years;
+  const totalCount = group?.filmCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / AWARD_LIST_PAGE_SIZE));
-  const page = Math.min(Math.max(requestedPage ?? 1, 1), totalPages);
+  if (page > totalPages) {
+    return undefined;
+  }
+
   const start = (page - 1) * AWARD_LIST_PAGE_SIZE;
 
   return {
+    ...award,
     years: [
       {
-        year: years[0].year,
-        ceremonyNumber: years[0].ceremonyNumber,
-        filmCount: totalCount,
-        movies: allMovies.slice(start, start + AWARD_LIST_PAGE_SIZE),
+        ...group,
+        movies: group.movies.slice(start, start + AWARD_LIST_PAGE_SIZE),
       },
     ],
     pagination: {
@@ -189,10 +221,7 @@ function paginateListAward(
 }
 
 export class AwardsService extends BaseService {
-  async getAwardBySlug(
-    slug: string,
-    options: {page?: number} = {},
-  ): Promise<AwardDetail | undefined> {
+  async getAwardBySlug(slug: string): Promise<AwardDetail | undefined> {
     const definition = awardPageDefinitions.find(entry => entry.slug === slug);
     if (!definition) {
       return undefined;
@@ -300,7 +329,7 @@ export class AwardsService extends BaseService {
       };
     }
 
-    return {...base, ...paginateListAward(years, options.page)};
+    return {...base, years: flattenListAward(years)};
   }
 
   async getAwardYear(
