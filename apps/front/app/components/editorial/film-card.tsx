@@ -72,6 +72,7 @@ export function FilmCard({
             alt={`${title} poster`}
             className="w-16 shrink-0"
             priority={priority}
+            displaySize="w185"
           />
           <div className="min-w-0">
             <BigYear year={movie.year} className="text-4xl" />

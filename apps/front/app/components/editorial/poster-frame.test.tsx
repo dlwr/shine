@@ -45,6 +45,33 @@ describe('PosterFrame', () => {
     );
   });
 
+  it('既定では表示幅に合わせてw500まで落とす', () => {
+    render(
+      <PosterFrame
+        posterUrl="https://image.tmdb.org/t/p/original/p.jpg"
+        alt="Parasite poster"
+      />,
+    );
+    expect(screen.getByAltText('Parasite poster')).toHaveAttribute(
+      'src',
+      'https://image.tmdb.org/t/p/w500/p.jpg',
+    );
+  });
+
+  it('displaySize でサムネイル向けサイズを指定できる', () => {
+    render(
+      <PosterFrame
+        posterUrl="https://image.tmdb.org/t/p/original/p.jpg"
+        alt="Parasite poster"
+        displaySize="w185"
+      />,
+    );
+    expect(screen.getByAltText('Parasite poster')).toHaveAttribute(
+      'src',
+      'https://image.tmdb.org/t/p/w185/p.jpg',
+    );
+  });
+
   it('priority を渡すと取得優先度を上げる', () => {
     render(
       <PosterFrame

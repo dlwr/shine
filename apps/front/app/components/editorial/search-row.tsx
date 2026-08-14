@@ -37,6 +37,7 @@ export function SearchRow({
         posterUrl={movie.posterUrl}
         alt={`${title} poster`}
         className="w-9 shrink-0"
+        displaySize="w185"
       />
       <span className="flex-1 font-display font-extrabold text-sm leading-none">
         {title}

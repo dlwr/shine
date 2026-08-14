@@ -124,6 +124,7 @@ export function MovieRow({movie}: {movie: AwardMovieEntryData}) {
           posterUrl={movie.posterUrl}
           alt={`${title} poster`}
           className="w-16 shrink-0"
+          displaySize="w185"
         />
         <span className="flex-1 font-display font-extrabold text-base md:text-lg leading-tight">
           {title}
@@ -155,6 +156,7 @@ function ListRow({movie}: {movie: AwardMovieEntryData}) {
         posterUrl={movie.posterUrl}
         alt={`${title} poster`}
         className="w-9 shrink-0"
+        displaySize="w185"
       />
       <span className="flex-1 font-display font-extrabold text-sm leading-none">
         {title}
