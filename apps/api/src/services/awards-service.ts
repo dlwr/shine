@@ -49,6 +49,16 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
     grouping: 'year',
   },
   {
+    slug: 'venice-golden-lion',
+    organizationName: 'Venice Film Festival',
+    categoryNames: ['Golden Lion'],
+    name: '金獅子賞',
+    organization: 'ヴェネツィア国際映画祭',
+    description:
+      'ヴェネツィア国際映画祭の最高賞・金獅子賞の歴代受賞作とコンペティション部門出品作の一覧。',
+    grouping: 'year',
+  },
+  {
     slug: 'academy-best-picture',
     organizationName: 'Academy Awards',
     categoryNames: ['Academy Award for Best Picture'],
