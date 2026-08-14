@@ -10,6 +10,7 @@
     "japan-academy-awards": "tsx src/japan-academy-awards-cli.ts",
     "assign-imdb-ids": "tsx src/assign-imdb-ids-cli.ts",
     "backfill-posters": "tsx src/backfill-posters-cli.ts",
+    "delete-orphan-movies": "tsx src/delete-orphan-movies-cli.ts",
     "import-imdb-list": "tsx src/import-imdb-list-cli.ts",
     "availability-check": "tsx src/availability-check-cli.ts",
     "japanese-translations": "tsx src/japanese-translations-cli.ts",
