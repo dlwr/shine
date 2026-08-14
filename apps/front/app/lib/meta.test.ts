@@ -163,10 +163,10 @@ describe('upgradePosterForSharing', () => {
     ).toBe('https://image.tmdb.org/t/p/w780/poster.jpg');
   });
 
-  it('originalサイズはそのまま返す', () => {
+  it('originalサイズもw780へ落とす', () => {
     expect(
       upgradePosterForSharing('https://image.tmdb.org/t/p/original/poster.jpg'),
-    ).toBe('https://image.tmdb.org/t/p/original/poster.jpg');
+    ).toBe('https://image.tmdb.org/t/p/w780/poster.jpg');
   });
 
   it('TMDb以外のURLはそのまま返す', () => {
