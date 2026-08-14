@@ -77,7 +77,16 @@ export type AwardMovieEntry = {
 export type AwardYearGroup = {
   year: number;
   ceremonyNumber: number | undefined;
+  /** その回の全出品作数。moviesは年別グルーピングでは受賞作のみを含む */
+  filmCount: number;
   movies: AwardMovieEntry[];
+};
+
+export type AwardPagination = {
+  page: number;
+  perPage: number;
+  totalCount: number;
+  totalPages: number;
 };
 
 export type AwardDetail = {
@@ -87,6 +96,8 @@ export type AwardDetail = {
   description: string;
   grouping: 'year' | 'list';
   years: AwardYearGroup[];
+  /** grouping === 'list' のときのみ返る */
+  pagination?: AwardPagination;
 };
 
 export type AwardYearDetail = {

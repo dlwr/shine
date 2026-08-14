@@ -14,7 +14,7 @@ const AWARDS_CACHE_TTL = 604_800;
 
 awardsRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = 'awards:list:v1';
+  const cacheKey = 'awards:list:v2';
   const cached = await cache.get(cacheKey);
   const result = (cached?.data as {awards: unknown[]} | undefined) ?? {
     awards: await new AwardsService(c.env).listAwards(),
@@ -35,10 +35,14 @@ awardsRoutes.get('/', async c => {
 awardsRoutes.get('/:slug', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
   const slug = c.req.param('slug');
-  const cacheKey = `awards:${slug}:v1`;
+  const pageParameter = Number.parseInt(c.req.query('page') ?? '1', 10);
+  const page =
+    Number.isInteger(pageParameter) && pageParameter > 0 ? pageParameter : 1;
+  const cacheKey = `awards:${slug}:p${page}:v2`;
   const cached = await cache.get(cacheKey);
   const award =
-    cached?.data ?? (await new AwardsService(c.env).getAwardBySlug(slug));
+    cached?.data ??
+    (await new AwardsService(c.env).getAwardBySlug(slug, {page}));
 
   if (!award) {
     return c.json({error: 'Award not found'}, 404);

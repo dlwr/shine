@@ -17,7 +17,15 @@ export type AwardMovieEntryData = {
 export type AwardYearGroupData = {
   year: number;
   ceremonyNumber?: number;
+  filmCount: number;
   movies: AwardMovieEntryData[];
+};
+
+export type AwardPaginationData = {
+  page: number;
+  perPage: number;
+  totalCount: number;
+  totalPages: number;
 };
 
 export type AwardDetailData = {
@@ -27,6 +35,7 @@ export type AwardDetailData = {
   description: string;
   grouping: 'year' | 'list';
   years: AwardYearGroupData[];
+  pagination?: AwardPaginationData;
 };
 
 const STRUCTURED_DATA_ITEM_LIMIT = 100;
@@ -38,6 +47,15 @@ function yearRange(award: AwardDetailData): {first?: number; last?: number} {
 function countMovies(award: AwardDetailData): number {
   let count = 0;
   for (const group of award.years) {
+    count += group.filmCount;
+  }
+
+  return count;
+}
+
+function countWinners(award: AwardDetailData): number {
+  let count = 0;
+  for (const group of award.years) {
     count += group.movies.length;
   }
 
@@ -45,12 +63,10 @@ function countMovies(award: AwardDetailData): number {
 }
 
 function buildItemList(award: AwardDetailData): Record<string, unknown> {
-  const movies =
-    award.grouping === 'year'
-      ? award.years.flatMap(group =>
-          group.movies.filter(movie => movie.isWinner),
-        )
-      : award.years.flatMap(group => group.movies);
+  const movies = award.years.flatMap(group => group.movies);
+  const offset = award.pagination
+    ? (award.pagination.page - 1) * award.pagination.perPage
+    : 0;
 
   return {
     '@context': 'https://schema.org',
@@ -60,28 +76,37 @@ function buildItemList(award: AwardDetailData): Record<string, unknown> {
       .slice(0, STRUCTURED_DATA_ITEM_LIMIT)
       .map((movie, index) => ({
         '@type': 'ListItem',
-        position: index + 1,
+        position: offset + index + 1,
         url: `${SITE_URL}/movies/${movie.uid}`,
         name: movie.title,
       })),
   };
 }
 
+function awardPath(award: AwardDetailData): string {
+  const page = award.pagination?.page ?? 1;
+  return page > 1
+    ? `/awards/${award.slug}?page=${page}`
+    : `/awards/${award.slug}`;
+}
+
 export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
   const {award, locale} = data as {award: AwardDetailData; locale?: Locale};
   const heading = awardHeading(award);
   const {first, last} = yearRange(award);
+  const page = award.pagination?.page ?? 1;
+  const pageSuffix = page > 1 ? `（${page}ページ目）` : '';
 
   const title =
     award.grouping === 'year'
-      ? `${heading} 歴代一覧（${first}–${last}） | SHINE`
-      : `${heading} 全${countMovies(award)}作品 | SHINE`;
+      ? `${heading} 歴代受賞作一覧（${first}–${last}） | SHINE`
+      : `${heading} 全${countMovies(award)}作品${pageSuffix} | SHINE`;
 
   return [
     ...buildSocialMeta({
       title,
       description: award.description,
-      path: `/awards/${award.slug}`,
+      path: awardPath(award),
       locale: locale ?? DEFAULT_LOCALE,
       imageUrl: `${SITE_URL}/og/home.png`,
       largeImage: true,
@@ -96,9 +121,11 @@ export async function loader({context, request, params}: Route.LoaderArgs) {
     (context.cloudflare as {env?: {PUBLIC_API_URL?: string}}).env
       ?.PUBLIC_API_URL || 'http://localhost:8787';
 
-  const response = await fetch(`${apiUrl}/awards/${params.slug}`, {
-    signal: request.signal,
-  });
+  const page = new URL(request.url).searchParams.get('page') ?? '1';
+  const response = await fetch(
+    `${apiUrl}/awards/${params.slug}?page=${encodeURIComponent(page)}`,
+    {signal: request.signal},
+  );
 
   if (response.status === 404) {
     throw new Response('Not Found', {status: 404});
@@ -170,6 +197,82 @@ function ListRow({movie}: {movie: AwardMovieEntryData}) {
   );
 }
 
+function YearSection({
+  award,
+  group,
+}: {
+  award: AwardDetailData;
+  group: AwardYearGroupData;
+}) {
+  const yearHref = `/awards/${award.slug}/${group.year}`;
+
+  return (
+    <section>
+      <div className="flex items-baseline gap-3 border-t-[3px] border-ink pt-2 mb-2">
+        <h2 className="font-display font-black text-3xl md:text-4xl tracking-[-0.06em] leading-none">
+          <a href={yearHref} className="text-ink no-underline">
+            {group.year}
+          </a>
+        </h2>
+        {group.ceremonyNumber && (
+          <span className="font-mono text-[10px] text-ink-muted">
+            第{group.ceremonyNumber}回
+          </span>
+        )}
+        <a
+          href={yearHref}
+          className="ml-auto font-mono text-[10px] text-ink-muted no-underline shrink-0">
+          出品作{group.filmCount}本を見る →
+        </a>
+      </div>
+      <div>
+        {group.movies.length > 0 ? (
+          group.movies.map(movie => <MovieRow key={movie.uid} movie={movie} />)
+        ) : (
+          <p className="font-mono text-xs text-ink-muted py-3">受賞作なし</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function Pagination({
+  award,
+  pagination,
+}: {
+  award: AwardDetailData;
+  pagination: AwardPaginationData;
+}) {
+  if (pagination.totalPages <= 1) {
+    return;
+  }
+
+  const pageHref = (page: number) =>
+    page === 1 ? `/awards/${award.slug}` : `/awards/${award.slug}?page=${page}`;
+
+  return (
+    <nav className="flex items-center justify-between gap-4 border-t-2 border-ink pt-4 mt-6 font-mono text-xs">
+      {pagination.page > 1 ? (
+        <a href={pageHref(pagination.page - 1)} className="text-ink">
+          ← 前の{pagination.perPage}件
+        </a>
+      ) : (
+        <span />
+      )}
+      <span className="text-ink-muted">
+        {pagination.page} / {pagination.totalPages}
+      </span>
+      {pagination.page < pagination.totalPages ? (
+        <a href={pageHref(pagination.page + 1)} className="text-ink">
+          次の{pagination.perPage}件 →
+        </a>
+      ) : (
+        <span />
+      )}
+    </nav>
+  );
+}
+
 export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
   const {award} = loaderData as {award: AwardDetailData};
   const locale = 'ja';
@@ -191,35 +294,15 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
           {heading}
         </h1>
         <p className="font-mono text-xs text-ink-muted mb-8">
-          {award.grouping === 'year' && first !== last
-            ? `${first}–${last} / ${countMovies(award)} FILMS`
+          {award.grouping === 'year'
+            ? `${first}–${last} / ${countWinners(award)} WINNERS / ${countMovies(award)} FILMS`
             : `${countMovies(award)} FILMS`}
         </p>
 
         {award.grouping === 'year' ? (
           <div className="space-y-10">
             {award.years.map(group => (
-              <section key={group.year}>
-                <div className="flex items-baseline gap-3 border-t-[3px] border-ink pt-2 mb-2">
-                  <h2 className="font-display font-black text-3xl md:text-4xl tracking-[-0.06em] leading-none">
-                    <a
-                      href={`/awards/${award.slug}/${group.year}`}
-                      className="text-ink no-underline">
-                      {group.year}
-                    </a>
-                  </h2>
-                  {group.ceremonyNumber && (
-                    <span className="font-mono text-[10px] text-ink-muted">
-                      第{group.ceremonyNumber}回
-                    </span>
-                  )}
-                </div>
-                <div>
-                  {group.movies.map(movie => (
-                    <MovieRow key={movie.uid} movie={movie} />
-                  ))}
-                </div>
-              </section>
+              <YearSection key={group.year} award={award} group={group} />
             ))}
           </div>
         ) : (
@@ -230,6 +313,10 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
               )),
             )}
           </div>
+        )}
+
+        {award.pagination && (
+          <Pagination award={award} pagination={award.pagination} />
         )}
 
         <SiteFooter locale={locale} />

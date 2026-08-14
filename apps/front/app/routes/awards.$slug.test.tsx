@@ -25,6 +25,7 @@ const mockAwardDetail = {
     {
       year: 2023,
       ceremonyNumber: 76,
+      filmCount: 21,
       movies: [
         {
           uid: 'movie-winner',
@@ -33,18 +34,12 @@ const mockAwardDetail = {
           posterUrl: 'https://example.com/poster.jpg',
           isWinner: true,
         },
-        {
-          uid: 'movie-nominee',
-          title: '怪物',
-          movieYear: 2023,
-          posterUrl: undefined,
-          isWinner: false,
-        },
       ],
     },
     {
       year: 2022,
       ceremonyNumber: 75,
+      filmCount: 18,
       movies: [
         {
           uid: 'movie-2022',
@@ -58,6 +53,7 @@ const mockAwardDetail = {
     {
       year: 2021,
       ceremonyNumber: 74,
+      filmCount: 24,
       movies: [
         {
           uid: 'movie-2021',
@@ -120,7 +116,7 @@ describe('Award detail page', () => {
       );
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8787/awards/palme-dor',
+        'http://localhost:8787/awards/palme-dor?page=1',
         {signal: request.signal},
       );
       expect(result).toEqual({award: mockAwardDetail, locale: 'ja'});
@@ -167,7 +163,7 @@ describe('Award detail page', () => {
       ) as {title: string};
 
       expect(titleDescriptor.title).toBe(
-        'カンヌ国際映画祭 パルム・ドール 歴代一覧（2021–2023） | SHINE',
+        'カンヌ国際映画祭 パルム・ドール 歴代受賞作一覧（2021–2023） | SHINE',
       );
     });
   });
@@ -200,6 +196,103 @@ describe('Award detail page', () => {
 
       expect(screen.getByText('落下の解剖学')).toBeInTheDocument();
       expect(screen.getAllByText('WINNER')).toHaveLength(3);
+    });
+
+    it('各年から出品作一覧へのリンクを表示する', () => {
+      render(
+        <AwardDetailPage
+          {...createComponentProperties(
+            cast<LoaderData>({award: mockAwardDetail, locale: 'ja'}),
+          )}
+        />,
+      );
+
+      const link = screen.getByRole('link', {name: /出品作21本を見る/});
+      expect(link).toHaveAttribute('href', '/awards/palme-dor/2023');
+    });
+
+    it('受賞作がない年は受賞作なしと表示する', () => {
+      const award = {
+        ...mockAwardDetail,
+        years: [{year: 1970, ceremonyNumber: 20, filmCount: 22, movies: []}],
+      };
+
+      render(
+        <AwardDetailPage
+          {...createComponentProperties(
+            cast<LoaderData>({award, locale: 'ja'}),
+          )}
+        />,
+      );
+
+      expect(screen.getByText('受賞作なし')).toBeInTheDocument();
+    });
+
+    it('リスト型の賞ではページ送りを表示する', () => {
+      const award = {
+        ...mockAwardDetail,
+        slug: '1001-movies',
+        grouping: 'list' as const,
+        years: [
+          {
+            year: 2025,
+            ceremonyNumber: undefined,
+            filmCount: 150,
+            movies: [
+              {
+                uid: 'movie-list',
+                title: '市民ケーン',
+                movieYear: 1941,
+                posterUrl: undefined,
+                isWinner: false,
+              },
+            ],
+          },
+        ],
+        pagination: {page: 1, perPage: 100, totalCount: 150, totalPages: 2},
+      };
+
+      render(
+        <AwardDetailPage
+          {...createComponentProperties(
+            cast<LoaderData>({award, locale: 'ja'}),
+          )}
+        />,
+      );
+
+      const next = screen.getByRole('link', {name: /次の100件/});
+      expect(next).toHaveAttribute('href', '/awards/1001-movies?page=2');
+    });
+
+    it('最終ページでは次へのリンクを出さない', () => {
+      const award = {
+        ...mockAwardDetail,
+        slug: '1001-movies',
+        grouping: 'list' as const,
+        years: [
+          {
+            year: 2025,
+            ceremonyNumber: undefined,
+            filmCount: 150,
+            movies: [],
+          },
+        ],
+        pagination: {page: 2, perPage: 100, totalCount: 150, totalPages: 2},
+      };
+
+      render(
+        <AwardDetailPage
+          {...createComponentProperties(
+            cast<LoaderData>({award, locale: 'ja'}),
+          )}
+        />,
+      );
+
+      expect(screen.queryByRole('link', {name: /次の100件/})).toBeNull();
+      expect(screen.getByRole('link', {name: /前の100件/})).toHaveAttribute(
+        'href',
+        '/awards/1001-movies',
+      );
     });
 
     it('各作品が映画詳細ページへリンクする', () => {

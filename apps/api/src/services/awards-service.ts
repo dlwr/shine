@@ -8,6 +8,7 @@ import {BaseService} from './base-service';
 import type {
   AwardDetail,
   AwardMovieEntry,
+  AwardPagination,
   AwardSummary,
   AwardYearDetail,
   AwardYearGroup,
@@ -151,8 +152,47 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
   },
 ];
 
+export const AWARD_LIST_PAGE_SIZE = 100;
+
+function paginateListAward(
+  years: AwardYearGroup[],
+  requestedPage: number | undefined,
+): {years: AwardYearGroup[]; pagination: AwardPagination} {
+  const allMovies = years
+    .flatMap(group => group.movies)
+    .toSorted(
+      (a, b) =>
+        (b.movieYear ?? 0) - (a.movieYear ?? 0) || a.uid.localeCompare(b.uid),
+    );
+
+  const totalCount = allMovies.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / AWARD_LIST_PAGE_SIZE));
+  const page = Math.min(Math.max(requestedPage ?? 1, 1), totalPages);
+  const start = (page - 1) * AWARD_LIST_PAGE_SIZE;
+
+  return {
+    years: [
+      {
+        year: years[0].year,
+        ceremonyNumber: years[0].ceremonyNumber,
+        filmCount: totalCount,
+        movies: allMovies.slice(start, start + AWARD_LIST_PAGE_SIZE),
+      },
+    ],
+    pagination: {
+      page,
+      perPage: AWARD_LIST_PAGE_SIZE,
+      totalCount,
+      totalPages,
+    },
+  };
+}
+
 export class AwardsService extends BaseService {
-  async getAwardBySlug(slug: string): Promise<AwardDetail | undefined> {
+  async getAwardBySlug(
+    slug: string,
+    options: {page?: number} = {},
+  ): Promise<AwardDetail | undefined> {
     const definition = awardPageDefinitions.find(entry => entry.slug === slug);
     if (!definition) {
       return undefined;
@@ -215,6 +255,7 @@ export class AwardsService extends BaseService {
         group = {
           year: row.ceremonyYear,
           ceremonyNumber: row.ceremonyNumber ?? undefined,
+          filmCount: 0,
           movies: [],
         };
         groups.set(row.ceremonyYear, group);
@@ -237,17 +278,29 @@ export class AwardsService extends BaseService {
 
     const years = [...groups.values()].toSorted((a, b) => b.year - a.year);
     for (const group of years) {
+      group.filmCount = group.movies.length;
       group.movies.sort((a, b) => Number(b.isWinner) - Number(a.isWinner));
     }
 
-    return {
+    const base = {
       slug: definition.slug,
       name: definition.name,
       organization: definition.organization,
       description: definition.description,
       grouping: definition.grouping,
-      years,
     };
+
+    if (definition.grouping === 'year') {
+      return {
+        ...base,
+        years: years.map(group => ({
+          ...group,
+          movies: group.movies.filter(movie => movie.isWinner),
+        })),
+      };
+    }
+
+    return {...base, ...paginateListAward(years, options.page)};
   }
 
   async getAwardYear(

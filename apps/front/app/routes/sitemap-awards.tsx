@@ -2,9 +2,12 @@ import type {Route} from './+types/sitemap-awards';
 import {buildUrlSet, type SitemapEntry} from '@/lib/sitemap';
 import {resolveApiUrl, sitemapResponse} from '@/lib/sitemap-source';
 
+const AWARD_LIST_PAGE_SIZE = 100;
+
 type AwardListing = {
   slug: string;
   grouping: 'year' | 'list';
+  movieCount?: number;
 };
 
 async function fetchAwards(
@@ -69,6 +72,17 @@ export async function loader({context, request}: Route.LoaderArgs) {
         changefreq: 'monthly' as const,
       })),
     ),
+    ...awards.flatMap(award => {
+      if (award.grouping !== 'list') {
+        return [];
+      }
+
+      const pages = Math.ceil((award.movieCount ?? 0) / AWARD_LIST_PAGE_SIZE);
+      return Array.from({length: Math.max(0, pages - 1)}, (_, index) => ({
+        path: `/awards/${award.slug}?page=${index + 2}`,
+        changefreq: 'weekly' as const,
+      }));
+    }),
   ];
 
   return sitemapResponse(buildUrlSet(entries));
