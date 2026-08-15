@@ -1,5 +1,9 @@
 import {setTimeout as sleep} from 'node:timers/promises';
-import type {Environment} from '@shine/database';
+import {hasJapaneseText} from '@shine/availability';
+import {and, eq, inArray, isNull} from 'drizzle-orm';
+import {getDatabase, type Environment} from '@shine/database';
+import {movies} from '@shine/database/schema/movies';
+import {translations} from '@shine/database/schema/translations';
 import {buildUrl, fetchJsonWithRetry} from './common/fetch-utilities';
 import {fetchTMDBMovieDetails} from './common/tmdb-utilities';
 import {
@@ -479,6 +483,84 @@ export async function resolveJapaneseFilmsByTmdb(
   return resolved;
 }
 
+/** Wikipediaの表記は邦題として信頼できるので、TMDb由来の原題を上書きする */
+export async function backfillJapaneseTitles({
+  environment,
+  editions,
+  resolved,
+}: {
+  environment: Environment;
+  editions: KinemaJunpoEdition[];
+  resolved: Map<string, ResolvedFilm>;
+}): Promise<{saved: number; replaced: number}> {
+  const titleByImdbId = new Map<string, string>();
+  for (const edition of editions) {
+    for (const film of [...edition.japanese, ...edition.foreign]) {
+      const match = resolved.get(filmKey(film));
+      if (!match || !hasJapaneseText(film.title)) {
+        continue;
+      }
+
+      if (!titleByImdbId.has(match.imdbId)) {
+        titleByImdbId.set(match.imdbId, film.title);
+      }
+    }
+  }
+
+  const database = getDatabase(environment);
+  const stats = {saved: 0, replaced: 0};
+  const imdbIds = [...titleByImdbId.keys()];
+
+  for (let index = 0; index < imdbIds.length; index += BATCH_SIZE) {
+    const batch = imdbIds.slice(index, index + BATCH_SIZE);
+    const rows = await database
+      .select({uid: movies.uid, imdbId: movies.imdbId})
+      .from(movies)
+      .where(and(inArray(movies.imdbId, batch), isNull(movies.deletedAt)));
+
+    for (const row of rows) {
+      const title = row.imdbId ? titleByImdbId.get(row.imdbId) : undefined;
+      if (!title) {
+        continue;
+      }
+
+      const [existing] = await database
+        .select({uid: translations.uid, content: translations.content})
+        .from(translations)
+        .where(
+          and(
+            eq(translations.resourceUid, row.uid),
+            eq(translations.resourceType, 'movie_title'),
+            eq(translations.languageCode, 'ja'),
+          ),
+        )
+        .limit(1);
+
+      if (existing === undefined) {
+        await database.insert(translations).values({
+          resourceType: 'movie_title',
+          resourceUid: row.uid,
+          languageCode: 'ja',
+          content: title,
+          isDefault: 0,
+        });
+        stats.saved++;
+        continue;
+      }
+
+      if (!hasJapaneseText(existing.content)) {
+        await database
+          .update(translations)
+          .set({content: title})
+          .where(eq(translations.uid, existing.uid));
+        stats.replaced++;
+      }
+    }
+  }
+
+  return stats;
+}
+
 export async function importKinemaJunpo({
   environment,
   dryRun = false,
@@ -557,6 +639,17 @@ export async function importKinemaJunpo({
     year,
     throttleMs,
   });
+
+  if (!dryRun) {
+    const titles = await backfillJapaneseTitles({
+      environment,
+      editions,
+      resolved,
+    });
+    console.log(
+      `\nJapanese titles: ${titles.saved} saved, ${titles.replaced} replaced`,
+    );
+  }
 
   return {japanese, foreign};
 }
