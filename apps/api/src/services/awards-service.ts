@@ -13,6 +13,23 @@ import type {
   AwardYearGroup,
 } from '@shine/types';
 
+export function findAwardPageDefinition(
+  organizationName: string,
+  categoryName?: string,
+): AwardPageDefinition | undefined {
+  const candidates = awardPageDefinitions.filter(
+    entry => entry.organizationName === organizationName,
+  );
+
+  return candidates.length > 1
+    ? candidates.find(
+        entry =>
+          categoryName !== undefined &&
+          entry.categoryNames.includes(categoryName),
+      )
+    : candidates[0];
+}
+
 export function awardPageLinkForOrganizationName(
   organizationName: string,
   categoryName?: string,
@@ -20,18 +37,7 @@ export function awardPageLinkForOrganizationName(
   slug: string | undefined;
   hasYearPages: boolean;
 } {
-  const candidates = awardPageDefinitions.filter(
-    entry => entry.organizationName === organizationName,
-  );
-
-  const definition =
-    candidates.length > 1
-      ? candidates.find(
-          entry =>
-            categoryName !== undefined &&
-            entry.categoryNames.includes(categoryName),
-        )
-      : candidates[0];
+  const definition = findAwardPageDefinition(organizationName, categoryName);
 
   return {
     slug: definition?.slug,
@@ -55,7 +61,7 @@ function compareAwardMovies(a: AwardMovieEntry, b: AwardMovieEntry): number {
     : rankA - rankB;
 }
 
-type AwardPageDefinition = {
+export type AwardPageDefinition = {
   slug: string;
   organizationName: string;
   categoryNames: string[];

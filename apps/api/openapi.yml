@@ -371,6 +371,129 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /quiz/daily:
+    get:
+      summary: Get today's quiz
+      description: Returns the puzzle date and the number of attempts. Never contains anything that identifies the answer
+      operationId: getQuizDaily
+      tags:
+        - Quiz
+      security: []
+      parameters:
+        - name: date
+          in: query
+          description: Puzzle date (YYYY-MM-DD). Defaults to today; future dates are rejected
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Successfully retrieved the puzzle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizPuzzle'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /quiz/candidates:
+    get:
+      summary: List every movie that can be guessed
+      description: Returns the whole quiz pool so the client can filter guesses locally
+      operationId: getQuizCandidates
+      tags:
+        - Quiz
+      security: []
+      responses:
+        '200':
+          description: Successfully retrieved the candidates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  candidates:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QuizCandidate'
+                required:
+                  - candidates
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /quiz/guess:
+    post:
+      summary: Submit a guess
+      description: Checks a guess server-side. Returns the next hint while attempts remain, and the answer once solved or after the last attempt
+      operationId: submitQuizGuess
+      tags:
+        - Quiz
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date
+                movieUid:
+                  type: string
+                  description: Omit to pass on this attempt
+                attempt:
+                  type: integer
+                  minimum: 1
+              required:
+                - attempt
+      responses:
+        '200':
+          description: Guess processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizGuessResult'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /quiz/answer:
+    get:
+      summary: Get the answer (internal)
+      description: Returns the answer including the poster URL. Used by the frontend worker to render the cropped poster; requires the shared key
+      operationId: getQuizAnswer
+      tags:
+        - Quiz
+      security: []
+      parameters:
+        - name: X-Quiz-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Successfully retrieved the answer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizAnswer'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /movies/{id}/article-links:
     get:
       summary: Get movie article links
@@ -1908,6 +2031,83 @@ components:
         - totalCount
         - totalPages
 
+    QuizPuzzle:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        maxAttempts:
+          type: integer
+        poolSize:
+          type: integer
+      required:
+        - date
+        - maxAttempts
+        - poolSize
+
+    QuizCandidate:
+      type: object
+      properties:
+        uid:
+          type: string
+        title:
+          type: string
+        year:
+          type: [integer, 'null']
+      required:
+        - uid
+        - title
+
+    QuizHint:
+      type: object
+      properties:
+        label:
+          type: string
+        value:
+          type: string
+      required:
+        - label
+        - value
+
+    QuizAnswer:
+      type: object
+      properties:
+        uid:
+          type: string
+        title:
+          type: string
+        year:
+          type: [integer, 'null']
+        posterUrl:
+          type: string
+        focalX:
+          type: number
+        focalY:
+          type: number
+      required:
+        - uid
+        - title
+        - posterUrl
+        - focalX
+        - focalY
+
+    QuizGuessResult:
+      type: object
+      properties:
+        correct:
+          type: boolean
+        hint:
+          allOf:
+            - $ref: '#/components/schemas/QuizHint'
+          description: Returned while attempts remain
+        answer:
+          allOf:
+            - $ref: '#/components/schemas/QuizAnswer'
+          description: Returned once solved or after the last attempt
+      required:
+        - correct
+
     AwardSummary:
       type: object
       properties:
@@ -3095,6 +3295,8 @@ components:
 tags:
   - name: Awards
     description: Award and editorial list pages
+  - name: Quiz
+    description: Daily movie guessing game
   - name: Movies
     description: Movie information and search operations
   - name: Articles
