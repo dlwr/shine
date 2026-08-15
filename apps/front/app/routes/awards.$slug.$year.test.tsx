@@ -174,6 +174,27 @@ describe('Award year page', () => {
       expect(screen.getByText('WINNER')).toBeInTheDocument();
     });
 
+    it('順位を持つ賞は順位を表示する', () => {
+      const award = {
+        ...mockAwardYear,
+        movies: [
+          {...mockAwardYear.movies[0], specialMention: '1位'},
+          {...mockAwardYear.movies[1], specialMention: '2位'},
+        ],
+      };
+
+      render(
+        <AwardYearPage
+          {...createComponentProperties(
+            cast<LoaderData>({award, locale: 'ja'}),
+          )}
+        />,
+      );
+
+      expect(screen.getByText('1位')).toBeInTheDocument();
+      expect(screen.getByText('2位')).toBeInTheDocument();
+    });
+
     it('前年へのリンクを表示し、次年がなければ出さない', () => {
       render(
         <AwardYearPage

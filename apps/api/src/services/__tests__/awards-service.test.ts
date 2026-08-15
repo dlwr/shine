@@ -86,6 +86,79 @@ async function seedMovie(
   }
 }
 
+async function seedKinemaJunpo(database: TestDatabase): Promise<void> {
+  await database
+    .insert(awardOrganizations)
+    .values({uid: 'org-kinejun', name: 'Kinema Junpo'});
+  await database.insert(awardCategories).values({
+    uid: 'cat-kj-japanese',
+    organizationUid: 'org-kinejun',
+    name: 'Best Japanese Film',
+  });
+  await database.insert(awardCeremonies).values({
+    uid: 'ceremony-kj-1956',
+    organizationUid: 'org-kinejun',
+    year: 1956,
+    ceremonyNumber: 30,
+  });
+  await seedMovie(database, 'movie-kj-1', 'Darkness at Noon');
+  await seedMovie(database, 'movie-kj-2', 'Yoru no kawa');
+  await seedMovie(database, 'movie-kj-3', 'Karakoram');
+  await database.insert(nominations).values([
+    {
+      movieUid: 'movie-kj-3',
+      ceremonyUid: 'ceremony-kj-1956',
+      categoryUid: 'cat-kj-japanese',
+      specialMention: '3位',
+    },
+    {
+      movieUid: 'movie-kj-1',
+      ceremonyUid: 'ceremony-kj-1956',
+      categoryUid: 'cat-kj-japanese',
+      isWinner: 1,
+      specialMention: '1位',
+    },
+    {
+      movieUid: 'movie-kj-2',
+      ceremonyUid: 'ceremony-kj-1956',
+      categoryUid: 'cat-kj-japanese',
+      specialMention: '2位',
+    },
+  ]);
+}
+
+describe('AwardsService.getAwardYear ランキング', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+  let service: AwardsService;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+    service = new AwardsService(environment);
+    await seedKinemaJunpo(database);
+  });
+
+  it('順位の昇順で並べる', async () => {
+    const result = await service.getAwardYear('kinema-junpo-japanese', 1956);
+
+    expect(result?.movies.map(movie => movie.uid)).toEqual([
+      'movie-kj-1',
+      'movie-kj-2',
+      'movie-kj-3',
+    ]);
+  });
+
+  it('順位を返す', async () => {
+    const result = await service.getAwardYear('kinema-junpo-japanese', 1956);
+
+    expect(result?.movies.map(movie => movie.specialMention)).toEqual([
+      '1位',
+      '2位',
+      '3位',
+    ]);
+  });
+});
+
 describe('AwardsService.getAwardBySlug', () => {
   let environment: Environment;
   let database: TestDatabase;
@@ -530,6 +603,28 @@ describe('awardPageLinkForOrganizationName', () => {
 
   it('returns no slug for an organization without an award page', () => {
     expect(awardPageLinkForOrganizationName('Unknown Org')).toEqual({
+      slug: undefined,
+      hasYearPages: false,
+    });
+  });
+
+  it('picks the page matching the category when an organization has several', () => {
+    expect(
+      awardPageLinkForOrganizationName('Kinema Junpo', 'Best Foreign Film'),
+    ).toEqual({
+      slug: 'kinema-junpo-foreign',
+      hasYearPages: true,
+    });
+    expect(
+      awardPageLinkForOrganizationName('Kinema Junpo', 'Best Japanese Film'),
+    ).toEqual({
+      slug: 'kinema-junpo-japanese',
+      hasYearPages: true,
+    });
+  });
+
+  it('returns no slug when the category of a multi-page organization is unknown', () => {
+    expect(awardPageLinkForOrganizationName('Kinema Junpo')).toEqual({
       slug: undefined,
       hasYearPages: false,
     });

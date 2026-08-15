@@ -12,6 +12,7 @@ export type AwardMovieEntryData = {
   movieYear?: number;
   posterUrl?: string;
   isWinner: boolean;
+  specialMention?: string;
 };
 
 export type AwardYearGroupData = {
@@ -139,6 +140,14 @@ export async function loader({context, request, params}: Route.LoaderArgs) {
   return {award, locale};
 }
 
+function RankLabel({rank}: {rank: string}) {
+  return (
+    <span className="font-mono text-[10px] text-ink-muted w-7 shrink-0 tabular-nums">
+      {rank}
+    </span>
+  );
+}
+
 export function MovieRow({movie}: {movie: AwardMovieEntryData}) {
   const title = movie.title ?? 'Unknown Title';
 
@@ -147,6 +156,7 @@ export function MovieRow({movie}: {movie: AwardMovieEntryData}) {
       <a
         href={`/movies/${movie.uid}`}
         className="flex items-center gap-4 py-3 no-underline text-ink">
+        {movie.specialMention && <RankLabel rank={movie.specialMention} />}
         <PosterFrame
           posterUrl={movie.posterUrl}
           alt={`${title} poster`}
@@ -167,6 +177,7 @@ export function MovieRow({movie}: {movie: AwardMovieEntryData}) {
     <a
       href={`/movies/${movie.uid}`}
       className="flex items-center gap-4 py-1.5 no-underline text-ink">
+      {movie.specialMention && <RankLabel rank={movie.specialMention} />}
       <span className="flex-1 font-mono text-sm leading-tight">{title}</span>
     </a>
   );

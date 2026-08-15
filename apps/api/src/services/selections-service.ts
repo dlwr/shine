@@ -541,7 +541,10 @@ export class SelectionsService extends BaseService {
           uid: nom.organizationUid,
           name: nom.organizationName,
           shortName: nom.organizationShortName ?? undefined,
-          ...awardPageLinkForOrganizationName(nom.organizationName),
+          ...awardPageLinkForOrganizationName(
+            nom.organizationName,
+            nom.categoryName,
+          ),
         },
       })),
       articleLinks: topArticles.map(article => ({
