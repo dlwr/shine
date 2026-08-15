@@ -1,7 +1,10 @@
 import {describe, expect, it} from 'vitest';
+import {extractAwardEditions} from '../imdb-event-award';
 import {
   kinemaJunpoCeremonyNumber,
+  kinemaJunpoJapaneseConfig,
   parseKinemaJunpoWikitext,
+  selectTmdbMatch,
   toImdbEventData,
 } from '../kinema-junpo';
 
@@ -231,5 +234,87 @@ describe('toImdbEventData', () => {
     expect(categoryOf(1932, 'Best Japanese Film')?.nominations[1].notes).toBe(
       '2位',
     );
+  });
+});
+
+describe('selectTmdbMatch', () => {
+  const kokuho = {
+    id: 1,
+    title: '国宝',
+    original_title: '国宝',
+    release_date: '2025-06-06',
+    original_language: 'ja',
+  };
+
+  it('邦題・公開年・日本映画がそろった候補を返す', () => {
+    expect(selectTmdbMatch([kokuho], '国宝', 2025)).toEqual(kokuho);
+  });
+
+  it('前年公開のずれを許容する', () => {
+    expect(selectTmdbMatch([kokuho], '国宝', 2026)).toEqual(kokuho);
+  });
+
+  it('公開年が離れた候補を採用しない', () => {
+    expect(selectTmdbMatch([kokuho], '国宝', 2020)).toBeUndefined();
+  });
+
+  it('邦題が一致しない候補を採用しない', () => {
+    expect(selectTmdbMatch([kokuho], '国宝 序章', 2025)).toBeUndefined();
+  });
+
+  it('空白の違いを無視して一致させる', () => {
+    const spaced = {...kokuho, title: '国宝 '};
+    expect(selectTmdbMatch([spaced], '国宝', 2025)).toEqual(spaced);
+  });
+
+  it('日本映画でない候補を採用しない', () => {
+    expect(
+      selectTmdbMatch([{...kokuho, original_language: 'en'}], '国宝', 2025),
+    ).toBeUndefined();
+  });
+
+  it('同名の候補が複数あるときは採用しない', () => {
+    expect(
+      selectTmdbMatch([kokuho, {...kokuho, id: 2}], '国宝', 2025),
+    ).toBeUndefined();
+  });
+
+  it('原題側の一致も見る', () => {
+    const original = {...kokuho, title: 'Kokuho'};
+    expect(selectTmdbMatch([original], '国宝', 2025)).toEqual(original);
+  });
+});
+
+describe('extractAwardEditions', () => {
+  const editions = parseKinemaJunpoWikitext(sampleWikitext);
+  const resolved = new Map([
+    [
+      '大人の見る繪本 生れてはみたけれど',
+      {imdbId: 'tt0023139', englishTitle: 'I Was Born, But...'},
+    ],
+    [
+      '御誂次郎吉格子',
+      {imdbId: 'tt0023375', englishTitle: 'Jirokichi the Rat'},
+    ],
+  ]);
+  const data = toImdbEventData(editions, resolved);
+
+  it('順位をspecialMentionとして取り込む', () => {
+    const films =
+      extractAwardEditions(data, kinemaJunpoJapaneseConfig).find(
+        edition => edition.year === 1932,
+      )?.films ?? [];
+
+    expect(films.map(film => film.specialMention)).toEqual(['1位', '2位']);
+  });
+
+  it('specialMentionを使わない賞では順位を持たない', () => {
+    const films =
+      extractAwardEditions(data, {
+        ...kinemaJunpoJapaneseConfig,
+        useNotesAsSpecialMention: false,
+      }).find(edition => edition.year === 1932)?.films ?? [];
+
+    expect(films.every(film => film.specialMention === undefined)).toBe(true);
   });
 });

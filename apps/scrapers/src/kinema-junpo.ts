@@ -1,5 +1,7 @@
+import {setTimeout as sleep} from 'node:timers/promises';
 import type {Environment} from '@shine/database';
 import {buildUrl, fetchJsonWithRetry} from './common/fetch-utilities';
+import {fetchTMDBMovieDetails} from './common/tmdb-utilities';
 import {
   importImdbEventAward,
   type ImdbEventAwardConfig,
@@ -8,6 +10,8 @@ import {
   type ImdbEventNomination,
 } from './imdb-event-award';
 
+const TMDB_API = 'https://api.themoviedb.org/3';
+const IMDB_ID_PATTERN = /^tt\d+$/;
 const WIKIPEDIA_API = 'https://ja.wikipedia.org/w/api.php';
 const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
 const WIKIPEDIA_ARTICLE = 'キネマ旬報';
@@ -139,6 +143,11 @@ export function parseKinemaJunpoWikitext(
   return editions;
 }
 
+/** 記事が無い作品はWikipediaの表示名で引けるようにする */
+export function filmKey(film: KinemaJunpoFilm): string {
+  return film.page ?? `title:${film.title}`;
+}
+
 function buildNominations(
   films: KinemaJunpoFilm[],
   resolved: Map<string, ResolvedFilm>,
@@ -147,7 +156,7 @@ function buildNominations(
   const seen = new Set<string>();
 
   for (const film of films) {
-    const match = film.page ? resolved.get(film.page) : undefined;
+    const match = resolved.get(filmKey(film));
     if (!match || seen.has(match.imdbId)) {
       continue;
     }
@@ -214,6 +223,7 @@ export const kinemaJunpoJapaneseConfig: ImdbEventAwardConfig = {
   ceremonyNumber: kinemaJunpoCeremonyNumber,
   isCompetitionCategory: category => category === JAPANESE_CATEGORY,
   minimumFilmsPerEdition: 1,
+  useNotesAsSpecialMention: true,
 };
 
 export const kinemaJunpoForeignConfig: ImdbEventAwardConfig = {
@@ -377,6 +387,98 @@ export async function resolveFilmsByWikipediaPage(
   return resolved;
 }
 
+export type TmdbSearchResult = {
+  id: number;
+  title?: string;
+  original_title?: string;
+  release_date?: string;
+  original_language?: string;
+};
+
+function normalizeTitle(value: string | undefined): string {
+  return (value ?? '').replaceAll(/[\s\u3000]/g, '').toLowerCase();
+}
+
+/** 同名のリメイクが多いので、絞り込んだ結果が1件のときだけ採用する */
+export function selectTmdbMatch(
+  results: TmdbSearchResult[],
+  title: string,
+  year: number,
+): TmdbSearchResult | undefined {
+  const normalized = normalizeTitle(title);
+  const matches = results.filter(result => {
+    if (result.original_language !== 'ja') {
+      return false;
+    }
+
+    const releaseYear = Number.parseInt(
+      result.release_date?.slice(0, 4) ?? '',
+      10,
+    );
+    if (!Number.isFinite(releaseYear) || Math.abs(releaseYear - year) > 1) {
+      return false;
+    }
+
+    return (
+      normalizeTitle(result.title) === normalized ||
+      normalizeTitle(result.original_title) === normalized
+    );
+  });
+
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
+async function searchTmdbByJapaneseTitle(
+  title: string,
+  tmdbApiKey: string,
+): Promise<TmdbSearchResult[]> {
+  const url = buildUrl(`${TMDB_API}/search/movie`, {
+    api_key: tmdbApiKey,
+    query: title,
+    language: 'ja-JP',
+    include_adult: 'false',
+  });
+
+  const response = await fetchJsonWithRetry<{results?: TmdbSearchResult[]}>(
+    url,
+  );
+
+  return response.results ?? [];
+}
+
+export async function resolveJapaneseFilmsByTmdb(
+  entries: Array<{key: string; title: string; year: number}>,
+  tmdbApiKey: string,
+  throttleMs: number,
+): Promise<Map<string, ResolvedFilm>> {
+  const resolved = new Map<string, ResolvedFilm>();
+
+  for (const entry of entries) {
+    try {
+      const results = await searchTmdbByJapaneseTitle(entry.title, tmdbApiKey);
+      const match = selectTmdbMatch(results, entry.title, entry.year);
+      if (match) {
+        const details = await fetchTMDBMovieDetails(match.id, tmdbApiKey);
+        const imdbId = details?.imdb_id;
+        if (imdbId && IMDB_ID_PATTERN.test(imdbId)) {
+          resolved.set(entry.key, {imdbId, englishTitle: details?.title});
+          console.log(
+            `  TMDb fallback: ${entry.title} (${entry.year}) -> ${imdbId} (TMDb ${match.id})`,
+          );
+        }
+      }
+    } catch (error) {
+      console.error(`  TMDb fallback failed for ${entry.title}:`, error);
+    }
+
+    if (throttleMs > 0) {
+      await sleep(throttleMs);
+    }
+  }
+
+  return resolved;
+}
+
 export async function importKinemaJunpo({
   environment,
   dryRun = false,
@@ -409,6 +511,32 @@ export async function importKinemaJunpo({
   console.log(`Resolving IMDb IDs for ${pages.length} articles...`);
   const resolved = await resolveFilmsByWikipediaPage(pages);
   console.log(`Resolved ${resolved.size}/${pages.length} articles`);
+
+  if (environment.TMDB_API_KEY) {
+    const pending = new Map(
+      editions.flatMap(edition =>
+        edition.japanese
+          .filter(film => !resolved.has(filmKey(film)))
+          .map(film => [
+            filmKey(film),
+            {key: filmKey(film), title: film.title, year: edition.year},
+          ]),
+      ),
+    );
+
+    console.log(`TMDb fallback for ${pending.size} Japanese films...`);
+    const fallback = await resolveJapaneseFilmsByTmdb(
+      [...pending.values()],
+      environment.TMDB_API_KEY,
+      throttleMs,
+    );
+
+    for (const [key, film] of fallback) {
+      resolved.set(key, film);
+    }
+
+    console.log(`TMDb fallback resolved ${fallback.size}/${pending.size}`);
+  }
 
   const data = toImdbEventData(editions, resolved);
 
