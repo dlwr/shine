@@ -15,6 +15,7 @@ export default [
   route('sitemap.xml', 'routes/sitemap-index.tsx'),
   route('sitemap/movies.xml', 'routes/sitemap-movies.tsx'),
   route('sitemap/awards.xml', 'routes/sitemap-awards.tsx'),
+  route('quiz', 'routes/quiz.tsx'),
   route('quiz/poster.png', 'routes/quiz-poster.tsx'),
   route('og/movie.png', 'routes/og-movie.tsx'),
   route('og/home.png', 'routes/og-home.tsx'),

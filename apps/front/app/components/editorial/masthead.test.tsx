@@ -32,6 +32,14 @@ describe('Masthead', () => {
     );
   });
 
+  it('QUIZ リンクを描画する', () => {
+    render(<Masthead locale="ja" />);
+    expect(screen.getByRole('link', {name: /quiz/i})).toHaveAttribute(
+      'href',
+      '/quiz',
+    );
+  });
+
   it('日本語ロケールでは日本語のタグラインを描画する', () => {
     render(<Masthead locale="ja" />);
 
