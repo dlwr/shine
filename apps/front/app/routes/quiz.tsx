@@ -24,7 +24,10 @@ import {
 const SUGGESTION_LIMIT = 8;
 
 export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
-  const {locale} = data as {locale?: Locale};
+  const {locale, puzzle} = data as {locale?: Locale; puzzle?: {date: string}};
+  const imageUrl = puzzle
+    ? `${SITE_URL}/og/quiz.png?date=${puzzle.date}`
+    : `${SITE_URL}/og/quiz.png`;
 
   return buildSocialMeta({
     title: '今日の映画クイズ | SHINE',
@@ -32,7 +35,7 @@ export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
       'ポスターの一部と5つのヒントから、今日の1本を当てる。カンヌ・アカデミー賞・キネマ旬報などに選ばれた映画から毎日1問。',
     path: '/quiz',
     locale: locale ?? DEFAULT_LOCALE,
-    imageUrl: `${SITE_URL}/og/home.png`,
+    imageUrl,
     largeImage: true,
   });
 }
