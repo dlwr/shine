@@ -1,5 +1,11 @@
 import {describe, expect, it} from 'vitest';
-import {buildDailyPostText, buildXPostText, xWeightedLength} from './post-text';
+import {
+  buildDailyPostText,
+  buildQuizPostText,
+  buildQuizXPostText,
+  buildXPostText,
+  xWeightedLength,
+} from './post-text';
 
 const base = {
   title: 'ハウスメイド',
@@ -71,6 +77,55 @@ describe('buildDailyPostText', () => {
 
     expect([...text].length).toBeLessThanOrEqual(300);
     expect(text).toMatch(/#青空映画部$/);
+  });
+});
+
+describe('buildQuizPostText', () => {
+  const quizBase = {date: '2026-08-16', poolSize: 1396};
+
+  it('出題日を月日で入れる', () => {
+    expect(buildQuizPostText(quizBase)).toContain('8/16');
+  });
+
+  it('遊び方を説明する', () => {
+    expect(buildQuizPostText(quizBase)).toContain('ヒント');
+  });
+
+  it('出題プールの本数を含む', () => {
+    expect(buildQuizPostText(quizBase)).toContain('1,396本');
+  });
+
+  it('末尾に #青空映画部 タグを付ける', () => {
+    expect(buildQuizPostText(quizBase)).toMatch(/#青空映画部$/);
+  });
+
+  it('300字(Blueskyの上限)を超えない', () => {
+    expect([...buildQuizPostText(quizBase)].length).toBeLessThanOrEqual(300);
+  });
+});
+
+describe('buildQuizXPostText', () => {
+  const quizBase = {
+    date: '2026-08-16',
+    poolSize: 1396,
+    url: 'https://shine-film.com/quiz',
+  };
+
+  it('本文の末尾にスキームを外したURLを含む', () => {
+    const text = buildQuizXPostText(quizBase);
+
+    expect(text).toMatch(/\nshine-film\.com\/quiz$/);
+    expect(text).not.toContain('https://');
+  });
+
+  it('ハッシュタグは付けない', () => {
+    expect(buildQuizXPostText(quizBase)).not.toContain('#');
+  });
+
+  it('weighted長が280以内に収まる', () => {
+    expect(xWeightedLength(buildQuizXPostText(quizBase))).toBeLessThanOrEqual(
+      280,
+    );
   });
 });
 
