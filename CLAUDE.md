@@ -59,6 +59,8 @@ Cloudflare Workers: non-secret vars go in `wrangler.jsonc`/`wrangler.toml` `vars
 - Admin pages authenticate with a JWT held in localStorage
 - API URL resolution: always `resolveApiUrl(context)` from `@/lib/api` — never hand-cast `context.cloudflare`
 - Tests: Vitest + React Testing Library, co-located `*.test.tsx`
+- **Masthead のナビ**: 項目は `NAV_LINKS` に足す。ボタンの行は `flex-wrap` 前提で、横並び固定にすると狭い画面で必ずはみ出す（過去2回のデグレ原因）
+- **横幅のはみ出し確認**: 共通レイアウトやヘッダを触ったら `agent-browser set viewport 375 812` の後、各ページで `document.documentElement.scrollWidth <= clientWidth` を確認する（jsdomはレイアウトを持たないのでvitestでは検出できない）
 
 ## Code Style and Conventions
 

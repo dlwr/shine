@@ -51,4 +51,14 @@ describe('Masthead', () => {
 
     expect(screen.getByText(/A FORGOTTEN FILM/i)).toBeInTheDocument();
   });
+
+  it('ナビゲーションは折り返す(項目を増やしても横幅からはみ出さないため)', () => {
+    render(<Masthead locale="ja" />);
+
+    const navigation = screen.getByRole('link', {
+      name: /search/i,
+    }).parentElement;
+
+    expect(navigation).toHaveClass('flex-wrap');
+  });
 });
