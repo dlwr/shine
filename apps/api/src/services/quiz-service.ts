@@ -13,7 +13,7 @@ import {BaseService} from './base-service';
 export const QUIZ_MAX_ATTEMPTS = 6;
 
 const MINIMUM_ORGANIZATIONS = 2;
-const POOL_CACHE_KEY = 'quiz:pool:v1';
+const POOL_CACHE_KEY = 'quiz:pool:v2';
 const POOL_CACHE_TTL = 604_800;
 
 export type QuizPoolEntry = {
@@ -167,10 +167,14 @@ export class QuizService extends BaseService {
             AND translations.language_code = 'ja'
           LIMIT 1
         )`.as('title'),
+        // 邦題ポスターには答えが刷られているので最後に回す
         posterUrl: sql<string>`(
           SELECT url FROM poster_urls
           WHERE poster_urls.movie_uid = movies.uid
-          ORDER BY poster_urls.is_primary DESC
+          ORDER BY
+            CASE WHEN poster_urls.language_code = 'ja' THEN 1 ELSE 0 END ASC,
+            poster_urls.is_primary DESC,
+            poster_urls.url ASC
           LIMIT 1
         )`.as('posterUrl'),
       })

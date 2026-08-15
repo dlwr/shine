@@ -13,6 +13,7 @@ import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {quizRoutes} from '../routes/quiz';
+import {QuizService} from '../services/quiz-service';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -22,17 +23,27 @@ const migrationsFolder = path.resolve(
 
 const QUIZ_KEY = 'test-quiz-key';
 
+type SeedPoster = {url: string; languageCode?: string; isPrimary?: number};
+
 type SeedOptions = {
   uid: string;
   title?: string;
   poster?: boolean;
+  posters?: SeedPoster[];
   organizations: Array<'cannes' | 'kinema'>;
   deleted?: boolean;
 };
 
 async function seedMovie(
   database: ReturnType<typeof getDatabase>,
-  {uid, title, poster = true, organizations, deleted = false}: SeedOptions,
+  {
+    uid,
+    title,
+    poster = true,
+    posters,
+    organizations,
+    deleted = false,
+  }: SeedOptions,
 ) {
   await database.insert(movies).values({
     uid,
@@ -51,7 +62,16 @@ async function seedMovie(
     });
   }
 
-  if (poster) {
+  if (posters) {
+    await database.insert(posterUrls).values(
+      posters.map(entry => ({
+        movieUid: uid,
+        url: entry.url,
+        languageCode: entry.languageCode,
+        isPrimary: entry.isPrimary ?? 0,
+      })),
+    );
+  } else if (poster) {
     await database.insert(posterUrls).values({
       movieUid: uid,
       url: `https://image.tmdb.org/t/p/original/${uid}.jpg`,
@@ -126,6 +146,19 @@ async function createTestEnvironment(): Promise<Environment> {
     title: '削除済み',
     organizations: ['cannes', 'kinema'],
     deleted: true,
+  });
+  await seedMovie(database, {
+    uid: 'movie-with-japanese-poster',
+    title: '羅生門',
+    organizations: ['cannes', 'kinema'],
+    posters: [
+      {
+        url: 'https://image.tmdb.org/t/p/original/ja.jpg',
+        languageCode: 'ja',
+        isPrimary: 1,
+      },
+      {url: 'https://image.tmdb.org/t/p/original/intl.jpg'},
+    ],
   });
 
   return environment;
@@ -223,7 +256,11 @@ describe('GET /quiz/answer', () => {
   it('picks a movie from the pool', async () => {
     const answer = await fetchAnswer(environment);
 
-    expect(['movie-in-pool', 'movie-also-in-pool']).toContain(answer.uid);
+    expect([
+      'movie-in-pool',
+      'movie-also-in-pool',
+      'movie-with-japanese-poster',
+    ]).toContain(answer.uid);
   });
 
   it('returns the same movie for the same date', async () => {
@@ -238,6 +275,23 @@ describe('GET /quiz/answer', () => {
 
     expect(answer.focalX).toBeGreaterThanOrEqual(0);
     expect(answer.focalX).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('出題ポスター', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+  });
+
+  it('邦題が刷られたポスターを避ける', async () => {
+    const pool = await new QuizService(environment).getPool();
+    const entry = pool.find(item => item.uid === 'movie-with-japanese-poster');
+
+    expect(entry?.posterUrl).toBe(
+      'https://image.tmdb.org/t/p/original/intl.jpg',
+    );
   });
 });
 
@@ -262,6 +316,7 @@ describe('GET /quiz/candidates', () => {
     expect(candidates.map(candidate => candidate.uid).toSorted()).toEqual([
       'movie-also-in-pool',
       'movie-in-pool',
+      'movie-with-japanese-poster',
     ]);
   });
 
@@ -270,6 +325,7 @@ describe('GET /quiz/candidates', () => {
 
     expect(candidates.map(candidate => candidate.title).toSorted()).toEqual([
       '東京物語',
+      '羅生門',
       '赤ひげ',
     ]);
   });
