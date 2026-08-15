@@ -403,15 +403,19 @@ function normalizeTitle(value: string | undefined): string {
   return (value ?? '').replaceAll(/[\s\u3000]/g, '').toLowerCase();
 }
 
+/** 外国映画は本国公開から日本公開までのずれがあるので過去側に幅を持たせる */
+const FOREIGN_YEAR_WINDOW = 15;
+
 /** 同名のリメイクが多いので、絞り込んだ結果が1件のときだけ採用する */
 export function selectTmdbMatch(
   results: TmdbSearchResult[],
   title: string,
   year: number,
+  {foreign = false}: {foreign?: boolean} = {},
 ): TmdbSearchResult | undefined {
   const normalized = normalizeTitle(title);
   const matches = results.filter(result => {
-    if (result.original_language !== 'ja') {
+    if (foreign === (result.original_language === 'ja')) {
       return false;
     }
 
@@ -419,7 +423,12 @@ export function selectTmdbMatch(
       result.release_date?.slice(0, 4) ?? '',
       10,
     );
-    if (!Number.isFinite(releaseYear) || Math.abs(releaseYear - year) > 1) {
+    if (!Number.isFinite(releaseYear)) {
+      return false;
+    }
+
+    const earliest = foreign ? year - FOREIGN_YEAR_WINDOW : year - 1;
+    if (releaseYear < earliest || releaseYear > year + 1) {
       return false;
     }
 
@@ -450,8 +459,8 @@ async function searchTmdbByJapaneseTitle(
   return response.results ?? [];
 }
 
-export async function resolveJapaneseFilmsByTmdb(
-  entries: Array<{key: string; title: string; year: number}>,
+export async function resolveFilmsByTmdb(
+  entries: Array<{key: string; title: string; year: number; foreign: boolean}>,
   tmdbApiKey: string,
   throttleMs: number,
 ): Promise<Map<string, ResolvedFilm>> {
@@ -460,7 +469,9 @@ export async function resolveJapaneseFilmsByTmdb(
   for (const entry of entries) {
     try {
       const results = await searchTmdbByJapaneseTitle(entry.title, tmdbApiKey);
-      const match = selectTmdbMatch(results, entry.title, entry.year);
+      const match = selectTmdbMatch(results, entry.title, entry.year, {
+        foreign: entry.foreign,
+      });
       if (match) {
         const details = await fetchTMDBMovieDetails(match.id, tmdbApiKey);
         const imdbId = details?.imdb_id;
@@ -597,17 +608,25 @@ export async function importKinemaJunpo({
   if (environment.TMDB_API_KEY) {
     const pending = new Map(
       editions.flatMap(edition =>
-        edition.japanese
-          .filter(film => !resolved.has(filmKey(film)))
-          .map(film => [
+        [
+          ...edition.japanese.map(film => ({film, foreign: false})),
+          ...edition.foreign.map(film => ({film, foreign: true})),
+        ]
+          .filter(({film}) => !resolved.has(filmKey(film)))
+          .map(({film, foreign}) => [
             filmKey(film),
-            {key: filmKey(film), title: film.title, year: edition.year},
+            {
+              key: filmKey(film),
+              title: film.title,
+              year: edition.year,
+              foreign,
+            },
           ]),
       ),
     );
 
-    console.log(`TMDb fallback for ${pending.size} Japanese films...`);
-    const fallback = await resolveJapaneseFilmsByTmdb(
+    console.log(`TMDb fallback for ${pending.size} films...`);
+    const fallback = await resolveFilmsByTmdb(
       [...pending.values()],
       environment.TMDB_API_KEY,
       throttleMs,

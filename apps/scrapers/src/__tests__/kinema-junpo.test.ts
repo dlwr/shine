@@ -283,6 +283,51 @@ describe('selectTmdbMatch', () => {
     const original = {...kokuho, title: 'Kokuho'};
     expect(selectTmdbMatch([original], '国宝', 2025)).toEqual(original);
   });
+
+  describe('外国映画', () => {
+    const laConfidential = {
+      id: 3,
+      title: 'L.A.コンフィデンシャル',
+      original_title: 'L.A. Confidential',
+      release_date: '1997-09-19',
+      original_language: 'en',
+    };
+
+    it('本国公開から日本公開までのずれを許容する', () => {
+      expect(
+        selectTmdbMatch([laConfidential], 'L.A.コンフィデンシャル', 1998, {
+          foreign: true,
+        }),
+      ).toEqual(laConfidential);
+    });
+
+    it('公開が古すぎる候補は採用しない', () => {
+      expect(
+        selectTmdbMatch([laConfidential], 'L.A.コンフィデンシャル', 2020, {
+          foreign: true,
+        }),
+      ).toBeUndefined();
+    });
+
+    it('日本映画を外国映画として採用しない', () => {
+      expect(
+        selectTmdbMatch(
+          [{...laConfidential, original_language: 'ja'}],
+          'L.A.コンフィデンシャル',
+          1998,
+          {foreign: true},
+        ),
+      ).toBeUndefined();
+    });
+
+    it('日本公開より後の作品は採用しない', () => {
+      expect(
+        selectTmdbMatch([laConfidential], 'L.A.コンフィデンシャル', 1995, {
+          foreign: true,
+        }),
+      ).toBeUndefined();
+    });
+  });
 });
 
 describe('extractAwardEditions', () => {
