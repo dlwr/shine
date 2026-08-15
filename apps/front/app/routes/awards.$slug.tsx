@@ -166,9 +166,11 @@ export function MovieRow({movie}: {movie: AwardMovieEntryData}) {
         <span className="flex-1 font-display font-extrabold text-base md:text-lg leading-tight">
           {title}
         </span>
-        <span className="font-mono text-[9px] bg-brand text-brand-on px-1.5 py-0.5 shrink-0">
-          WINNER
-        </span>
+        {!movie.specialMention && (
+          <span className="font-mono text-[9px] bg-brand text-brand-on px-1.5 py-0.5 shrink-0">
+            WINNER
+          </span>
+        )}
       </a>
     );
   }

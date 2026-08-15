@@ -195,6 +195,23 @@ describe('Award year page', () => {
       expect(screen.getByText('2位')).toBeInTheDocument();
     });
 
+    it('順位を持つ賞はWINNERバッジを出さない', () => {
+      const award = {
+        ...mockAwardYear,
+        movies: [{...mockAwardYear.movies[0], specialMention: '1位'}],
+      };
+
+      render(
+        <AwardYearPage
+          {...createComponentProperties(
+            cast<LoaderData>({award, locale: 'ja'}),
+          )}
+        />,
+      );
+
+      expect(screen.queryByText('WINNER')).not.toBeInTheDocument();
+    });
+
     it('前年へのリンクを表示し、次年がなければ出さない', () => {
       render(
         <AwardYearPage
