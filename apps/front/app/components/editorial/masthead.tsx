@@ -13,6 +13,12 @@ const TAGLINES = {
   en: ['A FORGOTTEN FILM,', 'EVERY DAY'],
 } as const;
 
+const NAV_LINKS = [
+  {href: '/quiz', label: 'QUIZ', ariaLabel: 'Quiz'},
+  {href: '/daily', label: 'DAILY', ariaLabel: 'Daily picks'},
+  {href: '/awards', label: 'AWARDS', ariaLabel: 'Awards'},
+] as const;
+
 export function Masthead({locale = 'en'}: {locale?: string}) {
   const [taglineTop, taglineBottom] =
     TAGLINES[locale as keyof typeof TAGLINES] ?? TAGLINES.en;
@@ -24,31 +30,22 @@ export function Masthead({locale = 'en'}: {locale?: string}) {
           SHINE
         </a>
       </h1>
-      <div className="ml-auto flex items-center gap-2 md:gap-3">
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-2 md:gap-3">
         <p className="hidden md:block text-right font-mono text-[10px] leading-tight text-ink-muted">
           {taglineTop}
           <br />
           {taglineBottom} — {today()}
         </p>
         <LanguageSelector locale={locale} />
-        <a
-          href="/quiz"
-          aria-label="Quiz"
-          className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-ink text-ink">
-          QUIZ
-        </a>
-        <a
-          href="/daily"
-          aria-label="Daily picks"
-          className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-ink text-ink">
-          DAILY
-        </a>
-        <a
-          href="/awards"
-          aria-label="Awards"
-          className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-ink text-ink">
-          AWARDS
-        </a>
+        {NAV_LINKS.map(link => (
+          <a
+            key={link.href}
+            href={link.href}
+            aria-label={link.ariaLabel}
+            className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-ink text-ink">
+            {link.label}
+          </a>
+        ))}
         <a
           href="/search"
           aria-label="Search"
