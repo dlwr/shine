@@ -24,6 +24,8 @@ export type ImdbEventAwardConfig = {
   ceremonyNumber: (year: number) => number | undefined;
   isCompetitionCategory: (category: string | null) => boolean;
   minimumFilmsPerEdition: number;
+  /** ノミネーションのnotesをspecialMentionとして保存する */
+  useNotesAsSpecialMention?: boolean;
   winnerCorrections?: Array<{
     year: number;
     imdbId: string;
@@ -66,6 +68,7 @@ export type AwardFilm = {
   title: string | null;
   originalTitle: string | null;
   isWinner: boolean;
+  specialMention?: string;
 };
 
 export type AwardEdition = {
@@ -112,6 +115,10 @@ export function extractAwardEditions(
               title: title.title,
               originalTitle: title.originalTitle,
               isWinner: nomination.isWinner,
+              specialMention:
+                config.useNotesAsSpecialMention && nomination.notes
+                  ? nomination.notes
+                  : undefined,
             });
           }
         }
@@ -349,7 +356,11 @@ async function processEdition(
   }
 
   const existingNominations = await database
-    .select({movieUid: nominations.movieUid, isWinner: nominations.isWinner})
+    .select({
+      movieUid: nominations.movieUid,
+      isWinner: nominations.isWinner,
+      specialMention: nominations.specialMention,
+    })
     .from(nominations)
     .where(
       and(
@@ -358,7 +369,10 @@ async function processEdition(
       ),
     );
   const nominationsByMovieUid = new Map(
-    existingNominations.map(row => [row.movieUid, row.isWinner]),
+    existingNominations.map(row => [
+      row.movieUid,
+      {isWinner: row.isWinner, specialMention: row.specialMention},
+    ]),
   );
 
   for (const film of edition.films) {
@@ -538,38 +552,65 @@ async function ensureNomination(
   ceremonyUid: string,
   categoryUid: string,
   film: AwardFilm,
-  nominationsByMovieUid: Map<string, number>,
+  nominationsByMovieUid: Map<
+    string,
+    {isWinner: number; specialMention: string | null}
+  >,
 ): Promise<void> {
   const {database, stats} = context;
-  const existingIsWinner = nominationsByMovieUid.get(movieUid);
+  const existing = nominationsByMovieUid.get(movieUid);
+  const isWinner = film.isWinner ? 1 : 0;
 
-  if (existingIsWinner === undefined) {
+  if (existing === undefined) {
     await database
       .insert(nominations)
       .values({
         movieUid,
         ceremonyUid,
         categoryUid,
-        isWinner: film.isWinner ? 1 : 0,
+        isWinner,
+        specialMention: film.specialMention,
       })
       .onConflictDoNothing();
-    nominationsByMovieUid.set(movieUid, film.isWinner ? 1 : 0);
+    nominationsByMovieUid.set(movieUid, {
+      isWinner,
+      specialMention: film.specialMention ?? null, // eslint-disable-line unicorn/no-null -- DBのnullable列に合わせる
+    });
     stats.nominationsCreated++;
     return;
   }
 
-  if (film.isWinner && existingIsWinner === 0) {
-    await database
-      .update(nominations)
-      .set({isWinner: 1})
-      .where(
-        and(
-          eq(nominations.movieUid, movieUid),
-          eq(nominations.ceremonyUid, ceremonyUid),
-          eq(nominations.categoryUid, categoryUid),
-        ),
-      );
-    nominationsByMovieUid.set(movieUid, 1);
+  const promoteWinner = film.isWinner && existing.isWinner === 0;
+  const updateMention =
+    film.specialMention !== undefined &&
+    film.specialMention !== existing.specialMention;
+
+  if (!promoteWinner && !updateMention) {
+    return;
+  }
+
+  await database
+    .update(nominations)
+    .set({
+      ...(promoteWinner && {isWinner: 1}),
+      ...(updateMention && {specialMention: film.specialMention}),
+    })
+    .where(
+      and(
+        eq(nominations.movieUid, movieUid),
+        eq(nominations.ceremonyUid, ceremonyUid),
+        eq(nominations.categoryUid, categoryUid),
+      ),
+    );
+
+  nominationsByMovieUid.set(movieUid, {
+    isWinner: promoteWinner ? 1 : existing.isWinner,
+    specialMention: updateMention
+      ? (film.specialMention ?? null) // eslint-disable-line unicorn/no-null -- DBのnullable列に合わせる
+      : existing.specialMention,
+  });
+
+  if (promoteWinner) {
     stats.winnersUpdated++;
   }
 }

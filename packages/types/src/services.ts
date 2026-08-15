@@ -72,6 +72,8 @@ export type AwardMovieEntry = {
   movieYear: number | undefined;
   posterUrl: string | undefined;
   isWinner: boolean;
+  /** ランキング形式の賞で「N位」が入る */
+  specialMention?: string;
 };
 
 export type AwardYearGroup = {

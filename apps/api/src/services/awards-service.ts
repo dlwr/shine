@@ -13,18 +13,46 @@ import type {
   AwardYearGroup,
 } from '@shine/types';
 
-export function awardPageLinkForOrganizationName(organizationName: string): {
+export function awardPageLinkForOrganizationName(
+  organizationName: string,
+  categoryName?: string,
+): {
   slug: string | undefined;
   hasYearPages: boolean;
 } {
-  const definition = awardPageDefinitions.find(
+  const candidates = awardPageDefinitions.filter(
     entry => entry.organizationName === organizationName,
   );
+
+  const definition =
+    candidates.length > 1
+      ? candidates.find(
+          entry =>
+            categoryName !== undefined &&
+            entry.categoryNames.includes(categoryName),
+        )
+      : candidates[0];
 
   return {
     slug: definition?.slug,
     hasYearPages: definition?.grouping === 'year',
   };
+}
+
+const RANK_PATTERN = /^(\d+)位$/;
+
+function rankOf(entry: AwardMovieEntry): number {
+  const matched = RANK_PATTERN.exec(entry.specialMention ?? '');
+  return matched ? Number.parseInt(matched[1], 10) : Number.POSITIVE_INFINITY;
+}
+
+function compareAwardMovies(a: AwardMovieEntry, b: AwardMovieEntry): number {
+  const rankA = rankOf(a);
+  const rankB = rankOf(b);
+
+  return rankA === rankB
+    ? Number(b.isWinner) - Number(a.isWinner)
+    : rankA - rankB;
 }
 
 type AwardPageDefinition = {
@@ -86,6 +114,26 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
     organization: '日本アカデミー賞',
     description:
       '日本アカデミー賞 最優秀作品賞の歴代受賞作と優秀作品賞ノミネートの一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'kinema-junpo-japanese',
+    organizationName: 'Kinema Junpo',
+    categoryNames: ['Best Japanese Film'],
+    name: '日本映画ベスト・テン',
+    organization: 'キネマ旬報',
+    description:
+      'キネマ旬報ベスト・テン日本映画部門の歴代ベストワンと年別ランキングの一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'kinema-junpo-foreign',
+    organizationName: 'Kinema Junpo',
+    categoryNames: ['Best Foreign Film'],
+    name: '外国映画ベスト・テン',
+    organization: 'キネマ旬報',
+    description:
+      'キネマ旬報ベスト・テン外国映画部門の歴代ベストワンと年別ランキングの一覧。',
     grouping: 'year',
   },
   {
@@ -237,6 +285,7 @@ export class AwardsService extends BaseService {
         movieUid: movies.uid,
         movieYear: movies.year,
         isWinner: nominations.isWinner,
+        specialMention: nominations.specialMention,
         ceremonyYear: awardCeremonies.year,
         ceremonyNumber: awardCeremonies.ceremonyNumber,
         jaTitle: sql<string | null>`(
@@ -302,13 +351,14 @@ export class AwardsService extends BaseService {
         movieYear: row.movieYear ?? undefined,
         posterUrl: row.posterUrl ?? undefined,
         isWinner: row.isWinner === 1,
+        specialMention: row.specialMention ?? undefined,
       });
     }
 
     const years = [...groups.values()].toSorted((a, b) => b.year - a.year);
     for (const group of years) {
       group.filmCount = group.movies.length;
-      group.movies.sort((a, b) => Number(b.isWinner) - Number(a.isWinner));
+      group.movies.sort(compareAwardMovies);
     }
 
     const base = {
@@ -351,6 +401,7 @@ export class AwardsService extends BaseService {
         movieUid: movies.uid,
         movieYear: movies.year,
         isWinner: nominations.isWinner,
+        specialMention: nominations.specialMention,
         ceremonyNumber: awardCeremonies.ceremonyNumber,
         jaTitle: sql<string | null>`(
           SELECT content FROM translations
@@ -405,10 +456,11 @@ export class AwardsService extends BaseService {
         movieYear: row.movieYear ?? undefined,
         posterUrl: row.posterUrl ?? undefined,
         isWinner: row.isWinner === 1,
+        specialMention: row.specialMention ?? undefined,
       });
     }
 
-    movieEntries.sort((a, b) => Number(b.isWinner) - Number(a.isWinner));
+    movieEntries.sort(compareAwardMovies);
 
     const yearRows = await this.database
       .selectDistinct({year: awardCeremonies.year})

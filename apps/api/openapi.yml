@@ -1865,6 +1865,9 @@ components:
           format: uri
         isWinner:
           type: boolean
+        specialMention:
+          type: string
+          description: ランキング形式の賞で「N位」が入る
       required:
         - uid
         - isWinner
