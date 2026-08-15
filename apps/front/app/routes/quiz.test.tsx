@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import QuizPage, {loader} from './quiz';
+import QuizPage, {loader, meta} from './quiz';
 import type {Route} from './+types/quiz';
 import {QUIZ_STATE_KEY} from '@/lib/quiz-state';
 
@@ -73,6 +73,19 @@ describe('Quiz page', () => {
           }),
         ),
       ).rejects.toMatchObject({status: 502});
+    });
+  });
+
+  describe('meta', () => {
+    it('クイズ専用のOG画像を出題日付きで指す', () => {
+      const descriptors = meta(
+        cast<Route.MetaArgs>({data: {puzzle: PUZZLE, locale: 'ja'}}),
+      );
+
+      expect(descriptors).toContainEqual({
+        property: 'og:image',
+        content: 'https://shine-film.com/og/quiz.png?date=2026-08-16',
+      });
     });
   });
 

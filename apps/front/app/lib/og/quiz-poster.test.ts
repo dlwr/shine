@@ -52,6 +52,30 @@ describe('cropLayout', () => {
 
     expect(layout.left + layout.width).toBe(QUIZ_POSTER_WIDTH);
   });
+
+  it('scales the enlarged poster to the given frame', () => {
+    const layout = cropLayout({
+      zoom: 3,
+      focalX: 0.5,
+      focalY: 0.5,
+      frameWidth: 200,
+      frameHeight: 300,
+    });
+
+    expect(layout).toMatchObject({width: 600, height: 900});
+  });
+
+  it('keeps the right edge inside the given frame', () => {
+    const layout = cropLayout({
+      zoom: 3,
+      focalX: 1,
+      focalY: 0.5,
+      frameWidth: 200,
+      frameHeight: 300,
+    });
+
+    expect(layout.left + layout.width).toBe(200);
+  });
 });
 
 describe('buildQuizPosterHtml', () => {
@@ -75,5 +99,18 @@ describe('buildQuizPosterHtml', () => {
     });
 
     expect(html).toContain(`width="${QUIZ_POSTER_WIDTH * zoomForStage(0)}"`);
+  });
+
+  it('renders at the given frame size', () => {
+    const html = buildQuizPosterHtml({
+      posterDataUri: 'data:image/jpeg;base64,AAA',
+      stage: 0,
+      focalX: 0.5,
+      focalY: 0.5,
+      frameWidth: 336,
+      frameHeight: 504,
+    });
+
+    expect(html).toContain('width:336px;height:504px');
   });
 });

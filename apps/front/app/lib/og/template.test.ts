@@ -3,6 +3,7 @@ import {
   buildBannerHtml,
   buildHomeCardHtml,
   buildMovieCardHtml,
+  buildQuizCardHtml,
   escapeHtml,
   splitYear,
   titleFontSize,
@@ -111,6 +112,54 @@ describe('buildHomeCardHtml', () => {
 
   it('日本語のタグラインを含む', () => {
     expect(buildHomeCardHtml()).toContain('毎日1本、埋もれた映画に光を当てる');
+  });
+});
+
+describe('buildQuizCardHtml', () => {
+  const baseProperties = {
+    date: '2026-08-16',
+    poolSize: 1396,
+    posterDataUri: 'data:image/jpeg;base64,abc',
+  };
+
+  it('クイズの見出しを含む', () => {
+    expect(buildQuizCardHtml(baseProperties)).toContain('今日の映画クイズ');
+  });
+
+  it('出題日を含む', () => {
+    expect(buildQuizCardHtml(baseProperties)).toContain('2026-08-16');
+  });
+
+  it('出題プールの本数を含む', () => {
+    expect(buildQuizCardHtml(baseProperties)).toContain('1,396');
+  });
+
+  it('ポスターをdata URIで埋め込む', () => {
+    expect(buildQuizCardHtml(baseProperties)).toContain(
+      'data:image/jpeg;base64,abc',
+    );
+  });
+
+  it('ポスターを切り出して表示する', () => {
+    expect(buildQuizCardHtml(baseProperties)).toContain('overflow:hidden');
+  });
+
+  it('ポスターが無ければimgタグを出さない', () => {
+    const html = buildQuizCardHtml({
+      ...baseProperties,
+      posterDataUri: undefined,
+    });
+
+    expect(html).not.toContain('<img');
+  });
+
+  it('ポスターが無くても見出しは出す', () => {
+    const html = buildQuizCardHtml({
+      ...baseProperties,
+      posterDataUri: undefined,
+    });
+
+    expect(html).toContain('今日の映画クイズ');
   });
 });
 

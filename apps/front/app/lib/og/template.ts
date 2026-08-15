@@ -4,6 +4,8 @@
  * (子がテキスト1つでも省略するとレンダリングが失敗する)
  * 配色はサイトのライトテーマ(tokens.css)に固定する。
  */
+import {buildQuizPosterHtml} from './quiz-poster';
+
 const COLORS = {
   paper: '#ece8df',
   surface: '#ffffff',
@@ -116,6 +118,49 @@ export function buildMovieCardHtml({
     <div style="display:flex;gap:14px;flex-wrap:wrap;">${chips}</div>
   </div>
   ${posterHtml}
+</div>`;
+}
+
+const QUIZ_CARD_FRAME_WIDTH = 324;
+const QUIZ_CARD_FRAME_HEIGHT = 486;
+
+type QuizCardProperties = {
+  date: string;
+  poolSize: number;
+  posterDataUri?: string;
+};
+
+export function buildQuizCardHtml({
+  date,
+  poolSize,
+  posterDataUri,
+}: QuizCardProperties): string {
+  const cropHtml = posterDataUri
+    ? buildQuizPosterHtml({
+        posterDataUri,
+        stage: 0,
+        focalX: 0.5,
+        focalY: 0.5,
+        frameWidth: QUIZ_CARD_FRAME_WIDTH,
+        frameHeight: QUIZ_CARD_FRAME_HEIGHT,
+      })
+    : '';
+
+  return `<div style="display:flex;width:${OG_WIDTH}px;height:${OG_HEIGHT}px;background:${COLORS.paper};border:16px solid ${COLORS.ink};padding:40px 48px;justify-content:space-between;align-items:center;">
+  <div style="display:flex;flex-direction:column;justify-content:space-between;height:100%;flex:1;padding-right:40px;">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:5px solid ${COLORS.ink};padding-bottom:12px;">
+      <div style="display:flex;font-size:54px;font-weight:700;letter-spacing:-3px;color:${COLORS.ink};">SHINE</div>
+      <div style="display:flex;font-size:22px;color:${COLORS.inkMuted};">${TAGLINE}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;">
+      <div style="display:flex;font-size:28px;font-weight:700;letter-spacing:6px;color:${COLORS.brand};">TODAY’S QUIZ</div>
+      <div style="display:flex;font-size:76px;font-weight:700;letter-spacing:-4px;color:${COLORS.ink};margin-top:10px;">今日の映画クイズ</div>
+      <div style="display:flex;font-size:30px;color:${COLORS.inkMuted};margin-top:20px;">ポスターの一部と5つのヒントで当てる</div>
+      <div style="display:flex;font-size:26px;color:${COLORS.inkMuted};margin-top:12px;">受賞作${poolSize.toLocaleString('ja-JP')}本から毎日1問 — ${escapeHtml(date)}</div>
+    </div>
+    <div style="display:flex;background:${COLORS.brand};color:${COLORS.brandOn};border:3px solid ${COLORS.ink};padding:8px 22px;font-size:28px;font-weight:700;">shine-film.com/quiz</div>
+  </div>
+  ${cropHtml}
 </div>`;
 }
 

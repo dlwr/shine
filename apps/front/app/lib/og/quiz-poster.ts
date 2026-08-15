@@ -36,30 +36,26 @@ export function cropLayout({
   zoom,
   focalX,
   focalY,
+  frameWidth = QUIZ_POSTER_WIDTH,
+  frameHeight = QUIZ_POSTER_HEIGHT,
 }: {
   zoom: number;
   focalX: number;
   focalY: number;
+  frameWidth?: number;
+  frameHeight?: number;
 }): CropLayout {
-  const width = Math.round(QUIZ_POSTER_WIDTH * zoom);
-  const height = Math.round(QUIZ_POSTER_HEIGHT * zoom);
+  const width = Math.round(frameWidth * zoom);
+  const height = Math.round(frameHeight * zoom);
 
   return {
     width,
     height,
     left: Math.round(
-      clamp(
-        QUIZ_POSTER_WIDTH / 2 - focalX * width,
-        QUIZ_POSTER_WIDTH - width,
-        0,
-      ),
+      clamp(frameWidth / 2 - focalX * width, frameWidth - width, 0),
     ),
     top: Math.round(
-      clamp(
-        QUIZ_POSTER_HEIGHT / 2 - focalY * height,
-        QUIZ_POSTER_HEIGHT - height,
-        0,
-      ),
+      clamp(frameHeight / 2 - focalY * height, frameHeight - height, 0),
     ),
   };
 }
@@ -69,15 +65,25 @@ export function buildQuizPosterHtml({
   stage,
   focalX,
   focalY,
+  frameWidth = QUIZ_POSTER_WIDTH,
+  frameHeight = QUIZ_POSTER_HEIGHT,
 }: {
   posterDataUri: string;
   stage: number;
   focalX: number;
   focalY: number;
+  frameWidth?: number;
+  frameHeight?: number;
 }): string {
-  const layout = cropLayout({zoom: zoomForStage(stage), focalX, focalY});
+  const layout = cropLayout({
+    zoom: zoomForStage(stage),
+    focalX,
+    focalY,
+    frameWidth,
+    frameHeight,
+  });
 
-  return `<div style="display:flex;position:relative;width:${QUIZ_POSTER_WIDTH}px;height:${QUIZ_POSTER_HEIGHT}px;overflow:hidden;background:${COLORS.paper};border:8px solid ${COLORS.ink};">
+  return `<div style="display:flex;position:relative;width:${frameWidth}px;height:${frameHeight}px;overflow:hidden;background:${COLORS.paper};border:8px solid ${COLORS.ink};">
   <img src="${posterDataUri}" width="${layout.width}" height="${layout.height}" style="position:absolute;left:${layout.left}px;top:${layout.top}px;" />
 </div>`;
 }
