@@ -1,0 +1,434 @@
+import type {Environment} from '@shine/database';
+import {buildUrl, fetchJsonWithRetry} from './common/fetch-utilities';
+import {
+  importImdbEventAward,
+  type ImdbEventAwardConfig,
+  type ImdbEventCollectedData,
+  type ImdbEventImportStats,
+  type ImdbEventNomination,
+} from './imdb-event-award';
+
+const WIKIPEDIA_API = 'https://ja.wikipedia.org/w/api.php';
+const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
+const WIKIPEDIA_ARTICLE = 'キネマ旬報';
+const SOURCE_URL = 'https://ja.wikipedia.org/wiki/キネマ旬報';
+const USER_AGENT = 'shine-film.com movie database (https://shine-film.com)';
+const BATCH_SIZE = 50;
+
+export const JAPANESE_CATEGORY = 'Best Japanese Film';
+export const FOREIGN_CATEGORY = 'Best Foreign Film';
+
+const JAPANESE_SECTIONS = new Set([
+  '日本映画ベスト・テン',
+  '日本映画',
+  '日本・現代映画',
+  '日本・時代映画',
+]);
+
+const FOREIGN_SECTIONS = new Set([
+  '外国映画ベスト・テン',
+  '外国映画',
+  '外国・発声映画',
+  '外国・無声映画',
+  '芸術的に最も優れた映画',
+  '娯楽的に最も優れた映画',
+  '芸術的優秀映画',
+  '娯楽的優秀映画',
+]);
+
+const EDITION_HEADING = /^====\s*第(\d+)回（(\d{4})年度）\s*====$/m;
+const SECTION_HEADING = /^'''(.+?)'''\s*$/m;
+const HIGHER_HEADING = /^={2,3}[^=]/m;
+const WIKI_LINK = /^\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]*))?]]/;
+const LINE_BREAK = /<br\s*\/?>/;
+const EMPTY_RANK = new Set(['-', '－', '―']);
+
+export type KinemaJunpoFilm = {
+  rank: number;
+  page?: string;
+  title: string;
+};
+
+export type KinemaJunpoEdition = {
+  year: number;
+  japanese: KinemaJunpoFilm[];
+  foreign: KinemaJunpoFilm[];
+};
+
+export type ResolvedFilm = {
+  imdbId: string;
+  englishTitle?: string;
+};
+
+// 1924年度から毎年。戦争で1943〜1945年度は中止され、1946年度の第20回で再開した
+export function kinemaJunpoCeremonyNumber(year: number): number | undefined {
+  if (year < 1924 || (year >= 1943 && year <= 1945)) {
+    return undefined;
+  }
+
+  return year <= 1942 ? year - 1923 : year - 1926;
+}
+
+function parseFilmLines(content: string): KinemaJunpoFilm[] {
+  const films: KinemaJunpoFilm[] = [];
+  let rank = 0;
+
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith('#')) {
+      continue;
+    }
+
+    rank++;
+    const entry = trimmed.slice(1).trim();
+    if (EMPTY_RANK.has(entry) || entry === '') {
+      continue;
+    }
+
+    for (const fragment of entry.split(LINE_BREAK)) {
+      const text = fragment.trim();
+      if (text === '') {
+        continue;
+      }
+
+      const link = WIKI_LINK.exec(text);
+      if (link) {
+        const page = link[1].trim();
+        films.push({rank, page, title: (link[2] ?? page).trim()});
+        continue;
+      }
+
+      const title = text.replace(/（.*$/, '').trim();
+      if (title !== '') {
+        films.push({rank, title});
+      }
+    }
+  }
+
+  return films;
+}
+
+export function parseKinemaJunpoWikitext(
+  wikitext: string,
+): KinemaJunpoEdition[] {
+  const parts = wikitext.split(new RegExp(EDITION_HEADING.source, 'gm'));
+  const editions: KinemaJunpoEdition[] = [];
+
+  for (let index = 1; index < parts.length; index += 3) {
+    const year = Number.parseInt(parts[index + 1], 10);
+    const body = parts[index + 2].split(
+      new RegExp(HIGHER_HEADING.source, 'm'),
+    )[0];
+    const blocks = body.split(new RegExp(SECTION_HEADING.source, 'gm'));
+    const edition: KinemaJunpoEdition = {year, japanese: [], foreign: []};
+
+    for (let block = 1; block < blocks.length; block += 2) {
+      const heading = blocks[block];
+      const films = parseFilmLines(blocks[block + 1]);
+
+      if (JAPANESE_SECTIONS.has(heading)) {
+        edition.japanese.push(...films);
+      } else if (FOREIGN_SECTIONS.has(heading)) {
+        edition.foreign.push(...films);
+      }
+    }
+
+    editions.push(edition);
+  }
+
+  return editions;
+}
+
+function buildNominations(
+  films: KinemaJunpoFilm[],
+  resolved: Map<string, ResolvedFilm>,
+): ImdbEventNomination[] {
+  const nominations: ImdbEventNomination[] = [];
+  const seen = new Set<string>();
+
+  for (const film of films) {
+    const match = film.page ? resolved.get(film.page) : undefined;
+    if (!match || seen.has(match.imdbId)) {
+      continue;
+    }
+
+    seen.add(match.imdbId);
+    nominations.push({
+      isWinner: film.rank === 1,
+      notes: `${film.rank}位`,
+      titles: [
+        {
+          imdbId: match.imdbId,
+          title: film.title,
+          originalTitle: match.englishTitle ?? null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationTitleの型に合わせる
+        },
+      ],
+    });
+  }
+
+  return nominations;
+}
+
+export function toImdbEventData(
+  editions: KinemaJunpoEdition[],
+  resolved: Map<string, ResolvedFilm>,
+  collectedAt = new Date().toISOString().slice(0, 10),
+): ImdbEventCollectedData {
+  return {
+    collectedAt,
+    source: SOURCE_URL,
+    editions: editions
+      .map(edition => ({
+        year: edition.year,
+        awardNames: [JAPANESE_CATEGORY, FOREIGN_CATEGORY],
+        targetAward: [
+          {
+            categories: [
+              {
+                category: JAPANESE_CATEGORY,
+                total: null, // eslint-disable-line unicorn/no-null -- ImdbEventCollectedDataの型に合わせる
+                nominations: buildNominations(edition.japanese, resolved),
+              },
+              {
+                category: FOREIGN_CATEGORY,
+                total: null, // eslint-disable-line unicorn/no-null -- ImdbEventCollectedDataの型に合わせる
+                nominations: buildNominations(edition.foreign, resolved),
+              },
+            ],
+          },
+        ],
+      }))
+      .filter(edition =>
+        edition.targetAward[0].categories.some(
+          category => category.nominations.length > 0,
+        ),
+      ),
+  };
+}
+
+export const kinemaJunpoJapaneseConfig: ImdbEventAwardConfig = {
+  organizationName: 'Kinema Junpo',
+  organizationCountry: 'Japan',
+  establishedYear: 1924,
+  categoryName: JAPANESE_CATEGORY,
+  ceremonyNumber: kinemaJunpoCeremonyNumber,
+  isCompetitionCategory: category => category === JAPANESE_CATEGORY,
+  minimumFilmsPerEdition: 1,
+};
+
+export const kinemaJunpoForeignConfig: ImdbEventAwardConfig = {
+  ...kinemaJunpoJapaneseConfig,
+  categoryName: FOREIGN_CATEGORY,
+  isCompetitionCategory: category => category === FOREIGN_CATEGORY,
+};
+
+type WikipediaPagePropertiesResponse = {
+  query?: {
+    normalized?: Array<{from: string; to: string}>;
+    redirects?: Array<{from: string; to: string}>;
+    pages?: Record<
+      string,
+      {title?: string; pageprops?: {wikibase_item?: string}}
+    >;
+  };
+};
+
+type WikidataEntitiesResponse = {
+  entities?: Record<
+    string,
+    {
+      claims?: Record<
+        string,
+        Array<{mainsnak?: {datavalue?: {value?: unknown}}}>
+      >;
+      labels?: Record<string, {value?: string}>;
+    }
+  >;
+};
+
+export async function fetchKinemaJunpoWikitext(): Promise<string> {
+  const url = buildUrl(WIKIPEDIA_API, {
+    action: 'parse',
+    page: WIKIPEDIA_ARTICLE,
+    prop: 'wikitext',
+    format: 'json',
+    formatversion: '2',
+  });
+
+  const response = await fetchJsonWithRetry<{parse?: {wikitext?: string}}>(
+    url,
+    {headers: {'User-Agent': USER_AGENT}},
+  );
+
+  const wikitext = response.parse?.wikitext;
+  if (!wikitext) {
+    throw new Error('Failed to fetch キネマ旬報 wikitext');
+  }
+
+  return wikitext;
+}
+
+async function fetchWikibaseItems(
+  pages: string[],
+): Promise<Map<string, string>> {
+  const url = buildUrl(WIKIPEDIA_API, {
+    action: 'query',
+    prop: 'pageprops',
+    ppprop: 'wikibase_item',
+    redirects: '1',
+    format: 'json',
+    titles: pages.join('|'),
+  });
+
+  const response = await fetchJsonWithRetry<WikipediaPagePropertiesResponse>(
+    url,
+    {
+      headers: {'User-Agent': USER_AGENT},
+    },
+  );
+
+  const normalized = new Map(
+    (response.query?.normalized ?? []).map(entry => [entry.from, entry.to]),
+  );
+  const redirects = new Map(
+    (response.query?.redirects ?? []).map(entry => [entry.from, entry.to]),
+  );
+  const byTitle = new Map(
+    Object.values(response.query?.pages ?? {}).map(page => [page.title, page]),
+  );
+
+  const items = new Map<string, string>();
+  for (const page of pages) {
+    const title = normalized.get(page) ?? page;
+    const resolvedTitle = redirects.get(title) ?? title;
+    const item = byTitle.get(resolvedTitle)?.pageprops?.wikibase_item;
+    if (item) {
+      items.set(page, item);
+    }
+  }
+
+  return items;
+}
+
+async function fetchImdbIds(
+  itemIds: string[],
+): Promise<Map<string, ResolvedFilm>> {
+  const url = buildUrl(WIKIDATA_API, {
+    action: 'wbgetentities',
+    props: 'claims|labels',
+    languages: 'en',
+    format: 'json',
+    ids: itemIds.join('|'),
+  });
+
+  const response = await fetchJsonWithRetry<WikidataEntitiesResponse>(url, {
+    headers: {'User-Agent': USER_AGENT},
+  });
+
+  const films = new Map<string, ResolvedFilm>();
+  for (const [itemId, entity] of Object.entries(response.entities ?? {})) {
+    const imdbId = entity.claims?.P345?.[0]?.mainsnak?.datavalue?.value;
+    if (typeof imdbId !== 'string' || !/^tt\d+$/.test(imdbId)) {
+      continue;
+    }
+
+    films.set(itemId, {imdbId, englishTitle: entity.labels?.en?.value});
+  }
+
+  return films;
+}
+
+export async function resolveFilmsByWikipediaPage(
+  pages: string[],
+): Promise<Map<string, ResolvedFilm>> {
+  const itemsByPage = new Map<string, string>();
+  for (let index = 0; index < pages.length; index += BATCH_SIZE) {
+    const batch = pages.slice(index, index + BATCH_SIZE);
+    for (const [page, item] of await fetchWikibaseItems(batch)) {
+      itemsByPage.set(page, item);
+    }
+
+    console.log(
+      `  Wikipedia: ${Math.min(index + BATCH_SIZE, pages.length)}/${pages.length}`,
+    );
+  }
+
+  const itemIds = [...new Set(itemsByPage.values())];
+  const filmsByItem = new Map<string, ResolvedFilm>();
+  for (let index = 0; index < itemIds.length; index += BATCH_SIZE) {
+    const batch = itemIds.slice(index, index + BATCH_SIZE);
+    for (const [item, film] of await fetchImdbIds(batch)) {
+      filmsByItem.set(item, film);
+    }
+
+    console.log(
+      `  Wikidata: ${Math.min(index + BATCH_SIZE, itemIds.length)}/${itemIds.length}`,
+    );
+  }
+
+  const resolved = new Map<string, ResolvedFilm>();
+  for (const [page, item] of itemsByPage) {
+    const film = filmsByItem.get(item);
+    if (film) {
+      resolved.set(page, film);
+    }
+  }
+
+  return resolved;
+}
+
+export async function importKinemaJunpo({
+  environment,
+  dryRun = false,
+  year,
+  throttleMs = 300,
+}: {
+  environment: Environment;
+  dryRun?: boolean;
+  year?: number;
+  throttleMs?: number;
+}): Promise<{japanese: ImdbEventImportStats; foreign: ImdbEventImportStats}> {
+  const wikitext = await fetchKinemaJunpoWikitext();
+  const allEditions = parseKinemaJunpoWikitext(wikitext);
+  const editions =
+    year === undefined
+      ? allEditions
+      : allEditions.filter(edition => edition.year === year);
+
+  console.log(`Parsed ${editions.length} editions from Wikipedia`);
+
+  const pages = [
+    ...new Set(
+      editions
+        .flatMap(edition => [...edition.japanese, ...edition.foreign])
+        .map(film => film.page)
+        .filter((page): page is string => page !== undefined),
+    ),
+  ];
+
+  console.log(`Resolving IMDb IDs for ${pages.length} articles...`);
+  const resolved = await resolveFilmsByWikipediaPage(pages);
+  console.log(`Resolved ${resolved.size}/${pages.length} articles`);
+
+  const data = toImdbEventData(editions, resolved);
+
+  const japanese = await importImdbEventAward({
+    environment,
+    data,
+    config: kinemaJunpoJapaneseConfig,
+    dryRun,
+    year,
+    throttleMs,
+  });
+
+  const foreign = await importImdbEventAward({
+    environment,
+    data,
+    config: kinemaJunpoForeignConfig,
+    dryRun,
+    year,
+    throttleMs,
+  });
+
+  return {japanese, foreign};
+}
