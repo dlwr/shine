@@ -24,6 +24,7 @@ export type Environment = {
   ADMIN_PASSWORD?: string;
   JWT_SECRET?: string;
   TURNSTILE_SECRET_KEY?: string;
+  QUIZ_ANSWER_KEY?: string;
   BROWSER?: Fetcher;
   CACHE_KV?: KVNamespace;
 };
