@@ -39,6 +39,7 @@ export type MovieSelection = {
     category: {
       uid: string;
       name: string;
+      displayName?: string | undefined;
     };
     ceremony: {
       uid: string;
@@ -49,6 +50,7 @@ export type MovieSelection = {
       uid: string;
       name: string;
       shortName: string | undefined;
+      displayName?: string | undefined;
       slug: string | undefined;
       hasYearPages: boolean;
     };

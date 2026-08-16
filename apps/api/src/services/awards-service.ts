@@ -45,6 +45,17 @@ export function awardPageLinkForOrganizationName(
   };
 }
 
+export function japaneseAwardNames(
+  organizationName: string,
+  categoryName: string,
+): {organization?: string; category?: string} {
+  const definition = findAwardPageDefinition(organizationName, categoryName);
+
+  return definition
+    ? {organization: definition.organization, category: definition.name}
+    : {};
+}
+
 const RANK_PATTERN = /^(\d+)位$/;
 
 function rankOf(entry: AwardMovieEntry): number {

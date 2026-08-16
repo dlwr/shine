@@ -4,6 +4,7 @@ import {Form, redirect} from 'react-router';
 import type {Route} from './+types/movies.$id';
 import {resolveApiUrl} from '@/lib/api';
 import {AwardTree} from '@/components/editorial/award-tree';
+import {Masthead} from '@/components/editorial/masthead';
 import {BigYear} from '@/components/editorial/big-year';
 import {MetaLine} from '@/components/editorial/meta-line';
 import {PosterFrame} from '@/components/editorial/poster-frame';
@@ -39,6 +40,7 @@ type MovieDetailData = {
     category: {
       uid: string;
       name: string;
+      displayName?: string;
     };
     ceremony: {
       uid: string;
@@ -49,6 +51,7 @@ type MovieDetailData = {
       uid: string;
       name: string;
       shortName?: string;
+      displayName?: string;
     };
   }>;
   articleLinks: Array<{
@@ -439,7 +442,9 @@ function summarizeOrganizations(
     ...new Set(
       nominations.map(
         nomination =>
-          nomination.organization.shortName || nomination.organization.name,
+          nomination.organization.displayName ||
+          nomination.organization.shortName ||
+          nomination.organization.name,
       ),
     ),
   ];
@@ -452,10 +457,14 @@ function buildMovieJsonLd(
 ): Record<string, unknown> {
   const awards = movieDetail.nominations
     .filter(nomination => nomination.isWinner)
-    .map(
-      nomination =>
-        `${nomination.organization.name} ${nomination.category.name} (${nomination.ceremony.year})`,
-    );
+    .map(nomination => {
+      const organization =
+        nomination.organization.displayName ?? nomination.organization.name;
+      const category =
+        nomination.category.displayName ?? nomination.category.name;
+
+      return `${organization} ${category} (${nomination.ceremony.year})`;
+    });
 
   return {
     '@context': 'https://schema.org',
@@ -674,7 +683,7 @@ export default function MovieDetail({
     return <MovieDetailErrorView error="映画情報が取得できませんでした" />;
   }
 
-  const {movieDetail, turnstileSiteKey} = data;
+  const {movieDetail, turnstileSiteKey, locale} = data;
   const relatedMovies = data.relatedMovies ?? [];
   const title = movieDetail.title || 'タイトル不明';
 
@@ -690,13 +699,7 @@ export default function MovieDetail({
   return (
     <div className="min-h-screen bg-paper">
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <nav className="mb-8">
-          <a
-            href="/"
-            className="font-mono text-xs text-ink-muted hover:text-ink transition-colors">
-            ← SHINE
-          </a>
-        </nav>
+        <Masthead locale={locale} />
 
         {/* Hero */}
         <div className="flex gap-5 mb-8 pb-8 border-b-2 border-ink">
@@ -715,6 +718,16 @@ export default function MovieDetail({
             <MetaLine items={metaItems} />
           </div>
         </div>
+
+        {/* Synopsis */}
+        {movieDetail.description && (
+          <section className="mb-8">
+            <p className="font-mono text-xs text-ink-muted mb-3">あらすじ</p>
+            <p className="text-sm leading-relaxed text-ink">
+              {movieDetail.description}
+            </p>
+          </section>
+        )}
 
         {/* Awards */}
         {movieDetail.nominations && movieDetail.nominations.length > 0 && (
@@ -739,7 +752,7 @@ export default function MovieDetail({
             year={movieDetail.year}
             tmdbId={movieDetail.tmdbId}
             imdbUrl={movieDetail.imdbUrl}
-            locale="ja"
+            locale={locale}
           />
         </section>
 
@@ -785,7 +798,7 @@ export default function MovieDetail({
           submissionResult={submissionResult}
           turnstileSiteKey={turnstileSiteKey}
         />
-        <SiteFooter locale="ja" />
+        <SiteFooter locale={locale} />
       </div>
     </div>
   );

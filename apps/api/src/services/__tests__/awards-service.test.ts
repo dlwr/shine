@@ -15,6 +15,7 @@ import {beforeEach, describe, expect, it} from 'vitest';
 import {
   AwardsService,
   awardPageLinkForOrganizationName,
+  japaneseAwardNames,
   paginateAwardDetail,
 } from '../awards-service';
 
@@ -628,6 +629,26 @@ describe('awardPageLinkForOrganizationName', () => {
       slug: undefined,
       hasYearPages: false,
     });
+  });
+});
+
+describe('japaneseAwardNames', () => {
+  it('組織名の日本語表記を返す', () => {
+    expect(japaneseAwardNames('Venice Film Festival', 'Golden Lion')).toEqual({
+      organization: 'ヴェネツィア国際映画祭',
+      category: '金獅子賞',
+    });
+  });
+
+  it('複数の賞ページを持つ組織はカテゴリで選ぶ', () => {
+    expect(japaneseAwardNames('Kinema Junpo', 'Best Japanese Film')).toEqual({
+      organization: 'キネマ旬報',
+      category: '日本映画ベスト・テン',
+    });
+  });
+
+  it('賞ページの無い組織には何も返さない', () => {
+    expect(japaneseAwardNames('Unknown Org', 'Unknown Category')).toEqual({});
   });
 });
 

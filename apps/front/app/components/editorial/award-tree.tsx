@@ -1,12 +1,14 @@
 export type AwardNomination = {
   uid: string;
   isWinner: boolean;
-  category: {name: string};
+  specialMention?: string;
+  category: {name: string; displayName?: string};
   ceremony: {uid: string; year: number; number?: number};
   organization: {
     uid: string;
     name: string;
     shortName?: string;
+    displayName?: string;
     slug?: string;
     hasYearPages?: boolean;
   };
@@ -50,7 +52,9 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
           <div key={`${group.organization.uid}-${ceremony.uid}`}>
             {(() => {
               const headerText = `${
-                group.organization.shortName ?? group.organization.name
+                group.organization.displayName ??
+                group.organization.shortName ??
+                group.organization.name
               } · ${ceremony.year}`;
               const slug = group.organization.slug;
               const href =
@@ -73,7 +77,14 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
               <div
                 key={nomination.uid}
                 className="flex items-center justify-between border-b border-ink/20 px-3 py-1.5 text-sm last:border-b-0">
-                <span>{nomination.category.name}</span>
+                <span>
+                  {nomination.category.displayName ?? nomination.category.name}
+                  {nomination.specialMention && (
+                    <span className="ml-2 font-mono text-xs text-ink-muted">
+                      {nomination.specialMention}
+                    </span>
+                  )}
+                </span>
                 {nomination.isWinner ? (
                   <span className="bg-brand px-1.5 py-0.5 font-mono text-[10px] text-brand-on">
                     ★ WINNER

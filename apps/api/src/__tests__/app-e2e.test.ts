@@ -125,6 +125,67 @@ describe('GET /movies/:id', () => {
   });
 });
 
+async function goldenLionNomination(locale: string) {
+  const response = await app.request(
+    `/movies/movie-a?locale=${locale}`,
+    {},
+    environment,
+  );
+  const body = (await response.json()) as {
+    nominations: Array<{
+      category: {name: string; displayName?: string};
+      organization: {name: string; displayName?: string};
+    }>;
+  };
+
+  return body.nominations.find(
+    nomination => nomination.category.name === 'Golden Lion',
+  );
+}
+
+describe('GET /movies/:id の賞の表示名', () => {
+  beforeEach(async () => {
+    const database = getDatabase(environment);
+    await database
+      .insert(awardOrganizations)
+      .values({uid: 'org-venice', name: 'Venice Film Festival'});
+    await database.insert(awardCeremonies).values({
+      uid: 'ceremony-venice',
+      organizationUid: 'org-venice',
+      year: 1951,
+    });
+    await database.insert(awardCategories).values({
+      uid: 'category-golden-lion',
+      organizationUid: 'org-venice',
+      name: 'Golden Lion',
+    });
+    await database.insert(nominations).values({
+      movieUid: 'movie-a',
+      ceremonyUid: 'ceremony-venice',
+      categoryUid: 'category-golden-lion',
+    });
+  });
+
+  it('日本語ロケールでは組織名を日本語で返す', async () => {
+    const nomination = await goldenLionNomination('ja');
+
+    expect(nomination?.organization.displayName).toBe('ヴェネツィア国際映画祭');
+  });
+
+  it('日本語ロケールでは賞の名前を日本語で返す', async () => {
+    const nomination = await goldenLionNomination('ja');
+
+    expect(nomination?.category.displayName).toBe('金獅子賞');
+  });
+
+  it('英語ロケールでは日本語の表示名を返さない', async () => {
+    const nomination = await goldenLionNomination('en');
+
+    expect(nomination?.organization.displayName).toBeUndefined();
+    expect(nomination?.category.displayName).toBeUndefined();
+  });
+});
+
 async function postLogin(password: string) {
   return app.request(
     '/auth/login',

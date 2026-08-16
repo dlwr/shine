@@ -1948,6 +1948,9 @@ components:
         name:
           type: string
           description: Category name
+        displayName:
+          type: [string, 'null']
+          description: Japanese name of the award, returned only for `locale=ja`
       required:
         - uid
         - name
@@ -2212,6 +2215,9 @@ components:
         shortName:
           type: [string, 'null']
           description: Organization short name or abbreviation
+        displayName:
+          type: [string, 'null']
+          description: Japanese name of the organization, returned only for `locale=ja`
         slug:
           type: [string, 'null']
           description: Slug of the award page on the frontend (/awards/{slug}), if one exists

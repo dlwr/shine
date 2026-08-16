@@ -32,6 +32,23 @@ const noms: AwardNomination[] = [
   },
 ];
 
+const japaneseNoms: AwardNomination[] = [
+  {
+    uid: 'n5',
+    isWinner: false,
+    specialMention: '5位',
+    category: {name: 'Best Japanese Film', displayName: '日本映画ベスト・テン'},
+    ceremony: {uid: 'c4', year: 1950},
+    organization: {
+      uid: 'o4',
+      name: 'Kinema Junpo',
+      displayName: 'キネマ旬報',
+      slug: 'kinema-junpo-japanese',
+      hasYearPages: true,
+    },
+  },
+];
+
 describe('AwardTree', () => {
   it('組織ヘッダとカテゴリ行を描画する', () => {
     render(<AwardTree nominations={noms} />);
@@ -81,6 +98,23 @@ describe('AwardTree', () => {
       'href',
       '/awards/variety-top-100',
     );
+  });
+
+  it('日本語の表示名があれば組織ヘッダに使う', () => {
+    render(<AwardTree nominations={japaneseNoms} />);
+    expect(
+      screen.getByRole('link', {name: /キネマ旬報 · 1950/}),
+    ).toBeInTheDocument();
+  });
+
+  it('日本語の表示名があればカテゴリ行に使う', () => {
+    render(<AwardTree nominations={japaneseNoms} />);
+    expect(screen.getByText('日本映画ベスト・テン')).toBeInTheDocument();
+  });
+
+  it('順位があれば表示する', () => {
+    render(<AwardTree nominations={japaneseNoms} />);
+    expect(screen.getByText('5位')).toBeInTheDocument();
   });
 
   it('slugがない組織のヘッダはリンクしない', () => {

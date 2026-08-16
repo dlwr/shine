@@ -24,6 +24,22 @@ describe('SiteFooter', () => {
     expect(screen.getByText(/カンヌ/)).toBeVisible();
   });
 
+  it('三大映画祭をすべて挙げる', () => {
+    render(<SiteFooter locale="ja" />);
+
+    expect(screen.getByText(/ヴェネツィア/)).toBeVisible();
+    expect(screen.getByText(/ベルリン/)).toBeVisible();
+  });
+
+  it('賞の一覧ページへ導線を置く', () => {
+    render(<SiteFooter locale="ja" />);
+
+    expect(screen.getByRole('link', {name: /映画賞/})).toHaveAttribute(
+      'href',
+      '/awards',
+    );
+  });
+
   it('TMDbの利用規約で求められる表記を載せる', () => {
     render(<SiteFooter locale="ja" />);
 
