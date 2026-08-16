@@ -144,6 +144,26 @@ describe('buildQuizCardHtml', () => {
     expect(buildQuizCardHtml(baseProperties)).toContain('overflow:hidden');
   });
 
+  it('渡された焦点で切り出す(出題ページと同じ範囲にするため)', () => {
+    const html = buildQuizCardHtml({
+      ...baseProperties,
+      focalX: 0,
+      focalY: 0,
+    });
+
+    expect(html).toContain('left:0px;top:0px');
+  });
+
+  it('焦点が右下なら右下を切り出す', () => {
+    const html = buildQuizCardHtml({
+      ...baseProperties,
+      focalX: 1,
+      focalY: 1,
+    });
+
+    expect(html).not.toContain('left:0px;top:0px');
+  });
+
   it('ポスターが無ければimgタグを出さない', () => {
     const html = buildQuizCardHtml({
       ...baseProperties,
