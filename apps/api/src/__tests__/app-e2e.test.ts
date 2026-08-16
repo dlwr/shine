@@ -125,6 +125,24 @@ describe('GET /movies/:id', () => {
   });
 });
 
+async function goldenLionNomination(locale: string) {
+  const response = await app.request(
+    `/movies/movie-a?locale=${locale}`,
+    {},
+    environment,
+  );
+  const body = (await response.json()) as {
+    nominations: Array<{
+      category: {name: string; displayName?: string};
+      organization: {name: string; displayName?: string};
+    }>;
+  };
+
+  return body.nominations.find(
+    nomination => nomination.category.name === 'Golden Lion',
+  );
+}
+
 describe('GET /movies/:id の賞の表示名', () => {
   beforeEach(async () => {
     const database = getDatabase(environment);
@@ -148,36 +166,20 @@ describe('GET /movies/:id の賞の表示名', () => {
     });
   });
 
-  async function nominationOf(locale: string) {
-    const response = await app.request(
-      `/movies/movie-a?locale=${locale}`,
-      {},
-      environment,
-    );
-    const body = (await response.json()) as {
-      nominations: Array<{
-        category: {name: string; displayName?: string};
-        organization: {name: string; displayName?: string};
-      }>;
-    };
-
-    return body.nominations.find(
-      nomination => nomination.category.name === 'Golden Lion',
-    );
-  }
-
   it('日本語ロケールでは組織名を日本語で返す', async () => {
-    expect((await nominationOf('ja'))?.organization.displayName).toBe(
-      'ヴェネツィア国際映画祭',
-    );
+    const nomination = await goldenLionNomination('ja');
+
+    expect(nomination?.organization.displayName).toBe('ヴェネツィア国際映画祭');
   });
 
   it('日本語ロケールでは賞の名前を日本語で返す', async () => {
-    expect((await nominationOf('ja'))?.category.displayName).toBe('金獅子賞');
+    const nomination = await goldenLionNomination('ja');
+
+    expect(nomination?.category.displayName).toBe('金獅子賞');
   });
 
   it('英語ロケールでは日本語の表示名を返さない', async () => {
-    const nomination = await nominationOf('en');
+    const nomination = await goldenLionNomination('en');
 
     expect(nomination?.organization.displayName).toBeUndefined();
     expect(nomination?.category.displayName).toBeUndefined();

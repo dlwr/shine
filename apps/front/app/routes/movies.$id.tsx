@@ -39,6 +39,7 @@ type MovieDetailData = {
     category: {
       uid: string;
       name: string;
+      displayName?: string;
     };
     ceremony: {
       uid: string;
@@ -49,6 +50,7 @@ type MovieDetailData = {
       uid: string;
       name: string;
       shortName?: string;
+      displayName?: string;
     };
   }>;
   articleLinks: Array<{
@@ -439,7 +441,9 @@ function summarizeOrganizations(
     ...new Set(
       nominations.map(
         nomination =>
-          nomination.organization.shortName || nomination.organization.name,
+          nomination.organization.displayName ||
+          nomination.organization.shortName ||
+          nomination.organization.name,
       ),
     ),
   ];
@@ -452,10 +456,14 @@ function buildMovieJsonLd(
 ): Record<string, unknown> {
   const awards = movieDetail.nominations
     .filter(nomination => nomination.isWinner)
-    .map(
-      nomination =>
-        `${nomination.organization.name} ${nomination.category.name} (${nomination.ceremony.year})`,
-    );
+    .map(nomination => {
+      const organization =
+        nomination.organization.displayName ?? nomination.organization.name;
+      const category =
+        nomination.category.displayName ?? nomination.category.name;
+
+      return `${organization} ${category} (${nomination.ceremony.year})`;
+    });
 
   return {
     '@context': 'https://schema.org',

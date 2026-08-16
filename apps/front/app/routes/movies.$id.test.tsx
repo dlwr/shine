@@ -32,6 +32,7 @@ const mockMovieDetail = {
       category: {
         uid: 'cat-1',
         name: "Palme d'Or",
+        displayName: 'パルム・ドール',
       },
       ceremony: {
         uid: 'cer-1',
@@ -42,6 +43,7 @@ const mockMovieDetail = {
         uid: 'org-1',
         name: 'Cannes Film Festival',
         shortName: 'Cannes',
+        displayName: 'カンヌ国際映画祭',
       },
     },
     {
@@ -50,6 +52,7 @@ const mockMovieDetail = {
       category: {
         uid: 'cat-2',
         name: 'Best Picture',
+        displayName: '作品賞',
       },
       ceremony: {
         uid: 'cer-2',
@@ -60,6 +63,7 @@ const mockMovieDetail = {
         uid: 'org-2',
         name: 'Academy Awards',
         shortName: 'Oscars',
+        displayName: 'アカデミー賞',
       },
     },
   ],
@@ -340,11 +344,11 @@ describe('MovieDetail Component', () => {
       });
     });
 
-    it('説明文に選出元の団体名を含む', () => {
+    it('説明文に選出元の団体名を日本語で含む', () => {
       expect(successMeta()).toContainEqual({
         name: 'description',
         content:
-          '『パルム・ドール受賞作品』(2023年)。Cannes・Oscarsに選出。いま配信・レンタルで観られるかをまとめています。',
+          '『パルム・ドール受賞作品』(2023年)。カンヌ国際映画祭・アカデミー賞に選出。いま配信・レンタルで観られるかをまとめています。',
       });
     });
 
@@ -444,7 +448,7 @@ describe('MovieDetail Component', () => {
       ) as {'script:ld+json': Record<string, unknown>};
 
       expect(jsonLd['script:ld+json'].award).toEqual([
-        "Cannes Film Festival Palme d'Or (2023)",
+        'カンヌ国際映画祭 パルム・ドール (2023)',
       ]);
     });
 
