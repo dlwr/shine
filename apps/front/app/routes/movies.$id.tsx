@@ -4,6 +4,7 @@ import {Form, redirect} from 'react-router';
 import type {Route} from './+types/movies.$id';
 import {resolveApiUrl} from '@/lib/api';
 import {AwardTree} from '@/components/editorial/award-tree';
+import {Masthead} from '@/components/editorial/masthead';
 import {BigYear} from '@/components/editorial/big-year';
 import {MetaLine} from '@/components/editorial/meta-line';
 import {PosterFrame} from '@/components/editorial/poster-frame';
@@ -682,7 +683,7 @@ export default function MovieDetail({
     return <MovieDetailErrorView error="映画情報が取得できませんでした" />;
   }
 
-  const {movieDetail, turnstileSiteKey} = data;
+  const {movieDetail, turnstileSiteKey, locale} = data;
   const relatedMovies = data.relatedMovies ?? [];
   const title = movieDetail.title || 'タイトル不明';
 
@@ -698,13 +699,7 @@ export default function MovieDetail({
   return (
     <div className="min-h-screen bg-paper">
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <nav className="mb-8">
-          <a
-            href="/"
-            className="font-mono text-xs text-ink-muted hover:text-ink transition-colors">
-            ← SHINE
-          </a>
-        </nav>
+        <Masthead locale={locale} />
 
         {/* Hero */}
         <div className="flex gap-5 mb-8 pb-8 border-b-2 border-ink">
@@ -757,7 +752,7 @@ export default function MovieDetail({
             year={movieDetail.year}
             tmdbId={movieDetail.tmdbId}
             imdbUrl={movieDetail.imdbUrl}
-            locale="ja"
+            locale={locale}
           />
         </section>
 
@@ -803,7 +798,7 @@ export default function MovieDetail({
           submissionResult={submissionResult}
           turnstileSiteKey={turnstileSiteKey}
         />
-        <SiteFooter locale="ja" />
+        <SiteFooter locale={locale} />
       </div>
     </div>
   );

@@ -722,6 +722,44 @@ describe('MovieDetail Component', () => {
       expect(screen.getByText('APIへの接続に失敗しました')).toBeInTheDocument();
     });
 
+    it('賞の一覧ページへのナビゲーションを表示する', () => {
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.getByRole('link', {name: 'Awards'})).toHaveAttribute(
+        'href',
+        '/awards',
+      );
+    });
+
+    it('検索ページへのナビゲーションを表示する', () => {
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.getByRole('link', {name: 'Search'})).toHaveAttribute(
+        'href',
+        '/search',
+      );
+    });
+
     it('ホームページへの戻るリンクが表示される', () => {
       const loaderData = createLoaderData();
       const parameters = createParameters('movie-123');
