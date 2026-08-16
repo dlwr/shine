@@ -2,6 +2,7 @@ export type CrossingAward = {
   slug: string;
   shortLabel: string;
   name: string;
+  filmCount: number;
 };
 
 export type CrossingPair = {
@@ -57,6 +58,9 @@ export function CrossingMatrix({
                 <a href={`/awards/${rowAward.slug}`} className="text-ink">
                   {rowAward.shortLabel}
                 </a>
+                <span className="ml-1.5 text-ink-muted">
+                  {rowAward.filmCount.toLocaleString('en-US')}
+                </span>
               </th>
               {awards.map(columnAward => {
                 if (rowAward.slug === columnAward.slug) {

@@ -4,9 +4,24 @@ import {describe, expect, it} from 'vitest';
 import {CrossingMatrix} from './crossing-matrix';
 
 const awards = [
-  {slug: 'palme-dor', shortLabel: 'カンヌ', name: 'パルム・ドール'},
-  {slug: 'academy-best-picture', shortLabel: 'アカデミー', name: '作品賞'},
-  {slug: 'variety-top-100', shortLabel: 'Variety', name: 'Top 100'},
+  {
+    slug: 'palme-dor',
+    shortLabel: 'カンヌ',
+    name: 'パルム・ドール',
+    filmCount: 1768,
+  },
+  {
+    slug: 'academy-best-picture',
+    shortLabel: 'アカデミー',
+    name: '作品賞',
+    filmCount: 617,
+  },
+  {
+    slug: 'variety-top-100',
+    shortLabel: 'Variety',
+    name: 'Top 100',
+    filmCount: 100,
+  },
 ];
 
 const pairs = [
@@ -64,6 +79,12 @@ describe('CrossingMatrix', () => {
     renderMatrix();
 
     expect(screen.getByTitle('カンヌ × アカデミー 62本')).toBeInTheDocument();
+  });
+
+  it('行の見出しにその賞の作品数を添える', () => {
+    renderMatrix();
+
+    expect(within(rowOf(/カンヌ/)).getByText('1,768')).toBeInTheDocument();
   });
 
   it('賞ページへのリンクを見出しに張る', () => {
