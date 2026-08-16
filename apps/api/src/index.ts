@@ -6,6 +6,7 @@ import {securityHeaders} from './middleware/security';
 import {adminRoutes} from './routes/admin';
 import {authRoutes} from './routes/auth';
 import {awardsRoutes} from './routes/awards';
+import {crossingsRoutes} from './routes/crossings';
 import {documentationRoutes} from './routes/documentation';
 import {moviesRoutes} from './routes/movies';
 import {quizRoutes} from './routes/quiz';
@@ -48,6 +49,7 @@ app.route('/docs', documentationRoutes); // API documentation
 app.route('/', selectionsRoutes); // Main endpoint for movie selections
 app.route('/movies', moviesRoutes);
 app.route('/awards', awardsRoutes);
+app.route('/crossings', crossingsRoutes);
 app.route('/quiz', quizRoutes);
 app.route('/admin', adminRoutes);
 app.route('/', utilitiesRoutes); // Utility endpoints like fetch-url-title

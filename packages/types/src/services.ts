@@ -127,6 +127,26 @@ export type AwardSummary = {
   lastYear: number;
 };
 
+export type CrossingMovie = {
+  uid: string;
+  title: string | undefined;
+  year: number | undefined;
+  posterUrl: string | undefined;
+  awardSlugs: string[];
+};
+
+export type AwardCrossings = {
+  awards: Array<{
+    slug: string;
+    name: string;
+    organization: string;
+    filmCount: number;
+  }>;
+  pairs: Array<{a: string; b: string; shared: number}>;
+  distribution: Array<{awardCount: number; filmCount: number}>;
+  topMovies: CrossingMovie[];
+};
+
 export type QuizHint = {
   label: string;
   value: string;

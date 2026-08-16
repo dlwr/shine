@@ -303,6 +303,27 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /crossings:
+    get:
+      summary: Get how awards overlap
+      description: |
+        Returns how often the award pages pick the same films: the film count of
+        each award, the shared count of every award pair, how many films were
+        picked by 1..13 awards, and the films picked by the most awards.
+      operationId: getCrossings
+      tags:
+        - Awards
+      security: []
+      responses:
+        '200':
+          description: Successfully retrieved award crossings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AwardCrossings'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /awards/{slug}:
     get:
       summary: Get an award page
@@ -2201,6 +2222,76 @@ components:
         - description
         - year
         - movies
+
+    AwardCrossings:
+      type: object
+      properties:
+        awards:
+          type: array
+          description: Awards that have at least one nomination
+          items:
+            type: object
+            properties:
+              slug:
+                type: string
+              name:
+                type: string
+              organization:
+                type: string
+              filmCount:
+                type: integer
+            required: [slug, name, organization, filmCount]
+        pairs:
+          type: array
+          description: Award pairs that share at least one film, most shared first
+          items:
+            type: object
+            properties:
+              a:
+                type: string
+                description: Slug of the first award, alphabetically before `b`
+              b:
+                type: string
+              shared:
+                type: integer
+                description: Number of films picked by both awards
+            required: [a, b, shared]
+        distribution:
+          type: array
+          description: How many films were picked by exactly N awards, N descending
+          items:
+            type: object
+            properties:
+              awardCount:
+                type: integer
+              filmCount:
+                type: integer
+            required: [awardCount, filmCount]
+        topMovies:
+          type: array
+          description: Films picked by the most awards, at most 100
+          items:
+            type: object
+            properties:
+              uid:
+                type: string
+                format: uuid
+              title:
+                type: [string, 'null']
+              year:
+                type: [integer, 'null']
+              posterUrl:
+                type: [string, 'null']
+              awardSlugs:
+                type: array
+                items:
+                  type: string
+            required: [uid, awardSlugs]
+      required:
+        - awards
+        - pairs
+        - distribution
+        - topMovies
 
     AwardOrganization:
       type: object
