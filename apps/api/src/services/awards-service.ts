@@ -74,6 +74,7 @@ function compareAwardMovies(a: AwardMovieEntry, b: AwardMovieEntry): number {
 
 export type AwardPageDefinition = {
   slug: string;
+  shortLabel: string;
   organizationName: string;
   categoryNames: string[];
   name: string;
@@ -85,6 +86,7 @@ export type AwardPageDefinition = {
 export const awardPageDefinitions: AwardPageDefinition[] = [
   {
     slug: 'palme-dor',
+    shortLabel: 'カンヌ',
     organizationName: 'Cannes Film Festival',
     categoryNames: ["Palme d'Or"],
     name: 'パルム・ドール',
@@ -95,6 +97,7 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
   },
   {
     slug: 'venice-golden-lion',
+    shortLabel: 'ヴェネツィア',
     organizationName: 'Venice Film Festival',
     categoryNames: ['Golden Lion'],
     name: '金獅子賞',
@@ -105,6 +108,7 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
   },
   {
     slug: 'berlin-golden-bear',
+    shortLabel: 'ベルリン',
     organizationName: 'Berlin International Film Festival',
     categoryNames: ['Golden Bear'],
     name: '金熊賞',
@@ -115,6 +119,7 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
   },
   {
     slug: 'academy-best-picture',
+    shortLabel: 'アカデミー',
     organizationName: 'Academy Awards',
     categoryNames: ['Academy Award for Best Picture'],
     name: '作品賞',
@@ -125,6 +130,7 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
   },
   {
     slug: 'japan-academy-best-picture',
+    shortLabel: '日本アカデミー',
     organizationName: 'Japan Academy Awards',
     categoryNames: ['最優秀作品賞', '優秀作品賞'],
     name: '最優秀作品賞',
@@ -135,6 +141,7 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
   },
   {
     slug: 'kinema-junpo-japanese',
+    shortLabel: 'キネ旬日本',
     organizationName: 'Kinema Junpo',
     categoryNames: ['Best Japanese Film'],
     name: '日本映画ベスト・テン',
@@ -145,6 +152,7 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
   },
   {
     slug: 'kinema-junpo-foreign',
+    shortLabel: 'キネ旬外国',
     organizationName: 'Kinema Junpo',
     categoryNames: ['Best Foreign Film'],
     name: '外国映画ベスト・テン',
@@ -155,6 +163,7 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
   },
   {
     slug: '1001-movies',
+    shortLabel: '1001本',
     organizationName: '1001 Movies You Must See Before You Die',
     categoryNames: ['Selected Films'],
     name: '死ぬまでに観たい映画1001本',
@@ -164,6 +173,7 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
   },
   {
     slug: 'popeye-21st-century',
+    shortLabel: 'POPEYE',
     organizationName: 'POPEYE',
     categoryNames: [
       '21ST CENTURY MOVIE GREATEST HITS (POPEYE ISSUE 944 DECEMBER 2025)',
@@ -176,6 +186,7 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
   },
   {
     slug: 'brutus-japanese-film',
+    shortLabel: 'BRUTUS',
     organizationName: 'BRUTUS',
     categoryNames: ['美しき、日本映画。(BRUTUS No. 1043)'],
     name: '美しき、日本映画。',
@@ -186,6 +197,7 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
   },
   {
     slug: 'variety-top-100',
+    shortLabel: 'Variety',
     organizationName: 'Variety',
     categoryNames: ['Top 100 Greatest Movies of All Time'],
     name: 'Top 100 Greatest Movies of All Time',
@@ -196,6 +208,7 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
   },
   {
     slug: 'time-underappreciated',
+    shortLabel: 'TIME',
     organizationName: 'TIME',
     categoryNames: ['The 50 Most Underappreciated Movies of the 21st Century'],
     name: 'The 50 Most Underappreciated Movies of the 21st Century',
@@ -206,6 +219,7 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
   },
   {
     slug: 'ign-japan-starter-pack',
+    shortLabel: 'IGN',
     organizationName: 'IGN Japan',
     categoryNames: ['スターターパック&スキルツリー'],
     name: 'スターターパック&スキルツリー',

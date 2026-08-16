@@ -165,6 +165,14 @@ describe('CrossingsService.getCrossings', () => {
     ).toBe(2);
   });
 
+  it('軸に使う短い賞名を返す', async () => {
+    const {awards} = await service.getCrossings();
+
+    expect(awards.find(award => award.slug === 'palme-dor')?.shortLabel).toBe(
+      'カンヌ',
+    );
+  });
+
   it('ノミネーションが無い賞は返さない', async () => {
     const {awards} = await service.getCrossings();
 

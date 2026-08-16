@@ -2236,11 +2236,14 @@ components:
                 type: string
               name:
                 type: string
+              shortLabel:
+                type: string
+                description: Short label for chart axes
               organization:
                 type: string
               filmCount:
                 type: integer
-            required: [slug, name, organization, filmCount]
+            required: [slug, name, shortLabel, organization, filmCount]
         pairs:
           type: array
           description: Award pairs that share at least one film, most shared first
@@ -2269,7 +2272,7 @@ components:
             required: [awardCount, filmCount]
         topMovies:
           type: array
-          description: Films picked by the most awards, at most 100
+          description: Films picked by the most awards, at most 24
           items:
             type: object
             properties:

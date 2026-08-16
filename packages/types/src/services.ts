@@ -139,6 +139,7 @@ export type AwardCrossings = {
   awards: Array<{
     slug: string;
     name: string;
+    shortLabel: string;
     organization: string;
     filmCount: number;
   }>;
