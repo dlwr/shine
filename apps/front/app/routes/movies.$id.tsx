@@ -716,6 +716,16 @@ export default function MovieDetail({
           </div>
         </div>
 
+        {/* Synopsis */}
+        {movieDetail.description && (
+          <section className="mb-8">
+            <p className="font-mono text-xs text-ink-muted mb-3">あらすじ</p>
+            <p className="text-sm leading-relaxed text-ink">
+              {movieDetail.description}
+            </p>
+          </section>
+        )}
+
         {/* Awards */}
         {movieDetail.nominations && movieDetail.nominations.length > 0 && (
           <section className="mb-8">

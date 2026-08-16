@@ -514,6 +514,42 @@ describe('MovieDetail Component', () => {
       expect(screen.queryByText('関連映画')).not.toBeInTheDocument();
     });
 
+    it('あらすじを表示する', () => {
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(
+        screen.getByText('カンヌ国際映画祭でパルム・ドールを受賞した作品'),
+      ).toBeInTheDocument();
+    });
+
+    it('あらすじが無ければセクションを出さない', () => {
+      const loaderData = createLoaderData({
+        movieDetail: {...mockMovieDetail, description: undefined},
+      });
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.queryByText('あらすじ')).not.toBeInTheDocument();
+    });
+
     it('映画詳細データが正常に表示される', () => {
       const loaderData = createLoaderData();
       const parameters = createParameters('movie-123');
