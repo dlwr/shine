@@ -56,6 +56,24 @@ const createLoaderArguments = (
     matches: [],
   });
 
+describe('Awards crossings link', () => {
+  it('賞の交差ページへの導線を置く', () => {
+    render(
+      <AwardsIndexPage
+        loaderData={cast<LoaderData>({...mockAwards, locale: 'ja'})}
+        actionData={undefined}
+        params={cast<ComponentProperties['params']>({})}
+        matches={cast<ComponentProperties['matches']>([])}
+      />,
+    );
+
+    expect(screen.getByRole('link', {name: /賞の交差/})).toHaveAttribute(
+      'href',
+      '/crossings',
+    );
+  });
+});
+
 describe('Awards index page', () => {
   beforeEach(() => {
     vi.resetAllMocks();

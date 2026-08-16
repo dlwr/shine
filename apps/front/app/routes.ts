@@ -8,6 +8,7 @@ export default [
   route('weekly', 'routes/weekly.tsx'),
   route('monthly', 'routes/monthly.tsx'),
   route('awards', 'routes/awards.tsx'),
+  route('crossings', 'routes/crossings.tsx'),
   route('awards/:slug', 'routes/awards.$slug.tsx'),
   route('awards/:slug/:year', 'routes/awards.$slug.$year.tsx'),
   route('robots.txt', 'routes/robots.tsx'),

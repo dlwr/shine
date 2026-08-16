@@ -442,15 +442,30 @@ describe('AwardsService.getAwardBySlug リスト型のページ分割', () => {
       .insert(awardCeremonies)
       .values({uid: 'ceremony-1001', organizationUid: 'org-1001', year: 2025});
 
-    for (let index = 0; index < 150; index++) {
-      const uid = `movie-${String(index).padStart(3, '0')}`;
-      await seedMovie(database, uid, `Film ${index}`, {year: 2000 + index});
-      await database.insert(nominations).values({
-        movieUid: uid,
+    const seeds = Array.from({length: 150}, (_, index) => ({
+      uid: `movie-${String(index).padStart(3, '0')}`,
+      title: `Film ${index}`,
+      year: 2000 + index,
+    }));
+    await database
+      .insert(movies)
+      .values(seeds.map(seed => ({uid: seed.uid, year: seed.year})));
+    await database.insert(translations).values(
+      seeds.map(seed => ({
+        resourceType: 'movie_title' as const,
+        resourceUid: seed.uid,
+        languageCode: 'en',
+        content: seed.title,
+        isDefault: 1,
+      })),
+    );
+    await database.insert(nominations).values(
+      seeds.map(seed => ({
+        movieUid: seed.uid,
         ceremonyUid: 'ceremony-1001',
         categoryUid: 'cat-1001',
-      });
-    }
+      })),
+    );
   });
 
   it('サービスは全件を返しページ情報を持たない', async () => {

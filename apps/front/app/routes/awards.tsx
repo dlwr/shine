@@ -65,9 +65,15 @@ export default function AwardsIndex({loaderData}: Route.ComponentProps) {
         <h1 className="font-display font-black text-2xl md:text-3xl tracking-tight mb-2">
           AWARDS & LISTS
         </h1>
-        <p className="font-mono text-xs text-ink-muted mb-8">
+        <p className="font-mono text-xs text-ink-muted mb-4">
           映画賞・映画リストから作品を探す
         </p>
+
+        <a
+          href="/crossings"
+          className="mb-8 inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold no-underline text-ink shadow-[3px_3px_0_var(--brand)]">
+          賞の交差を見る →
+        </a>
 
         <div>
           {awards.map(award => (
