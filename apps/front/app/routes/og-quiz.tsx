@@ -13,13 +13,15 @@ type QuizAnswer = {
   focalY: number;
 };
 
+type PosterCrop = {posterDataUri?: string; focalX?: number; focalY?: number};
+
 async function fetchTodaysPoster(
   context: unknown,
   signal: AbortSignal,
-): Promise<string | undefined> {
+): Promise<PosterCrop> {
   const quizKey = resolveQuizKey(context);
   if (!quizKey) {
-    return undefined;
+    return {};
   }
 
   const response = await fetch(`${resolveApiUrl(context)}/quiz/answer`, {
@@ -27,11 +29,17 @@ async function fetchTodaysPoster(
     signal,
   });
   if (!response.ok) {
-    return undefined;
+    return {};
   }
 
   const answer = (await response.json()) as QuizAnswer;
-  return fetchPosterAsDataUri(upgradePosterForSharing(answer.posterUrl));
+  return {
+    posterDataUri: await fetchPosterAsDataUri(
+      upgradePosterForSharing(answer.posterUrl),
+    ),
+    focalX: answer.focalX,
+    focalY: answer.focalY,
+  };
 }
 
 // クエリの date はキャッシュ回避用で、描画は必ずAPIが返す当日分を使う
@@ -48,8 +56,8 @@ export async function loader({context, request}: Route.LoaderArgs) {
     poolSize: number;
   };
 
-  const posterDataUri = await fetchTodaysPoster(context, request.signal);
-  const html = buildQuizCardHtml({date, poolSize, posterDataUri});
+  const crop = await fetchTodaysPoster(context, request.signal);
+  const html = buildQuizCardHtml({date, poolSize, ...crop});
   const notoSans = await loadGoogleFont('Noto Sans JP', 700, html);
 
   if (!notoSans) {

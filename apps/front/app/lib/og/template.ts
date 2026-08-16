@@ -128,19 +128,23 @@ type QuizCardProperties = {
   date: string;
   poolSize: number;
   posterDataUri?: string;
+  focalX?: number;
+  focalY?: number;
 };
 
 export function buildQuizCardHtml({
   date,
   poolSize,
   posterDataUri,
+  focalX = 0.5,
+  focalY = 0.5,
 }: QuizCardProperties): string {
   const cropHtml = posterDataUri
     ? buildQuizPosterHtml({
         posterDataUri,
         stage: 0,
-        focalX: 0.5,
-        focalY: 0.5,
+        focalX,
+        focalY,
         frameWidth: QUIZ_CARD_FRAME_WIDTH,
         frameHeight: QUIZ_CARD_FRAME_HEIGHT,
       })
