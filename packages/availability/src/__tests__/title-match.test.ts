@@ -1,5 +1,10 @@
 import {describe, expect, it} from 'vitest';
-import {hasJapaneseText, normalizeTitle, titleMatches} from '../title-match';
+import {
+  hasJapaneseText,
+  normalizeTitle,
+  titleMatches,
+  titleMatchesAsVolume,
+} from '../title-match';
 
 describe('hasJapaneseText', () => {
   it('detects katakana', () => {
@@ -134,5 +139,61 @@ describe('titleMatches', () => {
 
   it('does not match a different film named inside double angle brackets', () => {
     expect(titleMatches('無防備都市《ローマ》', ['ローマ'])).toBe(false);
+  });
+
+  it('does not match a volume of a split release', () => {
+    expect(
+      titleMatches('愛と宿命の泉　１　フロレット家のジャン', ['愛と宿命の泉']),
+    ).toBe(false);
+  });
+});
+
+describe('titleMatchesAsVolume', () => {
+  it('matches a volume numbered with a full-width digit', () => {
+    expect(
+      titleMatchesAsVolume('愛と宿命の泉　１　フロレット家のジャン', [
+        '愛と宿命の泉',
+      ]),
+    ).toBe(true);
+  });
+
+  it('matches a volume numbered with 第N部', () => {
+    expect(
+      titleMatchesAsVolume('愛と宿命の泉 第2部 泉のマノン', ['愛と宿命の泉']),
+    ).toBe(true);
+  });
+
+  it('matches a volume labelled 前編', () => {
+    expect(titleMatchesAsVolume('人間の條件 前編 純愛篇', ['人間の條件'])).toBe(
+      true,
+    );
+  });
+
+  it('does not match a sequel without a subtitle', () => {
+    expect(
+      titleMatchesAsVolume('ゴッドファーザー PART II', ['ゴッドファーザー']),
+    ).toBe(false);
+  });
+
+  it('does not match a numbered sequel without a subtitle', () => {
+    expect(titleMatchesAsVolume('ロッキー 3', ['ロッキー'])).toBe(false);
+  });
+
+  it('does not match an exact title', () => {
+    expect(titleMatchesAsVolume('愛と宿命の泉', ['愛と宿命の泉'])).toBe(false);
+  });
+
+  it('does not match a different film sharing a prefix', () => {
+    expect(
+      titleMatchesAsVolume('東京ゴッドファーザーズ 1 番外編', [
+        'ゴッドファーザー',
+      ]),
+    ).toBe(false);
+  });
+
+  it('ignores empty target titles', () => {
+    expect(
+      titleMatchesAsVolume('愛と宿命の泉　１　フロレット家のジャン', ['', ' ']),
+    ).toBe(false);
   });
 });
