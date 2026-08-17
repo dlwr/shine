@@ -69,11 +69,18 @@ export default function AwardsIndex({loaderData}: Route.ComponentProps) {
           映画賞・映画リストから作品を探す
         </p>
 
-        <a
-          href="/crossings"
-          className="mb-8 inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold no-underline text-ink shadow-[3px_3px_0_var(--brand)]">
-          賞の交差を見る →
-        </a>
+        <div className="mb-8 flex flex-wrap gap-3">
+          <a
+            href="/crossings"
+            className="inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold no-underline text-ink shadow-[3px_3px_0_var(--brand)]">
+            賞の交差を見る →
+          </a>
+          <a
+            href="/uncrowned"
+            className="inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold no-underline text-ink shadow-[3px_3px_0_var(--brand)]">
+            無冠の映画を見る →
+          </a>
+        </div>
 
         <div>
           {awards.map(award => (
