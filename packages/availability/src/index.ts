@@ -7,10 +7,21 @@ export {
   type SourceRunner,
   type SourceRunners,
 } from './checker';
-export {checkDiscas, parseDiscasTitles} from './sources/discas';
+export {
+  checkDiscas,
+  parseDiscasProductionYear,
+  parseDiscasResults,
+  parseDiscasTitles,
+} from './sources/discas';
 export {checkTmdbProviders} from './sources/tmdb';
 export {checkUnext, parseUnextTitles} from './sources/unext';
-export {hasJapaneseText, normalizeTitle, titleMatches} from './title-match';
+export {
+  hasJapaneseText,
+  normalizeTitle,
+  titleMatches,
+  titleMatchesAsVolume,
+  volumeBaseTitles,
+} from './title-match';
 export type {
   AvailabilitySource,
   AvailabilityStatus,

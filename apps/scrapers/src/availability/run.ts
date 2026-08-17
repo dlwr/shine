@@ -304,7 +304,9 @@ export function buildSourceRunners(options: {
     },
     async discas(movie) {
       await sleep(waitMs);
-      return checkDiscas(await titlesForSearch(movie), fetchImpl);
+      return checkDiscas(await titlesForSearch(movie), fetchImpl, {
+        year: movie.year,
+      });
     },
   };
 }

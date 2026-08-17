@@ -61,13 +61,10 @@ function comparisonKey(title: string): string {
     .replace(/[!?]+$/, '');
 }
 
-export function titleMatches(
-  candidate: string,
+function matchesAnyTarget(
+  candidateKeys: string[],
   targetTitles: string[],
 ): boolean {
-  const candidateKeys = candidateVariants(candidate)
-    .map(variant => comparisonKey(variant))
-    .filter(key => key !== '');
   if (candidateKeys.length === 0) {
     return false;
   }
@@ -76,4 +73,46 @@ export function titleMatches(
     const targetKey = comparisonKey(target);
     return targetKey !== '' && candidateKeys.includes(targetKey);
   });
+}
+
+export function titleMatches(
+  candidate: string,
+  targetTitles: string[],
+): boolean {
+  const candidateKeys = candidateVariants(candidate)
+    .map(variant => comparisonKey(variant))
+    .filter(key => key !== '');
+
+  return matchesAnyTarget(candidateKeys, targetTitles);
+}
+
+const volumeMarkerPattern =
+  /^(?:(?:vol\.?|第)?(?:\d+|[一二三四五六七八九十]+)(?:部|巻|集|話|章)?|前編|後編|上巻|下巻)$/;
+
+// 分売された作品は「本編タイトル + 巻数 + サブタイトル」で登録される。
+// 巻数のあとにサブタイトルが続くことを必須にして、続編（PART II 等）と区別する
+export function volumeBaseTitles(candidate: string): string[] {
+  const tokens = normalizeTitle(candidate)
+    .split(' ')
+    .filter(token => token !== '');
+
+  const bases: string[] = [];
+  for (let index = 1; index < tokens.length - 1; index++) {
+    if (volumeMarkerPattern.test(tokens[index])) {
+      bases.push(tokens.slice(0, index).join(' '));
+    }
+  }
+
+  return bases;
+}
+
+export function titleMatchesAsVolume(
+  candidate: string,
+  targetTitles: string[],
+): boolean {
+  const baseKeys = volumeBaseTitles(candidate)
+    .map(base => comparisonKey(base))
+    .filter(key => key !== '');
+
+  return matchesAnyTarget(baseKeys, targetTitles);
 }

@@ -67,7 +67,9 @@ export function buildOnDemandRunners(
       return checkUnext(await titlesForSearch(movie), fetchImpl);
     },
     async discas(movie) {
-      return checkDiscas(await titlesForSearch(movie), fetchImpl);
+      return checkDiscas(await titlesForSearch(movie), fetchImpl, {
+        year: movie.year,
+      });
     },
   };
 }

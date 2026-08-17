@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import iconv from 'iconv-lite';
-import {titleMatches} from '../title-match';
+import {titleMatches, titleMatchesAsVolume} from '../title-match';
 import type {FetchLike, SourceCheckResult} from '../types';
 
 const USER_AGENT =
@@ -16,13 +16,31 @@ function encodeShiftJisQuery(text: string): string {
   return encoded;
 }
 
-export function parseDiscasTitles(html: string): string[] {
+export type DiscasSearchResult = {
+  title: string;
+  detailUrl: string;
+};
+
+export function parseDiscasResults(html: string): DiscasSearchResult[] {
   const $ = cheerio.load(html);
   return $('a[href*="goodsDetail.do"]')
-    .map((_, element) => $(element).text())
+    .map((_, element) => ({
+      title: $(element).text().trim(),
+      detailUrl: $(element).attr('href') ?? '',
+    }))
     .get()
-    .map(title => title.trim())
-    .filter(title => title !== '');
+    .filter(result => result.title !== '' && result.detailUrl !== '');
+}
+
+export function parseDiscasTitles(html: string): string[] {
+  return parseDiscasResults(html).map(result => result.title);
+}
+
+const productionYearPattern = /製作年[\s\S]{0,50}?(\d{4})\s*年/;
+
+export function parseDiscasProductionYear(html: string): number | undefined {
+  const match = productionYearPattern.exec(cheerio.load(html).root().text());
+  return match ? Number(match[1]) : undefined;
 }
 
 class CookieJar {
@@ -79,9 +97,46 @@ async function fetchWithSession(
   throw new Error(`Too many redirects for ${url}`);
 }
 
+const MAX_VOLUME_LOOKUPS = 3;
+
+async function findMatchingVolume(
+  results: DiscasSearchResult[],
+  targetTitles: string[],
+  year: number | undefined,
+  jar: CookieJar,
+  fetchImpl: FetchLike,
+): Promise<DiscasSearchResult | undefined> {
+  const candidates = results
+    .filter(result => titleMatchesAsVolume(result.title, targetTitles))
+    .slice(0, MAX_VOLUME_LOOKUPS);
+
+  for (const candidate of candidates) {
+    const response = await fetchWithSession(
+      candidate.detailUrl,
+      jar,
+      fetchImpl,
+    );
+    if (!response.ok) {
+      continue;
+    }
+
+    const productionYear = parseDiscasProductionYear(
+      new TextDecoder('shift_jis').decode(await response.arrayBuffer()),
+    );
+    if (year && productionYear && productionYear !== year) {
+      continue;
+    }
+
+    return candidate;
+  }
+
+  return undefined;
+}
+
 export async function checkDiscas(
   targetTitles: string[],
   fetchImpl: FetchLike = fetch,
+  options: {year?: number} = {},
 ): Promise<SourceCheckResult> {
   const query = targetTitles.find(title => title.trim() !== '');
   if (!query) {
@@ -117,17 +172,36 @@ export async function checkDiscas(
     const html = new TextDecoder('shift_jis').decode(
       await response.arrayBuffer(),
     );
-    const resultTitles = parseDiscasTitles(html);
-    const matched = resultTitles.find(title =>
-      titleMatches(title, targetTitles),
+    const results = parseDiscasResults(html);
+    const matched = results.find(result =>
+      titleMatches(result.title, targetTitles),
+    );
+    if (matched) {
+      return {
+        source: 'discas',
+        status: 'ok',
+        detail: `Matched: ${matched.title}`,
+      };
+    }
+
+    const volume = await findMatchingVolume(
+      results,
+      targetTitles,
+      options.year,
+      jar,
+      fetchImpl,
     );
 
-    return matched
-      ? {source: 'discas', status: 'ok', detail: `Matched: ${matched}`}
+    return volume
+      ? {
+          source: 'discas',
+          status: 'ok',
+          detail: `Matched volume: ${volume.title}`,
+        }
       : {
           source: 'discas',
           status: 'ng',
-          detail: `No match in ${resultTitles.length} results`,
+          detail: `No match in ${results.length} results`,
         };
   } catch (error) {
     return {
