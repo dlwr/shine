@@ -2,6 +2,7 @@ import {type Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {authMiddleware} from '../../auth';
 import {AdminService} from '../../services';
+import {invalidateMovieCaches} from '../../services/movie-cache-invalidation';
 
 export const adminPostersRoutes = new Hono<{Bindings: Environment}>();
 
@@ -44,6 +45,8 @@ adminPostersRoutes.post('/movies/:id/posters', authMiddleware, async c => {
       isPrimary,
     });
 
+    await invalidateMovieCaches(c.env, movieId);
+
     return c.json(newPoster);
   } catch (error) {
     console.error('Error adding poster:', error);
@@ -65,6 +68,7 @@ adminPostersRoutes.delete(
       }
 
       await adminService.deletePoster(movieId, posterId);
+      await invalidateMovieCaches(c.env, movieId);
 
       return c.json({success: true});
     } catch (error) {

@@ -9,13 +9,17 @@ import {translations} from '@shine/database/schema/translations';
 import {Hono} from 'hono';
 import {authMiddleware} from '../../auth';
 import {sanitizeText} from '../../middleware/sanitizer';
-import {AdminService} from '../../services';
+import {AdminService, SelectionsService} from '../../services';
 import {
   ConflictError,
   NotFoundError,
   TmdbConfigurationError,
   ValidationError,
 } from '../../services/errors';
+import {
+  invalidateMovieCaches,
+  invalidateMovieDetailsCache,
+} from '../../services/movie-cache-invalidation';
 import {syncTmdbData, type TmdbSyncResult} from '../../services/tmdb-sync';
 import {parsePagination} from '../../utils/pagination';
 
@@ -225,7 +229,9 @@ adminMoviesRoutes.delete('/movies/:id', authMiddleware, async c => {
       return c.json({error: 'Missing id parameter'}, 400);
     }
 
+    await new SelectionsService(c.env).purgeSelectionCachesForMovie(movieId);
     await adminService.deleteMovie(movieId);
+    await invalidateMovieDetailsCache(c.env, movieId);
 
     return c.json({success: true});
   } catch (error) {
@@ -305,6 +311,7 @@ adminMoviesRoutes.put('/movies/:id', authMiddleware, async c => {
         .update(movies)
         .set(updateData)
         .where(eq(movies.uid, movieId));
+      await invalidateMovieCaches(c.env, movieId);
     }
 
     return c.json({success: true});
@@ -329,6 +336,8 @@ adminMoviesRoutes.put('/movies/:id/imdb-id', authMiddleware, async c => {
       imdbId,
       fetchTMDBData: refreshData,
     });
+
+    await invalidateMovieCaches(c.env, movieId);
 
     return c.json({
       success: true,
@@ -439,6 +448,8 @@ adminMoviesRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
         // Continue without failing the main operation
       }
     }
+
+    await invalidateMovieCaches(c.env, movieId);
 
     return c.json({
       success: true,
@@ -562,6 +573,8 @@ adminMoviesRoutes.post(
         fetchResults.postersAdded = syncResult.postersAdded;
         fetchResults.translationsAdded = syncResult.translationsAdded;
 
+        await invalidateMovieCaches(c.env, movieId);
+
         return c.json({
           success: true,
           fetchResults,
@@ -627,6 +640,8 @@ adminMoviesRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
         refreshMediaType,
         c.env,
       );
+
+      await invalidateMovieCaches(c.env, movieId);
 
       return c.json({
         success: true,
@@ -834,6 +849,9 @@ adminMoviesRoutes.post(
         // Finally, delete the source movie
         await tx.delete(movies).where(eq(movies.uid, sourceId));
       });
+
+      await invalidateMovieDetailsCache(c.env, sourceId);
+      await invalidateMovieCaches(c.env, targetId);
 
       return c.json({
         success: true,

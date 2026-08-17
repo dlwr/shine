@@ -5,6 +5,7 @@ import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {Hono} from 'hono';
 import {authMiddleware} from '../../auth';
+import {invalidateMovieCaches} from '../../services/movie-cache-invalidation';
 
 export const adminNominationsRoutes = new Hono<{Bindings: Environment}>();
 
@@ -100,6 +101,8 @@ adminNominationsRoutes.post(
         })
         .returning();
 
+      await invalidateMovieCaches(c.env, movieId);
+
       return c.json(newNomination[0]);
     } catch (error) {
       console.error('Error adding nomination:', error);
@@ -124,7 +127,7 @@ adminNominationsRoutes.put(
 
       // Check if nomination exists
       const nomination = await database
-        .select({uid: nominations.uid})
+        .select({uid: nominations.uid, movieUid: nominations.movieUid})
         .from(nominations)
         .where(eq(nominations.uid, nominationId))
         .limit(1);
@@ -141,6 +144,8 @@ adminNominationsRoutes.put(
           specialMention: specialMention || undefined,
         })
         .where(eq(nominations.uid, nominationId));
+
+      await invalidateMovieCaches(c.env, nomination[0].movieUid);
 
       return c.json({success: true});
     } catch (error) {
@@ -164,7 +169,7 @@ adminNominationsRoutes.delete(
 
       // Check if nomination exists
       const nomination = await database
-        .select({uid: nominations.uid})
+        .select({uid: nominations.uid, movieUid: nominations.movieUid})
         .from(nominations)
         .where(eq(nominations.uid, nominationId))
         .limit(1);
@@ -177,6 +182,8 @@ adminNominationsRoutes.delete(
       await database
         .delete(nominations)
         .where(eq(nominations.uid, nominationId));
+
+      await invalidateMovieCaches(c.env, nomination[0].movieUid);
 
       return c.json({success: true});
     } catch (error) {
