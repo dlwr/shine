@@ -2,13 +2,19 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {describe, expect, it, vi} from 'vitest';
-import {checkDiscas, parseDiscasTitles} from '../sources/discas';
+import {
+  checkDiscas,
+  parseDiscasProductionYear,
+  parseDiscasTitles,
+} from '../sources/discas';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
-const fixtureBytes = fs.readFileSync(
-  path.join(currentDirectory, 'fixtures/discas-search.html'),
-);
+const readFixture = (name: string) =>
+  fs.readFileSync(path.join(currentDirectory, 'fixtures', name));
+const fixtureBytes = readFixture('discas-search.html');
 const fixtureHtml = new TextDecoder('shift_jis').decode(fixtureBytes);
+const volumeSearchBytes = readFixture('discas-search-volumes.html');
+const detailBytes = readFixture('discas-detail.html');
 
 describe('parseDiscasTitles', () => {
   it('extracts titles from goodsDetail links, decoding character references', () => {
@@ -24,11 +30,30 @@ describe('parseDiscasTitles', () => {
   });
 });
 
-function createSessionFetch(searchBytes: Buffer) {
+describe('parseDiscasProductionYear', () => {
+  it('extracts the production year from a detail page', () => {
+    const detailHtml = new TextDecoder('shift_jis').decode(detailBytes);
+    expect(parseDiscasProductionYear(detailHtml)).toBe(1986);
+  });
+
+  it('returns undefined when the page has no production year', () => {
+    expect(parseDiscasProductionYear('<html><body></body></html>')).toBe(
+      undefined,
+    );
+  });
+});
+
+function createSessionFetch(searchBytes: Buffer, detailBytes?: Buffer) {
   // 実サイトの挙動を再現: top.doでJSESSIONID発行 →
   // 検索はxdsyncへ302(追加Cookie発行) → 両Cookie持参で再度検索すると200
   return vi.fn(async (url: string, init?: RequestInit) => {
     const cookie = new Headers(init?.headers).get('cookie') ?? '';
+
+    if (url.includes('goodsDetail.do')) {
+      return detailBytes
+        ? new Response(new Uint8Array(detailBytes))
+        : new Response(undefined, {status: 404});
+    }
 
     if (url.includes('top.do') && !cookie.includes('JSESSIONID=abc123')) {
       return new Response('', {
@@ -116,6 +141,49 @@ describe('checkDiscas', () => {
 
     expect(result.status).toBe('ng');
     expect(result.detail).toContain('404');
+  });
+
+  it('returns ok when a split release volume matches and the production year agrees', async () => {
+    const fetchSpy = createSessionFetch(volumeSearchBytes, detailBytes);
+
+    const result = await checkDiscas(['愛と宿命の泉'], fetchSpy, {year: 1986});
+
+    expect(result.status).toBe('ok');
+    expect(result.detail).toContain('愛と宿命の泉　１　フロレット家のジャン');
+  });
+
+  it('returns ng when a split release volume matches but the production year differs', async () => {
+    const fetchSpy = createSessionFetch(volumeSearchBytes, detailBytes);
+
+    const result = await checkDiscas(['愛と宿命の泉'], fetchSpy, {year: 1975});
+
+    expect(result.status).toBe('ng');
+  });
+
+  it('returns ok for a volume match when the movie year is unknown', async () => {
+    const fetchSpy = createSessionFetch(volumeSearchBytes, detailBytes);
+
+    const result = await checkDiscas(['愛と宿命の泉'], fetchSpy);
+
+    expect(result.status).toBe('ok');
+  });
+
+  it('returns ng when the volume detail page cannot be fetched', async () => {
+    const fetchSpy = createSessionFetch(volumeSearchBytes);
+
+    const result = await checkDiscas(['愛と宿命の泉'], fetchSpy, {year: 1986});
+
+    expect(result.status).toBe('ng');
+  });
+
+  it('does not fetch detail pages when an exact title matches', async () => {
+    const fetchSpy = createSessionFetch(fixtureBytes, detailBytes);
+
+    await checkDiscas(['ゴッドファーザー PART I'], fetchSpy);
+
+    expect(
+      fetchSpy.mock.calls.some(([url]) => url.includes('goodsDetail.do')),
+    ).toBe(false);
   });
 
   it('returns error when the search request fails', async () => {
