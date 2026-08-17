@@ -1,6 +1,7 @@
 import {
   and,
   eq,
+  inArray,
   isNull,
   notInArray,
   sql,
@@ -360,6 +361,43 @@ export class SelectionsService extends BaseService {
       CACHEABLE_LOCALES.map(async locale =>
         this.cache.delete(getCacheKeyForSelection(type, selectionDate, locale)),
       ),
+    );
+  }
+
+  async purgeSelectionCachesForMovie(
+    movieUid: string,
+    date = new Date(),
+  ): Promise<void> {
+    const types: SelectionType[] = ['daily', 'weekly', 'monthly'];
+    const current = await this.database
+      .select({
+        selectionType: movieSelections.selectionType,
+        selectionDate: movieSelections.selectionDate,
+      })
+      .from(movieSelections)
+      .where(
+        and(
+          eq(movieSelections.movieId, movieUid),
+          inArray(
+            movieSelections.selectionDate,
+            types.map(type => this.getSelectionDate(date, type)),
+          ),
+        ),
+      );
+
+    await Promise.all(
+      current
+        .filter(
+          selection =>
+            selection.selectionDate ===
+            this.getSelectionDate(date, selection.selectionType),
+        )
+        .map(async selection =>
+          this.purgeSelectionCache(
+            selection.selectionType,
+            selection.selectionDate,
+          ),
+        ),
     );
   }
 

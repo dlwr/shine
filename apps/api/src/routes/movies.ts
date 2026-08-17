@@ -17,6 +17,7 @@ import {
   AvailabilityService,
   buildOnDemandRunners,
   MoviesService,
+  SelectionsService,
 } from '../services';
 import {
   checkETag,
@@ -529,6 +530,14 @@ moviesRoutes.post('/:id/article-links', async c => {
         submitterIp: ip,
       })
       .returning();
+
+    // Invalidate movie details cache
+    await Promise.all(
+      getMovieCacheKeysForAllLocales(movieId).map(async key =>
+        cache.delete(key),
+      ),
+    );
+    await new SelectionsService(c.env).purgeSelectionCachesForMovie(movieId);
 
     return c.json(newArticle[0], 201);
   } catch (error) {

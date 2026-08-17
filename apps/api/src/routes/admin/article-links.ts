@@ -1,9 +1,30 @@
 import {type Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {authMiddleware} from '../../auth';
-import {AdminService} from '../../services';
+import {AdminService, SelectionsService} from '../../services';
+import {EdgeCache, getMovieCacheKeysForAllLocales} from '../../utils/cache';
 
 export const adminArticleLinksRoutes = new Hono<{Bindings: Environment}>();
+
+const cache = new EdgeCache();
+
+async function invalidateMovieCache(
+  environment: Environment,
+  movieUid: string | undefined,
+) {
+  if (!movieUid) {
+    return;
+  }
+
+  await Promise.all(
+    getMovieCacheKeysForAllLocales(movieUid).map(async key =>
+      cache.delete(key),
+    ),
+  );
+  await new SelectionsService(environment).purgeSelectionCachesForMovie(
+    movieUid,
+  );
+}
 
 // Flag article as spam
 adminArticleLinksRoutes.post(
@@ -17,7 +38,8 @@ adminArticleLinksRoutes.post(
         return c.json({error: 'Missing id parameter'}, 400);
       }
 
-      await adminService.flagArticleAsSpam(articleId);
+      const movieUid = await adminService.flagArticleAsSpam(articleId);
+      await invalidateMovieCache(c.env, movieUid);
 
       return c.json({success: true});
     } catch (error) {
@@ -39,7 +61,8 @@ adminArticleLinksRoutes.delete(
         return c.json({error: 'Missing id parameter'}, 400);
       }
 
-      await adminService.deleteArticleLink(articleId);
+      const movieUid = await adminService.deleteArticleLink(articleId);
+      await invalidateMovieCache(c.env, movieUid);
 
       return c.json({success: true});
     } catch (error) {
