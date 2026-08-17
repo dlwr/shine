@@ -17,12 +17,11 @@ import {
   AvailabilityService,
   buildOnDemandRunners,
   MoviesService,
-  SelectionsService,
 } from '../services';
+import {invalidateMovieCaches} from '../services/movie-cache-invalidation';
 import {
   checkETag,
   createCachedResponse,
-  getMovieCacheKeysForAllLocales,
   normalizeCacheLocale,
   createETag,
   EdgeCache,
@@ -44,16 +43,6 @@ type TurnstileVerificationResponse = {
   action?: string;
   cdata?: string;
 };
-
-async function invalidateMovieDetailsCache(
-  environment: Environment,
-  movieId: string,
-): Promise<void> {
-  const cache = new EdgeCache(undefined, environment.CACHE_KV);
-  await Promise.all(
-    getMovieCacheKeysForAllLocales(movieId).map(async key => cache.delete(key)),
-  );
-}
 
 async function verifyTurnstileToken(
   secretKey: string | undefined,
@@ -362,7 +351,7 @@ moviesRoutes.post('/:id/translations', authMiddleware, async c => {
       isDefault,
     );
 
-    await invalidateMovieDetailsCache(c.env, movieId);
+    await invalidateMovieCaches(c.env, movieId);
 
     console.log(
       `Cache invalidated for movie ${movieId} after translation update`,
@@ -392,7 +381,7 @@ moviesRoutes.delete('/:id/translations/:lang', authMiddleware, async c => {
 
     await moviesService.deleteMovieTranslation(movieId, languageCode);
 
-    await invalidateMovieDetailsCache(c.env, movieId);
+    await invalidateMovieCaches(c.env, movieId);
 
     console.log(
       `Cache invalidated for movie ${movieId} after translation deletion`,
@@ -531,8 +520,7 @@ moviesRoutes.post('/:id/article-links', async c => {
       })
       .returning();
 
-    await invalidateMovieDetailsCache(c.env, movieId);
-    await new SelectionsService(c.env).purgeSelectionCachesForMovie(movieId);
+    await invalidateMovieCaches(c.env, movieId);
 
     return c.json(newArticle[0], 201);
   } catch (error) {
