@@ -1,4 +1,4 @@
-import {and, eq, inArray, isNull, sql} from '@shine/database';
+import {and, eq, inArray, isNull, sql, type Environment} from '@shine/database';
 import {articleLinks} from '@shine/database/schema/article-links';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
@@ -22,7 +22,12 @@ import {BaseService} from './base-service';
 import type {MovieSelection, SearchOptions} from '@shine/types';
 
 export class MoviesService extends BaseService {
-  private readonly cache = new EdgeCache();
+  private readonly cache: EdgeCache;
+
+  constructor(environment: Environment) {
+    super(environment);
+    this.cache = new EdgeCache(undefined, environment.CACHE_KV);
+  }
 
   async searchMovies(options: SearchOptions) {
     const {page, limit, query, year, language, hasAwards} = options;

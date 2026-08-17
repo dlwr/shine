@@ -1,12 +1,10 @@
 import {type Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {authMiddleware} from '../../auth';
-import {AdminService, SelectionsService} from '../../services';
-import {EdgeCache, getMovieCacheKeysForAllLocales} from '../../utils/cache';
+import {AdminService} from '../../services';
+import {invalidateMovieCaches} from '../../services/movie-cache-invalidation';
 
 export const adminArticleLinksRoutes = new Hono<{Bindings: Environment}>();
-
-const cache = new EdgeCache();
 
 async function invalidateMovieCache(
   environment: Environment,
@@ -16,14 +14,7 @@ async function invalidateMovieCache(
     return;
   }
 
-  await Promise.all(
-    getMovieCacheKeysForAllLocales(movieUid).map(async key =>
-      cache.delete(key),
-    ),
-  );
-  await new SelectionsService(environment).purgeSelectionCachesForMovie(
-    movieUid,
-  );
+  await invalidateMovieCaches(environment, movieUid);
 }
 
 // Flag article as spam
