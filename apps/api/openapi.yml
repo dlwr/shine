@@ -324,6 +324,28 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /uncrowned:
+    get:
+      summary: Get the most-nominated films that never won
+      description: |
+        Returns the films with the most nominations in the year-grouped award
+        pages that never won any of them, with the awards and ceremony years
+        they lost, plus how many nominated films exist and how many of them
+        never won. Editorial lists are not counted.
+      operationId: getUncrowned
+      tags:
+        - Awards
+      security: []
+      responses:
+        '200':
+          description: Successfully retrieved uncrowned films
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Uncrowned'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /awards/{slug}:
     get:
       summary: Get an award page
@@ -2294,6 +2316,64 @@ components:
         - awards
         - pairs
         - distribution
+        - topMovies
+
+    Uncrowned:
+      type: object
+      properties:
+        nominatedFilmCount:
+          type: integer
+          description: Films nominated in the year-grouped award pages
+        uncrownedFilmCount:
+          type: integer
+          description: Nominated films that never won any of those awards
+        awards:
+          type: array
+          description: Year-grouped awards that appear among the losses
+          items:
+            type: object
+            properties:
+              slug:
+                type: string
+              name:
+                type: string
+              shortLabel:
+                type: string
+              organization:
+                type: string
+            required: [slug, name, shortLabel, organization]
+        topMovies:
+          type: array
+          description: Films with the most losses and no wins, at most 24
+          items:
+            type: object
+            properties:
+              uid:
+                type: string
+                format: uuid
+              title:
+                type: [string, 'null']
+              year:
+                type: [integer, 'null']
+              posterUrl:
+                type: [string, 'null']
+              losses:
+                type: array
+                description: Lost nominations, oldest ceremony first
+                items:
+                  type: object
+                  properties:
+                    slug:
+                      type: string
+                    year:
+                      type: integer
+                      description: Ceremony year of the lost nomination
+                  required: [slug, year]
+            required: [uid, losses]
+      required:
+        - nominatedFilmCount
+        - uncrownedFilmCount
+        - awards
         - topMovies
 
     AwardOrganization:
