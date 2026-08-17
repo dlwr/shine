@@ -530,6 +530,13 @@ moviesRoutes.post('/:id/article-links', async c => {
       })
       .returning();
 
+    // Invalidate movie details cache
+    await Promise.all(
+      getMovieCacheKeysForAllLocales(movieId).map(async key =>
+        cache.delete(key),
+      ),
+    );
+
     return c.json(newArticle[0], 201);
   } catch (error) {
     console.error('Error submitting article link:', error);
