@@ -6,8 +6,6 @@ import {EdgeCache, getMovieCacheKeysForAllLocales} from '../../utils/cache';
 
 export const adminArticleLinksRoutes = new Hono<{Bindings: Environment}>();
 
-const cache = new EdgeCache();
-
 async function invalidateMovieCache(
   environment: Environment,
   movieUid: string | undefined,
@@ -16,6 +14,7 @@ async function invalidateMovieCache(
     return;
   }
 
+  const cache = new EdgeCache(undefined, environment.CACHE_KV);
   await Promise.all(
     getMovieCacheKeysForAllLocales(movieUid).map(async key =>
       cache.delete(key),

@@ -33,7 +33,6 @@ import {parsePagination} from '../utils/pagination';
 
 export const moviesRoutes = new Hono<{Bindings: Environment}>();
 
-const cache = new EdgeCache();
 const TURNSTILE_VERIFY_ENDPOINT =
   'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
@@ -45,6 +44,16 @@ type TurnstileVerificationResponse = {
   action?: string;
   cdata?: string;
 };
+
+async function invalidateMovieDetailsCache(
+  environment: Environment,
+  movieId: string,
+): Promise<void> {
+  const cache = new EdgeCache(undefined, environment.CACHE_KV);
+  await Promise.all(
+    getMovieCacheKeysForAllLocales(movieId).map(async key => cache.delete(key)),
+  );
+}
 
 async function verifyTurnstileToken(
   secretKey: string | undefined,
@@ -139,6 +148,7 @@ moviesRoutes.get('/:id', async c => {
     }
 
     const locale = c.req.query('locale') || 'ja';
+    const cache = new EdgeCache(undefined, c.env.CACHE_KV);
 
     // Check cache first
     const cacheLocale = normalizeCacheLocale(locale);
@@ -352,12 +362,7 @@ moviesRoutes.post('/:id/translations', authMiddleware, async c => {
       isDefault,
     );
 
-    // Invalidate movie details cache
-    await Promise.all(
-      getMovieCacheKeysForAllLocales(movieId).map(async key =>
-        cache.delete(key),
-      ),
-    );
+    await invalidateMovieDetailsCache(c.env, movieId);
 
     console.log(
       `Cache invalidated for movie ${movieId} after translation update`,
@@ -387,12 +392,7 @@ moviesRoutes.delete('/:id/translations/:lang', authMiddleware, async c => {
 
     await moviesService.deleteMovieTranslation(movieId, languageCode);
 
-    // Invalidate movie details cache
-    await Promise.all(
-      getMovieCacheKeysForAllLocales(movieId).map(async key =>
-        cache.delete(key),
-      ),
-    );
+    await invalidateMovieDetailsCache(c.env, movieId);
 
     console.log(
       `Cache invalidated for movie ${movieId} after translation deletion`,
@@ -531,12 +531,7 @@ moviesRoutes.post('/:id/article-links', async c => {
       })
       .returning();
 
-    // Invalidate movie details cache
-    await Promise.all(
-      getMovieCacheKeysForAllLocales(movieId).map(async key =>
-        cache.delete(key),
-      ),
-    );
+    await invalidateMovieDetailsCache(c.env, movieId);
     await new SelectionsService(c.env).purgeSelectionCachesForMovie(movieId);
 
     return c.json(newArticle[0], 201);

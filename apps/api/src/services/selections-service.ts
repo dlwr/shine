@@ -34,7 +34,10 @@ type SelectionType = 'daily' | 'weekly' | 'monthly';
 export class SelectionsService extends BaseService {
   private readonly cache: EdgeCache;
 
-  constructor(environment: Environment, cache = new EdgeCache()) {
+  constructor(
+    environment: Environment,
+    cache = new EdgeCache(undefined, environment.CACHE_KV),
+  ) {
     super(environment);
     this.cache = cache;
   }
