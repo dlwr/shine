@@ -59,7 +59,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260731.1",
     "@eslint/js": "^10.0.1",
-    "@redocly/cli": "^2.20.4",
+    "@redocly/cli": "^2.46.1",
     "@types/node": "^26.1.2",
     "@vitest/coverage-v8": "4.1.10",
     "concurrently": "^9.2.1",
