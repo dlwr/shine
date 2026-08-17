@@ -28,12 +28,14 @@ export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
   const imageUrl = puzzle
     ? `${SITE_URL}/og/quiz.png?date=${puzzle.date}`
     : `${SITE_URL}/og/quiz.png`;
+  // SNSのカードはページURL単位でキャッシュされるので、出題日で別URLにする
+  const path = puzzle ? `/quiz?d=${puzzle.date}` : '/quiz';
 
   return buildSocialMeta({
     title: '今日の映画クイズ | SHINE',
     description:
       'ポスターの一部と5つのヒントから、今日の1本を当てる。カンヌ・アカデミー賞・キネマ旬報などに選ばれた映画から毎日1問。',
-    path: '/quiz',
+    path,
     locale: locale ?? DEFAULT_LOCALE,
     imageUrl,
     largeImage: true,

@@ -28,6 +28,7 @@ import {
 import {
   buildDailyPostText,
   buildQuizPostText,
+  buildQuizShareUrl,
   buildQuizXPostText,
   buildXPostText,
 } from './sns/post-text';
@@ -183,7 +184,7 @@ async function buildDailyPlan(): Promise<PostPlan> {
 async function buildQuizPlan(): Promise<PostPlan> {
   // 出題日はAPIに従う(ジョブの起動が遅れても昨日の問題を告知しない)
   const puzzle = await fetchQuizPuzzle();
-  const url = `${SITE_URL}/quiz`;
+  const url = buildQuizShareUrl({siteUrl: SITE_URL, date: puzzle.date});
 
   return {
     text: buildQuizPostText(puzzle),
