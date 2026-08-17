@@ -2,6 +2,7 @@ import {describe, expect, it} from 'vitest';
 import {
   buildDailyPostText,
   buildQuizPostText,
+  buildQuizShareUrl,
   buildQuizXPostText,
   buildXPostText,
   xWeightedLength,
@@ -126,6 +127,30 @@ describe('buildQuizXPostText', () => {
     expect(xWeightedLength(buildQuizXPostText(quizBase))).toBeLessThanOrEqual(
       280,
     );
+  });
+});
+
+describe('buildQuizShareUrl', () => {
+  it('出題日をクエリに付けて日ごとに別URLにする', () => {
+    expect(
+      buildQuizShareUrl({
+        siteUrl: 'https://shine-film.com',
+        date: '2026-08-16',
+      }),
+    ).toBe('https://shine-film.com/quiz?d=2026-08-16');
+  });
+
+  it('日付が変われば別のURLを返す', () => {
+    const first = buildQuizShareUrl({
+      siteUrl: 'https://shine-film.com',
+      date: '2026-08-16',
+    });
+    const second = buildQuizShareUrl({
+      siteUrl: 'https://shine-film.com',
+      date: '2026-08-17',
+    });
+
+    expect(first).not.toBe(second);
   });
 });
 

@@ -61,6 +61,16 @@ export function buildQuizPostText(input: QuizPostInput): string {
   return `${buildQuizBody(input)}\n${HASHTAG}`;
 }
 
+export function buildQuizShareUrl({
+  siteUrl,
+  date,
+}: {
+  siteUrl: string;
+  date: string;
+}): string {
+  return `${siteUrl}/quiz?d=${date}`;
+}
+
 export function buildQuizXPostText(
   input: QuizPostInput & {url: string},
 ): string {
