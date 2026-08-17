@@ -87,6 +87,26 @@ describe('Quiz page', () => {
         content: 'https://shine-film.com/og/quiz.png?date=2026-08-16',
       });
     });
+
+    it('og:urlに出題日を付けてSNSのカードキャッシュを分ける', () => {
+      const descriptors = meta(
+        cast<Route.MetaArgs>({data: {puzzle: PUZZLE, locale: 'ja'}}),
+      );
+
+      expect(descriptors).toContainEqual({
+        property: 'og:url',
+        content: 'https://shine-film.com/quiz?d=2026-08-16',
+      });
+    });
+
+    it('出題が取れないときのog:urlは日付を付けない', () => {
+      const descriptors = meta(cast<Route.MetaArgs>({data: {locale: 'ja'}}));
+
+      expect(descriptors).toContainEqual({
+        property: 'og:url',
+        content: 'https://shine-film.com/quiz',
+      });
+    });
   });
 
   describe('プレイ', () => {

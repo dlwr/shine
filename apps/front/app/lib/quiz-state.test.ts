@@ -135,6 +135,14 @@ describe('shareText', () => {
 
     expect(shareText(state, MAX_ATTEMPTS)).not.toContain('赤ひげ');
   });
+
+  it('links to the URL carrying the puzzle date', () => {
+    const state = play([{title: '赤ひげ', correct: true}]);
+
+    expect(shareText(state, MAX_ATTEMPTS)).toContain(
+      'https://shine-film.com/quiz?d=2026-08-16',
+    );
+  });
 });
 
 describe('streakOf', () => {

@@ -93,7 +93,7 @@ export function shareText(state: QuizGameState, maxAttempts: number): string {
   return [
     `SHINE QUIZ ${state.date} ${score}`,
     marks.join('') + padding,
-    'https://shine-film.com/quiz',
+    `https://shine-film.com/quiz?d=${state.date}`,
   ].join('\n');
 }
 
