@@ -30,6 +30,22 @@ type MovieDetailResponse = {
   articleLinks: Array<{uid: string; url: string; title: string}>;
 };
 
+function createKvStub(): KVNamespace {
+  const store = new Map<string, string>();
+  return {
+    async get(key: string) {
+      const value = store.get(key);
+      return value === undefined ? undefined : JSON.parse(value);
+    },
+    async put(key: string, value: string) {
+      store.set(key, value);
+    },
+    async delete(key: string) {
+      store.delete(key);
+    },
+  } as unknown as KVNamespace;
+}
+
 function createStatefulCacheStub() {
   const store = new Map<string, Response>();
   return {
@@ -277,5 +293,63 @@ describe('article links cache invalidation', () => {
     expect(response.status).toBe(200);
 
     expect(await getMovieArticleLinks(environment, 'ja')).toEqual([]);
+  });
+});
+
+async function insertArticleLinkDirectly(
+  environment: Environment,
+): Promise<void> {
+  await getDatabase(environment).insert(articleLinks).values({
+    movieUid: 'movie-1',
+    url: 'https://example.com/article',
+    title: 'Test Article',
+    submitterIp: 'test-ip',
+  });
+}
+
+describe('article links cache invalidation (CACHE_KV)', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+    environment.CACHE_KV = createKvStub();
+  });
+
+  it('映画詳細がKVにキャッシュされる', async () => {
+    expect(await getMovieArticleLinks(environment, 'ja')).toEqual([]);
+
+    await insertArticleLinkDirectly(environment);
+
+    expect(await getMovieArticleLinks(environment, 'ja')).toEqual([]);
+  });
+
+  it('投稿後にKV上の映画詳細キャッシュが無効化される', async () => {
+    expect(await getMovieArticleLinks(environment, 'ja')).toEqual([]);
+
+    await submitArticleLink(environment);
+
+    expect(await getMovieArticleLinks(environment, 'ja')).toContain(
+      'https://example.com/article',
+    );
+  });
+
+  it('selectionsがKVにキャッシュされる', async () => {
+    await insertDailySelection(environment);
+    expect(await getDailySelectionArticleLinks(environment)).toEqual([]);
+
+    await insertArticleLinkDirectly(environment);
+
+    expect(await getDailySelectionArticleLinks(environment)).toEqual([]);
+  });
+
+  it('投稿後にKV上のselectionsキャッシュが無効化される', async () => {
+    await insertDailySelection(environment);
+    expect(await getDailySelectionArticleLinks(environment)).toEqual([]);
+
+    await submitArticleLink(environment);
+
+    expect(await getDailySelectionArticleLinks(environment)).toContain(
+      'https://example.com/article',
+    );
   });
 });
