@@ -4,13 +4,19 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
 import {articleLinks} from '@shine/database/schema/article-links';
+import {awardCategories} from '@shine/database/schema/award-categories';
+import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
+import {awardOrganizations} from '@shine/database/schema/award-organizations';
+import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
+import {nominations} from '@shine/database/schema/nominations';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 import {createJWT} from '../auth';
 import {adminArticleLinksRoutes} from '../routes/admin/article-links';
 import {moviesRoutes} from '../routes/movies';
+import {selectionsRoutes} from '../routes/selections';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -53,6 +59,24 @@ async function createTestEnvironment(): Promise<Environment> {
   await migrate(database, {migrationsFolder});
 
   await database.insert(movies).values({uid: 'movie-1', year: 2020});
+  await database
+    .insert(awardOrganizations)
+    .values({uid: 'org-1', name: 'Test Award'});
+  await database
+    .insert(awardCeremonies)
+    .values({uid: 'ceremony-1', organizationUid: 'org-1', year: 2020});
+  await database.insert(awardCategories).values({
+    uid: 'category-1',
+    organizationUid: 'org-1',
+    name: 'Best Picture',
+  });
+  await database.insert(nominations).values({
+    uid: 'nomination-1',
+    movieUid: 'movie-1',
+    ceremonyUid: 'ceremony-1',
+    categoryUid: 'category-1',
+    isWinner: 1,
+  });
   await database.insert(translations).values([
     {
       resourceType: 'movie_title',
@@ -103,6 +127,35 @@ async function getMovieArticleLinks(
   );
   const body = (await response.json()) as MovieDetailResponse;
   return body.articleLinks.map(link => link.url);
+}
+
+function todayDateString(): string {
+  const now = new Date();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+async function insertDailySelection(environment: Environment): Promise<void> {
+  await getDatabase(environment).insert(movieSelections).values({
+    selectionType: 'daily',
+    selectionDate: todayDateString(),
+    movieId: 'movie-1',
+  });
+}
+
+async function getDailySelectionArticleLinks(
+  environment: Environment,
+): Promise<string[]> {
+  const response = await selectionsRoutes.request(
+    '/?locale=ja',
+    {},
+    environment,
+  );
+  const body = (await response.json()) as {
+    daily: {articleLinks: Array<{url: string}>};
+  };
+  return body.daily.articleLinks.map(link => link.url);
 }
 
 describe('article links cache invalidation', () => {
@@ -167,6 +220,40 @@ describe('article links cache invalidation', () => {
     expect(response.status).toBe(200);
 
     expect(await getMovieArticleLinks(environment, 'ja')).toEqual([]);
+  });
+
+  it('投稿後に当日のselectionsキャッシュが無効化される', async () => {
+    await insertDailySelection(environment);
+    expect(await getDailySelectionArticleLinks(environment)).toEqual([]);
+
+    await submitArticleLink(environment);
+
+    expect(await getDailySelectionArticleLinks(environment)).toContain(
+      'https://example.com/article',
+    );
+  });
+
+  it('admin削除後に当日のselectionsキャッシュが無効化される', async () => {
+    await insertDailySelection(environment);
+    await submitArticleLink(environment);
+    const [article] = await getDatabase(environment)
+      .select({uid: articleLinks.uid})
+      .from(articleLinks);
+    expect(await getDailySelectionArticleLinks(environment)).toContain(
+      'https://example.com/article',
+    );
+
+    const token = await createJWT(JWT_SECRET);
+    await adminArticleLinksRoutes.request(
+      `/article-links/${article.uid}`,
+      {
+        method: 'DELETE',
+        headers: {Authorization: `Bearer ${token}`},
+      },
+      environment,
+    );
+
+    expect(await getDailySelectionArticleLinks(environment)).toEqual([]);
   });
 
   it('adminスパム報告後に映画詳細キャッシュが無効化される', async () => {
