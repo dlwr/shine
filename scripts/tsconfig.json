@@ -7,6 +7,7 @@
   "include": [
     "./**/*.ts",
     "./**/*.cjs",
+    "../packages/availability/src/**/*",
     "../packages/database/src/**/*",
     "../packages/utils/src/**/*"
   ],
