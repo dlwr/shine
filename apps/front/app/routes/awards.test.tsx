@@ -72,6 +72,22 @@ describe('Awards crossings link', () => {
       '/crossings',
     );
   });
+
+  it('無冠の映画ページへの導線を置く', () => {
+    render(
+      <AwardsIndexPage
+        loaderData={cast<LoaderData>({...mockAwards, locale: 'ja'})}
+        actionData={undefined}
+        params={cast<ComponentProperties['params']>({})}
+        matches={cast<ComponentProperties['matches']>([])}
+      />,
+    );
+
+    expect(screen.getByRole('link', {name: /無冠の映画/})).toHaveAttribute(
+      'href',
+      '/uncrowned',
+    );
+  });
 });
 
 describe('Awards index page', () => {
