@@ -1,14 +1,17 @@
 import {type Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {authMiddleware} from '../../auth';
-import {AdminService} from '../../services';
+import {AdminService, SelectionsService} from '../../services';
 import {EdgeCache, getMovieCacheKeysForAllLocales} from '../../utils/cache';
 
 export const adminArticleLinksRoutes = new Hono<{Bindings: Environment}>();
 
 const cache = new EdgeCache();
 
-async function invalidateMovieCache(movieUid: string | undefined) {
+async function invalidateMovieCache(
+  environment: Environment,
+  movieUid: string | undefined,
+) {
   if (!movieUid) {
     return;
   }
@@ -17,6 +20,9 @@ async function invalidateMovieCache(movieUid: string | undefined) {
     getMovieCacheKeysForAllLocales(movieUid).map(async key =>
       cache.delete(key),
     ),
+  );
+  await new SelectionsService(environment).purgeSelectionCachesForMovie(
+    movieUid,
   );
 }
 
@@ -33,7 +39,7 @@ adminArticleLinksRoutes.post(
       }
 
       const movieUid = await adminService.flagArticleAsSpam(articleId);
-      await invalidateMovieCache(movieUid);
+      await invalidateMovieCache(c.env, movieUid);
 
       return c.json({success: true});
     } catch (error) {
@@ -56,7 +62,7 @@ adminArticleLinksRoutes.delete(
       }
 
       const movieUid = await adminService.deleteArticleLink(articleId);
-      await invalidateMovieCache(movieUid);
+      await invalidateMovieCache(c.env, movieUid);
 
       return c.json({success: true});
     } catch (error) {
