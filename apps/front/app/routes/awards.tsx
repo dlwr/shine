@@ -3,6 +3,7 @@ import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
+import {resolveApiUrl} from '@/lib/api';
 
 export type AwardSummaryData = {
   slug: string;
@@ -24,8 +25,8 @@ export function awardHeading(award: {
     : `${award.organization} ${award.name}`;
 }
 
-export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
-  const {locale} = data as {locale?: Locale};
+export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
+  const {locale} = loaderData as {locale?: Locale};
 
   return buildSocialMeta({
     title: '映画賞・リスト一覧 | SHINE',
@@ -40,9 +41,7 @@ export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
 
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
-  const apiUrl =
-    (context.cloudflare as {env?: {PUBLIC_API_URL?: string}}).env
-      ?.PUBLIC_API_URL || 'http://localhost:8787';
+  const apiUrl = resolveApiUrl(context);
 
   const response = await fetch(`${apiUrl}/awards`, {signal: request.signal});
   if (!response.ok) {

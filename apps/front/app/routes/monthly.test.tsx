@@ -3,16 +3,9 @@ import {render, screen} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import MonthlyArchivePage, {loader, meta} from './monthly';
 import type {Route} from './+types/monthly';
+import {createMockContext} from '@/lib/test-context';
 
 globalThis.fetch = vi.fn();
-
-const createMockContext = (apiUrl = 'http://localhost:8787') => ({
-  cloudflare: {
-    env: {
-      PUBLIC_API_URL: apiUrl,
-    },
-  },
-});
 
 const mockHistory = {
   items: [
@@ -105,7 +98,7 @@ describe('Monthly archive page', () => {
     it('タイトルとdescriptionを返す', () => {
       const result = meta(
         cast<Route.MetaArgs>({
-          data: {items: mockHistory.items, locale: 'ja'},
+          loaderData: {items: mockHistory.items, locale: 'ja'},
           params: {},
           location: {
             pathname: '/monthly',

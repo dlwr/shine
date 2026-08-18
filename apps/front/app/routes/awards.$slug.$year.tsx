@@ -5,6 +5,7 @@ import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {awardHeading} from './awards';
 import {MovieRow, type AwardMovieEntryData} from './awards.$slug';
+import {resolveApiUrl} from '@/lib/api';
 
 export type AwardYearDetailData = {
   slug: string;
@@ -32,8 +33,11 @@ function buildItemList(award: AwardYearDetailData): Record<string, unknown> {
   };
 }
 
-export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
-  const {award, locale} = data as {award: AwardYearDetailData; locale?: Locale};
+export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
+  const {award, locale} = loaderData as {
+    award: AwardYearDetailData;
+    locale?: Locale;
+  };
   const heading = awardHeading(award);
   const title = award.ceremonyNumber
     ? `${heading} ${award.year}年（第${award.ceremonyNumber}回） | SHINE`
@@ -58,9 +62,7 @@ export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
 
 export async function loader({context, request, params}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
-  const apiUrl =
-    (context.cloudflare as {env?: {PUBLIC_API_URL?: string}}).env
-      ?.PUBLIC_API_URL || 'http://localhost:8787';
+  const apiUrl = resolveApiUrl(context);
 
   if (!/^\d{4}$/.test(params.year ?? '')) {
     throw new Response('Not Found', {status: 404});

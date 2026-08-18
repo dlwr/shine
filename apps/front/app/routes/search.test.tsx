@@ -3,18 +3,12 @@ import {render, screen} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import Search, {loader, meta} from './search';
 import type {Route} from './+types/search';
+import {createMockContext} from '@/lib/test-context';
 
 // Fetchのモック
 globalThis.fetch = vi.fn();
 
 // Cloudflare環境のモック
-const createMockContext = (apiUrl = 'http://localhost:8787') => ({
-  cloudflare: {
-    env: {
-      PUBLIC_API_URL: apiUrl,
-    },
-  },
-});
 
 // 検索結果のモックデータ
 const mockSearchResults = {
@@ -78,11 +72,11 @@ describe('Search Component', () => {
     });
 
   const createMetaArguments = (
-    data: LoaderData,
+    loaderData: LoaderData,
     locationSearch: string,
   ): MetaArguments =>
     cast<MetaArguments>({
-      data,
+      loaderData,
       params: {},
       location: {
         pathname: '/search',
@@ -119,7 +113,7 @@ describe('Search Component', () => {
         id: 'routes/search',
         params: {},
         pathname: '/search',
-        data: loaderData as NonNullable<Matches[number]>['data'],
+        loaderData: loaderData as NonNullable<Matches[number]>['loaderData'],
         handle: undefined,
       },
     ]);

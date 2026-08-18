@@ -26,8 +26,11 @@ type SearchPaginationData = {
   hasPrevPage: boolean;
 };
 
-export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
-  const {searchQuery, locale} = data as {searchQuery: string; locale?: Locale};
+export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
+  const {searchQuery, locale} = loaderData as {
+    searchQuery: string;
+    locale?: Locale;
+  };
 
   const copy = searchQuery
     ? {

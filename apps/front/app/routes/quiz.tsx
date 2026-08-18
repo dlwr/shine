@@ -23,8 +23,11 @@ import {
 
 const SUGGESTION_LIMIT = 8;
 
-export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
-  const {locale, puzzle} = data as {locale?: Locale; puzzle?: {date: string}};
+export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
+  const {locale, puzzle} = loaderData as {
+    locale?: Locale;
+    puzzle?: {date: string};
+  };
   const imageUrl = puzzle
     ? `${SITE_URL}/og/quiz.png?date=${puzzle.date}`
     : `${SITE_URL}/og/quiz.png`;
@@ -122,12 +125,12 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
     [candidates, query],
   );
 
-  const finished = game.status !== 'playing';
-  const stage = finished ? puzzle.maxAttempts : game.guesses.length;
+  const isFinished = game.status !== 'playing';
+  const stage = isFinished ? puzzle.maxAttempts : game.guesses.length;
   const remaining = puzzle.maxAttempts - game.guesses.length;
 
   async function submit(candidate?: QuizCandidate) {
-    if (pending || finished) {
+    if (pending || isFinished) {
       return;
     }
 
@@ -204,7 +207,7 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
           <div className="border-2 border-ink bg-surface">
             <img
               src={`/quiz/poster.png?date=${puzzle.date}&stage=${stage}`}
-              alt={finished ? game.answer?.title : 'ポスターの一部'}
+              alt={isFinished ? game.answer?.title : 'ポスターの一部'}
               width={480}
               height={720}
               className="block w-full h-auto"
@@ -246,7 +249,7 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
               </dl>
             )}
 
-            {finished ? (
+            {isFinished ? (
               <div className="border-2 border-ink p-4">
                 <p className="font-display font-black text-lg mb-1">
                   {game.status === 'won' ? '正解！' : '残念！'}

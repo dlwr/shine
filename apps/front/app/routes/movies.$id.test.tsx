@@ -3,16 +3,11 @@ import {render, screen} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import MovieDetail, {action, loader, meta} from './movies.$id';
 import type {Route} from './+types/movies.$id';
+import {createMockContext as createTestContext} from '@/lib/test-context';
 
 // Cloudflare環境のモック
-const createMockContext = (apiUrl = 'http://localhost:8787') => ({
-  cloudflare: {
-    env: {
-      PUBLIC_API_URL: apiUrl,
-      PUBLIC_TURNSTILE_SITE_KEY: 'test-site-key',
-    },
-  },
-});
+const createMockContext = (apiUrl = 'http://localhost:8787') =>
+  createTestContext(apiUrl, {PUBLIC_TURNSTILE_SITE_KEY: 'test-site-key'});
 
 // 映画詳細データのモック
 const mockMovieDetail = {
@@ -133,11 +128,11 @@ const createLoaderArguments = (
   });
 
 const createMetaArguments = (
-  data: MetaArguments['data'],
+  loaderData: MetaArguments['loaderData'],
   parameters: MetaArguments['params'],
 ): MetaArguments =>
   cast<MetaArguments>({
-    data,
+    loaderData,
     params: parameters,
     location: {
       pathname: '/movies/movie-123',

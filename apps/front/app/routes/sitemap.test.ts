@@ -2,26 +2,22 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {loader as sitemapAwardsLoader} from './sitemap-awards';
 import {loader as sitemapIndexLoader} from './sitemap-index';
 import {loader as sitemapMoviesLoader} from './sitemap-movies';
+import {createMockContext} from '@/lib/test-context';
 
 globalThis.fetch = vi.fn();
 
 const cast = <T>(value?: unknown): T => value as T;
 
-const createContext = (apiUrl = 'http://localhost:8787') =>
-  cast<Parameters<typeof sitemapIndexLoader>[0]['context']>({
-    cloudflare: {env: {PUBLIC_API_URL: apiUrl}},
-  });
-
 const createIndexArguments = () =>
   cast<Parameters<typeof sitemapIndexLoader>[0]>({
-    context: createContext(),
+    context: createMockContext(),
     request: new Request('https://shine-film.com/sitemap.xml'),
     params: {},
   });
 
 const createMoviesArguments = (page: string) =>
   cast<Parameters<typeof sitemapMoviesLoader>[0]>({
-    context: createContext(),
+    context: createMockContext(),
     request: new Request(
       `https://shine-film.com/sitemap/movies.xml?page=${page}`,
     ),
@@ -130,7 +126,7 @@ describe('sitemap/movies-:page.xml', () => {
 
 const createAwardsArguments = () =>
   cast<Parameters<typeof sitemapAwardsLoader>[0]>({
-    context: createContext(),
+    context: createMockContext(),
     request: new Request('https://shine-film.com/sitemap/awards.xml'),
     params: {},
   });

@@ -1,4 +1,4 @@
-import {resolveApiUrl} from './api';
+import {resolveApiUrl, type LoadContext} from './api';
 
 export const MOVIES_PER_SITEMAP = 100;
 
@@ -12,7 +12,7 @@ type SearchResponse = {
 export {resolveApiUrl} from './api';
 
 async function fetchSearchPage(
-  context: unknown,
+  context: LoadContext,
   page: number,
   limit: number,
   signal?: AbortSignal,
@@ -30,7 +30,7 @@ async function fetchSearchPage(
 }
 
 export async function fetchMovieTotalCount(
-  context: unknown,
+  context: LoadContext,
   signal?: AbortSignal,
 ): Promise<number> {
   try {
@@ -42,7 +42,7 @@ export async function fetchMovieTotalCount(
 }
 
 export async function fetchMovieUids(
-  context: unknown,
+  context: LoadContext,
   page: number,
   signal?: AbortSignal,
 ): Promise<string[]> {

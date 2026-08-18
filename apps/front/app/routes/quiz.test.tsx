@@ -5,6 +5,8 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import QuizPage, {loader, meta} from './quiz';
 import type {Route} from './+types/quiz';
 import {QUIZ_STATE_KEY} from '@/lib/quiz-state';
+import {createEnvironmentContext} from '@/lib/api';
+import {createMockContext} from '@/lib/test-context';
 
 globalThis.fetch = vi.fn();
 
@@ -31,7 +33,7 @@ const createComponentProperties = (): Route.ComponentProps =>
 describe('Quiz page', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    globalThis.localStorage.clear();
+    localStorage.clear();
   });
 
   describe('loader', () => {
@@ -47,9 +49,7 @@ describe('Quiz page', () => {
       const request = new Request('http://localhost:3000/quiz');
       const result = await loader(
         cast<Route.LoaderArgs>({
-          context: {
-            cloudflare: {env: {PUBLIC_API_URL: 'http://localhost:8787'}},
-          },
+          context: createMockContext(),
           request,
           params: {},
           matches: [],
@@ -66,7 +66,7 @@ describe('Quiz page', () => {
       await expect(
         loader(
           cast<Route.LoaderArgs>({
-            context: {cloudflare: {env: {}}},
+            context: createEnvironmentContext({}),
             request: new Request('http://localhost:3000/quiz'),
             params: {},
             matches: [],
@@ -79,7 +79,7 @@ describe('Quiz page', () => {
   describe('meta', () => {
     it('クイズ専用のOG画像を出題日付きで指す', () => {
       const descriptors = meta(
-        cast<Route.MetaArgs>({data: {puzzle: PUZZLE, locale: 'ja'}}),
+        cast<Route.MetaArgs>({loaderData: {puzzle: PUZZLE, locale: 'ja'}}),
       );
 
       expect(descriptors).toContainEqual({
@@ -90,7 +90,7 @@ describe('Quiz page', () => {
 
     it('og:urlに出題日を付けてSNSのカードキャッシュを分ける', () => {
       const descriptors = meta(
-        cast<Route.MetaArgs>({data: {puzzle: PUZZLE, locale: 'ja'}}),
+        cast<Route.MetaArgs>({loaderData: {puzzle: PUZZLE, locale: 'ja'}}),
       );
 
       expect(descriptors).toContainEqual({
@@ -100,7 +100,9 @@ describe('Quiz page', () => {
     });
 
     it('出題が取れないときのog:urlは日付を付けない', () => {
-      const descriptors = meta(cast<Route.MetaArgs>({data: {locale: 'ja'}}));
+      const descriptors = meta(
+        cast<Route.MetaArgs>({loaderData: {locale: 'ja'}}),
+      );
 
       expect(descriptors).toContainEqual({
         property: 'og:url',
@@ -166,7 +168,7 @@ describe('Quiz page', () => {
     });
 
     it('リロードしても進行を引き継ぐ', async () => {
-      globalThis.localStorage.setItem(
+      localStorage.setItem(
         QUIZ_STATE_KEY,
         JSON.stringify({
           date: PUZZLE.date,
@@ -184,7 +186,7 @@ describe('Quiz page', () => {
     });
 
     it('日付が変わったら前日の進行は捨てる', async () => {
-      globalThis.localStorage.setItem(
+      localStorage.setItem(
         QUIZ_STATE_KEY,
         JSON.stringify({
           date: '2026-08-15',

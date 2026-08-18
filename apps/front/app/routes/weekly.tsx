@@ -17,8 +17,8 @@ const CONFIG: SelectionArchiveConfig = {
     '映画賞や名作リストに選ばれた映画から毎週1本を紹介する「今週の1本」の過去のセレクション一覧。',
 };
 
-export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
-  const {locale} = data as Partial<SelectionArchiveData>;
+export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
+  const {locale} = loaderData as Partial<SelectionArchiveData>;
   return buildArchiveMeta(CONFIG, locale);
 }
 

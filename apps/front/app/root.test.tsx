@@ -1,5 +1,6 @@
 import {renderToStaticMarkup} from 'react-dom/server';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {createEnvironmentContext} from '@/lib/api';
 
 let mockRootLoaderData:
   | {locale: string; canonicalUrl?: string; webAnalyticsToken?: string}
@@ -7,7 +8,8 @@ let mockRootLoaderData:
   locale: 'ja',
 };
 
-vi.mock('react-router', () => ({
+vi.mock('react-router', async importOriginal => ({
+  ...(await importOriginal<typeof import('react-router')>()),
   Links: () => {},
   Meta: () => {},
   Outlet: () => {},
@@ -25,7 +27,7 @@ const callLoader = (
 ) =>
   loader({
     request,
-    context: {cloudflare: {env: environment}},
+    context: createEnvironmentContext(environment),
   } as unknown as Parameters<typeof loader>[0]);
 
 describe('root loader', () => {

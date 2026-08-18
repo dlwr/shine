@@ -77,8 +77,8 @@ const HOME_COPY = {
   },
 } as const;
 
-export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
-  const locale = data?.locale ?? DEFAULT_LOCALE;
+export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
+  const locale = loaderData?.locale ?? DEFAULT_LOCALE;
   const copy = HOME_COPY[locale];
 
   return buildSocialMeta({
@@ -159,63 +159,67 @@ export default function Home({loaderData}: Route.ComponentProps) {
   const [adminToken, setAdminToken] = useState<string | undefined>();
 
   useEffect(() => {
-    if (globalThis.window !== undefined) {
-      setAdminToken(getAdminToken());
-
-      const handleAdminLogin = () => {
-        setAdminToken(getAdminToken());
-      };
-
-      const handleAdminLogout = () => {
-        setAdminToken(undefined);
-      };
-
-      globalThis.addEventListener('adminLogin', handleAdminLogin);
-      globalThis.addEventListener('adminLogout', handleAdminLogout);
-
-      return () => {
-        globalThis.removeEventListener('adminLogin', handleAdminLogin);
-        globalThis.removeEventListener('adminLogout', handleAdminLogout);
-      };
+    if (globalThis.window === undefined) {
+      return;
     }
+
+    setAdminToken(getAdminToken());
+
+    const handleAdminLogin = () => {
+      setAdminToken(getAdminToken());
+    };
+
+    const handleAdminLogout = () => {
+      setAdminToken(undefined);
+    };
+
+    globalThis.addEventListener('adminLogin', handleAdminLogin);
+    globalThis.addEventListener('adminLogout', handleAdminLogout);
+
+    return () => {
+      globalThis.removeEventListener('adminLogin', handleAdminLogin);
+      globalThis.removeEventListener('adminLogout', handleAdminLogout);
+    };
   }, []);
 
   // クライアントサイドでデータフェッチ
   useEffect(() => {
-    if (shouldFetchOnClient && globalThis.window !== undefined) {
-      const fetchMovies = async () => {
-        try {
-          setLoading(true);
-
-          const cacheKey = createSelectionCacheKey();
-          const fetchUrl = `${apiUrl}/?cache=${cacheKey}&locale=${locale}`;
-
-          const response = await fetch(fetchUrl, {
-            headers: {
-              'Cache-Control': 'no-store',
-              'Accept-Language': locale === 'ja' ? 'ja,en;q=0.5' : 'en',
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error(`API request failed: ${response.status}`);
-          }
-
-          const fetchedMovies = (await response.json()) as HighlightedMovies;
-          setMovies(fetchedMovies);
-          setError(undefined);
-        } catch (error_) {
-          console.error('Error fetching movies:', error_);
-          setError(
-            error_ instanceof Error ? error_.message : 'Unknown error occurred',
-          );
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      void fetchMovies();
+    if (!shouldFetchOnClient || globalThis.window === undefined) {
+      return;
     }
+
+    const fetchMovies = async () => {
+      try {
+        setLoading(true);
+
+        const cacheKey = createSelectionCacheKey();
+        const fetchUrl = `${apiUrl}/?cache=${cacheKey}&locale=${locale}`;
+
+        const response = await fetch(fetchUrl, {
+          headers: {
+            'Cache-Control': 'no-store',
+            'Accept-Language': locale === 'ja' ? 'ja,en;q=0.5' : 'en',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`API request failed: ${response.status}`);
+        }
+
+        const fetchedMovies = (await response.json()) as HighlightedMovies;
+        setMovies(fetchedMovies);
+        setError(undefined);
+      } catch (error_) {
+        console.error('Error fetching movies:', error_);
+        setError(
+          error_ instanceof Error ? error_.message : 'Unknown error occurred',
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchMovies();
   }, [shouldFetchOnClient, apiUrl, locale]);
 
   const labels = {
@@ -292,7 +296,7 @@ function ManualSelectionPanel({
       return;
     }
 
-    let cancelled = false;
+    let isCancelled = false;
     setSearchLoading(true);
     setError(undefined);
 
@@ -308,11 +312,11 @@ function ManualSelectionPanel({
 
         const data = (await response.json()) as {movies: SearchMovie[]};
 
-        if (!cancelled) {
+        if (!isCancelled) {
           setResults(data.movies ?? []);
         }
       } catch (error_) {
-        if (cancelled) {
+        if (isCancelled) {
           return;
         }
 
@@ -320,14 +324,14 @@ function ManualSelectionPanel({
         setError(locale === 'ja' ? '検索に失敗しました。' : 'Search failed.');
         setResults([]);
       } finally {
-        if (!cancelled) {
+        if (!isCancelled) {
           setSearchLoading(false);
         }
       }
     }, 300);
 
     return () => {
-      cancelled = true;
+      isCancelled = true;
       clearTimeout(timeoutId);
     };
   }, [query, apiUrl, locale]);
@@ -366,7 +370,7 @@ function ManualSelectionPanel({
         },
         body: JSON.stringify({
           type: period,
-          date: new Date().toISOString().split('T')[0],
+          date: new Date().toISOString().split('T', 1)[0],
           movieId: movie.uid,
         }),
       });

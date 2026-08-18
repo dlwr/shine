@@ -3,16 +3,9 @@ import {render, screen} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import AwardsIndexPage, {loader, meta} from './awards';
 import type {Route} from './+types/awards';
+import {createMockContext} from '@/lib/test-context';
 
 globalThis.fetch = vi.fn();
-
-const createMockContext = (apiUrl = 'http://localhost:8787') => ({
-  cloudflare: {
-    env: {
-      PUBLIC_API_URL: apiUrl,
-    },
-  },
-});
 
 const mockAwards = {
   awards: [
@@ -119,7 +112,7 @@ describe('Awards index page', () => {
   describe('meta', () => {
     it('賞一覧のタイトルを返す', () => {
       const metaArguments = cast<Route.MetaArgs>({
-        data: {awards: mockAwards.awards, locale: 'ja'},
+        loaderData: {awards: mockAwards.awards, locale: 'ja'},
         params: {},
         location: {
           pathname: '/awards',

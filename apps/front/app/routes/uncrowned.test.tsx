@@ -3,16 +3,9 @@ import {render, screen, within} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import UncrownedPage, {loader, meta} from './uncrowned';
 import type {Route} from './+types/uncrowned';
+import {createMockContext} from '@/lib/test-context';
 
 globalThis.fetch = vi.fn();
-
-const createMockContext = (apiUrl = 'http://localhost:8787') => ({
-  cloudflare: {
-    env: {
-      PUBLIC_API_URL: apiUrl,
-    },
-  },
-});
 
 const mockUncrowned = {
   nominatedFilmCount: 6506,
@@ -131,7 +124,7 @@ describe('Uncrowned page', () => {
     it('タイトルを返す', () => {
       const descriptors = meta(
         cast<Route.MetaArgs>({
-          data: loaderData(),
+          loaderData: loaderData(),
           params: {},
           location: {pathname: '/uncrowned', search: '', hash: ''},
           matches: [],

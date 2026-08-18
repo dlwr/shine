@@ -1,4 +1,4 @@
-import {resolveApiUrl} from '@/lib/api';
+import {resolveApiUrl, type LoadContext} from '@/lib/api';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
@@ -48,7 +48,7 @@ export function buildArchiveMeta(
 
 export async function loadSelectionArchive(
   config: SelectionArchiveConfig,
-  context: unknown,
+  context: LoadContext,
   request: Request,
 ): Promise<SelectionArchiveData> {
   const locale = getLocaleFromRequest(request);

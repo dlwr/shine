@@ -2,7 +2,7 @@ import {Turnstile} from '@marsidev/react-turnstile';
 import {useCallback, useState, type ChangeEvent, type ElementType} from 'react';
 import {Form, redirect} from 'react-router';
 import type {Route} from './+types/movies.$id';
-import {resolveApiUrl} from '@/lib/api';
+import {resolveApiUrl, resolveEnvironment} from '@/lib/api';
 import {AwardTree} from '@/components/editorial/award-tree';
 import {Masthead} from '@/components/editorial/masthead';
 import {BigYear} from '@/components/editorial/big-year';
@@ -15,13 +15,6 @@ import {Button} from '@/components/ui/button';
 import {useOnDemandAvailability} from '@/hooks/use-on-demand-availability';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-
-type CloudflareContext = {
-  env?: {
-    PUBLIC_API_URL?: string;
-    PUBLIC_TURNSTILE_SITE_KEY?: string;
-  };
-};
 
 type MovieDetailData = {
   uid: string;
@@ -471,16 +464,19 @@ function buildMovieJsonLd(
     '@type': 'Movie',
     name: movieDetail.title,
     url: `${SITE_URL}/movies/${movieDetail.uid}`,
-    ...(movieDetail.posterUrl ? {image: movieDetail.posterUrl} : {}),
-    ...(movieDetail.description ? {description: movieDetail.description} : {}),
-    ...(movieDetail.year ? {datePublished: String(movieDetail.year)} : {}),
-    ...(movieDetail.imdbUrl ? {sameAs: movieDetail.imdbUrl} : {}),
-    ...(awards.length > 0 ? {award: awards} : {}),
+    ...(movieDetail.posterUrl && {image: movieDetail.posterUrl}),
+    ...(movieDetail.description && {description: movieDetail.description}),
+    ...(movieDetail.year && {datePublished: String(movieDetail.year)}),
+    ...(movieDetail.imdbUrl && {sameAs: movieDetail.imdbUrl}),
+    ...(awards.length > 0 && {award: awards}),
   };
 }
 
-export function meta({data, params}: Route.MetaArgs): Route.MetaDescriptors {
-  const payload = data as LoaderData | undefined;
+export function meta({
+  loaderData,
+  params,
+}: Route.MetaArgs): Route.MetaDescriptors {
+  const payload = loaderData as LoaderData | undefined;
   const locale = payload?.locale ?? DEFAULT_LOCALE;
   const path = `/movies/${params.id}`;
 
@@ -547,9 +543,7 @@ export async function loader({
   const locale = getLocaleFromRequest(request);
 
   try {
-    const cloudflareEnvironment = (
-      context.cloudflare as CloudflareContext | undefined
-    )?.env;
+    const environment = resolveEnvironment(context);
     const apiUrl = resolveApiUrl(context);
     const [response, relatedMovies] = await Promise.all([
       fetch(`${apiUrl}/movies/${params.id}`, {
@@ -575,7 +569,7 @@ export async function loader({
     }
 
     const movieDetail = (await response.json()) as MovieDetailData;
-    const turnstileSiteKey = cloudflareEnvironment?.PUBLIC_TURNSTILE_SITE_KEY;
+    const turnstileSiteKey = environment.PUBLIC_TURNSTILE_SITE_KEY;
     return {movieDetail, relatedMovies, turnstileSiteKey, locale, apiUrl};
   } catch {
     return {

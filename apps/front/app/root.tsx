@@ -11,18 +11,17 @@ import type {Route} from './+types/root';
 import './app.css';
 import {NO_FLASH_SCRIPT} from '@/lib/theme';
 import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
+import {resolveEnvironment} from '@/lib/api';
 import {SITE_URL} from '@/lib/meta';
 
 export function loader({context, request}: Route.LoaderArgs) {
   const {pathname} = new URL(request.url);
-  const environment = (
-    context.cloudflare as {env?: {PUBLIC_WEB_ANALYTICS_TOKEN?: string}}
-  )?.env;
+  const environment = resolveEnvironment(context);
 
   return {
     locale: getLocaleFromRequest(request),
-    canonicalUrl: new URL(pathname, SITE_URL).toString(),
-    webAnalyticsToken: environment?.PUBLIC_WEB_ANALYTICS_TOKEN || undefined,
+    canonicalUrl: new URL(pathname, SITE_URL).href,
+    webAnalyticsToken: environment.PUBLIC_WEB_ANALYTICS_TOKEN || undefined,
   };
 }
 
