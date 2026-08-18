@@ -60,7 +60,7 @@ const RANK_PATTERN = /^(\d+)位$/;
 
 function rankOf(entry: AwardMovieEntry): number {
   const matched = RANK_PATTERN.exec(entry.specialMention ?? '');
-  return matched ? Number.parseInt(matched[1], 10) : Infinity;
+  return matched ? Number(matched[1]) : Infinity;
 }
 
 function compareAwardMovies(a: AwardMovieEntry, b: AwardMovieEntry): number {

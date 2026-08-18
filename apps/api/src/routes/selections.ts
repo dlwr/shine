@@ -177,7 +177,7 @@ function parseAcceptLanguage(acceptLanguage?: string): string[] {
     const [code, quality] = entry.trim().split(';q=', 2);
     return {
       code: code.split('-', 1)[0],
-      quality: quality ? Number.parseFloat(quality) : 1,
+      quality: quality ? Number(quality) : 1,
     };
   });
   const sortedLanguages = sortLanguagesByQuality(languages);

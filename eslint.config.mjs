@@ -95,7 +95,6 @@ export default tseslint.config(
       'unicorn/no-top-level-assignment-in-function': 'off',
       // Iterator#toArray は tsconfig の lib が ES2023 なので型が無い
       'unicorn/prefer-iterator-to-array': 'off',
-      'unicorn/prefer-number-coercion': 'off',
     },
   },
   {

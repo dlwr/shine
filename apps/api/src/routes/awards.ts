@@ -37,7 +37,7 @@ awardsRoutes.get('/', async c => {
 awardsRoutes.get('/:slug', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
   const slug = c.req.param('slug');
-  const pageParameter = Number.parseInt(c.req.query('page') ?? '1', 10);
+  const pageParameter = Number(c.req.query('page') ?? '1');
   const page =
     Number.isSafeInteger(pageParameter) && pageParameter > 0
       ? pageParameter
@@ -74,7 +74,7 @@ awardsRoutes.get('/:slug', async c => {
 
 awardsRoutes.get('/:slug/:year', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const year = Number.parseInt(c.req.param('year'), 10);
+  const year = Number(c.req.param('year'));
   if (!Number.isSafeInteger(year)) {
     return c.json({error: 'Award not found'}, 404);
   }

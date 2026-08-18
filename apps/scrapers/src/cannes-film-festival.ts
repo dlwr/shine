@@ -62,14 +62,14 @@ export default {
       if (winnersOnlyParameter === 'true') {
         // 受賞作品のみ更新
         if (yearParameter) {
-          const targetYear = Number.parseInt(yearParameter, 10);
+          const targetYear = Number(yearParameter);
           await updateCannesWinnersOnly(targetYear);
         } else {
           await updateAllCannesWinnersOnly();
         }
       } else if (yearParameter) {
         // 通常のスクレイピング
-        const targetYear = Number.parseInt(yearParameter, 10);
+        const targetYear = Number(yearParameter);
         await scrapeCannesFilmFestivalYear(targetYear);
       } else {
         await scrapeCannesFilmFestival();
@@ -1331,7 +1331,7 @@ async function collectPosterUrls(
     }
 
     const posterUrl = `${config.images.secure_base_url}${size}${movieDetails.posterPath}`;
-    const width = Number.parseInt(size.slice(1), 10);
+    const width = Number(size.slice(1));
 
     results.push({
       movieUid,

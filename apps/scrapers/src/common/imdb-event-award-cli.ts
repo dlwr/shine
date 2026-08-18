@@ -17,9 +17,9 @@ import {
 } from './environment';
 
 function parseThrottle(value: string): number {
-  const ms = Number.parseInt(value, 10);
+  const ms = Number(value);
 
-  if (Number.isNaN(ms) || ms < 0) {
+  if (!Number.isSafeInteger(ms) || ms < 0) {
     throw new InvalidArgumentError(
       'throttleは0以上のミリ秒で指定してください。',
     );
@@ -53,10 +53,10 @@ export async function runImdbEventAwardCli({
   );
 
   const parseYear = (value: string): number => {
-    const year = Number.parseInt(value, 10);
+    const year = Number(value);
 
     if (
-      Number.isNaN(year) ||
+      !Number.isSafeInteger(year) ||
       year < firstYear ||
       year > new Date().getFullYear()
     ) {

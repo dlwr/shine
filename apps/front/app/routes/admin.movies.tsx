@@ -84,8 +84,8 @@ export async function loader({context, request}: Route.LoaderArgs) {
 
   return {
     apiUrl: resolveApiUrl(context),
-    page: Number.parseInt(page, 10),
-    limit: Number.parseInt(limit, 10),
+    page: Number(page),
+    limit: Number(limit),
     search,
     movies: [],
     pagination: {

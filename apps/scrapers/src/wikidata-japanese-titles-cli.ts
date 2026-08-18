@@ -14,9 +14,9 @@ const environment = buildEnvironment(process.env);
 
 function parsePositiveInteger(label: string) {
   return (value: string): number => {
-    const parsed = Number.parseInt(value, 10);
+    const parsed = Number(value);
 
-    if (Number.isNaN(parsed) || parsed < 0) {
+    if (!Number.isSafeInteger(parsed) || parsed < 0) {
       throw new InvalidArgumentError(
         `${label}は0以上の整数で指定してください。`,
       );

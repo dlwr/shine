@@ -32,7 +32,7 @@ const parseInteger = (value: unknown): number | undefined => {
       return;
     }
 
-    const parsed = Number.parseInt(trimmed, 10);
+    const parsed = Number(trimmed);
     if (!Number.isNaN(parsed)) {
       return parsed;
     }

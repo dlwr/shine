@@ -55,7 +55,7 @@ export function pickStrictMatch(
       continue;
     }
 
-    const resultYear = Number.parseInt(result.release_date.slice(0, 4), 10);
+    const resultYear = Number(result.release_date.slice(0, 4));
     if (!Number.isFinite(resultYear)) {
       continue;
     }

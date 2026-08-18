@@ -762,9 +762,8 @@ async function insertMovieWithTranslations({
   csvDescription,
 }: InsertMovieParameters): Promise<string> {
   const releaseYear =
-    (tmdbMovie.release_date &&
-      Number.parseInt(tmdbMovie.release_date.slice(0, 4), 10)) ||
-    (csvYear ? Number.parseInt(csvYear, 10) : undefined);
+    (tmdbMovie.release_date && Number(tmdbMovie.release_date.slice(0, 4))) ||
+    (csvYear ? Number(csvYear) : undefined);
   const normalizedYear =
     typeof releaseYear === 'number' && Number.isFinite(releaseYear)
       ? releaseYear

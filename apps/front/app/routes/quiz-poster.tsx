@@ -21,7 +21,7 @@ type QuizAnswer = {
 export async function loader({context, request}: Route.LoaderArgs) {
   const url = new URL(request.url);
   const date = url.searchParams.get('date') ?? '';
-  const stage = Number.parseInt(url.searchParams.get('stage') ?? '0', 10);
+  const stage = Number(url.searchParams.get('stage') ?? '0');
 
   if (!DATE_PATTERN.test(date) || !Number.isSafeInteger(stage) || stage < 0) {
     return new Response('Not Found', {status: 404});

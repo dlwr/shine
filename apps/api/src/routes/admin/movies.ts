@@ -84,8 +84,8 @@ adminMoviesRoutes.get(
         return;
       })();
 
-      const year = rawYear ? Number.parseInt(rawYear, 10) : undefined;
-      const limit = rawLimit ? Number.parseInt(rawLimit, 10) : undefined;
+      const year = rawYear ? Number(rawYear) : undefined;
+      const limit = rawLimit ? Number(rawLimit) : undefined;
 
       if (year !== undefined && Number.isNaN(year)) {
         return c.json({error: 'Invalid year parameter'}, 400);

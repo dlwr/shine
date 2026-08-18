@@ -22,9 +22,9 @@ const environment = buildEnvironment(process.env);
 const DEFAULT_BATCH_SIZE = 20;
 
 function parseLimit(value: string): number {
-  const parsed = Number.parseInt(value, 10);
+  const parsed = Number(value);
 
-  if (Number.isNaN(parsed) || parsed <= 0) {
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
     throw new InvalidArgumentError(
       '無効なバッチサイズです。正の整数を指定してください。',
     );

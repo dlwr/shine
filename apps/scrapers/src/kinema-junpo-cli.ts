@@ -13,9 +13,9 @@ loadEnvironmentFiles();
 const environment = buildEnvironment(process.env);
 
 function parseYear(value: string): number {
-  const parsed = Number.parseInt(value, 10);
+  const parsed = Number(value);
 
-  if (Number.isNaN(parsed) || parsed < 1924) {
+  if (!Number.isSafeInteger(parsed) || parsed < 1924) {
     throw new InvalidArgumentError('yearは1924以上の整数で指定してください。');
   }
 
@@ -23,9 +23,9 @@ function parseYear(value: string): number {
 }
 
 function parseThrottle(value: string): number {
-  const parsed = Number.parseInt(value, 10);
+  const parsed = Number(value);
 
-  if (Number.isNaN(parsed) || parsed < 0) {
+  if (!Number.isSafeInteger(parsed) || parsed < 0) {
     throw new InvalidArgumentError('throttleは0以上の整数で指定してください。');
   }
 

@@ -54,7 +54,7 @@ export default {
       const url = new URL(request.url);
       const processCountParameter = url.searchParams.get('count');
       const processCount = processCountParameter
-        ? Number.parseInt(processCountParameter, 10)
+        ? Number(processCountParameter)
         : 10;
 
       const result = await fetchAndStorePosterUrls(processCount);
