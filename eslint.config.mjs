@@ -6,6 +6,7 @@ import tseslint from 'typescript-eslint';
 import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 import reactHooks from 'eslint-plugin-react-hooks';
 const ignores = [
+  '**/.claude/**',
   '**/.wrangler/**',
   '**/dist/**',
   '**/node_modules/**',
