@@ -74,7 +74,7 @@ export function kinemaJunpoCeremonyNumber(year: number): number | undefined {
     return undefined;
   }
 
-  return year <= 1942 ? year - 1923 : year - 1926;
+  return year - (year <= 1942 ? 1923 : 1926);
 }
 
 function parseFilmLines(content: string): KinemaJunpoFilm[] {
@@ -431,7 +431,7 @@ export function selectTmdbMatch(
       return false;
     }
 
-    const earliest = foreign ? year - FOREIGN_YEAR_WINDOW : year - 1;
+    const earliest = year - (foreign ? FOREIGN_YEAR_WINDOW : 1);
     if (releaseYear < earliest || releaseYear > year + 1) {
       return false;
     }

@@ -380,7 +380,9 @@ adminMoviesRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
     // Validate TMDb ID (must be a positive integer)
     if (
       tmdbId !== undefined &&
-      (typeof tmdbId !== 'number' || !Number.isSafeInteger(tmdbId) || tmdbId <= 0)
+      (typeof tmdbId !== 'number' ||
+        !Number.isSafeInteger(tmdbId) ||
+        tmdbId <= 0)
     ) {
       return c.json({error: 'TMDb ID must be a positive integer'}, 400);
     }

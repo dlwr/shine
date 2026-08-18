@@ -39,7 +39,9 @@ awardsRoutes.get('/:slug', async c => {
   const slug = c.req.param('slug');
   const pageParameter = Number.parseInt(c.req.query('page') ?? '1', 10);
   const page =
-    Number.isSafeInteger(pageParameter) && pageParameter > 0 ? pageParameter : 1;
+    Number.isSafeInteger(pageParameter) && pageParameter > 0
+      ? pageParameter
+      : 1;
 
   // ページはキャッシュキーに含めない。利用者入力でキー空間が広がるのを避けるため、
   // 全件を1キーに載せて読み出し後に切り出す

@@ -72,5 +72,5 @@ export function extractText($: cheerio.CheerioAPI, selector: string): string {
 export function extractMainTitle(title: string): string {
   // 「映画名 (説明)」 形式から映画名のみを抽出
   const match = /^(.+?)\s*[(（].*?[)）]?$/.exec(title);
-  return match ? normalizeText(match[1]) : normalizeText(title);
+  return normalizeText(match ? match[1] : title);
 }

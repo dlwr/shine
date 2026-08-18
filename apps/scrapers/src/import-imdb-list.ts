@@ -620,8 +620,7 @@ async function searchMovieByTitle(
         if (details) {
           return details;
         }
-      }
-      if (result.media_type === 'tv') {
+      } else if (result.media_type === 'tv') {
         const details = await fetchTvDetails(result.id);
         if (details) {
           return details;
