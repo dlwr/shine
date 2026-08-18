@@ -30,7 +30,7 @@ describe('Parser Utilities', () => {
         <html>
           <head>
             <script type="application/ld+json">
-              {"@context": "http://schema.org", "@type": "Movie", "name": "Test Movie"}
+              {"@context": "https://schema.org", "@type": "Movie", "name": "Test Movie"}
             </script>
           </head>
         </html>
@@ -39,7 +39,7 @@ describe('Parser Utilities', () => {
       const result = extractWikipediaJsonLD($);
 
       expect(result).toEqual({
-        '@context': 'http://schema.org',
+        '@context': 'https://schema.org',
         '@type': 'Movie',
         name: 'Test Movie',
       });
