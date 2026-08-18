@@ -106,7 +106,7 @@ export class UncrownedService extends BaseService {
     lossesByMovie: Map<string, Map<string, UncrownedLoss>>,
     limit: number,
   ): Promise<UncrownedMovie[]> {
-    const movieUids = [...lossesByMovie.entries()]
+    const movieUids = [...lossesByMovie]
       .toSorted(
         ([uidA, a], [uidB, b]) => b.size - a.size || uidA.localeCompare(uidB),
       )

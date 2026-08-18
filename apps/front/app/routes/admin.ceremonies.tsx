@@ -184,7 +184,7 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
       }
     }
 
-    const options = [...unique.entries()].map(([value, label]) => ({
+    const options = [...unique].map(([value, label]) => ({
       value,
       label,
     }));

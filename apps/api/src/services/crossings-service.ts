@@ -107,7 +107,7 @@ export class CrossingsService extends BaseService {
 
     const pairs = [...sharedCounts.values()].toSorted(comparePairs);
 
-    const distribution = [...countsByAwardCount.entries()]
+    const distribution = [...countsByAwardCount]
       .map(([awardCount, filmCount]) => ({awardCount, filmCount}))
       .toSorted((a, b) => b.awardCount - a.awardCount);
 
@@ -123,7 +123,7 @@ export class CrossingsService extends BaseService {
     slugsByMovie: Map<string, Set<string>>,
     limit: number,
   ): Promise<CrossingMovie[]> {
-    const movieUids = [...slugsByMovie.entries()]
+    const movieUids = [...slugsByMovie]
       .toSorted(([, a], [, b]) => b.size - a.size)
       .slice(0, limit)
       .map(([uid]) => uid);
