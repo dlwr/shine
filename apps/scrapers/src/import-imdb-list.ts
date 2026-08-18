@@ -591,7 +591,8 @@ async function searchMovieByTitle(
     const data = (await response.json()) as {
       results: TmdbMovieSearchResult[];
     };
-    for (const result of data.results ?? []) {
+    const results = data.results ?? [];
+    for (const result of results) {
       const details = await fetchMovieDetails(result.id);
       if (details) {
         return details;
@@ -612,7 +613,8 @@ async function searchMovieByTitle(
     const data = (await multiResponse.json()) as {
       results: TmdbMultiSearchResult[];
     };
-    for (const result of data.results ?? []) {
+    const pageResults = data.results ?? [];
+    for (const result of pageResults) {
       if (result.media_type === 'movie') {
         const details = await fetchMovieDetails(result.id);
         if (details) {

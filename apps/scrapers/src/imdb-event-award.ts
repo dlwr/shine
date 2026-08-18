@@ -125,7 +125,8 @@ export function extractAwardEditions(
       }
     }
 
-    for (const correction of config.winnerCorrections ?? []) {
+    const corrections = config.winnerCorrections ?? [];
+    for (const correction of corrections) {
       if (correction.year !== edition.year) {
         continue;
       }

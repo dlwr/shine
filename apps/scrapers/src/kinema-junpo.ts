@@ -340,7 +340,8 @@ async function fetchImdbIds(
   });
 
   const films = new Map<string, ResolvedFilm>();
-  for (const [itemId, entity] of Object.entries(response.entities ?? {})) {
+  const entityEntries = Object.entries(response.entities ?? {});
+  for (const [itemId, entity] of entityEntries) {
     const imdbId = entity.claims?.P345?.[0]?.mainsnak?.datavalue?.value;
     if (typeof imdbId !== 'string' || !/^tt\d+$/.test(imdbId)) {
       continue;
@@ -358,7 +359,8 @@ export async function resolveFilmsByWikipediaPage(
   const itemsByPage = new Map<string, string>();
   for (let index = 0; index < pages.length; index += BATCH_SIZE) {
     const batch = pages.slice(index, index + BATCH_SIZE);
-    for (const [page, item] of await fetchWikibaseItems(batch)) {
+    const wikibaseItems = await fetchWikibaseItems(batch);
+    for (const [page, item] of wikibaseItems) {
       itemsByPage.set(page, item);
     }
 
@@ -371,7 +373,8 @@ export async function resolveFilmsByWikipediaPage(
   const filmsByItem = new Map<string, ResolvedFilm>();
   for (let index = 0; index < itemIds.length; index += BATCH_SIZE) {
     const batch = itemIds.slice(index, index + BATCH_SIZE);
-    for (const [item, film] of await fetchImdbIds(batch)) {
+    const imdbIds = await fetchImdbIds(batch);
+    for (const [item, film] of imdbIds) {
       filmsByItem.set(item, film);
     }
 

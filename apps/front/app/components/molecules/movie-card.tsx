@@ -192,7 +192,8 @@ export function MovieCard({
   };
 
   const nominationsByOrg: Record<string, OrganizationGroup> = {};
-  for (const nomination of movie.nominations ?? []) {
+  const nominations = movie.nominations ?? [];
+  for (const nomination of nominations) {
     const orgKey = nomination.organization.uid;
     nominationsByOrg[orgKey] ??= {
       organization: nomination.organization,

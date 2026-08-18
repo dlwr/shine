@@ -52,7 +52,8 @@ export function parseSparqlResponse(
 ): Map<string, string> {
   const titles = new Map<string, string>();
 
-  for (const binding of response.results?.bindings ?? []) {
+  const bindings = response.results?.bindings ?? [];
+  for (const binding of bindings) {
     const imdbId = binding.imdb?.value;
     const label = binding.jaLabel?.value;
     if (!imdbId || !label) {
