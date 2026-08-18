@@ -292,7 +292,7 @@ async function processMovieForBatch(
 
   if (isDryRun) {
     console.log(
-      `[DRY RUN] Would process movie: ${tmdbMovie.title} (${tmdbMovie.release_date?.split('-')[0]}) ${
+      `[DRY RUN] Would process movie: ${tmdbMovie.title} (${tmdbMovie.release_date?.split('-', 1)[0]}) ${
         tmdbMovie.imdb_id ? `IMDb: ${tmdbMovie.imdb_id}` : ''
       }`,
     );
@@ -414,7 +414,7 @@ async function searchMovieOnTMDB(
     };
     console.log(
       `  Found on TMDB: ${sanitizedMovie.title} (${
-        sanitizedMovie.release_date.split('-')[0] || 'Unknown'
+        sanitizedMovie.release_date.split('-', 1)[0] || 'Unknown'
       })`,
     );
 
@@ -438,7 +438,7 @@ async function createNewMovieForBatch(tmdbMovie: TMDBMovieData): Promise<{
 
   // 公開年を抽出
   const releaseYear = tmdbMovie.release_date
-    ? Number.parseInt(tmdbMovie.release_date.split('-')[0], 10)
+    ? Number.parseInt(tmdbMovie.release_date.split('-', 1)[0], 10)
     : undefined;
 
   // 映画を作成（これは即座に実行する必要がある）

@@ -39,7 +39,7 @@ export function resolveMovieTitle(
     return noTranslationsFallback;
   }
 
-  const languageCode = locale.split('-')[0];
+  const languageCode = locale.split('-', 1)[0];
 
   const localeMatch = translations.find(
     translation =>

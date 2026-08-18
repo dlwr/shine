@@ -13,7 +13,7 @@ export function selectBestPoster(
   }
 
   // Convert locale to language code (e.g., 'ja' from 'ja-JP')
-  const languageCode = locale.split('-')[0];
+  const languageCode = locale.split('-', 1)[0];
 
   // Priority:
   // 1. Primary poster with matching language

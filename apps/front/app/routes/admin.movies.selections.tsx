@@ -226,7 +226,7 @@ export default function AdminMovieSelections({
 
   const getSelectionDate = () =>
     selections?.[selectionKeyMap[overrideType]]?.date ||
-    new Date().toISOString().split('T')[0];
+    new Date().toISOString().split('T', 1)[0];
 
   const generateRandomMovie = async () => {
     setRandomLoading(true);

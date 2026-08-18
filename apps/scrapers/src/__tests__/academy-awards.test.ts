@@ -155,7 +155,7 @@ describe('Academy Awards Scraper', () => {
       ];
 
       for (const {input, expected} of testCases) {
-        const year = Number.parseInt(input.split('/')[0], 10);
+        const year = Number.parseInt(input.split('/', 1)[0], 10);
         expect(year).toBe(expected);
       }
     });

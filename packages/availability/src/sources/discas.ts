@@ -48,7 +48,7 @@ class CookieJar {
 
   absorb(response: Response): void {
     for (const setCookie of response.headers.getSetCookie()) {
-      const [pair] = setCookie.split(';');
+      const [pair] = setCookie.split(';', 1);
       const separatorIndex = pair.indexOf('=');
       if (separatorIndex > 0) {
         this.cookies.set(

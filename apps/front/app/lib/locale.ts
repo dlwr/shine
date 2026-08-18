@@ -21,7 +21,7 @@ export function getLocaleFromRequest(request: Request): Locale {
   if (acceptLanguage) {
     const preferred = acceptLanguage
       .split(',')
-      .map(entry => entry.trim().split(';')[0].split('-')[0])
+      .map(entry => entry.trim().split(';', 1)[0].split('-', 1)[0])
       .find((entry): entry is Locale => isSupportedLocale(entry));
 
     if (preferred) {

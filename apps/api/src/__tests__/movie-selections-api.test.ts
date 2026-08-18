@@ -91,32 +91,32 @@ describe('Preview Selections API Logic', () => {
 
     const nextDay = new Date(now);
     nextDay.setDate(now.getDate() + 1);
-    expect(nextDay.toISOString().split('T')[0]).toBe('2025-06-21');
+    expect(nextDay.toISOString().split('T', 1)[0]).toBe('2025-06-21');
 
     const daysSinceFriday = (now.getDay() - 5 + 7) % 7;
     const fridayDate = new Date(now);
     fridayDate.setDate(now.getDate() - daysSinceFriday);
     const nextFriday = new Date(fridayDate);
     nextFriday.setDate(fridayDate.getDate() + 7);
-    expect(nextFriday.toISOString().split('T')[0]).toBe('2025-06-27');
+    expect(nextFriday.toISOString().split('T', 1)[0]).toBe('2025-06-27');
 
     const nextMonth = new Date(now);
     nextMonth.setMonth(now.getMonth() + 1);
     nextMonth.setDate(1);
-    expect(nextMonth.toISOString().split('T')[0]).toBe('2025-07-01');
+    expect(nextMonth.toISOString().split('T', 1)[0]).toBe('2025-07-01');
   });
 
   it('should handle edge cases in date calculation', () => {
     const endOfMonth = new Date('2025-06-30T12:00:00Z');
     const nextDay = new Date(endOfMonth);
     nextDay.setDate(endOfMonth.getDate() + 1);
-    expect(nextDay.toISOString().split('T')[0]).toBe('2025-07-01');
+    expect(nextDay.toISOString().split('T', 1)[0]).toBe('2025-07-01');
 
     const endOfYear = new Date('2025-12-31T12:00:00Z');
     const nextMonth = new Date(endOfYear);
     nextMonth.setMonth(endOfYear.getMonth() + 1);
     nextMonth.setDate(1);
-    expect(nextMonth.toISOString().split('T')[0]).toBe('2026-01-01');
+    expect(nextMonth.toISOString().split('T', 1)[0]).toBe('2026-01-01');
   });
 });
 

@@ -23,7 +23,7 @@ export function SearchRow({
 }) {
   const title =
     movie.title ??
-    movie.translations?.find(t => t.languageCode === locale.split('-')[0])
+    movie.translations?.find(t => t.languageCode === locale.split('-', 1)[0])
       ?.content ??
     movie.translations?.[0]?.content ??
     'Unknown Title';

@@ -641,7 +641,7 @@ export class SelectionsService extends BaseService {
     }>,
     locale: string,
   ): string | undefined {
-    const languageCode = locale.split('-')[0];
+    const languageCode = locale.split('-', 1)[0];
 
     // Priority-ordered list of matchers: locale match, default, Japanese, English
     const matchers: Array<
