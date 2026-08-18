@@ -81,49 +81,49 @@ const fetchMainData = (() => {
   return async function fetchMainData(
     context: ScrapeContext,
   ): Promise<MainData> {
-  if (mainData) {
-    return mainData;
-  }
+    if (mainData) {
+      return mainData;
+    }
 
-  const [organization] = await getDatabase(context.environment)
-    .select()
-    .from(awardOrganizations)
-    .where(eq(awardOrganizations.name, 'Academy Awards'));
+    const [organization] = await getDatabase(context.environment)
+      .select()
+      .from(awardOrganizations)
+      .where(eq(awardOrganizations.name, 'Academy Awards'));
 
-  if (!organization) {
-    throw new Error('Academy Awards organization not found');
-  }
+    if (!organization) {
+      throw new Error('Academy Awards organization not found');
+    }
 
-  const [category] = await getDatabase(context.environment)
-    .select()
-    .from(awardCategories)
-    .where(
-      and(
-        eq(awardCategories.shortName, 'Best Picture'),
-        eq(awardCategories.organizationUid, organization.uid),
-      ),
+    const [category] = await getDatabase(context.environment)
+      .select()
+      .from(awardCategories)
+      .where(
+        and(
+          eq(awardCategories.shortName, 'Best Picture'),
+          eq(awardCategories.organizationUid, organization.uid),
+        ),
+      );
+
+    if (!category) {
+      throw new Error('Best Picture category not found');
+    }
+
+    const ceremoniesData = await getDatabase(context.environment)
+      .select()
+      .from(awardCeremonies)
+      .where(eq(awardCeremonies.organizationUid, organization.uid));
+
+    const ceremonies = new Map<number, string>(
+      ceremoniesData.map(ceremony => [ceremony.year, ceremony.uid]),
     );
 
-  if (!category) {
-    throw new Error('Best Picture category not found');
-  }
+    mainData = {
+      organizationUid: organization.uid,
+      categoryUid: category.uid,
+      ceremonies,
+    };
 
-  const ceremoniesData = await getDatabase(context.environment)
-    .select()
-    .from(awardCeremonies)
-    .where(eq(awardCeremonies.organizationUid, organization.uid));
-
-  const ceremonies = new Map<number, string>(
-    ceremoniesData.map(ceremony => [ceremony.year, ceremony.uid]),
-  );
-
-  mainData = {
-    organizationUid: organization.uid,
-    categoryUid: category.uid,
-    ceremonies,
-  };
-
-  return mainData;
+    return mainData;
   };
 })();
 
@@ -618,11 +618,18 @@ async function processMovieForBatch(
         context.environment,
       );
       if (japaneseTitle) {
-        await saveJapaneseTranslation(movieUid, japaneseTitle, context.environment);
+        await saveJapaneseTranslation(
+          movieUid,
+          japaneseTitle,
+          context.environment,
+        );
       }
 
       // ポスターの取得・保存
-      const movieImages = await fetchTMDBMovieImages(imdbId, context.tmdbApiKey);
+      const movieImages = await fetchTMDBMovieImages(
+        imdbId,
+        context.tmdbApiKey,
+      );
       if (movieImages) {
         // TMDB IDを保存（まだ保存されていない場合）
         const currentMovie = await database

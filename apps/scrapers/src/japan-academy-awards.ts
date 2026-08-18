@@ -40,36 +40,40 @@ type MainData = {
   ceremonies: Map<number, string>;
 };
 
-let mainData: MainData | undefined;
-let environment_: Environment;
-let TMDB_API_KEY: string | undefined;
-let isDryRun = false;
+type ScrapeContext = {
+  environment: Environment;
+  tmdbApiKey: string | undefined;
+  isDryRun: boolean;
+};
 
 export default {
   async fetch(request: Request, environment: Environment): Promise<Response> {
-    environment_ = environment;
-    TMDB_API_KEY = environment.TMDB_API_KEY;
+    const tmdbApiKey = environment.TMDB_API_KEY;
 
     const url = new URL(request.url);
     const yearParameter = url.searchParams.get('year');
     const dryRunParameter = url.searchParams.get('dry-run');
-    isDryRun = dryRunParameter === 'true';
+    const context: ScrapeContext = {
+      environment,
+      tmdbApiKey,
+      isDryRun: dryRunParameter === 'true',
+    };
 
     if (url.pathname === '/seed') {
       console.log('seeding japan academy awards');
-      if (isDryRun) {
+      if (context.isDryRun) {
         console.log(
           '[DRY RUN] Would seed Japan Academy Awards organization and categories',
         );
       } else {
-        await seedJapanAcademyAwards(environment_);
+        await seedJapanAcademyAwards(context.environment);
       }
 
       return new Response('Seed completed successfully', {status: 200});
     }
 
     try {
-      if (isDryRun) {
+      if (context.isDryRun) {
         console.log(
           '[DRY RUN MODE] No actual database operations will be performed',
         );
@@ -77,9 +81,9 @@ export default {
 
       if (yearParameter) {
         const targetYear = Number(yearParameter);
-        await scrapeJapanAcademyAwardsYear(targetYear);
+        await scrapeJapanAcademyAwardsYear(context, targetYear);
       } else {
-        await scrapeJapanAcademyAwards();
+        await scrapeJapanAcademyAwards(context);
       }
 
       return new Response('Scraping completed successfully', {status: 200});
@@ -92,70 +96,77 @@ export default {
   },
 };
 
-async function fetchMainData(): Promise<MainData> {
-  if (mainData) {
-    return mainData;
-  }
+const fetchMainData = (() => {
+  let mainData: MainData | undefined;
 
-  if (isDryRun) {
-    // Dry run mode - return mock data
-    mainData = {
-      organizationUid: 'mock-japan-academy-uid',
-      categories: new Map([
-        ['Best Picture', 'mock-best-picture-uid'],
-        ['Best Animation', 'mock-best-animation-uid'],
-        ['Excellent Picture', 'mock-excellent-picture-uid'],
-        ['Excellent Animation', 'mock-excellent-animation-uid'],
-      ]),
-      ceremonies: new Map(),
-    };
-    return mainData;
-  }
-
-  const [organization] = await getDatabase(environment_)
-    .select()
-    .from(awardOrganizations)
-    .where(eq(awardOrganizations.name, 'Japan Academy Awards'));
-
-  if (!organization) {
-    throw new Error('Japan Academy Awards organization not found');
-  }
-
-  const categoriesData = await getDatabase(environment_)
-    .select()
-    .from(awardCategories)
-    .where(eq(awardCategories.organizationUid, organization.uid));
-
-  const categories = new Map<string, string>();
-  for (const category of categoriesData) {
-    if (category.shortName) {
-      categories.set(category.shortName, category.uid);
+  return async function fetchMainData(
+    context: ScrapeContext,
+  ): Promise<MainData> {
+    if (mainData) {
+      return mainData;
     }
-  }
 
-  const ceremoniesData = await getDatabase(environment_)
-    .select()
-    .from(awardCeremonies)
-    .where(eq(awardCeremonies.organizationUid, organization.uid));
+    if (context.isDryRun) {
+      // Dry run mode - return mock data
+      mainData = {
+        organizationUid: 'mock-japan-academy-uid',
+        categories: new Map([
+          ['Best Picture', 'mock-best-picture-uid'],
+          ['Best Animation', 'mock-best-animation-uid'],
+          ['Excellent Picture', 'mock-excellent-picture-uid'],
+          ['Excellent Animation', 'mock-excellent-animation-uid'],
+        ]),
+        ceremonies: new Map(),
+      };
+      return mainData;
+    }
 
-  const ceremonies = new Map<number, string>(
-    ceremoniesData.map(ceremony => [ceremony.year, ceremony.uid]),
-  );
+    const [organization] = await getDatabase(context.environment)
+      .select()
+      .from(awardOrganizations)
+      .where(eq(awardOrganizations.name, 'Japan Academy Awards'));
 
-  mainData = {
-    organizationUid: organization.uid,
-    categories,
-    ceremonies,
+    if (!organization) {
+      throw new Error('Japan Academy Awards organization not found');
+    }
+
+    const categoriesData = await getDatabase(context.environment)
+      .select()
+      .from(awardCategories)
+      .where(eq(awardCategories.organizationUid, organization.uid));
+
+    const categories = new Map<string, string>();
+    for (const category of categoriesData) {
+      if (category.shortName) {
+        categories.set(category.shortName, category.uid);
+      }
+    }
+
+    const ceremoniesData = await getDatabase(context.environment)
+      .select()
+      .from(awardCeremonies)
+      .where(eq(awardCeremonies.organizationUid, organization.uid));
+
+    const ceremonies = new Map<number, string>(
+      ceremoniesData.map(ceremony => [ceremony.year, ceremony.uid]),
+    );
+
+    mainData = {
+      organizationUid: organization.uid,
+      categories,
+      ceremonies,
+    };
+
+    return mainData;
   };
-
-  return mainData;
-}
+})();
 
 async function getOrCreateCeremony(
+  context: ScrapeContext,
   year: number,
   organizationUid: string,
 ): Promise<string> {
-  const database = getDatabase(environment_);
+  const database = getDatabase(context.environment);
   const ceremonyNumber = year - 1977; // 1978年が第1回、2024年が第47回
   const [ceremony] = await database
     .insert(awardCeremonies)
@@ -172,20 +183,21 @@ async function getOrCreateCeremony(
     })
     .returning();
 
-  mainData?.ceremonies.set(year, ceremony.uid);
+  const main = await fetchMainData(context);
+  main.ceremonies.set(year, ceremony.uid);
 
   return ceremony.uid;
 }
 
-export async function scrapeJapanAcademyAwards() {
+export async function scrapeJapanAcademyAwards(context: ScrapeContext) {
   try {
     console.log('Fetching data from Japanese Wikipedia main awards page...');
 
-    if (isDryRun) {
+    if (context.isDryRun) {
       console.log('[DRY RUN MODE] Fetching all Japan Academy Awards data');
     }
 
-    await scrapeMainAwardsPage();
+    await scrapeMainAwardsPage(context);
     console.log('Japan Academy Awards scraping completed successfully');
   } catch (error) {
     console.error('Error scraping Japan Academy Awards:', error);
@@ -193,17 +205,20 @@ export async function scrapeJapanAcademyAwards() {
   }
 }
 
-export async function scrapeJapanAcademyAwardsYear(year: number) {
+export async function scrapeJapanAcademyAwardsYear(
+  context: ScrapeContext,
+  year: number,
+) {
   try {
     console.log(`Fetching Japan Academy Awards data for ${year}...`);
 
-    if (isDryRun) {
+    if (context.isDryRun) {
       console.log(
         `[DRY RUN MODE] Fetching Japan Academy Awards data for ${year}`,
       );
     }
 
-    await scrapeMainAwardsPageForYear(year);
+    await scrapeMainAwardsPageForYear(context, year);
     console.log(`Japan Academy Awards ${year} scraping completed successfully`);
   } catch (error) {
     console.error(`Error scraping Japan Academy Awards ${year}:`, error);
@@ -211,7 +226,7 @@ export async function scrapeJapanAcademyAwardsYear(year: number) {
   }
 }
 
-async function scrapeMainAwardsPage() {
+async function scrapeMainAwardsPage(context: ScrapeContext) {
   console.log(`Fetching ${MAIN_AWARDS_URL}...`);
   const html = await fetchWithRetry(MAIN_AWARDS_URL);
   const $ = cheerio.load(html);
@@ -225,7 +240,7 @@ async function scrapeMainAwardsPage() {
 
   // 映画を処理
   for (const movie of movies) {
-    const batchData = await processMovieForBatch(movie);
+    const batchData = await processMovieForBatch(context, movie);
     if (batchData) {
       translationsBatch.push(...batchData.translations);
       if (batchData.referenceUrl) {
@@ -239,7 +254,7 @@ async function scrapeMainAwardsPage() {
   }
 
   // バッチでデータを挿入
-  const database = getDatabase(environment_);
+  const database = getDatabase(context.environment);
 
   if (translationsBatch.length > 0) {
     console.log(
@@ -272,7 +287,10 @@ async function scrapeMainAwardsPage() {
   console.log(`\nProcessed ${movies.length} movies from Japan Academy Awards`);
 }
 
-async function scrapeMainAwardsPageForYear(targetYear: number) {
+async function scrapeMainAwardsPageForYear(
+  context: ScrapeContext,
+  targetYear: number,
+) {
   console.log(`Fetching ${MAIN_AWARDS_URL}...`);
   const html = await fetchWithRetry(MAIN_AWARDS_URL);
   const $ = cheerio.load(html);
@@ -288,7 +306,7 @@ async function scrapeMainAwardsPageForYear(targetYear: number) {
 
   // 映画を処理
   for (const movie of movies) {
-    const batchData = await processMovieForBatch(movie);
+    const batchData = await processMovieForBatch(context, movie);
     if (batchData) {
       translationsBatch.push(...batchData.translations);
       if (batchData.referenceUrl) {
@@ -302,7 +320,7 @@ async function scrapeMainAwardsPageForYear(targetYear: number) {
   }
 
   // バッチでデータを挿入
-  const database = getDatabase(environment_);
+  const database = getDatabase(context.environment);
 
   if (translationsBatch.length > 0) {
     console.log(
@@ -534,7 +552,10 @@ function extractMoviesFromTableWithYear(
   return movies;
 }
 
-async function processMovieForBatch(movieInfo: MovieInfo): Promise<
+async function processMovieForBatch(
+  context: ScrapeContext,
+  movieInfo: MovieInfo,
+): Promise<
   | {
       translations: Array<typeof translations.$inferInsert>;
       referenceUrl?: typeof referenceUrls.$inferInsert;
@@ -543,7 +564,7 @@ async function processMovieForBatch(movieInfo: MovieInfo): Promise<
   | undefined
 > {
   try {
-    if (isDryRun) {
+    if (context.isDryRun) {
       console.log(
         `[DRY RUN] Would process movie: ${movieInfo.title} (${
           movieInfo.year
@@ -554,8 +575,8 @@ async function processMovieForBatch(movieInfo: MovieInfo): Promise<
       return undefined;
     }
 
-    const main = await fetchMainData();
-    const database = getDatabase(environment_);
+    const main = await fetchMainData(context);
+    const database = getDatabase(context.environment);
 
     // カテゴリーUIDを取得
     const categoryUid = main.categories.get(movieInfo.categoryType);
@@ -565,8 +586,12 @@ async function processMovieForBatch(movieInfo: MovieInfo): Promise<
 
     // IMDb IDを取得
     let imdbId: string | undefined;
-    if (TMDB_API_KEY) {
-      imdbId = await fetchImdbId(movieInfo.title, movieInfo.year, TMDB_API_KEY);
+    if (context.tmdbApiKey) {
+      imdbId = await fetchImdbId(
+        movieInfo.title,
+        movieInfo.year,
+        context.tmdbApiKey,
+      );
     }
 
     // 既存の映画を検索（タイトルまたはIMDb IDで）
@@ -669,8 +694,8 @@ async function processMovieForBatch(movieInfo: MovieInfo): Promise<
       });
 
       // 英語タイトルも取得して追加（IMDb IDがある場合）
-      if (imdbId && TMDB_API_KEY) {
-        const englishTitle = await fetchEnglishTitleFromTMDB(imdbId);
+      if (imdbId && context.tmdbApiKey) {
+        const englishTitle = await fetchEnglishTitleFromTMDB(context, imdbId);
         if (englishTitle) {
           translationsBatch.push({
             resourceType: 'movie_title',
@@ -696,8 +721,11 @@ async function processMovieForBatch(movieInfo: MovieInfo): Promise<
     }
 
     // ポスターの取得・保存（新規映画の場合のみ）
-    if (imdbId && TMDB_API_KEY && existingMovies.length === 0) {
-      const movieImages = await fetchTMDBMovieImages(imdbId, TMDB_API_KEY);
+    if (imdbId && context.tmdbApiKey && existingMovies.length === 0) {
+      const movieImages = await fetchTMDBMovieImages(
+        imdbId,
+        context.tmdbApiKey,
+      );
       if (movieImages) {
         // TMDB IDを保存（まだ保存されていない場合）
         const currentMovie = await database
@@ -707,14 +735,14 @@ async function processMovieForBatch(movieInfo: MovieInfo): Promise<
           .limit(1);
 
         if (currentMovie.length > 0 && !currentMovie[0].tmdbId) {
-          await saveTMDBId(imdbId, movieImages.tmdbId, environment_);
+          await saveTMDBId(imdbId, movieImages.tmdbId, context.environment);
         }
 
         // ポスターを保存
         const posterCount = await savePosterUrls(
           movieUid,
           movieImages.images.posters,
-          environment_,
+          context.environment,
         );
 
         if (posterCount > 0) {
@@ -724,6 +752,7 @@ async function processMovieForBatch(movieInfo: MovieInfo): Promise<
     }
 
     const ceremonyUid = await getOrCreateCeremony(
+      context,
       movieInfo.year,
       main.organizationUid,
     );
@@ -756,9 +785,10 @@ async function processMovieForBatch(movieInfo: MovieInfo): Promise<
 }
 
 async function fetchEnglishTitleFromTMDB(
+  context: ScrapeContext,
   imdbId: string,
 ): Promise<string | undefined> {
-  const TMDB_API_KEY_LOCAL = TMDB_API_KEY;
+  const TMDB_API_KEY_LOCAL = context.tmdbApiKey;
   if (!TMDB_API_KEY_LOCAL) {
     return undefined;
   }
