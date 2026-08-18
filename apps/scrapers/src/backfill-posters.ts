@@ -4,7 +4,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {
-  fetchTMDBConfiguration,
+  fetchTMDBConfiguration as fetchTMDBConfig,
   fetchTMDBMovieDetails,
   findTMDBByImdbId,
 } from './common/tmdb-utilities';
@@ -147,8 +147,8 @@ export async function backfillPosters({
     `${dryRun ? '[DRY RUN] ' : ''}Backfilling posters for ${candidates.length} movies...`,
   );
 
-  const configuration = await fetchTMDBConfiguration(tmdbApiKey);
-  const size = configuration.images.poster_sizes.includes(POSTER_SIZE)
+  const config = await fetchTMDBConfig(tmdbApiKey);
+  const size = config.images.poster_sizes.includes(POSTER_SIZE)
     ? POSTER_SIZE
     : 'original';
 
@@ -158,7 +158,7 @@ export async function backfillPosters({
         database,
         candidate,
         tmdbApiKey,
-        baseUrl: configuration.images.secure_base_url,
+        baseUrl: config.images.secure_base_url,
         size,
         dryRun,
         stats,

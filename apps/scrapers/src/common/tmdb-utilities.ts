@@ -97,7 +97,7 @@ export type TMDBTranslationsResponse = {
   }>;
 };
 
-let cachedConfiguration: TMDBConfiguration | undefined;
+let cachedConfig: TMDBConfiguration | undefined;
 
 /**
  * TMDb APIの画像設定を取得(プロセス内でキャッシュ)
@@ -105,17 +105,17 @@ let cachedConfiguration: TMDBConfiguration | undefined;
 export async function fetchTMDBConfiguration(
   tmdbApiKey: string,
 ): Promise<TMDBConfiguration> {
-  if (cachedConfiguration) {
-    return cachedConfiguration;
+  if (cachedConfig) {
+    return cachedConfig;
   }
 
   const configUrl = new URL(`${TMDB_API_BASE_URL}/configuration`);
   configUrl.searchParams.append('api_key', tmdbApiKey);
 
-  cachedConfiguration = await fetchJsonWithRetry<TMDBConfiguration>(
+  cachedConfig = await fetchJsonWithRetry<TMDBConfiguration>(
     configUrl.toString(),
   );
-  return cachedConfiguration;
+  return cachedConfig;
 }
 
 /**

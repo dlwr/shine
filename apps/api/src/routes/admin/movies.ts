@@ -13,7 +13,7 @@ import {AdminService, SelectionsService} from '../../services';
 import {
   ConflictError,
   NotFoundError,
-  TmdbConfigurationError,
+  TmdbConfigurationError as TmdbConfigError,
   ValidationError,
 } from '../../services/errors';
 import {
@@ -114,7 +114,7 @@ adminMoviesRoutes.get(
         return c.json({error: error.message}, 400);
       }
 
-      if (error instanceof TmdbConfigurationError) {
+      if (error instanceof TmdbConfigError) {
         return c.json({error: 'TMDb API key is not configured'}, 503);
       }
 

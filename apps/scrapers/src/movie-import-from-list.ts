@@ -11,8 +11,8 @@ import {translations} from '@shine/database/schema/translations';
 import {generateUUID} from '@shine/utils';
 import {fetchJsonWithRetry} from './common/fetch-utilities';
 import {
-  fetchTMDBConfiguration,
-  type TMDBConfiguration,
+  fetchTMDBConfiguration as fetchTMDBConfig,
+  type TMDBConfiguration as TMDBConfig,
 } from './common/tmdb-utilities';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
@@ -44,7 +44,7 @@ type TMDBSearchResponse = {
 
 let environment_: Environment;
 let TMDB_API_KEY: string;
-let tmdbConfiguration: TMDBConfiguration | undefined;
+let tmdbConfig: TMDBConfig | undefined;
 let isDryRun = false;
 
 /**
@@ -67,7 +67,7 @@ export async function importMoviesFromList(
   }
 
   // TMDB設定を取得
-  tmdbConfiguration = await fetchTMDBConfiguration(TMDB_API_KEY);
+  tmdbConfig = await fetchTMDBConfig(TMDB_API_KEY);
   console.log('TMDB configuration loaded');
 
   // JSONファイルを読み込み
@@ -480,8 +480,8 @@ async function createNewMovieForBatch(tmdbMovie: TMDBMovieData): Promise<{
 
   // ポスターURL
   let posterUrlData: typeof posterUrls.$inferInsert | undefined;
-  if (tmdbMovie.poster_path && tmdbConfiguration) {
-    const posterUrl = `${tmdbConfiguration.images.secure_base_url}w500${tmdbMovie.poster_path}`;
+  if (tmdbMovie.poster_path && tmdbConfig) {
+    const posterUrl = `${tmdbConfig.images.secure_base_url}w500${tmdbMovie.poster_path}`;
     posterUrlData = {
       movieUid,
       url: posterUrl,
@@ -533,7 +533,7 @@ async function updateExistingMovie(
   }
 
   // ポスターURLを追加（まだない場合）
-  if (tmdbMovie.poster_path && tmdbConfiguration) {
+  if (tmdbMovie.poster_path && tmdbConfig) {
     const [existingPoster] = await database
       .select()
       .from(posterUrls)
@@ -541,7 +541,7 @@ async function updateExistingMovie(
       .limit(1);
 
     if (!existingPoster) {
-      const posterUrl = `${tmdbConfiguration.images.secure_base_url}w500${tmdbMovie.poster_path}`;
+      const posterUrl = `${tmdbConfig.images.secure_base_url}w500${tmdbMovie.poster_path}`;
       await database.insert(posterUrls).values({
         movieUid,
         url: posterUrl,
