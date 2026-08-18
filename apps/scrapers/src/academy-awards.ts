@@ -44,24 +44,27 @@ type MainData = {
   ceremonies: Map<number, string>;
 };
 
-let mainData: MainData | undefined;
-let environment_: Environment;
-let TMDB_API_KEY: string | undefined;
+type ScrapeContext = {
+  environment: Environment;
+  tmdbApiKey: string | undefined;
+};
 
 export default {
   async fetch(request: Request, environment: Environment): Promise<Response> {
-    environment_ = environment;
-    TMDB_API_KEY = environment.TMDB_API_KEY;
+    const context: ScrapeContext = {
+      environment,
+      tmdbApiKey: environment.TMDB_API_KEY,
+    };
 
     const url = new URL(request.url);
     if (url.pathname === '/seed') {
       console.log('seeding academy awards');
-      await seedAcademyAwards(environment_);
+      await seedAcademyAwards(context.environment);
       return new Response('Seed completed successfully', {status: 200});
     }
 
     try {
-      await scrapeAcademyAwards();
+      await scrapeAcademyAwards(context);
       return new Response('Scraping completed successfully', {status: 200});
     } catch (error) {
       return new Response(
@@ -72,12 +75,17 @@ export default {
   },
 };
 
-async function fetchMainData(): Promise<MainData> {
+const fetchMainData = (() => {
+  let mainData: MainData | undefined;
+
+  return async function fetchMainData(
+    context: ScrapeContext,
+  ): Promise<MainData> {
   if (mainData) {
     return mainData;
   }
 
-  const [organization] = await getDatabase(environment_)
+  const [organization] = await getDatabase(context.environment)
     .select()
     .from(awardOrganizations)
     .where(eq(awardOrganizations.name, 'Academy Awards'));
@@ -86,7 +94,7 @@ async function fetchMainData(): Promise<MainData> {
     throw new Error('Academy Awards organization not found');
   }
 
-  const [category] = await getDatabase(environment_)
+  const [category] = await getDatabase(context.environment)
     .select()
     .from(awardCategories)
     .where(
@@ -100,7 +108,7 @@ async function fetchMainData(): Promise<MainData> {
     throw new Error('Best Picture category not found');
   }
 
-  const ceremoniesData = await getDatabase(environment_)
+  const ceremoniesData = await getDatabase(context.environment)
     .select()
     .from(awardCeremonies)
     .where(eq(awardCeremonies.organizationUid, organization.uid));
@@ -116,13 +124,15 @@ async function fetchMainData(): Promise<MainData> {
   };
 
   return mainData;
-}
+  };
+})();
 
 async function getOrCreateCeremony(
+  context: ScrapeContext,
   year: number,
   organizationUid: string,
 ): Promise<string> {
-  const database = getDatabase(environment_);
+  const database = getDatabase(context.environment);
   const [ceremony] = await database
     .insert(awardCeremonies)
     .values({
@@ -138,12 +148,13 @@ async function getOrCreateCeremony(
     })
     .returning();
 
-  mainData?.ceremonies.set(year, ceremony.uid);
+  const main = await fetchMainData(context);
+  main.ceremonies.set(year, ceremony.uid);
 
   return ceremony.uid;
 }
 
-export async function scrapeAcademyAwards() {
+export async function scrapeAcademyAwards(context: ScrapeContext) {
   try {
     console.log('Fetching data from Wikipedia...');
     const html = await fetchWithRetry(ACADEMY_AWARDS_URL);
@@ -171,6 +182,7 @@ export async function scrapeAcademyAwards() {
 
       for (const movie of movies) {
         const batchData = await processMovieForBatch(
+          context,
           movie.title,
           movie.year,
           movie.isWinner,
@@ -195,7 +207,7 @@ export async function scrapeAcademyAwards() {
     }
 
     // バッチでデータを挿入
-    const database = getDatabase(environment_);
+    const database = getDatabase(context.environment);
 
     if (translationsBatch.length > 0) {
       console.log(
@@ -490,6 +502,7 @@ function cleanupTitle(title: string): string {
 }
 
 async function processMovieForBatch(
+  context: ScrapeContext,
   title: string,
   year: number,
   isWinner: boolean,
@@ -503,12 +516,12 @@ async function processMovieForBatch(
   | undefined
 > {
   try {
-    const main = await fetchMainData();
-    const database = getDatabase(environment_);
+    const main = await fetchMainData(context);
+    const database = getDatabase(context.environment);
     // IMDb IDを取得
     let imdbId: string | undefined;
-    if (TMDB_API_KEY) {
-      imdbId = await fetchImdbId(title, year, TMDB_API_KEY);
+    if (context.tmdbApiKey) {
+      imdbId = await fetchImdbId(title, year, context.tmdbApiKey);
     }
 
     // 既存の映画を検索
@@ -584,7 +597,11 @@ async function processMovieForBatch(
     }
 
     // ノミネーション
-    const ceremonyUid = await getOrCreateCeremony(year, main.organizationUid);
+    const ceremonyUid = await getOrCreateCeremony(
+      context,
+      year,
+      main.organizationUid,
+    );
     const nominationData: typeof nominations.$inferInsert = {
       movieUid,
       ceremonyUid,
@@ -593,19 +610,19 @@ async function processMovieForBatch(
     };
 
     // 日本語タイトルとポスターの処理（新規映画の場合のみ）
-    if (imdbId && TMDB_API_KEY && existingMovies.length === 0) {
+    if (imdbId && context.tmdbApiKey && existingMovies.length === 0) {
       // 日本語タイトルの取得・保存
       const japaneseTitle = await fetchJapaneseTitleFromTMDB(
         imdbId,
         undefined,
-        environment_,
+        context.environment,
       );
       if (japaneseTitle) {
-        await saveJapaneseTranslation(movieUid, japaneseTitle, environment_);
+        await saveJapaneseTranslation(movieUid, japaneseTitle, context.environment);
       }
 
       // ポスターの取得・保存
-      const movieImages = await fetchTMDBMovieImages(imdbId, TMDB_API_KEY);
+      const movieImages = await fetchTMDBMovieImages(imdbId, context.tmdbApiKey);
       if (movieImages) {
         // TMDB IDを保存（まだ保存されていない場合）
         const currentMovie = await database
@@ -614,14 +631,14 @@ async function processMovieForBatch(
           .where(eq(movies.uid, movieUid))
           .limit(1);
         if (currentMovie.length > 0 && !currentMovie[0].tmdbId) {
-          await saveTMDBId(imdbId, movieImages.tmdbId, environment_);
+          await saveTMDBId(imdbId, movieImages.tmdbId, context.environment);
         }
 
         // ポスターを保存
         const posterCount = await savePosterUrls(
           movieUid,
           movieImages.images.posters,
-          environment_,
+          context.environment,
         );
         if (posterCount > 0) {
           console.log(`  Saved ${posterCount} posters for ${title}`);
