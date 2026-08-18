@@ -13,9 +13,9 @@ import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import {generateUUID} from '@shine/utils';
 import {
-  fetchTMDBConfiguration as fetchTMDBConfig,
+  fetchTMDBConfiguration,
   findTMDBByImdbId,
-  type TMDBConfiguration as TMDBConfig,
+  type TMDBConfiguration,
 } from './common/tmdb-utilities';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
@@ -81,7 +81,7 @@ type ImportOptions = {
 };
 
 let tmdbApiKey: string;
-let tmdbConfig: TMDBConfig | undefined;
+let tmdbConfiguration: TMDBConfiguration | undefined;
 type AwardContext = {
   organizationUid: string;
   ceremonyUid: string;
@@ -221,7 +221,7 @@ export async function importMoviesFromCsv({
     nominationsCreated: 0,
   };
 
-  await ensureTmdbConfig();
+  await ensureTmdbConfiguration();
 
   console.log(
     `${dryRun ? '[DRY RUN] ' : ''}Processing ${totalToProcess} movies from ${filePath} (${existingRecordsForNomination.length} existing needing nominations, ${targetNewRecords.length} new)`,
@@ -419,8 +419,8 @@ export async function importMoviesFromCsv({
   return stats;
 }
 
-async function ensureTmdbConfig(): Promise<void> {
-  tmdbConfig ??= await fetchTMDBConfig(tmdbApiKey);
+async function ensureTmdbConfiguration(): Promise<void> {
+  tmdbConfiguration ??= await fetchTMDBConfiguration(tmdbApiKey);
 }
 
 async function findOrCreateOrganization(
@@ -956,12 +956,12 @@ async function insertPoster(
   movieUid: string,
   posterPath?: string,
 ) {
-  if (!posterPath || !tmdbConfig) {
+  if (!posterPath || !tmdbConfiguration) {
     return;
   }
 
-  const baseUrl = tmdbConfig.images.secure_base_url;
-  const size = tmdbConfig.images.poster_sizes.includes('w500')
+  const baseUrl = tmdbConfiguration.images.secure_base_url;
+  const size = tmdbConfiguration.images.poster_sizes.includes('w500')
     ? 'w500'
     : 'original';
 

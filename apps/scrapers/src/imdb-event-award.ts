@@ -10,7 +10,7 @@ import {posterUrls} from '@shine/database/schema/poster-urls';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import {
-  fetchTMDBConfiguration as fetchTMDBConfig,
+  fetchTMDBConfiguration,
   fetchTMDBMovieDetails,
   findTMDBByImdbId,
   type TMDBMovieData,
@@ -651,15 +651,15 @@ async function insertPoster(
   posterPath: string,
   tmdbApiKey: string,
 ): Promise<void> {
-  let config;
+  let configuration;
   try {
-    config = await fetchTMDBConfig(tmdbApiKey);
+    configuration = await fetchTMDBConfiguration(tmdbApiKey);
   } catch (error) {
     console.error('  Failed to fetch TMDb configuration:', error);
     return;
   }
 
-  const size = config.images.poster_sizes.includes('w500')
+  const size = configuration.images.poster_sizes.includes('w500')
     ? 'w500'
     : 'original';
 
@@ -667,7 +667,7 @@ async function insertPoster(
     .insert(posterUrls)
     .values({
       movieUid,
-      url: `${config.images.secure_base_url}${size}${posterPath}`,
+      url: `${configuration.images.secure_base_url}${size}${posterPath}`,
       sourceType: 'tmdb',
       isPrimary: 1,
     })
