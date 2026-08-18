@@ -1,0 +1,225 @@
+[
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Foreign Film",
+    "ceremonyYear": 1925,
+    "specialMention": "9位",
+    "wrongImdbId": "tt0033028",
+    "correctImdbId": "tt0015310",
+    "correctTitle": "シー・ホーク",
+    "correctYear": 1924
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Japanese Film",
+    "ceremonyYear": 1931,
+    "specialMention": "4位",
+    "wrongImdbId": "tt0025312",
+    "correctImdbId": null,
+    "correctTitle": "一本刀土俵入り",
+    "correctYear": 1931
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Japanese Film",
+    "ceremonyYear": 1935,
+    "specialMention": "10位",
+    "wrongImdbId": "tt0057710",
+    "correctImdbId": "tt0027237",
+    "correctTitle": "雪之丞変化",
+    "correctYear": 1935
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Japanese Film",
+    "ceremonyYear": 1936,
+    "specialMention": "7位",
+    "wrongImdbId": "tt0202229",
+    "correctImdbId": null,
+    "correctTitle": "兄いもうと",
+    "correctYear": 1936
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Japanese Film",
+    "ceremonyYear": 1938,
+    "specialMention": "10位",
+    "wrongImdbId": "tt1994569",
+    "correctImdbId": "tt0452421",
+    "correctTitle": "太陽の子",
+    "correctYear": 1938
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Japanese Film",
+    "ceremonyYear": 1947,
+    "specialMention": "2位",
+    "wrongImdbId": "tt0171802",
+    "correctImdbId": "tt0342973",
+    "correctTitle": "戦争と平和",
+    "correctYear": 1947
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Japanese Film",
+    "ceremonyYear": 1948,
+    "specialMention": "2位",
+    "wrongImdbId": "tt0057561",
+    "correctImdbId": "tt0040230",
+    "correctTitle": "手をつなぐ子等",
+    "correctYear": 1948
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Japanese Film",
+    "ceremonyYear": 1948,
+    "specialMention": "6位",
+    "wrongImdbId": "tt0056051",
+    "correctImdbId": "tt0040413",
+    "correctTitle": "破戒",
+    "correctYear": 1948
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Foreign Film",
+    "ceremonyYear": 1955,
+    "specialMention": "6位",
+    "wrongImdbId": "tt0079820",
+    "correctImdbId": "tt0044414",
+    "correctTitle": "やぶにらみの暴君",
+    "correctYear": 1952
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Japanese Film",
+    "ceremonyYear": 1959,
+    "specialMention": "2位",
+    "wrongImdbId": "tt3893038",
+    "correctImdbId": "tt0053121",
+    "correctTitle": "野火",
+    "correctYear": 1959
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Japanese Film",
+    "ceremonyYear": 1959,
+    "specialMention": "5位",
+    "wrongImdbId": "tt0055233",
+    "correctImdbId": "tt0053114",
+    "correctTitle": "人間の條件　第１部純愛篇／第２部激怒篇",
+    "correctYear": 1959
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Japanese Film",
+    "ceremonyYear": 1969,
+    "specialMention": "5位",
+    "wrongImdbId": "tt0104395",
+    "correctImdbId": "tt0186193",
+    "correctTitle": "橋のない川",
+    "correctYear": 1969
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Japanese Film",
+    "ceremonyYear": 1970,
+    "specialMention": "9位",
+    "wrongImdbId": "tt0104395",
+    "correctImdbId": "tt1995321",
+    "correctTitle": "橋のない川 第二部",
+    "correctYear": 1970
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Japanese Film",
+    "ceremonyYear": 1971,
+    "specialMention": "4位",
+    "wrongImdbId": "tt0323921",
+    "correctImdbId": "tt0320441",
+    "correctTitle": "戦争と人間　第二部",
+    "correctYear": 1971
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Japanese Film",
+    "ceremonyYear": 1973,
+    "specialMention": "10位",
+    "wrongImdbId": "tt0323921",
+    "correctImdbId": "tt0072139",
+    "correctTitle": "戦争と人間　完結編",
+    "correctYear": 1973
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Japanese Film",
+    "ceremonyYear": 2024,
+    "specialMention": "8位",
+    "wrongImdbId": "tt8764582",
+    "correctImdbId": "tt34144683",
+    "correctTitle": "青春ジャック 止められるか、俺たちを2",
+    "correctYear": 2024
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1951,
+    "wrongImdbId": "tt0109340",
+    "correctImdbId": "tt0043362",
+    "correctTitle": "The Browning Version",
+    "correctYear": 1951
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1952,
+    "wrongImdbId": "tt0048455",
+    "correctImdbId": "tt0045251",
+    "correctTitle": "Othello",
+    "correctYear": 1951
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1956,
+    "wrongImdbId": "tt0099266",
+    "correctImdbId": "tt0048359",
+    "correctTitle": "Mother",
+    "correctYear": 1955
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1958,
+    "wrongImdbId": "tt1078600",
+    "correctImdbId": "tt0051155",
+    "correctTitle": "Vengeance",
+    "correctYear": 1958
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1988,
+    "wrongImdbId": "tt28277817",
+    "correctImdbId": "tt0094747",
+    "correctTitle": "Bird",
+    "correctYear": 1988
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1988,
+    "wrongImdbId": "tt0241303",
+    "correctImdbId": "tt0094868",
+    "correctTitle": "Chocolat",
+    "correctYear": 1988
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1996,
+    "wrongImdbId": "tt0375679",
+    "correctImdbId": "tt0115964",
+    "correctTitle": "Crash",
+    "correctYear": 1996
+  }
+]
