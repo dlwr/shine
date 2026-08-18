@@ -118,10 +118,10 @@ export const extractImdbNominations = (
     const categoryName = entry.edge?.node?.category?.text;
     const awardName = entry.award?.text;
 
-    let score = Infinity;
-    if (typeof categoryName === 'string' && categoryName.trim() !== '') {
-      score = getMatchScore(categoryName, targetNames);
-    }
+    let score =
+      typeof categoryName === 'string' && categoryName.trim() !== ''
+        ? getMatchScore(categoryName, targetNames)
+        : Infinity;
 
     if (
       score === Infinity &&

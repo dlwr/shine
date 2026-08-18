@@ -216,7 +216,7 @@ moviesRoutes.get('/:id/related', async c => {
     const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
     const limitParameter = Number(c.req.query('limit') ?? '6');
     const limit =
-      Number.isInteger(limitParameter) && limitParameter > 0
+      Number.isSafeInteger(limitParameter) && limitParameter > 0
         ? Math.min(limitParameter, 12)
         : 6;
 
@@ -338,11 +338,9 @@ moviesRoutes.post('/:id/translations', authMiddleware, async c => {
     }
 
     const content = sanitizeText(rawContent);
-    const isDefault =
-      rawIsDefault === true ||
-      rawIsDefault === 1 ||
-      rawIsDefault === 'true' ||
-      rawIsDefault === '1';
+    const isDefault = [true, 1, 'true', '1'].includes(
+      rawIsDefault as boolean | number | string,
+    );
 
     await moviesService.addMovieTranslation(
       movieId,

@@ -39,7 +39,7 @@ awardsRoutes.get('/:slug', async c => {
   const slug = c.req.param('slug');
   const pageParameter = Number.parseInt(c.req.query('page') ?? '1', 10);
   const page =
-    Number.isInteger(pageParameter) && pageParameter > 0 ? pageParameter : 1;
+    Number.isSafeInteger(pageParameter) && pageParameter > 0 ? pageParameter : 1;
 
   // ページはキャッシュキーに含めない。利用者入力でキー空間が広がるのを避けるため、
   // 全件を1キーに載せて読み出し後に切り出す
@@ -73,7 +73,7 @@ awardsRoutes.get('/:slug', async c => {
 awardsRoutes.get('/:slug/:year', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
   const year = Number.parseInt(c.req.param('year'), 10);
-  if (!Number.isInteger(year)) {
+  if (!Number.isSafeInteger(year)) {
     return c.json({error: 'Award not found'}, 404);
   }
 

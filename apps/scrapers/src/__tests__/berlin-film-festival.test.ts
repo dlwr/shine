@@ -66,7 +66,7 @@ const data = JSON.parse(
 const editions = extractAwardEditions(data, berlinConfig);
 
 const isMainCategory = (category: string | null) =>
-  category === null || category === 'Best Film' || category === 'Competition';
+  category === null || ['Best Film', 'Competition'].includes(category);
 
 const winnersOf = (year: number) =>
   editions

@@ -10,7 +10,7 @@ const parsePositiveInteger = (
   fallback: number,
 ): number => {
   const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed >= 1 ? parsed : fallback;
+  return Number.isSafeInteger(parsed) && parsed >= 1 ? parsed : fallback;
 };
 
 export const parsePagination = (

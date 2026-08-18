@@ -291,10 +291,11 @@ function analyzeTableStructure(
     yearIndex = 0;
   }
 
-  let tableType: 'film' | 'producer' | 'unknown' = 'film';
-  if (headerTexts.some(text => text.includes('producer'))) {
-    tableType = 'producer';
-  }
+  const tableType: 'film' | 'producer' | 'unknown' = headerTexts.some(text =>
+    text.includes('producer'),
+  )
+    ? 'producer'
+    : 'film';
 
   console.log(
     `Table ${tableIndex}: film=${filmIndex}, year=${yearIndex}, producer=${producerIndex}, type=${tableType}`,

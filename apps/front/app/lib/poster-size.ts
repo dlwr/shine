@@ -31,5 +31,5 @@ export function posterUrlForDisplay(
     return url;
   }
 
-  return url.replace(TMDB_POSTER_PATTERN, `${prefix}${size}${suffix}`);
+  return url.replace(TMDB_POSTER_PATTERN, () => `${prefix}${size}${suffix}`);
 }

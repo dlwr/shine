@@ -415,7 +415,8 @@ export function selectTmdbMatch(
 ): TmdbSearchResult | undefined {
   const normalized = normalizeTitle(title);
   const matches = results.filter(result => {
-    if (foreign === (result.original_language === 'ja')) {
+    const isJapanese = result.original_language === 'ja';
+    if (foreign === isJapanese) {
       return false;
     }
 

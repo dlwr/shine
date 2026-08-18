@@ -267,7 +267,7 @@ adminMoviesRoutes.put('/movies/:id', authMiddleware, async c => {
     if (year !== undefined) {
       if (
         typeof year !== 'number' ||
-        !Number.isInteger(year) ||
+        !Number.isSafeInteger(year) ||
         year < 1888 ||
         year > 2100
       ) {
@@ -380,7 +380,7 @@ adminMoviesRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
     // Validate TMDb ID (must be a positive integer)
     if (
       tmdbId !== undefined &&
-      (typeof tmdbId !== 'number' || !Number.isInteger(tmdbId) || tmdbId <= 0)
+      (typeof tmdbId !== 'number' || !Number.isSafeInteger(tmdbId) || tmdbId <= 0)
     ) {
       return c.json({error: 'TMDb ID must be a positive integer'}, 400);
     }

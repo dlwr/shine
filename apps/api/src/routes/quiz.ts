@@ -93,7 +93,7 @@ quizRoutes.post('/guess', async c => {
   const body = await c.req.json<GuessBody>().catch(() => ({}) as GuessBody);
   const date = resolveDate(body.date);
   const attempt = Number(body.attempt);
-  if (!date || !Number.isInteger(attempt) || attempt < 1) {
+  if (!date || !Number.isSafeInteger(attempt) || attempt < 1) {
     return c.json({error: 'Invalid request'}, 400);
   }
 

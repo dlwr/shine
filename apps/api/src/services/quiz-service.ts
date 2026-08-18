@@ -242,6 +242,6 @@ export class QuizService extends BaseService {
 
     return [...entries.values()]
       .filter(entry => entry.organizations.length >= MINIMUM_ORGANIZATIONS)
-      .toSorted((a, b) => (a.uid < b.uid ? -1 : 1));
+      .toSorted((a, b) => a.uid.localeCompare(b.uid));
   }
 }
