@@ -19,14 +19,14 @@ export function normalizeTitle(title: string): string {
     .replaceAll(/\s+/g, ' ')
     .trim();
 
-  let stripped = true;
-  while (stripped) {
-    stripped = false;
+  let isStripped = true;
+  while (isStripped) {
+    isStripped = false;
     for (const pattern of editionSuffixPatterns) {
       const next = result.replace(pattern, '').trim();
       if (next !== result) {
         result = next;
-        stripped = true;
+        isStripped = true;
       }
     }
   }

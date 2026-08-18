@@ -8,7 +8,7 @@ export default async function handleRequest(
   responseHeaders: Headers,
   routerContext: EntryContext,
 ) {
-  let shellRendered = false;
+  let isShellRendered = false;
   const userAgent = request.headers.get('user-agent');
 
   const body = await renderToReadableStream(
@@ -19,13 +19,13 @@ export default async function handleRequest(
         // Log streaming rendering errors from inside the shell.  Don't log
         // errors encountered during initial shell rendering since they'll
         // reject and get logged in handleDocumentRequest.
-        if (shellRendered) {
+        if (isShellRendered) {
           console.error(error);
         }
       },
     },
   );
-  shellRendered = true;
+  isShellRendered = true;
 
   // Ensure requests from bots and SPA Mode renders wait for all content to load before responding
   // https://react.dev/reference/react-dom/server/renderToPipeableStream#waiting-for-all-content-to-load-for-crawlers-and-static-generation

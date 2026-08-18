@@ -583,11 +583,11 @@ async function ensureNomination(
   }
 
   const promoteWinner = film.isWinner && existing.isWinner === 0;
-  const updateMention =
+  const isUpdateMention =
     film.specialMention !== undefined &&
     film.specialMention !== existing.specialMention;
 
-  if (!promoteWinner && !updateMention) {
+  if (!promoteWinner && !isUpdateMention) {
     return;
   }
 
@@ -595,7 +595,7 @@ async function ensureNomination(
     .update(nominations)
     .set({
       ...(promoteWinner && {isWinner: 1}),
-      ...(updateMention && {specialMention: film.specialMention}),
+      ...(isUpdateMention && {specialMention: film.specialMention}),
     })
     .where(
       and(
@@ -607,7 +607,7 @@ async function ensureNomination(
 
   nominationsByMovieUid.set(movieUid, {
     isWinner: promoteWinner ? 1 : existing.isWinner,
-    specialMention: updateMention
+    specialMention: isUpdateMention
       ? (film.specialMention ?? null) // eslint-disable-line unicorn/no-null -- DBのnullable列に合わせる
       : existing.specialMention,
   });

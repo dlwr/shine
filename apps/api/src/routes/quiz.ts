@@ -81,12 +81,12 @@ function guessResult(
   date: string,
   {movieUid, attempt}: {movieUid?: string; attempt: number},
 ): QuizGuessResult {
-  const correct = movieUid === entry.uid;
-  if (correct || attempt >= QUIZ_MAX_ATTEMPTS) {
-    return {correct, answer: toQuizAnswer(entry, date)};
+  const isCorrect = movieUid === entry.uid;
+  if (isCorrect || attempt >= QUIZ_MAX_ATTEMPTS) {
+    return {correct: isCorrect, answer: toQuizAnswer(entry, date)};
   }
 
-  return {correct, hint: buildQuizHints(entry)[attempt - 1]};
+  return {correct: isCorrect, hint: buildQuizHints(entry)[attempt - 1]};
 }
 
 quizRoutes.post('/guess', async c => {

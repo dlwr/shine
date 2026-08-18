@@ -421,9 +421,9 @@ export default function NominationManager({
         <button
           type="button"
           onClick={() => {
-            const next = !showAddForm;
-            setShowAddForm(next);
-            if (!next) {
+            const isNext = !showAddForm;
+            setShowAddForm(isNext);
+            if (!isNext) {
               resetAddForm();
             }
           }}

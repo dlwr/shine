@@ -115,7 +115,7 @@ const filterCeremonies = (
   organization: string,
 ) => {
   return ceremonies.filter(ceremony => {
-    const matchesOrganization =
+    const isMatchesOrganization =
       !organization || ceremony.organizationUid === organization;
 
     const matchesQuery =
@@ -124,7 +124,7 @@ const filterCeremonies = (
       (ceremony.location ?? '').toLowerCase().includes(query.toLowerCase()) ||
       ceremony.year.toString().includes(query);
 
-    return matchesOrganization && matchesQuery;
+    return isMatchesOrganization && matchesQuery;
   });
 };
 

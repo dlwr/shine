@@ -119,10 +119,10 @@ describe('AvailabilityService.checkMovie', () => {
       checkedAt: Math.floor(Date.now() / 1000) - 60,
     });
 
-    let runnerCalled = false;
+    let isRunnerCalled = false;
     const runners: SourceRunners = {
       async unext() {
-        runnerCalled = true;
+        isRunnerCalled = true;
         return {source: 'unext', status: 'ok', detail: 'fresh'};
       },
     };
@@ -130,7 +130,7 @@ describe('AvailabilityService.checkMovie', () => {
     const service = new AvailabilityService(environment);
     const result = await service.checkMovie('movie-a', runners);
 
-    expect(runnerCalled).toBe(false);
+    expect(isRunnerCalled).toBe(false);
     expect(result?.availability[0]?.detail).toBe('Matched (cached)');
   });
 });
