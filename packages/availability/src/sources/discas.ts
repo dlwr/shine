@@ -87,7 +87,7 @@ async function fetchWithSession(
 
     const location = response.headers.get('location');
     if (response.status >= 300 && response.status < 400 && location) {
-      currentUrl = new URL(location, currentUrl).toString();
+      currentUrl = new URL(location, currentUrl).href;
       continue;
     }
 

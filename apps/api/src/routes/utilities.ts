@@ -45,7 +45,7 @@ utilitiesRoutes.post('/fetch-url-title', async c => {
       }
 
       const nextValidation = validateExternalUrl(
-        new URL(location, currentUrl).toString(),
+        new URL(location, currentUrl).href,
       );
       if (!nextValidation.ok) {
         return c.json({error: 'Failed to fetch URL'}, 400);

@@ -18,7 +18,7 @@ function escapeXml(value: string): string {
 }
 
 function toAbsoluteUrl(path: string): string {
-  return escapeXml(new URL(path, SITE_URL).toString());
+  return escapeXml(new URL(path, SITE_URL).href);
 }
 
 export function buildSitemapIndex(paths: string[]): string {

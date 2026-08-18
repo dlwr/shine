@@ -41,7 +41,7 @@ export function buildSocialMeta({
   largeImage = false,
   type = 'website',
 }: SocialMetaInput): MetaDescriptor[] {
-  const url = new URL(path, SITE_URL).toString();
+  const url = new URL(path, SITE_URL).href;
   const useLargeCard = Boolean(imageUrl) && largeImage;
 
   const descriptors: MetaDescriptor[] = [
