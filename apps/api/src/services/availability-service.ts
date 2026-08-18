@@ -33,7 +33,7 @@ export function buildOnDemandRunners(
 
   // 検索クエリは先頭のタイトルが使われるため、別題は必ず後ろに足す
   async function titlesForSearch(movie: MovieToCheck): Promise<string[]> {
-    if (!movie.tmdbId || !tmdbApiKey) {
+    if (!tmdbApiKey || !movie.tmdbId) {
       return movie.titles;
     }
 
@@ -53,7 +53,7 @@ export function buildOnDemandRunners(
 
   return {
     async tmdb(movie) {
-      if (!movie.tmdbId || !tmdbApiKey) {
+      if (!tmdbApiKey || !movie.tmdbId) {
         return {
           source: 'tmdb',
           status: 'error',

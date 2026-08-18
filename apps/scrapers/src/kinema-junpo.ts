@@ -89,7 +89,7 @@ function parseFilmLines(content: string): KinemaJunpoFilm[] {
 
     rank++;
     const entry = trimmed.slice(1).trim();
-    if (EMPTY_RANK.has(entry) || entry === '') {
+    if (entry === '' || EMPTY_RANK.has(entry)) {
       continue;
     }
 

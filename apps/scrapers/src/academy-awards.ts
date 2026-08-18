@@ -362,7 +362,7 @@ function processTableRows(
       console.log(`Skipping duplicate: ${title} (${currentYear})`);
     } else {
       processedTitles.add(dedupeKey);
-      const isWinner = determineIfWinner($row);
+      const isWinner = isWinnerRow($row);
 
       console.log(
         `Adding movie: ${title} (${currentYear}) - ${
@@ -410,7 +410,7 @@ function extractYear($row: cheerio.Cheerio<Element>): number | undefined {
   return undefined;
 }
 
-function determineIfWinner($row: cheerio.Cheerio<Element>): boolean {
+function isWinnerRow($row: cheerio.Cheerio<Element>): boolean {
   const filmCell = $row.find('td').first();
 
   if (filmCell.find('b').length > 0) {
@@ -593,7 +593,7 @@ async function processMovieForBatch(
     };
 
     // 日本語タイトルとポスターの処理（新規映画の場合のみ）
-    if (existingMovies.length === 0 && imdbId && TMDB_API_KEY) {
+    if (imdbId && TMDB_API_KEY && existingMovies.length === 0) {
       // 日本語タイトルの取得・保存
       const japaneseTitle = await fetchJapaneseTitleFromTMDB(
         imdbId,

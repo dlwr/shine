@@ -39,9 +39,9 @@ function parseLimit(value: string): number {
 async function main(options: {
   limit?: number;
   all: boolean;
-  includeNonJapanese: boolean;
+  shouldIncludeNonJapanese: boolean;
 }): Promise<void> {
-  const {all: isAllMode, includeNonJapanese} = options;
+  const {all: isAllMode, shouldIncludeNonJapanese} = options;
 
   let batchSize = options.limit ?? DEFAULT_BATCH_SIZE;
 
@@ -62,14 +62,14 @@ async function main(options: {
 
   // 日本語翻訳が未登録の映画データを取得
   console.log(
-    includeNonJapanese
+    shouldIncludeNonJapanese
       ? '日本語翻訳が未登録、または原題のまま保存されている映画を検索中...'
       : '日本語翻訳が未登録の映画を検索中...',
   );
   const movies = await getMoviesWithoutJapaneseTranslation(
     database,
     batchSize,
-    includeNonJapanese,
+    shouldIncludeNonJapanese,
   );
 
   if (movies.length === 0) {

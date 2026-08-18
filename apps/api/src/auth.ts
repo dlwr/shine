@@ -22,7 +22,7 @@ export async function createJWT(secret: string): Promise<string> {
   return jwt;
 }
 
-export async function passwordsMatch(
+export async function isPasswordCorrect(
   provided: string,
   expected: string,
 ): Promise<boolean> {
@@ -42,7 +42,7 @@ export async function passwordsMatch(
   return difference === 0;
 }
 
-export async function verifyJWT(
+export async function isValidJWT(
   token: string,
   secret: string,
 ): Promise<boolean> {
@@ -81,7 +81,7 @@ export async function authMiddleware(
     }
 
     const token = authHeader.slice(7);
-    const isValid = await verifyJWT(token, c.env.JWT_SECRET);
+    const isValid = await isValidJWT(token, c.env.JWT_SECRET);
 
     if (!isValid) {
       throw new HTTPException(401, {

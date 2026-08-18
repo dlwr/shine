@@ -1289,7 +1289,7 @@ async function collectPosterUrls(
   movieUid: string,
   sizes: string[] = ['w342'],
 ): Promise<Array<typeof posterUrls.$inferInsert>> {
-  if (!movieDetails.posterPath || !TMDB_API_KEY) {
+  if (!TMDB_API_KEY || !movieDetails.posterPath) {
     return [];
   }
 

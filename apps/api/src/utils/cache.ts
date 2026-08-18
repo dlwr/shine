@@ -193,10 +193,10 @@ export const getCacheKeyForSelection = (
 
 export const getCacheKeyForMovie = (
   movieId: string,
-  includeDetails = false,
+  shouldIncludeDetails = false,
   locale: string = 'ja',
 ): string => {
-  const suffix = includeDetails ? 'full' : 'basic';
+  const suffix = shouldIncludeDetails ? 'full' : 'basic';
   return `movie:${movieId}:${suffix}:${locale}:v4`;
 };
 
@@ -326,7 +326,7 @@ export const createETag = (data: unknown): string => {
   return `"${Math.abs(hash).toString(16)}"`;
 };
 
-export const checkETag = (
+export const shouldCheckETag = (
   request: {header: (name: string) => string | undefined},
   etag: string,
 ): boolean => {

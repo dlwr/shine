@@ -1,6 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import {resolveMovieTitle} from './movie-title';
 
+// eslint-disable-next-line unicorn/consistent-boolean-name -- DBのis_default列は0/1の数値
 const translation = (languageCode: string, content: string, isDefault = 0) => ({
   languageCode,
   content,

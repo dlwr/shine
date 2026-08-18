@@ -131,7 +131,7 @@ describe('MovieInfoEditor 外部ID検索', () => {
           });
         }
 
-        if (url.endsWith('/tmdb-id') && method === 'PUT') {
+        if (method === 'PUT' && url.endsWith('/tmdb-id')) {
           const headers = new Headers(init?.headers);
           expect(headers.get('authorization')).toBe('Bearer admin-token');
           expect(headers.get('content-type')).toBe('application/json');
@@ -143,8 +143,8 @@ describe('MovieInfoEditor 外部ID検索', () => {
         }
 
         if (
-          url.endsWith(`/admin/movies/${movieData.uid}`) &&
-          method === 'GET'
+          method === 'GET' &&
+          url.endsWith(`/admin/movies/${movieData.uid}`)
         ) {
           return Promise.resolve({
             ok: true,

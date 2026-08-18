@@ -95,7 +95,7 @@ export async function syncTmdbData(
     let translationsAdded = 0;
     const rowsByLanguage = new Map<string, typeof translations.$inferInsert>();
 
-    if (movieData.original_language === 'ja' && originalTitle) {
+    if (originalTitle && movieData.original_language === 'ja') {
       rowsByLanguage.set('ja', {
         resourceType: 'movie_title',
         resourceUid: movieUid,
@@ -108,7 +108,7 @@ export async function syncTmdbData(
 
     for (const translation of translationsData.translations) {
       const translatedTitle = translation.data?.title || translation.data?.name;
-      if (translation.iso_639_1 && translatedTitle) {
+      if (translatedTitle && translation.iso_639_1) {
         const isOriginalLanguage =
           translation.iso_639_1 === movieData.original_language;
         rowsByLanguage.set(translation.iso_639_1, {

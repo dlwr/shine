@@ -145,7 +145,7 @@ async function verifyOrphan(
   orphan: Orphan,
   tmdbApiKey: string | undefined,
 ): Promise<Verdict> {
-  if (!orphan.imdbId || !orphan.title || !tmdbApiKey) {
+  if (!tmdbApiKey || !orphan.imdbId || !orphan.title) {
     return 'no-imdb-id';
   }
 

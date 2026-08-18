@@ -279,7 +279,7 @@ function ManualSelectionPanel({
   apiUrl: string;
   onClose: () => void;
   onOverrideSuccess: () => Promise<void> | void;
-  onOverrideLoadingChange: (value: boolean) => void;
+  onOverrideLoadingChange: (isLoading: boolean) => void;
   isParentLoading: boolean;
 }) {
   const [query, setQuery] = useState('');
@@ -597,8 +597,8 @@ function Movies({
   );
 
   const handleOverrideLoadingChange = useCallback(
-    (type: PeriodType, value: boolean) => {
-      setActionLoading(previous => ({...previous, [type]: value}));
+    (type: PeriodType, isLoading: boolean) => {
+      setActionLoading(previous => ({...previous, [type]: isLoading}));
     },
     [],
   );

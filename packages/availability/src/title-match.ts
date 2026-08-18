@@ -75,7 +75,7 @@ function matchesAnyTarget(
   });
 }
 
-export function titleMatches(
+export function matchesTitle(
   candidate: string,
   targetTitles: string[],
 ): boolean {
@@ -106,7 +106,7 @@ export function volumeBaseTitles(candidate: string): string[] {
   return bases;
 }
 
-export function titleMatchesAsVolume(
+export function matchesTitleAsVolume(
   candidate: string,
   targetTitles: string[],
 ): boolean {

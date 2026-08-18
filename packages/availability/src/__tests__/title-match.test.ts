@@ -2,8 +2,8 @@ import {describe, expect, it} from 'vitest';
 import {
   hasJapaneseText,
   normalizeTitle,
-  titleMatches,
-  titleMatchesAsVolume,
+  matchesTitle,
+  matchesTitleAsVolume,
 } from '../title-match';
 
 describe('hasJapaneseText', () => {
@@ -64,14 +64,14 @@ describe('normalizeTitle', () => {
   });
 });
 
-describe('titleMatches', () => {
+describe('matchesTitle', () => {
   it('matches identical normalized titles', () => {
-    expect(titleMatches('ゴッドファーザー', ['ゴッドファーザー'])).toBe(true);
+    expect(matchesTitle('ゴッドファーザー', ['ゴッドファーザー'])).toBe(true);
   });
 
   it('matches across media/edition decorations and spacing differences', () => {
     expect(
-      titleMatches('【Blu-ray】ゴッドファーザー PARTI デジタル・リストア版', [
+      matchesTitle('【Blu-ray】ゴッドファーザー PARTI デジタル・リストア版', [
         'ゴッドファーザー PART I',
       ]),
     ).toBe(true);
@@ -79,29 +79,29 @@ describe('titleMatches', () => {
 
   it('matches any of multiple target titles', () => {
     expect(
-      titleMatches('The Godfather', ['ゴッドファーザー', 'the godfather']),
+      matchesTitle('The Godfather', ['ゴッドファーザー', 'the godfather']),
     ).toBe(true);
   });
 
   it('does not match a different movie containing the title as substring', () => {
-    expect(titleMatches('東京ゴッドファーザーズ', ['ゴッドファーザー'])).toBe(
+    expect(matchesTitle('東京ゴッドファーザーズ', ['ゴッドファーザー'])).toBe(
       false,
     );
   });
 
   it('does not match sequels', () => {
-    expect(titleMatches('ゴッドファーザー PART II', ['ゴッドファーザー'])).toBe(
+    expect(matchesTitle('ゴッドファーザー PART II', ['ゴッドファーザー'])).toBe(
       false,
     );
   });
 
   it('ignores empty target titles', () => {
-    expect(titleMatches('ゴッドファーザー', ['', '  '])).toBe(false);
+    expect(matchesTitle('ゴッドファーザー', ['', '  '])).toBe(false);
   });
 
   it('matches a parenthesized alternate title', () => {
     expect(
-      titleMatches('ブードゥリアン（私はゾンビと歩いた！）', [
+      matchesTitle('ブードゥリアン（私はゾンビと歩いた！）', [
         '私はゾンビと歩いた',
       ]),
     ).toBe(true);
@@ -109,21 +109,21 @@ describe('titleMatches', () => {
 
   it('matches the part outside parentheses', () => {
     expect(
-      titleMatches('ブードゥリアン（私はゾンビと歩いた！）', [
+      matchesTitle('ブードゥリアン（私はゾンビと歩いた！）', [
         'ブードゥリアン',
       ]),
     ).toBe(true);
   });
 
   it('ignores a trailing exclamation mark difference', () => {
-    expect(titleMatches('私はゾンビと歩いた！', ['私はゾンビと歩いた'])).toBe(
+    expect(matchesTitle('私はゾンビと歩いた！', ['私はゾンビと歩いた'])).toBe(
       true,
     );
   });
 
   it('does not match a different title inside parentheses', () => {
     expect(
-      titleMatches('ブードゥリアン（私はゾンビと歩いた！）', [
+      matchesTitle('ブードゥリアン（私はゾンビと歩いた！）', [
         'ゾンビと歩いた',
       ]),
     ).toBe(false);
@@ -131,27 +131,27 @@ describe('titleMatches', () => {
 
   it('matches a title decorated with a double angle bracket edition', () => {
     expect(
-      titleMatches('エルミタージュ幻想《ニューマスター版》', [
+      matchesTitle('エルミタージュ幻想《ニューマスター版》', [
         'エルミタージュ幻想',
       ]),
     ).toBe(true);
   });
 
   it('does not match a different film named inside double angle brackets', () => {
-    expect(titleMatches('無防備都市《ローマ》', ['ローマ'])).toBe(false);
+    expect(matchesTitle('無防備都市《ローマ》', ['ローマ'])).toBe(false);
   });
 
   it('does not match a volume of a split release', () => {
     expect(
-      titleMatches('愛と宿命の泉　１　フロレット家のジャン', ['愛と宿命の泉']),
+      matchesTitle('愛と宿命の泉　１　フロレット家のジャン', ['愛と宿命の泉']),
     ).toBe(false);
   });
 });
 
-describe('titleMatchesAsVolume', () => {
+describe('matchesTitleAsVolume', () => {
   it('matches a volume numbered with a full-width digit', () => {
     expect(
-      titleMatchesAsVolume('愛と宿命の泉　１　フロレット家のジャン', [
+      matchesTitleAsVolume('愛と宿命の泉　１　フロレット家のジャン', [
         '愛と宿命の泉',
       ]),
     ).toBe(true);
@@ -159,33 +159,33 @@ describe('titleMatchesAsVolume', () => {
 
   it('matches a volume numbered with 第N部', () => {
     expect(
-      titleMatchesAsVolume('愛と宿命の泉 第2部 泉のマノン', ['愛と宿命の泉']),
+      matchesTitleAsVolume('愛と宿命の泉 第2部 泉のマノン', ['愛と宿命の泉']),
     ).toBe(true);
   });
 
   it('matches a volume labelled 前編', () => {
-    expect(titleMatchesAsVolume('人間の條件 前編 純愛篇', ['人間の條件'])).toBe(
+    expect(matchesTitleAsVolume('人間の條件 前編 純愛篇', ['人間の條件'])).toBe(
       true,
     );
   });
 
   it('does not match a sequel without a subtitle', () => {
     expect(
-      titleMatchesAsVolume('ゴッドファーザー PART II', ['ゴッドファーザー']),
+      matchesTitleAsVolume('ゴッドファーザー PART II', ['ゴッドファーザー']),
     ).toBe(false);
   });
 
   it('does not match a numbered sequel without a subtitle', () => {
-    expect(titleMatchesAsVolume('ロッキー 3', ['ロッキー'])).toBe(false);
+    expect(matchesTitleAsVolume('ロッキー 3', ['ロッキー'])).toBe(false);
   });
 
   it('does not match an exact title', () => {
-    expect(titleMatchesAsVolume('愛と宿命の泉', ['愛と宿命の泉'])).toBe(false);
+    expect(matchesTitleAsVolume('愛と宿命の泉', ['愛と宿命の泉'])).toBe(false);
   });
 
   it('does not match a different film sharing a prefix', () => {
     expect(
-      titleMatchesAsVolume('東京ゴッドファーザーズ 1 番外編', [
+      matchesTitleAsVolume('東京ゴッドファーザーズ 1 番外編', [
         'ゴッドファーザー',
       ]),
     ).toBe(false);
@@ -193,7 +193,7 @@ describe('titleMatchesAsVolume', () => {
 
   it('ignores empty target titles', () => {
     expect(
-      titleMatchesAsVolume('愛と宿命の泉　１　フロレット家のジャン', ['', ' ']),
+      matchesTitleAsVolume('愛と宿命の泉　１　フロレット家のジャン', ['', ' ']),
     ).toBe(false);
   });
 });

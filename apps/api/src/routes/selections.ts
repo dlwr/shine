@@ -19,7 +19,7 @@ import {Hono} from 'hono';
 import {authMiddleware} from '../auth';
 import {SelectionsService} from '../services';
 import {
-  checkETag,
+  shouldCheckETag,
   createCachedResponse,
   createETag,
   EdgeCache,
@@ -205,7 +205,7 @@ selectionsRoutes.get('/', async c => {
     const etag = createETag(result);
 
     // Check if client has the same version
-    if (checkETag(c.req, etag)) {
+    if (shouldCheckETag(c.req, etag)) {
       return c.newResponse('', 304, {
         ETag: etag,
         'Cache-Control': 'public, max-age=3600',

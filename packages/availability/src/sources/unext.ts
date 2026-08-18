@@ -1,4 +1,4 @@
-import {titleMatches} from '../title-match';
+import {matchesTitle} from '../title-match';
 import type {FetchLike, SourceCheckResult} from '../types';
 
 const USER_AGENT =
@@ -85,7 +85,7 @@ export async function checkUnext(
 
     const resultTitles = parseUnextTitles(body);
     const matched = resultTitles.find(title =>
-      titleMatches(title, targetTitles),
+      matchesTitle(title, targetTitles),
     );
 
     return matched

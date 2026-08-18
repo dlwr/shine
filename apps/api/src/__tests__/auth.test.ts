@@ -1,7 +1,7 @@
 import type {Context} from 'hono';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import type {Environment} from '@shine/database';
-import {authMiddleware, createJWT, verifyJWT} from '../auth';
+import {authMiddleware, createJWT, isValidJWT} from '../auth';
 
 describe('JWT Authentication', () => {
   const testSecret = 'test-secret-key';
@@ -15,21 +15,21 @@ describe('JWT Authentication', () => {
     });
   });
 
-  describe('verifyJWT', () => {
+  describe('isValidJWT', () => {
     it('should verify a JWT token created with the same secret', async () => {
       const token = await createJWT(testSecret);
-      const isValid = await verifyJWT(token, testSecret);
+      const isValid = await isValidJWT(token, testSecret);
       expect(isValid).toBe(true);
     });
 
     it('should reject JWT token with different secret', async () => {
       const token = await createJWT(testSecret);
-      const isValid = await verifyJWT(token, 'different-secret');
+      const isValid = await isValidJWT(token, 'different-secret');
       expect(isValid).toBe(false);
     });
 
     it('should reject invalid JWT token', async () => {
-      const isValid = await verifyJWT('invalid-token', testSecret);
+      const isValid = await isValidJWT('invalid-token', testSecret);
       expect(isValid).toBe(false);
     });
   });

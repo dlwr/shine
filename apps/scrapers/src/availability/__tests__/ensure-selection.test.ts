@@ -15,13 +15,13 @@ for (let index = 1; index <= 12; index++) {
 
 const loadMovie = async (uid: string): Promise<TestMovie> => movieCatalog[uid];
 
-function availabilityOf(available: boolean): AvailabilityDecision {
+function availabilityOf(isAvailable: boolean): AvailabilityDecision {
   return {
-    available,
+    available: isAvailable,
     results: [
       {
         source: 'tmdb',
-        status: available ? 'ok' : 'ng',
+        status: isAvailable ? 'ok' : 'ng',
         fromCache: false,
       },
     ],

@@ -19,7 +19,7 @@ const existing = [
 describe('selectMoviesNeedingJapaneseTitle', () => {
   it('ja翻訳が無い映画は対象になる', () => {
     const result = selectMoviesNeedingJapaneseTitle(candidates, existing, {
-      includeNonJapanese: false,
+      shouldIncludeNonJapanese: false,
     });
 
     expect(result.map(m => m.uid)).toContain('a');
@@ -27,7 +27,7 @@ describe('selectMoviesNeedingJapaneseTitle', () => {
 
   it('日本語文字を含むja翻訳がある映画は対象外', () => {
     const result = selectMoviesNeedingJapaneseTitle(candidates, existing, {
-      includeNonJapanese: false,
+      shouldIncludeNonJapanese: false,
     });
 
     expect(result.map(m => m.uid)).not.toContain('b');
@@ -35,7 +35,7 @@ describe('selectMoviesNeedingJapaneseTitle', () => {
 
   it('既定では英字のみのja翻訳がある映画は対象外', () => {
     const result = selectMoviesNeedingJapaneseTitle(candidates, existing, {
-      includeNonJapanese: false,
+      shouldIncludeNonJapanese: false,
     });
 
     expect(result.map(m => m.uid)).not.toContain('c');
@@ -43,7 +43,7 @@ describe('selectMoviesNeedingJapaneseTitle', () => {
 
   it('includeNonJapaneseを指定すると英字のみのja翻訳がある映画も対象になる', () => {
     const result = selectMoviesNeedingJapaneseTitle(candidates, existing, {
-      includeNonJapanese: true,
+      shouldIncludeNonJapanese: true,
     });
 
     expect(result.map(m => m.uid)).toContain('c');
@@ -51,7 +51,7 @@ describe('selectMoviesNeedingJapaneseTitle', () => {
 
   it('includeNonJapaneseを指定しても日本語文字を含む映画は対象外のまま', () => {
     const result = selectMoviesNeedingJapaneseTitle(candidates, existing, {
-      includeNonJapanese: true,
+      shouldIncludeNonJapanese: true,
     });
 
     expect(result.map(m => m.uid)).not.toContain('b');
@@ -61,7 +61,7 @@ describe('selectMoviesNeedingJapaneseTitle', () => {
     const result = selectMoviesNeedingJapaneseTitle(
       [movie('d')],
       [{movieUid: 'd', content: 'ランド・オブ・ザ・デッド'}],
-      {includeNonJapanese: true},
+      {shouldIncludeNonJapanese: true},
     );
 
     expect(result).toHaveLength(0);
@@ -71,7 +71,7 @@ describe('selectMoviesNeedingJapaneseTitle', () => {
     const result = selectMoviesNeedingJapaneseTitle(
       [movie('e')],
       [{movieUid: 'e', content: 'M/OTHER 大河のうた'}],
-      {includeNonJapanese: true},
+      {shouldIncludeNonJapanese: true},
     );
 
     expect(result).toHaveLength(0);
