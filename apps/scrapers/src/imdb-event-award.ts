@@ -24,7 +24,9 @@ export type ImdbEventAwardConfig = {
   ceremonyNumber: (year: number) => number | undefined;
   isCompetitionCategory: (category: string | null) => boolean;
   minimumFilmsPerEdition: number;
-  /** ノミネーションのnotesをspecialMentionとして保存する */
+  /**
+  ノミネーションのnotesをspecialMentionとして保存する
+  */
   useNotesAsSpecialMention?: boolean;
   winnerCorrections?: Array<{
     year: number;

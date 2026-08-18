@@ -11,7 +11,9 @@ import {selectMoviesNeedingJapaneseTitle} from './select-targets';
  */
 export type Movie = {
   uid: string;
-  /** movies.imdb_id は NULL 許容。無効値のまま外部検索に渡さないこと */
+  /**
+  movies.imdb_id は NULL 許容。無効値のまま外部検索に渡さないこと
+  */
   imdbId: string | undefined;
   englishTitle: string;
   year?: number;

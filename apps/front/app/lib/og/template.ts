@@ -171,7 +171,9 @@ export function buildQuizCardHtml({
 export const BANNER_WIDTH = 1500;
 export const BANNER_HEIGHT = 500;
 
-/** SNSプロフィール用バナー(3:1) */
+/**
+SNSプロフィール用バナー(3:1)
+*/
 export function buildBannerHtml(): string {
   return `<div style="display:flex;width:${BANNER_WIDTH}px;height:${BANNER_HEIGHT}px;background:${COLORS.paper};border:14px solid ${COLORS.ink};padding:40px 60px;align-items:center;justify-content:space-between;">
   <div style="display:flex;flex-direction:column;">

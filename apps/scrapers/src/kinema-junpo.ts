@@ -147,7 +147,9 @@ export function parseKinemaJunpoWikitext(
   return editions;
 }
 
-/** 記事が無い作品はWikipediaの表示名で引けるようにする */
+/**
+記事が無い作品はWikipediaの表示名で引けるようにする
+*/
 export function filmKey(film: KinemaJunpoFilm): string {
   return film.page ?? `title:${film.title}`;
 }
@@ -403,10 +405,14 @@ function normalizeTitle(value: string | undefined): string {
   return (value ?? '').replaceAll(/[\s\u3000]/g, '').toLowerCase();
 }
 
-/** 外国映画は本国公開から日本公開までのずれがあるので過去側に幅を持たせる */
+/**
+外国映画は本国公開から日本公開までのずれがあるので過去側に幅を持たせる
+*/
 const FOREIGN_YEAR_WINDOW = 15;
 
-/** 同名のリメイクが多いので、絞り込んだ結果が1件のときだけ採用する */
+/**
+同名のリメイクが多いので、絞り込んだ結果が1件のときだけ採用する
+*/
 export function selectTmdbMatch(
   results: TmdbSearchResult[],
   title: string,
@@ -494,7 +500,9 @@ export async function resolveFilmsByTmdb(
   return resolved;
 }
 
-/** Wikipediaの表記は邦題として信頼できるので、TMDb由来の原題を上書きする */
+/**
+Wikipediaの表記は邦題として信頼できるので、TMDb由来の原題を上書きする
+*/
 export async function backfillJapaneseTitles({
   environment,
   editions,

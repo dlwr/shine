@@ -25,7 +25,9 @@ type SocialMetaInput = {
   path: string;
   locale: Locale;
   imageUrl?: string;
-  /** 1200x630の生成カードを使うときに指定。twitter:cardと寸法が切り替わる */
+  /**
+  1200x630の生成カードを使うときに指定。twitter:cardと寸法が切り替わる
+  */
   largeImage?: boolean;
   type?: 'website' | 'article';
 };
