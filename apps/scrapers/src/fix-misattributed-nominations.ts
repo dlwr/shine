@@ -240,7 +240,7 @@ async function resolveCorrectMovie(
 
   const tmdbApiKey = environment.TMDB_API_KEY;
   let details: TMDBMovieData | undefined;
-  if (entry.correctImdbId && tmdbApiKey) {
+  if (tmdbApiKey && entry.correctImdbId) {
     const found = await findTMDBByImdbId(entry.correctImdbId, tmdbApiKey);
     if (found?.mediaType === 'movie') {
       details = await fetchTMDBMovieDetails(found.tmdbId, tmdbApiKey, 'en-US');

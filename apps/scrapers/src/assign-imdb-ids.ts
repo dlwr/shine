@@ -139,13 +139,13 @@ async function assignImdbIds() {
         if (imdbId) {
           if (options.dryRun) {
             console.log(`[DRY RUN] Would assign IMDb ID: ${imdbId}`);
-            if (!movie.tmdbId && tmdbId) {
+            if (tmdbId && !movie.tmdbId) {
               console.log(`[DRY RUN] Would also assign TMDb ID: ${tmdbId}`);
             }
           } else {
             // Update movie with IMDb ID (and TMDb ID if we found it)
             const updateData: Record<string, unknown> = {imdbId};
-            if (!movie.tmdbId && tmdbId) {
+            if (tmdbId && !movie.tmdbId) {
               updateData.tmdbId = tmdbId;
             }
 
@@ -155,7 +155,7 @@ async function assignImdbIds() {
               .where(eq(movies.uid, movie.uid));
 
             console.log(`✓ Assigned IMDb ID: ${imdbId}`);
-            if (!movie.tmdbId && tmdbId) {
+            if (tmdbId && !movie.tmdbId) {
               console.log(`✓ Also assigned TMDb ID: ${tmdbId}`);
             }
           }

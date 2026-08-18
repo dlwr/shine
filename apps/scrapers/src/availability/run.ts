@@ -280,7 +280,7 @@ export function buildSourceRunners(options: {
   return {
     async tmdb(movie) {
       let tmdbId = movie.tmdbId;
-      if (!tmdbId && movie.imdbId && tmdbApiKey) {
+      if (tmdbApiKey && !tmdbId && movie.imdbId) {
         const found = await findTMDBByImdbId(movie.imdbId, tmdbApiKey);
         if (found?.tmdbId) {
           tmdbId = found.tmdbId;

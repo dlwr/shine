@@ -478,7 +478,7 @@ async function createNewMovieForBatch(tmdbMovie: TMDBMovieData): Promise<{
 
   // ポスターURL
   let posterUrlData: typeof posterUrls.$inferInsert | undefined;
-  if (tmdbMovie.poster_path && tmdbConfiguration) {
+  if (tmdbConfiguration && tmdbMovie.poster_path) {
     const posterUrl = `${tmdbConfiguration.images.secure_base_url}w500${tmdbMovie.poster_path}`;
     posterUrlData = {
       movieUid,
@@ -531,7 +531,7 @@ async function updateExistingMovie(
   }
 
   // ポスターURLを追加（まだない場合）
-  if (tmdbMovie.poster_path && tmdbConfiguration) {
+  if (tmdbConfiguration && tmdbMovie.poster_path) {
     const [existingPoster] = await database
       .select()
       .from(posterUrls)

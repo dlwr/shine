@@ -67,7 +67,7 @@ async function main(): Promise<void> {
     }
 
     const exhausted = summaries.filter(summary => summary.exhausted);
-    if (exhausted.length > 0 && !isDryRun) {
+    if (!isDryRun && exhausted.length > 0) {
       console.error(
         `視聴可能な映画が見つからなかったセレクション: ${exhausted
           .map(summary => summary.type)

@@ -593,7 +593,7 @@ async function processMovieForBatch(
     };
 
     // 日本語タイトルとポスターの処理（新規映画の場合のみ）
-    if (existingMovies.length === 0 && imdbId && TMDB_API_KEY) {
+    if (imdbId && TMDB_API_KEY && existingMovies.length === 0) {
       // 日本語タイトルの取得・保存
       const japaneseTitle = await fetchJapaneseTitleFromTMDB(
         imdbId,

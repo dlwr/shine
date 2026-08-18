@@ -86,7 +86,7 @@ async function fetchWithSession(
     jar.absorb(response);
 
     const location = response.headers.get('location');
-    if (response.status >= 300 && response.status < 400 && location) {
+    if (location && response.status >= 300 && response.status < 400) {
       currentUrl = new URL(location, currentUrl).href;
       continue;
     }

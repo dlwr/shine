@@ -696,7 +696,7 @@ async function processMovieForBatch(movieInfo: MovieInfo): Promise<
     }
 
     // ポスターの取得・保存（新規映画の場合のみ）
-    if (existingMovies.length === 0 && imdbId && TMDB_API_KEY) {
+    if (imdbId && TMDB_API_KEY && existingMovies.length === 0) {
       const movieImages = await fetchTMDBMovieImages(imdbId, TMDB_API_KEY);
       if (movieImages) {
         // TMDB IDを保存（まだ保存されていない場合）

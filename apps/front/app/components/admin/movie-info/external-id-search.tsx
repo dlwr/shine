@@ -88,7 +88,7 @@ export function ExternalIdSearch({
   const [idSearchInitialized, setIdSearchInitialized] = useState(false);
 
   useEffect(() => {
-    if (!movieData.imdbId && !movieData.tmdbId && !showIdSearch) {
+    if (!showIdSearch && !movieData.imdbId && !movieData.tmdbId) {
       setShowIdSearch(true);
     }
   }, [movieData.imdbId, movieData.tmdbId, showIdSearch]);
