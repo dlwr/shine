@@ -45,6 +45,46 @@ describe('checkTmdbProviders', () => {
     expect(result.status).toBe('ng');
   });
 
+  it('returns ng when the only JP provider is defunct Google Play Movies', async () => {
+    const fetchSpy = vi.fn(async () =>
+      Response.json({
+        id: 238,
+        results: {
+          JP: {
+            rent: [{provider_id: 3, provider_name: 'Google Play Movies'}],
+            buy: [{provider_id: 3, provider_name: 'Google Play Movies'}],
+          },
+        },
+      }),
+    );
+
+    const result = await checkTmdbProviders(238, 'api-key', fetchSpy);
+
+    expect(result.status).toBe('ng');
+  });
+
+  it('excludes defunct Google Play Movies from detail when other providers exist', async () => {
+    const fetchSpy = vi.fn(async () =>
+      Response.json({
+        id: 238,
+        results: {
+          JP: {
+            rent: [
+              {provider_id: 3, provider_name: 'Google Play Movies'},
+              {provider_id: 10, provider_name: 'Amazon Video'},
+            ],
+          },
+        },
+      }),
+    );
+
+    const result = await checkTmdbProviders(238, 'api-key', fetchSpy);
+
+    expect(result.status).toBe('ok');
+    expect(result.detail).toContain('Amazon Video');
+    expect(result.detail).not.toContain('Google Play Movies');
+  });
+
   it('returns error on HTTP failure', async () => {
     const fetchSpy = vi.fn(
       async () => new Response('unauthorized', {status: 401}),
