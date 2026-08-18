@@ -235,7 +235,7 @@ async function main() {
   }
 
   if (errors.length > 0) {
-    throw new Error(`${errors.length}件の投稿が失敗しました`);
+    throw new AggregateError(errors, `${errors.length}件の投稿が失敗しました`);
   }
 }
 
