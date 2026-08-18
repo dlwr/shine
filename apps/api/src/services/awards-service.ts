@@ -519,6 +519,7 @@ export class AwardsService extends BaseService {
       year,
       ceremonyNumber: rows[0].ceremonyNumber ?? undefined,
       movies: movieEntries,
+      // eslint-disable-next-line unicorn/no-useless-undefined -- 三項の分岐として省略できない
       previousYear: index > 0 ? years[index - 1] : undefined,
       nextYear: index < years.length - 1 ? years[index + 1] : undefined,
     };

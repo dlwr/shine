@@ -411,6 +411,7 @@ const loadCeremonyDetail = async (database: Database, ceremonyUid: string) => {
   );
 
   const previousCeremony =
+    // eslint-disable-next-line unicorn/no-useless-undefined -- 三項の分岐として省略できない
     currentIndex > 0 ? sortedSiblings[currentIndex - 1] : undefined;
   const nextCeremony =
     currentIndex !== -1 && currentIndex < sortedSiblings.length - 1

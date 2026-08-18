@@ -303,12 +303,10 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
             disabled={pagination.page === 1}
             onClick={() => {
               if (!(pagination.page > 1) || globalThis.window === undefined) {
-              	return;
+                return;
               }
 
-              const parameters = new URLSearchParams(
-                location.search,
-              );
+              const parameters = new URLSearchParams(location.search);
               parameters.set('page', String(pagination.page - 1));
               const newUrl = `${location.pathname}?${parameters.toString()}`;
               history.replaceState({}, '', newUrl);
@@ -325,13 +323,14 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
             size="sm"
             disabled={pagination.page === pagination.totalPages}
             onClick={() => {
-              if (!(pagination.page < pagination.totalPages) || globalThis.window === undefined) {
-              	return;
+              if (
+                !(pagination.page < pagination.totalPages) ||
+                globalThis.window === undefined
+              ) {
+                return;
               }
 
-              const parameters = new URLSearchParams(
-                location.search,
-              );
+              const parameters = new URLSearchParams(location.search);
               parameters.set('page', String(pagination.page + 1));
               const newUrl = `${location.pathname}?${parameters.toString()}`;
               history.replaceState({}, '', newUrl);
@@ -477,7 +476,7 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
     (query: string) => {
       // Update URL without causing React Router re-render
       if (globalThis.window === undefined) {
-      	return;
+        return;
       }
 
       const newParameters = new URLSearchParams(searchParameters);

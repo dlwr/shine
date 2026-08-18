@@ -166,7 +166,9 @@ export class CrossingsService extends BaseService {
         title: row.jaTitle ?? row.defaultTitle ?? undefined,
         year: row.year ?? undefined,
         posterUrl: row.posterUrl ?? undefined,
-        awardSlugs: [...(slugsByMovie.get(row.uid) ?? [])].toSorted((a, b) => a.localeCompare(b)),
+        awardSlugs: [...(slugsByMovie.get(row.uid) ?? [])].toSorted((a, b) =>
+          a.localeCompare(b),
+        ),
       }))
       .toSorted(compareTopMovies);
   }

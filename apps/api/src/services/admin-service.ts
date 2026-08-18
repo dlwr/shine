@@ -994,7 +994,9 @@ export class AdminService extends BaseService {
 
     let html: string;
     try {
-      const existingPages = isReusedExistingSession ? await browser.pages() : [];
+      const existingPages = isReusedExistingSession
+        ? await browser.pages()
+        : [];
       const page =
         existingPages.length > 0 ? existingPages[0] : await browser.newPage();
       await page.setUserAgent(

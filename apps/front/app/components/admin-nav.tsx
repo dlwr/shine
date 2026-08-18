@@ -11,7 +11,7 @@ const navItems = [
 
 const handleLogout = () => {
   if (typeof globalThis === 'undefined' || !globalThis.localStorage) {
-  	return;
+    return;
   }
 
   clearAdminToken();
