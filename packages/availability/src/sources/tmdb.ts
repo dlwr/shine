@@ -1,14 +1,25 @@
 import type {FetchLike, SourceCheckResult} from '../types';
 
+type Provider = {provider_id?: number; provider_name?: string};
+
 type WatchProvidersResponse = {
   results?: {
     JP?: {
-      flatrate?: Array<{provider_name?: string}>;
-      rent?: Array<{provider_name?: string}>;
-      buy?: Array<{provider_name?: string}>;
+      flatrate?: Provider[];
+      rent?: Provider[];
+      buy?: Provider[];
     };
   };
 };
+
+// Google Play Movies: 2024-01-17に日本でサービス終了したがJustWatch側のデータが残っている
+const DEFUNCT_PROVIDER_IDS = new Set([3]);
+
+const activeProviders = (providers: Provider[] | undefined) =>
+  (providers ?? []).filter(
+    p =>
+      p.provider_id === undefined || !DEFUNCT_PROVIDER_IDS.has(p.provider_id),
+  );
 
 export async function checkTmdbProviders(
   tmdbId: number,
@@ -30,9 +41,9 @@ export async function checkTmdbProviders(
     const body = (await response.json()) as WatchProvidersResponse;
     const jp = body.results?.JP;
     const offerings = [
-      ...(jp?.flatrate ?? []).map(p => `${p.provider_name}(見放題)`),
-      ...(jp?.rent ?? []).map(p => `${p.provider_name}(レンタル)`),
-      ...(jp?.buy ?? []).map(p => `${p.provider_name}(購入)`),
+      ...activeProviders(jp?.flatrate).map(p => `${p.provider_name}(見放題)`),
+      ...activeProviders(jp?.rent).map(p => `${p.provider_name}(レンタル)`),
+      ...activeProviders(jp?.buy).map(p => `${p.provider_name}(購入)`),
     ];
 
     return offerings.length > 0
