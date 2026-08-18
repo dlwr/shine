@@ -392,11 +392,7 @@ function extractAllMoviesFromMainPage($: cheerio.CheerioAPI): MovieInfo[] {
   for (const table of tables) {
     const $table = $(table);
 
-    const specificYear = findYearBeforeTable(
-      $table,
-      movies,
-      processedYears,
-    );
+    const specificYear = findYearBeforeTable($table, movies, processedYears);
 
     // 年が見つからない場合は、このテーブルをスキップ
     if (!specificYear) {
