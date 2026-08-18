@@ -47,9 +47,9 @@ function candidateVariants(candidate: string): string[] {
   }
 
   variants.push(
-    ...[...candidate.matchAll(parenthesizedTitlePattern)].map(
-      segment => segment[1],
-    ),
+    ...candidate
+      .matchAll(parenthesizedTitlePattern)
+      .map(segment => segment[1]),
   );
 
   return variants;

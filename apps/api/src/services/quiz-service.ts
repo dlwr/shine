@@ -240,8 +240,10 @@ export class QuizService extends BaseService {
       }
     }
 
-    return [...entries.values()]
+    return entries
+      .values()
       .filter(entry => entry.organizations.length >= MINIMUM_ORGANIZATIONS)
+      .toArray()
       .toSorted((a, b) => a.uid.localeCompare(b.uid));
   }
 }

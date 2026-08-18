@@ -161,7 +161,7 @@ export function extractAwardEditions(
 
     applyWinnerCorrections(config, edition.year, filmsByImdbId);
 
-    const films = [...filmsByImdbId.values()];
+    const films = filmsByImdbId.values().toArray();
     if (films.length < config.minimumFilmsPerEdition) {
       continue;
     }

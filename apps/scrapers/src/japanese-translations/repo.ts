@@ -99,7 +99,7 @@ export async function getMoviesWithoutJapaneseTranslation(
     );
 
   const moviesWithoutJapanese = selectMoviesNeedingJapaneseTitle(
-    [...movieData.values()],
+    movieData.values().toArray(),
     moviesWithJapaneseTitles,
     {shouldIncludeNonJapanese},
   );

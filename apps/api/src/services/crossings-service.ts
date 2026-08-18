@@ -106,7 +106,7 @@ export class CrossingsService extends BaseService {
         filmCount: filmCounts.get(definition.slug) ?? 0,
       }));
 
-    const pairs = [...sharedCounts.values()].toSorted(comparePairs);
+    const pairs = sharedCounts.values().toArray().toSorted(comparePairs);
 
     const distribution = [...countsByAwardCount]
       .map(([awardCount, filmCount]) => ({awardCount, filmCount}))

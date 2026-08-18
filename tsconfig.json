@@ -13,7 +13,7 @@
   "compilerOptions": {
     "composite": true,
     // Enable latest features
-    "lib": ["ES2023", "WebWorker"],
+    "lib": ["ESNext", "WebWorker"],
     "target": "ES2022",
     "downlevelIteration": true,
     "module": "ESNext",

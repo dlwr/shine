@@ -122,7 +122,7 @@ export async function syncTmdbData(
       }
     }
 
-    const rows = [...rowsByLanguage.values()];
+    const rows = rowsByLanguage.values().toArray();
     const chunkSize = 50;
     const now = Math.floor(Date.now() / 1000);
     for (let index = 0; index < rows.length; index += chunkSize) {

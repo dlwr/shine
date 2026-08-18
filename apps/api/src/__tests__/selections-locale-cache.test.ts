@@ -33,7 +33,10 @@ function createStatefulCacheStub() {
       return store.delete(key);
     },
     async keys() {
-      return [...store.keys()].map(key => new Request(key));
+      return store
+        .keys()
+        .map(key => new Request(key))
+        .toArray();
     },
   } as unknown as Cache;
 }
