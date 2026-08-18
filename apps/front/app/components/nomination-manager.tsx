@@ -174,7 +174,7 @@ export default function NominationManager({
   useEffect(() => {
     if (
       editingNominationId &&
-      !nominations.some(nomination => nomination.uid === editingNominationId)
+      nominations.every(nomination => !(nomination.uid === editingNominationId))
     ) {
       setEditingNominationId(undefined);
     }
