@@ -20,15 +20,6 @@ export class EdgeCache {
     this.kv = kv;
   }
 
-  private get cache(): Cache {
-    return this.cacheStorage ?? (caches as unknown as {default: Cache}).default;
-  }
-
-  // Cache API keys must be valid request URLs; map logical keys onto one
-  private keyToUrl(key: string): string {
-    return `https://edge-cache.internal/${encodeURIComponent(key)}`;
-  }
-
   async getResponse(key: string): Promise<Response | undefined> {
     try {
       const cached = await this.cache.match(this.keyToUrl(key));
@@ -166,6 +157,15 @@ export class EdgeCache {
 
   getMetrics(): CacheMetrics {
     return {...this.metrics};
+  }
+
+  private get cache(): Cache {
+    return this.cacheStorage ?? (caches as unknown as {default: Cache}).default;
+  }
+
+  // Cache API keys must be valid request URLs; map logical keys onto one
+  private keyToUrl(key: string): string {
+    return `https://edge-cache.internal/${encodeURIComponent(key)}`;
   }
 
   private updateHitRate(): void {

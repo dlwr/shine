@@ -57,6 +57,21 @@ export default tseslint.config(
   {
     rules: {
       'unicorn/single-line-block-comment-style': ['error', 'single-line'],
+      'unicorn/consistent-class-member-order': [
+        'error',
+        {
+          order: [
+            'static-field',
+            'static-block',
+            'static-method',
+            'private-field',
+            'public-field',
+            'constructor',
+            'public-method',
+            'private-method',
+          ],
+        },
+      ],
     },
   },
   {
