@@ -47,6 +47,7 @@ function createSessionFetch(searchBytes: Buffer, detailBytes?: Buffer) {
   // 実サイトの挙動を再現: top.doでJSESSIONID発行 →
   // 検索はxdsyncへ302(追加Cookie発行) → 両Cookie持参で再度検索すると200
   return vi.fn(async (url: string, init?: RequestInit) => {
+    // eslint-disable-next-line unicorn/no-declarations-before-early-exit -- 後続の分岐でも使うので前に置く
     const cookie = new Headers(init?.headers).get('cookie') ?? '';
 
     if (url.includes('goodsDetail.do')) {

@@ -175,6 +175,7 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
     }
   };
 
+  // eslint-disable-next-line unicorn/no-declarations-before-early-exit -- 後続の分岐でも使うので前に置く
   const handleMerge = async (sourceId: string, sourceTitle: string) => {
     const targetId = showMergeDialog(sourceId, sourceTitle);
     if (targetId) {

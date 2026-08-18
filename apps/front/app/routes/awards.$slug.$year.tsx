@@ -61,12 +61,12 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 }
 
 export async function loader({context, request, params}: Route.LoaderArgs) {
-  const locale = getLocaleFromRequest(request);
-  const apiUrl = resolveApiUrl(context);
-
   if (!/^\d{4}$/.test(params.year ?? '')) {
     throw new Response('Not Found', {status: 404});
   }
+
+  const locale = getLocaleFromRequest(request);
+  const apiUrl = resolveApiUrl(context);
 
   const response = await fetch(
     `${apiUrl}/awards/${params.slug}/${params.year}`,

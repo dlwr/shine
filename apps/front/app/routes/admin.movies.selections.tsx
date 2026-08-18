@@ -294,6 +294,7 @@ export default function AdminMovieSelections({
     setSelectedMovie(undefined);
   };
 
+  // eslint-disable-next-line unicorn/no-declarations-before-early-exit -- 後続の分岐でも使うので前に置く
   const getPrimaryTitle = (movie: SelectionData['movie'] | SearchMovie) => {
     if (!movie) {
       return '無題';

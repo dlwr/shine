@@ -48,14 +48,6 @@ export function FilmCard({
       ? selectBestPoster(movie.posterUrls, locale)
       : movie.posterUrl;
 
-  const winner = movie.nominations?.some(n => n.isWinner);
-  const nomCount = movie.nominations?.length ?? 0;
-  const chip = winner
-    ? '★ WINNER'
-    : nomCount > 0
-      ? `${nomCount} NOMS`
-      : undefined;
-
   if (variant === 'compact') {
     return (
       <a
@@ -84,6 +76,14 @@ export function FilmCard({
       </a>
     );
   }
+
+  const winner = movie.nominations?.some(n => n.isWinner);
+  const nomCount = movie.nominations?.length ?? 0;
+  const chip = winner
+    ? '★ WINNER'
+    : nomCount > 0
+      ? `${nomCount} NOMS`
+      : undefined;
 
   return (
     <a

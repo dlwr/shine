@@ -623,7 +623,6 @@ adminMoviesRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
     }
 
     const {tmdbId} = movie[0];
-    const refreshMediaType = (movie[0].mediaType as 'movie' | 'tv') || 'movie';
     if (!tmdbId) {
       return c.json({error: 'Movie does not have a TMDb ID'}, 400);
     }
@@ -631,6 +630,8 @@ adminMoviesRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
     if (!c.env.TMDB_API_KEY) {
       return c.json({error: 'TMDb API key not configured'}, 500);
     }
+
+    const refreshMediaType = (movie[0].mediaType as 'movie' | 'tv') || 'movie';
 
     try {
       const refreshResults = await syncTmdbData(

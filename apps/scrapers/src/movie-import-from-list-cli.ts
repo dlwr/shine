@@ -38,8 +38,6 @@ async function main(): Promise<void> {
 
   // 環境変数から設定を取得
   const tursoUrl = process.env.TURSO_DATABASE_URL;
-  const tursoToken = process.env.TURSO_AUTH_TOKEN;
-  const tmdbKey = process.env.TMDB_API_KEY;
 
   // 必要な環境変数をチェック
   if (!tursoUrl) {
@@ -48,12 +46,14 @@ async function main(): Promise<void> {
     return;
   }
 
+  const tursoToken = process.env.TURSO_AUTH_TOKEN;
   if (!tursoToken) {
     console.error('Error: TURSO_AUTH_TOKEN environment variable is required');
     process.exitCode = 1;
     return;
   }
 
+  const tmdbKey = process.env.TMDB_API_KEY;
   if (!tmdbKey) {
     console.error('Error: TMDB_API_KEY environment variable is required');
     process.exitCode = 1;

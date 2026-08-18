@@ -954,13 +954,13 @@ export class AdminService extends BaseService {
       );
     }
 
-    const normalizedUrl = ensureTrailingSlash(imdbEventUrl);
-
     if (!this.env.BROWSER) {
       throw new ExternalFetchError(
         'Browser Rendering binding is not configured. Add [browser] binding to wrangler.toml.',
       );
     }
+
+    const normalizedUrl = ensureTrailingSlash(imdbEventUrl);
 
     let browser: Awaited<ReturnType<typeof puppeteer.launch>> | undefined;
     let isReusedExistingSession = false;
