@@ -413,7 +413,7 @@ const loadCeremonyDetail = async (database: Database, ceremonyUid: string) => {
   const previousCeremony =
     currentIndex > 0 ? sortedSiblings[currentIndex - 1] : undefined;
   const nextCeremony =
-    currentIndex >= 0 && currentIndex < sortedSiblings.length - 1
+    currentIndex !== -1 && currentIndex < sortedSiblings.length - 1
       ? sortedSiblings[currentIndex + 1]
       : undefined;
 
