@@ -18,7 +18,7 @@ describe('normalizeCategoryName', () => {
   });
 
   it('normalizes curly quotes', () => {
-    expect(normalizeCategoryName('Best Picture\u2019s')).toBe("best picture's");
+    expect(normalizeCategoryName('Best Picture\u{2019}s')).toBe("best picture's");
   });
 
   it('collapses whitespace', () => {

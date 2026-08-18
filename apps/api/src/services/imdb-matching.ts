@@ -47,7 +47,7 @@ export const normalizeCategoryName = (value: string): string =>
   value
     .normalize('NFKC')
     .toLowerCase()
-    .replaceAll('\u2019', "'")
+    .replaceAll('\u{2019}', "'")
     .replaceAll(/[（）]/g, match => (match === '（' ? '(' : ')'))
     .replaceAll(/\s+/g, ' ')
     .trim();

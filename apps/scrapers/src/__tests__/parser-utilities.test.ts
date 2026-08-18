@@ -79,7 +79,7 @@ describe('Parser Utilities', () => {
     });
 
     it('should remove zero-width characters', () => {
-      const text = 'Test\u200Btext\u200Cwith\u200Dzero\uFEFFwidth';
+      const text = 'Test\u{200B}text\u{200C}with\u{200D}zero\u{FEFF}width';
       const result = normalizeText(text);
 
       expect(result).toBe('Testtextwithzero width');
