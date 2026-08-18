@@ -88,8 +88,7 @@ export default tseslint.config(
   {
     // unicorn 73 で増えたルール。1ルールずつ直しては消していく作業中で、
     // 全部消えたらこのブロックごと無くなる。恒久的な除外ではない。
-    rules: {
-    },
+    rules: {},
   },
   {
     files: ['**/*.tsx'],

@@ -38,15 +38,11 @@ const filterMoviesWithImdbId = (
       typeof movie.imdbId === 'string' && movie.imdbId.length > 0,
   );
 
-let environment_: Environment;
-let TMDB_API_KEY: string | undefined;
-
 export default {
   async fetch(request: Request, environment: Environment): Promise<Response> {
-    environment_ = environment;
-    TMDB_API_KEY = environment.TMDB_API_KEY;
+    const tmdbApiKey = environment.TMDB_API_KEY;
 
-    if (!TMDB_API_KEY) {
+    if (!tmdbApiKey) {
       return new Response('TMDB_API_KEY is not set', {status: 500});
     }
 
@@ -57,7 +53,11 @@ export default {
         ? Number(processCountParameter)
         : 10;
 
-      const result = await fetchAndStorePosterUrls(processCount);
+      const result = await fetchAndStorePosterUrls(
+        environment,
+        tmdbApiKey,
+        processCount,
+      );
       return Response.json(result, {
         status: 200,
         headers: {'Content-Type': 'application/json'},
@@ -72,8 +72,11 @@ export default {
   },
 };
 
-async function getMoviesWithImdbId(limit = 10): Promise<MovieWithImdbId[]> {
-  const database = getDatabase(environment_);
+async function getMoviesWithImdbId(
+  environment: Environment,
+  limit = 10,
+): Promise<MovieWithImdbId[]> {
+  const database = getDatabase(environment);
 
   // まず、ポスターがない映画を優先的に取得（TMDB IDもない映画を優先）
   const moviesWithoutPosters = await database
@@ -123,7 +126,11 @@ async function getMoviesWithImdbId(limit = 10): Promise<MovieWithImdbId[]> {
   return filterMoviesWithImdbId(normalizeMovies(moviesWithImdbIdNoTmdb));
 }
 
-async function fetchAndStorePosterUrls(limit = 10): Promise<{
+async function fetchAndStorePosterUrls(
+  environment: Environment,
+  tmdbApiKey: string,
+  limit = 10,
+): Promise<{
   processed: number;
   success: number;
   failed: number;
@@ -134,7 +141,7 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
     error?: string;
   }>;
 }> {
-  const moviesWithImdbId = await getMoviesWithImdbId(limit);
+  const moviesWithImdbId = await getMoviesWithImdbId(environment, limit);
   console.log(`処理対象の映画: ${moviesWithImdbId.length}件`);
 
   const results: {
@@ -178,14 +185,11 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
       if (movie.tmdbId === undefined) {
         // TMDB IDがない場合は、IMDb IDから検索
         console.log('  TMDb API からポスター情報を取得中...');
-        const movieData = await fetchTMDBMovieImages(
-          movie.imdbId,
-          TMDB_API_KEY!,
-        );
+        const movieData = await fetchTMDBMovieImages(movie.imdbId, tmdbApiKey);
 
         if (movieData) {
           // TMDB ID を保存
-          await saveTMDBId(movie.imdbId, movieData.tmdbId, environment_);
+          await saveTMDBId(movie.imdbId, movieData.tmdbId, environment);
 
           if (
             !movieData.images.posters ||
@@ -202,7 +206,7 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
             const savedCount = await savePosterUrls(
               movie.uid,
               movieData.images.posters,
-              environment_,
+              environment,
             );
             result.postersAdded = savedCount;
 
@@ -224,11 +228,7 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
         console.log(`  既存のTMDB ID を使用: ${movie.tmdbId}`);
 
         // TMDB IDから直接ポスター情報を取得
-        const images = await fetchTMDBImages(
-          movie.tmdbId,
-          'movie',
-          TMDB_API_KEY!,
-        );
+        const images = await fetchTMDBImages(movie.tmdbId, 'movie', tmdbApiKey);
 
         if (!images) {
           throw new Error(
@@ -248,7 +248,7 @@ async function fetchAndStorePosterUrls(limit = 10): Promise<{
           const savedCount = await savePosterUrls(
             movie.uid,
             images.posters,
-            environment_,
+            environment,
           );
           result.postersAdded = savedCount;
 
