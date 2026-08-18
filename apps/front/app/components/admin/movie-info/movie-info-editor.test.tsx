@@ -50,15 +50,17 @@ Object.defineProperty(globalThis, 'localStorage', {
 beforeEach(() => {
   vi.resetAllMocks();
   mockLocalStorage.getItem.mockReturnValue('admin-token');
-  Object.defineProperty(globalThis, 'fetch', {
-    value: vi.fn(),
-    writable: true,
-    configurable: true,
-  });
-  Object.defineProperty(globalThis, 'alert', {
-    value: vi.fn(),
-    writable: true,
-    configurable: true,
+  Object.defineProperties(globalThis, {
+  	fetch: {
+	    value: vi.fn(),
+	    writable: true,
+	    configurable: true,
+	  },
+  	alert: {
+	    value: vi.fn(),
+	    writable: true,
+	    configurable: true,
+	  },
   });
 });
 
