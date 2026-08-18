@@ -93,23 +93,31 @@ function parseFilmLines(content: string): KinemaJunpoFilm[] {
       continue;
     }
 
-    for (const fragment of entry.split(LINE_BREAK)) {
-      const text = fragment.trim();
-      if (text === '') {
-        continue;
-      }
+    films.push(...parseEntry(rank, entry));
+  }
 
-      const link = WIKI_LINK.exec(text);
-      if (link) {
-        const page = link[1].trim();
-        films.push({rank, page, title: (link[2] ?? page).trim()});
-        continue;
-      }
+  return films;
+}
 
-      const title = text.replace(/（.*$/, '').trim();
-      if (title !== '') {
-        films.push({rank, title});
-      }
+function parseEntry(rank: number, entry: string): KinemaJunpoFilm[] {
+  const films: KinemaJunpoFilm[] = [];
+
+  for (const fragment of entry.split(LINE_BREAK)) {
+    const text = fragment.trim();
+    if (text === '') {
+      continue;
+    }
+
+    const link = WIKI_LINK.exec(text);
+    if (link) {
+      const page = link[1].trim();
+      films.push({rank, page, title: (link[2] ?? page).trim()});
+      continue;
+    }
+
+    const title = text.replace(/（.*$/, '').trim();
+    if (title !== '') {
+      films.push({rank, title});
     }
   }
 
@@ -498,6 +506,62 @@ export async function resolveFilmsByTmdb(
   return resolved;
 }
 
+function collectJapaneseTitles(
+  edition: KinemaJunpoEdition,
+  resolved: Map<string, ResolvedFilm>,
+  titleByImdbId: Map<string, string>,
+): void {
+  for (const film of [...edition.japanese, ...edition.foreign]) {
+    const match = resolved.get(filmKey(film));
+    if (!match || !hasJapaneseText(film.title)) {
+      continue;
+    }
+
+    if (!titleByImdbId.has(match.imdbId)) {
+      titleByImdbId.set(match.imdbId, film.title);
+    }
+  }
+}
+
+async function saveJapaneseTitle(
+  database: ReturnType<typeof getDatabase>,
+  movieUid: string,
+  title: string,
+): Promise<'saved' | 'replaced' | 'skipped'> {
+  const [existing] = await database
+    .select({uid: translations.uid, content: translations.content})
+    .from(translations)
+    .where(
+      and(
+        eq(translations.resourceUid, movieUid),
+        eq(translations.resourceType, 'movie_title'),
+        eq(translations.languageCode, 'ja'),
+      ),
+    )
+    .limit(1);
+
+  if (existing === undefined) {
+    await database.insert(translations).values({
+      resourceType: 'movie_title',
+      resourceUid: movieUid,
+      languageCode: 'ja',
+      content: title,
+      isDefault: 0,
+    });
+    return 'saved';
+  }
+
+  if (!hasJapaneseText(existing.content)) {
+    await database
+      .update(translations)
+      .set({content: title})
+      .where(eq(translations.uid, existing.uid));
+    return 'replaced';
+  }
+
+  return 'skipped';
+}
+
 /** Wikipediaの表記は邦題として信頼できるので、TMDb由来の原題を上書きする */
 export async function backfillJapaneseTitles({
   environment,
@@ -510,16 +574,7 @@ export async function backfillJapaneseTitles({
 }): Promise<{saved: number; replaced: number}> {
   const titleByImdbId = new Map<string, string>();
   for (const edition of editions) {
-    for (const film of [...edition.japanese, ...edition.foreign]) {
-      const match = resolved.get(filmKey(film));
-      if (!match || !hasJapaneseText(film.title)) {
-        continue;
-      }
-
-      if (!titleByImdbId.has(match.imdbId)) {
-        titleByImdbId.set(match.imdbId, film.title);
-      }
-    }
+    collectJapaneseTitles(edition, resolved, titleByImdbId);
   }
 
   const database = getDatabase(environment);
@@ -535,40 +590,13 @@ export async function backfillJapaneseTitles({
 
     for (const row of rows) {
       const title = row.imdbId ? titleByImdbId.get(row.imdbId) : undefined;
-      if (!title) {
-        continue;
-      }
-
-      const [existing] = await database
-        .select({uid: translations.uid, content: translations.content})
-        .from(translations)
-        .where(
-          and(
-            eq(translations.resourceUid, row.uid),
-            eq(translations.resourceType, 'movie_title'),
-            eq(translations.languageCode, 'ja'),
-          ),
-        )
-        .limit(1);
-
-      if (existing === undefined) {
-        await database.insert(translations).values({
-          resourceType: 'movie_title',
-          resourceUid: row.uid,
-          languageCode: 'ja',
-          content: title,
-          isDefault: 0,
-        });
-        stats.saved++;
-        continue;
-      }
-
-      if (!hasJapaneseText(existing.content)) {
-        await database
-          .update(translations)
-          .set({content: title})
-          .where(eq(translations.uid, existing.uid));
-        stats.replaced++;
+      if (title) {
+        const outcome = await saveJapaneseTitle(database, row.uid, title);
+        if (outcome === 'saved') {
+          stats.saved++;
+        } else if (outcome === 'replaced') {
+          stats.replaced++;
+        }
       }
     }
   }
