@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
 import type {MovieDetails} from '@/components/admin/movie-info/types';
 
 type PosterUrl = MovieDetails['posters'][number];
@@ -63,10 +63,9 @@ export default function PosterManager({
       }
 
       if (!response.ok) {
-        const errorData = (await response
-          .json()
-          .catch(() => ({error: 'Unknown error'}))) as {error?: string};
-        throw new Error(errorData.error || 'Failed to add poster');
+        throw new Error(
+          await readErrorMessage(response, 'Failed to add poster'),
+        );
       }
 
       const movieResponse = await adminFetch(
@@ -121,10 +120,9 @@ export default function PosterManager({
       }
 
       if (!response.ok) {
-        const errorData = (await response
-          .json()
-          .catch(() => ({error: 'Unknown error'}))) as {error?: string};
-        throw new Error(errorData.error || 'Failed to delete poster');
+        throw new Error(
+          await readErrorMessage(response, 'Failed to delete poster'),
+        );
       }
 
       const movieResponse = await adminFetch(

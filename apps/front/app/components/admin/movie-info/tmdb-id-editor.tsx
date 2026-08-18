@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
 import type {MovieDetails, PerformTmdbUpdate} from './types';
 
 type TmdbIdEditorProperties = {
@@ -91,10 +91,9 @@ export function TmdbIdEditor({
       }
 
       if (!response.ok) {
-        const errorData = (await response
-          .json()
-          .catch(() => ({error: 'Unknown error'}))) as {error?: string};
-        throw new Error(errorData.error || 'Failed to refresh TMDb data');
+        throw new Error(
+          await readErrorMessage(response, 'Failed to refresh TMDb data'),
+        );
       }
 
       const movieResponse = await adminFetch(

@@ -151,12 +151,12 @@ export default function ArticleLinkManager<
                   {!article.isSpam && (
                     <button
                       type="button"
-                      onClick={() => {
-                        handleSpamToggle(article.uid).catch(
-                          (error: unknown) => {
-                            console.error('Failed to toggle spam:', error);
-                          },
-                        );
+                      onClick={async () => {
+                        try {
+                          await handleSpamToggle(article.uid);
+                        } catch (error) {
+                          console.error('Failed to toggle spam:', error);
+                        }
                       }}
                       className="text-orange-600 hover:text-orange-800 text-sm font-medium">
                       スパムとして報告
@@ -166,12 +166,12 @@ export default function ArticleLinkManager<
                     <div className="flex items-center space-x-2">
                       <button
                         type="button"
-                        onClick={() => {
-                          handleDeleteArticle(article.uid).catch(
-                            (error: unknown) => {
-                              console.error('Failed to delete article:', error);
-                            },
-                          );
+                        onClick={async () => {
+                          try {
+                            await handleDeleteArticle(article.uid);
+                          } catch (error) {
+                            console.error('Failed to delete article:', error);
+                          }
                         }}
                         className="text-red-600 hover:text-red-800 text-sm font-medium">
                         削除を確定

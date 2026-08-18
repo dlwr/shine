@@ -92,8 +92,6 @@ export default tseslint.config(
       // スクレイパー4本のモジュールレベル可変状態。設計として直す価値はあるが
       // テストが薄いので取り込みロジックごと別途整理する
       'unicorn/no-top-level-assignment-in-function': 'off',
-      // .catch(() => fallback) の1行がtry/catch数行に膨らみ、catchの範囲も広がる
-      'unicorn/prefer-await': 'off',
     },
   },
   {

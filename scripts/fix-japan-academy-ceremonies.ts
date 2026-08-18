@@ -47,14 +47,14 @@ async function main() {
   const environment = resolveEnvironment();
   const database = getDatabase(environment);
 
-  const organization = await database
+  const organizationRows = await database
     .select({
       uid: awardOrganizations.uid,
     })
     .from(awardOrganizations)
     .where(eq(awardOrganizations.name, 'Japan Academy Awards'))
-    .limit(1)
-    .then(rows => rows[0]);
+    .limit(1);
+  const organization = organizationRows[0];
 
   if (!organization) {
     throw new Error('Japan Academy Awards organization not found.');

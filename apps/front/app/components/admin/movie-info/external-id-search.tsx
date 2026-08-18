@@ -1,6 +1,6 @@
 import {useEffect, useMemo, useState} from 'react';
 import type {FormEvent} from 'react';
-import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
 import type {
   ExternalIdSearchResponse,
   ExternalIdSuggestion,
@@ -165,10 +165,7 @@ export function ExternalIdSearch({
       }
 
       if (!response.ok) {
-        const errorData = (await response
-          .json()
-          .catch(() => ({error: '検索に失敗しました'}))) as {error?: string};
-        throw new Error(errorData.error || '検索に失敗しました');
+        throw new Error(await readErrorMessage(response, '検索に失敗しました'));
       }
 
       const data = (await response.json()) as ExternalIdSearchResponse;

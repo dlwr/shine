@@ -1,7 +1,7 @@
 import {useState, type FormEvent} from 'react';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
-import {adminFetch} from '@/lib/admin-fetch';
+import {adminFetch, readErrorMessage} from '@/lib/admin-fetch';
 import {ensureToken} from './ensure-token';
 import type {
   AwardsCategory,
@@ -84,10 +84,9 @@ export function AddNominationForm({
       }
 
       if (!response.ok) {
-        const data = (await response
-          .json()
-          .catch(() => ({error: 'Unknown error'}))) as {error?: string};
-        throw new Error(data.error || '映画の追加に失敗しました。');
+        throw new Error(
+          await readErrorMessage(response, '映画の追加に失敗しました。'),
+        );
       }
 
       await onAdded();

@@ -1042,20 +1042,22 @@ export class AdminService extends BaseService {
 
       await gotoWithRetry();
 
-      await page
-        .waitForSelector('script#__NEXT_DATA__', {timeout: 20_000})
-        .catch(() => {
-          throw new Error(
-            'IMDb page did not load expected content (timed out waiting for __NEXT_DATA__)',
-          );
-        });
+      try {
+        await page.waitForSelector('script#__NEXT_DATA__', {timeout: 20_000});
+      } catch {
+        throw new Error(
+          'IMDb page did not load expected content (timed out waiting for __NEXT_DATA__)',
+        );
+      }
       html = await page.content();
     } finally {
-      await (
-        isReusedExistingSession ? browser.disconnect() : browser.close()
-      ).catch(() => {
+      try {
+        await (isReusedExistingSession
+          ? browser.disconnect()
+          : browser.close());
+      } catch {
         // Session/browser may already be closed by the platform; ignore
-      });
+      }
     }
     const marker = '<script id="__NEXT_DATA__" type="application/json">';
     const markerIndex = html.indexOf(marker);
