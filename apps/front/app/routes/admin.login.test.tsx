@@ -29,7 +29,7 @@ Object.defineProperty(globalThis, 'localStorage', {
 });
 
 // Fetchのモック
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 // HTMLFormElement.prototype.requestSubmitのモック（JSdomで未実装）
 Object.defineProperty(HTMLFormElement.prototype, 'requestSubmit', {

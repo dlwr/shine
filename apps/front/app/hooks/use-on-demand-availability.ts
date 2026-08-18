@@ -13,18 +13,18 @@ export function useOnDemandAvailability(options: {
 }): {availability: AvailabilityInfo[]; checking: boolean} {
   const {movieUid, apiUrl, initial} = options;
   const hasInitial = Boolean(initial && initial.length > 0);
-  const skip = hasInitial || movieUid === '';
+  const isSkip = hasInitial || movieUid === '';
   const [availability, setAvailability] = useState<AvailabilityInfo[]>(
     initial ?? [],
   );
-  const [checking, setChecking] = useState(!skip);
+  const [checking, setChecking] = useState(!isSkip);
 
   useEffect(() => {
-    if (skip) {
+    if (isSkip) {
       return;
     }
 
-    let cancelled = false;
+    let isCancelled = false;
 
     (async () => {
       try {
@@ -37,22 +37,22 @@ export function useOnDemandAvailability(options: {
         }
 
         const body = (await response.json()) as CheckResponse;
-        if (!cancelled) {
+        if (!isCancelled) {
           setAvailability(body.availability ?? []);
         }
       } catch {
         // 確認に失敗してもページ表示には影響させない
       } finally {
-        if (!cancelled) {
+        if (!isCancelled) {
           setChecking(false);
         }
       }
     })();
 
     return () => {
-      cancelled = true;
+      isCancelled = true;
     };
-  }, [movieUid, apiUrl, skip]);
+  }, [movieUid, apiUrl, isSkip]);
 
   return {availability, checking};
 }

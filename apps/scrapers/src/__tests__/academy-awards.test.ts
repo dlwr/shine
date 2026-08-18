@@ -155,7 +155,7 @@ describe('Academy Awards Scraper', () => {
       ];
 
       for (const {input, expected} of testCases) {
-        const year = Number.parseInt(input.split('/')[0], 10);
+        const year = Number.parseInt(input.split('/', 1)[0], 10);
         expect(year).toBe(expected);
       }
     });
@@ -243,7 +243,7 @@ describe('Academy Awards Scraper', () => {
           expected: 'https://en.wikipedia.org/wiki/Cabaret_(1972_film)',
         },
         {input: '#section', expected: undefined}, // Fragment links should be ignored
-        {input: 'http://example.com', expected: undefined}, // External links should be ignored
+        {input: 'https://example.com', expected: undefined}, // External links should be ignored
       ];
 
       for (const {input, expected} of testCases) {

@@ -174,9 +174,9 @@ function parseAcceptLanguage(acceptLanguage?: string): string[] {
   }
 
   const languages = acceptLanguage.split(',').map(entry => {
-    const [code, quality] = entry.trim().split(';q=');
+    const [code, quality] = entry.trim().split(';q=', 2);
     return {
-      code: code.split('-')[0],
+      code: code.split('-', 1)[0],
       quality: quality ? Number.parseFloat(quality) : 1,
     };
   });

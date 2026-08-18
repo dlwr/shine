@@ -310,9 +310,8 @@ describe('fixMisattributedNominations', () => {
       entries: [entry],
     });
 
-    expect(stats.affectedMovieUids.toSorted()).toEqual([
-      'correct-movie',
-      'wrong-movie',
-    ]);
+    expect(
+      stats.affectedMovieUids.toSorted((a, b) => a.localeCompare(b)),
+    ).toEqual(['correct-movie', 'wrong-movie']);
   });
 });

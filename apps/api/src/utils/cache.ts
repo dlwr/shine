@@ -181,7 +181,7 @@ export type CacheableLocale = (typeof CACHEABLE_LOCALES)[number];
 export const normalizeCacheLocale = (
   locale: string,
 ): CacheableLocale | undefined => {
-  const language = locale.split('-')[0] as CacheableLocale;
+  const language = locale.split('-', 1)[0] as CacheableLocale;
   return CACHEABLE_LOCALES.includes(language) ? language : undefined;
 };
 

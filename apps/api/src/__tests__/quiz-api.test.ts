@@ -313,7 +313,11 @@ describe('GET /quiz/candidates', () => {
   it('lists every movie in the pool', async () => {
     const candidates = await fetchCandidates();
 
-    expect(candidates.map(candidate => candidate.uid).toSorted()).toEqual([
+    expect(
+      candidates
+        .map(candidate => candidate.uid)
+        .toSorted((a, b) => a.localeCompare(b)),
+    ).toEqual([
       'movie-also-in-pool',
       'movie-in-pool',
       'movie-with-japanese-poster',
@@ -323,11 +327,11 @@ describe('GET /quiz/candidates', () => {
   it('carries the title of each candidate', async () => {
     const candidates = await fetchCandidates();
 
-    expect(candidates.map(candidate => candidate.title).toSorted()).toEqual([
-      '東京物語',
-      '羅生門',
-      '赤ひげ',
-    ]);
+    expect(
+      candidates
+        .map(candidate => candidate.title)
+        .toSorted((a, b) => a.localeCompare(b)),
+    ).toEqual(['東京物語', '羅生門', '赤ひげ']);
   });
 });
 

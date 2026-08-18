@@ -44,7 +44,7 @@ type AwardsData = {
 const ensureToken = () => {
   const token = getAdminToken();
   if (!token) {
-    globalThis.location.href = '/admin/login';
+    location.assign('/admin/login');
     return;
   }
   return token;
@@ -140,7 +140,7 @@ export default function NominationManager({
       }
 
       if (!getAdminToken()) {
-        globalThis.location.href = '/admin/login';
+        location.assign('/admin/login');
         return;
       }
 
@@ -174,7 +174,7 @@ export default function NominationManager({
   useEffect(() => {
     if (
       editingNominationId &&
-      !nominations.some(nomination => nomination.uid === editingNominationId)
+      nominations.every(nomination => nomination.uid !== editingNominationId)
     ) {
       setEditingNominationId(undefined);
     }
@@ -421,9 +421,9 @@ export default function NominationManager({
         <button
           type="button"
           onClick={() => {
-            const next = !showAddForm;
-            setShowAddForm(next);
-            if (!next) {
+            const isNext = !showAddForm;
+            setShowAddForm(isNext);
+            if (!isNext) {
               resetAddForm();
             }
           }}

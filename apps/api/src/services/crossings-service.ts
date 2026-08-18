@@ -72,7 +72,7 @@ export class CrossingsService extends BaseService {
     const sharedCounts = new Map<string, AwardCrossings['pairs'][number]>();
     const countsByAwardCount = new Map<number, number>();
     for (const slugSet of slugsByMovie.values()) {
-      const slugs = [...slugSet].toSorted();
+      const slugs = [...slugSet].toSorted((a, b) => a.localeCompare(b));
       for (const slug of slugs) {
         filmCounts.set(slug, (filmCounts.get(slug) ?? 0) + 1);
       }
@@ -107,7 +107,7 @@ export class CrossingsService extends BaseService {
 
     const pairs = [...sharedCounts.values()].toSorted(comparePairs);
 
-    const distribution = [...countsByAwardCount.entries()]
+    const distribution = [...countsByAwardCount]
       .map(([awardCount, filmCount]) => ({awardCount, filmCount}))
       .toSorted((a, b) => b.awardCount - a.awardCount);
 
@@ -123,7 +123,7 @@ export class CrossingsService extends BaseService {
     slugsByMovie: Map<string, Set<string>>,
     limit: number,
   ): Promise<CrossingMovie[]> {
-    const movieUids = [...slugsByMovie.entries()]
+    const movieUids = [...slugsByMovie]
       .toSorted(([, a], [, b]) => b.size - a.size)
       .slice(0, limit)
       .map(([uid]) => uid);
@@ -166,7 +166,9 @@ export class CrossingsService extends BaseService {
         title: row.jaTitle ?? row.defaultTitle ?? undefined,
         year: row.year ?? undefined,
         posterUrl: row.posterUrl ?? undefined,
-        awardSlugs: [...(slugsByMovie.get(row.uid) ?? [])].toSorted(),
+        awardSlugs: [...(slugsByMovie.get(row.uid) ?? [])].toSorted((a, b) =>
+          a.localeCompare(b),
+        ),
       }))
       .toSorted(compareTopMovies);
   }

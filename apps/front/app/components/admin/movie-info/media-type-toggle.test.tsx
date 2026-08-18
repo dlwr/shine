@@ -53,7 +53,7 @@ describe('MediaTypeToggle', () => {
   });
 
   it('クリックでPUT /admin/movies/:idにmediaTypeを送信する', async () => {
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,

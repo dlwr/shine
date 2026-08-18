@@ -91,11 +91,11 @@ describe('AddNominationForm', () => {
     await waitFor(() => {
       expect(onMessage).toHaveBeenCalledWith('部門を選択してください。');
     });
-    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it('送信でPOST /admin/movies/:uid/nominationsに内容を送信する', async () => {
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
@@ -130,7 +130,7 @@ describe('AddNominationForm', () => {
   });
 
   it('追加成功後にonAddedと成功メッセージのonMessageを呼ぶ', async () => {
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,

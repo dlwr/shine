@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/prefer-https -- httpとhttpsの扱いの違いそのものを検証している */
 import {describe, expect, it} from 'vitest';
 import {validateExternalUrl} from '../url-safety';
 

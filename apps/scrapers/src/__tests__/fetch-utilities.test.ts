@@ -7,7 +7,7 @@ import {
 } from '../common/fetch-utilities';
 
 // Mock fetch globally
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 describe('Fetch Utilities', () => {
   beforeEach(() => {

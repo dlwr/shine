@@ -110,7 +110,7 @@ describe('NominationManager', () => {
       expect(screen.getAllByRole('combobox')).toHaveLength(3);
     });
 
-    const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>;
+    const fetchMock = fetch as ReturnType<typeof vi.fn>;
     const awardsCall = fetchMock.mock.calls.find(
       ([input]) => input === 'http://localhost:8787/admin/awards',
     );

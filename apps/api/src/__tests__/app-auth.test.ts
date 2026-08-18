@@ -60,7 +60,7 @@ describe('createJWT', () => {
   it('issues tokens with an expiration time', async () => {
     const token = await createJWT(JWT_SECRET);
     const payload = JSON.parse(
-      Buffer.from(token.split('.')[1], 'base64url').toString(),
+      Buffer.from(token.split('.', 2)[1], 'base64url').toString(),
     ) as {exp?: number; iat?: number};
 
     expect(payload.exp).toBeDefined();

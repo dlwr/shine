@@ -5,7 +5,7 @@ import MonthlyArchivePage, {loader, meta} from './monthly';
 import type {Route} from './+types/monthly';
 import {createMockContext} from '@/lib/test-context';
 
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 const mockHistory = {
   items: [

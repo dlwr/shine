@@ -31,7 +31,7 @@ adminPostersRoutes.post('/movies/:id/posters', authMiddleware, async c => {
     // Basic URL validation
     let normalizedUrl: string;
     try {
-      normalizedUrl = new URL(url).toString();
+      normalizedUrl = new URL(url).href;
     } catch {
       return c.json({error: 'Invalid URL format'}, 400);
     }

@@ -30,7 +30,7 @@ const environment = {
 const tmdbApiKey = process.env.TMDB_API_KEY ?? '';
 const waitMs = Number(process.env.WAIT_MS ?? 2000);
 const limit = Number(process.env.LIMIT ?? 0);
-const apply = process.env.APPLY === '1';
+const isApply = process.env.APPLY === '1';
 
 const database = getDatabase(environment);
 const client = database.$client;
@@ -57,7 +57,7 @@ const targets = await client.execute(`
 `);
 
 const rows = limit > 0 ? targets.rows.slice(0, limit) : targets.rows;
-console.log(`targets: ${rows.length} (apply=${apply})`);
+console.log(`targets: ${rows.length} (apply=${isApply})`);
 
 let flipped = 0;
 let index = 0;
@@ -106,7 +106,7 @@ for (const row of rows) {
     `[${index}/${rows.length}] FLIP ${titles[0]} (${year ?? '?'}) -> ${result.detail}`,
   );
 
-  if (!apply) {
+  if (!isApply) {
     continue;
   }
 

@@ -34,7 +34,7 @@ Object.defineProperty(globalThis, 'localStorage', {
 });
 
 // Fetchのモック
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 // Cloudflare環境のモック
 

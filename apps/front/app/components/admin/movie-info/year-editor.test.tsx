@@ -18,15 +18,17 @@ Object.defineProperty(globalThis, 'localStorage', {
 beforeEach(() => {
   vi.resetAllMocks();
   mockLocalStorage.getItem.mockReturnValue('admin-token');
-  Object.defineProperty(globalThis, 'fetch', {
-    value: vi.fn(),
-    writable: true,
-    configurable: true,
-  });
-  Object.defineProperty(globalThis, 'alert', {
-    value: vi.fn(),
-    writable: true,
-    configurable: true,
+  Object.defineProperties(globalThis, {
+    fetch: {
+      value: vi.fn(),
+      writable: true,
+      configurable: true,
+    },
+    alert: {
+      value: vi.fn(),
+      writable: true,
+      configurable: true,
+    },
   });
 });
 
@@ -64,11 +66,11 @@ describe('YearEditor', () => {
         screen.getByText('年は1888から2100の間で入力してください'),
       ).toBeInTheDocument();
     });
-    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it('保存でPUT /admin/movies/:idに年を送信する', async () => {
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
@@ -94,7 +96,7 @@ describe('YearEditor', () => {
     expect(JSON.parse(init.body as string)).toEqual({year: 2001});
 
     await waitFor(() => {
-      expect(globalThis.alert).toHaveBeenCalledWith('公開年を更新しました');
+      expect(alert).toHaveBeenCalledWith('公開年を更新しました');
     });
   });
 });

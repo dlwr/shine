@@ -13,21 +13,20 @@ type DomLikeGlobal = typeof globalThis & {
 const domGlobal = globalThis as DomLikeGlobal;
 
 // Ensure React is available globally for JSX
-globalThis.React = React;
+vi.stubGlobal('React', React);
 
 // Polyfill Web Crypto API for Node.js environment
 if (globalThis.crypto) {
   // Ensure crypto.subtle is available in the existing crypto object
-  if (!globalThis.crypto.subtle) {
-    Object.defineProperty(globalThis.crypto, 'subtle', {
+  if (!crypto.subtle) {
+    Object.defineProperty(crypto, 'subtle', {
       value: webcrypto.subtle,
       writable: false,
       configurable: false,
     });
   }
 } else {
-  // @ts-expect-error: webcrypto is not typed
-  globalThis.crypto = webcrypto;
+  vi.stubGlobal('crypto', webcrypto);
 }
 
 // Mock HTMLFormElement.prototype.requestSubmit for jsdom
@@ -109,18 +108,26 @@ if (!domGlobal.ResizeObserver) {
 
 // Window.locationのモック（テスト環境用）
 if (domGlobal.window !== undefined) {
-  Object.defineProperty(globalThis, 'location', {
-    value: {
-      href: 'http://localhost:3000/',
-      origin: 'http://localhost:3000',
-      protocol: 'http:',
-      host: 'localhost:3000',
-      hostname: 'localhost',
-      port: '3000',
-      pathname: '/',
-      search: '',
-      hash: '',
+  const locationMock = {
+    href: 'http://localhost:3000/',
+    origin: 'http://localhost:3000',
+    protocol: 'http:',
+    host: 'localhost:3000',
+    hostname: 'localhost',
+    port: '3000',
+    pathname: '/',
+    search: '',
+    hash: '',
+    assign(url: string) {
+      locationMock.href = url;
     },
+    replace(url: string) {
+      locationMock.href = url;
+    },
+  };
+
+  Object.defineProperty(globalThis, 'location', {
+    value: locationMock,
     writable: true,
   });
 }
@@ -145,20 +152,26 @@ Object.defineProperty(globalThis, 'caches', {
 });
 
 // Mock console methods to reduce noise in tests
-globalThis.console = {
+vi.stubGlobal('console', {
   ...console,
   log: vi.fn(),
   error: vi.fn(),
   warn: vi.fn(),
   info: vi.fn(),
-};
+});
 
 // Mock fetch for external API calls
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 // Mock btoa/atob for base64 encoding in Node.js environment
-globalThis.btoa ||= (input: string) =>
-  Buffer.from(input, 'binary').toString('base64');
+vi.stubGlobal(
+  'btoa',
+  globalThis.btoa ??
+    ((input: string) => Buffer.from(input, 'binary').toString('base64')),
+);
 
-globalThis.atob ||= (input: string) =>
-  Buffer.from(input, 'base64').toString('binary');
+vi.stubGlobal(
+  'atob',
+  globalThis.atob ??
+    ((input: string) => Buffer.from(input, 'base64').toString('binary')),
+);

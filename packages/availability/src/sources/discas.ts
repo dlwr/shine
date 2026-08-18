@@ -48,7 +48,7 @@ class CookieJar {
 
   absorb(response: Response): void {
     for (const setCookie of response.headers.getSetCookie()) {
-      const [pair] = setCookie.split(';');
+      const [pair] = setCookie.split(';', 1);
       const separatorIndex = pair.indexOf('=');
       if (separatorIndex > 0) {
         this.cookies.set(
@@ -87,7 +87,7 @@ async function fetchWithSession(
 
     const location = response.headers.get('location');
     if (response.status >= 300 && response.status < 400 && location) {
-      currentUrl = new URL(location, currentUrl).toString();
+      currentUrl = new URL(location, currentUrl).href;
       continue;
     }
 

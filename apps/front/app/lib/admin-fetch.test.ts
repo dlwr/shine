@@ -6,7 +6,7 @@ import {
   setAdminToken,
 } from './admin-fetch';
 
-const fetchMock = globalThis.fetch as Mock;
+const fetchMock = fetch as Mock;
 
 const lastFetchHeaders = () => {
   const [, init] = fetchMock.mock.calls.at(-1) as [unknown, RequestInit];
@@ -14,14 +14,14 @@ const lastFetchHeaders = () => {
 };
 
 beforeEach(() => {
-  globalThis.localStorage.clear();
+  localStorage.clear();
   fetchMock.mockReset();
-  globalThis.location.href = 'http://localhost:3000/';
+  location.assign('http://localhost:3000/');
 });
 
 describe('getAdminToken', () => {
   it('localStorageのadminTokenを返す', () => {
-    globalThis.localStorage.setItem('adminToken', 'token-123');
+    localStorage.setItem('adminToken', 'token-123');
 
     expect(getAdminToken()).toBe('token-123');
   });
@@ -35,7 +35,7 @@ describe('setAdminToken', () => {
   it('localStorageにトークンを保存する', () => {
     setAdminToken('token-abc');
 
-    expect(globalThis.localStorage.getItem('adminToken')).toBe('token-abc');
+    expect(localStorage.getItem('adminToken')).toBe('token-abc');
   });
 
   it('adminLoginイベントをdispatchする', () => {
@@ -51,11 +51,11 @@ describe('setAdminToken', () => {
 
 describe('clearAdminToken', () => {
   it('localStorageからトークンを削除する', () => {
-    globalThis.localStorage.setItem('adminToken', 'token-abc');
+    localStorage.setItem('adminToken', 'token-abc');
 
     clearAdminToken();
 
-    expect(globalThis.localStorage.getItem('adminToken')).toBeNull();
+    expect(localStorage.getItem('adminToken')).toBeNull();
   });
 
   it('adminLogoutイベントをdispatchする', () => {
@@ -71,7 +71,7 @@ describe('clearAdminToken', () => {
 
 describe('adminFetch', () => {
   it('Authorizationヘッダを自動付与する', async () => {
-    globalThis.localStorage.setItem('adminToken', 'token-xyz');
+    localStorage.setItem('adminToken', 'token-xyz');
     fetchMock.mockResolvedValue(new Response('{}', {status: 200}));
 
     await adminFetch('https://api.example.com/admin/movies');
@@ -88,7 +88,7 @@ describe('adminFetch', () => {
   });
 
   it('initのmethodや既存ヘッダを引き継ぐ', async () => {
-    globalThis.localStorage.setItem('adminToken', 'token-xyz');
+    localStorage.setItem('adminToken', 'token-xyz');
     fetchMock.mockResolvedValue(new Response('{}', {status: 200}));
 
     await adminFetch('https://api.example.com/admin/movies', {
@@ -105,28 +105,28 @@ describe('adminFetch', () => {
   });
 
   it('成功レスポンスをそのまま返す', async () => {
-    globalThis.localStorage.setItem('adminToken', 'token-xyz');
+    localStorage.setItem('adminToken', 'token-xyz');
     fetchMock.mockResolvedValue(new Response('{"ok":true}', {status: 200}));
 
     const response = await adminFetch('https://api.example.com/admin/movies');
 
     expect(response.status).toBe(200);
-    expect(globalThis.localStorage.getItem('adminToken')).toBe('token-xyz');
-    expect(globalThis.location.href).toBe('http://localhost:3000/');
+    expect(localStorage.getItem('adminToken')).toBe('token-xyz');
+    expect(location.href).toBe('http://localhost:3000/');
   });
 
   it('401ならトークンを削除して/admin/loginへリダイレクトする', async () => {
-    globalThis.localStorage.setItem('adminToken', 'token-xyz');
+    localStorage.setItem('adminToken', 'token-xyz');
     fetchMock.mockResolvedValue(new Response('Unauthorized', {status: 401}));
 
     await adminFetch('https://api.example.com/admin/movies');
 
-    expect(globalThis.localStorage.getItem('adminToken')).toBeNull();
-    expect(globalThis.location.href).toBe('/admin/login');
+    expect(localStorage.getItem('adminToken')).toBeNull();
+    expect(location.href).toBe('/admin/login');
   });
 
   it('401時にadminLogoutイベントをdispatchする', async () => {
-    globalThis.localStorage.setItem('adminToken', 'token-xyz');
+    localStorage.setItem('adminToken', 'token-xyz');
     fetchMock.mockResolvedValue(new Response('Unauthorized', {status: 401}));
     const listener = vi.fn();
     globalThis.addEventListener('adminLogout', listener);
@@ -146,13 +146,13 @@ describe('adminFetch', () => {
   });
 
   it('401以外のエラーではリダイレクトしない', async () => {
-    globalThis.localStorage.setItem('adminToken', 'token-xyz');
+    localStorage.setItem('adminToken', 'token-xyz');
     fetchMock.mockResolvedValue(new Response('Server Error', {status: 500}));
 
     const response = await adminFetch('https://api.example.com/admin/movies');
 
     expect(response.status).toBe(500);
-    expect(globalThis.localStorage.getItem('adminToken')).toBe('token-xyz');
-    expect(globalThis.location.href).toBe('http://localhost:3000/');
+    expect(localStorage.getItem('adminToken')).toBe('token-xyz');
+    expect(location.href).toBe('http://localhost:3000/');
   });
 });

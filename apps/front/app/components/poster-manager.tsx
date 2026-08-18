@@ -35,7 +35,7 @@ export default function PosterManager({
     }
 
     if (!getAdminToken()) {
-      globalThis.location.href = '/admin/login';
+      location.assign('/admin/login');
       return;
     }
 
@@ -108,7 +108,7 @@ export default function PosterManager({
     }
 
     if (!getAdminToken()) {
-      globalThis.location.href = '/admin/login';
+      location.assign('/admin/login');
       return;
     }
 

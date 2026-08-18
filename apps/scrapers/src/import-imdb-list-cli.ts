@@ -41,7 +41,7 @@ program
   .action(async (csvFile: string, options: Record<string, unknown>) => {
     const limit = finiteNumber(options.limit);
     const throttle = finiteNumber(options.throttle);
-    const dryRun = Boolean(options.dryRun);
+    const isDryRun = Boolean(options.dryRun);
     const organizationName = optionalString(options.organization);
     const categoryName = optionalString(options.category);
     const ceremonyName = optionalString(options.ceremony);
@@ -64,7 +64,7 @@ program
       await importMoviesFromCsv({
         filePath: csvFile,
         environment: buildEnvironment(process.env),
-        dryRun,
+        dryRun: isDryRun,
         limit,
         throttleMs: throttle,
         organizationName,

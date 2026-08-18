@@ -963,7 +963,7 @@ export class AdminService extends BaseService {
     }
 
     let browser: Awaited<ReturnType<typeof puppeteer.launch>> | undefined;
-    let reusedExistingSession = false;
+    let isReusedExistingSession = false;
     try {
       const sessions = await puppeteer.sessions(this.env.BROWSER);
       const freeSession = sessions.find(s => !s.connectionId);
@@ -973,7 +973,7 @@ export class AdminService extends BaseService {
             this.env.BROWSER,
             freeSession.sessionId,
           );
-          reusedExistingSession = true;
+          isReusedExistingSession = true;
         } catch (error) {
           console.warn(
             'Failed to reuse existing browser session; launching new:',
@@ -994,7 +994,9 @@ export class AdminService extends BaseService {
 
     let html: string;
     try {
-      const existingPages = reusedExistingSession ? await browser.pages() : [];
+      const existingPages = isReusedExistingSession
+        ? await browser.pages()
+        : [];
       const page =
         existingPages.length > 0 ? existingPages[0] : await browser.newPage();
       await page.setUserAgent(
@@ -1053,7 +1055,7 @@ export class AdminService extends BaseService {
       html = await page.content();
     } finally {
       await (
-        reusedExistingSession ? browser.disconnect() : browser.close()
+        isReusedExistingSession ? browser.disconnect() : browser.close()
       ).catch(() => {
         // Session/browser may already be closed by the platform; ignore
       });

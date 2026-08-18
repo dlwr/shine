@@ -20,7 +20,7 @@ describe('resolveMovieTitle', () => {
   it('title が空白のみの場合は翻訳にフォールバックする', () => {
     expect(
       resolveMovieTitle({
-        title: '   ',
+        title: ' '.repeat(3),
         translations: [translation('en', 'Parasite')],
       }),
     ).toBe('Parasite');

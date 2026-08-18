@@ -35,7 +35,7 @@ Object.defineProperty(globalThis, 'localStorage', {
 });
 
 // Fetchのモック
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 // Cloudflare環境のモック
 
@@ -311,7 +311,12 @@ describe('AdminMovies Component', () => {
     });
 
     it('ログアウト機能が動作する', () => {
-      const mockLocation = {href: ''};
+      const mockLocation = {
+        href: '',
+        assign(url: string) {
+          mockLocation.href = url;
+        },
+      };
       Object.defineProperty(globalThis, 'location', {
         value: mockLocation,
         writable: true,

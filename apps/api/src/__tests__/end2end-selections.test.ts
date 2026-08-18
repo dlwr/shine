@@ -150,7 +150,7 @@ describe('Movie Selections E2E Workflows', () => {
       // Next day calculation
       const nextDay = new Date(baseDate);
       nextDay.setDate(baseDate.getDate() + 1);
-      expect(nextDay.toISOString().split('T')[0]).toBe('2025-06-21');
+      expect(nextDay.toISOString().split('T', 1)[0]).toBe('2025-06-21');
 
       // Next Friday calculation
       const daysSinceFriday = (baseDate.getDay() - 5 + 7) % 7;
@@ -158,13 +158,13 @@ describe('Movie Selections E2E Workflows', () => {
       fridayDate.setDate(baseDate.getDate() - daysSinceFriday);
       const nextFriday = new Date(fridayDate);
       nextFriday.setDate(fridayDate.getDate() + 7);
-      expect(nextFriday.toISOString().split('T')[0]).toBe('2025-06-27');
+      expect(nextFriday.toISOString().split('T', 1)[0]).toBe('2025-06-27');
 
       // Next month calculation
       const nextMonth = new Date(baseDate);
       nextMonth.setMonth(baseDate.getMonth() + 1);
       nextMonth.setDate(1);
-      expect(nextMonth.toISOString().split('T')[0]).toBe('2025-07-01');
+      expect(nextMonth.toISOString().split('T', 1)[0]).toBe('2025-07-01');
     });
   });
 

@@ -36,7 +36,7 @@ export function YearEditor({
     }
 
     if (!getAdminToken()) {
-      globalThis.location.href = '/admin/login';
+      location.assign('/admin/login');
       return;
     }
 

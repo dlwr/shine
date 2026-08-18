@@ -50,7 +50,7 @@ describe('ImdbIdEditor', () => {
       });
     });
     await waitFor(() => {
-      expect(globalThis.alert).toHaveBeenCalledWith('IMDb IDを更新しました');
+      expect(alert).toHaveBeenCalledWith('IMDb IDを更新しました');
     });
   });
 

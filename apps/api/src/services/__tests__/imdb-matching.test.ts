@@ -18,7 +18,9 @@ describe('normalizeCategoryName', () => {
   });
 
   it('normalizes curly quotes', () => {
-    expect(normalizeCategoryName('Best Picture\u2019s')).toBe("best picture's");
+    expect(normalizeCategoryName('Best Picture\u{2019}s')).toBe(
+      "best picture's",
+    );
   });
 
   it('collapses whitespace', () => {
@@ -48,9 +50,7 @@ describe('getMatchScore', () => {
 
   it('returns Infinity for no match', () => {
     const targets = new Set(['best picture']);
-    expect(getMatchScore('Best Cinematography', targets)).toBe(
-      Number.POSITIVE_INFINITY,
-    );
+    expect(getMatchScore('Best Cinematography', targets)).toBe(Infinity);
   });
 
   it('returns best score among multiple targets', () => {

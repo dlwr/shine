@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/prefer-https -- JSON-LDの@contextは実データがhttp://schema.orgで来る */
 import * as cheerio from 'cheerio';
 import {describe, expect, it} from 'vitest';
 import {

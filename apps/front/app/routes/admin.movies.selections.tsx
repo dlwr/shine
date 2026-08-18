@@ -160,7 +160,7 @@ export default function AdminMovieSelections({
 
       const token = getAdminToken();
       if (!token) {
-        globalThis.location.href = '/admin/login';
+        location.assign('/admin/login');
         return;
       }
 
@@ -226,7 +226,7 @@ export default function AdminMovieSelections({
 
   const getSelectionDate = () =>
     selections?.[selectionKeyMap[overrideType]]?.date ||
-    new Date().toISOString().split('T')[0];
+    new Date().toISOString().split('T', 1)[0];
 
   const generateRandomMovie = async () => {
     setRandomLoading(true);
@@ -277,7 +277,7 @@ export default function AdminMovieSelections({
 
       if (response.ok) {
         // Reload selections
-        globalThis.location.reload();
+        location.reload();
       }
     } catch (error) {
       console.error('Override error:', error);

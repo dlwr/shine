@@ -48,7 +48,7 @@ type QuizPostInput = {
 };
 
 function buildQuizBody({date, poolSize}: QuizPostInput): string {
-  const [, month, day] = date.split('-');
+  const [, month, day] = date.split('-', 3);
 
   return [
     `今日の映画クイズ（${Number(month)}/${Number(day)}）`,

@@ -60,7 +60,7 @@ type SearchTimeoutGlobal = typeof globalThis & {
 const globalWithSearchTimeout = globalThis as SearchTimeoutGlobal;
 
 const getUrlParameters = () => {
-  const parameters = new URLSearchParams(globalThis.location.search);
+  const parameters = new URLSearchParams(location.search);
   return {
     search: parameters.get('search') || '',
     page: Number(parameters.get('page') || 1),
@@ -116,7 +116,7 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
       }
 
       if (!getAdminToken()) {
-        globalThis.location.href = '/admin/login';
+        location.assign('/admin/login');
         return;
       }
 
@@ -302,15 +302,15 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
             size="sm"
             disabled={pagination.page === 1}
             onClick={() => {
-              if (pagination.page > 1 && globalThis.window !== undefined) {
-                const parameters = new URLSearchParams(
-                  globalThis.location.search,
-                );
-                parameters.set('page', String(pagination.page - 1));
-                const newUrl = `${globalThis.location.pathname}?${parameters.toString()}`;
-                globalThis.history.replaceState({}, '', newUrl);
-                globalThis.dispatchEvent(new Event('urlchange'));
+              if (!(pagination.page > 1) || globalThis.window === undefined) {
+                return;
               }
+
+              const parameters = new URLSearchParams(location.search);
+              parameters.set('page', String(pagination.page - 1));
+              const newUrl = `${location.pathname}?${parameters.toString()}`;
+              history.replaceState({}, '', newUrl);
+              globalThis.dispatchEvent(new Event('urlchange'));
             }}
             className="min-w-[120px]">
             Previous
@@ -324,17 +324,17 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
             disabled={pagination.page === pagination.totalPages}
             onClick={() => {
               if (
-                pagination.page < pagination.totalPages &&
-                globalThis.window !== undefined
+                !(pagination.page < pagination.totalPages) ||
+                globalThis.window === undefined
               ) {
-                const parameters = new URLSearchParams(
-                  globalThis.location.search,
-                );
-                parameters.set('page', String(pagination.page + 1));
-                const newUrl = `${globalThis.location.pathname}?${parameters.toString()}`;
-                globalThis.history.replaceState({}, '', newUrl);
-                globalThis.dispatchEvent(new Event('urlchange'));
+                return;
               }
+
+              const parameters = new URLSearchParams(location.search);
+              parameters.set('page', String(pagination.page + 1));
+              const newUrl = `${location.pathname}?${parameters.toString()}`;
+              history.replaceState({}, '', newUrl);
+              globalThis.dispatchEvent(new Event('urlchange'));
             }}
             className="min-w-[120px]">
             Next
@@ -475,21 +475,23 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
   const handleSearch = useCallback(
     (query: string) => {
       // Update URL without causing React Router re-render
-      if (globalThis.window !== undefined) {
-        const newParameters = new URLSearchParams(searchParameters);
-        if (query) {
-          newParameters.set('search', query);
-        } else {
-          newParameters.delete('search');
-        }
-
-        newParameters.set('page', '1');
-
-        const newUrl = `${globalThis.location.pathname}?${newParameters.toString()}`;
-        globalThis.history.replaceState({}, '', newUrl);
-        // Trigger custom event to update MoviesList
-        globalThis.dispatchEvent(new Event('urlchange'));
+      if (globalThis.window === undefined) {
+        return;
       }
+
+      const newParameters = new URLSearchParams(searchParameters);
+      if (query) {
+        newParameters.set('search', query);
+      } else {
+        newParameters.delete('search');
+      }
+
+      newParameters.set('page', '1');
+
+      const newUrl = `${location.pathname}?${newParameters.toString()}`;
+      history.replaceState({}, '', newUrl);
+      // Trigger custom event to update MoviesList
+      globalThis.dispatchEvent(new Event('urlchange'));
     },
     [searchParameters],
   );
@@ -508,7 +510,7 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
     }
 
     if (!getAdminToken()) {
-      globalThis.location.href = '/admin/login';
+      location.assign('/admin/login');
       return;
     }
 

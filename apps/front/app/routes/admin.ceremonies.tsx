@@ -115,7 +115,7 @@ const filterCeremonies = (
   organization: string,
 ) => {
   return ceremonies.filter(ceremony => {
-    const matchesOrganization =
+    const isMatchesOrganization =
       !organization || ceremony.organizationUid === organization;
 
     const matchesQuery =
@@ -124,7 +124,7 @@ const filterCeremonies = (
       (ceremony.location ?? '').toLowerCase().includes(query.toLowerCase()) ||
       ceremony.year.toString().includes(query);
 
-    return matchesOrganization && matchesQuery;
+    return isMatchesOrganization && matchesQuery;
   });
 };
 
@@ -143,7 +143,7 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
       }
 
       if (!getAdminToken()) {
-        globalThis.location.href = '/admin/login';
+        location.assign('/admin/login');
         return;
       }
 
@@ -184,7 +184,7 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
       }
     }
 
-    const options = [...unique.entries()].map(([value, label]) => ({
+    const options = [...unique].map(([value, label]) => ({
       value,
       label,
     }));

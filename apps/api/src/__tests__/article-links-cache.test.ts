@@ -176,9 +176,10 @@ async function getDailySelectionArticleLinks(
 
 describe('article links cache invalidation', () => {
   let environment: Environment;
-  const originalCaches = (globalThis as {caches?: unknown}).caches;
+  const originalCaches = caches;
 
   beforeEach(async () => {
+    // eslint-disable-next-line unicorn/no-global-object-property-assignment -- cachesはnon-configurableでvi.stubGlobalが使えない
     (globalThis as {caches?: unknown}).caches = {
       default: createStatefulCacheStub(),
     };
@@ -186,6 +187,7 @@ describe('article links cache invalidation', () => {
   });
 
   afterEach(() => {
+    // eslint-disable-next-line unicorn/no-global-object-property-assignment -- 同上
     (globalThis as {caches?: unknown}).caches = originalCaches;
   });
 

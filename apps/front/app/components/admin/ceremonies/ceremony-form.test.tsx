@@ -97,7 +97,7 @@ describe('CeremonyForm', () => {
   });
 
   it('保存でPUT /admin/ceremonies/:uidにフォーム内容を送信する', async () => {
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
@@ -151,6 +151,6 @@ describe('CeremonyForm', () => {
         screen.getByText('主催団体を選択してください。'),
       ).toBeInTheDocument();
     });
-    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

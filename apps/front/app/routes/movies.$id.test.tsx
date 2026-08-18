@@ -94,7 +94,7 @@ const mockRelatedMovies = [
 ];
 
 // Fetchのモック
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 const cast = <T,>(value?: unknown): T => value as T;
 

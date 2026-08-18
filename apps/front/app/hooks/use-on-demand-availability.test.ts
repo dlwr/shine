@@ -2,7 +2,7 @@ import {renderHook, waitFor} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {useOnDemandAvailability} from './use-on-demand-availability';
 
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 describe('useOnDemandAvailability', () => {
   beforeEach(() => {
