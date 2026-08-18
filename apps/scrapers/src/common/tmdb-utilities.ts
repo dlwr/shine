@@ -107,7 +107,7 @@ export async function fetchTMDBConfig(tmdbApiKey: string): Promise<TMDBConfig> {
     return cachedConfig;
   }
 
-  const configUrl = new URL(`${TMDB_API_BASE_URL}/config`);
+  const configUrl = new URL(`${TMDB_API_BASE_URL}/configuration`);
   configUrl.searchParams.append('api_key', tmdbApiKey);
 
   cachedConfig = await fetchJsonWithRetry<TMDBConfig>(configUrl.href);
