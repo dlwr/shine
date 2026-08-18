@@ -11,17 +11,17 @@ type SelectOptions = {
    * 原題がそのまま ja の translation として保存されている映画も対象に含める。
    * 例: "Pather Panchali"（邦題は「大地のうた」）
    */
-  includeNonJapanese: boolean;
+  shouldIncludeNonJapanese: boolean;
 };
 
 export function selectMoviesNeedingJapaneseTitle<T extends Pick<Movie, 'uid'>>(
   candidates: T[],
   existingJapaneseTitles: ExistingJapaneseTitle[],
-  {includeNonJapanese}: SelectOptions,
+  {shouldIncludeNonJapanese}: SelectOptions,
 ): T[] {
   const satisfied = new Set(
     existingJapaneseTitles
-      .filter(row => !includeNonJapanese || hasJapaneseText(row.content))
+      .filter(row => !shouldIncludeNonJapanese || hasJapaneseText(row.content))
       .map(row => row.movieUid),
   );
 

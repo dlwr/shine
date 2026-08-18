@@ -244,7 +244,7 @@ export async function importMoviesFromCsv({
       continue;
     }
 
-    const nominationCreated = await ensureNomination({
+    const nominationCreated = await didCreateNomination({
       database,
       movieUid: existing.uid,
       categoryUid: awardContext.categoryUid,
@@ -326,7 +326,7 @@ export async function importMoviesFromCsv({
             imdbId,
           });
 
-          const nominationCreated = await ensureNomination({
+          const nominationCreated = await didCreateNomination({
             database,
             movieUid,
             categoryUid: awardContext.categoryUid,
@@ -386,7 +386,7 @@ export async function importMoviesFromCsv({
           });
         }
 
-        const nominationCreated = await ensureNomination({
+        const nominationCreated = await didCreateNomination({
           database,
           movieUid,
           categoryUid: awardContext.categoryUid,
@@ -977,7 +977,7 @@ async function insertPoster(
     .onConflictDoNothing();
 }
 
-async function ensureNomination({
+async function didCreateNomination({
   database,
   movieUid,
   categoryUid,

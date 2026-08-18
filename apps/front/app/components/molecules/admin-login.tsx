@@ -89,9 +89,9 @@ export function AdminLogin({locale, apiUrl}: AdminLoginProperties) {
     setIsLoggedIn(false);
   };
 
-  const handleOpenChange = (open: boolean) => {
-    setShowModal(open);
-    if (!open) {
+  const handleOpenChange = (isOpen: boolean) => {
+    setShowModal(isOpen);
+    if (!isOpen) {
       setPassword('');
       setError(false);
     }

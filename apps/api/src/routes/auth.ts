@@ -1,6 +1,6 @@
 import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
-import {createJWT, passwordsMatch} from '../auth';
+import {createJWT, isPasswordCorrect} from '../auth';
 import {loginRateLimiter} from '../login-rate-limiter';
 import {
   createAuthenticationError,
@@ -46,7 +46,7 @@ authRoutes.post('/login', async c => {
       );
     }
 
-    if (!(await passwordsMatch(password, c.env.ADMIN_PASSWORD))) {
+    if (!(await isPasswordCorrect(password, c.env.ADMIN_PASSWORD))) {
       loginRateLimiter.recordFailure(clientIp);
       return createAuthenticationError(c, 'INVALID_CREDENTIALS');
     }

@@ -20,7 +20,7 @@ import {
 } from '../services';
 import {invalidateMovieCaches} from '../services/movie-cache-invalidation';
 import {
-  checkETag,
+  shouldCheckETag,
   createCachedResponse,
   normalizeCacheLocale,
   createETag,
@@ -177,7 +177,7 @@ moviesRoutes.get('/:id', async c => {
     const etag = createETag(result);
 
     // Check if client has the same version
-    if (checkETag(c.req, etag)) {
+    if (shouldCheckETag(c.req, etag)) {
       return c.newResponse('', 304, {
         ETag: etag,
         'Cache-Control': 'public, max-age=86400',

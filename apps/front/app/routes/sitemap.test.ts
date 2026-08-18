@@ -24,9 +24,9 @@ const createMoviesArguments = (page: string) =>
     params: {},
   });
 
-const mockSearchResponse = (body: unknown, ok = true) => {
+const mockSearchResponse = (body: unknown, isOk = true) => {
   vi.mocked(fetch).mockResolvedValueOnce({
-    ok,
+    ok: isOk,
     json: async () => body,
   } as Response);
 };

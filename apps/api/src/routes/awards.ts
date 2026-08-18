@@ -4,7 +4,7 @@ import type {AwardDetail} from '@shine/types';
 import {AwardsService} from '../services';
 import {paginateAwardDetail} from '../services/awards-service';
 import {
-  checkETag,
+  shouldCheckETag,
   createCachedResponse,
   createETag,
   EdgeCache,
@@ -27,7 +27,7 @@ awardsRoutes.get('/', async c => {
   }
 
   const etag = createETag(result);
-  if (checkETag(c.req, etag)) {
+  if (shouldCheckETag(c.req, etag)) {
     return new Response(undefined, {status: 304, headers: {ETag: etag}});
   }
 
@@ -65,7 +65,7 @@ awardsRoutes.get('/:slug', async c => {
   }
 
   const etag = createETag(award);
-  if (checkETag(c.req, etag)) {
+  if (shouldCheckETag(c.req, etag)) {
     return new Response(undefined, {status: 304, headers: {ETag: etag}});
   }
 
@@ -94,7 +94,7 @@ awardsRoutes.get('/:slug/:year', async c => {
   }
 
   const etag = createETag(award);
-  if (checkETag(c.req, etag)) {
+  if (shouldCheckETag(c.req, etag)) {
     return new Response(undefined, {status: 304, headers: {ETag: etag}});
   }
 

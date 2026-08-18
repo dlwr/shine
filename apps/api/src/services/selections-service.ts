@@ -397,13 +397,13 @@ export class SelectionsService extends BaseService {
     date: Date,
     type: SelectionType,
     locale: string,
-    persistSelection: boolean,
+    shouldPersistSelection: boolean,
   ): Promise<MovieSelection | undefined> {
     const seed = this.getDateSeed(date, type);
     const movieUid = await this.selectMovieFromNominations(
       date,
       type,
-      persistSelection,
+      shouldPersistSelection,
       seed,
     );
     if (!movieUid) {
@@ -691,7 +691,7 @@ export class SelectionsService extends BaseService {
   private async selectMovieFromNominations(
     date: Date,
     type: SelectionType,
-    persistSelection: boolean,
+    shouldPersistSelection: boolean,
     seed: number | 'random',
     excludeMovieUids: string[] = [],
   ): Promise<string | undefined> {
@@ -732,7 +732,7 @@ export class SelectionsService extends BaseService {
 
     const selectedMovieUid = selectedNomination.movieUid;
 
-    if (persistSelection) {
+    if (shouldPersistSelection) {
       const selectionDate = this.getSelectionDate(date, type);
 
       await this.database

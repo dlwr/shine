@@ -57,6 +57,10 @@ export default tseslint.config(
   {
     rules: {
       'unicorn/single-line-block-comment-style': ['error', 'single-line'],
+      'unicorn/consistent-boolean-name': [
+        'error',
+        {prefixes: {matches: true, contains: true, prefers: true}},
+      ],
       'unicorn/consistent-class-member-order': [
         'error',
         {
@@ -84,16 +88,14 @@ export default tseslint.config(
     // unicorn 73 で増えたルール。1ルールずつ直しては消していく作業中で、
     // 全部消えたらこのブロックごと無くなる。恒久的な除外ではない。
     rules: {
-      'unicorn/consistent-boolean-name': 'off',
       'unicorn/max-nested-calls': 'off',
-      'unicorn/name-replacements': 'off',
       'unicorn/no-break-in-nested-loop': 'off',
+      'unicorn/name-replacements': 'off',
       'unicorn/no-top-level-assignment-in-function': 'off',
       'unicorn/prefer-await': 'off',
       // Iterator#toArray は tsconfig の lib が ES2023 なので型が無い
       'unicorn/prefer-iterator-to-array': 'off',
       'unicorn/prefer-number-coercion': 'off',
-      'unicorn/prefer-simple-condition-first': 'off',
     },
   },
   {

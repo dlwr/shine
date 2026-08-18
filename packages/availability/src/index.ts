@@ -18,8 +18,8 @@ export {checkUnext, parseUnextTitles} from './sources/unext';
 export {
   hasJapaneseText,
   normalizeTitle,
-  titleMatches,
-  titleMatchesAsVolume,
+  matchesTitle,
+  matchesTitleAsVolume,
   volumeBaseTitles,
 } from './title-match';
 export type {

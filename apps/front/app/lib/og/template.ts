@@ -65,8 +65,8 @@ type MovieCardProperties = {
   availabilityLabels: string[];
 };
 
-function chip(label: string, filled: boolean): string {
-  const style = filled
+function chip(label: string, isFilled: boolean): string {
+  const style = isFilled
     ? `background:${COLORS.brand};color:${COLORS.brandOn};border:3px solid ${COLORS.ink};`
     : `background:${COLORS.surface};color:${COLORS.ink};border:3px solid ${COLORS.ink};`;
 

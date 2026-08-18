@@ -560,7 +560,7 @@ async function ensureNomination(
 ): Promise<void> {
   const {database, stats} = context;
   const existing = nominationsByMovieUid.get(movieUid);
-  const isWinner = film.isWinner ? 1 : 0;
+  const winnerFlag = film.isWinner ? 1 : 0;
 
   if (existing === undefined) {
     await database
@@ -569,12 +569,12 @@ async function ensureNomination(
         movieUid,
         ceremonyUid,
         categoryUid,
-        isWinner,
+        isWinner: winnerFlag,
         specialMention: film.specialMention,
       })
       .onConflictDoNothing();
     nominationsByMovieUid.set(movieUid, {
-      isWinner,
+      isWinner: winnerFlag,
       specialMention: film.specialMention ?? null, // eslint-disable-line unicorn/no-null -- DBのnullable列に合わせる
     });
     stats.nominationsCreated++;

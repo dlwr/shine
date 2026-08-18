@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {
-  checkETag,
+  shouldCheckETag,
   createCachedResponse,
   createETag,
   EdgeCache,
@@ -100,7 +100,7 @@ describe('Cache Utilities', () => {
         header: (name: string) => (name === 'If-None-Match' ? etag : undefined),
       };
 
-      expect(checkETag(mockRequest, etag)).toBe(true);
+      expect(shouldCheckETag(mockRequest, etag)).toBe(true);
 
       // Mock request with different ETag
       const mockRequestDifferent = {
@@ -108,7 +108,7 @@ describe('Cache Utilities', () => {
           name === 'If-None-Match' ? '"different"' : undefined,
       };
 
-      expect(checkETag(mockRequestDifferent, etag)).toBe(false);
+      expect(shouldCheckETag(mockRequestDifferent, etag)).toBe(false);
     });
   });
 

@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import iconv from 'iconv-lite';
-import {titleMatches, titleMatchesAsVolume} from '../title-match';
+import {matchesTitle, matchesTitleAsVolume} from '../title-match';
 import type {FetchLike, SourceCheckResult} from '../types';
 
 const USER_AGENT =
@@ -107,7 +107,7 @@ async function findMatchingVolume(
   fetchImpl: FetchLike,
 ): Promise<DiscasSearchResult | undefined> {
   const candidates = results
-    .filter(result => titleMatchesAsVolume(result.title, targetTitles))
+    .filter(result => matchesTitleAsVolume(result.title, targetTitles))
     .slice(0, MAX_VOLUME_LOOKUPS);
 
   for (const candidate of candidates) {
@@ -174,7 +174,7 @@ export async function checkDiscas(
     );
     const results = parseDiscasResults(html);
     const matched = results.find(result =>
-      titleMatches(result.title, targetTitles),
+      matchesTitle(result.title, targetTitles),
     );
     if (matched) {
       return {

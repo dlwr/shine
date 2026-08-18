@@ -56,9 +56,9 @@ export async function importMoviesFromList(
   categoryName: string,
   environment: Environment,
   limit?: number,
-  dryRun = false,
+  shouldDryRun = false,
 ): Promise<void> {
-  isDryRun = dryRun;
+  isDryRun = shouldDryRun;
   environment_ = environment;
   TMDB_API_KEY = environment.TMDB_API_KEY || '';
 

@@ -2,7 +2,7 @@ import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {CrossingsService} from '../services/crossings-service';
 import {
-  checkETag,
+  shouldCheckETag,
   createCachedResponse,
   createETag,
   EdgeCache,
@@ -24,7 +24,7 @@ crossingsRoutes.get('/', async c => {
   }
 
   const etag = createETag(result);
-  if (checkETag(c.req, etag)) {
+  if (shouldCheckETag(c.req, etag)) {
     return new Response(undefined, {status: 304, headers: {ETag: etag}});
   }
 
