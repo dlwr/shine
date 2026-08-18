@@ -5,7 +5,7 @@ import AwardsIndexPage, {loader, meta} from './awards';
 import type {Route} from './+types/awards';
 import {createMockContext} from '@/lib/test-context';
 
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 const mockAwards = {
   awards: [

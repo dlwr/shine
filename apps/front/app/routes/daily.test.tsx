@@ -5,7 +5,7 @@ import DailyArchivePage, {loader, meta} from './daily';
 import type {Route} from './+types/daily';
 import {createMockContext} from '@/lib/test-context';
 
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 const mockHistory = {
   items: [

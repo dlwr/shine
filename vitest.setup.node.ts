@@ -12,8 +12,7 @@ if (globalThis.crypto) {
     });
   }
 } else {
-  // @ts-expect-error: webcrypto is not typed
-  globalThis.crypto = webcrypto;
+  vi.stubGlobal('crypto', webcrypto);
 }
 
 // TextEncoder and TextDecoder are already global in Node.js 18+
@@ -36,20 +35,26 @@ Object.defineProperty(globalThis, 'caches', {
 });
 
 // Mock console methods to reduce noise in tests
-globalThis.console = {
+vi.stubGlobal('console', {
   ...console,
   log: vi.fn(),
   error: vi.fn(),
   warn: vi.fn(),
   info: vi.fn(),
-};
+});
 
 // Mock fetch for external API calls
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 // Mock btoa/atob for base64 encoding in Node.js environment
-globalThis.btoa ||= (input: string) =>
-  Buffer.from(input, 'binary').toString('base64');
+vi.stubGlobal(
+  'btoa',
+  globalThis.btoa ??
+    ((input: string) => Buffer.from(input, 'binary').toString('base64')),
+);
 
-globalThis.atob ||= (input: string) =>
-  Buffer.from(input, 'base64').toString('binary');
+vi.stubGlobal(
+  'atob',
+  globalThis.atob ??
+    ((input: string) => Buffer.from(input, 'base64').toString('binary')),
+);

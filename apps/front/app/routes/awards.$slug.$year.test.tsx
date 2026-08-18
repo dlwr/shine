@@ -5,7 +5,7 @@ import AwardYearPage, {loader, meta} from './awards.$slug.$year';
 import type {Route} from './+types/awards.$slug.$year';
 import {createMockContext} from '@/lib/test-context';
 
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 const mockAwardYear = {
   slug: 'palme-dor',

@@ -8,7 +8,7 @@ import {QUIZ_STATE_KEY} from '@/lib/quiz-state';
 import {createEnvironmentContext} from '@/lib/api';
 import {createMockContext} from '@/lib/test-context';
 
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 const cast = <T,>(value?: unknown): T => value as T;
 

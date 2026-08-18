@@ -6,7 +6,7 @@ import type {Route} from './+types/search';
 import {createMockContext} from '@/lib/test-context';
 
 // Fetchのモック
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 // Cloudflare環境のモック
 

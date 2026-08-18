@@ -5,7 +5,7 @@ import UncrownedPage, {loader, meta} from './uncrowned';
 import type {Route} from './+types/uncrowned';
 import {createMockContext} from '@/lib/test-context';
 
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 const mockUncrowned = {
   nominatedFilmCount: 6506,

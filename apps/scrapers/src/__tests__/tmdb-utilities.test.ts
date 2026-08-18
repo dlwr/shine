@@ -6,7 +6,7 @@ import {
   searchTMDBMovie,
 } from '../common/tmdb-utilities';
 
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 function jsonResponse(body: unknown): Response {
   return {

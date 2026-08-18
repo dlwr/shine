@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/prefer-https -- httpとhttpsの扱いの違いそのものを検証している */
 import {describe, expect, it} from 'vitest';
 import {validateExternalUrl} from '../url-safety';
 
@@ -7,7 +8,7 @@ describe('validateExternalUrl', () => {
   });
 
   it('accepts a normal http URL', () => {
-    expect(validateExternalUrl('https://example.com/').ok).toBe(true);
+    expect(validateExternalUrl('http://example.com/').ok).toBe(true);
   });
 
   it('rejects malformed URLs', () => {
@@ -56,23 +57,23 @@ describe('validateExternalUrl', () => {
   });
 
   it('rejects non-default ports', () => {
-    expect(validateExternalUrl('https://example.com:8787/').ok).toBe(false);
+    expect(validateExternalUrl('http://example.com:8787/').ok).toBe(false);
     expect(validateExternalUrl('https://example.com:8443/').ok).toBe(false);
   });
 
   it('accepts explicit default ports', () => {
-    expect(validateExternalUrl('https://example.com:80/').ok).toBe(true);
+    expect(validateExternalUrl('http://example.com:80/').ok).toBe(true);
     expect(validateExternalUrl('https://example.com:443/').ok).toBe(true);
   });
 
   it('rejects hostnames with trailing dots that alias blocked hosts', () => {
     expect(validateExternalUrl('http://localhost./').ok).toBe(false);
-    expect(validateExternalUrl('https://printer.local./').ok).toBe(false);
+    expect(validateExternalUrl('http://printer.local./').ok).toBe(false);
     expect(validateExternalUrl('http://127.0.0.1./').ok).toBe(false);
   });
 
   it('rejects .local and .internal hostnames', () => {
-    expect(validateExternalUrl('https://printer.local/').ok).toBe(false);
-    expect(validateExternalUrl('https://metadata.internal/').ok).toBe(false);
+    expect(validateExternalUrl('http://printer.local/').ok).toBe(false);
+    expect(validateExternalUrl('http://metadata.internal/').ok).toBe(false);
   });
 });

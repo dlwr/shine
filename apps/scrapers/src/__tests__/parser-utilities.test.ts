@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/prefer-https -- JSON-LDの@contextは実データがhttp://schema.orgで来る */
 import * as cheerio from 'cheerio';
 import {describe, expect, it} from 'vitest';
 import {
@@ -30,7 +31,7 @@ describe('Parser Utilities', () => {
         <html>
           <head>
             <script type="application/ld+json">
-              {"@context": "https://schema.org", "@type": "Movie", "name": "Test Movie"}
+              {"@context": "http://schema.org", "@type": "Movie", "name": "Test Movie"}
             </script>
           </head>
         </html>
@@ -39,7 +40,7 @@ describe('Parser Utilities', () => {
       const result = extractWikipediaJsonLD($);
 
       expect(result).toEqual({
-        '@context': 'https://schema.org',
+        '@context': 'http://schema.org',
         '@type': 'Movie',
         name: 'Test Movie',
       });
@@ -79,7 +80,7 @@ describe('Parser Utilities', () => {
     });
 
     it('should remove zero-width characters', () => {
-      const text = 'Test\u{200B}text\u{200C}with\u{200D}zero\u{FEFF}width';
+      const text = 'Test\u200Btext\u200Cwith\u200Dzero\uFEFFwidth';
       const result = normalizeText(text);
 
       expect(result).toBe('Testtextwithzero width');

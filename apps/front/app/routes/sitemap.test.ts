@@ -4,7 +4,7 @@ import {loader as sitemapIndexLoader} from './sitemap-index';
 import {loader as sitemapMoviesLoader} from './sitemap-movies';
 import {createMockContext} from '@/lib/test-context';
 
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 const cast = <T>(value?: unknown): T => value as T;
 

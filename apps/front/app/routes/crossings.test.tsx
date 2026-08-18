@@ -5,7 +5,7 @@ import CrossingsPage, {loader, meta} from './crossings';
 import type {Route} from './+types/crossings';
 import {createMockContext} from '@/lib/test-context';
 
-globalThis.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 const mockCrossings = {
   awards: [
