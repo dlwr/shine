@@ -30,17 +30,16 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
   const byOrg: Record<string, Grouped> = {};
   for (const nomination of nominations) {
     const orgKey = nomination.organization.uid;
-    if (!byOrg[orgKey]) {
-      byOrg[orgKey] = {organization: nomination.organization, ceremonies: {}};
-    }
+    byOrg[orgKey] ??= {
+      organization: nomination.organization,
+      ceremonies: {},
+    };
 
     const ceremonyKey = nomination.ceremony.uid;
-    if (!byOrg[orgKey].ceremonies[ceremonyKey]) {
-      byOrg[orgKey].ceremonies[ceremonyKey] = {
-        ceremony: nomination.ceremony,
-        items: [],
-      };
-    }
+    byOrg[orgKey].ceremonies[ceremonyKey] ??= {
+      ceremony: nomination.ceremony,
+      items: [],
+    };
 
     byOrg[orgKey].ceremonies[ceremonyKey].items.push(nomination);
   }
