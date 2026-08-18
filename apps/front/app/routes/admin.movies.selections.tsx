@@ -160,7 +160,7 @@ export default function AdminMovieSelections({
 
       const token = getAdminToken();
       if (!token) {
-        globalThis.location.assign('/admin/login');
+        location.assign('/admin/login');
         return;
       }
 
@@ -277,7 +277,7 @@ export default function AdminMovieSelections({
 
       if (response.ok) {
         // Reload selections
-        globalThis.location.reload();
+        location.reload();
       }
     } catch (error) {
       console.error('Override error:', error);

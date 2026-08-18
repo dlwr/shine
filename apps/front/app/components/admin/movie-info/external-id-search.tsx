@@ -145,7 +145,7 @@ export function ExternalIdSearch({
     }
 
     if (!getAdminToken()) {
-      globalThis.location.assign('/admin/login');
+      location.assign('/admin/login');
       return;
     }
 

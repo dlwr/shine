@@ -143,7 +143,7 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
       }
 
       if (!getAdminToken()) {
-        globalThis.location.assign('/admin/login');
+        location.assign('/admin/login');
         return;
       }
 

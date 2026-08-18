@@ -66,7 +66,7 @@ describe('TmdbIdEditor', () => {
       expect(performTmdbUpdate).toHaveBeenCalledWith(98_765);
     });
     await waitFor(() => {
-      expect(globalThis.alert).toHaveBeenCalledWith('TMDb IDを更新しました');
+      expect(alert).toHaveBeenCalledWith('TMDb IDを更新しました');
     });
   });
 
@@ -90,7 +90,7 @@ describe('TmdbIdEditor', () => {
   });
 
   it('TMDb情報更新でPOST /admin/movies/:id/refresh-tmdbを呼ぶ', async () => {
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
@@ -108,7 +108,7 @@ describe('TmdbIdEditor', () => {
       );
     });
     await waitFor(() => {
-      expect(globalThis.alert).toHaveBeenCalledWith('TMDb情報を更新しました');
+      expect(alert).toHaveBeenCalledWith('TMDb情報を更新しました');
     });
   });
 });

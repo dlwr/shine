@@ -90,7 +90,7 @@ describe('MovieInfoEditor 外部ID検索', () => {
     const movieData = createMovieData();
     const onMovieDataUpdate = vi.fn();
 
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
 
     const searchResponse = {
       usedQuery: 'テスト映画',
@@ -178,7 +178,7 @@ describe('MovieInfoEditor 外部ID検索', () => {
     fireEvent.click(applyTmdbButton);
 
     await waitFor(() => {
-      expect(globalThis.alert).toHaveBeenCalledWith('TMDb IDを設定しました');
+      expect(alert).toHaveBeenCalledWith('TMDb IDを設定しました');
     });
 
     await waitFor(() => {

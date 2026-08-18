@@ -176,7 +176,7 @@ async function getDailySelectionArticleLinks(
 
 describe('article links cache invalidation', () => {
   let environment: Environment;
-  const originalCaches = (globalThis as {caches?: unknown}).caches;
+  const originalCaches = caches;
 
   beforeEach(async () => {
     (globalThis as {caches?: unknown}).caches = {

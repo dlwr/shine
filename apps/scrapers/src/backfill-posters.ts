@@ -68,7 +68,7 @@ export function pickStrictMatch(
     const titles = [result.title, result.original_title].filter(
       (value): value is string => typeof value === 'string',
     );
-    if (titles.every(candidate => !(normalizeTitle(candidate) === wanted))) {
+    if (titles.every(candidate => normalizeTitle(candidate) !== wanted)) {
       continue;
     }
 

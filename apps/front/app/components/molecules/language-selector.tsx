@@ -10,7 +10,7 @@ type LanguageSelectorProperties = {
 
 const getCurrentUrl = (newLocale: string): string => {
   if (globalThis.window !== undefined) {
-    const url = new URL(globalThis.location.href);
+    const url = new URL(location.href);
     url.searchParams.set('locale', newLocale);
     return url.toString();
   }

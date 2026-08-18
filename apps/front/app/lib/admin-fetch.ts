@@ -28,7 +28,7 @@ export async function adminFetch(
 
   if (response.status === 401) {
     clearAdminToken();
-    globalThis.location.assign('/admin/login');
+    location.assign('/admin/login');
   }
 
   return response;

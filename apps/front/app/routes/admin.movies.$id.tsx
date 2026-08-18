@@ -61,7 +61,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
       }
 
       if (!getAdminToken()) {
-        globalThis.location.assign('/admin/login');
+        location.assign('/admin/login');
         return;
       }
 

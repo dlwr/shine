@@ -7,7 +7,7 @@ export const ensureToken = () => {
 
   const token = getAdminToken();
   if (!token) {
-    globalThis.location.assign('/admin/login');
+    location.assign('/admin/login');
     return;
   }
 

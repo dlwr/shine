@@ -47,11 +47,11 @@ describe('MovieSearchPanel', () => {
         screen.getByText('2文字以上のキーワードを入力してください。'),
       ).toBeInTheDocument();
     });
-    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it('検索で/admin/moviesにリクエストし結果を表示する', async () => {
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
@@ -81,7 +81,7 @@ describe('MovieSearchPanel', () => {
   });
 
   it('検索結果の選択でonSelectMovieが呼ばれる', async () => {
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
     const movie = {uid: 'movie-1', title: '七人の侍', year: 1954};
     fetchMock.mockResolvedValue({
       ok: true,

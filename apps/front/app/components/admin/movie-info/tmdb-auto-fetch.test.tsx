@@ -47,7 +47,7 @@ describe('TmdbAutoFetch', () => {
   });
 
   it('ボタンでPOST /admin/movies/:id/auto-fetch-tmdbを呼ぶ', async () => {
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
     fetchMock.mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);
       if (url.endsWith('/auto-fetch-tmdb')) {
@@ -93,7 +93,7 @@ describe('TmdbAutoFetch', () => {
     });
 
     await waitFor(() => {
-      expect(globalThis.alert).toHaveBeenCalledWith(
+      expect(alert).toHaveBeenCalledWith(
         'TMDbデータを自動取得しました:\n• TMDb IDを設定\n• 2枚のポスターを追加\n• 1件の翻訳を追加\n',
       );
     });

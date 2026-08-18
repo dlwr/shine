@@ -61,8 +61,7 @@ export default function AdminLogin({actionData}: Route.ComponentProps) {
   // ログイン成功時の処理
   useEffect(() => {
     if (!(actionData?.success &&
-      actionData?.token &&
-      globalThis.window !== undefined)) {
+      actionData?.token) || globalThis.window === undefined) {
     	return;
     }
 

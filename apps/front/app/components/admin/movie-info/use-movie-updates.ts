@@ -25,7 +25,7 @@ export function useMovieUpdates({
   const performImdbUpdate = useCallback<PerformImdbUpdate>(
     async (imdbIdValue, options = {}) => {
       if (!getAdminToken()) {
-        globalThis.location.assign('/admin/login');
+        location.assign('/admin/login');
         return false;
       }
 
@@ -73,7 +73,7 @@ export function useMovieUpdates({
   const performTmdbUpdate = useCallback<PerformTmdbUpdate>(
     async (tmdbIdValue, options = {}) => {
       if (!getAdminToken()) {
-        globalThis.location.assign('/admin/login');
+        location.assign('/admin/login');
         return false;
       }
 

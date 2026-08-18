@@ -18,8 +18,8 @@ globalThis.React = React;
 // Polyfill Web Crypto API for Node.js environment
 if (globalThis.crypto) {
   // Ensure crypto.subtle is available in the existing crypto object
-  if (!globalThis.crypto.subtle) {
-    Object.defineProperty(globalThis.crypto, 'subtle', {
+  if (!crypto.subtle) {
+    Object.defineProperty(crypto, 'subtle', {
       value: webcrypto.subtle,
       writable: false,
       configurable: false,

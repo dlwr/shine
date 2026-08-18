@@ -23,7 +23,7 @@ export function MediaTypeToggle({
 
     const newType = movieData.mediaType === 'tv' ? 'movie' : 'tv';
     if (!getAdminToken()) {
-      globalThis.location.assign('/admin/login');
+      location.assign('/admin/login');
       return;
     }
 
