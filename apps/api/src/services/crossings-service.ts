@@ -78,7 +78,8 @@ export class CrossingsService extends BaseService {
       }
 
       for (const [index, a] of slugs.entries()) {
-        for (const b of slugs.slice(index + 1)) {
+        const laterSlugs = slugs.slice(index + 1);
+        for (const b of laterSlugs) {
           const key = `${a}::${b}`;
           const pair = sharedCounts.get(key);
           if (pair) {

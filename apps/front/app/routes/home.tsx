@@ -173,12 +173,12 @@ export default function Home({loaderData}: Route.ComponentProps) {
       setAdminToken(undefined);
     };
 
-    globalThis.addEventListener('adminLogin', handleAdminLogin);
-    globalThis.addEventListener('adminLogout', handleAdminLogout);
+    addEventListener('adminLogin', handleAdminLogin);
+    addEventListener('adminLogout', handleAdminLogout);
 
     return () => {
-      globalThis.removeEventListener('adminLogin', handleAdminLogin);
-      globalThis.removeEventListener('adminLogout', handleAdminLogout);
+      removeEventListener('adminLogin', handleAdminLogin);
+      removeEventListener('adminLogout', handleAdminLogout);
     };
   }, []);
 
@@ -639,7 +639,9 @@ function Movies({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {SELECTION_PERIODS.map((period, index) => {
           const movie = movies?.[period];
+          // eslint-disable-next-line unicorn/no-computed-property-existence-check -- 存在ではなく値の真偽を見ている
           const isLoading = Boolean(actionLoading[period]);
+          // eslint-disable-next-line unicorn/no-computed-property-existence-check -- 存在ではなく値の真偽を見ている
           const isSearchVisible = Boolean(searchOpen[period]);
           const animClass = `anim-rise anim-rise-${index + 1}`;
 

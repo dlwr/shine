@@ -268,6 +268,43 @@ export class SelectionsService extends BaseService {
     await this.purgeSelectionCache(type, selectionDate);
   }
 
+  async purgeSelectionCachesForMovie(
+    movieUid: string,
+    date = new Date(),
+  ): Promise<void> {
+    const types: SelectionType[] = ['daily', 'weekly', 'monthly'];
+    const current = await this.database
+      .select({
+        selectionType: movieSelections.selectionType,
+        selectionDate: movieSelections.selectionDate,
+      })
+      .from(movieSelections)
+      .where(
+        and(
+          eq(movieSelections.movieId, movieUid),
+          inArray(
+            movieSelections.selectionDate,
+            types.map(type => this.getSelectionDate(date, type)),
+          ),
+        ),
+      );
+
+    await Promise.all(
+      current
+        .filter(
+          selection =>
+            selection.selectionDate ===
+            this.getSelectionDate(date, selection.selectionType),
+        )
+        .map(async selection =>
+          this.purgeSelectionCache(
+            selection.selectionType,
+            selection.selectionDate,
+          ),
+        ),
+    );
+  }
+
   private async getMovieByDateSeed(
     date: Date,
     type: SelectionType,
@@ -354,54 +391,6 @@ export class SelectionsService extends BaseService {
     }
 
     return movie;
-  }
-
-  private async purgeSelectionCache(
-    type: SelectionType,
-    selectionDate: string,
-  ): Promise<void> {
-    await Promise.all(
-      CACHEABLE_LOCALES.map(async locale =>
-        this.cache.delete(getCacheKeyForSelection(type, selectionDate, locale)),
-      ),
-    );
-  }
-
-  async purgeSelectionCachesForMovie(
-    movieUid: string,
-    date = new Date(),
-  ): Promise<void> {
-    const types: SelectionType[] = ['daily', 'weekly', 'monthly'];
-    const current = await this.database
-      .select({
-        selectionType: movieSelections.selectionType,
-        selectionDate: movieSelections.selectionDate,
-      })
-      .from(movieSelections)
-      .where(
-        and(
-          eq(movieSelections.movieId, movieUid),
-          inArray(
-            movieSelections.selectionDate,
-            types.map(type => this.getSelectionDate(date, type)),
-          ),
-        ),
-      );
-
-    await Promise.all(
-      current
-        .filter(
-          selection =>
-            selection.selectionDate ===
-            this.getSelectionDate(date, selection.selectionType),
-        )
-        .map(async selection =>
-          this.purgeSelectionCache(
-            selection.selectionType,
-            selection.selectionDate,
-          ),
-        ),
-    );
   }
 
   private async generateMovieSelection(
@@ -763,5 +752,16 @@ export class SelectionsService extends BaseService {
     }
 
     return selectedMovieUid;
+  }
+
+  private async purgeSelectionCache(
+    type: SelectionType,
+    selectionDate: string,
+  ): Promise<void> {
+    await Promise.all(
+      CACHEABLE_LOCALES.map(async locale =>
+        this.cache.delete(getCacheKeyForSelection(type, selectionDate, locale)),
+      ),
+    );
   }
 }

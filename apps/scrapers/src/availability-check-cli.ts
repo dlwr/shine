@@ -24,22 +24,23 @@ const shouldHelp = arguments_.has('--help') || arguments_.has('-h');
 async function main(): Promise<void> {
   const environment = buildEnvironment(process.env);
 
-  const apiUrl =
-    process.env.SHINE_API_URL || 'https://shine-api.yuta25.workers.dev';
-  const adminPassword = environment.ADMIN_PASSWORD || '';
-  const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL || '';
-
   if (!environment.TURSO_DATABASE_URL || !environment.TURSO_AUTH_TOKEN) {
     console.error('TURSO_DATABASE_URL / TURSO_AUTH_TOKEN が設定されていません');
     process.exitCode = 1;
     return;
   }
 
+  const adminPassword = environment.ADMIN_PASSWORD || '';
+
   if (!adminPassword) {
     console.error('ADMIN_PASSWORD が設定されていません');
     process.exitCode = 1;
     return;
   }
+
+  const apiUrl =
+    process.env.SHINE_API_URL || 'https://shine-api.yuta25.workers.dev';
+  const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL || '';
 
   try {
     const summaries = await runAvailabilityCheck({

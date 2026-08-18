@@ -13,6 +13,7 @@ const requiredEnvironmentVariables = [
 ] as const;
 
 for (const key of requiredEnvironmentVariables) {
+  // eslint-disable-next-line unicorn/no-computed-property-existence-check -- 存在ではなく値の真偽を見ている
   if (!process.env[key]) {
     throw new Error(
       `${key} is required. Please add it to .dev.vars or the environment.`,

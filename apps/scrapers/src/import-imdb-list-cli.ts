@@ -52,6 +52,7 @@ program
       'TMDB_API_KEY',
     ] as const;
     const missingEnvironment = requiredEnvironment.filter(
+      // eslint-disable-next-line unicorn/no-computed-property-existence-check -- 存在ではなく値の真偽を見ている
       key => !process.env[key],
     );
     if (missingEnvironment.length > 0) {

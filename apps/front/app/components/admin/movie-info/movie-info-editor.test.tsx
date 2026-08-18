@@ -120,6 +120,7 @@ describe('MovieInfoEditor 外部ID検索', () => {
     fetchMock.mockImplementation(
       (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : input.toString();
+        // eslint-disable-next-line unicorn/no-declarations-before-early-exit -- 後続の分岐でも使うので前に置く
         const method = init?.method ?? 'GET';
 
         if (url.includes('/external-id-search')) {

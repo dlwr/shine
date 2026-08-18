@@ -240,7 +240,7 @@ selectionsRoutes.get('/selections/:type/history', async c => {
     const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
     const limitParameter = Number(c.req.query('limit') ?? '14');
     const limit =
-      Number.isInteger(limitParameter) && limitParameter > 0
+      Number.isSafeInteger(limitParameter) && limitParameter > 0
         ? Math.min(limitParameter, 30)
         : 14;
     const today = getSelectionDate(new Date(), type);

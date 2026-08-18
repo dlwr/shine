@@ -14,7 +14,7 @@ export const sanitizeUrl = (input: string): string => {
       throw new Error('Invalid protocol');
     }
 
-    return url.toString();
+    return url.href;
   } catch {
     throw new Error('Invalid URL');
   }

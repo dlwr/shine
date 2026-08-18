@@ -40,7 +40,7 @@ export async function fetchJapaneseTitleFromTMDB(
       findUrl.searchParams.append('api_key', TMDB_API_KEY);
       findUrl.searchParams.append('external_source', 'imdb_id');
 
-      const findResponse = await fetch(findUrl.toString());
+      const findResponse = await fetch(findUrl.href);
       if (!findResponse.ok) {
         throw new Error(`TMDb API error: ${findResponse.statusText}`);
       }
@@ -67,7 +67,7 @@ export async function fetchJapaneseTitleFromTMDB(
     movieUrl.searchParams.append('api_key', TMDB_API_KEY);
     movieUrl.searchParams.append('language', 'ja');
 
-    const movieResponse = await fetch(movieUrl.toString());
+    const movieResponse = await fetch(movieUrl.href);
     if (!movieResponse.ok) {
       throw new Error(`TMDb API error: ${movieResponse.statusText}`);
     }

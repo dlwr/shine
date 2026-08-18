@@ -46,7 +46,7 @@ export function normalizeText(text: string): string {
   return text
     .trim()
     .replaceAll(/\s+/g, ' ')
-    .replaceAll(/[\u200B-\u200D\uFEFF]/g, ''); // ゼロ幅スペースなどの非表示文字を削除
+    .replaceAll(/[\u{200B}-\u{200D}\u{FEFF}]/gu, ''); // ゼロ幅スペースなどの非表示文字を削除
 }
 
 /**
@@ -72,5 +72,5 @@ export function extractText($: cheerio.CheerioAPI, selector: string): string {
 export function extractMainTitle(title: string): string {
   // 「映画名 (説明)」 形式から映画名のみを抽出
   const match = /^(.+?)\s*[(（].*?[)）]?$/.exec(title);
-  return match ? normalizeText(match[1]) : normalizeText(title);
+  return normalizeText(match ? match[1] : title);
 }

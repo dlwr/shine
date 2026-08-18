@@ -12,7 +12,7 @@ const getCurrentUrl = (newLocale: string): string => {
   if (globalThis.window !== undefined) {
     const url = new URL(location.href);
     url.searchParams.set('locale', newLocale);
-    return url.toString();
+    return url.href;
   }
 
   return `?locale=${newLocale}`;

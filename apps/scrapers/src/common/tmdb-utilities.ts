@@ -113,7 +113,7 @@ export async function fetchTMDBConfiguration(
   configUrl.searchParams.append('api_key', tmdbApiKey);
 
   cachedConfiguration = await fetchJsonWithRetry<TMDBConfiguration>(
-    configUrl.toString(),
+    configUrl.href,
   );
   return cachedConfiguration;
 }
@@ -134,7 +134,7 @@ export async function fetchTMDBMovieTranslations(
     translationsUrl.searchParams.append('api_key', tmdbApiKey);
 
     const data = await fetchJsonWithRetry<TMDBTranslationsResponse>(
-      translationsUrl.toString(),
+      translationsUrl.href,
     );
     return data;
   } catch (error) {
@@ -163,7 +163,7 @@ export async function searchTMDBMovie(
     searchUrlWithYear.searchParams.append('language', 'en-US');
 
     const dataWithYear = await fetchJsonWithRetry<TMDBSearchResponse>(
-      searchUrlWithYear.toString(),
+      searchUrlWithYear.href,
     );
 
     // 年パラメータ付きで結果があった場合
@@ -185,7 +185,7 @@ export async function searchTMDBMovie(
     searchUrlNoYear.searchParams.append('language', 'en-US');
 
     const dataNoYear = await fetchJsonWithRetry<TMDBSearchResponse>(
-      searchUrlNoYear.toString(),
+      searchUrlNoYear.href,
     );
 
     // 年パラメータなしでも結果をフィルタリング
@@ -224,7 +224,7 @@ export async function fetchTMDBMovieDetails(
     detailsUrl.searchParams.append('api_key', tmdbApiKey);
     detailsUrl.searchParams.append('language', language);
 
-    const data = await fetchJsonWithRetry<TMDBMovieData>(detailsUrl.toString());
+    const data = await fetchJsonWithRetry<TMDBMovieData>(detailsUrl.href);
     return data;
   } catch (error) {
     console.error(
@@ -250,7 +250,7 @@ export async function fetchTMDBTvDetails(
 
     const data = await fetchJsonWithRetry<
       TMDBTvData & {translations?: TMDBMovieData['translations']}
-    >(detailsUrl.toString());
+    >(detailsUrl.href);
     return {
       id: data.id,
       title: data.name,
@@ -294,7 +294,7 @@ export async function findTMDBByImdbId(
     findUrl.searchParams.append('api_key', tmdbApiKey);
     findUrl.searchParams.append('external_source', 'imdb_id');
 
-    const data = await fetchJsonWithRetry<TMDBFindResponse>(findUrl.toString());
+    const data = await fetchJsonWithRetry<TMDBFindResponse>(findUrl.href);
 
     if (data.movie_results && data.movie_results.length > 0) {
       return {tmdbId: data.movie_results[0].id, mediaType: 'movie'};
@@ -392,7 +392,7 @@ export async function fetchTMDBImages(
     );
     imagesUrl.searchParams.append('api_key', tmdbApiKey);
 
-    return await fetchJsonWithRetry<TMDBMovieImages>(imagesUrl.toString());
+    return await fetchJsonWithRetry<TMDBMovieImages>(imagesUrl.href);
   } catch (error) {
     console.error(`Error fetching TMDb images for TMDb ID ${tmdbId}:`, error);
     return undefined;

@@ -238,7 +238,7 @@ function flattenListAward(years: AwardYearGroup[]): AwardYearGroup[] {
     for (const movie of group.movies) {
       const existing = byUid.get(movie.uid);
       if (existing) {
-        existing.isWinner = existing.isWinner || movie.isWinner;
+        existing.isWinner ||= movie.isWinner;
         continue;
       }
 
@@ -372,7 +372,7 @@ export class AwardsService extends BaseService {
 
       const existing = group.movies.find(movie => movie.uid === row.movieUid);
       if (existing) {
-        existing.isWinner = existing.isWinner || row.isWinner === 1;
+        existing.isWinner ||= row.isWinner === 1;
         continue;
       }
 
@@ -477,7 +477,7 @@ export class AwardsService extends BaseService {
     for (const row of rows) {
       const existing = movieEntries.find(movie => movie.uid === row.movieUid);
       if (existing) {
-        existing.isWinner = existing.isWinner || row.isWinner === 1;
+        existing.isWinner ||= row.isWinner === 1;
         continue;
       }
 

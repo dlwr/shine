@@ -586,12 +586,13 @@ async function searchMovieByTitle(
     searchUrl.searchParams.set('year', year);
   }
 
-  const response = await fetch(searchUrl.toString());
+  const response = await fetch(searchUrl.href);
   if (response.ok) {
     const data = (await response.json()) as {
       results: TmdbMovieSearchResult[];
     };
-    for (const result of data.results ?? []) {
+    const results = data.results ?? [];
+    for (const result of results) {
       const details = await fetchMovieDetails(result.id);
       if (details) {
         return details;
@@ -607,19 +608,19 @@ async function searchMovieByTitle(
     multiUrl.searchParams.set('first_air_date_year', year);
   }
 
-  const multiResponse = await fetch(multiUrl.toString());
+  const multiResponse = await fetch(multiUrl.href);
   if (multiResponse.ok) {
     const data = (await multiResponse.json()) as {
       results: TmdbMultiSearchResult[];
     };
-    for (const result of data.results ?? []) {
+    const pageResults = data.results ?? [];
+    for (const result of pageResults) {
       if (result.media_type === 'movie') {
         const details = await fetchMovieDetails(result.id);
         if (details) {
           return details;
         }
-      }
-      if (result.media_type === 'tv') {
+      } else if (result.media_type === 'tv') {
         const details = await fetchTvDetails(result.id);
         if (details) {
           return details;
@@ -638,7 +639,7 @@ async function fetchMovieDetails(
   detailUrl.searchParams.set('api_key', tmdbApiKey);
   detailUrl.searchParams.set('language', 'en-US');
 
-  const response = await fetch(detailUrl.toString());
+  const response = await fetch(detailUrl.href);
   if (response.status === 404) {
     return undefined;
   }
@@ -655,7 +656,7 @@ async function fetchMovieDetails(
   localizedUrl.searchParams.set('language', 'ja');
 
   try {
-    const localizedResponse = await fetch(localizedUrl.toString());
+    const localizedResponse = await fetch(localizedUrl.href);
     if (localizedResponse.ok) {
       const localized = (await localizedResponse.json()) as TmdbMovieDetails;
       return {
@@ -678,7 +679,7 @@ async function fetchTvDetails(
   detailUrl.searchParams.set('api_key', tmdbApiKey);
   detailUrl.searchParams.set('language', 'en-US');
 
-  const response = await fetch(detailUrl.toString());
+  const response = await fetch(detailUrl.href);
   if (response.status === 404) {
     return undefined;
   }
@@ -712,7 +713,7 @@ async function fetchTvDetails(
   localizedUrl.searchParams.set('language', 'ja');
 
   try {
-    const localizedResponse = await fetch(localizedUrl.toString());
+    const localizedResponse = await fetch(localizedUrl.href);
     if (localizedResponse.ok) {
       const localized = (await localizedResponse.json()) as {
         name?: string;

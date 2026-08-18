@@ -393,9 +393,7 @@ async function searchMovieOnTMDB(
     searchUrl.searchParams.append('query', title);
     searchUrl.searchParams.append('language', 'ja');
 
-    const data = await fetchJsonWithRetry<TMDBSearchResponse>(
-      searchUrl.toString(),
-    );
+    const data = await fetchJsonWithRetry<TMDBSearchResponse>(searchUrl.href);
 
     if (data.results.length === 0) {
       return undefined;

@@ -74,7 +74,7 @@ export function kinemaJunpoCeremonyNumber(year: number): number | undefined {
     return undefined;
   }
 
-  return year <= 1942 ? year - 1923 : year - 1926;
+  return year - (year <= 1942 ? 1923 : 1926);
 }
 
 function parseFilmLines(content: string): KinemaJunpoFilm[] {
@@ -340,7 +340,8 @@ async function fetchImdbIds(
   });
 
   const films = new Map<string, ResolvedFilm>();
-  for (const [itemId, entity] of Object.entries(response.entities ?? {})) {
+  const entityEntries = Object.entries(response.entities ?? {});
+  for (const [itemId, entity] of entityEntries) {
     const imdbId = entity.claims?.P345?.[0]?.mainsnak?.datavalue?.value;
     if (typeof imdbId !== 'string' || !/^tt\d+$/.test(imdbId)) {
       continue;
@@ -358,7 +359,8 @@ export async function resolveFilmsByWikipediaPage(
   const itemsByPage = new Map<string, string>();
   for (let index = 0; index < pages.length; index += BATCH_SIZE) {
     const batch = pages.slice(index, index + BATCH_SIZE);
-    for (const [page, item] of await fetchWikibaseItems(batch)) {
+    const wikibaseItems = await fetchWikibaseItems(batch);
+    for (const [page, item] of wikibaseItems) {
       itemsByPage.set(page, item);
     }
 
@@ -371,7 +373,8 @@ export async function resolveFilmsByWikipediaPage(
   const filmsByItem = new Map<string, ResolvedFilm>();
   for (let index = 0; index < itemIds.length; index += BATCH_SIZE) {
     const batch = itemIds.slice(index, index + BATCH_SIZE);
-    for (const [item, film] of await fetchImdbIds(batch)) {
+    const imdbIds = await fetchImdbIds(batch);
+    for (const [item, film] of imdbIds) {
       filmsByItem.set(item, film);
     }
 
@@ -400,7 +403,7 @@ export type TmdbSearchResult = {
 };
 
 function normalizeTitle(value: string | undefined): string {
-  return (value ?? '').replaceAll(/[\s\u3000]/g, '').toLowerCase();
+  return (value ?? '').replaceAll(/[\s\u{3000}]/gu, '').toLowerCase();
 }
 
 /** 外国映画は本国公開から日本公開までのずれがあるので過去側に幅を持たせる */
@@ -415,7 +418,8 @@ export function selectTmdbMatch(
 ): TmdbSearchResult | undefined {
   const normalized = normalizeTitle(title);
   const matches = results.filter(result => {
-    if (foreign === (result.original_language === 'ja')) {
+    const isJapanese = result.original_language === 'ja';
+    if (foreign === isJapanese) {
       return false;
     }
 
@@ -427,7 +431,7 @@ export function selectTmdbMatch(
       return false;
     }
 
-    const earliest = foreign ? year - FOREIGN_YEAR_WINDOW : year - 1;
+    const earliest = year - (foreign ? FOREIGN_YEAR_WINDOW : 1);
     if (releaseYear < earliest || releaseYear > year + 1) {
       return false;
     }

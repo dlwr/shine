@@ -770,7 +770,7 @@ async function fetchEnglishTitleFromTMDB(
 
     const data = await fetchJsonWithRetry<{
       movie_results?: Array<{title: string}>;
-    }>(findUrl.toString());
+    }>(findUrl.href);
     const movieResults = data.movie_results;
 
     if (!movieResults || movieResults.length === 0) {

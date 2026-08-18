@@ -669,7 +669,7 @@ export class AdminService extends BaseService {
       searchUrl.searchParams.append('year', String(yearToUse));
     }
 
-    const searchResponse = await fetch(searchUrl.toString());
+    const searchResponse = await fetch(searchUrl.href);
 
     if (!searchResponse.ok) {
       throw new Error('Failed to search TMDb');
@@ -704,7 +704,7 @@ export class AdminService extends BaseService {
           );
           externalUrl.searchParams.append('api_key', tmdbApiKey);
 
-          const externalResponse = await fetch(externalUrl.toString());
+          const externalResponse = await fetch(externalUrl.href);
           if (externalResponse.ok) {
             const externalData = (await externalResponse.json()) as {
               imdb_id?: string;
@@ -954,13 +954,13 @@ export class AdminService extends BaseService {
       );
     }
 
-    const normalizedUrl = ensureTrailingSlash(imdbEventUrl);
-
     if (!this.env.BROWSER) {
       throw new ExternalFetchError(
         'Browser Rendering binding is not configured. Add [browser] binding to wrangler.toml.',
       );
     }
+
+    const normalizedUrl = ensureTrailingSlash(imdbEventUrl);
 
     let browser: Awaited<ReturnType<typeof puppeteer.launch>> | undefined;
     let isReusedExistingSession = false;

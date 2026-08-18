@@ -106,7 +106,7 @@ export function extractAwardEditions(
           for (const title of nomination.titles) {
             const existing = filmsByImdbId.get(title.imdbId);
             if (existing) {
-              existing.isWinner = existing.isWinner || nomination.isWinner;
+              existing.isWinner ||= nomination.isWinner;
               continue;
             }
 
@@ -125,7 +125,8 @@ export function extractAwardEditions(
       }
     }
 
-    for (const correction of config.winnerCorrections ?? []) {
+    const corrections = config.winnerCorrections ?? [];
+    for (const correction of corrections) {
       if (correction.year !== edition.year) {
         continue;
       }

@@ -35,7 +35,7 @@ export async function syncTmdbData(
   );
   imagesUrl.searchParams.append('api_key', tmdbApiKey);
 
-  const imagesResponse = await fetch(imagesUrl.toString());
+  const imagesResponse = await fetch(imagesUrl.href);
   if (imagesResponse.ok) {
     const images: TMDBMovieImages = await imagesResponse.json();
     if (images.posters && images.posters.length > 0) {

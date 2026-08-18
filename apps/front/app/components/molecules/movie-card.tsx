@@ -192,23 +192,20 @@ export function MovieCard({
   };
 
   const nominationsByOrg: Record<string, OrganizationGroup> = {};
-  for (const nomination of movie.nominations ?? []) {
+  const nominations = movie.nominations ?? [];
+  for (const nomination of nominations) {
     const orgKey = nomination.organization.uid;
-    if (!nominationsByOrg[orgKey]) {
-      nominationsByOrg[orgKey] = {
-        organization: nomination.organization,
-        ceremonies: {},
-      };
-    }
+    nominationsByOrg[orgKey] ??= {
+      organization: nomination.organization,
+      ceremonies: {},
+    };
 
     const organizationGroup = nominationsByOrg[orgKey];
     const ceremonyKey = nomination.ceremony.uid;
-    if (!organizationGroup.ceremonies[ceremonyKey]) {
-      organizationGroup.ceremonies[ceremonyKey] = {
-        ceremony: nomination.ceremony,
-        nominations: [],
-      };
-    }
+    organizationGroup.ceremonies[ceremonyKey] ??= {
+      ceremony: nomination.ceremony,
+      nominations: [],
+    };
 
     organizationGroup.ceremonies[ceremonyKey].nominations.push(nomination);
   }

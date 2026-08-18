@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/no-incorrect-template-string-interpolation -- ファイル全体がOpenAPIのYAMLで、{id}はパスパラメータ表記 */
 import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
 

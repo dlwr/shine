@@ -34,7 +34,8 @@ function describeSummary(summary: SelectionCheckSummary): string {
 
   if (summary.attempts.length > 1) {
     lines.push(`再抽選: ${summary.attempts.length - 1}回`);
-    for (const attempt of summary.attempts.slice(0, -1)) {
+    const earlierAttempts = summary.attempts.slice(0, -1);
+    for (const attempt of earlierAttempts) {
       lines.push(`  ✕ ${attempt.title}`);
     }
   }

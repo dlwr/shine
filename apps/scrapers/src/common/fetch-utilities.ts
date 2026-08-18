@@ -149,5 +149,5 @@ export function buildUrl(
     url.searchParams.append(key, value);
   }
 
-  return url.toString();
+  return url.href;
 }

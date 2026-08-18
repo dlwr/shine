@@ -21,11 +21,12 @@ export function MediaTypeToggle({
   const toggle = useCallback(async () => {
     if (updating) return;
 
-    const newType = movieData.mediaType === 'tv' ? 'movie' : 'tv';
     if (!getAdminToken()) {
       location.assign('/admin/login');
       return;
     }
+
+    const newType = movieData.mediaType === 'tv' ? 'movie' : 'tv';
 
     setUpdating(true);
     setError(undefined);
