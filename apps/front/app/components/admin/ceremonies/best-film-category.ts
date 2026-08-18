@@ -40,7 +40,7 @@ export const findBestFilmCategory = (
   );
 
   let bestMatch: AwardsCategory | undefined;
-  let bestScore = Number.POSITIVE_INFINITY;
+  let bestScore = Infinity;
 
   for (const category of categories) {
     if (category.organizationUid !== organizationUid) {
@@ -52,7 +52,7 @@ export const findBestFilmCategory = (
       return category;
     }
 
-    let score = Number.POSITIVE_INFINITY;
+    let score = Infinity;
     for (const synonym of normalizedSynonyms) {
       if (normalizedName.includes(synonym)) {
         score = Math.min(score, normalizedName.length - synonym.length);

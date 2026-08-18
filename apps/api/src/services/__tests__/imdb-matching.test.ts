@@ -49,7 +49,7 @@ describe('getMatchScore', () => {
   it('returns Infinity for no match', () => {
     const targets = new Set(['best picture']);
     expect(getMatchScore('Best Cinematography', targets)).toBe(
-      Number.POSITIVE_INFINITY,
+      Infinity,
     );
   });
 

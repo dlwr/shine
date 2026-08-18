@@ -86,7 +86,7 @@ export const getMatchScore = (
     return 0;
   }
 
-  let best = Number.POSITIVE_INFINITY;
+  let best = Infinity;
   for (const candidate of targetNames) {
     if (normalized.includes(candidate)) {
       best = Math.min(best, normalized.length - candidate.length);
@@ -112,19 +112,19 @@ export const extractImdbNominations = (
   });
 
   let targetEntry: (typeof categoryEdges)[number] | undefined;
-  let bestScore = Number.POSITIVE_INFINITY;
+  let bestScore = Infinity;
 
   for (const entry of categoryEdges) {
     const categoryName = entry.edge?.node?.category?.text;
     const awardName = entry.award?.text;
 
-    let score = Number.POSITIVE_INFINITY;
+    let score = Infinity;
     if (typeof categoryName === 'string' && categoryName.trim() !== '') {
       score = getMatchScore(categoryName, targetNames);
     }
 
     if (
-      score === Number.POSITIVE_INFINITY &&
+      score === Infinity &&
       typeof awardName === 'string' &&
       awardName.trim() !== ''
     ) {
