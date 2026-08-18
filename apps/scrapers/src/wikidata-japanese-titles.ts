@@ -42,9 +42,7 @@ export function buildSparqlQuery(imdbIds: string[]): string {
 }`;
 }
 
-/**
-Wikidataのラベルは同名作品を区別するため「(映画)」等が付くことがある
-*/
+/** Wikidataのラベルは同名作品を区別するため「(映画)」等が付くことがある */
 export function cleanWikidataLabel(label: string): string {
   return label.replace(/\s*[（(][^（()）]*映画[^（()）]*[）)]\s*$/, '').trim();
 }

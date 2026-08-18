@@ -26,9 +26,7 @@ export type QuizPoolEntry = {
   achievements: string[];
 };
 
-/**
-賞ページ定義のorganizationが英語のままのもの
-*/
+/** 賞ページ定義のorganizationが英語のままのもの */
 const organizationLabelOverrides: Record<string, string> = {
   '1001 Movies You Must See Before You Die': '死ぬまでに観たい映画1001本',
 };
@@ -55,9 +53,7 @@ export function buildQuizHints(entry: QuizPoolEntry): QuizHint[] {
   ];
 }
 
-/**
-ポスターを拡大表示するときに中心へ置く点。日付ごとに変えて絵面を変化させる
-*/
+/** ポスターを拡大表示するときに中心へ置く点。日付ごとに変えて絵面を変化させる */
 export function quizFocalPoint(date: string): {focalX: number; focalY: number} {
   const seed = simpleHash(`quiz-focal-${date}`);
 

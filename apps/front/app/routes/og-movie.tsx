@@ -22,9 +22,7 @@ type MovieDetail = {
 };
 
 const CACHE_CONTROL = 'public, max-age=86400';
-/**
-Satoriへ渡すフォントに最低限含める文字
-*/
+/** Satoriへ渡すフォントに最低限含める文字 */
 const BASE_TEXT =
   'SHINE0123456789毎日1本、埋もれた映画に光を当てる見放題宅配レンタル配信あり ';
 

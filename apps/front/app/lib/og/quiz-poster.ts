@@ -5,9 +5,7 @@
 export const QUIZ_POSTER_WIDTH = 480;
 export const QUIZ_POSTER_HEIGHT = 720;
 
-/**
-手数ぶんの6段階と、決着後に全体を見せる最終段階
-*/
+/** 手数ぶんの6段階と、決着後に全体を見せる最終段階 */
 const ZOOM_STAGES = [6, 4.5, 3.2, 2.4, 1.8, 1.4, 1];
 
 const COLORS = {

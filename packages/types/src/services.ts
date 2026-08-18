@@ -74,18 +74,14 @@ export type AwardMovieEntry = {
   movieYear: number | undefined;
   posterUrl: string | undefined;
   isWinner: boolean;
-  /**
-  ランキング形式の賞で「N位」が入る
-  */
+  /** ランキング形式の賞で「N位」が入る */
   specialMention?: string;
 };
 
 export type AwardYearGroup = {
   year: number;
   ceremonyNumber: number | undefined;
-  /**
-  その回の全出品作数。moviesは年別グルーピングでは受賞作のみを含む
-  */
+  /** その回の全出品作数。moviesは年別グルーピングでは受賞作のみを含む */
   filmCount: number;
   movies: AwardMovieEntry[];
 };
@@ -104,9 +100,7 @@ export type AwardDetail = {
   description: string;
   grouping: 'year' | 'list';
   years: AwardYearGroup[];
-  /**
-  grouping === 'list' のときのみ返る
-  */
+  /** grouping === 'list' のときのみ返る */
   pagination?: AwardPagination;
 };
 
@@ -201,9 +195,7 @@ export type QuizAnswer = {
   title: string;
   year: number | undefined;
   posterUrl: string;
-  /**
-  ポスターの拡大表示で中心に置く点。0〜1の相対座標
-  */
+  /** ポスターの拡大表示で中心に置く点。0〜1の相対座標 */
   focalX: number;
   focalY: number;
 };

@@ -55,6 +55,11 @@ export default tseslint.config(
     },
   },
   {
+    rules: {
+      'unicorn/single-line-block-comment-style': ['error', 'single-line'],
+    },
+  },
+  {
     files: ['**/*.test.ts', '**/*.test.tsx', 'vitest.setup*.ts'],
     rules: {
       'unicorn/no-top-level-assignment-in-function': 'off',
