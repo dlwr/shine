@@ -579,7 +579,7 @@ function findCompetitionSection(
 
   const headings = $('h2, h3, h4');
 
-  for (const heading of headings.toArray()) {
+  for (const heading of headings) {
     const $heading = $(heading);
     const text = $heading.text();
 
@@ -825,7 +825,7 @@ function findWinnerInInfobox(
     return undefined;
   }
 
-  for (const row of infoBox.find('tr').toArray()) {
+  for (const row of infoBox.find('tr')) {
     const $row = $(row);
     const header = $row.find('th').text();
     if (!containsPalmeKeyword(header)) {
@@ -851,7 +851,7 @@ function findWinnerInAwardsSections(
 ): WinnerCandidate | undefined {
   const headings = $('h2, h3, h4');
 
-  for (const heading of headings.toArray()) {
+  for (const heading of headings) {
     const $heading = $(heading);
     const text = $heading.text().toLowerCase();
     if (!text.includes('award') && !text.includes('prize')) {
@@ -902,7 +902,7 @@ function findWinnerInLists(
 ): WinnerCandidate | undefined {
   const listItems = container.find('li');
 
-  for (const item of listItems.toArray()) {
+  for (const item of listItems) {
     const $item = $(item);
     if (!containsPalmeKeyword($item.text())) {
       continue;
@@ -923,11 +923,11 @@ function findWinnerInTables(
 ): WinnerCandidate | undefined {
   const tables = container.find('table');
 
-  for (const table of tables.toArray()) {
+  for (const table of tables) {
     const $table = $(table);
     const rows = $table.find('tr');
 
-    for (const row of rows.toArray()) {
+    for (const row of rows) {
       const $row = $(row);
       if (!containsPalmeKeyword($row.text())) {
         continue;
