@@ -16,7 +16,7 @@ const lastFetchHeaders = () => {
 beforeEach(() => {
   globalThis.localStorage.clear();
   fetchMock.mockReset();
-  globalThis.location.href = 'http://localhost:3000/';
+  globalThis.location.assign('http://localhost:3000/');
 });
 
 describe('getAdminToken', () => {

@@ -37,7 +37,7 @@ export default function TranslationManager({
     }
 
     if (!getAdminToken()) {
-      globalThis.location.href = '/admin/login';
+      globalThis.location.assign('/admin/login');
       return;
     }
 
@@ -101,7 +101,7 @@ export default function TranslationManager({
     }
 
     if (!getAdminToken()) {
-      globalThis.location.href = '/admin/login';
+      globalThis.location.assign('/admin/login');
       return;
     }
 
@@ -159,7 +159,7 @@ export default function TranslationManager({
     }
 
     if (!getAdminToken()) {
-      globalThis.location.href = '/admin/login';
+      globalThis.location.assign('/admin/login');
       return;
     }
 

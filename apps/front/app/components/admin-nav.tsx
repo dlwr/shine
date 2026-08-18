@@ -12,7 +12,7 @@ const navItems = [
 const handleLogout = () => {
   if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
     clearAdminToken();
-    globalThis.location.href = '/admin/login';
+    globalThis.location.assign('/admin/login');
   }
 };
 

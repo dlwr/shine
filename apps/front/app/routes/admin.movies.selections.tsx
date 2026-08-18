@@ -160,7 +160,7 @@ export default function AdminMovieSelections({
 
       const token = getAdminToken();
       if (!token) {
-        globalThis.location.href = '/admin/login';
+        globalThis.location.assign('/admin/login');
         return;
       }
 

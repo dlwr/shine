@@ -116,7 +116,7 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
       }
 
       if (!getAdminToken()) {
-        globalThis.location.href = '/admin/login';
+        globalThis.location.assign('/admin/login');
         return;
       }
 
@@ -508,7 +508,7 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
     }
 
     if (!getAdminToken()) {
-      globalThis.location.href = '/admin/login';
+      globalThis.location.assign('/admin/login');
       return;
     }
 

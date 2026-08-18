@@ -44,7 +44,7 @@ type AwardsData = {
 const ensureToken = () => {
   const token = getAdminToken();
   if (!token) {
-    globalThis.location.href = '/admin/login';
+    globalThis.location.assign('/admin/login');
     return;
   }
   return token;
@@ -140,7 +140,7 @@ export default function NominationManager({
       }
 
       if (!getAdminToken()) {
-        globalThis.location.href = '/admin/login';
+        globalThis.location.assign('/admin/login');
         return;
       }
 
