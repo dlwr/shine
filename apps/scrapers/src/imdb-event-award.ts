@@ -87,6 +87,63 @@ export type ImdbEventImportStats = {
   failed: number;
 };
 
+function collectCategoryFilms(
+  config: ImdbEventAwardConfig,
+  category: ImdbEventCollectedData['editions'][number]['targetAward'][number]['categories'][number],
+  filmsByImdbId: Map<string, AwardFilm>,
+): void {
+  if (!config.isCompetitionCategory(category.category)) {
+    return;
+  }
+
+  for (const nomination of category.nominations) {
+    collectNominationFilms(config, nomination, filmsByImdbId);
+  }
+}
+
+function collectNominationFilms(
+  config: ImdbEventAwardConfig,
+  nomination: ImdbEventNomination,
+  filmsByImdbId: Map<string, AwardFilm>,
+): void {
+  for (const title of nomination.titles) {
+    const existing = filmsByImdbId.get(title.imdbId);
+    if (existing) {
+      existing.isWinner ||= nomination.isWinner;
+      continue;
+    }
+
+    filmsByImdbId.set(title.imdbId, {
+      imdbId: title.imdbId,
+      title: title.title,
+      originalTitle: title.originalTitle,
+      isWinner: nomination.isWinner,
+      specialMention:
+        config.useNotesAsSpecialMention && nomination.notes
+          ? nomination.notes
+          : undefined,
+    });
+  }
+}
+
+function applyWinnerCorrections(
+  config: ImdbEventAwardConfig,
+  year: number,
+  filmsByImdbId: Map<string, AwardFilm>,
+): void {
+  const corrections = config.winnerCorrections ?? [];
+  for (const correction of corrections) {
+    if (correction.year !== year) {
+      continue;
+    }
+
+    const film = filmsByImdbId.get(correction.imdbId);
+    if (film) {
+      film.isWinner = correction.isWinner;
+    }
+  }
+}
+
 export function extractAwardEditions(
   data: ImdbEventCollectedData,
   config: ImdbEventAwardConfig,
@@ -98,44 +155,11 @@ export function extractAwardEditions(
 
     for (const award of edition.targetAward) {
       for (const category of award.categories) {
-        if (!config.isCompetitionCategory(category.category)) {
-          continue;
-        }
-
-        for (const nomination of category.nominations) {
-          for (const title of nomination.titles) {
-            const existing = filmsByImdbId.get(title.imdbId);
-            if (existing) {
-              existing.isWinner ||= nomination.isWinner;
-              continue;
-            }
-
-            filmsByImdbId.set(title.imdbId, {
-              imdbId: title.imdbId,
-              title: title.title,
-              originalTitle: title.originalTitle,
-              isWinner: nomination.isWinner,
-              specialMention:
-                config.useNotesAsSpecialMention && nomination.notes
-                  ? nomination.notes
-                  : undefined,
-            });
-          }
-        }
+        collectCategoryFilms(config, category, filmsByImdbId);
       }
     }
 
-    const corrections = config.winnerCorrections ?? [];
-    for (const correction of corrections) {
-      if (correction.year !== edition.year) {
-        continue;
-      }
-
-      const film = filmsByImdbId.get(correction.imdbId);
-      if (film) {
-        film.isWinner = correction.isWinner;
-      }
-    }
+    applyWinnerCorrections(config, edition.year, filmsByImdbId);
 
     const films = [...filmsByImdbId.values()];
     if (films.length < config.minimumFilmsPerEdition) {

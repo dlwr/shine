@@ -167,28 +167,13 @@ export async function importJapaneseTitlesFromWikidata({
     }
 
     for (const candidate of batch) {
-      const title = titles.get(candidate.imdbId);
-      if (!title) {
-        stats.notFound++;
-        continue;
-      }
-
-      const isReplacement = candidate.existingJa !== undefined;
-      console.log(
-        `  ${candidate.imdbId}: ${isReplacement ? `${candidate.existingJa} -> ` : ''}${title}`,
-      );
-
-      if (isReplacement) {
-        stats.replaced++;
-      } else {
-        stats.saved++;
-      }
-
-      if (dryRun) {
-        continue;
-      }
-
-      await saveJapaneseTitle(database, candidate, title);
+      await applyCandidateTitle({
+        database,
+        candidate,
+        title: titles.get(candidate.imdbId),
+        dryRun,
+        stats,
+      });
     }
 
     console.log(`  Batch ${batchNumber}/${batches} done`);
@@ -206,6 +191,42 @@ export async function importJapaneseTitlesFromWikidata({
   console.log(`  Failed: ${stats.failed}`);
 
   return stats;
+}
+
+async function applyCandidateTitle({
+  database,
+  candidate,
+  title,
+  dryRun,
+  stats,
+}: {
+  database: ReturnType<typeof getDatabase>;
+  candidate: Candidate;
+  title: string | undefined;
+  dryRun: boolean;
+  stats: WikidataImportStats;
+}): Promise<void> {
+  if (!title) {
+    stats.notFound++;
+    return;
+  }
+
+  const isReplacement = candidate.existingJa !== undefined;
+  console.log(
+    `  ${candidate.imdbId}: ${isReplacement ? `${candidate.existingJa} -> ` : ''}${title}`,
+  );
+
+  if (isReplacement) {
+    stats.replaced++;
+  } else {
+    stats.saved++;
+  }
+
+  if (dryRun) {
+    return;
+  }
+
+  await saveJapaneseTitle(database, candidate, title);
 }
 
 async function saveJapaneseTitle(

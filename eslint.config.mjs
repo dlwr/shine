@@ -57,6 +57,7 @@ export default tseslint.config(
   {
     rules: {
       'unicorn/single-line-block-comment-style': ['error', 'single-line'],
+      'unicorn/max-nested-calls': ['error', {max: 4}],
       'unicorn/consistent-boolean-name': [
         'error',
         {prefixes: {matches: true, contains: true, prefers: true}},
@@ -88,11 +89,10 @@ export default tseslint.config(
     // unicorn 73 で増えたルール。1ルールずつ直しては消していく作業中で、
     // 全部消えたらこのブロックごと無くなる。恒久的な除外ではない。
     rules: {
-      'unicorn/max-nested-calls': 'off',
-      'unicorn/no-break-in-nested-loop': 'off',
       'unicorn/name-replacements': 'off',
-      'unicorn/no-top-level-assignment-in-function': 'off',
+      // .catch(() => fallback) の1行がtry/catch数行に膨らみ、catchの範囲も広がる
       'unicorn/prefer-await': 'off',
+      'unicorn/no-top-level-assignment-in-function': 'off',
       // Iterator#toArray は tsconfig の lib が ES2023 なので型が無い
       'unicorn/prefer-iterator-to-array': 'off',
       'unicorn/prefer-number-coercion': 'off',

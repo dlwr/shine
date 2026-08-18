@@ -337,6 +337,51 @@ async function scrapeMainAwardsPageForYear(targetYear: number) {
   );
 }
 
+function findYearBeforeTable(
+  $table: cheerio.Cheerio<AnyNode>,
+  movies: MovieInfo[],
+  processedYears: Set<number>,
+): number | undefined {
+  let $previousElement = $table.prev();
+
+  for (
+    let elementIndex = 0;
+    elementIndex < 10 && $previousElement.length > 0;
+    elementIndex++
+  ) {
+    const previousText = $previousElement.text().trim();
+
+    // 「2024年（第47回）」のようなパターン
+    const yearAndCeremonyMatch = /(\d{4})年.*第(\d+)回/.exec(previousText);
+    if (yearAndCeremonyMatch) {
+      const year = Number.parseInt(yearAndCeremonyMatch[1], 10);
+      // 2024年の場合は特別処理：テキストから映画を抽出
+      if (year === 2024 && !processedYears.has(year)) {
+        movies.push(...extractMoviesFromText(previousText, year));
+        processedYears.add(year);
+      }
+
+      return year;
+    }
+
+    // 第X回のパターンを探す
+    const ceremonyMatch = /第(\d+)回/.exec(previousText);
+    if (ceremonyMatch) {
+      return 1977 + Number.parseInt(ceremonyMatch[1], 10);
+    }
+
+    // 西暦年のパターン
+    const yearMatch = /(\d{4})年/.exec(previousText);
+    if (yearMatch) {
+      return Number.parseInt(yearMatch[1], 10);
+    }
+
+    $previousElement = $previousElement.prev();
+  }
+
+  return undefined;
+}
+
 function extractAllMoviesFromMainPage($: cheerio.CheerioAPI): MovieInfo[] {
   const movies: MovieInfo[] = [];
 
@@ -347,52 +392,7 @@ function extractAllMoviesFromMainPage($: cheerio.CheerioAPI): MovieInfo[] {
   for (const table of tables) {
     const $table = $(table);
 
-    // 表の直前にある要素から具体的な年を探す
-    let specificYear: number | undefined;
-    let $previousElement = $table.prev();
-
-    // 直前の数個の要素を調べて年を探す
-    for (
-      let elementIndex = 0;
-      elementIndex < 10 && $previousElement.length > 0;
-      elementIndex++
-    ) {
-      const previousText = $previousElement.text().trim();
-
-      // 「2024年（第47回）」のようなパターン
-      const yearAndCeremonyMatch = /(\d{4})年.*第(\d+)回/.exec(previousText);
-      if (yearAndCeremonyMatch) {
-        specificYear = Number.parseInt(yearAndCeremonyMatch[1], 10);
-        // 2024年の場合は特別処理：テキストから映画を抽出
-        if (specificYear === 2024 && !processedYears.has(specificYear)) {
-          const moviesFromText = extractMoviesFromText(
-            previousText,
-            specificYear,
-          );
-          movies.push(...moviesFromText);
-          processedYears.add(specificYear); // 処理済みとしてマーク
-        }
-
-        break;
-      }
-
-      // 第X回のパターンを探す
-      const ceremonyMatch = /第(\d+)回/.exec(previousText);
-      if (ceremonyMatch) {
-        const ceremonyNumber = Number.parseInt(ceremonyMatch[1], 10);
-        specificYear = 1977 + ceremonyNumber;
-        break;
-      }
-
-      // 西暦年のパターン
-      const yearMatch = /(\d{4})年/.exec(previousText);
-      if (yearMatch) {
-        specificYear = Number.parseInt(yearMatch[1], 10);
-        break;
-      }
-
-      $previousElement = $previousElement.prev();
-    }
+    const specificYear = findYearBeforeTable($table, movies, processedYears);
 
     // 年が見つからない場合は、このテーブルをスキップ
     if (!specificYear) {

@@ -232,18 +232,25 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
 
 const AWARD_LIST_PAGE_SIZE = 100;
 
+function mergeMoviesByUid(
+  movies: AwardMovieEntry[],
+  byUid: Map<string, AwardMovieEntry>,
+): void {
+  for (const movie of movies) {
+    const existing = byUid.get(movie.uid);
+    if (existing) {
+      existing.isWinner ||= movie.isWinner;
+      continue;
+    }
+
+    byUid.set(movie.uid, movie);
+  }
+}
+
 function flattenListAward(years: AwardYearGroup[]): AwardYearGroup[] {
   const byUid = new Map<string, AwardMovieEntry>();
   for (const group of years) {
-    for (const movie of group.movies) {
-      const existing = byUid.get(movie.uid);
-      if (existing) {
-        existing.isWinner ||= movie.isWinner;
-        continue;
-      }
-
-      byUid.set(movie.uid, movie);
-    }
+    mergeMoviesByUid(group.movies, byUid);
   }
 
   const movies = [...byUid.values()].toSorted(

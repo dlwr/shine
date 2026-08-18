@@ -589,27 +589,9 @@ function findCompetitionSection(
 
     console.log(`Found potential films heading: "${text}"`);
 
-    let nextElement = $heading.parent().next();
-    let attempts = 0;
-
-    while (nextElement.length > 0 && attempts < 15) {
-      const filmTableMatch = locateFilmTable($, nextElement);
-      if (filmTableMatch) {
-        const message =
-          filmTableMatch.source === 'self'
-            ? 'Found films table after heading'
-            : 'Found films table inside element';
-        console.log(message);
-        return filmTableMatch.table;
-      }
-
-      if (nextElement.is('h2, h3, h4')) {
-        console.log('Reached next heading, stopping search');
-        break;
-      }
-
-      nextElement = nextElement.next();
-      attempts++;
+    const table = findTableAfterHeading($, $heading);
+    if (table) {
+      return table;
     }
   }
 
@@ -925,18 +907,9 @@ function findWinnerInTables(
 
   for (const table of tables) {
     const $table = $(table);
-    const rows = $table.find('tr');
-
-    for (const row of rows) {
-      const $row = $(row);
-      if (!containsPalmeKeyword($row.text())) {
-        continue;
-      }
-
-      const candidate = extractWinnerFromAwardRow($, $row);
-      if (candidate) {
-        return candidate;
-      }
+    const candidate = findPalmeWinnerInTable($, $table);
+    if (candidate) {
+      return candidate;
     }
   }
 
@@ -954,6 +927,55 @@ function extractWinnerFromAwardRow(
 
   const titleCell = cells.length > 1 ? cells.eq(1) : cells.first();
   return extractWinnerFromElement($, titleCell);
+}
+
+function findTableAfterHeading(
+  $: cheerio.CheerioAPI,
+  $heading: cheerio.Cheerio<Element>,
+): cheerio.Cheerio<Element> | undefined {
+  let nextElement = $heading.parent().next();
+  let attempts = 0;
+
+  while (nextElement.length > 0 && attempts < 15) {
+    const filmTableMatch = locateFilmTable($, nextElement);
+    if (filmTableMatch) {
+      const message =
+        filmTableMatch.source === 'self'
+          ? 'Found films table after heading'
+          : 'Found films table inside element';
+      console.log(message);
+      return filmTableMatch.table;
+    }
+
+    if (nextElement.is('h2, h3, h4')) {
+      console.log('Reached next heading, stopping search');
+      return undefined;
+    }
+
+    nextElement = nextElement.next();
+    attempts++;
+  }
+
+  return undefined;
+}
+
+function findPalmeWinnerInTable(
+  $: cheerio.CheerioAPI,
+  $table: cheerio.Cheerio<Element>,
+): WinnerCandidate | undefined {
+  for (const row of $table.find('tr')) {
+    const $row = $(row);
+    if (!containsPalmeKeyword($row.text())) {
+      continue;
+    }
+
+    const candidate = extractWinnerFromAwardRow($, $row);
+    if (candidate) {
+      return candidate;
+    }
+  }
+
+  return undefined;
 }
 
 function findPalmeDOrWinner(
