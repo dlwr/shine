@@ -38,6 +38,22 @@ export default tseslint.config(
     },
   },
   {
+    files: ['**/__tests__/**'],
+    rules: {
+      'unicorn/filename-case': 'off',
+    },
+  },
+  {
+    files: [
+      'apps/api/src/index.ts',
+      'apps/api/src/routes/**',
+      'drizzle.config.ts',
+    ],
+    rules: {
+      'unicorn/no-top-level-side-effects': 'off',
+    },
+  },
+  {
     files: ['**/*.tsx'],
     plugins: {'react-hooks': reactHooks},
     rules: {
