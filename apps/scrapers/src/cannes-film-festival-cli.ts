@@ -15,7 +15,11 @@ const environment = buildEnvironment(process.env);
 function parseYear(value: string): number {
   const year = Number(value);
 
-  if (!Number.isSafeInteger(year) || year < 1946 || year > new Date().getFullYear()) {
+  if (
+    !Number.isSafeInteger(year) ||
+    year < 1946 ||
+    year > new Date().getFullYear()
+  ) {
     throw new InvalidArgumentError(
       '無効な年です。1946年以降の年を指定してください。',
     );

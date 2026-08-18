@@ -90,9 +90,11 @@ export default tseslint.config(
     // 全部消えたらこのブロックごと無くなる。恒久的な除外ではない。
     rules: {
       'unicorn/name-replacements': 'off',
+      // スクレイパー4本のモジュールレベル可変状態。設計として直す価値はあるが
+      // テストが薄いので取り込みロジックごと別途整理する
+      'unicorn/no-top-level-assignment-in-function': 'off',
       // .catch(() => fallback) の1行がtry/catch数行に膨らみ、catchの範囲も広がる
       'unicorn/prefer-await': 'off',
-      'unicorn/no-top-level-assignment-in-function': 'off',
       // Iterator#toArray は tsconfig の lib が ES2023 なので型が無い
       'unicorn/prefer-iterator-to-array': 'off',
     },
