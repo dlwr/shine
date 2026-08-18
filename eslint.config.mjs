@@ -89,7 +89,6 @@ export default tseslint.config(
     // unicorn 73 で増えたルール。1ルールずつ直しては消していく作業中で、
     // 全部消えたらこのブロックごと無くなる。恒久的な除外ではない。
     rules: {
-      'unicorn/name-replacements': 'off',
       // スクレイパー4本のモジュールレベル可変状態。設計として直す価値はあるが
       // テストが薄いので取り込みロジックごと別途整理する
       'unicorn/no-top-level-assignment-in-function': 'off',

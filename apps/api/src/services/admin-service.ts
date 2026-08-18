@@ -20,7 +20,7 @@ import {
   ConflictError,
   ExternalFetchError,
   NotFoundError,
-  TmdbConfigurationError,
+  TmdbConfigError,
   TmdbDataNotFoundError,
   UnprocessableContentError,
   ValidationError,
@@ -582,7 +582,7 @@ export class AdminService extends BaseService {
     const tmdbApiKey = this.env.TMDB_API_KEY;
 
     if (!tmdbApiKey) {
-      throw new TmdbConfigurationError();
+      throw new TmdbConfigError();
     }
 
     const [movie] = await this.database
@@ -1187,7 +1187,7 @@ export class AdminService extends BaseService {
           error instanceof Error ? error.message : error,
         );
         if (
-          error instanceof TmdbConfigurationError ||
+          error instanceof TmdbConfigError ||
           error instanceof TmdbDataNotFoundError
         ) {
           const fallback = await this.createMovieFromImdbId(nomination.imdbId, {
@@ -1288,7 +1288,7 @@ export class AdminService extends BaseService {
   > {
     const apiKey = this.env.TMDB_API_KEY;
     if (!apiKey) {
-      throw new TmdbConfigurationError();
+      throw new TmdbConfigError();
     }
 
     const {findTMDBByImdbId} =

@@ -556,7 +556,7 @@ describe('importImdbEventAward', () => {
           });
         }
 
-        if (url.includes('/configuration')) {
+        if (url.includes('/config')) {
           return Response.json({
             images: {
               secure_base_url: 'https://image.tmdb.org/t/p/',
@@ -655,7 +655,7 @@ describe('importImdbEventAward', () => {
           });
         }
 
-        if (url.includes('/configuration')) {
+        if (url.includes('/config')) {
           return Response.json({
             images: {secure_base_url: 'https://x/', poster_sizes: ['w500']},
           });

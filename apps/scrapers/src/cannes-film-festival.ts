@@ -11,10 +11,10 @@ import {posterUrls} from '@shine/database/schema/poster-urls';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import {
-  fetchTMDBConfiguration,
+  fetchTMDBConfig,
   fetchTMDBMovieDetails,
   searchTMDBMovie,
-  type TMDBConfiguration,
+  type TMDBConfig,
 } from './common/tmdb-utilities';
 import {FetchHttpError, fetchWithRetry} from './common/fetch-utilities';
 
@@ -1315,11 +1315,11 @@ async function collectPosterUrls(
     return [];
   }
 
-  let config: TMDBConfiguration;
+  let config: TMDBConfig;
   try {
-    config = await fetchTMDBConfiguration(TMDB_API_KEY);
+    config = await fetchTMDBConfig(TMDB_API_KEY);
   } catch (error) {
-    console.error('Error fetching TMDb configuration:', error);
+    console.error('Error fetching TMDb config:', error);
     return [];
   }
 

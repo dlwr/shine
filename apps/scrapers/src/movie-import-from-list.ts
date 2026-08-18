@@ -10,10 +10,7 @@ import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {generateUUID} from '@shine/utils';
 import {fetchJsonWithRetry} from './common/fetch-utilities';
-import {
-  fetchTMDBConfiguration,
-  type TMDBConfiguration,
-} from './common/tmdb-utilities';
+import {fetchTMDBConfig, type TMDBConfig} from './common/tmdb-utilities';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -44,7 +41,7 @@ type TMDBSearchResponse = {
 
 let environment_: Environment;
 let TMDB_API_KEY: string;
-let tmdbConfiguration: TMDBConfiguration | undefined;
+let tmdbConfig: TMDBConfig | undefined;
 let isDryRun = false;
 
 /**
@@ -67,8 +64,8 @@ export async function importMoviesFromList(
   }
 
   // TMDB設定を取得
-  tmdbConfiguration = await fetchTMDBConfiguration(TMDB_API_KEY);
-  console.log('TMDB configuration loaded');
+  tmdbConfig = await fetchTMDBConfig(TMDB_API_KEY);
+  console.log('TMDB config loaded');
 
   // JSONファイルを読み込み
   const fileContent = readFileSync(filePath, 'utf8');
@@ -478,8 +475,8 @@ async function createNewMovieForBatch(tmdbMovie: TMDBMovieData): Promise<{
 
   // ポスターURL
   let posterUrlData: typeof posterUrls.$inferInsert | undefined;
-  if (tmdbConfiguration && tmdbMovie.poster_path) {
-    const posterUrl = `${tmdbConfiguration.images.secure_base_url}w500${tmdbMovie.poster_path}`;
+  if (tmdbConfig && tmdbMovie.poster_path) {
+    const posterUrl = `${tmdbConfig.images.secure_base_url}w500${tmdbMovie.poster_path}`;
     posterUrlData = {
       movieUid,
       url: posterUrl,
@@ -531,7 +528,7 @@ async function updateExistingMovie(
   }
 
   // ポスターURLを追加（まだない場合）
-  if (tmdbConfiguration && tmdbMovie.poster_path) {
+  if (tmdbConfig && tmdbMovie.poster_path) {
     const [existingPoster] = await database
       .select()
       .from(posterUrls)
@@ -539,7 +536,7 @@ async function updateExistingMovie(
       .limit(1);
 
     if (!existingPoster) {
-      const posterUrl = `${tmdbConfiguration.images.secure_base_url}w500${tmdbMovie.poster_path}`;
+      const posterUrl = `${tmdbConfig.images.secure_base_url}w500${tmdbMovie.poster_path}`;
       await database.insert(posterUrls).values({
         movieUid,
         url: posterUrl,

@@ -72,7 +72,7 @@ export type TMDBSearchResponse = {
   }>;
 };
 
-export type TMDBConfiguration = {
+export type TMDBConfig = {
   images: {
     secure_base_url: string;
     poster_sizes: string[];
@@ -97,25 +97,21 @@ export type TMDBTranslationsResponse = {
   }>;
 };
 
-let cachedConfiguration: TMDBConfiguration | undefined;
+let cachedConfig: TMDBConfig | undefined;
 
 /**
  * TMDb APIの画像設定を取得(プロセス内でキャッシュ)
  */
-export async function fetchTMDBConfiguration(
-  tmdbApiKey: string,
-): Promise<TMDBConfiguration> {
-  if (cachedConfiguration) {
-    return cachedConfiguration;
+export async function fetchTMDBConfig(tmdbApiKey: string): Promise<TMDBConfig> {
+  if (cachedConfig) {
+    return cachedConfig;
   }
 
-  const configUrl = new URL(`${TMDB_API_BASE_URL}/configuration`);
+  const configUrl = new URL(`${TMDB_API_BASE_URL}/config`);
   configUrl.searchParams.append('api_key', tmdbApiKey);
 
-  cachedConfiguration = await fetchJsonWithRetry<TMDBConfiguration>(
-    configUrl.href,
-  );
-  return cachedConfiguration;
+  cachedConfig = await fetchJsonWithRetry<TMDBConfig>(configUrl.href);
+  return cachedConfig;
 }
 
 /**

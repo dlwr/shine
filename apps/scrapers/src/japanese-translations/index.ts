@@ -5,7 +5,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {
   getMoviesWithoutJapaneseTranslation,
   saveJapaneseTranslationsBatch,
-} from './repository';
+} from './repo';
 import {fetchJapaneseTitleFromTMDB} from './scrapers/tmdb-scraper';
 
 // 処理するバッチサイズ
