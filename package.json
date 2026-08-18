@@ -58,36 +58,41 @@
     "scrapers:sns-post": "pnpm --filter @shine/scrapers run sns-post"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260731.1",
+    "@cloudflare/workers-types": "^5.20260818.1",
     "@eslint/js": "^10.0.1",
     "@redocly/cli": "^2.46.1",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "@vitest/coverage-v8": "4.1.10",
-    "concurrently": "^9.2.1",
-    "drizzle-kit": "^0.31.9",
-    "esbuild": "^0.28.1",
+    "concurrently": "^10.0.5",
+    "drizzle-kit": "^0.31.10",
+    "esbuild": "^0.28.2",
     "eslint": "^10.8.1",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-import-x": "^4.16.1",
-    "eslint-plugin-n": "^18.2.2",
+    "eslint-plugin-import-x": "^4.17.1",
+    "eslint-plugin-n": "^18.3.0",
     "eslint-plugin-promise": "^7.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-unicorn": "^63.0.0",
-    "globals": "^17.4.0",
+    "globals": "^17.11.0",
     "jsdom": "^30.0.1",
-    "msw": "^2.12.10",
+    "msw": "^2.15.0",
     "prettier": "^3.9.6",
-    "tsx": "^4.21.0",
+    "tsx": "^4.23.12",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.67.0",
     "vitest": "4.1.10",
-    "wrangler": "4.118.0"
+    "wrangler": "4.123.0"
   },
   "dependencies": {
-    "@libsql/client": "^0.17.0",
+    "@libsql/client": "^0.17.4",
     "dotenv": "^17.4.2",
-    "drizzle-orm": "^0.45.1",
+    "drizzle-orm": "^0.45.2",
     "zod": "^4.4.3"
   },
-  "packageManager": "pnpm@10.26.2"
+  "packageManager": "pnpm@10.26.2",
+  "pnpm": {
+    "overrides": {
+      "@cloudflare/workers-types": "5.20260731.1"
+    }
+  }
 }
