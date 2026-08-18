@@ -32,6 +32,7 @@
     "scrapers:assign-imdb-ids": "pnpm --filter @shine/scrapers run assign-imdb-ids",
     "scrapers:backfill-posters": "pnpm --filter @shine/scrapers run backfill-posters",
     "scrapers:delete-orphan-movies": "pnpm --filter @shine/scrapers run delete-orphan-movies",
+    "scrapers:fix-misattributed-nominations": "pnpm --filter @shine/scrapers run fix-misattributed-nominations",
     "scripts:soft-delete-orphan-movies": "tsx scripts/soft-delete-orphan-movies.ts",
     "db:studio": "node scripts/setup-database-environment.cjs drizzle-kit studio",
     "db:generate": "node scripts/setup-database-environment.cjs drizzle-kit generate",
