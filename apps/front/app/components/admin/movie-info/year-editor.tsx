@@ -20,9 +20,7 @@ export function YearEditor({
   const [yearError, setYearError] = useState<string | undefined>();
 
   const updateYear = async () => {
-    const yearNumber = newYear.trim()
-      ? Number.parseInt(newYear.trim(), 10)
-      : undefined;
+    const yearNumber = newYear.trim() ? Number(newYear.trim()) : undefined;
 
     if (
       newYear.trim() &&

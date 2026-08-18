@@ -34,7 +34,7 @@ async function main(): Promise<void> {
 
   const filePath = arguments_[0];
   const awardName = arguments_[1];
-  const limit = arguments_[2] ? Number.parseInt(arguments_[2], 10) : undefined;
+  const limit = arguments_[2] ? Number(arguments_[2]) : undefined;
 
   // 環境変数から設定を取得
   const tursoUrl = process.env.TURSO_DATABASE_URL;

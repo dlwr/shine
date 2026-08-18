@@ -31,7 +31,7 @@ export function TmdbIdEditor({
     const trimmedTmdbId = newTmdbId.trim();
     let tmdbIdNumber: number | undefined;
     if (trimmedTmdbId !== '') {
-      tmdbIdNumber = Number.parseInt(trimmedTmdbId, 10);
+      tmdbIdNumber = Number(trimmedTmdbId);
     }
 
     if (

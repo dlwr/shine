@@ -210,10 +210,7 @@ export class AdminService extends BaseService {
 
     let releaseYear: number | undefined;
     if (tmdbMovieData?.release_date) {
-      const parsedYear = Number.parseInt(
-        tmdbMovieData.release_date.slice(0, 4),
-        10,
-      );
+      const parsedYear = Number(tmdbMovieData.release_date.slice(0, 4));
       if (!Number.isNaN(parsedYear)) {
         releaseYear = parsedYear;
       }
@@ -720,7 +717,7 @@ export class AdminService extends BaseService {
         }
 
         const releaseYear = item.release_date
-          ? Number.parseInt(item.release_date.slice(0, 4), 10)
+          ? Number(item.release_date.slice(0, 4))
           : undefined;
 
         const yearDifference =

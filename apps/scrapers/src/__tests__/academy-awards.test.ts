@@ -155,18 +155,19 @@ describe('Academy Awards Scraper', () => {
       ];
 
       for (const {input, expected} of testCases) {
-        const year = Number.parseInt(input.split('/', 1)[0], 10);
+        const year = Number(input.split('/', 1)[0]);
         expect(year).toBe(expected);
       }
     });
 
     it('should handle invalid year formats', () => {
-      const testCases = ['invalid', '', 'abc'];
-
-      for (const input of testCases) {
-        const year = Number.parseInt(input, 10);
-        expect(Number.isNaN(year)).toBe(true);
+      for (const input of ['invalid', 'abc']) {
+        expect(Number.isNaN(Number(input))).toBe(true);
       }
+    });
+
+    it('treats an empty string as zero, not NaN', () => {
+      expect(Number('')).toBe(0);
     });
   });
 

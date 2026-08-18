@@ -140,7 +140,7 @@ export function CeremonyForm({
         organizationUid: formState.organizationUid,
         year: formState.year,
         ceremonyNumber: formState.ceremonyNumber
-          ? Number.parseInt(formState.ceremonyNumber, 10)
+          ? Number(formState.ceremonyNumber)
           : undefined,
         startDate: formState.startDate || undefined,
         endDate: formState.endDate || undefined,

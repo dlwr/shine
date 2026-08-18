@@ -76,7 +76,7 @@ export default {
       }
 
       if (yearParameter) {
-        const targetYear = Number.parseInt(yearParameter, 10);
+        const targetYear = Number(yearParameter);
         await scrapeJapanAcademyAwardsYear(targetYear);
       } else {
         await scrapeJapanAcademyAwards();
@@ -354,7 +354,7 @@ function findYearBeforeTable(
     // 「2024年（第47回）」のようなパターン
     const yearAndCeremonyMatch = /(\d{4})年.*第(\d+)回/.exec(previousText);
     if (yearAndCeremonyMatch) {
-      const year = Number.parseInt(yearAndCeremonyMatch[1], 10);
+      const year = Number(yearAndCeremonyMatch[1]);
       // 2024年の場合は特別処理：テキストから映画を抽出
       if (year === 2024 && !processedYears.has(year)) {
         movies.push(...extractMoviesFromText(previousText, year));
@@ -367,13 +367,13 @@ function findYearBeforeTable(
     // 第X回のパターンを探す
     const ceremonyMatch = /第(\d+)回/.exec(previousText);
     if (ceremonyMatch) {
-      return 1977 + Number.parseInt(ceremonyMatch[1], 10);
+      return 1977 + Number(ceremonyMatch[1]);
     }
 
     // 西暦年のパターン
     const yearMatch = /(\d{4})年/.exec(previousText);
     if (yearMatch) {
-      return Number.parseInt(yearMatch[1], 10);
+      return Number(yearMatch[1]);
     }
 
     $previousElement = $previousElement.prev();

@@ -131,7 +131,7 @@ export function parseKinemaJunpoWikitext(
   const editions: KinemaJunpoEdition[] = [];
 
   for (let index = 1; index < parts.length; index += 3) {
-    const year = Number.parseInt(parts[index + 1], 10);
+    const year = Number(parts[index + 1]);
     const body = parts[index + 2].split(
       new RegExp(HIGHER_HEADING.source, 'm'),
     )[0];
@@ -431,10 +431,12 @@ export function selectTmdbMatch(
       return false;
     }
 
-    const releaseYear = Number.parseInt(
-      result.release_date?.slice(0, 4) ?? '',
-      10,
-    );
+    const releaseDate = result.release_date?.slice(0, 4);
+    if (!releaseDate) {
+      return false;
+    }
+
+    const releaseYear = Number(releaseDate);
     if (!Number.isFinite(releaseYear)) {
       return false;
     }

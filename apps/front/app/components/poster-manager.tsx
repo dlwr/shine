@@ -49,12 +49,8 @@ export default function PosterManager({
           },
           body: JSON.stringify({
             url: newPoster.url.trim(),
-            width: newPoster.width
-              ? Number.parseInt(newPoster.width, 10)
-              : undefined,
-            height: newPoster.height
-              ? Number.parseInt(newPoster.height, 10)
-              : undefined,
+            width: newPoster.width ? Number(newPoster.width) : undefined,
+            height: newPoster.height ? Number(newPoster.height) : undefined,
             languageCode: newPoster.languageCode.trim() || undefined,
             source: newPoster.source.trim() || undefined,
             isPrimary: newPoster.isPrimary,

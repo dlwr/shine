@@ -473,7 +473,7 @@ async function createMovie(
   }
 
   const releaseYear = details?.release_date
-    ? Number.parseInt(details.release_date.slice(0, 4), 10)
+    ? Number(details.release_date.slice(0, 4))
     : NaN;
 
   const [movie] = await database

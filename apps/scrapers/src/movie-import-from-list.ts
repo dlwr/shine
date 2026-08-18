@@ -436,7 +436,7 @@ async function createNewMovieForBatch(tmdbMovie: TMDBMovieData): Promise<{
 
   // 公開年を抽出
   const releaseYear = tmdbMovie.release_date
-    ? Number.parseInt(tmdbMovie.release_date.split('-', 1)[0], 10)
+    ? Number(tmdbMovie.release_date.split('-', 1)[0])
     : undefined;
 
   // 映画を作成（これは即座に実行する必要がある）

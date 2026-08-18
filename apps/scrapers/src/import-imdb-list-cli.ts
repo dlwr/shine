@@ -20,13 +20,11 @@ program
   .name('import-imdb-list')
   .description('Import movies from an IMDb-based CSV file.')
   .argument('<csv-file>', 'Path to the CSV file exported from IMDb')
-  .option('-l, --limit <number>', 'Limit number of movies to process', value =>
-    Number.parseInt(value, 10),
-  )
+  .option('-l, --limit <number>', 'Limit number of movies to process', Number)
   .option(
     '-t, --throttle <number>',
     'Throttle between TMDb requests in milliseconds',
-    value => Number.parseInt(value, 10),
+    Number,
   )
   .option('--dry-run', 'Run without writing to the database', false)
   .option(

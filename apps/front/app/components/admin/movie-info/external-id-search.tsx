@@ -135,7 +135,7 @@ export function ExternalIdSearch({
     parameters.set('limit', '5');
 
     if (idSearchYear.trim()) {
-      const parsedYear = Number.parseInt(idSearchYear.trim(), 10);
+      const parsedYear = Number(idSearchYear.trim());
       if (Number.isNaN(parsedYear)) {
         setIdSearchError('年は数値で入力してください');
         return;
