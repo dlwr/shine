@@ -614,7 +614,7 @@ describe('importImdbEventAward', () => {
       .select()
       .from(referenceUrls)
       .where(eq(referenceUrls.movieUid, rashomon.uid));
-    expect(referenceRows.map(row => row.sourceType).toSorted()).toEqual([
+    expect(referenceRows.map(row => row.sourceType).toSorted((a, b) => a.localeCompare(b))).toEqual([
       'imdb',
       'other',
     ]);

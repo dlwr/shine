@@ -111,7 +111,7 @@ describe('GET /movies/search hasAwards filter', () => {
   it('hasAwards=false でノミネートのない映画だけを返す', async () => {
     const body = await search(environment, '?hasAwards=false');
 
-    expect(body.movies.map(movie => movie.uid).toSorted()).toEqual([
+    expect(body.movies.map(movie => movie.uid).toSorted((a, b) => a.localeCompare(b))).toEqual([
       'movie-plain-1',
       'movie-plain-2',
     ]);
@@ -126,7 +126,7 @@ describe('GET /movies/search hasAwards filter', () => {
   it('hasAwards=true でノミネートのある映画だけを返す', async () => {
     const body = await search(environment, '?hasAwards=true');
 
-    expect(body.movies.map(movie => movie.uid).toSorted()).toEqual([
+    expect(body.movies.map(movie => movie.uid).toSorted((a, b) => a.localeCompare(b))).toEqual([
       'movie-awarded-1',
       'movie-awarded-2',
     ]);
@@ -141,7 +141,7 @@ describe('GET /movies/search hasAwards filter', () => {
   it('hasAwards 未指定なら削除済み以外の全映画を返す', async () => {
     const body = await search(environment, '');
 
-    expect(body.movies.map(movie => movie.uid).toSorted()).toEqual([
+    expect(body.movies.map(movie => movie.uid).toSorted((a, b) => a.localeCompare(b))).toEqual([
       'movie-awarded-1',
       'movie-awarded-2',
       'movie-plain-1',
