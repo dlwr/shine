@@ -3,15 +3,9 @@ import {render, screen, waitFor} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Home, {loader, meta} from './home';
 import type {Route} from './+types/home';
+import {createMockContext} from '@/lib/test-context';
 
 // Cloudflare環境のモック
-const createMockContext = (apiUrl = 'http://localhost:8787') => ({
-  cloudflare: {
-    env: {
-      PUBLIC_API_URL: apiUrl,
-    },
-  },
-});
 
 // APIレスポンスのモック
 const mockMovies = {
@@ -120,9 +114,9 @@ const createMatches = (
       id: 'routes/home',
       params: {},
       pathname: '/',
-      data: loaderData as NonNullable<
+      loaderData: loaderData as NonNullable<
         ComponentProperties['matches'][number]
-      >['data'],
+      >['loaderData'],
       handle: undefined,
     },
   ]);
@@ -131,7 +125,7 @@ const createActionData = (): ComponentProperties['actionData'] =>
   cast<ComponentProperties['actionData']>();
 
 const createMetaArguments = (locale: 'ja' | 'en'): Route.MetaArgs =>
-  cast<Route.MetaArgs>({data: {locale}});
+  cast<Route.MetaArgs>({loaderData: {locale}});
 
 describe('Home Component', () => {
   beforeEach(() => {
@@ -424,7 +418,7 @@ describe('Home Component', () => {
     });
 
     it('クライアント再取得に失敗してもダミー映画を表示しない', async () => {
-      const mockFetch = vi.mocked(globalThis.fetch);
+      const mockFetch = vi.mocked(fetch);
       mockFetch.mockRejectedValue(new Error('Network error'));
 
       const loaderData = cast<ComponentProperties['loaderData']>(

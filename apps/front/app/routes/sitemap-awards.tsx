@@ -1,4 +1,5 @@
 import type {Route} from './+types/sitemap-awards';
+import {type LoadContext} from '@/lib/api';
 import {buildUrlSet, type SitemapEntry} from '@/lib/sitemap';
 import {resolveApiUrl, sitemapResponse} from '@/lib/sitemap-source';
 
@@ -13,7 +14,7 @@ type AwardDetailShape = {
 };
 
 async function fetchAwards(
-  context: unknown,
+  context: LoadContext,
   signal?: AbortSignal,
 ): Promise<AwardListing[]> {
   try {
@@ -30,7 +31,7 @@ async function fetchAwards(
 }
 
 async function fetchAwardDetail(
-  context: unknown,
+  context: LoadContext,
   slug: string,
   signal?: AbortSignal,
 ): Promise<AwardDetailShape> {

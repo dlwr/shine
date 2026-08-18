@@ -3,16 +3,9 @@ import {render, screen, within} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import CrossingsPage, {loader, meta} from './crossings';
 import type {Route} from './+types/crossings';
+import {createMockContext} from '@/lib/test-context';
 
 globalThis.fetch = vi.fn();
-
-const createMockContext = (apiUrl = 'http://localhost:8787') => ({
-  cloudflare: {
-    env: {
-      PUBLIC_API_URL: apiUrl,
-    },
-  },
-});
 
 const mockCrossings = {
   awards: [
@@ -149,7 +142,7 @@ describe('Crossings page', () => {
     it('タイトルを返す', () => {
       const descriptors = meta(
         cast<Route.MetaArgs>({
-          data: loaderData(),
+          loaderData: loaderData(),
           params: {},
           location: {pathname: '/crossings', search: '', hash: ''},
           matches: [],

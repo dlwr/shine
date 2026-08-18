@@ -5,6 +5,7 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {awardHeading} from './awards';
+import {resolveApiUrl} from '@/lib/api';
 
 export type AwardMovieEntryData = {
   uid: string;
@@ -91,8 +92,11 @@ function awardPath(award: AwardDetailData): string {
     : `/awards/${award.slug}`;
 }
 
-export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
-  const {award, locale} = data as {award: AwardDetailData; locale?: Locale};
+export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
+  const {award, locale} = loaderData as {
+    award: AwardDetailData;
+    locale?: Locale;
+  };
   const heading = awardHeading(award);
   const {first, last} = yearRange(award);
   const page = award.pagination?.page ?? 1;
@@ -118,9 +122,7 @@ export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
 
 export async function loader({context, request, params}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
-  const apiUrl =
-    (context.cloudflare as {env?: {PUBLIC_API_URL?: string}}).env
-      ?.PUBLIC_API_URL || 'http://localhost:8787';
+  const apiUrl = resolveApiUrl(context);
 
   const page = new URL(request.url).searchParams.get('page') ?? '1';
   const response = await fetch(

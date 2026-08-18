@@ -1,6 +1,6 @@
 import {ImageResponse} from 'workers-og';
 import type {Route} from './+types/og-quiz';
-import {resolveApiUrl, resolveQuizKey} from '@/lib/api';
+import {resolveApiUrl, resolveQuizKey, type LoadContext} from '@/lib/api';
 import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
 import {OG_HEIGHT, OG_WIDTH, buildQuizCardHtml} from '@/lib/og/template';
 import {upgradePosterForSharing} from '@/lib/meta';
@@ -16,7 +16,7 @@ type QuizAnswer = {
 type PosterCrop = {posterDataUri?: string; focalX?: number; focalY?: number};
 
 async function fetchTodaysPoster(
-  context: unknown,
+  context: LoadContext,
   signal: AbortSignal,
 ): Promise<PosterCrop> {
   const quizKey = resolveQuizKey(context);

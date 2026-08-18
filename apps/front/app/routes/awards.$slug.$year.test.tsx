@@ -3,16 +3,9 @@ import {render, screen} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import AwardYearPage, {loader, meta} from './awards.$slug.$year';
 import type {Route} from './+types/awards.$slug.$year';
+import {createMockContext} from '@/lib/test-context';
 
 globalThis.fetch = vi.fn();
-
-const createMockContext = (apiUrl = 'http://localhost:8787') => ({
-  cloudflare: {
-    env: {
-      PUBLIC_API_URL: apiUrl,
-    },
-  },
-});
 
 const mockAwardYear = {
   slug: 'palme-dor',
@@ -140,7 +133,9 @@ describe('Award year page', () => {
   describe('meta', () => {
     it('回数付きのタイトルと受賞作入りのdescriptionを組み立てる', () => {
       const result = meta(
-        cast<Route.MetaArgs>({data: {award: mockAwardYear, locale: 'ja'}}),
+        cast<Route.MetaArgs>({
+          loaderData: {award: mockAwardYear, locale: 'ja'},
+        }),
       );
 
       const title = result.find(

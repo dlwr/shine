@@ -4,6 +4,7 @@ import {MemoryRouter} from 'react-router';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import AdminMovies, {loader, meta} from './admin.movies';
 import type {Route} from './+types/admin.movies';
+import {createMockContext} from '@/lib/test-context';
 
 // UseSearchParamsのモック
 const mockSearchParameters = new URLSearchParams();
@@ -37,13 +38,6 @@ Object.defineProperty(globalThis, 'localStorage', {
 globalThis.fetch = vi.fn();
 
 // Cloudflare環境のモック
-const createMockContext = (apiUrl = 'http://localhost:8787') => ({
-  cloudflare: {
-    env: {
-      PUBLIC_API_URL: apiUrl,
-    },
-  },
-});
 
 // 映画リストのモックデータ
 const cast = <T,>(value: unknown): T => value as T;

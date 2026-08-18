@@ -3,12 +3,14 @@ import {render, screen} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import type {Route} from '../../.react-router/types/app/routes/+types/admin.movies.$id';
 import AdminMovieEdit, {loader, meta} from './admin.movies.$id';
+import {createMockContext} from '@/lib/test-context';
 
 type AdminMovieEditLoaderArguments = Route.LoaderArgs;
 type AdminMovieEditComponentProperties = Route.ComponentProps;
 
 // react-router モック
-vi.mock('react-router', () => ({
+vi.mock('react-router', async importOriginal => ({
+  ...(await importOriginal<typeof import('react-router')>()),
   useLocation: () => ({
     pathname: '/admin/movies/movie-123',
     search: '',
@@ -35,13 +37,6 @@ Object.defineProperty(globalThis, 'localStorage', {
 globalThis.fetch = vi.fn();
 
 // Cloudflare環境のモック
-const createMockContext = (apiUrl = 'http://localhost:8787') => ({
-  cloudflare: {
-    env: {
-      PUBLIC_API_URL: apiUrl,
-    },
-  },
-});
 
 // 映画詳細のモックデータ
 const mockMovieDetails = {
@@ -167,11 +162,6 @@ describe('AdminMovieEdit Route', () => {
               id: 'root',
               params: {},
               pathname: '/',
-              data: {
-                locale: 'ja' as const,
-                canonicalUrl: 'https://shine-film.com/',
-                webAnalyticsToken: undefined,
-              },
               loaderData: {
                 locale: 'ja' as const,
                 canonicalUrl: 'https://shine-film.com/',
@@ -183,7 +173,6 @@ describe('AdminMovieEdit Route', () => {
               id: 'routes/admin.movies.$id',
               params: {id: 'movie-123'},
               pathname: '/admin/movies/movie-123',
-              data: {} as AdminMovieEditComponentProperties['loaderData'],
               loaderData: {} as AdminMovieEditComponentProperties['loaderData'],
               handle: undefined,
             },
@@ -218,11 +207,6 @@ describe('AdminMovieEdit Route', () => {
                 id: 'root',
                 params: {},
                 pathname: '/admin/movies/movie-123',
-                data: {
-                  locale: 'ja' as const,
-                  canonicalUrl: 'https://shine-film.com/',
-                  webAnalyticsToken: undefined,
-                },
                 loaderData: {
                   locale: 'ja' as const,
                   canonicalUrl: 'https://shine-film.com/',
@@ -234,10 +218,6 @@ describe('AdminMovieEdit Route', () => {
                 id: 'routes/admin.movies.$id',
                 params: {id: 'movie-123'},
                 pathname: '/admin/movies/movie-123',
-                data: {
-                  apiUrl: 'http://localhost:8787',
-                  movieId: 'movie-123',
-                },
                 loaderData: {
                   apiUrl: 'http://localhost:8787',
                   movieId: 'movie-123',
@@ -277,11 +257,6 @@ describe('AdminMovieEdit Route', () => {
                 id: 'root',
                 params: {},
                 pathname: '/admin/movies/movie-123',
-                data: {
-                  locale: 'ja' as const,
-                  canonicalUrl: 'https://shine-film.com/',
-                  webAnalyticsToken: undefined,
-                },
                 loaderData: {
                   locale: 'ja' as const,
                   canonicalUrl: 'https://shine-film.com/',
@@ -293,10 +268,6 @@ describe('AdminMovieEdit Route', () => {
                 id: 'routes/admin.movies.$id',
                 params: {id: 'movie-123'},
                 pathname: '/admin/movies/movie-123',
-                data: {
-                  apiUrl: 'http://localhost:8787',
-                  movieId: 'movie-123',
-                },
                 loaderData: {
                   apiUrl: 'http://localhost:8787',
                   movieId: 'movie-123',

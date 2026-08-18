@@ -4,6 +4,7 @@ import {MemoryRouter} from 'react-router';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import type {Route} from '../../.react-router/types/app/routes/+types/admin.login';
 import AdminLogin, {action, meta} from './admin.login';
+import {createMockContext} from '@/lib/test-context';
 
 type AdminLoginComponentProperties = Route.ComponentProps;
 
@@ -41,13 +42,6 @@ Object.defineProperty(HTMLFormElement.prototype, 'requestSubmit', {
 });
 
 // Cloudflare環境のモック
-const createMockContext = (apiUrl = 'http://localhost:8787') => ({
-  cloudflare: {
-    env: {
-      PUBLIC_API_URL: apiUrl,
-    },
-  },
-});
 
 describe('AdminLogin Component', () => {
   beforeEach(() => {
@@ -171,11 +165,6 @@ describe('AdminLogin Component', () => {
                 id: 'root',
                 params: {},
                 pathname: '/',
-                data: {
-                  locale: 'ja' as const,
-                  canonicalUrl: 'https://shine-film.com/',
-                  webAnalyticsToken: undefined,
-                },
                 loaderData: {
                   locale: 'ja' as const,
                   canonicalUrl: 'https://shine-film.com/',
@@ -187,7 +176,6 @@ describe('AdminLogin Component', () => {
                 id: 'routes/admin.login',
                 params: {},
                 pathname: '/admin/login',
-                data: {} as AdminLoginComponentProperties['loaderData'],
                 loaderData: {} as AdminLoginComponentProperties['loaderData'],
                 handle: undefined,
               },
@@ -219,11 +207,6 @@ describe('AdminLogin Component', () => {
                 id: 'root',
                 params: {},
                 pathname: '/',
-                data: {
-                  locale: 'ja' as const,
-                  canonicalUrl: 'https://shine-film.com/',
-                  webAnalyticsToken: undefined,
-                },
                 loaderData: {
                   locale: 'ja' as const,
                   canonicalUrl: 'https://shine-film.com/',
@@ -235,7 +218,6 @@ describe('AdminLogin Component', () => {
                 id: 'routes/admin.login',
                 params: {},
                 pathname: '/admin/login',
-                data: {} as AdminLoginComponentProperties['loaderData'],
                 loaderData: {} as AdminLoginComponentProperties['loaderData'],
                 handle: undefined,
               },
@@ -266,11 +248,6 @@ describe('AdminLogin Component', () => {
                 id: 'root',
                 params: {},
                 pathname: '/',
-                data: {
-                  locale: 'ja' as const,
-                  canonicalUrl: 'https://shine-film.com/',
-                  webAnalyticsToken: undefined,
-                },
                 loaderData: {
                   locale: 'ja' as const,
                   canonicalUrl: 'https://shine-film.com/',
@@ -282,7 +259,6 @@ describe('AdminLogin Component', () => {
                 id: 'routes/admin.login',
                 params: {},
                 pathname: '/admin/login',
-                data: {} as AdminLoginComponentProperties['loaderData'],
                 loaderData: {} as AdminLoginComponentProperties['loaderData'],
                 handle: undefined,
               },
@@ -317,11 +293,6 @@ describe('AdminLogin Component', () => {
                 id: 'root',
                 params: {},
                 pathname: '/',
-                data: {
-                  locale: 'ja' as const,
-                  canonicalUrl: 'https://shine-film.com/',
-                  webAnalyticsToken: undefined,
-                },
                 loaderData: {
                   locale: 'ja' as const,
                   canonicalUrl: 'https://shine-film.com/',
@@ -333,7 +304,6 @@ describe('AdminLogin Component', () => {
                 id: 'routes/admin.login',
                 params: {},
                 pathname: '/admin/login',
-                data: {} as AdminLoginComponentProperties['loaderData'],
                 loaderData: {} as AdminLoginComponentProperties['loaderData'],
                 handle: undefined,
               },
@@ -361,11 +331,6 @@ describe('AdminLogin Component', () => {
                 id: 'root',
                 params: {},
                 pathname: '/',
-                data: {
-                  locale: 'ja' as const,
-                  canonicalUrl: 'https://shine-film.com/',
-                  webAnalyticsToken: undefined,
-                },
                 loaderData: {
                   locale: 'ja' as const,
                   canonicalUrl: 'https://shine-film.com/',
@@ -377,7 +342,6 @@ describe('AdminLogin Component', () => {
                 id: 'routes/admin.login',
                 params: {},
                 pathname: '/admin/login',
-                data: {} as AdminLoginComponentProperties['loaderData'],
                 loaderData: {} as AdminLoginComponentProperties['loaderData'],
                 handle: undefined,
               },
@@ -411,11 +375,6 @@ describe('AdminLogin Component', () => {
                 id: 'root',
                 params: {},
                 pathname: '/',
-                data: {
-                  locale: 'ja' as const,
-                  canonicalUrl: 'https://shine-film.com/',
-                  webAnalyticsToken: undefined,
-                },
                 loaderData: {
                   locale: 'ja' as const,
                   canonicalUrl: 'https://shine-film.com/',
@@ -427,7 +386,6 @@ describe('AdminLogin Component', () => {
                 id: 'routes/admin.login',
                 params: {},
                 pathname: '/admin/login',
-                data: {} as AdminLoginComponentProperties['loaderData'],
                 loaderData: {} as AdminLoginComponentProperties['loaderData'],
                 handle: undefined,
               },

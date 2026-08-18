@@ -18,8 +18,8 @@ const CONFIG: SelectionArchiveConfig = {
   formatDate: selectionDate => selectionDate.slice(0, 7),
 };
 
-export function meta({data}: Route.MetaArgs): Route.MetaDescriptors {
-  const {locale} = data as Partial<SelectionArchiveData>;
+export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
+  const {locale} = loaderData as Partial<SelectionArchiveData>;
   return buildArchiveMeta(CONFIG, locale);
 }
 
