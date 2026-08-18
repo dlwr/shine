@@ -69,10 +69,10 @@ export function buildPostRecord({
     text,
     createdAt,
     langs: ['ja'],
-    ...(facets.length > 0 ? {facets} : {}),
+    ...((facets.length > 0) && {facets}),
     embed: {
       $type: 'app.bsky.embed.external',
-      external: {...link, ...(thumb ? {thumb} : {})},
+      external: {...link, ...(thumb && {thumb})},
     },
   };
 }

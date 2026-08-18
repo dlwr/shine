@@ -784,8 +784,8 @@ async function insertMovieWithTranslations({
     originalLanguage: tmdbMovie.original_language ?? 'en',
     year: normalizedYear,
     mediaType,
-    ...(tmdbId === undefined ? {} : {tmdbId}),
-    ...(releaseDate === undefined ? {} : {releaseDate}),
+    ...(!(tmdbId === undefined) && {tmdbId}),
+    ...(!(releaseDate === undefined) && {releaseDate}),
   };
 
   await database.insert(movies).values(movieValues);
