@@ -175,7 +175,7 @@ describe('backfillPosters', () => {
     vi.unstubAllGlobals();
   });
 
-  const configuration = {
+  const config = {
     images: {
       secure_base_url: 'https://image.tmdb.org/t/p/',
       poster_sizes: ['w185', 'w342', 'w500', 'original'],
@@ -190,7 +190,7 @@ describe('backfillPosters', () => {
       tmdbId: 82_474,
     });
     stubTmdb({
-      '/configuration': configuration,
+      '/configuration': config,
       '/movie/82474': {id: 82_474, title: '7th Heaven', poster_path: '/a.jpg'},
     });
 
@@ -208,7 +208,7 @@ describe('backfillPosters', () => {
   it('原寸ではなくw500で保存する', async () => {
     await seedMovie(database, {uid: 'm1', title: 'X', year: 2000, tmdbId: 1});
     stubTmdb({
-      '/configuration': configuration,
+      '/configuration': config,
       '/movie/1': {id: 1, title: 'X', poster_path: '/a.jpg'},
     });
 
@@ -226,7 +226,7 @@ describe('backfillPosters', () => {
       imdbId: 'tt0042876',
     });
     stubTmdb({
-      '/configuration': configuration,
+      '/configuration': config,
       '/find/tt0042876': {
         movie_results: [{id: 548, media_type: 'movie'}],
         tv_results: [],
@@ -247,7 +247,7 @@ describe('backfillPosters', () => {
   it('IDが無い映画はタイトルと年で厳格に照合する', async () => {
     await seedMovie(database, {uid: 'm1', title: 'In Old Chicago', year: 1937});
     stubTmdb({
-      '/configuration': configuration,
+      '/configuration': config,
       '/search/movie': {
         results: [
           {id: 43_884, title: 'In Old Chicago', release_date: '1937-04-15'},
@@ -273,7 +273,7 @@ describe('backfillPosters', () => {
   it('タイトルが一致しない候補は採用しない', async () => {
     await seedMovie(database, {uid: 'm1', title: 'In Old Chicago', year: 1937});
     stubTmdb({
-      '/configuration': configuration,
+      '/configuration': config,
       '/search/movie': {
         results: [{id: 999, title: 'Chicago', release_date: '1937-01-01'}],
       },
@@ -303,7 +303,7 @@ describe('backfillPosters', () => {
       imdbId: 'tt0042876',
     });
     stubTmdb({
-      '/configuration': configuration,
+      '/configuration': config,
       '/find/tt0042876': {
         movie_results: [{id: 548, media_type: 'movie'}],
         tv_results: [],
@@ -327,7 +327,7 @@ describe('backfillPosters', () => {
       .set({deletedAt: 1000})
       .where(eq(movies.uid, 'm1'));
     stubTmdb({
-      '/configuration': configuration,
+      '/configuration': config,
       '/movie/1': {id: 1, title: 'X', poster_path: '/a.jpg'},
     });
 
@@ -351,7 +351,7 @@ describe('backfillPosters', () => {
   it('TMDbにポスターが無い場合は保存しない', async () => {
     await seedMovie(database, {uid: 'm1', title: 'X', year: 2000, tmdbId: 1});
     stubTmdb({
-      '/configuration': configuration,
+      '/configuration': config,
       '/movie/1': {id: 1, title: 'X'},
     });
 
@@ -364,7 +364,7 @@ describe('backfillPosters', () => {
   it('dryRunでは書き込まない', async () => {
     await seedMovie(database, {uid: 'm1', title: 'X', year: 2000, tmdbId: 1});
     stubTmdb({
-      '/configuration': configuration,
+      '/configuration': config,
       '/movie/1': {id: 1, title: 'X', poster_path: '/a.jpg'},
     });
 
@@ -382,7 +382,7 @@ describe('backfillPosters', () => {
     await seedMovie(database, {uid: 'm1', title: 'A', year: 2000, tmdbId: 1});
     await seedMovie(database, {uid: 'm2', title: 'B', year: 2001, tmdbId: 2});
     stubTmdb({
-      '/configuration': configuration,
+      '/configuration': config,
       '/movie/1': {id: 1, title: 'A', poster_path: '/a.jpg'},
       '/movie/2': {id: 2, title: 'B', poster_path: '/b.jpg'},
     });

@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
 import type {MovieDetails} from './types';
 
 type YearEditorProperties = {
@@ -54,10 +54,9 @@ export function YearEditor({
       }
 
       if (!response.ok) {
-        const errorData = (await response
-          .json()
-          .catch(() => ({error: 'Unknown error'}))) as {error?: string};
-        throw new Error(errorData.error || 'Failed to update year');
+        throw new Error(
+          await readErrorMessage(response, 'Failed to update year'),
+        );
       }
 
       const movieResponse = await adminFetch(

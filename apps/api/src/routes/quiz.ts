@@ -90,7 +90,13 @@ function guessResult(
 }
 
 quizRoutes.post('/guess', async c => {
-  const body = await c.req.json<GuessBody>().catch(() => ({}) as GuessBody);
+  let body: GuessBody;
+  try {
+    body = await c.req.json<GuessBody>();
+  } catch {
+    body = {} as GuessBody;
+  }
+
   const date = resolveDate(body.date);
   const attempt = Number(body.attempt);
   if (!date || !Number.isSafeInteger(attempt) || attempt < 1) {

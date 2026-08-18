@@ -253,10 +253,13 @@ function flattenListAward(years: AwardYearGroup[]): AwardYearGroup[] {
     mergeMoviesByUid(group.movies, byUid);
   }
 
-  const movies = [...byUid.values()].toSorted(
-    (a, b) =>
-      (b.movieYear ?? 0) - (a.movieYear ?? 0) || (a.uid < b.uid ? -1 : 1),
-  );
+  const movies = byUid
+    .values()
+    .toArray()
+    .toSorted(
+      (a, b) =>
+        (b.movieYear ?? 0) - (a.movieYear ?? 0) || (a.uid < b.uid ? -1 : 1),
+    );
 
   return [
     {
@@ -393,7 +396,10 @@ export class AwardsService extends BaseService {
       });
     }
 
-    const years = [...groups.values()].toSorted((a, b) => b.year - a.year);
+    const years = groups
+      .values()
+      .toArray()
+      .toSorted((a, b) => b.year - a.year);
     for (const group of years) {
       group.filmCount = group.movies.length;
       group.movies.sort(compareAwardMovies);

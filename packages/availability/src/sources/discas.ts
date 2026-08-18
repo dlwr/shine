@@ -60,8 +60,10 @@ class CookieJar {
   }
 
   header(): string {
-    return [...this.cookies.entries()]
+    return this.cookies
+      .entries()
       .map(([name, value]) => `${name}=${value}`)
+      .toArray()
       .join('; ');
   }
 }

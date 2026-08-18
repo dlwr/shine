@@ -10,10 +10,7 @@ import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {generateUUID} from '@shine/utils';
 import {fetchJsonWithRetry} from './common/fetch-utilities';
-import {
-  fetchTMDBConfiguration,
-  type TMDBConfiguration,
-} from './common/tmdb-utilities';
+import {fetchTMDBConfig, type TMDBConfig} from './common/tmdb-utilities';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -42,10 +39,12 @@ type TMDBSearchResponse = {
   total_results: number;
 };
 
-let environment_: Environment;
-let TMDB_API_KEY: string;
-let tmdbConfiguration: TMDBConfiguration | undefined;
-let isDryRun = false;
+type ImportContext = {
+  environment: Environment;
+  tmdbApiKey: string;
+  tmdbConfig: TMDBConfig | undefined;
+  isDryRun: boolean;
+};
 
 /**
  * Movie-list.jsonから映画をインポートする
@@ -58,17 +57,20 @@ export async function importMoviesFromList(
   limit?: number,
   shouldDryRun = false,
 ): Promise<void> {
-  isDryRun = shouldDryRun;
-  environment_ = environment;
-  TMDB_API_KEY = environment.TMDB_API_KEY || '';
+  const tmdbApiKey = environment.TMDB_API_KEY || '';
 
-  if (!TMDB_API_KEY) {
-    throw new Error('TMDB_API_KEY is required');
+  if (!tmdbApiKey) {
+    throw new Error('context.tmdbApiKey is required');
   }
 
   // TMDB設定を取得
-  tmdbConfiguration = await fetchTMDBConfiguration(TMDB_API_KEY);
-  console.log('TMDB configuration loaded');
+  const context: ImportContext = {
+    environment,
+    tmdbApiKey,
+    tmdbConfig: await fetchTMDBConfig(tmdbApiKey),
+    isDryRun: shouldDryRun,
+  };
+  console.log('TMDB config loaded');
 
   // JSONファイルを読み込み
   const fileContent = readFileSync(filePath, 'utf8');
@@ -77,21 +79,21 @@ export async function importMoviesFromList(
   // Limitが指定されている場合は制限
   const movieTitles = limit ? allMovieTitles.slice(0, limit) : allMovieTitles;
 
-  if (isDryRun) {
+  if (context.isDryRun) {
     console.log(
       '[DRY RUN MODE] No actual database operations will be performed',
     );
   }
 
   console.log(
-    `${isDryRun ? '[DRY RUN] Would import' : 'Importing'} ${movieTitles.length}${
+    `${context.isDryRun ? '[DRY RUN] Would import' : 'Importing'} ${movieTitles.length}${
       limit ? ` (limited from ${allMovieTitles.length})` : ''
     } movies from ${filePath}`,
   );
 
   // アワード組織とカテゴリーを作成
   const {organizationUid, categoryUid, ceremonyUid} =
-    await createAwardStructure(awardName, categoryName);
+    await createAwardStructure(context, awardName, categoryName);
 
   // バッチ処理用の配列
   const translationsBatch: Array<typeof translations.$inferInsert> = [];
@@ -104,6 +106,7 @@ export async function importMoviesFromList(
 
     try {
       const batchData = await processMovieForBatch(
+        context,
         title,
         organizationUid,
         categoryUid,
@@ -125,13 +128,13 @@ export async function importMoviesFromList(
   }
 
   // バッチでデータを挿入
-  if (isDryRun) {
+  if (context.isDryRun) {
     console.log('\n[DRY RUN] Would insert:');
     console.log(`  - ${translationsBatch.length} translations`);
     console.log(`  - ${posterUrlsBatch.length} poster URLs`);
     console.log(`  - ${nominationsBatch.length} nominations`);
   } else {
-    const database = getDatabase(environment_);
+    const database = getDatabase(context.environment);
 
     if (translationsBatch.length > 0) {
       console.log(
@@ -164,13 +167,14 @@ export async function importMoviesFromList(
     }
   }
 
-  console.log(`\n${isDryRun ? '[DRY RUN] ' : ''}Import completed!`);
+  console.log(`\n${context.isDryRun ? '[DRY RUN] ' : ''}Import completed!`);
 }
 
 /**
  * アワード組織、カテゴリー、セレモニーを作成
  */
 async function createAwardStructure(
+  context: ImportContext,
   awardName: string,
   categoryName: string,
 ): Promise<{
@@ -178,7 +182,7 @@ async function createAwardStructure(
   categoryUid: string;
   ceremonyUid: string;
 }> {
-  if (isDryRun) {
+  if (context.isDryRun) {
     console.log(
       `[DRY RUN] Would create award structure for: ${awardName} - ${categoryName}`,
     );
@@ -189,7 +193,7 @@ async function createAwardStructure(
     };
   }
 
-  const database = getDatabase(environment_);
+  const database = getDatabase(context.environment);
 
   // 組織を作成/取得
   await database
@@ -270,6 +274,7 @@ async function createAwardStructure(
  * バッチ処理用に映画を処理
  */
 async function processMovieForBatch(
+  context: ImportContext,
   title: string,
   _organizationUid: string,
   categoryUid: string,
@@ -283,14 +288,14 @@ async function processMovieForBatch(
   | undefined
 > {
   // TMDBで映画を検索
-  const tmdbMovie = await searchMovieOnTMDB(title);
+  const tmdbMovie = await searchMovieOnTMDB(context, title);
 
   if (!tmdbMovie) {
     console.log(`  TMDB search failed for: ${title}`);
     return undefined;
   }
 
-  if (isDryRun) {
+  if (context.isDryRun) {
     console.log(
       `[DRY RUN] Would process movie: ${tmdbMovie.title} (${tmdbMovie.release_date?.split('-', 1)[0]}) ${
         tmdbMovie.imdb_id ? `IMDb: ${tmdbMovie.imdb_id}` : ''
@@ -299,7 +304,7 @@ async function processMovieForBatch(
     return undefined;
   }
 
-  const database = getDatabase(environment_);
+  const database = getDatabase(context.environment);
 
   // 既存の映画をチェック（TMDB IDまたはIMDb IDで）
   let existingMovie: typeof movies.$inferSelect | undefined;
@@ -339,10 +344,10 @@ async function processMovieForBatch(
     movieUid = existingMovie.uid;
 
     // TMDBデータで既存映画を更新
-    await updateExistingMovie(existingMovie.uid, tmdbMovie);
+    await updateExistingMovie(context, existingMovie.uid, tmdbMovie);
   } else {
     console.log(`  Creating new movie: ${tmdbMovie.title}`);
-    const result = await createNewMovieForBatch(tmdbMovie);
+    const result = await createNewMovieForBatch(context, tmdbMovie);
     movieUid = result.movieUid;
     translationsBatch.push(...result.translations);
     posterUrlData = result.posterUrl;
@@ -385,11 +390,12 @@ async function processMovieForBatch(
  * TMDBで映画を検索
  */
 async function searchMovieOnTMDB(
+  context: ImportContext,
   title: string,
 ): Promise<TMDBMovieData | undefined> {
   try {
     const searchUrl = new URL(`${TMDB_API_BASE_URL}/search/movie`);
-    searchUrl.searchParams.append('api_key', TMDB_API_KEY);
+    searchUrl.searchParams.append('api_key', context.tmdbApiKey);
     searchUrl.searchParams.append('query', title);
     searchUrl.searchParams.append('language', 'ja');
 
@@ -426,12 +432,15 @@ async function searchMovieOnTMDB(
 /**
  * バッチ処理用に新しい映画を作成
  */
-async function createNewMovieForBatch(tmdbMovie: TMDBMovieData): Promise<{
+async function createNewMovieForBatch(
+  context: ImportContext,
+  tmdbMovie: TMDBMovieData,
+): Promise<{
   movieUid: string;
   translations: Array<typeof translations.$inferInsert>;
   posterUrl?: typeof posterUrls.$inferInsert;
 }> {
-  const database = getDatabase(environment_);
+  const database = getDatabase(context.environment);
   const movieUid = generateUUID();
 
   // 公開年を抽出
@@ -478,8 +487,8 @@ async function createNewMovieForBatch(tmdbMovie: TMDBMovieData): Promise<{
 
   // ポスターURL
   let posterUrlData: typeof posterUrls.$inferInsert | undefined;
-  if (tmdbConfiguration && tmdbMovie.poster_path) {
-    const posterUrl = `${tmdbConfiguration.images.secure_base_url}w500${tmdbMovie.poster_path}`;
+  if (context.tmdbConfig && tmdbMovie.poster_path) {
+    const posterUrl = `${context.tmdbConfig.images.secure_base_url}w500${tmdbMovie.poster_path}`;
     posterUrlData = {
       movieUid,
       url: posterUrl,
@@ -498,10 +507,11 @@ async function createNewMovieForBatch(tmdbMovie: TMDBMovieData): Promise<{
  * 既存の映画を更新（差分チェック付き）
  */
 async function updateExistingMovie(
+  context: ImportContext,
   movieUid: string,
   tmdbMovie: TMDBMovieData,
 ): Promise<void> {
-  const database = getDatabase(environment_);
+  const database = getDatabase(context.environment);
 
   // 既存の映画データを取得
   const [existingMovie] = await database
@@ -531,7 +541,7 @@ async function updateExistingMovie(
   }
 
   // ポスターURLを追加（まだない場合）
-  if (tmdbConfiguration && tmdbMovie.poster_path) {
+  if (context.tmdbConfig && tmdbMovie.poster_path) {
     const [existingPoster] = await database
       .select()
       .from(posterUrls)
@@ -539,7 +549,7 @@ async function updateExistingMovie(
       .limit(1);
 
     if (!existingPoster) {
-      const posterUrl = `${tmdbConfiguration.images.secure_base_url}w500${tmdbMovie.poster_path}`;
+      const posterUrl = `${context.tmdbConfig.images.secure_base_url}w500${tmdbMovie.poster_path}`;
       await database.insert(posterUrls).values({
         movieUid,
         url: posterUrl,

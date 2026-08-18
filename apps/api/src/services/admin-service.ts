@@ -20,7 +20,7 @@ import {
   ConflictError,
   ExternalFetchError,
   NotFoundError,
-  TmdbConfigurationError,
+  TmdbConfigError,
   TmdbDataNotFoundError,
   UnprocessableContentError,
   ValidationError,
@@ -582,7 +582,7 @@ export class AdminService extends BaseService {
     const tmdbApiKey = this.env.TMDB_API_KEY;
 
     if (!tmdbApiKey) {
-      throw new TmdbConfigurationError();
+      throw new TmdbConfigError();
     }
 
     const [movie] = await this.database
@@ -1042,20 +1042,22 @@ export class AdminService extends BaseService {
 
       await gotoWithRetry();
 
-      await page
-        .waitForSelector('script#__NEXT_DATA__', {timeout: 20_000})
-        .catch(() => {
-          throw new Error(
-            'IMDb page did not load expected content (timed out waiting for __NEXT_DATA__)',
-          );
-        });
+      try {
+        await page.waitForSelector('script#__NEXT_DATA__', {timeout: 20_000});
+      } catch {
+        throw new Error(
+          'IMDb page did not load expected content (timed out waiting for __NEXT_DATA__)',
+        );
+      }
       html = await page.content();
     } finally {
-      await (
-        isReusedExistingSession ? browser.disconnect() : browser.close()
-      ).catch(() => {
+      try {
+        await (isReusedExistingSession
+          ? browser.disconnect()
+          : browser.close());
+      } catch {
         // Session/browser may already be closed by the platform; ignore
-      });
+      }
     }
     const marker = '<script id="__NEXT_DATA__" type="application/json">';
     const markerIndex = html.indexOf(marker);
@@ -1187,7 +1189,7 @@ export class AdminService extends BaseService {
           error instanceof Error ? error.message : error,
         );
         if (
-          error instanceof TmdbConfigurationError ||
+          error instanceof TmdbConfigError ||
           error instanceof TmdbDataNotFoundError
         ) {
           const fallback = await this.createMovieFromImdbId(nomination.imdbId, {
@@ -1288,7 +1290,7 @@ export class AdminService extends BaseService {
   > {
     const apiKey = this.env.TMDB_API_KEY;
     if (!apiKey) {
-      throw new TmdbConfigurationError();
+      throw new TmdbConfigError();
     }
 
     const {findTMDBByImdbId} =

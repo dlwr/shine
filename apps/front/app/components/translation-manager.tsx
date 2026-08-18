@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
 import type {MovieDetails} from '@/components/admin/movie-info/types';
 
 type Translation = MovieDetails['translations'][number];
@@ -62,10 +62,9 @@ export default function TranslationManager({
       }
 
       if (!response.ok) {
-        const errorData = (await response
-          .json()
-          .catch(() => ({error: 'Unknown error'}))) as {error?: string};
-        throw new Error(errorData.error || 'Failed to add translation');
+        throw new Error(
+          await readErrorMessage(response, 'Failed to add translation'),
+        );
       }
 
       const movieResponse = await adminFetch(
@@ -126,10 +125,9 @@ export default function TranslationManager({
       }
 
       if (!response.ok) {
-        const errorData = (await response
-          .json()
-          .catch(() => ({error: 'Unknown error'}))) as {error?: string};
-        throw new Error(errorData.error || 'Failed to update translation');
+        throw new Error(
+          await readErrorMessage(response, 'Failed to update translation'),
+        );
       }
 
       const movieResponse = await adminFetch(
@@ -176,10 +174,9 @@ export default function TranslationManager({
       }
 
       if (!response.ok) {
-        const errorData = (await response
-          .json()
-          .catch(() => ({error: 'Unknown error'}))) as {error?: string};
-        throw new Error(errorData.error || 'Failed to delete translation');
+        throw new Error(
+          await readErrorMessage(response, 'Failed to delete translation'),
+        );
       }
 
       const movieResponse = await adminFetch(

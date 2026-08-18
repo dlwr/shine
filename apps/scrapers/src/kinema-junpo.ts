@@ -581,7 +581,7 @@ export async function backfillJapaneseTitles({
 
   const database = getDatabase(environment);
   const stats = {saved: 0, replaced: 0};
-  const imdbIds = [...titleByImdbId.keys()];
+  const imdbIds = titleByImdbId.keys().toArray();
 
   for (let index = 0; index < imdbIds.length; index += BATCH_SIZE) {
     const batch = imdbIds.slice(index, index + BATCH_SIZE);
@@ -661,7 +661,7 @@ export async function importKinemaJunpo({
 
     console.log(`TMDb fallback for ${pending.size} films...`);
     const fallback = await resolveFilmsByTmdb(
-      [...pending.values()],
+      pending.values().toArray(),
       environment.TMDB_API_KEY,
       throttleMs,
     );

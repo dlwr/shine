@@ -1,5 +1,5 @@
 import {useCallback, useState} from 'react';
-import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
 import type {MovieDetails} from './types';
 
 type MediaTypeToggleProperties = {
@@ -45,11 +45,11 @@ export function MediaTypeToggle({
       }
 
       if (!response.ok) {
-        const errorData = (await response
-          .json()
-          .catch(() => ({error: 'Unknown error'}))) as {error?: string};
         throw new Error(
-          errorData.error || 'メディアタイプの更新に失敗しました',
+          await readErrorMessage(
+            response,
+            'メディアタイプの更新に失敗しました',
+          ),
         );
       }
 

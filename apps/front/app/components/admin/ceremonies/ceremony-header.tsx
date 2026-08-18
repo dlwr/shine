@@ -2,7 +2,7 @@ import {useState} from 'react';
 import {useNavigate} from 'react-router';
 import AdminNav from '@/components/admin-nav';
 import {Button} from '@/components/ui/button';
-import {adminFetch} from '@/lib/admin-fetch';
+import {adminFetch, readErrorMessage} from '@/lib/admin-fetch';
 import {ensureToken} from './ensure-token';
 import {formatNavigationLabel, formatTimestamp} from './format';
 import type {CeremonyResponse} from './types';
@@ -58,10 +58,9 @@ export function CeremonyHeader({
       }
 
       if (!response.ok) {
-        const data = (await response
-          .json()
-          .catch(() => ({error: 'Unknown error'}))) as {error?: string};
-        throw new Error(data.error || 'セレモニーの削除に失敗しました。');
+        throw new Error(
+          await readErrorMessage(response, 'セレモニーの削除に失敗しました。'),
+        );
       }
 
       navigate('/admin/ceremonies');

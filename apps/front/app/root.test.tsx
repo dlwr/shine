@@ -218,7 +218,10 @@ function iconHrefs(): string[] {
     </Layout>,
   );
 
-  return [...markup.matchAll(ICON_LINK_PATTERN)].map(([, href]) => href);
+  return markup
+    .matchAll(ICON_LINK_PATTERN)
+    .map(([, href]) => href)
+    .toArray();
 }
 
 describe('root Layout のアイコン', () => {

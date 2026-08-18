@@ -1,5 +1,5 @@
 import {useCallback} from 'react';
-import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
 import type {MovieDetails, PerformImdbUpdate, PerformTmdbUpdate} from './types';
 
 type UseMovieUpdatesOptions = {
@@ -52,10 +52,9 @@ export function useMovieUpdates({
         }
 
         if (!response.ok) {
-          const errorData = (await response
-            .json()
-            .catch(() => ({error: 'Unknown error'}))) as {error?: string};
-          throw new Error(errorData.error || 'Failed to update IMDb ID');
+          throw new Error(
+            await readErrorMessage(response, 'Failed to update IMDb ID'),
+          );
         }
 
         await refreshMovieData();
@@ -103,10 +102,9 @@ export function useMovieUpdates({
         }
 
         if (!response.ok) {
-          const errorData = (await response
-            .json()
-            .catch(() => ({error: 'Unknown error'}))) as {error?: string};
-          throw new Error(errorData.error || 'Failed to update TMDb ID');
+          throw new Error(
+            await readErrorMessage(response, 'Failed to update TMDb ID'),
+          );
         }
 
         await refreshMovieData();

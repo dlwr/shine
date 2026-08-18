@@ -11,10 +11,10 @@ import {posterUrls} from '@shine/database/schema/poster-urls';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import {
-  fetchTMDBConfiguration,
+  fetchTMDBConfig,
   fetchTMDBMovieDetails,
   searchTMDBMovie,
-  type TMDBConfiguration,
+  type TMDBConfig,
 } from './common/tmdb-utilities';
 import {FetchHttpError, fetchWithRetry} from './common/fetch-utilities';
 
@@ -36,24 +36,28 @@ type MainData = {
   ceremonies: Map<number, string>;
 };
 
-let mainData: MainData | undefined;
-let environment_: Environment;
-let TMDB_API_KEY: string | undefined;
-let isDryRun = false;
+type ScrapeContext = {
+  environment: Environment;
+  tmdbApiKey: string | undefined;
+  isDryRun: boolean;
+};
 
 export default {
   async fetch(request: Request, environment: Environment): Promise<Response> {
-    environment_ = environment;
-    TMDB_API_KEY = environment.TMDB_API_KEY;
+    const tmdbApiKey = environment.TMDB_API_KEY;
 
     const url = new URL(request.url);
     const yearParameter = url.searchParams.get('year');
     const winnersOnlyParameter = url.searchParams.get('winners-only');
     const dryRunParameter = url.searchParams.get('dry-run');
-    isDryRun = dryRunParameter === 'true';
+    const context: ScrapeContext = {
+      environment,
+      tmdbApiKey,
+      isDryRun: dryRunParameter === 'true',
+    };
 
     try {
-      if (isDryRun) {
+      if (context.isDryRun) {
         console.log(
           '[DRY RUN MODE] No actual database operations will be performed',
         );
@@ -63,16 +67,16 @@ export default {
         // 受賞作品のみ更新
         if (yearParameter) {
           const targetYear = Number(yearParameter);
-          await updateCannesWinnersOnly(targetYear);
+          await updateCannesWinnersOnly(context, targetYear);
         } else {
-          await updateAllCannesWinnersOnly();
+          await updateAllCannesWinnersOnly(context);
         }
       } else if (yearParameter) {
         // 通常のスクレイピング
         const targetYear = Number(yearParameter);
-        await scrapeCannesFilmFestivalYear(targetYear);
+        await scrapeCannesFilmFestivalYear(context, targetYear);
       } else {
-        await scrapeCannesFilmFestival();
+        await scrapeCannesFilmFestival(context);
       }
 
       return new Response('Scraping completed successfully', {status: 200});
@@ -85,8 +89,8 @@ export default {
   },
 };
 
-async function seedCannesOrganization(): Promise<void> {
-  const database = getDatabase(environment_);
+async function seedCannesOrganization(context: ScrapeContext): Promise<void> {
+  const database = getDatabase(context.environment);
 
   // カンヌ映画祭の組織を作成
   await database
@@ -128,64 +132,70 @@ async function seedCannesOrganization(): Promise<void> {
     .onConflictDoNothing();
 }
 
-async function fetchMainData(): Promise<MainData> {
-  if (mainData) {
-    return mainData;
-  }
+const fetchMainData = (() => {
+  let mainData: MainData | undefined;
 
-  if (isDryRun) {
-    // Dry run mode - return mock data
+  return async function fetchMainData(
+    context: ScrapeContext,
+  ): Promise<MainData> {
+    if (mainData) {
+      return mainData;
+    }
+
+    if (context.isDryRun) {
+      // Dry run mode - return mock data
+      mainData = {
+        organizationUid: 'mock-cannes-uid',
+        palmeDOrCategoryUid: 'mock-palme-dor-uid',
+        grandPrixCategoryUid: 'mock-grand-prix-uid',
+        ceremonies: new Map(),
+      };
+      return mainData;
+    }
+
+    // 組織が存在しない場合は作成
+    await seedCannesOrganization(context);
+
+    const [organization] = await getDatabase(context.environment)
+      .select()
+      .from(awardOrganizations)
+      .where(eq(awardOrganizations.name, 'Cannes Film Festival'));
+
+    if (!organization) {
+      throw new Error('Cannes Film Festival organization not found');
+    }
+
+    const categories = await getDatabase(context.environment)
+      .select()
+      .from(awardCategories)
+      .where(eq(awardCategories.organizationUid, organization.uid));
+
+    const palmeDOr = categories.find(cat => cat.shortName === "Palme d'Or");
+    const grandPrix = categories.find(cat => cat.shortName === 'Grand Prix');
+
+    if (!palmeDOr || !grandPrix) {
+      throw new Error('Required categories not found');
+    }
+
+    const ceremoniesData = await getDatabase(context.environment)
+      .select()
+      .from(awardCeremonies)
+      .where(eq(awardCeremonies.organizationUid, organization.uid));
+
+    const ceremonies = new Map<number, string>(
+      ceremoniesData.map(ceremony => [ceremony.year, ceremony.uid]),
+    );
+
     mainData = {
-      organizationUid: 'mock-cannes-uid',
-      palmeDOrCategoryUid: 'mock-palme-dor-uid',
-      grandPrixCategoryUid: 'mock-grand-prix-uid',
-      ceremonies: new Map(),
+      organizationUid: organization.uid,
+      palmeDOrCategoryUid: palmeDOr.uid,
+      grandPrixCategoryUid: grandPrix.uid,
+      ceremonies,
     };
+
     return mainData;
-  }
-
-  // 組織が存在しない場合は作成
-  await seedCannesOrganization();
-
-  const [organization] = await getDatabase(environment_)
-    .select()
-    .from(awardOrganizations)
-    .where(eq(awardOrganizations.name, 'Cannes Film Festival'));
-
-  if (!organization) {
-    throw new Error('Cannes Film Festival organization not found');
-  }
-
-  const categories = await getDatabase(environment_)
-    .select()
-    .from(awardCategories)
-    .where(eq(awardCategories.organizationUid, organization.uid));
-
-  const palmeDOr = categories.find(cat => cat.shortName === "Palme d'Or");
-  const grandPrix = categories.find(cat => cat.shortName === 'Grand Prix');
-
-  if (!palmeDOr || !grandPrix) {
-    throw new Error('Required categories not found');
-  }
-
-  const ceremoniesData = await getDatabase(environment_)
-    .select()
-    .from(awardCeremonies)
-    .where(eq(awardCeremonies.organizationUid, organization.uid));
-
-  const ceremonies = new Map<number, string>(
-    ceremoniesData.map(ceremony => [ceremony.year, ceremony.uid]),
-  );
-
-  mainData = {
-    organizationUid: organization.uid,
-    palmeDOrCategoryUid: palmeDOr.uid,
-    grandPrixCategoryUid: grandPrix.uid,
-    ceremonies,
   };
-
-  return mainData;
-}
+})();
 
 // 1946年開始、1948年と1950年は未開催（2020年は中止だが第73回として数える）
 export function cannesCeremonyNumber(year: number): number | undefined {
@@ -205,10 +215,11 @@ export function cannesCeremonyNumber(year: number): number | undefined {
 }
 
 async function getOrCreateCeremony(
+  context: ScrapeContext,
   year: number,
   organizationUid: string,
 ): Promise<string> {
-  const database = getDatabase(environment_);
+  const database = getDatabase(context.environment);
   const [ceremony] = await database
     .insert(awardCeremonies)
     .values({
@@ -224,7 +235,8 @@ async function getOrCreateCeremony(
     })
     .returning();
 
-  mainData?.ceremonies.set(year, ceremony.uid);
+  const main = await fetchMainData(context);
+  main.ceremonies.set(year, ceremony.uid);
 
   return ceremony.uid;
 }
@@ -237,12 +249,16 @@ type YearBatchData = {
   movieCount: number;
 };
 
-async function processCannesYear(year: number, main: MainData) {
+async function processCannesYear(
+  context: ScrapeContext,
+  year: number,
+  main: MainData,
+) {
   console.log(`\nProcessing Cannes ${year}...`);
 
   try {
-    const batches = await gatherYearBatches(year, main);
-    await persistYearBatches(year, batches);
+    const batches = await gatherYearBatches(context, year, main);
+    await persistYearBatches(context, year, batches);
     console.log(`Processed ${batches.movieCount} movies for ${year}`);
   } catch (error) {
     console.error(`Error processing year ${year}:`, error);
@@ -252,11 +268,16 @@ async function processCannesYear(year: number, main: MainData) {
 }
 
 async function gatherYearBatches(
+  context: ScrapeContext,
   year: number,
   main: MainData,
 ): Promise<YearBatchData> {
   const movies = await scrapeYearPage(year);
-  const ceremonyUid = await getOrCreateCeremony(year, main.organizationUid);
+  const ceremonyUid = await getOrCreateCeremony(
+    context,
+    year,
+    main.organizationUid,
+  );
   const batches: YearBatchData = {
     translations: [],
     posterUrls: [],
@@ -266,7 +287,12 @@ async function gatherYearBatches(
   };
 
   for (const movie of movies) {
-    const batchData = await processMovieForBatch(movie, ceremonyUid, main);
+    const batchData = await processMovieForBatch(
+      context,
+      movie,
+      ceremonyUid,
+      main,
+    );
     if (!batchData) {
       continue;
     }
@@ -286,8 +312,12 @@ async function gatherYearBatches(
   return batches;
 }
 
-async function persistYearBatches(year: number, batches: YearBatchData) {
-  if (isDryRun) {
+async function persistYearBatches(
+  context: ScrapeContext,
+  year: number,
+  batches: YearBatchData,
+) {
+  if (context.isDryRun) {
     console.log(`\n[DRY RUN] Would insert for ${year}:`);
     console.log(`  - ${batches.translations.length} translations`);
     console.log(`  - ${batches.posterUrls.length} poster URLs`);
@@ -296,7 +326,7 @@ async function persistYearBatches(year: number, batches: YearBatchData) {
     return;
   }
 
-  const database = getDatabase(environment_);
+  const database = getDatabase(context.environment);
 
   if (batches.translations.length > 0) {
     console.log(
@@ -345,13 +375,13 @@ async function delay(ms: number) {
   });
 }
 
-export async function scrapeCannesFilmFestival() {
+export async function scrapeCannesFilmFestival(context: ScrapeContext) {
   try {
-    const main = await fetchMainData();
+    const main = await fetchMainData(context);
     const currentYear = new Date().getFullYear();
 
     for (let year = currentYear; year >= 1946; year--) {
-      await processCannesYear(year, main);
+      await processCannesYear(context, year, main);
     }
 
     console.log('Cannes Film Festival scraping completed successfully');
@@ -361,14 +391,21 @@ export async function scrapeCannesFilmFestival() {
   }
 }
 
-export async function scrapeCannesFilmFestivalYear(year: number) {
+export async function scrapeCannesFilmFestivalYear(
+  context: ScrapeContext,
+  year: number,
+) {
   try {
-    const main = await fetchMainData();
+    const main = await fetchMainData(context);
 
     console.log(`Processing Cannes ${year}...`);
 
     const movies = await scrapeYearPage(year);
-    const ceremonyUid = await getOrCreateCeremony(year, main.organizationUid);
+    const ceremonyUid = await getOrCreateCeremony(
+      context,
+      year,
+      main.organizationUid,
+    );
 
     // バッチ処理のためのデータを収集
     const translationsBatch: Array<typeof translations.$inferInsert> = [];
@@ -377,7 +414,12 @@ export async function scrapeCannesFilmFestivalYear(year: number) {
     const nominationsBatch: Array<typeof nominations.$inferInsert> = [];
 
     for (const movie of movies) {
-      const batchData = await processMovieForBatch(movie, ceremonyUid, main);
+      const batchData = await processMovieForBatch(
+        context,
+        movie,
+        ceremonyUid,
+        main,
+      );
       if (batchData) {
         translationsBatch.push(...batchData.translations);
         posterUrlsBatch.push(...batchData.posterUrls);
@@ -392,14 +434,14 @@ export async function scrapeCannesFilmFestivalYear(year: number) {
     }
 
     // バッチでデータを挿入
-    if (isDryRun) {
+    if (context.isDryRun) {
       console.log(`\n[DRY RUN] Would insert for year ${year}:`);
       console.log(`  - ${translationsBatch.length} translations`);
       console.log(`  - ${posterUrlsBatch.length} poster URLs`);
       console.log(`  - ${referenceUrlsBatch.length} reference URLs`);
       console.log(`  - ${nominationsBatch.length} nominations`);
     } else {
-      const database = getDatabase(environment_);
+      const database = getDatabase(context.environment);
 
       if (translationsBatch.length > 0) {
         console.log(
@@ -995,16 +1037,16 @@ function findPalmeDOrWinner(
   return undefined;
 }
 
-export async function updateAllCannesWinnersOnly() {
+export async function updateAllCannesWinnersOnly(context: ScrapeContext) {
   try {
-    await fetchMainData();
+    await fetchMainData(context);
 
     const currentYear = new Date().getFullYear();
     for (let year = currentYear; year >= 1946; year--) {
       console.log(`\nUpdating Cannes winners for ${year}...`);
 
       try {
-        await updateCannesWinnersOnly(year);
+        await updateCannesWinnersOnly(context, year);
       } catch (error) {
         console.error(`Error updating winners for year ${year}:`, error);
       }
@@ -1021,9 +1063,12 @@ export async function updateAllCannesWinnersOnly() {
   }
 }
 
-export async function updateCannesWinnersOnly(year: number) {
+export async function updateCannesWinnersOnly(
+  context: ScrapeContext,
+  year: number,
+) {
   try {
-    const main = await fetchMainData();
+    const main = await fetchMainData(context);
 
     console.log(`Processing Cannes ${year} winners...`);
 
@@ -1031,8 +1076,9 @@ export async function updateCannesWinnersOnly(year: number) {
 
     if (winner) {
       await updateWinnerStatus(
+        context,
         winner,
-        await getOrCreateCeremony(year, main.organizationUid),
+        await getOrCreateCeremony(context, year, main.organizationUid),
         main,
       );
       console.log(`Updated winner for ${year}: ${winner.title}`);
@@ -1071,12 +1117,13 @@ async function fetchPalmeDOrWinner(
 }
 
 async function updateWinnerStatus(
+  context: ScrapeContext,
   movieInfo: MovieInfo,
   ceremonyUid: string,
   main: MainData,
 ) {
   try {
-    const database = getDatabase(environment_);
+    const database = getDatabase(context.environment);
 
     // 既存の映画を検索
     const existingMovies = await database
@@ -1149,25 +1196,34 @@ type MovieDetailsResult = {
 };
 
 async function fetchMovieDetails(
+  context: ScrapeContext,
   title: string,
   year: number,
 ): Promise<MovieDetailsResult> {
-  if (!TMDB_API_KEY) {
+  if (!context.tmdbApiKey) {
     console.error('TMDb API key is not set');
     return {};
   }
 
   try {
     // TMDbで映画を検索
-    const movieId = await searchTMDBMovie(title, year, TMDB_API_KEY);
+    const movieId = await searchTMDBMovie(title, year, context.tmdbApiKey);
     if (!movieId) {
       console.log(`No TMDb match found for ${title} (${year})`);
       return {};
     }
 
     // 英語版・日本語版の詳細情報を取得
-    const dataEn = await fetchTMDBMovieDetails(movieId, TMDB_API_KEY, 'en-US');
-    const dataJa = await fetchTMDBMovieDetails(movieId, TMDB_API_KEY, 'ja');
+    const dataEn = await fetchTMDBMovieDetails(
+      movieId,
+      context.tmdbApiKey,
+      'en-US',
+    );
+    const dataJa = await fetchTMDBMovieDetails(
+      movieId,
+      context.tmdbApiKey,
+      'ja',
+    );
 
     // 日本語タイトルが英語タイトルと異なる場合のみ保存
     const japaneseTitle =
@@ -1307,19 +1363,20 @@ function appendJapaneseTitle(
 }
 
 async function collectPosterUrls(
+  context: ScrapeContext,
   movieDetails: MovieDetails,
   movieUid: string,
   sizes: string[] = ['w342'],
 ): Promise<Array<typeof posterUrls.$inferInsert>> {
-  if (!TMDB_API_KEY || !movieDetails.posterPath) {
+  if (!context.tmdbApiKey || !movieDetails.posterPath) {
     return [];
   }
 
-  let config: TMDBConfiguration;
+  let config: TMDBConfig;
   try {
-    config = await fetchTMDBConfiguration(TMDB_API_KEY);
+    config = await fetchTMDBConfig(context.tmdbApiKey);
   } catch (error) {
-    console.error('Error fetching TMDb configuration:', error);
+    console.error('Error fetching TMDb config:', error);
     return [];
   }
 
@@ -1396,6 +1453,7 @@ function logProcessedMovie(
 }
 
 async function processMovieForBatch(
+  context: ScrapeContext,
   movieInfo: MovieInfo,
   ceremonyUid: string,
   main: MainData,
@@ -1409,7 +1467,7 @@ async function processMovieForBatch(
   | undefined
 > {
   try {
-    if (isDryRun) {
+    if (context.isDryRun) {
       console.log(
         `[DRY RUN] Would process movie: ${movieInfo.title} (${movieInfo.year}) - ${
           movieInfo.isWinner ? 'Winner' : 'Nominee'
@@ -1418,8 +1476,9 @@ async function processMovieForBatch(
       return undefined;
     }
 
-    const database = getDatabase(environment_);
+    const database = getDatabase(context.environment);
     const movieDetails = await fetchMovieDetails(
+      context,
       movieInfo.title,
       movieInfo.year,
     );
@@ -1436,6 +1495,7 @@ async function processMovieForBatch(
       movieResolution.movieUid,
     );
     const posterUrlsBatch = await collectPosterUrls(
+      context,
       movieDetails,
       movieResolution.movieUid,
     );

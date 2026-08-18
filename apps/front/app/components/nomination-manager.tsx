@@ -2,7 +2,7 @@ import {useEffect, useMemo, useState} from 'react';
 import {Link} from 'react-router';
 import type {ChangeEvent, FormEvent} from 'react';
 import type {MovieDetails} from '../routes/admin.movies.$id';
-import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
 
 type Nomination = MovieDetails['nominations'][number];
 
@@ -277,10 +277,9 @@ export default function NominationManager({
       }
 
       if (!response.ok) {
-        const errorData = (await response
-          .json()
-          .catch(() => ({error: 'Unknown error'}))) as {error?: string};
-        throw new Error(errorData.error || 'ノミネートの追加に失敗しました');
+        throw new Error(
+          await readErrorMessage(response, 'ノミネートの追加に失敗しました'),
+        );
       }
 
       await refreshMovieData();
@@ -344,10 +343,9 @@ export default function NominationManager({
       }
 
       if (!response.ok) {
-        const errorData = (await response
-          .json()
-          .catch(() => ({error: 'Unknown error'}))) as {error?: string};
-        throw new Error(errorData.error || 'ノミネートの更新に失敗しました');
+        throw new Error(
+          await readErrorMessage(response, 'ノミネートの更新に失敗しました'),
+        );
       }
 
       await refreshMovieData();
@@ -394,10 +392,9 @@ export default function NominationManager({
       }
 
       if (!response.ok) {
-        const errorData = (await response
-          .json()
-          .catch(() => ({error: 'Unknown error'}))) as {error?: string};
-        throw new Error(errorData.error || 'ノミネートの削除に失敗しました');
+        throw new Error(
+          await readErrorMessage(response, 'ノミネートの削除に失敗しました'),
+        );
       }
 
       await refreshMovieData();

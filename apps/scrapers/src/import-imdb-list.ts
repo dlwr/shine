@@ -13,9 +13,9 @@ import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import {generateUUID} from '@shine/utils';
 import {
-  fetchTMDBConfiguration,
+  fetchTMDBConfig,
   findTMDBByImdbId,
-  type TMDBConfiguration,
+  type TMDBConfig,
 } from './common/tmdb-utilities';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
@@ -80,15 +80,11 @@ type ImportOptions = {
   ceremonyName?: string;
 };
 
-let tmdbApiKey: string;
-let tmdbConfiguration: TMDBConfiguration | undefined;
 type AwardContext = {
   organizationUid: string;
   ceremonyUid: string;
   categoryUid: string;
 };
-
-let cachedAwardContext: AwardContext | undefined;
 
 export async function importMoviesFromCsv({
   filePath,
@@ -100,7 +96,7 @@ export async function importMoviesFromCsv({
   categoryName,
   ceremonyName,
 }: ImportOptions): Promise<ImportStats> {
-  tmdbApiKey = environment.TMDB_API_KEY ?? '';
+  const tmdbApiKey = environment.TMDB_API_KEY ?? '';
   if (!tmdbApiKey) {
     throw new Error('TMDB_API_KEY is required to import movies from CSV.');
   }
@@ -221,7 +217,7 @@ export async function importMoviesFromCsv({
     nominationsCreated: 0,
   };
 
-  await ensureTmdbConfiguration();
+  const tmdbConfig = await ensureTmdbConfig(tmdbApiKey);
 
   console.log(
     `${dryRun ? '[DRY RUN] ' : ''}Processing ${totalToProcess} movies from ${filePath} (${existingRecordsForNomination.length} existing needing nominations, ${targetNewRecords.length} new)`,
@@ -291,9 +287,9 @@ export async function importMoviesFromCsv({
 
     let tmdbMovie: TmdbMovieDetails | undefined;
     try {
-      tmdbMovie = await fetchMovieByImdbId(imdbId);
+      tmdbMovie = await fetchMovieByImdbId(tmdbApiKey, imdbId);
       if (!tmdbMovie) {
-        tmdbMovie = await searchMovieByTitle(record);
+        tmdbMovie = await searchMovieByTitle(tmdbApiKey, record);
       }
     } catch (error) {
       console.error('  Failed to fetch TMDb data:', error);
@@ -316,6 +312,7 @@ export async function importMoviesFromCsv({
         try {
           const movieUid = await insertMovieFromCsvRecord({
             database,
+            tmdbConfig,
             imdbId,
             record,
           });
@@ -362,6 +359,7 @@ export async function importMoviesFromCsv({
       try {
         const movieUid = await insertMovieWithTranslations({
           database,
+          tmdbConfig,
           imdbId,
           tmdbMovie,
           jaTitle,
@@ -419,9 +417,14 @@ export async function importMoviesFromCsv({
   return stats;
 }
 
-async function ensureTmdbConfiguration(): Promise<void> {
-  tmdbConfiguration ??= await fetchTMDBConfiguration(tmdbApiKey);
-}
+const ensureTmdbConfig = (() => {
+  let cached: TMDBConfig | undefined;
+
+  return async (apiKey: string): Promise<TMDBConfig> => {
+    cached ??= await fetchTMDBConfig(apiKey);
+    return cached;
+  };
+})();
 
 async function findOrCreateOrganization(
   database: ReturnType<typeof getDatabase>,
@@ -503,49 +506,54 @@ async function findOrCreateCeremony(
   return row.uid;
 }
 
-async function getAwardContext(
-  database: ReturnType<typeof getDatabase>,
-  options?: {
-    organizationName?: string;
-    categoryName?: string;
-    ceremonyName?: string;
-  },
-): Promise<AwardContext> {
-  if (cachedAwardContext) {
+const getAwardContext = (() => {
+  let cachedAwardContext: AwardContext | undefined;
+
+  return async function getAwardContext(
+    database: ReturnType<typeof getDatabase>,
+    options?: {
+      organizationName?: string;
+      categoryName?: string;
+      ceremonyName?: string;
+    },
+  ): Promise<AwardContext> {
+    if (cachedAwardContext) {
+      return cachedAwardContext;
+    }
+
+    const orgName =
+      options?.organizationName ??
+      process.env.AWARD_ORGANIZATION_NAME ??
+      '1001 Movies You Must See Before You Die';
+    const catName =
+      options?.categoryName ??
+      process.env.AWARD_CATEGORY_NAME ??
+      'Selected Films';
+    const ceremonyDescription = options?.ceremonyName ?? orgName;
+
+    const organizationUid = await findOrCreateOrganization(database, orgName);
+    const categoryUid = await findOrCreateCategory(
+      database,
+      organizationUid,
+      catName,
+    );
+    const ceremonyUid = await findOrCreateCeremony(
+      database,
+      organizationUid,
+      ceremonyDescription,
+    );
+
+    console.log(
+      `Award context: org="${orgName}", category="${catName}", ceremony="${ceremonyDescription}"`,
+    );
+
+    cachedAwardContext = {organizationUid, categoryUid, ceremonyUid};
     return cachedAwardContext;
-  }
-
-  const orgName =
-    options?.organizationName ??
-    process.env.AWARD_ORGANIZATION_NAME ??
-    '1001 Movies You Must See Before You Die';
-  const catName =
-    options?.categoryName ??
-    process.env.AWARD_CATEGORY_NAME ??
-    'Selected Films';
-  const ceremonyDescription = options?.ceremonyName ?? orgName;
-
-  const organizationUid = await findOrCreateOrganization(database, orgName);
-  const categoryUid = await findOrCreateCategory(
-    database,
-    organizationUid,
-    catName,
-  );
-  const ceremonyUid = await findOrCreateCeremony(
-    database,
-    organizationUid,
-    ceremonyDescription,
-  );
-
-  console.log(
-    `Award context: org="${orgName}", category="${catName}", ceremony="${ceremonyDescription}"`,
-  );
-
-  cachedAwardContext = {organizationUid, categoryUid, ceremonyUid};
-  return cachedAwardContext;
-}
+  };
+})();
 
 async function fetchMovieByImdbId(
+  tmdbApiKey: string,
   imdbId: string,
 ): Promise<TmdbMovieDetails | undefined> {
   const findResult = await findTMDBByImdbId(imdbId, tmdbApiKey);
@@ -554,10 +562,10 @@ async function fetchMovieByImdbId(
   }
 
   if (findResult.mediaType === 'movie') {
-    return fetchMovieDetails(findResult.tmdbId);
+    return fetchMovieDetails(tmdbApiKey, findResult.tmdbId);
   }
 
-  const tvDetails = await fetchTvDetails(findResult.tmdbId);
+  const tvDetails = await fetchTvDetails(tmdbApiKey, findResult.tmdbId);
   if (tvDetails) {
     return {
       ...tvDetails,
@@ -569,6 +577,7 @@ async function fetchMovieByImdbId(
 }
 
 async function searchMovieByTitle(
+  tmdbApiKey: string,
   record: CsvMovieRow,
 ): Promise<TmdbMovieDetails | undefined> {
   const query = record['Original Title']?.trim() || record.Title?.trim();
@@ -593,7 +602,7 @@ async function searchMovieByTitle(
     };
     const results = data.results ?? [];
     for (const result of results) {
-      const details = await fetchMovieDetails(result.id);
+      const details = await fetchMovieDetails(tmdbApiKey, result.id);
       if (details) {
         return details;
       }
@@ -616,12 +625,12 @@ async function searchMovieByTitle(
     const pageResults = data.results ?? [];
     for (const result of pageResults) {
       if (result.media_type === 'movie') {
-        const details = await fetchMovieDetails(result.id);
+        const details = await fetchMovieDetails(tmdbApiKey, result.id);
         if (details) {
           return details;
         }
       } else if (result.media_type === 'tv') {
-        const details = await fetchTvDetails(result.id);
+        const details = await fetchTvDetails(tmdbApiKey, result.id);
         if (details) {
           return details;
         }
@@ -633,6 +642,7 @@ async function searchMovieByTitle(
 }
 
 async function fetchMovieDetails(
+  tmdbApiKey: string,
   tmdbId: number,
 ): Promise<TmdbMovieDetails | undefined> {
   const detailUrl = new URL(`${TMDB_API_BASE_URL}/movie/${tmdbId}`);
@@ -673,6 +683,7 @@ async function fetchMovieDetails(
 }
 
 async function fetchTvDetails(
+  tmdbApiKey: string,
   tmdbId: number,
 ): Promise<TmdbMovieDetails | undefined> {
   const detailUrl = new URL(`${TMDB_API_BASE_URL}/tv/${tmdbId}`);
@@ -736,6 +747,7 @@ async function fetchTvDetails(
 
 type InsertMovieParameters = {
   database: ReturnType<typeof getDatabase>;
+  tmdbConfig: TMDBConfig | undefined;
   imdbId: string;
   tmdbMovie: TmdbMovieDetails;
   jaTitle?: string;
@@ -753,6 +765,7 @@ type ExistingMovieRecord = {
 
 async function insertMovieWithTranslations({
   database,
+  tmdbConfig,
   imdbId,
   tmdbMovie,
   jaTitle,
@@ -806,17 +819,19 @@ async function insertMovieWithTranslations({
     tmdbId,
     tmdbMovie.media_type,
   );
-  await insertPoster(database, movieUid, tmdbMovie.poster_path);
+  await insertPoster(database, tmdbConfig, movieUid, tmdbMovie.poster_path);
 
   return movieUid;
 }
 
 async function insertMovieFromCsvRecord({
   database,
+  tmdbConfig,
   imdbId,
   record,
 }: {
   database: ReturnType<typeof getDatabase>;
+  tmdbConfig: TMDBConfig | undefined;
   imdbId: string;
   record: CsvMovieRow;
 }): Promise<string> {
@@ -836,6 +851,7 @@ async function insertMovieFromCsvRecord({
 
   return insertMovieWithTranslations({
     database,
+    tmdbConfig,
     imdbId,
     tmdbMovie: fallbackMovie,
     jaTitle: csvTitle,
@@ -953,15 +969,16 @@ async function insertReferenceUrls(
 
 async function insertPoster(
   database: ReturnType<typeof getDatabase>,
+  tmdbConfig: TMDBConfig | undefined,
   movieUid: string,
   posterPath?: string,
 ) {
-  if (!posterPath || !tmdbConfiguration) {
+  if (!posterPath || !tmdbConfig) {
     return;
   }
 
-  const baseUrl = tmdbConfiguration.images.secure_base_url;
-  const size = tmdbConfiguration.images.poster_sizes.includes('w500')
+  const baseUrl = tmdbConfig.images.secure_base_url;
+  const size = tmdbConfig.images.poster_sizes.includes('w500')
     ? 'w500'
     : 'original';
 

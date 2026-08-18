@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
 import type {MovieDetails} from './types';
 
 type TmdbAutoFetchProperties = {
@@ -45,10 +45,9 @@ export function TmdbAutoFetch({
       }
 
       if (!response.ok) {
-        const errorData = (await response
-          .json()
-          .catch(() => ({error: 'Unknown error'}))) as {error?: string};
-        throw new Error(errorData.error || 'TMDb自動取得に失敗しました');
+        throw new Error(
+          await readErrorMessage(response, 'TMDb自動取得に失敗しました'),
+        );
       }
 
       const result = (await response.json()) as {

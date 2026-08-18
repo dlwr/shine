@@ -19,10 +19,10 @@ export class ValidationError extends Error {
   }
 }
 
-export class TmdbConfigurationError extends Error {
+export class TmdbConfigError extends Error {
   constructor(message = 'TMDb API key not configured', options?: ErrorOptions) {
     super(message, options);
-    this.name = 'TmdbConfigurationError';
+    this.name = 'TmdbConfigError';
   }
 }
 

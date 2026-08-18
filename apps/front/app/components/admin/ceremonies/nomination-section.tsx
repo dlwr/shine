@@ -1,6 +1,10 @@
 import {useEffect, useMemo, useState} from 'react';
 import {Button} from '@/components/ui/button';
-import {adminFetch} from '@/lib/admin-fetch';
+import {
+  adminFetch,
+  readErrorMessage,
+  readJsonOrDefault,
+} from '@/lib/admin-fetch';
 import {AddNominationForm} from './add-nomination-form';
 import {findBestFilmCategory} from './best-film-category';
 import {ensureToken} from './ensure-token';
@@ -165,10 +169,9 @@ export function NominationSection({
       }
 
       if (!response.ok) {
-        const data = (await response
-          .json()
-          .catch(() => ({error: 'Unknown error'}))) as {error?: string};
-        throw new Error(data.error || '紐付けの削除に失敗しました。');
+        throw new Error(
+          await readErrorMessage(response, '紐付けの削除に失敗しました。'),
+        );
       }
 
       await refetchCeremony({showSpinner: false});
@@ -219,10 +222,10 @@ export function NominationSection({
         return;
       }
 
-      const data = (await response.json().catch(() => ({
+      const data = (await readJsonOrDefault(response, {
         success: false,
         error: 'Unknown error',
-      }))) as {
+      })) as {
         success?: boolean;
         error?: string;
         stats?: {

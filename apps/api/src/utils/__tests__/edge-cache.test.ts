@@ -15,7 +15,10 @@ function createStatefulCacheStub() {
       return store.delete(key);
     },
     async keys() {
-      return [...store.keys()].map(key => new Request(`http://cache/${key}`));
+      return store
+        .keys()
+        .map(key => new Request(`http://cache/${key}`))
+        .toArray();
     },
   };
 }
