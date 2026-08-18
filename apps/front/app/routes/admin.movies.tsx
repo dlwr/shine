@@ -158,11 +158,11 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 
     void fetchMovies();
 
-    globalThis.addEventListener('urlchange', fetchMovies);
-    globalThis.addEventListener('refetchMovies', fetchMovies);
+    addEventListener('urlchange', fetchMovies);
+    addEventListener('refetchMovies', fetchMovies);
     return () => {
-      globalThis.removeEventListener('urlchange', fetchMovies);
-      globalThis.removeEventListener('refetchMovies', fetchMovies);
+      removeEventListener('urlchange', fetchMovies);
+      removeEventListener('refetchMovies', fetchMovies);
     };
   }, [apiUrl]); // Only depend on apiUrl, use custom event for URL changes
 
@@ -171,7 +171,7 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
     if (success) {
       // Re-fetch movies
       const event = new CustomEvent('refetchMovies');
-      globalThis.dispatchEvent(event);
+      dispatchEvent(event);
     }
   };
 
@@ -187,7 +187,7 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
       if (success) {
         // Re-fetch movies
         const event = new CustomEvent('refetchMovies');
-        globalThis.dispatchEvent(event);
+        dispatchEvent(event);
       }
     }
   };
@@ -310,7 +310,7 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
               parameters.set('page', String(pagination.page - 1));
               const newUrl = `${location.pathname}?${parameters.toString()}`;
               history.replaceState({}, '', newUrl);
-              globalThis.dispatchEvent(new Event('urlchange'));
+              dispatchEvent(new Event('urlchange'));
             }}
             className="min-w-[120px]">
             Previous
@@ -334,7 +334,7 @@ const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
               parameters.set('page', String(pagination.page + 1));
               const newUrl = `${location.pathname}?${parameters.toString()}`;
               history.replaceState({}, '', newUrl);
-              globalThis.dispatchEvent(new Event('urlchange'));
+              dispatchEvent(new Event('urlchange'));
             }}
             className="min-w-[120px]">
             Next
@@ -491,7 +491,7 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
       const newUrl = `${location.pathname}?${newParameters.toString()}`;
       history.replaceState({}, '', newUrl);
       // Trigger custom event to update MoviesList
-      globalThis.dispatchEvent(new Event('urlchange'));
+      dispatchEvent(new Event('urlchange'));
     },
     [searchParameters],
   );
@@ -551,7 +551,7 @@ export default function AdminMovies({loaderData}: Route.ComponentProps) {
       setCreateSuccess(`Movie created successfully${importSummary}.`);
       setNewImdbId('');
 
-      globalThis.dispatchEvent(new Event('refetchMovies'));
+      dispatchEvent(new Event('refetchMovies'));
     } catch (error) {
       console.error('Create movie error:', error);
       setCreateError('Failed to create movie. Please try again.');

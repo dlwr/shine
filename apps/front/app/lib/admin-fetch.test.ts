@@ -40,12 +40,12 @@ describe('setAdminToken', () => {
 
   it('adminLoginイベントをdispatchする', () => {
     const listener = vi.fn();
-    globalThis.addEventListener('adminLogin', listener);
+    addEventListener('adminLogin', listener);
 
     setAdminToken('token-abc');
 
     expect(listener).toHaveBeenCalledTimes(1);
-    globalThis.removeEventListener('adminLogin', listener);
+    removeEventListener('adminLogin', listener);
   });
 });
 
@@ -60,12 +60,12 @@ describe('clearAdminToken', () => {
 
   it('adminLogoutイベントをdispatchする', () => {
     const listener = vi.fn();
-    globalThis.addEventListener('adminLogout', listener);
+    addEventListener('adminLogout', listener);
 
     clearAdminToken();
 
     expect(listener).toHaveBeenCalledTimes(1);
-    globalThis.removeEventListener('adminLogout', listener);
+    removeEventListener('adminLogout', listener);
   });
 });
 
@@ -129,12 +129,12 @@ describe('adminFetch', () => {
     localStorage.setItem('adminToken', 'token-xyz');
     fetchMock.mockResolvedValue(new Response('Unauthorized', {status: 401}));
     const listener = vi.fn();
-    globalThis.addEventListener('adminLogout', listener);
+    addEventListener('adminLogout', listener);
 
     await adminFetch('https://api.example.com/admin/movies');
 
     expect(listener).toHaveBeenCalledTimes(1);
-    globalThis.removeEventListener('adminLogout', listener);
+    removeEventListener('adminLogout', listener);
   });
 
   it('401でもそのResponseを返す', async () => {

@@ -33,9 +33,9 @@ type SearchResult = {
 export function normalizeTitle(title: string): string {
   return title
     .normalize('NFD')
-    .replaceAll(/[\u0300-\u036F]/g, '')
+    .replaceAll(/[\u{300}-\u{36F}]/gu, '')
     .toLowerCase()
-    .replaceAll(/[^a-z0-9\u3040-\u30FF\u4E00-\u9FFF]/g, '');
+    .replaceAll(/[^a-z0-9\u{3040}-\u{30FF}\u{4E00}-\u{9FFF}]/gu, '');
 }
 
 /**
@@ -282,7 +282,7 @@ async function resolveTmdbId(
 
   try {
     const data = await fetchJsonWithRetry<{results: SearchResult[]}>(
-      searchUrl.toString(),
+      searchUrl.href,
     );
     return pickStrictMatch(data.results ?? [], candidate.title, candidate.year);
   } catch (error) {

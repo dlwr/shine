@@ -81,13 +81,13 @@ export default tseslint.config(
       'unicorn/no-declarations-before-early-exit': 'off',
       'unicorn/no-incorrect-template-string-interpolation': 'off',
       'unicorn/no-this-outside-of-class': 'off',
-      'unicorn/no-unnecessary-global-this': 'off',
       'unicorn/no-unreadable-for-of-expression': 'off',
       'unicorn/no-top-level-assignment-in-function': 'off',
       'unicorn/no-unsafe-string-replacement': 'off',
       'unicorn/prefer-await': 'off',
       'unicorn/prefer-else-if': 'off',
       'unicorn/prefer-includes-over-repeated-comparisons': 'off',
+      // Iterator#toArray は tsconfig の lib が ES2023 なので型が無い
       'unicorn/prefer-iterator-to-array': 'off',
       'unicorn/prefer-minimal-ternary': 'off',
       'unicorn/prefer-number-coercion': 'off',
@@ -95,8 +95,6 @@ export default tseslint.config(
       'unicorn/prefer-simple-condition-first': 'off',
       'unicorn/prefer-simple-sort-comparator': 'off',
       'unicorn/prefer-ternary': 'off',
-      'unicorn/prefer-unicode-code-point-escapes': 'off',
-      'unicorn/prefer-url-href': 'off',
     },
   },
   {

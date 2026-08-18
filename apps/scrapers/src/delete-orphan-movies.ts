@@ -170,7 +170,7 @@ async function fetchTitleByImdbId(
     const data = await fetchJsonWithRetry<{
       movie_results?: Array<{title?: string}>;
       tv_results?: Array<{name?: string}>;
-    }>(url.toString());
+    }>(url.href);
 
     return data.movie_results?.[0]?.title ?? data.tv_results?.[0]?.name;
   } catch (error) {

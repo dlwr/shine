@@ -6,12 +6,12 @@ export function getAdminToken(): string | undefined {
 
 export function setAdminToken(token: string): void {
   globalThis.localStorage?.setItem(tokenKey, token);
-  globalThis.dispatchEvent(new Event('adminLogin'));
+  dispatchEvent(new Event('adminLogin'));
 }
 
 export function clearAdminToken(): void {
   globalThis.localStorage?.removeItem(tokenKey);
-  globalThis.dispatchEvent(new Event('adminLogout'));
+  dispatchEvent(new Event('adminLogout'));
 }
 
 export async function adminFetch(

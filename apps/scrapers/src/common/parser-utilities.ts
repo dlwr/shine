@@ -46,7 +46,7 @@ export function normalizeText(text: string): string {
   return text
     .trim()
     .replaceAll(/\s+/g, ' ')
-    .replaceAll(/[\u200B-\u200D\uFEFF]/g, ''); // ゼロ幅スペースなどの非表示文字を削除
+    .replaceAll(/[\u{200B}-\u{200D}\u{FEFF}]/gu, ''); // ゼロ幅スペースなどの非表示文字を削除
 }
 
 /**

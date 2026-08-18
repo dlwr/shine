@@ -173,12 +173,12 @@ export default function Home({loaderData}: Route.ComponentProps) {
       setAdminToken(undefined);
     };
 
-    globalThis.addEventListener('adminLogin', handleAdminLogin);
-    globalThis.addEventListener('adminLogout', handleAdminLogout);
+    addEventListener('adminLogin', handleAdminLogin);
+    addEventListener('adminLogout', handleAdminLogout);
 
     return () => {
-      globalThis.removeEventListener('adminLogin', handleAdminLogin);
-      globalThis.removeEventListener('adminLogout', handleAdminLogout);
+      removeEventListener('adminLogin', handleAdminLogin);
+      removeEventListener('adminLogout', handleAdminLogout);
     };
   }, []);
 

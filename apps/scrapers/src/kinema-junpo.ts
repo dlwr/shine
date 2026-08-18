@@ -400,7 +400,7 @@ export type TmdbSearchResult = {
 };
 
 function normalizeTitle(value: string | undefined): string {
-  return (value ?? '').replaceAll(/[\s\u3000]/g, '').toLowerCase();
+  return (value ?? '').replaceAll(/[\s\u{3000}]/gu, '').toLowerCase();
 }
 
 /** 外国映画は本国公開から日本公開までのずれがあるので過去側に幅を持たせる */
