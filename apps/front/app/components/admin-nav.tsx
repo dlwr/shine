@@ -10,10 +10,12 @@ const navItems = [
 ] as const;
 
 const handleLogout = () => {
-  if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
-    clearAdminToken();
-    globalThis.location.assign('/admin/login');
+  if (!(typeof globalThis !== 'undefined' && globalThis.localStorage)) {
+  	return;
   }
+
+  clearAdminToken();
+  globalThis.location.assign('/admin/login');
 };
 
 function findActiveHref(pathname: string): string | undefined {

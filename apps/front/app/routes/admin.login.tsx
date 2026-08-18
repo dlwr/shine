@@ -60,16 +60,16 @@ export default function AdminLogin({actionData}: Route.ComponentProps) {
 
   // ログイン成功時の処理
   useEffect(() => {
-    if (
-      actionData?.success &&
+    if (!(actionData?.success &&
       actionData?.token &&
-      globalThis.window !== undefined
-    ) {
-      setAdminToken(actionData.token);
-      console.log('Token saved, redirecting to /admin/movies');
-
-      navigate('/admin/movies', {replace: true});
+      globalThis.window !== undefined)) {
+    	return;
     }
+
+    setAdminToken(actionData.token);
+    console.log('Token saved, redirecting to /admin/movies');
+
+    navigate('/admin/movies', {replace: true});
   }, [actionData, navigate]);
 
   return (
