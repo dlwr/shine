@@ -467,7 +467,7 @@ function extractMoviesFromText(text: string, year: number): MovieInfo[] {
   return movies;
 }
 
-function extractMoviesFromTableWithYear(
+export function extractMoviesFromTableWithYear(
   $: cheerio.CheerioAPI,
   $table: cheerio.Cheerio<AnyNode>,
   year: number,
@@ -538,11 +538,12 @@ function extractMoviesFromTableWithYear(
           }
         }
 
+        // 最優秀作品賞は優秀作品賞5本から選ばれるので、受賞作も優秀作品賞に入れる
         movies.push({
           title,
           year,
           isWinner,
-          categoryType: isWinner ? 'Best Picture' : 'Excellent Picture',
+          categoryType: 'Excellent Picture',
           referenceUrl,
         });
       }
