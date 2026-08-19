@@ -50,10 +50,14 @@ export function japaneseAwardNames(
   categoryName: string,
 ): {organization?: string; category?: string} {
   const definition = findAwardPageDefinition(organizationName, categoryName);
+  if (!definition) {
+    return {};
+  }
 
-  return definition
+  // 複数カテゴリを束ねるページの name はページ名なので、カテゴリ名には使えない
+  return definition.categoryNames.length === 1
     ? {organization: definition.organization, category: definition.name}
-    : {};
+    : {organization: definition.organization};
 }
 
 const RANK_PATTERN = /^(\d+)位$/;

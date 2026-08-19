@@ -662,6 +662,12 @@ describe('japaneseAwardNames', () => {
     });
   });
 
+  it('複数カテゴリを束ねるページではカテゴリ名を上書きしない', () => {
+    expect(japaneseAwardNames('Japan Academy Awards', '優秀作品賞')).toEqual({
+      organization: '日本アカデミー賞',
+    });
+  });
+
   it('賞ページの無い組織には何も返さない', () => {
     expect(japaneseAwardNames('Unknown Org', 'Unknown Category')).toEqual({});
   });
