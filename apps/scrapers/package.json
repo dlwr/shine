@@ -21,6 +21,7 @@
     "berlin-film-festival": "tsx src/berlin-film-festival-cli.ts",
     "kinema-junpo": "tsx src/kinema-junpo-cli.ts",
     "movie-credits": "tsx src/movie-credits-cli.ts",
+    "movie-descriptions": "tsx src/movie-descriptions-cli.ts",
     "sns-post": "tsx src/sns-post-cli.ts"
   },
   "dependencies": {

@@ -339,12 +339,64 @@ describe('MovieDetail Component', () => {
       });
     });
 
-    it('説明文に選出元の団体名を日本語で含む', () => {
+    it('説明文に選出元の団体名とあらすじを日本語で含む', () => {
       expect(successMeta()).toContainEqual({
+        name: 'description',
+        content:
+          '『パルム・ドール受賞作品』(2023年)。カンヌ国際映画祭・アカデミー賞に選出。カンヌ国際映画祭でパルム・ドールを受賞した作品',
+      });
+    });
+
+    it('あらすじが無い場合は配信状況の案内を返す', () => {
+      const result = meta(
+        createMetaArguments(
+          {
+            movieDetail: {...mockMovieDetail, description: undefined},
+            locale: 'ja',
+          },
+          {id: 'movie-123'},
+        ),
+      );
+
+      expect(result).toContainEqual({
         name: 'description',
         content:
           '『パルム・ドール受賞作品』(2023年)。カンヌ国際映画祭・アカデミー賞に選出。いま配信・レンタルで観られるかをまとめています。',
       });
+    });
+
+    it('長いあらすじは120文字に切り詰める', () => {
+      const result = meta(
+        createMetaArguments(
+          {
+            movieDetail: {...mockMovieDetail, description: 'あ'.repeat(200)},
+            locale: 'ja',
+          },
+          {id: 'movie-123'},
+        ),
+      );
+      const descriptor = result.find(
+        item => 'name' in item && item.name === 'description',
+      ) as {content: string};
+
+      expect([...descriptor.content]).toHaveLength(120);
+    });
+
+    it('切り詰めたあらすじの末尾に三点リーダーを付ける', () => {
+      const result = meta(
+        createMetaArguments(
+          {
+            movieDetail: {...mockMovieDetail, description: 'あ'.repeat(200)},
+            locale: 'ja',
+          },
+          {id: 'movie-123'},
+        ),
+      );
+      const descriptor = result.find(
+        item => 'name' in item && item.name === 'description',
+      ) as {content: string};
+
+      expect(descriptor.content.endsWith('…')).toBe(true);
     });
 
     it('og:imageに生成カードのURLを返す', () => {
@@ -396,7 +448,11 @@ describe('MovieDetail Component', () => {
       const result = meta(
         createMetaArguments(
           {
-            movieDetail: {...mockMovieDetail, nominations: []},
+            movieDetail: {
+              ...mockMovieDetail,
+              nominations: [],
+              description: undefined,
+            },
             locale: 'ja',
           },
           {id: 'movie-123'},

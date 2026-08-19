@@ -16,6 +16,7 @@ export type TMDBMovieData = {
   title: string;
   original_title: string;
   original_language?: string;
+  overview?: string;
   release_date: string;
   imdb_id?: string;
   poster_path?: string;
@@ -39,6 +40,7 @@ export type TMDBTvData = {
   name: string;
   original_name: string;
   original_language?: string;
+  overview?: string;
   first_air_date: string;
   imdb_id?: string;
   poster_path?: string;
@@ -279,6 +281,7 @@ export async function fetchTMDBTvDetails(
       title: data.name,
       original_title: data.original_name,
       original_language: data.original_language,
+      overview: data.overview,
       release_date: data.first_air_date,
       poster_path: data.poster_path,
       translations: data.translations,
