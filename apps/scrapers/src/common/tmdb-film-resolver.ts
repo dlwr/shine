@@ -1,10 +1,7 @@
 import {setTimeout as sleep} from 'node:timers/promises';
 import {buildUrl, fetchJsonWithRetry} from './fetch-utilities';
 import {fetchTMDBMovieDetails} from './tmdb-utilities';
-import {
-  type FilmReference,
-  type ResolvedFilm,
-} from './wikidata-film-resolver';
+import {type FilmReference, type ResolvedFilm} from './wikidata-film-resolver';
 
 const TMDB_API = 'https://api.themoviedb.org/3';
 const IMDB_ID_PATTERN = /^tt\d+$/;
@@ -115,18 +112,19 @@ export async function resolveFilmsByTmdb(
   return resolved;
 }
 
-
 /** 記事名から同定できなかった作品を、邦題と年でTMDbから引き直す */
 export async function resolveRemainingByTmdb({
   references,
   resolved,
   tmdbApiKey,
   throttleMs,
+  resolveFilms = resolveFilmsByTmdb,
 }: {
   references: FilmReference[];
   resolved: Map<string, ResolvedFilm>;
   tmdbApiKey: string | undefined;
   throttleMs: number;
+  resolveFilms?: typeof resolveFilmsByTmdb;
 }): Promise<number> {
   if (!tmdbApiKey) {
     return 0;
@@ -147,7 +145,7 @@ export async function resolveRemainingByTmdb({
   );
 
   console.log(`TMDb fallback for ${pending.size} films...`);
-  const fallback = await resolveFilmsByTmdb(
+  const fallback = await resolveFilms(
     pending.values().toArray(),
     tmdbApiKey,
     throttleMs,

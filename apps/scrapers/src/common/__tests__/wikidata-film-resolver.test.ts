@@ -1,6 +1,7 @@
 import {describe, expect, it, vi} from 'vitest';
 import {
   collectDuplicateResolutions,
+  dropDuplicateResolutions,
   collectImplausibleResolutions,
   dropMisattributedResolutions,
   isPlausiblePublicationYear,
@@ -193,5 +194,43 @@ describe('collectDuplicateResolutions', () => {
     expect(collectDuplicateResolutions(references, createResolved())).toEqual(
       [],
     );
+  });
+});
+
+describe('dropDuplicateResolutions', () => {
+  const serialReferences: FilmReference[] = [
+    {key: '学校', title: '学校', targetYear: 1993, yearWindow: SAME_YEAR},
+    {key: '学校', title: '学校II', targetYear: 1996, yearWindow: SAME_YEAR},
+    {
+      key: 'キクとイサム',
+      title: 'キクとイサム',
+      targetYear: 1959,
+      yearWindow: SAME_YEAR,
+    },
+  ];
+
+  it('複数の年が指している解決結果を捨てる', () => {
+    const resolved = new Map<string, ResolvedFilm>([
+      ['学校', {imdbId: 'tt0338679'}],
+      ['キクとイサム', {imdbId: 'tt0052858'}],
+    ]);
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const dropped = dropDuplicateResolutions(serialReferences, resolved);
+
+    expect(dropped).toBe(1);
+    expect(resolved.has('学校')).toBe(false);
+  });
+
+  it('1つの年しか指していない解決結果は残す', () => {
+    const resolved = new Map<string, ResolvedFilm>([
+      ['学校', {imdbId: 'tt0338679'}],
+      ['キクとイサム', {imdbId: 'tt0052858'}],
+    ]);
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    dropDuplicateResolutions(serialReferences, resolved);
+
+    expect(resolved.has('キクとイサム')).toBe(true);
   });
 });
