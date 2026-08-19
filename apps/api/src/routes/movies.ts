@@ -26,6 +26,7 @@ import {
   createETag,
   EdgeCache,
   getCacheKeyForMovie,
+  getCacheKeyForSearch,
   getCacheTTL,
 } from '../utils/cache';
 import {parsePagination} from '../utils/pagination';
@@ -96,16 +97,31 @@ moviesRoutes.get('/search', async c => {
       hasAwards = undefined;
     }
 
-    const result = await moviesService.searchMovies({
-      page,
-      limit,
+    const filters = {
       query,
       year: yearFilter ? Number(yearFilter) : undefined,
       language: languageFilter,
       hasAwards,
+    };
+
+    const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+    const cacheKey = getCacheKeyForSearch(query ?? '', page, limit, filters);
+    const cached = await cache.get(cacheKey);
+
+    if (cached?.data) {
+      return c.json(cached.data as Record<string, unknown>);
+    }
+
+    const result = await moviesService.searchMovies({
+      page,
+      limit,
+      query,
+      year: filters.year,
+      language: languageFilter,
+      hasAwards,
     });
 
-    return c.json({
+    const body = {
       movies: result.movies,
       pagination: {
         currentPage: result.pagination.currentPage,
@@ -114,13 +130,16 @@ moviesRoutes.get('/search', async c => {
         hasNextPage: result.pagination.hasNext,
         hasPrevPage: result.pagination.hasPrev,
       },
-      filters: {
-        query,
-        year: yearFilter ? Number(yearFilter) : undefined,
-        language: languageFilter,
-        hasAwards,
-      },
-    });
+      filters,
+    };
+
+    await cache.set(
+      cacheKey,
+      body,
+      query ? getCacheTTL.search.specific : getCacheTTL.search.common,
+    );
+
+    return c.json(body);
   } catch (error) {
     console.error('Error searching movies:', error);
     return c.json({error: 'Internal server error'}, 500);
