@@ -28,6 +28,7 @@
     "scrapers:kinema-junpo": "pnpm --filter @shine/scrapers run kinema-junpo",
     "scrapers:movie-credits": "pnpm --filter @shine/scrapers run movie-credits",
     "scrapers:movie-descriptions": "pnpm --filter @shine/scrapers run movie-descriptions",
+    "scrapers:fix-original-languages": "pnpm --filter @shine/scrapers run fix-original-languages",
     "scrapers:movie-import": "pnpm --filter @shine/scrapers run movie-import",
     "scrapers:import-imdb-list": "pnpm --filter @shine/scrapers run import-imdb-list",
     "scrapers:availability-check": "pnpm --filter @shine/scrapers run availability-check",
