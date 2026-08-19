@@ -8,11 +8,8 @@ import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {describe, expect, it} from 'vitest';
-import {
-  backfillJapaneseTitles,
-  type KinemaJunpoEdition,
-  type ResolvedFilm,
-} from '../kinema-junpo';
+import {type ResolvedFilm} from '../common/wikidata-film-resolver';
+import {backfillJapaneseTitles, type KinemaJunpoEdition} from '../kinema-junpo';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(

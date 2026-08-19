@@ -1,11 +1,18 @@
-import {setTimeout as sleep} from 'node:timers/promises';
 import {hasJapaneseText} from '@shine/availability';
 import {and, eq, inArray, isNull} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {buildUrl, fetchJsonWithRetry} from './common/fetch-utilities';
-import {fetchTMDBMovieDetails} from './common/tmdb-utilities';
+import {resolveRemainingByTmdb} from './common/tmdb-film-resolver';
+import {
+  dropMisattributedResolutions,
+  reportDuplicateResolutions,
+  resolveFilmsByWikipediaPage,
+  type FilmReference,
+  type ResolvedFilm,
+  type YearWindow,
+} from './common/wikidata-film-resolver';
 import {
   importImdbEventAward,
   type ImdbEventAwardConfig,
@@ -14,10 +21,7 @@ import {
   type ImdbEventNomination,
 } from './imdb-event-award';
 
-const TMDB_API = 'https://api.themoviedb.org/3';
-const IMDB_ID_PATTERN = /^tt\d+$/;
 const WIKIPEDIA_API = 'https://ja.wikipedia.org/w/api.php';
-const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
 const WIKIPEDIA_ARTICLE = 'キネマ旬報';
 const SOURCE_URL = 'https://ja.wikipedia.org/wiki/キネマ旬報';
 const USER_AGENT = 'shine-film.com movie database (https://shine-film.com)';
@@ -61,12 +65,6 @@ export type KinemaJunpoEdition = {
   year: number;
   japanese: KinemaJunpoFilm[];
   foreign: KinemaJunpoFilm[];
-};
-
-export type ResolvedFilm = {
-  imdbId: string;
-  englishTitle?: string;
-  publicationYear?: number;
 };
 
 // 1924年度から毎年。戦争で1943〜1945年度は中止され、1946年度の第20回で再開した
@@ -161,6 +159,36 @@ export function filmKey(film: KinemaJunpoFilm): string {
   return film.page ?? `title:${film.title}`;
 }
 
+/** 日本映画は年度＝公開年。映画祭プレミアで前年、年始公開で翌年になることはある */
+const JAPANESE_PUBLICATION_WINDOW: YearWindow = {min: -1, max: 1};
+
+/** 外国映画は本国公開の後に日本公開されるので年度より前になる */
+const FOREIGN_PUBLICATION_WINDOW: YearWindow = {
+  min: -Infinity,
+  max: 1,
+};
+
+export function kinemaJunpoFilmReferences(
+  editions: KinemaJunpoEdition[],
+): FilmReference[] {
+  return editions.flatMap(edition => [
+    ...edition.japanese.map(film => ({
+      key: filmKey(film),
+      title: film.title,
+      targetYear: edition.year,
+      yearWindow: JAPANESE_PUBLICATION_WINDOW,
+      foreign: false,
+    })),
+    ...edition.foreign.map(film => ({
+      key: filmKey(film),
+      title: film.title,
+      targetYear: edition.year,
+      yearWindow: FOREIGN_PUBLICATION_WINDOW,
+      foreign: true,
+    })),
+  ]);
+}
+
 function buildNominations(
   films: KinemaJunpoFilm[],
   resolved: Map<string, ResolvedFilm>,
@@ -245,32 +273,6 @@ export const kinemaJunpoForeignConfig: ImdbEventAwardConfig = {
   isCompetitionCategory: category => category === FOREIGN_CATEGORY,
 };
 
-type WikipediaPagePropertiesResponse = {
-  query?: {
-    normalized?: Array<{from: string; to: string}>;
-    redirects?: Array<{from: string; to: string}>;
-    pages?: Record<
-      string,
-      {title?: string; pageprops?: {wikibase_item?: string}}
-    >;
-  };
-};
-
-type WikidataClaims = Record<
-  string,
-  Array<{mainsnak?: {datavalue?: {value?: unknown}}}>
->;
-
-type WikidataEntitiesResponse = {
-  entities?: Record<
-    string,
-    {
-      claims?: WikidataClaims;
-      labels?: Record<string, {value?: string}>;
-    }
-  >;
-};
-
 export async function fetchKinemaJunpoWikitext(): Promise<string> {
   const url = buildUrl(WIKIPEDIA_API, {
     action: 'parse',
@@ -291,451 +293,6 @@ export async function fetchKinemaJunpoWikitext(): Promise<string> {
   }
 
   return wikitext;
-}
-
-async function fetchWikibaseItems(
-  pages: string[],
-): Promise<Map<string, string>> {
-  const url = buildUrl(WIKIPEDIA_API, {
-    action: 'query',
-    prop: 'pageprops',
-    ppprop: 'wikibase_item',
-    redirects: '1',
-    format: 'json',
-    titles: pages.join('|'),
-  });
-
-  const response = await fetchJsonWithRetry<WikipediaPagePropertiesResponse>(
-    url,
-    {
-      headers: {'User-Agent': USER_AGENT},
-    },
-  );
-
-  const normalized = new Map(
-    (response.query?.normalized ?? []).map(entry => [entry.from, entry.to]),
-  );
-  const redirects = new Map(
-    (response.query?.redirects ?? []).map(entry => [entry.from, entry.to]),
-  );
-  const byTitle = new Map(
-    Object.values(response.query?.pages ?? {}).map(page => [page.title, page]),
-  );
-
-  const items = new Map<string, string>();
-  for (const page of pages) {
-    const title = normalized.get(page) ?? page;
-    const resolvedTitle = redirects.get(title) ?? title;
-    const item = byTitle.get(resolvedTitle)?.pageprops?.wikibase_item;
-    if (item) {
-      items.set(page, item);
-    }
-  }
-
-  return items;
-}
-
-async function fetchImdbIds(
-  itemIds: string[],
-): Promise<Map<string, ResolvedFilm>> {
-  const url = buildUrl(WIKIDATA_API, {
-    action: 'wbgetentities',
-    props: 'claims|labels',
-    languages: 'en',
-    format: 'json',
-    ids: itemIds.join('|'),
-  });
-
-  const response = await fetchJsonWithRetry<WikidataEntitiesResponse>(url, {
-    headers: {'User-Agent': USER_AGENT},
-  });
-
-  const films = new Map<string, ResolvedFilm>();
-  const entityEntries = Object.entries(response.entities ?? {});
-  for (const [itemId, entity] of entityEntries) {
-    const imdbId = entity.claims?.P345?.[0]?.mainsnak?.datavalue?.value;
-    if (typeof imdbId !== 'string' || !/^tt\d+$/.test(imdbId)) {
-      continue;
-    }
-
-    films.set(itemId, {
-      imdbId,
-      englishTitle: entity.labels?.en?.value,
-      publicationYear: publicationYearFromClaims(entity.claims),
-    });
-  }
-
-  return films;
-}
-
-/** WikidataのP577（publication date）から最も早い公開年を取り出す */
-export function publicationYearFromClaims(
-  claims: WikidataClaims | undefined,
-): number | undefined {
-  const years = (claims?.P577 ?? [])
-    .map(claim => {
-      const value = claim.mainsnak?.datavalue?.value;
-      if (typeof value !== 'object' || value === null || !('time' in value)) {
-        return;
-      }
-
-      const {time} = value as {time?: unknown};
-      if (typeof time !== 'string') {
-        return;
-      }
-
-      const year = /^\+(\d{4})/.exec(time)?.[1];
-      return year === undefined ? undefined : Number(year);
-    })
-    .filter((year): year is number => year !== undefined);
-
-  return years.length > 0 ? Math.min(...years) : undefined;
-}
-
-/**
- * 日本映画はその年度の公開作（映画祭プレミアで前年、年始公開で翌年になることはある）、
- * 外国映画は本国公開の後に日本公開されるので年度より前になる
- */
-export function isPlausibleEditionYear(
-  publicationYear: number | undefined,
-  editionYear: number,
-  category: 'japanese' | 'foreign',
-): boolean {
-  if (publicationYear === undefined) {
-    return true;
-  }
-
-  const difference = publicationYear - editionYear;
-  if (difference > 1) {
-    return false;
-  }
-
-  return category === 'foreign' || difference >= -1;
-}
-
-export type ResolutionCandidate = {
-  key: string;
-  title: string;
-  editionYear: number;
-  category: 'japanese' | 'foreign';
-  imdbId: string;
-  publicationYear?: number;
-};
-
-/** リメイクや続編の記事は最新版のIMDb IDを返すので、年の合わない解決結果を洗い出す */
-export function collectImplausibleResolutions(
-  editions: KinemaJunpoEdition[],
-  resolved: Map<string, ResolvedFilm>,
-): ResolutionCandidate[] {
-  return editions.flatMap(edition => [
-    ...implausibleFilms(edition.japanese, edition.year, 'japanese', resolved),
-    ...implausibleFilms(edition.foreign, edition.year, 'foreign', resolved),
-  ]);
-}
-
-function implausibleFilms(
-  films: KinemaJunpoFilm[],
-  editionYear: number,
-  category: 'japanese' | 'foreign',
-  resolved: Map<string, ResolvedFilm>,
-): ResolutionCandidate[] {
-  const candidates: ResolutionCandidate[] = [];
-
-  for (const film of films) {
-    const key = filmKey(film);
-    const match = resolved.get(key);
-    if (
-      !match ||
-      isPlausibleEditionYear(match.publicationYear, editionYear, category)
-    ) {
-      continue;
-    }
-
-    candidates.push({
-      key,
-      title: film.title,
-      editionYear,
-      category,
-      imdbId: match.imdbId,
-      publicationYear: match.publicationYear,
-    });
-  }
-
-  return candidates;
-}
-
-export type DuplicateResolution = {
-  imdbId: string;
-  entries: Array<{editionYear: number; title: string}>;
-};
-
-/**
- * 連作は日本語版Wikipediaの記事が1本しかないので、第一部と第二部が
- * 同じIMDb IDに解決される。年ガードでは検出できないので別に報告する
- */
-export function collectDuplicateResolutions(
-  editions: KinemaJunpoEdition[],
-  resolved: Map<string, ResolvedFilm>,
-): DuplicateResolution[] {
-  const byImdbId = new Map<
-    string,
-    Array<{editionYear: number; title: string}>
-  >();
-
-  const films = editions.flatMap(edition =>
-    [...edition.japanese, ...edition.foreign].map(film => ({
-      film,
-      editionYear: edition.year,
-    })),
-  );
-
-  for (const {film, editionYear} of films) {
-    const match = resolved.get(filmKey(film));
-    if (!match) {
-      continue;
-    }
-
-    const entries = byImdbId.get(match.imdbId) ?? [];
-    entries.push({editionYear, title: film.title});
-    byImdbId.set(match.imdbId, entries);
-  }
-
-  return [...byImdbId]
-    .filter(
-      ([, entries]) =>
-        new Set(entries.map(entry => entry.editionYear)).size > 1,
-    )
-    .map(([imdbId, entries]) => ({imdbId, entries}));
-}
-
-type TmdbFindResponse = {movie_results?: Array<{release_date?: string}>};
-
-async function fetchTmdbReleaseYear(
-  imdbId: string,
-  tmdbApiKey: string,
-): Promise<number | undefined> {
-  const url = buildUrl(`${TMDB_API}/find/${imdbId}`, {
-    api_key: tmdbApiKey,
-    external_source: 'imdb_id',
-  });
-
-  try {
-    const response = await fetchJsonWithRetry<TmdbFindResponse>(url);
-    const year = response.movie_results?.[0]?.release_date?.slice(0, 4);
-    return year ? Number(year) : undefined;
-  } catch (error) {
-    console.warn(`  TMDbの公開年を取得できません (${imdbId}):`, error);
-    return undefined;
-  }
-}
-
-/**
- * Wikidataの公開日には原作小説の出版年が入っていることがあるので、
- * 年が合わないものはTMDbの公開年で確かめてから捨てる
- */
-export async function dropMisattributedResolutions({
-  editions,
-  resolved,
-  tmdbApiKey,
-  throttleMs = 300,
-  fetchReleaseYear,
-}: {
-  editions: KinemaJunpoEdition[];
-  resolved: Map<string, ResolvedFilm>;
-  tmdbApiKey?: string;
-  throttleMs?: number;
-  fetchReleaseYear?: (imdbId: string) => Promise<number | undefined>;
-}): Promise<number> {
-  const candidates = collectImplausibleResolutions(editions, resolved);
-  if (candidates.length === 0) {
-    return 0;
-  }
-
-  console.log(`Verifying ${candidates.length} resolutions with unlikely years`);
-
-  const resolveYear =
-    fetchReleaseYear ??
-    (tmdbApiKey
-      ? async (imdbId: string) => fetchTmdbReleaseYear(imdbId, tmdbApiKey)
-      : undefined);
-
-  let dropped = 0;
-  for (const candidate of candidates) {
-    const releaseYear = await resolveYear?.(candidate.imdbId);
-    const label = `${candidate.title}（${candidate.editionYear}年度, ${candidate.key}）-> ${candidate.imdbId}`;
-
-    if (releaseYear === undefined) {
-      console.warn(`  公開年を確認できないので残す: ${label}`);
-      continue;
-    }
-
-    if (
-      isPlausibleEditionYear(
-        releaseYear,
-        candidate.editionYear,
-        candidate.category,
-      )
-    ) {
-      continue;
-    }
-
-    console.warn(`  別の作品と判断して除外: ${label}（TMDb ${releaseYear}年）`);
-    resolved.delete(candidate.key);
-    dropped++;
-
-    if (throttleMs > 0) {
-      await sleep(throttleMs);
-    }
-  }
-
-  return dropped;
-}
-
-export async function resolveFilmsByWikipediaPage(
-  pages: string[],
-): Promise<Map<string, ResolvedFilm>> {
-  const itemsByPage = new Map<string, string>();
-  for (let index = 0; index < pages.length; index += BATCH_SIZE) {
-    const batch = pages.slice(index, index + BATCH_SIZE);
-    const wikibaseItems = await fetchWikibaseItems(batch);
-    for (const [page, item] of wikibaseItems) {
-      itemsByPage.set(page, item);
-    }
-
-    console.log(
-      `  Wikipedia: ${Math.min(index + BATCH_SIZE, pages.length)}/${pages.length}`,
-    );
-  }
-
-  const itemIds = [...new Set(itemsByPage.values())];
-  const filmsByItem = new Map<string, ResolvedFilm>();
-  for (let index = 0; index < itemIds.length; index += BATCH_SIZE) {
-    const batch = itemIds.slice(index, index + BATCH_SIZE);
-    const imdbIds = await fetchImdbIds(batch);
-    for (const [item, film] of imdbIds) {
-      filmsByItem.set(item, film);
-    }
-
-    console.log(
-      `  Wikidata: ${Math.min(index + BATCH_SIZE, itemIds.length)}/${itemIds.length}`,
-    );
-  }
-
-  const resolved = new Map<string, ResolvedFilm>();
-  for (const [page, item] of itemsByPage) {
-    const film = filmsByItem.get(item);
-    if (film) {
-      resolved.set(page, film);
-    }
-  }
-
-  return resolved;
-}
-
-export type TmdbSearchResult = {
-  id: number;
-  title?: string;
-  original_title?: string;
-  release_date?: string;
-  original_language?: string;
-};
-
-function normalizeTitle(value: string | undefined): string {
-  return (value ?? '').replaceAll(/[\s\u{3000}]/gu, '').toLowerCase();
-}
-
-/** 外国映画は本国公開から日本公開までのずれがあるので過去側に幅を持たせる */
-const FOREIGN_YEAR_WINDOW = 15;
-
-/** 同名のリメイクが多いので、絞り込んだ結果が1件のときだけ採用する */
-export function selectTmdbMatch(
-  results: TmdbSearchResult[],
-  title: string,
-  year: number,
-  {foreign = false}: {foreign?: boolean} = {},
-): TmdbSearchResult | undefined {
-  const normalized = normalizeTitle(title);
-  const matches = results.filter(result => {
-    const isJapanese = result.original_language === 'ja';
-    if (foreign === isJapanese) {
-      return false;
-    }
-
-    const releaseDate = result.release_date?.slice(0, 4);
-    if (!releaseDate) {
-      return false;
-    }
-
-    const releaseYear = Number(releaseDate);
-    if (!Number.isFinite(releaseYear)) {
-      return false;
-    }
-
-    const earliest = year - (foreign ? FOREIGN_YEAR_WINDOW : 1);
-    if (releaseYear < earliest || releaseYear > year + 1) {
-      return false;
-    }
-
-    return (
-      normalizeTitle(result.title) === normalized ||
-      normalizeTitle(result.original_title) === normalized
-    );
-  });
-
-  return matches.length === 1 ? matches[0] : undefined;
-}
-
-async function searchTmdbByJapaneseTitle(
-  title: string,
-  tmdbApiKey: string,
-): Promise<TmdbSearchResult[]> {
-  const url = buildUrl(`${TMDB_API}/search/movie`, {
-    api_key: tmdbApiKey,
-    query: title,
-    language: 'ja-JP',
-    include_adult: 'false',
-  });
-
-  const response = await fetchJsonWithRetry<{results?: TmdbSearchResult[]}>(
-    url,
-  );
-
-  return response.results ?? [];
-}
-
-export async function resolveFilmsByTmdb(
-  entries: Array<{key: string; title: string; year: number; foreign: boolean}>,
-  tmdbApiKey: string,
-  throttleMs: number,
-): Promise<Map<string, ResolvedFilm>> {
-  const resolved = new Map<string, ResolvedFilm>();
-
-  for (const entry of entries) {
-    try {
-      const results = await searchTmdbByJapaneseTitle(entry.title, tmdbApiKey);
-      const match = selectTmdbMatch(results, entry.title, entry.year, {
-        foreign: entry.foreign,
-      });
-      if (match) {
-        const details = await fetchTMDBMovieDetails(match.id, tmdbApiKey);
-        const imdbId = details?.imdb_id;
-        if (imdbId && IMDB_ID_PATTERN.test(imdbId)) {
-          resolved.set(entry.key, {imdbId, englishTitle: details?.title});
-          console.log(
-            `  TMDb fallback: ${entry.title} (${entry.year}) -> ${imdbId} (TMDb ${match.id})`,
-          );
-        }
-      }
-    } catch (error) {
-      console.error(`  TMDb fallback failed for ${entry.title}:`, error);
-    }
-
-    if (throttleMs > 0) {
-      await sleep(throttleMs);
-    }
-  }
-
-  return resolved;
 }
 
 function collectJapaneseTitles(
@@ -869,8 +426,9 @@ export async function importKinemaJunpo({
   const resolved = await resolveFilmsByWikipediaPage(pages);
   console.log(`Resolved ${resolved.size}/${pages.length} articles`);
 
+  const references = kinemaJunpoFilmReferences(editions);
   const dropped = await dropMisattributedResolutions({
-    editions,
+    references,
     resolved,
     tmdbApiKey: environment.TMDB_API_KEY,
     throttleMs,
@@ -879,48 +437,14 @@ export async function importKinemaJunpo({
     console.log(`Dropped ${dropped} misattributed resolutions`);
   }
 
-  for (const duplicate of collectDuplicateResolutions(editions, resolved)) {
-    const where = duplicate.entries
-      .map(entry => `${entry.editionYear}年度「${entry.title}」`)
-      .join('、');
-    console.warn(
-      `  複数の年度が同じ映画を指しています: ${duplicate.imdbId} — ${where}`,
-    );
-  }
+  reportDuplicateResolutions(references, resolved);
 
-  if (environment.TMDB_API_KEY) {
-    const pending = new Map(
-      editions.flatMap(edition =>
-        [
-          ...edition.japanese.map(film => ({film, foreign: false})),
-          ...edition.foreign.map(film => ({film, foreign: true})),
-        ]
-          .filter(({film}) => !resolved.has(filmKey(film)))
-          .map(({film, foreign}) => [
-            filmKey(film),
-            {
-              key: filmKey(film),
-              title: film.title,
-              year: edition.year,
-              foreign,
-            },
-          ]),
-      ),
-    );
-
-    console.log(`TMDb fallback for ${pending.size} films...`);
-    const fallback = await resolveFilmsByTmdb(
-      pending.values().toArray(),
-      environment.TMDB_API_KEY,
-      throttleMs,
-    );
-
-    for (const [key, film] of fallback) {
-      resolved.set(key, film);
-    }
-
-    console.log(`TMDb fallback resolved ${fallback.size}/${pending.size}`);
-  }
+  await resolveRemainingByTmdb({
+    references,
+    resolved,
+    tmdbApiKey: environment.TMDB_API_KEY,
+    throttleMs,
+  });
 
   const data = toImdbEventData(editions, resolved);
 
