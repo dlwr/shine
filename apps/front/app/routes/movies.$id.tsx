@@ -450,6 +450,25 @@ function summarizeOrganizations(
   return names.slice(0, MAX_DESCRIPTION_ORGANIZATIONS).join('・');
 }
 
+const MAX_META_DESCRIPTION_LENGTH = 120;
+
+function buildMetaDescription(
+  headline: string,
+  synopsis: string | undefined,
+): string {
+  const room = MAX_META_DESCRIPTION_LENGTH - [...headline].length;
+
+  if (!synopsis || room <= 0) {
+    return `${headline}いま配信・レンタルで観られるかをまとめています。`;
+  }
+
+  const characters = [...synopsis];
+
+  return characters.length > room
+    ? `${headline}${characters.slice(0, room - 1).join('')}…`
+    : `${headline}${synopsis}`;
+}
+
 function buildMovieJsonLd(
   movieDetail: MovieDetailData,
 ): Record<string, unknown> {
@@ -506,7 +525,10 @@ export function meta({
   return [
     ...buildSocialMeta({
       title: `${title} (${year}) | SHINE`,
-      description: `『${title}』(${year}年)。${selection}いま配信・レンタルで観られるかをまとめています。`,
+      description: buildMetaDescription(
+        `『${title}』(${year}年)。${selection}`,
+        movieDetail?.description,
+      ),
       path,
       locale,
       type: 'article',
