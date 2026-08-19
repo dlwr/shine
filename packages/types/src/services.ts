@@ -253,3 +253,18 @@ export type MergeMoviesOptions = {
   preserveTranslations?: boolean;
   preservePosters?: boolean;
 };
+
+export type PersonDetail = {
+  uid: string;
+  name: string;
+  originalName: string;
+  profilePath: string | undefined;
+  credits: Array<{
+    movieUid: string;
+    title: string | undefined;
+    year: number | undefined;
+    posterUrl: string | undefined;
+    job: string | undefined;
+    character: string | undefined;
+  }>;
+};
