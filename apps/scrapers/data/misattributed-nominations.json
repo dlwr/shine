@@ -12,6 +12,16 @@
   {
     "organization": "Kinema Junpo",
     "category": "Best Japanese Film",
+    "ceremonyYear": 1929,
+    "specialMention": "3位",
+    "wrongImdbId": "tt0020342",
+    "correctImdbId": "tt1180828",
+    "correctTitle": "浪人街 第三話 憑かれた人々",
+    "correctYear": 1929
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Japanese Film",
     "ceremonyYear": 1931,
     "specialMention": "4位",
     "wrongImdbId": "tt0025312",
@@ -80,6 +90,24 @@
     "correctYear": 1948
   },
   {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1951,
+    "wrongImdbId": "tt0109340",
+    "correctImdbId": "tt0043362",
+    "correctTitle": "The Browning Version",
+    "correctYear": 1951
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1952,
+    "wrongImdbId": "tt0048455",
+    "correctImdbId": "tt0045251",
+    "correctTitle": "Othello",
+    "correctYear": 1951
+  },
+  {
     "organization": "Kinema Junpo",
     "category": "Best Foreign Film",
     "ceremonyYear": 1955,
@@ -88,6 +116,24 @@
     "correctImdbId": "tt0044414",
     "correctTitle": "やぶにらみの暴君",
     "correctYear": 1952
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1956,
+    "wrongImdbId": "tt0099266",
+    "correctImdbId": "tt0048359",
+    "correctTitle": "Mother",
+    "correctYear": 1955
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1958,
+    "wrongImdbId": "tt1078600",
+    "correctImdbId": "tt0051155",
+    "correctTitle": "Vengeance",
+    "correctYear": 1958
   },
   {
     "organization": "Kinema Junpo",
@@ -108,6 +154,16 @@
     "correctImdbId": "tt0053114",
     "correctTitle": "人間の條件　第１部純愛篇／第２部激怒篇",
     "correctYear": 1959
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Foreign Film",
+    "ceremonyYear": 1966,
+    "specialMention": "10位",
+    "wrongImdbId": "tt0063794",
+    "correctImdbId": "tt0059884",
+    "correctTitle": "戦争と平和 第一部",
+    "correctYear": 1966
   },
   {
     "organization": "Kinema Junpo",
@@ -150,52 +206,6 @@
     "correctYear": 1973
   },
   {
-    "organization": "Kinema Junpo",
-    "category": "Best Japanese Film",
-    "ceremonyYear": 2024,
-    "specialMention": "8位",
-    "wrongImdbId": "tt8764582",
-    "correctImdbId": "tt34144683",
-    "correctTitle": "青春ジャック 止められるか、俺たちを2",
-    "correctYear": 2024
-  },
-  {
-    "organization": "Cannes Film Festival",
-    "category": "Palme d'Or",
-    "ceremonyYear": 1951,
-    "wrongImdbId": "tt0109340",
-    "correctImdbId": "tt0043362",
-    "correctTitle": "The Browning Version",
-    "correctYear": 1951
-  },
-  {
-    "organization": "Cannes Film Festival",
-    "category": "Palme d'Or",
-    "ceremonyYear": 1952,
-    "wrongImdbId": "tt0048455",
-    "correctImdbId": "tt0045251",
-    "correctTitle": "Othello",
-    "correctYear": 1951
-  },
-  {
-    "organization": "Cannes Film Festival",
-    "category": "Palme d'Or",
-    "ceremonyYear": 1956,
-    "wrongImdbId": "tt0099266",
-    "correctImdbId": "tt0048359",
-    "correctTitle": "Mother",
-    "correctYear": 1955
-  },
-  {
-    "organization": "Cannes Film Festival",
-    "category": "Palme d'Or",
-    "ceremonyYear": 1958,
-    "wrongImdbId": "tt1078600",
-    "correctImdbId": "tt0051155",
-    "correctTitle": "Vengeance",
-    "correctYear": 1958
-  },
-  {
     "organization": "Cannes Film Festival",
     "category": "Palme d'Or",
     "ceremonyYear": 1988,
@@ -221,5 +231,15 @@
     "correctImdbId": "tt0115964",
     "correctTitle": "Crash",
     "correctYear": 1996
+  },
+  {
+    "organization": "Kinema Junpo",
+    "category": "Best Japanese Film",
+    "ceremonyYear": 2024,
+    "specialMention": "8位",
+    "wrongImdbId": "tt8764582",
+    "correctImdbId": "tt34144683",
+    "correctTitle": "青春ジャック 止められるか、俺たちを2",
+    "correctYear": 2024
   }
 ]

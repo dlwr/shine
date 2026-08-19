@@ -1,5 +1,6 @@
 import {describe, expect, it, vi} from 'vitest';
 import {
+  collectDuplicateResolutions,
   collectImplausibleResolutions,
   dropMisattributedResolutions,
   isPlausibleEditionYear,
@@ -167,5 +168,39 @@ describe('年の合わない解決結果の扱い', () => {
     expect(candidates.map(candidate => candidate.key)).not.toContain(
       '大いなる西部',
     );
+  });
+});
+
+describe('collectDuplicateResolutions', () => {
+  it('複数の年度が同じ映画を指しているものを報告する', () => {
+    const serialEditions: KinemaJunpoEdition[] = [
+      {
+        year: 1928,
+        japanese: [{rank: 1, page: '浪人街', title: '浪人街 第一話'}],
+        foreign: [],
+      },
+      {
+        year: 1929,
+        japanese: [{rank: 3, page: '浪人街', title: '浪人街 第三話'}],
+        foreign: [],
+      },
+    ];
+    const resolved = new Map<string, ResolvedFilm>([
+      ['浪人街', {imdbId: 'tt0020342'}],
+    ]);
+
+    expect(collectDuplicateResolutions(serialEditions, resolved)).toEqual([
+      {
+        imdbId: 'tt0020342',
+        entries: [
+          {editionYear: 1928, title: '浪人街 第一話'},
+          {editionYear: 1929, title: '浪人街 第三話'},
+        ],
+      },
+    ]);
+  });
+
+  it('1つの年度にしか出ない映画は報告しない', () => {
+    expect(collectDuplicateResolutions(editions, createResolved())).toEqual([]);
   });
 });

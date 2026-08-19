@@ -464,6 +464,50 @@ function implausibleFilms(
   return candidates;
 }
 
+export type DuplicateResolution = {
+  imdbId: string;
+  entries: Array<{editionYear: number; title: string}>;
+};
+
+/**
+ * 連作は日本語版Wikipediaの記事が1本しかないので、第一部と第二部が
+ * 同じIMDb IDに解決される。年ガードでは検出できないので別に報告する
+ */
+export function collectDuplicateResolutions(
+  editions: KinemaJunpoEdition[],
+  resolved: Map<string, ResolvedFilm>,
+): DuplicateResolution[] {
+  const byImdbId = new Map<
+    string,
+    Array<{editionYear: number; title: string}>
+  >();
+
+  const films = editions.flatMap(edition =>
+    [...edition.japanese, ...edition.foreign].map(film => ({
+      film,
+      editionYear: edition.year,
+    })),
+  );
+
+  for (const {film, editionYear} of films) {
+    const match = resolved.get(filmKey(film));
+    if (!match) {
+      continue;
+    }
+
+    const entries = byImdbId.get(match.imdbId) ?? [];
+    entries.push({editionYear, title: film.title});
+    byImdbId.set(match.imdbId, entries);
+  }
+
+  return [...byImdbId]
+    .filter(
+      ([, entries]) =>
+        new Set(entries.map(entry => entry.editionYear)).size > 1,
+    )
+    .map(([imdbId, entries]) => ({imdbId, entries}));
+}
+
 type TmdbFindResponse = {movie_results?: Array<{release_date?: string}>};
 
 async function fetchTmdbReleaseYear(
@@ -833,6 +877,15 @@ export async function importKinemaJunpo({
   });
   if (dropped > 0) {
     console.log(`Dropped ${dropped} misattributed resolutions`);
+  }
+
+  for (const duplicate of collectDuplicateResolutions(editions, resolved)) {
+    const where = duplicate.entries
+      .map(entry => `${entry.editionYear}年度「${entry.title}」`)
+      .join('、');
+    console.warn(
+      `  複数の年度が同じ映画を指しています: ${duplicate.imdbId} — ${where}`,
+    );
   }
 
   if (environment.TMDB_API_KEY) {
