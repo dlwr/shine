@@ -4,6 +4,10 @@ import {Form, redirect} from 'react-router';
 import type {Route} from './+types/movies.$id';
 import {resolveApiUrl, resolveEnvironment} from '@/lib/api';
 import {AwardTree} from '@/components/editorial/award-tree';
+import {
+  CreditsList,
+  type MovieCredits,
+} from '@/components/editorial/credits-list';
 import {Masthead} from '@/components/editorial/masthead';
 import {BigYear} from '@/components/editorial/big-year';
 import {MetaLine} from '@/components/editorial/meta-line';
@@ -58,6 +62,7 @@ type MovieDetailData = {
     detail?: string;
     checkedAt: number;
   }>;
+  credits?: MovieCredits;
 };
 type LoaderErrorResponse = {
   error: string;
@@ -722,6 +727,18 @@ export default function MovieDetail({
             </p>
           </section>
         )}
+
+        {/* Cast & Crew */}
+        {movieDetail.credits &&
+          (movieDetail.credits.cast.length > 0 ||
+            movieDetail.credits.crew.length > 0) && (
+            <section className="mb-8">
+              <p className="font-mono text-xs text-ink-muted mb-3">
+                CAST &amp; CREW
+              </p>
+              <CreditsList credits={movieDetail.credits} />
+            </section>
+          )}
 
         {/* Awards */}
         {movieDetail.nominations && movieDetail.nominations.length > 0 && (

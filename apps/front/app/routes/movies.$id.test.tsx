@@ -513,6 +513,47 @@ describe('MovieDetail Component', () => {
       expect(screen.queryByText('関連映画')).not.toBeInTheDocument();
     });
 
+    it('監督と出演者を表示する', () => {
+      const loaderData = createLoaderData({
+        movieDetail: {
+          ...mockMovieDetail,
+          credits: {
+            cast: [{uid: 'p1', name: '西島秀俊', character: 'Yusuke Kafuku'}],
+            crew: [{uid: 'p2', name: '濱口竜介', job: 'Director'}],
+          },
+        },
+      });
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.getByText('濱口竜介')).toBeInTheDocument();
+      expect(screen.getByText('西島秀俊', {exact: false})).toBeInTheDocument();
+    });
+
+    it('クレジットが無ければセクションを出さない', () => {
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.queryByText('CAST & CREW')).not.toBeInTheDocument();
+    });
+
     it('あらすじを表示する', () => {
       const loaderData = createLoaderData();
       const parameters = createParameters('movie-123');

@@ -66,6 +66,20 @@ export type MovieSelection = {
     detail: string | undefined;
     checkedAt: number;
   }>;
+  credits?: {
+    cast: Array<{
+      uid: string;
+      name: string;
+      character: string | undefined;
+      profilePath: string | undefined;
+    }>;
+    crew: Array<{
+      uid: string;
+      name: string;
+      job: string;
+      profilePath: string | undefined;
+    }>;
+  };
 };
 
 export type AwardMovieEntry = {
