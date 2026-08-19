@@ -15,6 +15,10 @@ import {beforeEach, describe, expect, it} from 'vitest';
 import {quizRoutes} from '../routes/quiz';
 import {QuizService} from '../services/quiz-service';
 
+function byCodePoint(a: string, b: string): number {
+  return a < b ? -1 : 1;
+}
+
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
   currentDirectory,
@@ -314,9 +318,7 @@ describe('GET /quiz/candidates', () => {
     const candidates = await fetchCandidates();
 
     expect(
-      candidates
-        .map(candidate => candidate.uid)
-        .toSorted((a, b) => a.localeCompare(b)),
+      candidates.map(candidate => candidate.uid).toSorted(byCodePoint),
     ).toEqual([
       'movie-also-in-pool',
       'movie-in-pool',
@@ -328,9 +330,7 @@ describe('GET /quiz/candidates', () => {
     const candidates = await fetchCandidates();
 
     expect(
-      candidates
-        .map(candidate => candidate.title)
-        .toSorted((a, b) => a.localeCompare(b)),
+      candidates.map(candidate => candidate.title).toSorted(byCodePoint),
     ).toEqual(['東京物語', '羅生門', '赤ひげ']);
   });
 });
