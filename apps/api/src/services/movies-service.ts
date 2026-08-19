@@ -55,12 +55,30 @@ export class MoviesService extends BaseService {
 
     if (query) {
       conditions.push(sql`
-				EXISTS (
-				  SELECT 1
-				  FROM translations
-				  WHERE translations.resource_uid = movies.uid
-				    AND translations.resource_type = 'movie_title'
-				    AND translations.content LIKE ${`%${query}%`}
+				(
+				  EXISTS (
+				    SELECT 1
+				    FROM translations
+				    WHERE translations.resource_uid = movies.uid
+				      AND translations.resource_type = 'movie_title'
+				      AND translations.content LIKE ${`%${query}%`}
+				  )
+				  OR EXISTS (
+				    SELECT 1
+				    FROM movie_credits
+				    JOIN people ON people.uid = movie_credits.person_uid
+				    WHERE movie_credits.movie_uid = movies.uid
+				      AND (
+				        people.name LIKE ${`%${query}%`}
+				        OR EXISTS (
+				          SELECT 1
+				          FROM translations AS person_translations
+				          WHERE person_translations.resource_uid = people.uid
+				            AND person_translations.resource_type = 'person_name'
+				            AND person_translations.content LIKE ${`%${query}%`}
+				        )
+				      )
+				  )
 				)
 			`);
     }
