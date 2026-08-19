@@ -628,34 +628,39 @@ export async function savePosterUrls(
   }
 }
 
+export type TMDBMovieSummary = {
+  imdbId?: string;
+  originalLanguage?: string;
+};
+
 /**
- * IMDb IDを取得する関数（検索ベース）
+ * タイトルと年で検索した映画のIMDb IDと原語を取得
  */
-export async function fetchImdbId(
+export async function fetchTMDBMovieSummary(
   title: string,
   year: number,
   tmdbApiKey: string,
-): Promise<string | undefined> {
+): Promise<TMDBMovieSummary> {
   try {
-    // TMDbで映画を検索
     const movieId = await searchTMDBMovie(title, year, tmdbApiKey);
     if (!movieId) {
       console.log(`No TMDb match found for ${title} (${year})`);
-      return undefined;
+      return {};
     }
 
-    // 映画の詳細情報を取得
     const movieData = await fetchTMDBMovieDetails(movieId, tmdbApiKey);
     if (movieData?.imdb_id) {
       console.log(`Found IMDb ID for ${title} (${year}): ${movieData.imdb_id}`);
-      return movieData.imdb_id;
+    } else {
+      console.log(`No IMDb ID found for ${title} (${year})`);
     }
 
-    console.log(`No IMDb ID found for ${title} (${year})`);
-
-    return undefined;
+    return {
+      imdbId: movieData?.imdb_id || undefined,
+      originalLanguage: movieData?.original_language || undefined,
+    };
   } catch (error) {
     console.error(`Error fetching IMDb ID for ${title} (${year}):`, error);
-    return undefined;
+    return {};
   }
 }

@@ -11,7 +11,7 @@ import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import {seedAcademyAwards} from '@shine/database/seeds/academy-awards';
 import {
-  fetchImdbId,
+  fetchTMDBMovieSummary,
   fetchJapaneseTitleFromTMDB,
   fetchTMDBMovieImages,
   saveJapaneseTranslation,
@@ -595,10 +595,17 @@ async function processMovieForBatch(
       return undefined;
     }
 
-    // IMDb IDを取得
+    // IMDb IDと原語を取得
     let imdbId: string | undefined;
+    let originalLanguage: string | undefined;
     if (context.tmdbApiKey) {
-      imdbId = await fetchImdbId(title, year, context.tmdbApiKey);
+      const summary = await fetchTMDBMovieSummary(
+        title,
+        year,
+        context.tmdbApiKey,
+      );
+      imdbId = summary.imdbId;
+      originalLanguage = summary.originalLanguage;
     }
 
     const existing = await findExistingMovie(database, title, imdbId);
@@ -629,7 +636,7 @@ async function processMovieForBatch(
       const [newMovie] = await database
         .insert(movies)
         .values({
-          originalLanguage: 'en',
+          originalLanguage: originalLanguage ?? 'en',
           year,
           imdbId: imdbId || undefined,
         })
