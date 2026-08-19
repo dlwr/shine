@@ -28,9 +28,13 @@ export function buildEnvironment(source: NodeJS.ProcessEnv): Environment {
 }
 
 export function assertDatabaseEnvironment(environment: Environment): void {
+  const isLocalFileDatabase =
+    environment.TURSO_DATABASE_URL.startsWith('file:');
   const missing = [
     environment.TURSO_DATABASE_URL ? undefined : 'TURSO_DATABASE_URL',
-    environment.TURSO_AUTH_TOKEN ? undefined : 'TURSO_AUTH_TOKEN',
+    isLocalFileDatabase || environment.TURSO_AUTH_TOKEN
+      ? undefined
+      : 'TURSO_AUTH_TOKEN',
   ].filter(Boolean);
 
   if (missing.length > 0) {

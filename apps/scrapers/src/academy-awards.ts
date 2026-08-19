@@ -19,6 +19,7 @@ import {
   saveTMDBId,
 } from './common/tmdb-utilities';
 import {fetchWithRetry} from './common/fetch-utilities';
+import {getScrapeDatabase} from './common/dry-run';
 
 const WIKIPEDIA_BASE_URL = 'https://en.wikipedia.org';
 const ACADEMY_AWARDS_URL = `${WIKIPEDIA_BASE_URL}/wiki/Academy_Award_for_Best_Picture`;
@@ -47,17 +48,28 @@ type MainData = {
 type ScrapeContext = {
   environment: Environment;
   tmdbApiKey: string | undefined;
+  isDryRun: boolean;
 };
 
 export default {
   async fetch(request: Request, environment: Environment): Promise<Response> {
+    const url = new URL(request.url);
     const context: ScrapeContext = {
       environment,
       tmdbApiKey: environment.TMDB_API_KEY,
+      isDryRun: url.searchParams.get('dry-run') === 'true',
     };
 
-    const url = new URL(request.url);
+    if (context.isDryRun) {
+      console.log('[DRY RUN MODE] データベースへの書き込みは行いません');
+    }
+
     if (url.pathname === '/seed') {
+      if (context.isDryRun) {
+        console.log('[DRY RUN] Would seed academy awards master data');
+        return new Response('Seed skipped (dry run)', {status: 200});
+      }
+
       console.log('seeding academy awards');
       await seedAcademyAwards(context.environment);
       return new Response('Seed completed successfully', {status: 200});
@@ -132,7 +144,7 @@ async function getOrCreateCeremony(
   year: number,
   organizationUid: string,
 ): Promise<string> {
-  const database = getDatabase(context.environment);
+  const database = getScrapeDatabase(context);
   const [ceremony] = await database
     .insert(awardCeremonies)
     .values({
@@ -207,7 +219,7 @@ export async function scrapeAcademyAwards(context: ScrapeContext) {
     }
 
     // バッチでデータを挿入
-    const database = getDatabase(context.environment);
+    const database = getScrapeDatabase(context);
 
     if (translationsBatch.length > 0) {
       console.log(
@@ -501,6 +513,60 @@ function cleanupTitle(title: string): string {
     .trim();
 }
 
+type DatabaseClient = ReturnType<typeof getDatabase>;
+
+type ExistingMovie =
+  | {status: 'active'; uid: string; imdbId: string | null}
+  | {status: 'soft-deleted'}
+  | {status: 'missing'};
+
+async function findExistingMovie(
+  database: DatabaseClient,
+  title: string,
+  imdbId: string | undefined,
+): Promise<ExistingMovie> {
+  if (imdbId) {
+    const [movieWithImdbId] = await database
+      .select({
+        uid: movies.uid,
+        imdbId: movies.imdbId,
+        deletedAt: movies.deletedAt,
+      })
+      .from(movies)
+      .where(eq(movies.imdbId, imdbId))
+      .limit(1);
+
+    if (movieWithImdbId) {
+      return movieWithImdbId.deletedAt === null
+        ? {
+            status: 'active',
+            uid: movieWithImdbId.uid,
+            imdbId: movieWithImdbId.imdbId,
+          }
+        : {status: 'soft-deleted'};
+    }
+  }
+
+  const [movieWithTitle] = await database
+    .select({uid: movies.uid, imdbId: movies.imdbId})
+    .from(movies)
+    .innerJoin(
+      translations,
+      and(
+        eq(translations.resourceUid, movies.uid),
+        eq(translations.resourceType, 'movie_title'),
+        eq(translations.languageCode, 'en'),
+        eq(translations.isDefault, 1),
+      ),
+    )
+    .where(and(eq(translations.content, title), isNull(movies.deletedAt)))
+    .limit(1);
+
+  return movieWithTitle
+    ? {status: 'active', uid: movieWithTitle.uid, imdbId: movieWithTitle.imdbId}
+    : {status: 'missing'};
+}
+
 async function processMovieForBatch(
   context: ScrapeContext,
   title: string,
@@ -517,40 +583,39 @@ async function processMovieForBatch(
 > {
   try {
     const main = await fetchMainData(context);
-    const database = getDatabase(context.environment);
+    const database = getScrapeDatabase(context);
+
+    if (context.isDryRun) {
+      const existing = await findExistingMovie(database, title, undefined);
+      console.log(
+        `[DRY RUN] Would process ${existing.status} movie: ${title} (${year}) - ${
+          isWinner ? 'Winner' : 'Nominee'
+        }`,
+      );
+      return undefined;
+    }
+
     // IMDb IDを取得
     let imdbId: string | undefined;
     if (context.tmdbApiKey) {
       imdbId = await fetchImdbId(title, year, context.tmdbApiKey);
     }
 
-    // 既存の映画を検索
-    const existingMovies = await database
-      .select({
-        movies,
-        translations,
-      })
-      .from(movies)
-      .innerJoin(
-        translations,
-        and(
-          eq(translations.resourceUid, movies.uid),
-          eq(translations.resourceType, 'movie_title'),
-          eq(translations.languageCode, 'en'),
-          eq(translations.isDefault, 1),
-        ),
-      )
-      .where(and(eq(translations.content, title), isNull(movies.deletedAt)));
+    const existing = await findExistingMovie(database, title, imdbId);
 
+    if (existing.status === 'soft-deleted') {
+      console.log(`Skipping soft-deleted movie: ${title} (${imdbId})`);
+      return undefined;
+    }
+
+    const isNewMovie = existing.status === 'missing';
     let movieUid: string;
     const translationsBatch: Array<typeof translations.$inferInsert> = [];
 
-    if (existingMovies.length > 0) {
-      // 既存の映画が見つかった場合は更新
-      const existingMovie = existingMovies[0].movies;
-      movieUid = existingMovie.uid;
+    if (existing.status === 'active') {
+      movieUid = existing.uid;
       // IMDb IDが新しく取得できた場合は更新（差分チェック付き）
-      if (imdbId && !existingMovie.imdbId) {
+      if (imdbId && !existing.imdbId) {
         await database
           .update(movies)
           .set({
@@ -610,7 +675,7 @@ async function processMovieForBatch(
     };
 
     // 日本語タイトルとポスターの処理（新規映画の場合のみ）
-    if (imdbId && context.tmdbApiKey && existingMovies.length === 0) {
+    if (isNewMovie && imdbId && context.tmdbApiKey) {
       // 日本語タイトルの取得・保存
       const japaneseTitle = await fetchJapaneseTitleFromTMDB(
         imdbId,
@@ -655,7 +720,7 @@ async function processMovieForBatch(
 
     console.log(
       `Processed ${
-        existingMovies.length > 0 ? 'updated' : 'new'
+        isNewMovie ? 'new' : 'updated'
       } movie: ${title} (${year}) - ${isWinner ? 'Winner' : 'Nominee'} ${
         imdbId ? `IMDb: ${imdbId}` : ''
       }`,
