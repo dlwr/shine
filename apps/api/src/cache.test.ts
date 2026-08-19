@@ -5,6 +5,7 @@ import {
   createETag,
   EdgeCache,
   getCacheKeyForMovie,
+  getCacheKeyForPerson,
   getCacheKeyForSelection,
   getCacheTTL,
   shouldCacheSearch,
@@ -26,6 +27,15 @@ describe('Cache Utilities', () => {
       expect(key1).toBe(key2);
       expect(key1).not.toBe(key3);
       expect(key1).toMatch(/^selections:daily:2024-06-24:en:v1$/);
+    });
+
+    it('人物のキャッシュキーにロケールを含める', () => {
+      expect(getCacheKeyForPerson('person-1', 'ja')).toBe(
+        'person:person-1:ja:v2',
+      );
+      expect(getCacheKeyForPerson('person-1', 'en')).toBe(
+        'person:person-1:en:v2',
+      );
     });
 
     it('should generate consistent cache keys for movies', () => {
