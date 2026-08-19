@@ -18,8 +18,21 @@ async function main() {
   try {
     // コマンドライン引数を解析
     const arguments_ = process.argv.slice(2);
-    const seedIndex = arguments_.indexOf('--seed');
-    const shouldSeed = seedIndex !== -1;
+    const knownOptions = new Set(['--seed', '--dry-run']);
+    const unknownOptions = arguments_.filter(
+      argument => !knownOptions.has(argument),
+    );
+    if (unknownOptions.length > 0) {
+      showUsage();
+      throw new Error(`不明なオプション: ${unknownOptions.join(', ')}`);
+    }
+
+    const shouldSeed = arguments_.includes('--seed');
+    const isDryRun = arguments_.includes('--dry-run');
+
+    if (isDryRun) {
+      console.log('dry-run モードで実行します（書き込みは行いません）');
+    }
 
     if (shouldSeed) {
       console.log('アカデミー賞マスターデータのシードを開始します');
@@ -36,7 +49,13 @@ async function main() {
     }
 
     // スクレイピング処理を実行
-    const url = shouldSeed ? 'http://localhost/seed' : 'http://localhost/';
+    const url = new URL(
+      shouldSeed ? 'http://localhost/seed' : 'http://localhost/',
+    );
+    if (isDryRun) {
+      url.searchParams.set('dry-run', 'true');
+    }
+
     const request = new Request(url);
     const response = await academyAwards.fetch(request, environment);
 
@@ -65,6 +84,7 @@ function showUsage() {
   console.log(
     '  --seed          マスターデータ（組織・カテゴリ・セレモニー）のシードを実行',
   );
+  console.log('  --dry-run       データベースへ書き込まず、処理内容のみ表示');
   console.log('  --help, -h      このヘルプを表示');
   console.log('');
   console.log('説明:');
@@ -76,6 +96,9 @@ function showUsage() {
   console.log('  pnpm run scrapers:academy-awards --seed    # 初回実行時');
   console.log(
     '  pnpm run scrapers:academy-awards           # 通常のスクレイピング',
+  );
+  console.log(
+    '  pnpm run scrapers:academy-awards --dry-run # 書き込まずに確認',
   );
 }
 

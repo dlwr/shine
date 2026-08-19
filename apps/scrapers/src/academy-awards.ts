@@ -19,6 +19,7 @@ import {
   saveTMDBId,
 } from './common/tmdb-utilities';
 import {fetchWithRetry} from './common/fetch-utilities';
+import {getScrapeDatabase} from './common/dry-run';
 
 const WIKIPEDIA_BASE_URL = 'https://en.wikipedia.org';
 const ACADEMY_AWARDS_URL = `${WIKIPEDIA_BASE_URL}/wiki/Academy_Award_for_Best_Picture`;
@@ -47,17 +48,28 @@ type MainData = {
 type ScrapeContext = {
   environment: Environment;
   tmdbApiKey: string | undefined;
+  isDryRun: boolean;
 };
 
 export default {
   async fetch(request: Request, environment: Environment): Promise<Response> {
+    const url = new URL(request.url);
     const context: ScrapeContext = {
       environment,
       tmdbApiKey: environment.TMDB_API_KEY,
+      isDryRun: url.searchParams.get('dry-run') === 'true',
     };
 
-    const url = new URL(request.url);
+    if (context.isDryRun) {
+      console.log('[DRY RUN MODE] データベースへの書き込みは行いません');
+    }
+
     if (url.pathname === '/seed') {
+      if (context.isDryRun) {
+        console.log('[DRY RUN] Would seed academy awards master data');
+        return new Response('Seed skipped (dry run)', {status: 200});
+      }
+
       console.log('seeding academy awards');
       await seedAcademyAwards(context.environment);
       return new Response('Seed completed successfully', {status: 200});
@@ -132,7 +144,7 @@ async function getOrCreateCeremony(
   year: number,
   organizationUid: string,
 ): Promise<string> {
-  const database = getDatabase(context.environment);
+  const database = getScrapeDatabase(context);
   const [ceremony] = await database
     .insert(awardCeremonies)
     .values({
@@ -207,7 +219,7 @@ export async function scrapeAcademyAwards(context: ScrapeContext) {
     }
 
     // バッチでデータを挿入
-    const database = getDatabase(context.environment);
+    const database = getScrapeDatabase(context);
 
     if (translationsBatch.length > 0) {
       console.log(
@@ -571,7 +583,18 @@ async function processMovieForBatch(
 > {
   try {
     const main = await fetchMainData(context);
-    const database = getDatabase(context.environment);
+    const database = getScrapeDatabase(context);
+
+    if (context.isDryRun) {
+      const existing = await findExistingMovie(database, title, undefined);
+      console.log(
+        `[DRY RUN] Would process ${existing.status} movie: ${title} (${year}) - ${
+          isWinner ? 'Winner' : 'Nominee'
+        }`,
+      );
+      return undefined;
+    }
+
     // IMDb IDを取得
     let imdbId: string | undefined;
     if (context.tmdbApiKey) {

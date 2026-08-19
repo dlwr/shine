@@ -4,6 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
+import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
@@ -123,7 +124,11 @@ describe('scrapeAcademyAwards', () => {
     });
 
     const {scrapeAcademyAwards} = await loadScraper({Anora: 'tt1'});
-    await scrapeAcademyAwards({environment, tmdbApiKey: 'test-key'});
+    await scrapeAcademyAwards({
+      environment,
+      tmdbApiKey: 'test-key',
+      isDryRun: false,
+    });
 
     const savedMovies = await database.select().from(movies);
     expect(savedMovies).toHaveLength(1);
@@ -144,7 +149,11 @@ describe('scrapeAcademyAwards', () => {
 
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const {scrapeAcademyAwards} = await loadScraper({Anora: 'tt1'});
-    await scrapeAcademyAwards({environment, tmdbApiKey: 'test-key'});
+    await scrapeAcademyAwards({
+      environment,
+      tmdbApiKey: 'test-key',
+      isDryRun: false,
+    });
 
     expect(errorSpy).not.toHaveBeenCalled();
     errorSpy.mockRestore();
@@ -156,12 +165,35 @@ describe('scrapeAcademyAwards', () => {
     expect(savedNominations).toHaveLength(0);
   });
 
+  it('dry-runでは書き込みを一切行わない', async () => {
+    const {environment, database} = await createTestEnvironment();
+
+    const {scrapeAcademyAwards} = await loadScraper({Anora: 'tt1'});
+    await scrapeAcademyAwards({
+      environment,
+      tmdbApiKey: 'test-key',
+      isDryRun: true,
+    });
+
+    expect(await database.select().from(movies)).toHaveLength(0);
+    expect(await database.select().from(nominations)).toHaveLength(0);
+    expect(await database.select().from(awardCeremonies)).toHaveLength(0);
+  });
+
   it('2回実行しても映画とノミネーションが重複しない', async () => {
     const {environment, database} = await createTestEnvironment();
 
     const {scrapeAcademyAwards} = await loadScraper({Anora: 'tt1'});
-    await scrapeAcademyAwards({environment, tmdbApiKey: 'test-key'});
-    await scrapeAcademyAwards({environment, tmdbApiKey: 'test-key'});
+    await scrapeAcademyAwards({
+      environment,
+      tmdbApiKey: 'test-key',
+      isDryRun: false,
+    });
+    await scrapeAcademyAwards({
+      environment,
+      tmdbApiKey: 'test-key',
+      isDryRun: false,
+    });
 
     const savedMovies = await database.select().from(movies);
     expect(savedMovies).toHaveLength(1);
