@@ -340,4 +340,29 @@ describe('importMovieCredits', () => {
 
     expect(result.failed).toBe(1);
   });
+
+  it('1件が壊れていても残りの映画を処理する', async () => {
+    const {database, environment} = await createTestDatabase();
+    await database.insert(movies).values([
+      {originalLanguage: 'en', year: 1976, tmdbId: 103},
+      {originalLanguage: 'en', year: 1980, tmdbId: 104},
+    ]);
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        text: async () => JSON.stringify({cast: undefined, crew: []}),
+      } as unknown as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        text: async () => JSON.stringify({cast: [castMember(0)], crew: []}),
+      } as unknown as Response);
+
+    const result = await importMovieCredits({
+      database,
+      environment,
+      isDryRun: false,
+    });
+
+    expect(result).toMatchObject({processed: 1, failed: 1});
+  });
 });

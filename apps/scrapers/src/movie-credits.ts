@@ -246,16 +246,24 @@ export async function importMovieCredits(
   let processed = 0;
   let failed = 0;
   for (const target of pending) {
-    const credits = await fetchTMDBCredits(
-      target.tmdbId ?? 0,
-      target.mediaType === 'tv' ? 'tv' : 'movie',
-      context.environment.TMDB_API_KEY ?? '',
-    );
+    try {
+      const credits = await fetchTMDBCredits(
+        target.tmdbId ?? 0,
+        target.mediaType === 'tv' ? 'tv' : 'movie',
+        context.environment.TMDB_API_KEY ?? '',
+      );
 
-    if (credits) {
-      await saveMovieCredits(context, target.uid, selectCredits(credits));
-      processed++;
-    } else {
+      if (credits) {
+        await saveMovieCredits(context, target.uid, selectCredits(credits));
+        processed++;
+      } else {
+        failed++;
+      }
+    } catch (error) {
+      console.error(
+        `クレジットの取り込みに失敗しました (${target.uid}):`,
+        error,
+      );
       failed++;
     }
 
