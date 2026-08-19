@@ -17,7 +17,7 @@ vi.mock('../common/fetch-utilities', () => ({
 }));
 
 vi.mock('../common/tmdb-utilities', () => ({
-  fetchImdbId: vi.fn(),
+  fetchTMDBMovieSummary: vi.fn(),
   fetchJapaneseTitleFromTMDB: vi.fn(),
   fetchTMDBMovieImages: vi.fn(),
   saveJapaneseTranslation: vi.fn(),
@@ -90,13 +90,15 @@ async function seedMovie(
   });
 }
 
-async function loadScraper(imdbIdByTitle: Record<string, string>) {
+async function loadScraper(
+  summaryByTitle: Record<string, {imdbId?: string; originalLanguage?: string}>,
+) {
   vi.resetModules();
   const {fetchWithRetry} = await import('../common/fetch-utilities');
   vi.mocked(fetchWithRetry).mockResolvedValue(wikipediaHtml);
-  const {fetchImdbId} = await import('../common/tmdb-utilities');
-  vi.mocked(fetchImdbId).mockImplementation(
-    async (title: string) => imdbIdByTitle[title],
+  const {fetchTMDBMovieSummary} = await import('../common/tmdb-utilities');
+  vi.mocked(fetchTMDBMovieSummary).mockImplementation(
+    async (title: string) => summaryByTitle[title] ?? {},
   );
   return import('../academy-awards');
 }
@@ -123,7 +125,7 @@ describe('scrapeAcademyAwards', () => {
       imdbId: 'tt1',
     });
 
-    const {scrapeAcademyAwards} = await loadScraper({Anora: 'tt1'});
+    const {scrapeAcademyAwards} = await loadScraper({Anora: {imdbId: 'tt1'}});
     await scrapeAcademyAwards({
       environment,
       tmdbApiKey: 'test-key',
@@ -148,7 +150,7 @@ describe('scrapeAcademyAwards', () => {
     });
 
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const {scrapeAcademyAwards} = await loadScraper({Anora: 'tt1'});
+    const {scrapeAcademyAwards} = await loadScraper({Anora: {imdbId: 'tt1'}});
     await scrapeAcademyAwards({
       environment,
       tmdbApiKey: 'test-key',
@@ -165,10 +167,42 @@ describe('scrapeAcademyAwards', () => {
     expect(savedNominations).toHaveLength(0);
   });
 
+  it('新規映画の原語にTMDbの値を使う', async () => {
+    const {environment, database} = await createTestEnvironment();
+
+    const {scrapeAcademyAwards} = await loadScraper({
+      Anora: {imdbId: 'tt1', originalLanguage: 'ru'},
+    });
+    await scrapeAcademyAwards({
+      environment,
+      tmdbApiKey: 'test-key',
+      isDryRun: false,
+    });
+
+    const savedMovies = await database.select().from(movies);
+    expect(savedMovies[0].originalLanguage).toBe('ru');
+  });
+
+  it('TMDbが原語を返さなければ en のままにする', async () => {
+    const {environment, database} = await createTestEnvironment();
+
+    const {scrapeAcademyAwards} = await loadScraper({
+      Anora: {imdbId: 'tt1'},
+    });
+    await scrapeAcademyAwards({
+      environment,
+      tmdbApiKey: 'test-key',
+      isDryRun: false,
+    });
+
+    const savedMovies = await database.select().from(movies);
+    expect(savedMovies[0].originalLanguage).toBe('en');
+  });
+
   it('dry-runでは書き込みを一切行わない', async () => {
     const {environment, database} = await createTestEnvironment();
 
-    const {scrapeAcademyAwards} = await loadScraper({Anora: 'tt1'});
+    const {scrapeAcademyAwards} = await loadScraper({Anora: {imdbId: 'tt1'}});
     await scrapeAcademyAwards({
       environment,
       tmdbApiKey: 'test-key',
@@ -183,7 +217,7 @@ describe('scrapeAcademyAwards', () => {
   it('2回実行しても映画とノミネーションが重複しない', async () => {
     const {environment, database} = await createTestEnvironment();
 
-    const {scrapeAcademyAwards} = await loadScraper({Anora: 'tt1'});
+    const {scrapeAcademyAwards} = await loadScraper({Anora: {imdbId: 'tt1'}});
     await scrapeAcademyAwards({
       environment,
       tmdbApiKey: 'test-key',

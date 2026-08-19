@@ -1208,6 +1208,7 @@ type MovieDetailsResult = {
   imdbId?: string;
   posterPath?: string;
   japaneseTitle?: string;
+  originalLanguage?: string;
 };
 
 async function fetchMovieDetails(
@@ -1250,6 +1251,7 @@ async function fetchMovieDetails(
       imdbId: dataEn?.imdb_id || undefined,
       posterPath: dataEn?.poster_path || undefined,
       japaneseTitle,
+      originalLanguage: dataEn?.original_language || undefined,
     };
 
     if (details.imdbId) {
@@ -1332,7 +1334,7 @@ async function resolveMovieUid(
   const [newMovie] = await database
     .insert(movies)
     .values({
-      originalLanguage: 'en',
+      originalLanguage: movieDetails.originalLanguage ?? 'en',
       year: movieInfo.year,
       imdbId: movieDetails.imdbId || undefined,
     })

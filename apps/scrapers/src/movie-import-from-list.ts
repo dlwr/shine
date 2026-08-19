@@ -18,6 +18,7 @@ type TMDBMovieData = {
   id: number;
   title: string;
   original_title: string;
+  original_language: string | undefined;
   release_date: string;
   poster_path: string | undefined;
   imdb_id: string | undefined;
@@ -28,6 +29,7 @@ type TMDBMovieSearchResult = {
   id: number;
   title: string;
   original_title?: string;
+  original_language?: string;
   release_date?: string;
   poster_path?: string;
   imdb_id?: string;
@@ -411,6 +413,7 @@ async function searchMovieOnTMDB(
       id: movie.id,
       title: movie.title,
       original_title: movie.original_title ?? movie.title,
+      original_language: movie.original_language ?? undefined,
       release_date: movie.release_date ?? '',
       poster_path: movie.poster_path ?? undefined,
       imdb_id: movie.imdb_id ?? undefined,
@@ -451,7 +454,7 @@ async function createNewMovieForBatch(
   // 映画を作成（これは即座に実行する必要がある）
   await database.insert(movies).values({
     uid: movieUid,
-    originalLanguage: 'en', // Default to English for TMDB movies
+    originalLanguage: tmdbMovie.original_language ?? 'en',
     year: releaseYear,
     tmdbId: tmdbMovie.id,
     imdbId: tmdbMovie.imdb_id,

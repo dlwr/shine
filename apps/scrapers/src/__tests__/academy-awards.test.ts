@@ -11,7 +11,7 @@ vi.mock('@shine/database', () => ({
 }));
 
 vi.mock('./common/tmdb-utilities', () => ({
-  fetchImdbId: vi.fn(),
+  fetchTMDBMovieSummary: vi.fn(),
   fetchJapaneseTitleFromTMDB: vi.fn(),
   fetchTMDBMovieImages: vi.fn(),
   saveJapaneseTranslation: vi.fn(),

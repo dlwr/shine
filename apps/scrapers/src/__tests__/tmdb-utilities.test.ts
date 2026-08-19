@@ -2,6 +2,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {
   fetchTMDBCredits,
   fetchTMDBMovieDetails,
+  fetchTMDBMovieSummary,
   fetchTMDBMovieTranslations,
   findTMDBByImdbId,
   searchTMDBMovie,
@@ -14,6 +15,14 @@ function jsonResponse(body: unknown): Response {
     ok: true,
     text: vi.fn().mockResolvedValue(JSON.stringify(body)),
   } as unknown as Response;
+}
+
+function stubSearchThenDetails(details: unknown) {
+  vi.mocked(fetch)
+    .mockResolvedValueOnce(
+      jsonResponse({results: [{id: 758_866, release_date: '2021-08-20'}]}),
+    )
+    .mockResolvedValueOnce(jsonResponse(details));
 }
 
 describe('TMDb Utilities', () => {
@@ -43,6 +52,48 @@ describe('TMDb Utilities', () => {
 
       const requestedUrl = vi.mocked(fetch).mock.calls[0][0] as string;
       expect(requestedUrl).toContain('/tv/55/credits');
+    });
+  });
+
+  describe('fetchTMDBMovieSummary', () => {
+    it('検索で見つけた作品のIMDb IDを返す', async () => {
+      stubSearchThenDetails({
+        id: 758_866,
+        imdb_id: 'tt14039582',
+        original_language: 'ja',
+      });
+
+      const result = await fetchTMDBMovieSummary(
+        'Drive My Car',
+        2021,
+        'api-key',
+      );
+
+      expect(result.imdbId).toBe('tt14039582');
+    });
+
+    it('検索で見つけた作品の原語を返す', async () => {
+      stubSearchThenDetails({
+        id: 758_866,
+        imdb_id: 'tt14039582',
+        original_language: 'ja',
+      });
+
+      const result = await fetchTMDBMovieSummary(
+        'Drive My Car',
+        2021,
+        'api-key',
+      );
+
+      expect(result.originalLanguage).toBe('ja');
+    });
+
+    it('検索で見つからなければ空を返す', async () => {
+      vi.mocked(fetch).mockResolvedValue(jsonResponse({results: []}));
+
+      const result = await fetchTMDBMovieSummary('Unknown', 1900, 'api-key');
+
+      expect(result).toEqual({});
     });
   });
 
