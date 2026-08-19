@@ -88,14 +88,23 @@ export async function saveMovieCredits(
     .where(inArray(people.tmdbId, tmdbPersonIds));
   const known = new Set(existing.map(row => row.tmdbId));
 
-  const missing = credits.filter(credit => !known.has(credit.tmdbPersonId));
-  if (missing.length > 0 && !context.isDryRun) {
+  const missing = new Map<number, SelectedCredit>();
+  for (const credit of credits) {
+    if (!known.has(credit.tmdbPersonId)) {
+      missing.set(credit.tmdbPersonId, credit);
+    }
+  }
+
+  if (missing.size > 0 && !context.isDryRun) {
     await context.database.insert(people).values(
-      missing.map(credit => ({
-        tmdbId: credit.tmdbPersonId,
-        name: credit.name,
-        profilePath: credit.profilePath,
-      })),
+      missing
+        .values()
+        .map(credit => ({
+          tmdbId: credit.tmdbPersonId,
+          name: credit.name,
+          profilePath: credit.profilePath,
+        }))
+        .toArray(),
     );
   }
 

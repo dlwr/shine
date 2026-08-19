@@ -157,6 +157,22 @@ describe('saveMovieCredits', () => {
     expect(rows).toHaveLength(2);
   });
 
+  it('同じ人物が複数の役割を持っていても people は1件だけ作る', async () => {
+    const {database, movieUid} = await createTestDatabase();
+    const credits = selectCredits({
+      cast: [],
+      crew: [
+        {...crewMember('Director', 'Directing'), id: 5026},
+        {...crewMember('Screenplay', 'Writing'), id: 5026},
+      ],
+    });
+
+    await saveMovieCredits({database, isDryRun: false}, movieUid, credits);
+
+    const rows = await database.select().from(people);
+    expect(rows).toHaveLength(1);
+  });
+
   it('取得結果から消えたクレジットを削除する', async () => {
     const {database, movieUid} = await createTestDatabase();
     await saveMovieCredits({database, isDryRun: false}, movieUid, sample);
