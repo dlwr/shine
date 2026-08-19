@@ -44,6 +44,31 @@ export type TMDBTvData = {
   poster_path?: string;
 };
 
+export type TMDBCastCredit = {
+  credit_id: string;
+  id: number;
+  name: string;
+  original_name: string;
+  character?: string;
+  order: number;
+  profile_path?: string | undefined;
+};
+
+export type TMDBCrewCredit = {
+  credit_id: string;
+  id: number;
+  name: string;
+  original_name: string;
+  job: string;
+  department: string;
+  profile_path?: string | undefined;
+};
+
+export type TMDBCredits = {
+  cast: TMDBCastCredit[];
+  crew: TMDBCrewCredit[];
+};
+
 export type TMDBFindResponse = {
   movie_results: TMDBMovieData[];
   tv_results: TMDBTvData[];
@@ -278,6 +303,28 @@ export async function fetchTMDBDetails(
   }
 
   return fetchTMDBMovieDetails(tmdbId, tmdbApiKey, language);
+}
+
+/**
+ * TMDb APIから出演・スタッフのクレジットを取得
+ */
+export async function fetchTMDBCredits(
+  tmdbId: number,
+  mediaType: 'movie' | 'tv',
+  tmdbApiKey: string,
+): Promise<TMDBCredits | undefined> {
+  try {
+    const creditsUrl = new URL(
+      `${TMDB_API_BASE_URL}/${mediaType}/${tmdbId}/credits`,
+    );
+    creditsUrl.searchParams.append('api_key', tmdbApiKey);
+    creditsUrl.searchParams.append('language', 'ja-JP');
+
+    return await fetchJsonWithRetry<TMDBCredits>(creditsUrl.href);
+  } catch (error) {
+    console.error(`Error fetching TMDb credits for ID ${tmdbId}:`, error);
+    return undefined;
+  }
 }
 
 /**

@@ -15,7 +15,7 @@ export const translations = sqliteTable(
       .primaryKey()
       .$defaultFn(() => generateUUID()),
     resourceType: text({
-      enum: ['movie_title', 'movie_description'],
+      enum: ['movie_title', 'movie_description', 'person_name'],
     }).notNull(),
     resourceUid: text().notNull(),
     languageCode: text().notNull(),
