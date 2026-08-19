@@ -171,6 +171,7 @@ moviesRoutes.get('/:id', async c => {
       description: movieDetails.description,
       nominations: movieDetails.nominations,
       articleLinks: movieDetails.articleLinks,
+      credits: movieDetails.credits,
     };
 
     // Create ETag for the response
