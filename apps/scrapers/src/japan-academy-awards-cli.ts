@@ -1,102 +1,80 @@
-#!/usr/bin/env -S tsx
-
 /**
- * 日本アカデミー賞スクレイピングのCLIエントリーポイント
+ * 日本アカデミー賞作品賞取り込みのCLIエントリーポイント
  */
-import {Command} from 'commander';
-import japanAcademyAwards from './japan-academy-awards';
+import {Command, InvalidArgumentError} from 'commander';
 import {
   assertDatabaseEnvironment,
   buildEnvironment,
   loadEnvironmentFiles,
 } from './common/environment';
+import {importJapanAcademyAwards} from './japan-academy-awards';
 
 loadEnvironmentFiles();
 const environment = buildEnvironment(process.env);
-assertDatabaseEnvironment(environment);
+
+function parseYear(value: string): number {
+  const parsed = Number(value);
+
+  if (!Number.isSafeInteger(parsed) || parsed < 1978) {
+    throw new InvalidArgumentError('yearは1978以上の整数で指定してください。');
+  }
+
+  return parsed;
+}
+
+function parseThrottle(value: string): number {
+  const parsed = Number(value);
+
+  if (!Number.isSafeInteger(parsed) || parsed < 0) {
+    throw new InvalidArgumentError('throttleは0以上の整数で指定してください。');
+  }
+
+  return parsed;
+}
 
 const program = new Command();
 
 program
-  .name('japan-academy-awards-cli')
-  .description('Scrape Japan Academy Awards data from Wikipedia')
-  .option(
-    '--seed',
-    'Seed the database with Japan Academy Awards organization and categories',
-    false,
+  .name('japan-academy-awards')
+  .description(
+    [
+      '日本語版Wikipediaの「日本アカデミー賞作品賞」から優秀作品賞を取り込みます。',
+      '記事名からWikidataのIMDb ID (P345) を引いて映画を同定するため、',
+      'IMDb IDを持たない作品は取り込みません。',
+      '最優秀作品賞は優秀作品賞の中から選ばれるので、受賞として保存します。',
+    ].join('\n'),
   )
-  .option(
-    '--year <year>',
-    'Scrape data for a specific year (e.g., --year 2023)',
-  )
-  .option(
-    '--dry-run',
-    'Show what would be scraped without making database changes',
-    false,
-  )
+  .option('--year <year>', '取り込む授賞式の年を1つに絞る', parseYear)
+  .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
+  .option('--throttle <ms>', 'TMDb呼び出し間の待機ミリ秒', parseThrottle, 300)
   .addHelpText(
     'after',
     `
-Examples:
-  # Scrape Japan Academy Awards data for all years
-  japan-academy-awards-cli
-
-  # Scrape data for a specific year
-  japan-academy-awards-cli --year 2023
-
-  # Preview what would be scraped for 2023 (dry run)
-  japan-academy-awards-cli --year 2023 --dry-run
-
-  # Seed database first, then scrape specific year
-  japan-academy-awards-cli --seed --year 2023
+例:
+  pnpm run scrapers:japan-academy-awards --dry-run
+  pnpm run scrapers:japan-academy-awards --year 2026
 `,
-  )
-  .action(async (options: {seed: boolean; year?: string; dryRun: boolean}) => {
-    if (options.dryRun) {
-      console.log('🔍 DRY RUN MODE - No database changes will be made');
-    }
+  );
 
-    if (options.seed) {
-      console.log('Seeding Japan Academy Awards...');
-      const seedUrl = options.dryRun
-        ? 'http://localhost/seed?dry-run=true'
-        : 'http://localhost/seed';
-      const seedRequest = new Request(seedUrl);
-      const seedResponse = await japanAcademyAwards.fetch(
-        seedRequest,
-        environment,
-      );
-      if (!seedResponse.ok) {
-        throw new Error(`Seeding failed: ${await seedResponse.text()}`);
-      }
+program.parse();
 
-      console.log('Seeding completed successfully');
-    }
+const options = program.opts<{
+  year?: number;
+  dryRun: boolean;
+  throttle: number;
+}>();
 
-    console.log('Starting Japan Academy Awards scraping...');
-    const baseUrl = 'http://localhost/';
-    const searchParameters = new URLSearchParams();
-    if (options.year) {
-      searchParameters.append('year', options.year);
-    }
+if (!options.dryRun) {
+  assertDatabaseEnvironment(environment);
+}
 
-    if (options.dryRun) {
-      searchParameters.append('dry-run', 'true');
-    }
+const stats = await importJapanAcademyAwards({
+  environment,
+  dryRun: options.dryRun,
+  year: options.year,
+  throttleMs: options.throttle,
+});
 
-    const url = `${baseUrl}?${searchParameters.toString()}`;
-    const request = new Request(url);
-    const response = await japanAcademyAwards.fetch(request, environment);
-    if (!response.ok) {
-      throw new Error(`Scraping failed: ${await response.text()}`);
-    }
-
-    console.log('Scraping completed successfully');
-  });
-
-try {
-  await program.parseAsync(process.argv);
-} catch (error) {
-  console.error('Error:', error);
+if (stats.failed > 0) {
   process.exitCode = 1;
 }
