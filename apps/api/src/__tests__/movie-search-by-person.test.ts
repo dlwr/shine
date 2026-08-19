@@ -93,6 +93,26 @@ async function createTestEnvironment(): Promise<Environment> {
   return environment;
 }
 
+function createKvMock(): Environment['CACHE_KV'] {
+  const store = new Map<string, string>();
+  return {
+    async get(key: string, type?: string) {
+      const value = store.get(key);
+      if (!value) {
+        return;
+      }
+
+      return type === 'json' ? JSON.parse(value) : value;
+    },
+    async put(key: string, value: string) {
+      store.set(key, value);
+    },
+    async delete(key: string) {
+      store.delete(key);
+    },
+  } as unknown as Environment['CACHE_KV'];
+}
+
 async function search(environment: Environment, query: string) {
   const response = await moviesRoutes.request(
     `/search?q=${encodeURIComponent(query)}`,
@@ -134,5 +154,25 @@ describe('GET /movies/search 人名検索', () => {
     const body = await search(environment, '黒澤明');
 
     expect(body.pagination.totalCount).toBe(1);
+  });
+
+  it('検索語ごとに別のキャッシュキーを使う', async () => {
+    const first = await search(environment, '黒澤明');
+    const second = await search(environment, 'スコセッシ');
+
+    expect(first.movies.map(movie => movie.uid)).toEqual(['movie-ran']);
+    expect(second.movies.map(movie => movie.uid)).toEqual(['movie-taxi']);
+  });
+
+  it('同じ検索語はキャッシュから返す', async () => {
+    const cached = {...environment, CACHE_KV: createKvMock()};
+    const first = await search(cached, '黒澤明');
+    const database = getDatabase(cached);
+    await database.delete(movieCredits);
+
+    const second = await search(cached, '黒澤明');
+
+    expect(first.movies.map(movie => movie.uid)).toEqual(['movie-ran']);
+    expect(second.movies.map(movie => movie.uid)).toEqual(['movie-ran']);
   });
 });

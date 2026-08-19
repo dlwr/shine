@@ -67,16 +67,13 @@ export class MoviesService extends BaseService {
 				    SELECT 1
 				    FROM movie_credits
 				    JOIN people ON people.uid = movie_credits.person_uid
+				    LEFT JOIN translations AS person_names
+				      ON person_names.resource_uid = people.uid
+				      AND person_names.resource_type = 'person_name'
 				    WHERE movie_credits.movie_uid = movies.uid
 				      AND (
 				        people.name LIKE ${`%${query}%`}
-				        OR EXISTS (
-				          SELECT 1
-				          FROM translations AS person_translations
-				          WHERE person_translations.resource_uid = people.uid
-				            AND person_translations.resource_type = 'person_name'
-				            AND person_translations.content LIKE ${`%${query}%`}
-				        )
+				        OR person_names.content LIKE ${`%${query}%`}
 				      )
 				  )
 				)
