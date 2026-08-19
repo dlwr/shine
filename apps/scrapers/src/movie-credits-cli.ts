@@ -37,7 +37,13 @@ program
   )
   .option('--limit <n>', '処理する映画の件数上限', parsePositiveInteger)
   .option('--force', '取得済みの映画も取り直す', false)
-  .option('--throttle <ms>', 'リクエスト間隔(ms)', parsePositiveInteger, 250)
+  .option('--throttle <ms>', 'リクエスト間隔(ms)', parsePositiveInteger, 150)
+  .option(
+    '--concurrency <n>',
+    '同時に処理する映画の数',
+    parsePositiveInteger,
+    5,
+  )
   .option('--dry-run', '書き込みは行わず、対象のみ表示', false)
   .addHelpText(
     'after',
@@ -53,6 +59,7 @@ program
       limit?: number;
       force: boolean;
       throttle: number;
+      concurrency: number;
       dryRun: boolean;
     }) => {
       assertDatabaseEnvironment(environment);
@@ -72,6 +79,7 @@ program
           force: options.force,
           limit: options.limit,
           throttleMs: options.throttle,
+          concurrency: options.concurrency,
           onProgress(done, total) {
             if (done === total || done % 100 === 0) {
               console.log(`  ${done}/${total}`);
