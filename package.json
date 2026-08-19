@@ -26,6 +26,7 @@
     "scrapers:venice-film-festival": "pnpm --filter @shine/scrapers run venice-film-festival",
     "scrapers:berlin-film-festival": "pnpm --filter @shine/scrapers run berlin-film-festival",
     "scrapers:kinema-junpo": "pnpm --filter @shine/scrapers run kinema-junpo",
+    "scrapers:movie-credits": "pnpm --filter @shine/scrapers run movie-credits",
     "scrapers:movie-import": "pnpm --filter @shine/scrapers run movie-import",
     "scrapers:import-imdb-list": "pnpm --filter @shine/scrapers run import-imdb-list",
     "scrapers:availability-check": "pnpm --filter @shine/scrapers run availability-check",
