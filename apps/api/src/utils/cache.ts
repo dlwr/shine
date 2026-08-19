@@ -197,7 +197,7 @@ export const getCacheKeyForMovie = (
   locale: string = 'ja',
 ): string => {
   const suffix = shouldIncludeDetails ? 'full' : 'basic';
-  return `movie:${movieId}:${suffix}:${locale}:v4`;
+  return `movie:${movieId}:${suffix}:${locale}:v5`;
 };
 
 export const getMovieCacheKeysForAllLocales = (movieId: string): string[] =>

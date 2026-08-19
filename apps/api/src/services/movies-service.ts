@@ -4,7 +4,9 @@ import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
+import {movieCredits} from '@shine/database/schema/movie-credits';
 import {nominations} from '@shine/database/schema/nominations';
+import {people} from '@shine/database/schema/people';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {
@@ -20,6 +22,21 @@ import {
 } from './awards-service';
 import {BaseService} from './base-service';
 import type {MovieSelection, SearchOptions} from '@shine/types';
+
+const CREW_JOB_ORDER = [
+  'Director',
+  'Screenplay',
+  'Writer',
+  'Story',
+  'Director of Photography',
+  'Editor',
+  'Original Music Composer',
+];
+
+function crewJobRank(job: string): number {
+  const index = CREW_JOB_ORDER.indexOf(job);
+  return index === -1 ? CREW_JOB_ORDER.length : index;
+}
 
 export class MoviesService extends BaseService {
   private readonly cache: EdgeCache;
@@ -301,6 +318,8 @@ export class MoviesService extends BaseService {
       .orderBy(sql`${articleLinks.submittedAt} DESC`)
       .limit(3);
 
+    const credits = await this.getMovieCredits(movieId, locale);
+
     const movieDetails: MovieSelection = {
       uid: movie.uid,
       year: movie.year ?? 0,
@@ -351,6 +370,7 @@ export class MoviesService extends BaseService {
         title: article.title,
         description: article.description || undefined,
       })),
+      credits,
     };
 
     // Cache result
@@ -486,5 +506,62 @@ export class MoviesService extends BaseService {
         this.cache.delete(key),
       ),
     );
+  }
+
+  private async getMovieCredits(
+    movieId: string,
+    locale: string,
+  ): Promise<MovieSelection['credits']> {
+    const rows = await this.database
+      .select({
+        personUid: people.uid,
+        name: people.name,
+        profilePath: people.profilePath,
+        department: movieCredits.department,
+        job: movieCredits.job,
+        character: movieCredits.character,
+        castOrder: movieCredits.castOrder,
+        localizedName: translations.content,
+      })
+      .from(movieCredits)
+      .innerJoin(people, eq(people.uid, movieCredits.personUid))
+      .leftJoin(
+        translations,
+        and(
+          eq(translations.resourceUid, people.uid),
+          eq(translations.resourceType, 'person_name'),
+          eq(translations.languageCode, locale),
+        ),
+      )
+      .where(eq(movieCredits.movieUid, movieId));
+
+    if (rows.length === 0) {
+      return undefined;
+    }
+
+    const displayName = (row: (typeof rows)[number]) =>
+      row.localizedName ?? row.name;
+
+    const cast = rows
+      .filter(row => row.department === 'Acting')
+      .toSorted((a, b) => (a.castOrder ?? 0) - (b.castOrder ?? 0))
+      .map(row => ({
+        uid: row.personUid,
+        name: displayName(row),
+        character: row.character ?? undefined,
+        profilePath: row.profilePath ?? undefined,
+      }));
+
+    const crew = rows
+      .filter(row => row.job !== null)
+      .toSorted((a, b) => crewJobRank(a.job ?? '') - crewJobRank(b.job ?? ''))
+      .map(row => ({
+        uid: row.personUid,
+        name: displayName(row),
+        job: row.job ?? '',
+        profilePath: row.profilePath ?? undefined,
+      }));
+
+    return {cast, crew};
   }
 }

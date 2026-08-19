@@ -2458,6 +2458,52 @@ components:
               items:
                 $ref: '#/components/schemas/ArticleLink'
               description: Related article links (max 3)
+            credits:
+              $ref: '#/components/schemas/MovieCredits'
+
+    MovieCredits:
+      type: object
+      properties:
+        cast:
+          type: array
+          items:
+            type: object
+            properties:
+              uid:
+                type: string
+                format: uuid
+              name:
+                type: string
+              character:
+                type: string
+              profilePath:
+                type: string
+            required:
+              - uid
+              - name
+          description: Billed cast, ordered as credited
+        crew:
+          type: array
+          items:
+            type: object
+            properties:
+              uid:
+                type: string
+                format: uuid
+              name:
+                type: string
+              job:
+                type: string
+              profilePath:
+                type: string
+            required:
+              - uid
+              - name
+              - job
+          description: Director first, then writing, camera, editing and music
+      required:
+        - cast
+        - crew
 
     MovieSearchResponse:
       type: object
