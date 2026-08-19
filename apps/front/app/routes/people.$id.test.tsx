@@ -14,12 +14,13 @@ const person = {
       title: '乱',
       year: 1985,
       posterUrl: 'https://example.com/ran.jpg',
-      job: 'Director',
+      jobs: ['Director', 'Screenplay'],
     },
     {
       movieUid: 'movie-taxi',
       title: '影武者',
       year: 1980,
+      jobs: [],
       character: 'Extra',
     },
   ],
@@ -67,5 +68,11 @@ describe('PersonPage', () => {
     } as Route.MetaArgs) as Array<{title?: string}>;
 
     expect(descriptors[0].title).toContain('黒澤明');
+  });
+
+  it('複数の役割を並べて出す', () => {
+    renderPage();
+
+    expect(screen.getByText('監督・脚本')).toBeInTheDocument();
   });
 });

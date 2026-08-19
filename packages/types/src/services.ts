@@ -264,7 +264,7 @@ export type PersonDetail = {
     title: string | undefined;
     year: number | undefined;
     posterUrl: string | undefined;
-    job: string | undefined;
+    jobs: string[];
     character: string | undefined;
   }>;
 };

@@ -2527,13 +2527,17 @@ components:
                 type: integer
               posterUrl:
                 type: string
-              job:
-                type: string
+              jobs:
+                type: array
+                items:
+                  type: string
+                description: Crew jobs on this film
               character:
                 type: string
             required:
               - movieUid
-          description: Films this person worked on, newest first
+              - jobs
+          description: Films this person worked on, newest first (one entry per film)
       required:
         - uid
         - name
