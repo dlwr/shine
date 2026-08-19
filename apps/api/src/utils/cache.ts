@@ -200,6 +200,11 @@ export const getCacheKeyForMovie = (
   return `movie:${movieId}:${suffix}:${locale}:v5`;
 };
 
+export const getCacheKeyForPerson = (
+  personUid: string,
+  locale: string,
+): string => `person:${personUid}:${locale}:v2`;
+
 export const getMovieCacheKeysForAllLocales = (movieId: string): string[] =>
   CACHEABLE_LOCALES.flatMap(locale => [
     getCacheKeyForMovie(movieId, true, locale),

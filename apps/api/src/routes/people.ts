@@ -5,6 +5,7 @@ import {
   createCachedResponse,
   createETag,
   EdgeCache,
+  getCacheKeyForPerson,
   normalizeCacheLocale,
   shouldCheckETag,
 } from '../utils/cache';
@@ -17,7 +18,7 @@ peopleRoutes.get('/:id', async c => {
   const personUid = c.req.param('id');
   const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
   const cacheLocale = normalizeCacheLocale(locale) ?? 'ja';
-  const cacheKey = `person:${personUid}:${cacheLocale}:v1`;
+  const cacheKey = getCacheKeyForPerson(personUid, cacheLocale);
 
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
   const cached = await cache.get(cacheKey);
