@@ -241,5 +241,14 @@
     "correctImdbId": "tt34144683",
     "correctTitle": "青春ジャック 止められるか、俺たちを2",
     "correctYear": 2024
+  },
+  {
+    "organization": "Japan Academy Awards",
+    "category": "優秀作品賞",
+    "ceremonyYear": 2026,
+    "wrongImdbId": "tt35447529",
+    "correctImdbId": "tt38119721",
+    "correctTitle": "宝島",
+    "correctYear": 2025
   }
 ]
