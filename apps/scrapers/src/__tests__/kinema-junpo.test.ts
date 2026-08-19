@@ -1,10 +1,10 @@
 import {describe, expect, it} from 'vitest';
+import {selectTmdbMatch} from '../common/tmdb-film-resolver';
 import {extractAwardEditions} from '../imdb-event-award';
 import {
   kinemaJunpoCeremonyNumber,
   kinemaJunpoJapaneseConfig,
   parseKinemaJunpoWikitext,
-  selectTmdbMatch,
   toImdbEventData,
 } from '../kinema-junpo';
 

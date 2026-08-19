@@ -3,11 +3,15 @@ import {
   collectDuplicateResolutions,
   collectImplausibleResolutions,
   dropMisattributedResolutions,
-  isPlausibleEditionYear,
+  isPlausiblePublicationYear,
   publicationYearFromClaims,
-  type KinemaJunpoEdition,
+  type FilmReference,
   type ResolvedFilm,
-} from '../kinema-junpo';
+  type YearWindow,
+} from '../wikidata-film-resolver';
+
+const SAME_YEAR: YearWindow = {min: -1, max: 1};
+const EARLIER_ONLY: YearWindow = {min: -Infinity, max: 1};
 
 describe('publicationYearFromClaims', () => {
   it('P577から公開年を取り出す', () => {
@@ -34,54 +38,51 @@ describe('publicationYearFromClaims', () => {
   });
 });
 
-describe('isPlausibleEditionYear', () => {
-  it('日本映画は年度と同じ年を認める', () => {
-    expect(isPlausibleEditionYear(1959, 1959, 'japanese')).toBe(true);
+describe('isPlausiblePublicationYear', () => {
+  it('対象年と同じ年を認める', () => {
+    expect(isPlausiblePublicationYear(1959, 1959, SAME_YEAR)).toBe(true);
   });
 
-  it('日本映画は映画祭プレミアの前年を認める', () => {
-    expect(isPlausibleEditionYear(1958, 1959, 'japanese')).toBe(true);
+  it('窓の下限まで認める', () => {
+    expect(isPlausiblePublicationYear(1958, 1959, SAME_YEAR)).toBe(true);
   });
 
-  it('日本映画は2年以上前を認めない', () => {
-    expect(isPlausibleEditionYear(1957, 1959, 'japanese')).toBe(false);
+  it('窓の下限を超えたら認めない', () => {
+    expect(isPlausiblePublicationYear(1957, 1959, SAME_YEAR)).toBe(false);
   });
 
-  it('日本映画は年始公開で年度の翌年になるのを認める', () => {
-    expect(isPlausibleEditionYear(1960, 1959, 'japanese')).toBe(true);
+  it('窓の上限まで認める', () => {
+    expect(isPlausiblePublicationYear(1960, 1959, SAME_YEAR)).toBe(true);
   });
 
-  it('日本映画は2年以上後を認めない', () => {
-    expect(isPlausibleEditionYear(1961, 1959, 'japanese')).toBe(false);
+  it('窓の上限を超えたら認めない', () => {
+    expect(isPlausiblePublicationYear(1961, 1959, SAME_YEAR)).toBe(false);
   });
 
-  it('外国映画は本国公開が数年前でも認める', () => {
-    expect(isPlausibleEditionYear(1950, 1959, 'foreign')).toBe(true);
-  });
-
-  it('外国映画も2年以上後の公開は認めない', () => {
-    expect(isPlausibleEditionYear(1961, 1959, 'foreign')).toBe(false);
+  it('下限のない窓では何年前でも認める', () => {
+    expect(isPlausiblePublicationYear(1930, 1959, EARLIER_ONLY)).toBe(true);
   });
 
   it('公開年が分からない場合は判断しない', () => {
-    expect(isPlausibleEditionYear(undefined, 1959, 'japanese')).toBe(true);
+    expect(isPlausiblePublicationYear(undefined, 1959, SAME_YEAR)).toBe(true);
   });
 });
 
-const editions: KinemaJunpoEdition[] = [
+const references: FilmReference[] = [
+  {key: '野火', title: '野火', targetYear: 1959, yearWindow: SAME_YEAR},
   {
-    year: 1959,
-    japanese: [
-      {rank: 1, page: '野火', title: '野火'},
-      {rank: 2, page: 'キクとイサム', title: 'キクとイサム'},
-    ],
-    foreign: [{rank: 1, page: '大いなる西部', title: '大いなる西部'}],
+    key: 'キクとイサム',
+    title: 'キクとイサム',
+    targetYear: 1959,
+    yearWindow: SAME_YEAR,
   },
   {
-    year: 2016,
-    japanese: [{rank: 1, page: '怒り (小説)', title: '怒り'}],
-    foreign: [],
+    key: '大いなる西部',
+    title: '大いなる西部',
+    targetYear: 1959,
+    yearWindow: EARLIER_ONLY,
   },
+  {key: '怒り (小説)', title: '怒り', targetYear: 2016, yearWindow: SAME_YEAR},
 ];
 
 function createResolved(): Map<string, ResolvedFilm> {
@@ -96,7 +97,7 @@ function createResolved(): Map<string, ResolvedFilm> {
 describe('年の合わない解決結果の扱い', () => {
   it('年の離れた解決結果だけを候補に挙げる', () => {
     const candidates = collectImplausibleResolutions(
-      editions,
+      references,
       createResolved(),
     );
 
@@ -111,7 +112,7 @@ describe('年の合わない解決結果の扱い', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const dropped = await dropMisattributedResolutions({
-      editions,
+      references,
       resolved,
       throttleMs: 0,
       async fetchReleaseYear(imdbId) {
@@ -128,7 +129,7 @@ describe('年の合わない解決結果の扱い', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     await dropMisattributedResolutions({
-      editions,
+      references,
       resolved,
       throttleMs: 0,
       async fetchReleaseYear() {
@@ -144,7 +145,7 @@ describe('年の合わない解決結果の扱い', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const dropped = await dropMisattributedResolutions({
-      editions,
+      references,
       resolved,
       throttleMs: 0,
       async fetchReleaseYear(): Promise<number | undefined> {
@@ -155,52 +156,42 @@ describe('年の合わない解決結果の扱い', () => {
     expect(dropped).toBe(0);
     expect(resolved.has('野火')).toBe(true);
   });
-
-  it('年が合う解決結果は候補にならない', () => {
-    const candidates = collectImplausibleResolutions(
-      editions,
-      createResolved(),
-    );
-
-    expect(candidates.map(candidate => candidate.key)).not.toContain(
-      'キクとイサム',
-    );
-    expect(candidates.map(candidate => candidate.key)).not.toContain(
-      '大いなる西部',
-    );
-  });
 });
 
 describe('collectDuplicateResolutions', () => {
-  it('複数の年度が同じ映画を指しているものを報告する', () => {
-    const serialEditions: KinemaJunpoEdition[] = [
+  it('複数の年が同じ映画を指しているものを報告する', () => {
+    const serialReferences: FilmReference[] = [
       {
-        year: 1928,
-        japanese: [{rank: 1, page: '浪人街', title: '浪人街 第一話'}],
-        foreign: [],
+        key: '浪人街',
+        title: '浪人街 第一話',
+        targetYear: 1928,
+        yearWindow: SAME_YEAR,
       },
       {
-        year: 1929,
-        japanese: [{rank: 3, page: '浪人街', title: '浪人街 第三話'}],
-        foreign: [],
+        key: '浪人街',
+        title: '浪人街 第三話',
+        targetYear: 1929,
+        yearWindow: SAME_YEAR,
       },
     ];
     const resolved = new Map<string, ResolvedFilm>([
       ['浪人街', {imdbId: 'tt0020342'}],
     ]);
 
-    expect(collectDuplicateResolutions(serialEditions, resolved)).toEqual([
+    expect(collectDuplicateResolutions(serialReferences, resolved)).toEqual([
       {
         imdbId: 'tt0020342',
         entries: [
-          {editionYear: 1928, title: '浪人街 第一話'},
-          {editionYear: 1929, title: '浪人街 第三話'},
+          {targetYear: 1928, title: '浪人街 第一話'},
+          {targetYear: 1929, title: '浪人街 第三話'},
         ],
       },
     ]);
   });
 
-  it('1つの年度にしか出ない映画は報告しない', () => {
-    expect(collectDuplicateResolutions(editions, createResolved())).toEqual([]);
+  it('1つの年にしか出ない映画は報告しない', () => {
+    expect(collectDuplicateResolutions(references, createResolved())).toEqual(
+      [],
+    );
   });
 });
