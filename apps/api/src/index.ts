@@ -6,6 +6,7 @@ import {securityHeaders} from './middleware/security';
 import {adminRoutes} from './routes/admin';
 import {authRoutes} from './routes/auth';
 import {awardsRoutes} from './routes/awards';
+import {peopleRoutes} from './routes/people';
 import {crossingsRoutes} from './routes/crossings';
 import {documentationRoutes} from './routes/documentation';
 import {moviesRoutes} from './routes/movies';
@@ -50,6 +51,7 @@ app.route('/docs', documentationRoutes); // API documentation
 app.route('/', selectionsRoutes); // Main endpoint for movie selections
 app.route('/movies', moviesRoutes);
 app.route('/awards', awardsRoutes);
+app.route('/people', peopleRoutes);
 app.route('/crossings', crossingsRoutes);
 app.route('/uncrowned', uncrownedRoutes);
 app.route('/quiz', quizRoutes);

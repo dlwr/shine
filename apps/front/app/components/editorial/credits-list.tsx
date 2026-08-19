@@ -23,17 +23,27 @@ const JOB_LABELS: Record<string, string> = {
   'Original Music Composer': '音楽',
 };
 
+type CreditPerson = {uid: string; name: string};
+
 function groupCrewByJob(crew: MovieCredits['crew']) {
-  const groups = new Map<string, string[]>();
+  const groups = new Map<string, CreditPerson[]>();
 
   for (const member of crew) {
     const label = JOB_LABELS[member.job] ?? member.job;
     const names = groups.get(label) ?? [];
-    names.push(member.name);
+    names.push({uid: member.uid, name: member.name});
     groups.set(label, names);
   }
 
   return groups.entries().toArray();
+}
+
+function PersonLink({person}: {person: CreditPerson}) {
+  return (
+    <a href={`/people/${person.uid}`} className="text-ink">
+      {person.name}
+    </a>
+  );
 }
 
 export function CreditsList({credits}: {credits: MovieCredits}) {
@@ -48,7 +58,14 @@ export function CreditsList({credits}: {credits: MovieCredits}) {
               <dt className="font-mono text-xs text-ink-muted pt-0.5">
                 {label}
               </dt>
-              <dd className="text-ink">{names.join('、')}</dd>
+              <dd className="text-ink">
+                {names.map((person, index) => (
+                  <span key={person.uid}>
+                    {index > 0 && '、'}
+                    <PersonLink person={person} />
+                  </span>
+                ))}
+              </dd>
             </div>
           ))}
         </dl>
@@ -60,7 +77,7 @@ export function CreditsList({credits}: {credits: MovieCredits}) {
           <ul className="list-none p-0 m-0 space-y-0.5 text-sm">
             {credits.cast.map(member => (
               <li key={member.uid} className="text-ink">
-                {member.name}
+                <PersonLink person={member} />
                 {member.character && (
                   <span className="text-ink-muted"> — {member.character}</span>
                 )}

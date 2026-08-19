@@ -34,7 +34,7 @@ describe('CreditsList', () => {
       />,
     );
 
-    expect(screen.getByText('黒澤明、橋本忍')).toBeInTheDocument();
+    expect(screen.getByRole('definition')).toHaveTextContent('黒澤明、橋本忍');
   });
 
   it('出演者を役名つきで並べる', () => {
@@ -53,5 +53,13 @@ describe('CreditsList', () => {
     render(<CreditsList credits={{cast: credits.cast, crew: []}} />);
 
     expect(screen.queryByText('監督')).not.toBeInTheDocument();
+  });
+
+  it('人名から人物ページへリンクする', () => {
+    render(<CreditsList credits={credits} />);
+
+    expect(
+      screen.getByRole('link', {name: 'マーティン・スコセッシ'}),
+    ).toHaveAttribute('href', '/people/p3');
   });
 });

@@ -303,6 +303,45 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /people/{personId}:
+    get:
+      summary: Get a person and the films they worked on
+      description: |
+        Returns one person with the films they are credited on, newest first.
+        Names come from the credits import: Japanese names are stored on the
+        person, foreign names get their Japanese form from translations.
+      operationId: getPerson
+      tags:
+        - Movies
+      security: []
+      parameters:
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Person UID
+        - name: locale
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ja, en]
+            default: ja
+          description: Language for names and film titles
+      responses:
+        '200':
+          description: Successfully retrieved the person
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /crossings:
     get:
       summary: Get how awards overlap
@@ -2460,6 +2499,46 @@ components:
               description: Related article links (max 3)
             credits:
               $ref: '#/components/schemas/MovieCredits'
+
+    PersonDetail:
+      type: object
+      properties:
+        uid:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Localized name when available, otherwise the original
+        originalName:
+          type: string
+        profilePath:
+          type: string
+        credits:
+          type: array
+          items:
+            type: object
+            properties:
+              movieUid:
+                type: string
+                format: uuid
+              title:
+                type: string
+              year:
+                type: integer
+              posterUrl:
+                type: string
+              job:
+                type: string
+              character:
+                type: string
+            required:
+              - movieUid
+          description: Films this person worked on, newest first
+      required:
+        - uid
+        - name
+        - originalName
+        - credits
 
     MovieCredits:
       type: object
