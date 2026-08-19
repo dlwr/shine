@@ -66,6 +66,7 @@ export type KinemaJunpoEdition = {
 export type ResolvedFilm = {
   imdbId: string;
   englishTitle?: string;
+  publicationYear?: number;
 };
 
 // 1924年度から毎年。戦争で1943〜1945年度は中止され、1946年度の第20回で再開した
@@ -255,14 +256,16 @@ type WikipediaPagePropertiesResponse = {
   };
 };
 
+type WikidataClaims = Record<
+  string,
+  Array<{mainsnak?: {datavalue?: {value?: unknown}}}>
+>;
+
 type WikidataEntitiesResponse = {
   entities?: Record<
     string,
     {
-      claims?: Record<
-        string,
-        Array<{mainsnak?: {datavalue?: {value?: unknown}}}>
-      >;
+      claims?: WikidataClaims;
       labels?: Record<string, {value?: string}>;
     }
   >;
@@ -355,10 +358,193 @@ async function fetchImdbIds(
       continue;
     }
 
-    films.set(itemId, {imdbId, englishTitle: entity.labels?.en?.value});
+    films.set(itemId, {
+      imdbId,
+      englishTitle: entity.labels?.en?.value,
+      publicationYear: publicationYearFromClaims(entity.claims),
+    });
   }
 
   return films;
+}
+
+/** WikidataのP577（publication date）から最も早い公開年を取り出す */
+export function publicationYearFromClaims(
+  claims: WikidataClaims | undefined,
+): number | undefined {
+  const years = (claims?.P577 ?? [])
+    .map(claim => {
+      const value = claim.mainsnak?.datavalue?.value;
+      if (typeof value !== 'object' || value === null || !('time' in value)) {
+        return;
+      }
+
+      const {time} = value as {time?: unknown};
+      if (typeof time !== 'string') {
+        return;
+      }
+
+      const year = /^\+(\d{4})/.exec(time)?.[1];
+      return year === undefined ? undefined : Number(year);
+    })
+    .filter((year): year is number => year !== undefined);
+
+  return years.length > 0 ? Math.min(...years) : undefined;
+}
+
+/**
+ * 日本映画はその年度の公開作（映画祭プレミアで前年、年始公開で翌年になることはある）、
+ * 外国映画は本国公開の後に日本公開されるので年度より前になる
+ */
+export function isPlausibleEditionYear(
+  publicationYear: number | undefined,
+  editionYear: number,
+  category: 'japanese' | 'foreign',
+): boolean {
+  if (publicationYear === undefined) {
+    return true;
+  }
+
+  const difference = publicationYear - editionYear;
+  if (difference > 1) {
+    return false;
+  }
+
+  return category === 'foreign' || difference >= -1;
+}
+
+export type ResolutionCandidate = {
+  key: string;
+  title: string;
+  editionYear: number;
+  category: 'japanese' | 'foreign';
+  imdbId: string;
+  publicationYear?: number;
+};
+
+/** リメイクや続編の記事は最新版のIMDb IDを返すので、年の合わない解決結果を洗い出す */
+export function collectImplausibleResolutions(
+  editions: KinemaJunpoEdition[],
+  resolved: Map<string, ResolvedFilm>,
+): ResolutionCandidate[] {
+  return editions.flatMap(edition => [
+    ...implausibleFilms(edition.japanese, edition.year, 'japanese', resolved),
+    ...implausibleFilms(edition.foreign, edition.year, 'foreign', resolved),
+  ]);
+}
+
+function implausibleFilms(
+  films: KinemaJunpoFilm[],
+  editionYear: number,
+  category: 'japanese' | 'foreign',
+  resolved: Map<string, ResolvedFilm>,
+): ResolutionCandidate[] {
+  const candidates: ResolutionCandidate[] = [];
+
+  for (const film of films) {
+    const key = filmKey(film);
+    const match = resolved.get(key);
+    if (
+      !match ||
+      isPlausibleEditionYear(match.publicationYear, editionYear, category)
+    ) {
+      continue;
+    }
+
+    candidates.push({
+      key,
+      title: film.title,
+      editionYear,
+      category,
+      imdbId: match.imdbId,
+      publicationYear: match.publicationYear,
+    });
+  }
+
+  return candidates;
+}
+
+type TmdbFindResponse = {movie_results?: Array<{release_date?: string}>};
+
+async function fetchTmdbReleaseYear(
+  imdbId: string,
+  tmdbApiKey: string,
+): Promise<number | undefined> {
+  const url = buildUrl(`${TMDB_API}/find/${imdbId}`, {
+    api_key: tmdbApiKey,
+    external_source: 'imdb_id',
+  });
+
+  try {
+    const response = await fetchJsonWithRetry<TmdbFindResponse>(url);
+    const year = response.movie_results?.[0]?.release_date?.slice(0, 4);
+    return year ? Number(year) : undefined;
+  } catch (error) {
+    console.warn(`  TMDbの公開年を取得できません (${imdbId}):`, error);
+    return undefined;
+  }
+}
+
+/**
+ * Wikidataの公開日には原作小説の出版年が入っていることがあるので、
+ * 年が合わないものはTMDbの公開年で確かめてから捨てる
+ */
+export async function dropMisattributedResolutions({
+  editions,
+  resolved,
+  tmdbApiKey,
+  throttleMs = 300,
+  fetchReleaseYear,
+}: {
+  editions: KinemaJunpoEdition[];
+  resolved: Map<string, ResolvedFilm>;
+  tmdbApiKey?: string;
+  throttleMs?: number;
+  fetchReleaseYear?: (imdbId: string) => Promise<number | undefined>;
+}): Promise<number> {
+  const candidates = collectImplausibleResolutions(editions, resolved);
+  if (candidates.length === 0) {
+    return 0;
+  }
+
+  console.log(`Verifying ${candidates.length} resolutions with unlikely years`);
+
+  const resolveYear =
+    fetchReleaseYear ??
+    (tmdbApiKey
+      ? async (imdbId: string) => fetchTmdbReleaseYear(imdbId, tmdbApiKey)
+      : undefined);
+
+  let dropped = 0;
+  for (const candidate of candidates) {
+    const releaseYear = await resolveYear?.(candidate.imdbId);
+    const label = `${candidate.title}（${candidate.editionYear}年度, ${candidate.key}）-> ${candidate.imdbId}`;
+
+    if (releaseYear === undefined) {
+      console.warn(`  公開年を確認できないので残す: ${label}`);
+      continue;
+    }
+
+    if (
+      isPlausibleEditionYear(
+        releaseYear,
+        candidate.editionYear,
+        candidate.category,
+      )
+    ) {
+      continue;
+    }
+
+    console.warn(`  別の作品と判断して除外: ${label}（TMDb ${releaseYear}年）`);
+    resolved.delete(candidate.key);
+    dropped++;
+
+    if (throttleMs > 0) {
+      await sleep(throttleMs);
+    }
+  }
+
+  return dropped;
 }
 
 export async function resolveFilmsByWikipediaPage(
@@ -638,6 +824,16 @@ export async function importKinemaJunpo({
   console.log(`Resolving IMDb IDs for ${pages.length} articles...`);
   const resolved = await resolveFilmsByWikipediaPage(pages);
   console.log(`Resolved ${resolved.size}/${pages.length} articles`);
+
+  const dropped = await dropMisattributedResolutions({
+    editions,
+    resolved,
+    tmdbApiKey: environment.TMDB_API_KEY,
+    throttleMs,
+  });
+  if (dropped > 0) {
+    console.log(`Dropped ${dropped} misattributed resolutions`);
+  }
 
   if (environment.TMDB_API_KEY) {
     const pending = new Map(
