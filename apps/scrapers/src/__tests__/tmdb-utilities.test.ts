@@ -1,5 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {
+  fetchTMDBCredits,
   fetchTMDBMovieDetails,
   fetchTMDBMovieTranslations,
   findTMDBByImdbId,
@@ -18,6 +19,31 @@ function jsonResponse(body: unknown): Response {
 describe('TMDb Utilities', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe('fetchTMDBCredits', () => {
+    it('日本語ロケールでクレジットを取得する', async () => {
+      vi.mocked(fetch).mockResolvedValue(
+        jsonResponse({id: 103, cast: [], crew: []}),
+      );
+
+      await fetchTMDBCredits(103, 'movie', 'api-key');
+
+      const requestedUrl = vi.mocked(fetch).mock.calls[0][0] as string;
+      expect(requestedUrl).toContain('/movie/103/credits');
+      expect(requestedUrl).toContain('language=ja-JP');
+    });
+
+    it('テレビ作品は tv エンドポイントを使う', async () => {
+      vi.mocked(fetch).mockResolvedValue(
+        jsonResponse({id: 55, cast: [], crew: []}),
+      );
+
+      await fetchTMDBCredits(55, 'tv', 'api-key');
+
+      const requestedUrl = vi.mocked(fetch).mock.calls[0][0] as string;
+      expect(requestedUrl).toContain('/tv/55/credits');
+    });
   });
 
   describe('fetchTMDBMovieDetails', () => {
