@@ -11,7 +11,7 @@ export type PersonCreditData = {
   title?: string;
   year?: number;
   posterUrl?: string;
-  job?: string;
+  jobs: string[];
   character?: string;
 };
 
@@ -34,11 +34,13 @@ const JOB_LABELS: Record<string, string> = {
 };
 
 function roleLabel(credit: PersonCreditData): string {
-  if (credit.job) {
-    return JOB_LABELS[credit.job] ?? credit.job;
+  const labels = credit.jobs.map(job => JOB_LABELS[job] ?? job);
+
+  if (credit.character !== undefined) {
+    labels.push('出演');
   }
 
-  return credit.character ? `出演 — ${credit.character}` : '出演';
+  return labels.length > 0 ? labels.join('・') : '出演';
 }
 
 function personDescription(person: PersonData): string {
@@ -133,10 +135,7 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
 
         <div>
           {person.credits.map(credit => (
-            <CreditRow
-              key={`${credit.movieUid}:${credit.job ?? credit.character ?? ''}`}
-              credit={credit}
-            />
+            <CreditRow key={credit.movieUid} credit={credit} />
           ))}
         </div>
 

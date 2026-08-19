@@ -70,19 +70,31 @@ export class PeopleService extends BaseService {
       )
       .orderBy(sql`${movies.year} DESC`);
 
+    const byMovie = new Map<string, PersonDetail['credits'][number]>();
+    for (const row of creditRows) {
+      const credit = byMovie.get(row.movieUid) ?? {
+        movieUid: row.movieUid,
+        title: row.title ?? undefined,
+        year: row.year ?? undefined,
+        posterUrl: row.posterUrl ?? undefined,
+        jobs: [],
+        character: undefined,
+      };
+
+      if (row.job && !credit.jobs.includes(row.job)) {
+        credit.jobs.push(row.job);
+      }
+
+      credit.character ??= row.character ?? undefined;
+      byMovie.set(row.movieUid, credit);
+    }
+
     return {
       uid: person.uid,
       name: person.localizedName ?? person.name,
       originalName: person.name,
       profilePath: person.profilePath ?? undefined,
-      credits: creditRows.map(row => ({
-        movieUid: row.movieUid,
-        title: row.title ?? undefined,
-        year: row.year ?? undefined,
-        posterUrl: row.posterUrl ?? undefined,
-        job: row.job ?? undefined,
-        character: row.character ?? undefined,
-      })),
+      credits: byMovie.values().toArray(),
     };
   }
 }

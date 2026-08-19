@@ -68,6 +68,7 @@ async function createTestEnvironment(): Promise<{
   await database.insert(people).values([
     {uid: 'person-kurosawa', tmdbId: 5026, name: '黒澤明'},
     {uid: 'person-scorsese', tmdbId: 1032, name: 'Martin Scorsese'},
+    {uid: 'person-multi', tmdbId: 7450, name: 'ビートたけし'},
   ]);
   await database.insert(translations).values({
     resourceType: 'person_name',
@@ -96,6 +97,28 @@ async function createTestEnvironment(): Promise<{
       creditId: 'c3',
       department: 'Directing',
       job: 'Director',
+    },
+    {
+      movieUid: 'movie-ran',
+      personUid: 'person-multi',
+      creditId: 'c4',
+      department: 'Directing',
+      job: 'Director',
+    },
+    {
+      movieUid: 'movie-ran',
+      personUid: 'person-multi',
+      creditId: 'c5',
+      department: 'Writing',
+      job: 'Screenplay',
+    },
+    {
+      movieUid: 'movie-ran',
+      personUid: 'person-multi',
+      creditId: 'c6',
+      department: 'Acting',
+      character: '本人',
+      castOrder: 0,
     },
   ]);
 
@@ -136,6 +159,23 @@ describe('PeopleService.getPerson', () => {
     ]);
   });
 
+  it('同じ映画の複数の役割を1件にまとめる', async () => {
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-multi', 'ja');
+
+    expect(person?.credits).toHaveLength(1);
+    expect(person?.credits[0].jobs).toEqual(['Director', 'Screenplay']);
+  });
+
+  it('出演の役名を持つ', async () => {
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-multi', 'ja');
+
+    expect(person?.credits[0].character).toBe('本人');
+  });
+
   it('論理削除された映画は含めない', async () => {
     const service = new PeopleService(environment);
 
@@ -151,7 +191,7 @@ describe('PeopleService.getPerson', () => {
 
     const person = await service.getPerson('person-kurosawa', 'ja');
 
-    expect(person?.credits[0].job).toBe('Director');
+    expect(person?.credits[0].jobs).toEqual(['Director']);
   });
 
   it('存在しない人物には undefined を返す', async () => {

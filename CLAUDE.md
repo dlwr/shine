@@ -13,6 +13,7 @@ Key design patterns:
 - Date-seeded movie selection (daily/weekly/monthly) with deterministic hash-based randomization, persisted in `movie_selections`
 - Multilingual support through the `translations` table
 - Awards / nominations tracking (organizations → ceremonies → categories → nominations)
+- Credits (people → movie_credits) from TMDb; `/people/:id` で人物から映画を辿れる
 - UUID primary keys; camelCase in schema mapped to snake_case in the database (`casing: 'snake_case'`)
 - Soft delete on movies via `deleted_at` — every movie lookup (API and scrapers) must filter or skip soft-deleted rows
 
@@ -36,6 +37,7 @@ Important schema rules:
 - All tables use UUID primary keys via `generateUUID()`
 - **`translations`**: `resourceType` is an enum of `'movie_title' | 'movie_description'`; `content` holds the raw text (never `"title:..."` prefixed). Composite unique on `(resourceType, resourceUid, languageCode)`. Movie titles live ONLY here, not on `movies`
 - `movies.deletedAt` implements soft delete; unique constraints on `imdbId`/`tmdbId` still include deleted rows, so dedup checks must NOT filter them out (skip instead of re-creating)
+- **`people` / `movie_credits`**: 監督・出演者。`people.tmdbId` と `movie_credits.creditId`（TMDbの`credit_id`）が一意キー。日本人は `people.name` が日本語表記、外国人は `translations` の `person_name` に日本語名が入る二系統なので、表示・検索は両方を見る
 - Schema fields are camelCase (`createdAt`) but map to snake_case columns; always reference schema fields in queries, never hardcoded column names
 
 ## Environment Configuration
