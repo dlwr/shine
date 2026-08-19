@@ -4,6 +4,7 @@ import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
+import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
@@ -324,6 +325,7 @@ export class AdminService extends BaseService {
   async deleteMovie(movieId: string): Promise<void> {
     await this.database.transaction(async trx => {
       await trx.delete(articleLinks).where(eq(articleLinks.movieUid, movieId));
+      await trx.delete(movieCredits).where(eq(movieCredits.movieUid, movieId));
       await trx
         .delete(movieAvailabilityChecks)
         .where(eq(movieAvailabilityChecks.movieUid, movieId));
@@ -833,6 +835,21 @@ export class AdminService extends BaseService {
     }
 
     await this.database.transaction(async trx => {
+      // Merge credits: keep the target's own set when it already has one
+      const targetCredits = await trx
+        .select({uid: movieCredits.uid})
+        .from(movieCredits)
+        .where(eq(movieCredits.movieUid, targetMovieId));
+
+      await (targetCredits.length > 0
+        ? trx
+            .delete(movieCredits)
+            .where(eq(movieCredits.movieUid, sourceMovieId))
+        : trx
+            .update(movieCredits)
+            .set({movieUid: targetMovieId})
+            .where(eq(movieCredits.movieUid, sourceMovieId)));
+
       // Merge nominations
       await trx
         .update(nominations)

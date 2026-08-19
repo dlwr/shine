@@ -1,5 +1,7 @@
 import {and, eq, getDatabase, not, type Environment} from '@shine/database';
 import {articleLinks} from '@shine/database/schema/article-links';
+import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
+import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
@@ -714,6 +716,24 @@ adminMoviesRoutes.post(
           .update(movieSelections)
           .set({movieId: targetId})
           .where(eq(movieSelections.movieId, sourceId));
+
+        // Delete source availability checks
+        await tx
+          .delete(movieAvailabilityChecks)
+          .where(eq(movieAvailabilityChecks.movieUid, sourceId));
+
+        // Merge credits: keep the target's own set when it already has one
+        const targetCredits = await tx
+          .select({uid: movieCredits.uid})
+          .from(movieCredits)
+          .where(eq(movieCredits.movieUid, targetId));
+
+        await (targetCredits.length > 0
+          ? tx.delete(movieCredits).where(eq(movieCredits.movieUid, sourceId))
+          : tx
+              .update(movieCredits)
+              .set({movieUid: targetId})
+              .where(eq(movieCredits.movieUid, sourceId)));
 
         // Update nominations
         await tx

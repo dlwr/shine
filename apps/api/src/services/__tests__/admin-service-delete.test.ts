@@ -4,7 +4,9 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {eq, getDatabase, type Environment} from '@shine/database';
 import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
+import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
+import {people} from '@shine/database/schema/people';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {AdminService} from '../admin-service';
@@ -51,5 +53,94 @@ describe('AdminService.deleteMovie', () => {
       .from(movieAvailabilityChecks)
       .where(eq(movieAvailabilityChecks.movieUid, 'movie-a'));
     expect(remainingChecks).toHaveLength(0);
+  });
+
+  it('deletes credits together with the movie', async () => {
+    await database.insert(movies).values({uid: 'movie-a', year: 2020});
+    await database
+      .insert(people)
+      .values({uid: 'person-a', tmdbId: 5026, name: '黒澤明'});
+    await database.insert(movieCredits).values({
+      movieUid: 'movie-a',
+      personUid: 'person-a',
+      creditId: 'credit-a',
+      department: 'Directing',
+      job: 'Director',
+    });
+
+    const service = new AdminService(environment);
+    await service.deleteMovie('movie-a');
+
+    const remainingCredits = await database.select().from(movieCredits);
+    expect(remainingCredits).toHaveLength(0);
+  });
+});
+
+describe('AdminService.mergeMovies', () => {
+  let environment: Environment;
+  let database: ReturnType<typeof getDatabase>;
+
+  beforeEach(async () => {
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
+    environment = {
+      TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
+      TURSO_AUTH_TOKEN: '',
+    };
+    database = getDatabase(environment);
+    await migrate(database, {migrationsFolder});
+    await database.insert(movies).values([
+      {uid: 'movie-source', year: 2020},
+      {uid: 'movie-target', year: 2020},
+    ]);
+    await database
+      .insert(people)
+      .values({uid: 'person-a', tmdbId: 5026, name: '黒澤明'});
+  });
+
+  it('moves credits to the target movie', async () => {
+    await database.insert(movieCredits).values({
+      movieUid: 'movie-source',
+      personUid: 'person-a',
+      creditId: 'credit-a',
+      department: 'Directing',
+      job: 'Director',
+    });
+
+    const service = new AdminService(environment);
+    await service.mergeMovies({
+      sourceMovieId: 'movie-source',
+      targetMovieId: 'movie-target',
+    });
+
+    const remaining = await database.select().from(movieCredits);
+    expect(remaining.map(row => row.movieUid)).toEqual(['movie-target']);
+  });
+
+  it('drops source credits when the target already has its own', async () => {
+    await database.insert(movieCredits).values([
+      {
+        movieUid: 'movie-source',
+        personUid: 'person-a',
+        creditId: 'credit-a',
+        department: 'Directing',
+        job: 'Director',
+      },
+      {
+        movieUid: 'movie-target',
+        personUid: 'person-a',
+        creditId: 'credit-b',
+        department: 'Directing',
+        job: 'Director',
+      },
+    ]);
+
+    const service = new AdminService(environment);
+    await service.mergeMovies({
+      sourceMovieId: 'movie-source',
+      targetMovieId: 'movie-target',
+    });
+
+    const remaining = await database.select().from(movieCredits);
+    expect(remaining.map(row => row.creditId)).toEqual(['credit-b']);
   });
 });
