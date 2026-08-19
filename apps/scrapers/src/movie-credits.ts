@@ -96,16 +96,19 @@ export async function saveMovieCredits(
   }
 
   if (missing.size > 0 && !context.isDryRun) {
-    await context.database.insert(people).values(
-      missing
-        .values()
-        .map(credit => ({
-          tmdbId: credit.tmdbPersonId,
-          name: credit.name,
-          profilePath: credit.profilePath,
-        }))
-        .toArray(),
-    );
+    await context.database
+      .insert(people)
+      .values(
+        missing
+          .values()
+          .map(credit => ({
+            tmdbId: credit.tmdbPersonId,
+            name: credit.name,
+            profilePath: credit.profilePath,
+          }))
+          .toArray(),
+      )
+      .onConflictDoNothing({target: people.tmdbId});
   }
 
   const stored = await context.database
@@ -189,14 +192,23 @@ async function saveJapaneseNames(
 
   const added = [...translated].filter(([personUid]) => !known.has(personUid));
   if (added.length > 0 && !context.isDryRun) {
-    await context.database.insert(translations).values(
-      added.map(([personUid, content]) => ({
-        resourceType: 'person_name' as const,
-        resourceUid: personUid,
-        languageCode: 'ja',
-        content,
-      })),
-    );
+    await context.database
+      .insert(translations)
+      .values(
+        added.map(([personUid, content]) => ({
+          resourceType: 'person_name' as const,
+          resourceUid: personUid,
+          languageCode: 'ja',
+          content,
+        })),
+      )
+      .onConflictDoNothing({
+        target: [
+          translations.resourceType,
+          translations.resourceUid,
+          translations.languageCode,
+        ],
+      });
   }
 }
 
@@ -204,6 +216,7 @@ export type ImportOptions = {
   force?: boolean;
   limit?: number;
   throttleMs?: number;
+  concurrency?: number;
   onProgress?: (processed: number, total: number) => void;
 };
 
@@ -239,44 +252,61 @@ export async function importMovieCredits(
         .from(movieCredits);
   const alreadyImported = new Set(importedRows.map(row => row.movieUid));
 
-  const pending = targets.filter(
+  const eligible = targets.filter(
     target => target.tmdbId && !alreadyImported.has(target.uid),
   );
+  const pending =
+    options.limit === undefined ? eligible : eligible.slice(0, options.limit);
 
   let processed = 0;
   let failed = 0;
-  for (const target of pending) {
-    try {
-      const credits = await fetchTMDBCredits(
-        target.tmdbId ?? 0,
-        target.mediaType === 'tv' ? 'tv' : 'movie',
-        context.environment.TMDB_API_KEY ?? '',
-      );
+  let cursor = 0;
 
-      if (credits) {
-        await saveMovieCredits(context, target.uid, selectCredits(credits));
-        processed++;
-      } else {
+  async function runWorker(): Promise<void> {
+    for (;;) {
+      const index = cursor;
+      cursor++;
+
+      if (index >= pending.length) {
+        return;
+      }
+
+      const target = pending[index];
+
+      try {
+        const credits = await fetchTMDBCredits(
+          target.tmdbId ?? 0,
+          target.mediaType === 'tv' ? 'tv' : 'movie',
+          context.environment.TMDB_API_KEY ?? '',
+        );
+
+        if (credits) {
+          await saveMovieCredits(context, target.uid, selectCredits(credits));
+          processed++;
+        } else {
+          failed++;
+        }
+      } catch (error) {
+        console.error(
+          `クレジットの取り込みに失敗しました (${target.uid}):`,
+          error,
+        );
         failed++;
       }
-    } catch (error) {
-      console.error(
-        `クレジットの取り込みに失敗しました (${target.uid}):`,
-        error,
-      );
-      failed++;
-    }
 
-    options.onProgress?.(processed + failed, pending.length);
+      options.onProgress?.(processed + failed, pending.length);
 
-    if (options.limit !== undefined && processed + failed >= options.limit) {
-      break;
-    }
-
-    if (options.throttleMs) {
-      await sleep(options.throttleMs);
+      if (options.throttleMs) {
+        await sleep(options.throttleMs);
+      }
     }
   }
+
+  const workerCount = Math.max(
+    1,
+    Math.min(options.concurrency ?? 1, pending.length),
+  );
+  await Promise.all(Array.from({length: workerCount}, async () => runWorker()));
 
   return {processed, skipped: targets.length - pending.length, failed};
 }

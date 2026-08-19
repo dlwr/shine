@@ -17,6 +17,15 @@ import {
   selectCredits,
 } from '../movie-credits';
 
+function creditsFor(creditId: string) {
+  return selectCredits({
+    cast: [],
+    crew: [
+      {...crewMember('Director', 'Directing'), id: 5026, credit_id: creditId},
+    ],
+  });
+}
+
 function byText(a: string, b: string): number {
   return a < b ? -1 : 1;
 }
@@ -212,6 +221,21 @@ describe('saveMovieCredits', () => {
     expect(rows).toHaveLength(0);
   });
 
+  it('同じ人物を含む2本を同時に保存しても people は1件になる', async () => {
+    const {database, movieUid} = await createTestDatabase();
+    const [other] = await database
+      .insert(movies)
+      .values({originalLanguage: 'en', year: 1980})
+      .returning();
+    await Promise.all([
+      saveMovieCredits({database, isDryRun: false}, movieUid, creditsFor('a')),
+      saveMovieCredits({database, isDryRun: false}, other.uid, creditsFor('b')),
+    ]);
+
+    const rows = await database.select().from(people);
+    expect(rows).toHaveLength(1);
+  });
+
   it('dry-run では書き込まない', async () => {
     const {database, environment, movieUid} = await createTestDatabase();
     const dryRunDatabase = getScrapeDatabase({environment, isDryRun: true});
@@ -364,5 +388,67 @@ describe('importMovieCredits', () => {
     });
 
     expect(result).toMatchObject({processed: 1, failed: 1});
+  });
+
+  it('複数の映画を同時に取得する', async () => {
+    const {database, environment} = await createTestDatabase();
+    await database.insert(movies).values([
+      {originalLanguage: 'en', year: 1976, tmdbId: 103},
+      {originalLanguage: 'en', year: 1980, tmdbId: 104},
+      {originalLanguage: 'en', year: 1984, tmdbId: 105},
+    ]);
+    let inFlight = 0;
+    let peakInFlight = 0;
+    vi.mocked(fetch).mockImplementation(async () => {
+      inFlight++;
+      peakInFlight = Math.max(peakInFlight, inFlight);
+      await new Promise(resolve => {
+        setTimeout(resolve, 10);
+      });
+      inFlight--;
+      return {
+        ok: true,
+        text: async () => JSON.stringify({cast: [], crew: []}),
+      } as unknown as Response;
+    });
+
+    await importMovieCredits(
+      {database, environment, isDryRun: false},
+      {concurrency: 3},
+    );
+
+    expect(peakInFlight).toBe(3);
+  });
+
+  it('同じ人物が別の映画に同時に現れても重複しない', async () => {
+    const {database, environment} = await createTestDatabase();
+    await database.insert(movies).values([
+      {originalLanguage: 'en', year: 1976, tmdbId: 103},
+      {originalLanguage: 'en', year: 1980, tmdbId: 104},
+    ]);
+    vi.mocked(fetch).mockImplementation(async url => {
+      const tmdbId = /\/movie\/(\d+)\//.exec(String(url))?.[1] ?? '0';
+      const sharedCrew = {
+        ...crewMember('Director', 'Directing'),
+        id: 5026,
+        credit_id: `crew-${tmdbId}`,
+      };
+      await new Promise(resolve => {
+        setTimeout(resolve, 10);
+      });
+      return {
+        ok: true,
+        text: async () => JSON.stringify({cast: [], crew: [sharedCrew]}),
+      } as unknown as Response;
+    });
+
+    const result = await importMovieCredits(
+      {database, environment, isDryRun: false},
+      {concurrency: 2},
+    );
+
+    expect(result.failed).toBe(0);
+    const rows = await database.select().from(people);
+    expect(rows).toHaveLength(1);
   });
 });
