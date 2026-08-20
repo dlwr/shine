@@ -100,6 +100,12 @@ describe('buildSparqlQuery', () => {
     expect(query).not.toContain('not-an-id');
     expect(query).not.toContain('DROP');
   });
+
+  it('ja.wikipediaのsitelinkも問い合わせる', () => {
+    const query = buildSparqlQuery(['tt0042876']);
+    expect(query).toContain('schema:about');
+    expect(query).toContain('ja.wikipedia.org');
+  });
 });
 
 describe('cleanWikidataLabel', () => {
@@ -169,6 +175,66 @@ describe('parseSparqlResponse', () => {
   it('空の結果でも壊れない', () => {
     expect(parseSparqlResponse(sparqlResponse([])).size).toBe(0);
     expect(parseSparqlResponse({}).size).toBe(0);
+  });
+
+  it('ja.wikipediaの記事名をラベルより優先する', () => {
+    const result = parseSparqlResponse({
+      results: {
+        bindings: [
+          {
+            imdb: {value: 'tt3469964'},
+            jaLabel: {value: '推掌'},
+            article: {
+              value:
+                'https://ja.wikipedia.org/wiki/%E3%83%96%E3%83%A9%E3%82%A4%E3%83%B3%E3%83%89%E3%83%BB%E3%83%9E%E3%83%83%E3%82%B5%E3%83%BC%E3%82%B8',
+            },
+          },
+        ],
+      },
+    });
+    expect(result.get('tt3469964')).toBe('ブラインド・マッサージ');
+  });
+
+  it('記事名の曖昧さ回避とアンダースコアを落とす', () => {
+    const result = parseSparqlResponse({
+      results: {
+        bindings: [
+          {
+            imdb: {value: 'tt0019702'},
+            jaLabel: {value: '脅迫'},
+            article: {
+              value:
+                'https://ja.wikipedia.org/wiki/%E6%81%90%E5%96%9D_(1929%E5%B9%B4%E3%81%AE%E6%98%A0%E7%94%BB)',
+            },
+          },
+        ],
+      },
+    });
+    expect(result.get('tt0019702')).toBe('恐喝');
+  });
+
+  it('記事名から日本語が残らなければラベルへフォールバックする', () => {
+    const result = parseSparqlResponse({
+      results: {
+        bindings: [
+          {
+            imdb: {value: 'tt0042876'},
+            jaLabel: {value: '羅生門'},
+            article: {value: 'https://ja.wikipedia.org/wiki/Rashomon'},
+          },
+        ],
+      },
+    });
+    expect(result.get('tt0042876')).toBe('羅生門');
+  });
+
+  it('記事名もラベルも無いbindingは捨てる', () => {
+    const result = parseSparqlResponse({
+      results: {
+        bindings: [{imdb: {value: 'tt0000001'}}],
+      },
+    });
+    expect(result.has('tt0000001')).toBe(false);
   });
 });
 

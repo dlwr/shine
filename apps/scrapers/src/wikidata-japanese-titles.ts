@@ -28,6 +28,7 @@ type SparqlResponse = {
     bindings?: Array<{
       imdb?: {value?: string};
       jaLabel?: {value?: string};
+      article?: {value?: string};
     }>;
   };
 };
@@ -38,11 +39,17 @@ export function buildSparqlQuery(imdbIds: string[]): string {
     .map(id => `"${id}"`)
     .join(' ');
 
-  return `SELECT ?imdb ?jaLabel WHERE {
+  return `SELECT ?imdb ?jaLabel ?article WHERE {
   VALUES ?imdb { ${values} }
   ?item wdt:P345 ?imdb.
-  ?item rdfs:label ?jaLabel.
-  FILTER(LANG(?jaLabel) = "ja")
+  OPTIONAL {
+    ?item rdfs:label ?jaLabel.
+    FILTER(LANG(?jaLabel) = "ja")
+  }
+  OPTIONAL {
+    ?article schema:about ?item;
+      schema:isPartOf <https://ja.wikipedia.org/>.
+  }
 }`;
 }
 
@@ -51,16 +58,53 @@ export function cleanWikidataLabel(label: string): string {
   return label.replace(/\s*[（(][^（()）]*映画[^（()）]*[）)]\s*$/, '').trim();
 }
 
+function articleTitleFromUrl(url: string | undefined): string | undefined {
+  if (!url) {
+    return undefined;
+  }
+
+  const encoded = url.split('/wiki/').pop();
+  if (!encoded) {
+    return undefined;
+  }
+
+  try {
+    return decodeURIComponent(encoded).replaceAll('_', ' ');
+  } catch {
+    return undefined;
+  }
+}
+
 export function parseSparqlResponse(
   response: SparqlResponse,
 ): Map<string, string> {
   const titles = new Map<string, string>();
+  const fromArticle = new Set<string>();
 
   const bindings = response.results?.bindings ?? [];
   for (const binding of bindings) {
     const imdbId = binding.imdb?.value;
+    if (!imdbId) {
+      continue;
+    }
+
+    // ラベルは壊れていることがあるので、ja.wikipediaの記事名を優先する
+    const articleTitle = articleTitleFromUrl(binding.article?.value);
+    if (articleTitle) {
+      const cleaned = cleanWikidataLabel(articleTitle);
+      if (cleaned && hasJapaneseText(cleaned)) {
+        titles.set(imdbId, cleaned);
+        fromArticle.add(imdbId);
+        continue;
+      }
+    }
+
+    if (fromArticle.has(imdbId)) {
+      continue;
+    }
+
     const label = binding.jaLabel?.value;
-    if (!imdbId || !label) {
+    if (!label) {
       continue;
     }
 
