@@ -497,7 +497,10 @@ async function createMovie(
     },
   ];
 
-  const japaneseTitle = detailsJa?.title;
+  const isJaFallbackToOriginal =
+    detailsJa?.title === detailsJa?.original_title &&
+    details?.original_language !== 'ja';
+  const japaneseTitle = isJaFallbackToOriginal ? undefined : detailsJa?.title;
   if (japaneseTitle && japaneseTitle !== englishTitle) {
     translationValues.push({
       resourceType: 'movie_title',
