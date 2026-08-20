@@ -1,6 +1,7 @@
 import {setTimeout as sleep} from 'node:timers/promises';
-import {and, eq, isNotNull, isNull, sql} from 'drizzle-orm';
+import {and, eq, isNotNull, isNull, or, sql} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
+import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {hasKana} from './common/japanese-text';
 import {
@@ -31,15 +32,40 @@ function normalize(value: string | undefined): string | undefined {
   return value?.trim() || undefined;
 }
 
+function pad(value: number): string {
+  return String(value).padStart(2, '0');
+}
+
+/** 週はAPIのselections-serviceと同じく金曜始まり、月は1日をキーにする */
+export function selectionDateKeys(date: string): {
+  daily: string;
+  weekly: string;
+  monthly: string;
+} {
+  const [year, month, day] = date.split('-').map(Number);
+  const daily = new Date(Date.UTC(year, month - 1, day));
+  const daysSinceFriday = (daily.getUTCDay() - 5 + 7) % 7;
+  const friday = new Date(Date.UTC(year, month - 1, day - daysSinceFriday));
+  const format = (value: Date) =>
+    `${value.getUTCFullYear()}-${pad(value.getUTCMonth() + 1)}-${pad(value.getUTCDate())}`;
+  return {
+    daily: format(daily),
+    weekly: format(friday),
+    monthly: `${year}-${pad(month)}-01`,
+  };
+}
+
 export async function buildTmdbJaWorklist({
   environment,
   limit,
   throttleMs = 150,
+  selectionDate,
   onProgress,
 }: {
   environment: Environment;
   limit?: number;
   throttleMs?: number;
+  selectionDate?: string;
   onProgress?: (processed: number, total: number) => void;
 }): Promise<{items: TmdbJaWorklistItem[]; stats: TmdbJaWorklistStats}> {
   const database = getDatabase(environment);
@@ -72,12 +98,42 @@ export async function buildTmdbJaWorklist({
       ),
     );
 
-  const eligible = rows.filter(
+  let eligible = rows.filter(
     row =>
       row.jaTitle !== null &&
       hasKana(row.jaTitle) &&
       row.jaDescription === null,
   );
+
+  if (selectionDate !== undefined) {
+    const keys = selectionDateKeys(selectionDate);
+    const selectionRows = await database
+      .select({movieId: movieSelections.movieId})
+      .from(movieSelections)
+      .where(
+        or(
+          and(
+            eq(movieSelections.selectionType, 'daily'),
+            eq(movieSelections.selectionDate, keys.daily),
+          ),
+          and(
+            eq(movieSelections.selectionType, 'weekly'),
+            eq(movieSelections.selectionDate, keys.weekly),
+          ),
+          and(
+            eq(movieSelections.selectionType, 'monthly'),
+            eq(movieSelections.selectionDate, keys.monthly),
+          ),
+        ),
+      );
+    const selectedUids = new Set(selectionRows.map(row => row.movieId));
+    eligible = rows.filter(
+      row =>
+        selectedUids.has(row.uid) &&
+        row.jaTitle !== null &&
+        hasKana(row.jaTitle),
+    );
+  }
   const candidates = limit === undefined ? eligible : eligible.slice(0, limit);
 
   const stats: TmdbJaWorklistStats = {
