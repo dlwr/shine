@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
+import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
@@ -68,6 +69,19 @@ async function seedMovie(
       content: values.jaDescription,
     });
   }
+}
+
+async function seedSelection(
+  database: ReturnType<typeof getDatabase>,
+  type: 'daily' | 'weekly' | 'monthly',
+  date: string,
+  movieId: string,
+): Promise<void> {
+  await database.insert(movieSelections).values({
+    selectionType: type,
+    selectionDate: date,
+    movieId,
+  });
 }
 
 type TmdbStub = Record<
@@ -324,6 +338,86 @@ describe('buildTmdbJaWorklist', () => {
 
     expect(items).toHaveLength(1);
     expect(stats.candidates).toBe(1);
+  });
+
+  it('selectionDateを指定するとその日の選出映画だけを対象にする', async () => {
+    await seedMovie(database, {
+      uid: 'm-daily',
+      tmdbId: 100,
+      jaTitle: 'デイリー',
+    });
+    await seedMovie(database, {
+      uid: 'm-weekly',
+      tmdbId: 200,
+      jaTitle: 'ウィークリー',
+    });
+    await seedMovie(database, {
+      uid: 'm-monthly',
+      tmdbId: 300,
+      jaTitle: 'マンスリー',
+    });
+    await seedMovie(database, {
+      uid: 'm-other',
+      tmdbId: 400,
+      jaTitle: 'そのほか',
+    });
+    await seedSelection(database, 'daily', '2026-08-20', 'm-daily');
+    await seedSelection(database, 'weekly', '2026-08-14', 'm-weekly');
+    await seedSelection(database, 'monthly', '2026-08-01', 'm-monthly');
+    stubTmdb({
+      100: {details: {title: 'Daily', overview: 'Daily movie.'}},
+      200: {details: {title: 'Weekly', overview: 'Weekly movie.'}},
+      300: {details: {title: 'Monthly', overview: 'Monthly movie.'}},
+      400: {details: {title: 'Other', overview: 'Other movie.'}},
+    });
+
+    const {items, stats} = await buildTmdbJaWorklist({
+      environment,
+      selectionDate: '2026-08-20',
+      throttleMs: 0,
+    });
+
+    expect(
+      items.map(item => item.uid).toSorted((a, b) => a.localeCompare(b)),
+    ).toEqual(['m-daily', 'm-monthly', 'm-weekly']);
+    expect(stats.candidates).toBe(3);
+  });
+
+  it('選出モードではjaあらすじがあってもTMDb側が欠けていれば載せる', async () => {
+    await seedMovie(database, {
+      uid: 'm-daily',
+      tmdbId: 100,
+      jaTitle: 'デイリー',
+      jaDescription: '取り込み済みのあらすじ。',
+    });
+    await seedSelection(database, 'daily', '2026-08-20', 'm-daily');
+    stubTmdb({100: {details: {title: 'Daily', overview: 'Daily movie.'}}});
+
+    const {items} = await buildTmdbJaWorklist({
+      environment,
+      selectionDate: '2026-08-20',
+      throttleMs: 0,
+    });
+
+    expect(items).toHaveLength(1);
+  });
+
+  it('選出モードでもかなを含まない邦題は対象にしない', async () => {
+    await seedMovie(database, {
+      uid: 'm-daily',
+      tmdbId: 100,
+      jaTitle: '一步之遥',
+    });
+    await seedSelection(database, 'daily', '2026-08-20', 'm-daily');
+    stubTmdb({});
+
+    const {stats} = await buildTmdbJaWorklist({
+      environment,
+      selectionDate: '2026-08-20',
+      throttleMs: 0,
+    });
+
+    expect(stats.candidates).toBe(0);
   });
 
   it('en詳細が取れない映画はfailedに数える', async () => {
