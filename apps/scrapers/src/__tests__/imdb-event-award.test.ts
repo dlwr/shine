@@ -628,6 +628,77 @@ describe('importImdbEventAward', () => {
     expect(unknown.year).toBe(1951);
   });
 
+  it('TMDbのja応答が原題フォールバックのときは邦題として保存しない', async () => {
+    environment.TMDB_API_KEY = 'test-key';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/find/tt2168000')) {
+          return Response.json({
+            movie_results: [{id: 312_408, media_type: 'movie'}],
+            tv_results: [],
+          });
+        }
+
+        if (url.includes('/movie/312408') && url.includes('language=ja')) {
+          return Response.json({
+            id: 312_408,
+            title: '一步之遥',
+            original_title: '一步之遥',
+          });
+        }
+
+        if (url.includes('/movie/312408')) {
+          return Response.json({
+            id: 312_408,
+            title: 'Gone with the Bullets',
+            original_title: '一步之遥',
+            original_language: 'zh',
+            release_date: '2014-12-18',
+          });
+        }
+
+        if (url.includes('/configuration')) {
+          return Response.json({
+            images: {secure_base_url: 'https://x/', poster_sizes: ['w500']},
+          });
+        }
+
+        return new Response('not found', {status: 404});
+      }),
+    );
+
+    await importImdbEventAward({
+      environment,
+      config: testConfig,
+      data: collectedData([
+        edition(1951, [
+          nomination('tt2168000', 'Yi bu zhi yao', true),
+          nomination('tt0000001', 'Unknown'),
+        ]),
+      ]),
+      throttleMs: 0,
+    });
+
+    const [movie] = await database
+      .select()
+      .from(movies)
+      .where(eq(movies.imdbId, 'tt2168000'));
+    const titleRows = await database
+      .select()
+      .from(translations)
+      .where(
+        and(
+          eq(translations.resourceUid, movie.uid),
+          eq(translations.resourceType, 'movie_title'),
+        ),
+      );
+    const byLanguage = new Map(titleRows.map(row => [row.languageCode, row]));
+    expect(byLanguage.get('en')?.content).toBe('Gone with the Bullets');
+    expect(byLanguage.get('ja')).toBeUndefined();
+  });
+
   it('TMDbのIDが既存映画と衝突したら既存映画を再利用しimdbIdを補完する', async () => {
     environment.TMDB_API_KEY = 'test-key';
     await database.insert(movies).values({

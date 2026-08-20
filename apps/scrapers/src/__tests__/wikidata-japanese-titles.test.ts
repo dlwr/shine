@@ -37,11 +37,20 @@ async function createTestEnvironment(): Promise<{
 
 async function seedMovie(
   database: ReturnType<typeof getDatabase>,
-  values: {uid: string; imdbId?: string; enTitle: string; jaTitle?: string},
+  values: {
+    uid: string;
+    imdbId?: string;
+    enTitle: string;
+    jaTitle?: string;
+    originalLanguage?: string;
+  },
 ): Promise<void> {
-  await database
-    .insert(movies)
-    .values({uid: values.uid, imdbId: values.imdbId, year: 1950});
+  await database.insert(movies).values({
+    uid: values.uid,
+    imdbId: values.imdbId,
+    year: 1950,
+    originalLanguage: values.originalLanguage ?? 'en',
+  });
   await database.insert(translations).values({
     resourceType: 'movie_title',
     resourceUid: values.uid,
@@ -90,6 +99,12 @@ describe('buildSparqlQuery', () => {
     expect(query).toContain('"tt0042876"');
     expect(query).not.toContain('not-an-id');
     expect(query).not.toContain('DROP');
+  });
+
+  it('ja.wikipediaのsitelinkも問い合わせる', () => {
+    const query = buildSparqlQuery(['tt0042876']);
+    expect(query).toContain('schema:about');
+    expect(query).toContain('ja.wikipedia.org');
   });
 });
 
@@ -160,6 +175,66 @@ describe('parseSparqlResponse', () => {
   it('空の結果でも壊れない', () => {
     expect(parseSparqlResponse(sparqlResponse([])).size).toBe(0);
     expect(parseSparqlResponse({}).size).toBe(0);
+  });
+
+  it('ja.wikipediaの記事名をラベルより優先する', () => {
+    const result = parseSparqlResponse({
+      results: {
+        bindings: [
+          {
+            imdb: {value: 'tt3469964'},
+            jaLabel: {value: '推掌'},
+            article: {
+              value:
+                'https://ja.wikipedia.org/wiki/%E3%83%96%E3%83%A9%E3%82%A4%E3%83%B3%E3%83%89%E3%83%BB%E3%83%9E%E3%83%83%E3%82%B5%E3%83%BC%E3%82%B8',
+            },
+          },
+        ],
+      },
+    });
+    expect(result.get('tt3469964')).toBe('ブラインド・マッサージ');
+  });
+
+  it('記事名の曖昧さ回避とアンダースコアを落とす', () => {
+    const result = parseSparqlResponse({
+      results: {
+        bindings: [
+          {
+            imdb: {value: 'tt0019702'},
+            jaLabel: {value: '脅迫'},
+            article: {
+              value:
+                'https://ja.wikipedia.org/wiki/%E6%81%90%E5%96%9D_(1929%E5%B9%B4%E3%81%AE%E6%98%A0%E7%94%BB)',
+            },
+          },
+        ],
+      },
+    });
+    expect(result.get('tt0019702')).toBe('恐喝');
+  });
+
+  it('記事名から日本語が残らなければラベルへフォールバックする', () => {
+    const result = parseSparqlResponse({
+      results: {
+        bindings: [
+          {
+            imdb: {value: 'tt0042876'},
+            jaLabel: {value: '羅生門'},
+            article: {value: 'https://ja.wikipedia.org/wiki/Rashomon'},
+          },
+        ],
+      },
+    });
+    expect(result.get('tt0042876')).toBe('羅生門');
+  });
+
+  it('記事名もラベルも無いbindingは捨てる', () => {
+    const result = parseSparqlResponse({
+      results: {
+        bindings: [{imdb: {value: 'tt0000001'}}],
+      },
+    });
+    expect(result.has('tt0000001')).toBe(false);
   });
 });
 
@@ -238,8 +313,68 @@ describe('importJapaneseTitlesFromWikidata', () => {
     await seedMovie(database, {
       uid: 'm1',
       imdbId: 'tt0042876',
+      enTitle: 'Seven Samurai',
+      jaTitle: '七人の侍',
+    });
+    stubWikidata([['tt0042876', '別のタイトル']]);
+
+    const stats = await importJapaneseTitlesFromWikidata({
+      environment,
+      throttleMs: 0,
+    });
+
+    expect(stats.candidates).toBe(0);
+    expect(await japaneseTitleOf(database, 'm1')).toBe('七人の侍');
+  });
+
+  it('原語がja以外でかなを含まない邦題は候補にして置き換える', async () => {
+    await seedMovie(database, {
+      uid: 'm1',
+      imdbId: 'tt2168000',
+      enTitle: 'Gone with the Bullets',
+      jaTitle: '一步之遥',
+      originalLanguage: 'zh',
+    });
+    stubWikidata([['tt2168000', '弾丸と共に去りぬ -暗黒街の逃亡者-']]);
+
+    const stats = await importJapaneseTitlesFromWikidata({
+      environment,
+      throttleMs: 0,
+    });
+
+    expect(stats.replaced).toBe(1);
+    expect(await japaneseTitleOf(database, 'm1')).toBe(
+      '弾丸と共に去りぬ -暗黒街の逃亡者-',
+    );
+  });
+
+  it('既存と同じ邦題なら書き込まない', async () => {
+    await seedMovie(database, {
+      uid: 'm1',
+      imdbId: 'tt0042876',
+      enTitle: 'Rear Window',
+      jaTitle: '裏窓',
+      originalLanguage: 'en',
+    });
+    stubWikidata([['tt0042876', '裏窓']]);
+
+    const stats = await importJapaneseTitlesFromWikidata({
+      environment,
+      throttleMs: 0,
+    });
+
+    expect(stats.candidates).toBe(1);
+    expect(stats.replaced).toBe(0);
+    expect(stats.saved).toBe(0);
+  });
+
+  it('原語がjaならかなを含まない邦題でも対象にしない', async () => {
+    await seedMovie(database, {
+      uid: 'm1',
+      imdbId: 'tt0042876',
       enTitle: 'Rashomon',
       jaTitle: '羅生門',
+      originalLanguage: 'ja',
     });
     stubWikidata([['tt0042876', '別のタイトル']]);
 
