@@ -5,15 +5,12 @@ import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {fetchJsonWithRetry} from './common/fetch-utilities';
+import {hasKana} from './common/japanese-text';
 
 const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
 const USER_AGENT = 'shine-film.com movie database (https://shine-film.com)';
 const DEFAULT_BATCH_SIZE = 50;
 const IMDB_ID_PATTERN = /^tt\d+$/;
-
-function hasKana(text: string): boolean {
-  return /[ぁ-ゖァ-ヶー]/.test(text);
-}
 
 export type WikidataImportStats = {
   candidates: number;
