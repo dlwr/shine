@@ -266,6 +266,10 @@ async function applyCandidateTitle({
     return;
   }
 
+  if (title === candidate.existingJa) {
+    return;
+  }
+
   const isReplacement = candidate.existingJa !== undefined;
   console.log(
     `  ${candidate.imdbId}: ${isReplacement ? `${candidate.existingJa} -> ` : ''}${title}`,

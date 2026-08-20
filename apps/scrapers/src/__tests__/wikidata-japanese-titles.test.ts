@@ -348,6 +348,26 @@ describe('importJapaneseTitlesFromWikidata', () => {
     );
   });
 
+  it('既存と同じ邦題なら書き込まない', async () => {
+    await seedMovie(database, {
+      uid: 'm1',
+      imdbId: 'tt0042876',
+      enTitle: 'Rear Window',
+      jaTitle: '裏窓',
+      originalLanguage: 'en',
+    });
+    stubWikidata([['tt0042876', '裏窓']]);
+
+    const stats = await importJapaneseTitlesFromWikidata({
+      environment,
+      throttleMs: 0,
+    });
+
+    expect(stats.candidates).toBe(1);
+    expect(stats.replaced).toBe(0);
+    expect(stats.saved).toBe(0);
+  });
+
   it('原語がjaならかなを含まない邦題でも対象にしない', async () => {
     await seedMovie(database, {
       uid: 'm1',
