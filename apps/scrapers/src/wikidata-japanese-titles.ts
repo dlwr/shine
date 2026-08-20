@@ -11,6 +11,10 @@ const USER_AGENT = 'shine-film.com movie database (https://shine-film.com)';
 const DEFAULT_BATCH_SIZE = 50;
 const IMDB_ID_PATTERN = /^tt\d+$/;
 
+function hasKana(text: string): boolean {
+  return /[ぁ-ゖァ-ヶー]/.test(text);
+}
+
 export type WikidataImportStats = {
   candidates: number;
   saved: number;
@@ -118,6 +122,7 @@ export async function importJapaneseTitlesFromWikidata({
     .select({
       uid: movies.uid,
       imdbId: movies.imdbId,
+      originalLanguage: movies.originalLanguage,
       existingJa: sql<string | null>`(
         SELECT content FROM translations
         WHERE translations.resource_uid = movies.uid
@@ -129,9 +134,15 @@ export async function importJapaneseTitlesFromWikidata({
     .from(movies)
     .where(and(isNull(movies.deletedAt), isNotNull(movies.imdbId)));
 
-  // 邦題が無いものと、原題がそのままjaとして入っているものが対象
+  // 邦題が無いもの、原題がそのままjaとして入っているもの、
+  // 原語がja以外なのにかなを含まないもの（中国語原題の素通し対策）が対象
   const allCandidates: Candidate[] = rows
-    .filter(row => row.existingJa === null || !hasJapaneseText(row.existingJa))
+    .filter(
+      row =>
+        row.existingJa === null ||
+        !hasJapaneseText(row.existingJa) ||
+        (row.originalLanguage !== 'ja' && !hasKana(row.existingJa)),
+    )
     .map(row => ({
       uid: row.uid,
       imdbId: row.imdbId ?? '',

@@ -37,11 +37,20 @@ async function createTestEnvironment(): Promise<{
 
 async function seedMovie(
   database: ReturnType<typeof getDatabase>,
-  values: {uid: string; imdbId?: string; enTitle: string; jaTitle?: string},
+  values: {
+    uid: string;
+    imdbId?: string;
+    enTitle: string;
+    jaTitle?: string;
+    originalLanguage?: string;
+  },
 ): Promise<void> {
-  await database
-    .insert(movies)
-    .values({uid: values.uid, imdbId: values.imdbId, year: 1950});
+  await database.insert(movies).values({
+    uid: values.uid,
+    imdbId: values.imdbId,
+    year: 1950,
+    originalLanguage: values.originalLanguage ?? 'en',
+  });
   await database.insert(translations).values({
     resourceType: 'movie_title',
     resourceUid: values.uid,
@@ -238,8 +247,48 @@ describe('importJapaneseTitlesFromWikidata', () => {
     await seedMovie(database, {
       uid: 'm1',
       imdbId: 'tt0042876',
+      enTitle: 'Seven Samurai',
+      jaTitle: '七人の侍',
+    });
+    stubWikidata([['tt0042876', '別のタイトル']]);
+
+    const stats = await importJapaneseTitlesFromWikidata({
+      environment,
+      throttleMs: 0,
+    });
+
+    expect(stats.candidates).toBe(0);
+    expect(await japaneseTitleOf(database, 'm1')).toBe('七人の侍');
+  });
+
+  it('原語がja以外でかなを含まない邦題は候補にして置き換える', async () => {
+    await seedMovie(database, {
+      uid: 'm1',
+      imdbId: 'tt2168000',
+      enTitle: 'Gone with the Bullets',
+      jaTitle: '一步之遥',
+      originalLanguage: 'zh',
+    });
+    stubWikidata([['tt2168000', '弾丸と共に去りぬ -暗黒街の逃亡者-']]);
+
+    const stats = await importJapaneseTitlesFromWikidata({
+      environment,
+      throttleMs: 0,
+    });
+
+    expect(stats.replaced).toBe(1);
+    expect(await japaneseTitleOf(database, 'm1')).toBe(
+      '弾丸と共に去りぬ -暗黒街の逃亡者-',
+    );
+  });
+
+  it('原語がjaならかなを含まない邦題でも対象にしない', async () => {
+    await seedMovie(database, {
+      uid: 'm1',
+      imdbId: 'tt0042876',
       enTitle: 'Rashomon',
       jaTitle: '羅生門',
+      originalLanguage: 'ja',
     });
     stubWikidata([['tt0042876', '別のタイトル']]);
 
