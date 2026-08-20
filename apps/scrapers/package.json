@@ -22,6 +22,7 @@
     "kinema-junpo": "tsx src/kinema-junpo-cli.ts",
     "movie-credits": "tsx src/movie-credits-cli.ts",
     "movie-descriptions": "tsx src/movie-descriptions-cli.ts",
+    "tmdb-ja-worklist": "tsx src/tmdb-ja-worklist-cli.ts",
     "fix-original-languages": "tsx src/fix-original-languages-cli.ts",
     "sns-post": "tsx src/sns-post-cli.ts"
   },
