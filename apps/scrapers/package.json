@@ -21,6 +21,7 @@
     "berlin-film-festival": "tsx src/berlin-film-festival-cli.ts",
     "kinema-junpo": "tsx src/kinema-junpo-cli.ts",
     "mainichi-film-concours": "tsx src/mainichi-film-concours-cli.ts",
+    "blue-ribbon-awards": "tsx src/blue-ribbon-awards-cli.ts",
     "movie-credits": "tsx src/movie-credits-cli.ts",
     "movie-descriptions": "tsx src/movie-descriptions-cli.ts",
     "tmdb-ja-worklist": "tsx src/tmdb-ja-worklist-cli.ts",
