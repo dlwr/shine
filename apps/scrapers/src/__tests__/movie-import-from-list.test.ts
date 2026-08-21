@@ -53,6 +53,9 @@ describe('createNewMovieForBatch', () => {
       original_title: 'Kokuho',
       original_language: 'ja',
       release_date: '2025-06-06',
+      poster_path: undefined,
+      imdb_id: undefined,
+      overview: '',
     });
 
     const byLanguage = new Map(
@@ -71,6 +74,9 @@ describe('createNewMovieForBatch', () => {
       original_title: 'Inception',
       original_language: 'en',
       release_date: '2010-07-15',
+      poster_path: undefined,
+      imdb_id: undefined,
+      overview: '',
     });
 
     const byLanguage = new Map(
