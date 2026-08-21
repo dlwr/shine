@@ -23,6 +23,7 @@
     "mainichi-film-concours": "tsx src/mainichi-film-concours-cli.ts",
     "blue-ribbon-awards": "tsx src/blue-ribbon-awards-cli.ts",
     "hochi-film-awards": "tsx src/hochi-film-awards-cli.ts",
+    "nikkan-sports-film-awards": "tsx src/nikkan-sports-film-awards-cli.ts",
     "movie-credits": "tsx src/movie-credits-cli.ts",
     "movie-descriptions": "tsx src/movie-descriptions-cli.ts",
     "tmdb-ja-worklist": "tsx src/tmdb-ja-worklist-cli.ts",
