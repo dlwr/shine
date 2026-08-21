@@ -18,6 +18,7 @@ import {
 } from './common/tmdb-utilities';
 import {FetchHttpError, fetchWithRetry} from './common/fetch-utilities';
 import {getScrapeDatabase} from './common/dry-run';
+import {withDefaultTranslationFlags} from './common/default-translations';
 
 const WIKIPEDIA_BASE_URL = 'https://en.wikipedia.org';
 
@@ -1153,7 +1154,6 @@ async function updateWinnerStatus(
           eq(translations.resourceUid, movies.uid),
           eq(translations.resourceType, 'movie_title'),
           eq(translations.languageCode, 'en'),
-          eq(translations.isDefault, 1),
         ),
       )
       .where(
@@ -1282,13 +1282,12 @@ type DatabaseClient = ReturnType<typeof getDatabase>;
 
 type MovieDetails = Awaited<ReturnType<typeof fetchMovieDetails>>;
 
-async function resolveMovieUid(
+export async function resolveMovieUid(
   database: DatabaseClient,
   movieInfo: MovieInfo,
   movieDetails: MovieDetails,
 ): Promise<{
   movieUid: string;
-  translations: Array<typeof translations.$inferInsert>;
   wasExisting: boolean;
 }> {
   const existingMovies = await database
@@ -1303,7 +1302,6 @@ async function resolveMovieUid(
         eq(translations.resourceUid, movies.uid),
         eq(translations.resourceType, 'movie_title'),
         eq(translations.languageCode, 'en'),
-        eq(translations.isDefault, 1),
       ),
     )
     .where(
@@ -1326,7 +1324,6 @@ async function resolveMovieUid(
 
     return {
       movieUid: existingMovie.uid,
-      translations: [],
       wasExisting: true,
     };
   }
@@ -1344,39 +1341,56 @@ async function resolveMovieUid(
     throw new Error(`Failed to create movie: ${movieInfo.title}`);
   }
 
-  const translationsBatch: Array<typeof translations.$inferInsert> = [
-    {
-      resourceType: 'movie_title',
-      resourceUid: newMovie.uid,
-      languageCode: 'en',
-      content: movieInfo.title,
-      isDefault: 1,
-    },
-  ];
-
   return {
     movieUid: newMovie.uid,
-    translations: translationsBatch,
     wasExisting: false,
   };
 }
 
-function appendJapaneseTitle(
-  translationsBatch: Array<typeof translations.$inferInsert>,
-  movieDetails: MovieDetails,
+export function buildTitleRows(
   movieUid: string,
-) {
-  if (!movieDetails.japaneseTitle) {
-    return;
+  englishTitle: string,
+  movieDetails: MovieDetails,
+  wasExisting: boolean,
+): Array<typeof translations.$inferInsert> {
+  if (wasExisting) {
+    if (!movieDetails.japaneseTitle) {
+      return [];
+    }
+
+    return [
+      {
+        resourceType: 'movie_title',
+        resourceUid: movieUid,
+        languageCode: 'ja',
+        content: movieDetails.japaneseTitle,
+        isDefault: 0,
+      },
+    ];
   }
 
-  translationsBatch.push({
-    resourceType: 'movie_title',
-    resourceUid: movieUid,
-    languageCode: 'ja',
-    content: movieDetails.japaneseTitle,
-    isDefault: 1,
-  });
+  const rows: Array<typeof translations.$inferInsert> = [
+    {
+      resourceType: 'movie_title',
+      resourceUid: movieUid,
+      languageCode: 'en',
+      content: englishTitle,
+    },
+  ];
+
+  if (movieDetails.japaneseTitle) {
+    rows.push({
+      resourceType: 'movie_title',
+      resourceUid: movieUid,
+      languageCode: 'ja',
+      content: movieDetails.japaneseTitle,
+    });
+  }
+
+  return withDefaultTranslationFlags(
+    movieDetails.originalLanguage ?? 'en',
+    rows,
+  );
 }
 
 async function collectPosterUrls(
@@ -1504,12 +1518,11 @@ async function processMovieForBatch(
       movieInfo,
       movieDetails,
     );
-    const translationsBatch = [...movieResolution.translations];
-
-    appendJapaneseTitle(
-      translationsBatch,
-      movieDetails,
+    const translationsBatch = buildTitleRows(
       movieResolution.movieUid,
+      movieInfo.title,
+      movieDetails,
+      movieResolution.wasExisting,
     );
     const posterUrlsBatch = await collectPosterUrls(
       context,

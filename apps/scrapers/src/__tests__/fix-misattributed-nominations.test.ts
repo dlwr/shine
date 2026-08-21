@@ -268,6 +268,57 @@ describe('fixMisattributedNominations', () => {
     expect(stats.moviesCreated).toBe(1);
   });
 
+  it('作成した日本語映画は日本語タイトルがデフォルトになる', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string | URL) => {
+        const url = String(input);
+        if (url.includes('/find/tt0053121')) {
+          return Response.json(
+            {movie_results: [{id: 42, media_type: 'movie'}]},
+            {status: 200},
+          );
+        }
+
+        if (url.includes('/movie/42')) {
+          return Response.json(
+            {
+              id: 42,
+              title: 'Fires on the Plain',
+              original_language: 'ja',
+              release_date: '1959-11-03',
+            },
+            {status: 200},
+          );
+        }
+
+        return new Response('{}', {status: 404});
+      }),
+    );
+
+    await fixMisattributedNominations({
+      environment,
+      entries: [entry],
+    });
+
+    const [created] = await database
+      .select()
+      .from(movies)
+      .where(eq(movies.imdbId, 'tt0053121'));
+    const titleRows = await database
+      .select()
+      .from(translations)
+      .where(
+        and(
+          eq(translations.resourceUid, created.uid),
+          eq(translations.resourceType, 'movie_title'),
+        ),
+      );
+    const byLanguage = new Map(titleRows.map(row => [row.languageCode, row]));
+    expect(byLanguage.get('ja')?.isDefault).toBe(1);
+    expect(byLanguage.get('en')?.isDefault).toBe(0);
+  });
+
   it('IMDb IDが無い映画はタイトルと年だけで作成する', async () => {
     const entryWithoutImdbId: MisattributedNomination = {
       ...entry,
