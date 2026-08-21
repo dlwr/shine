@@ -166,6 +166,27 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
     grouping: 'year',
   },
   {
+    slug: 'mainichi-japanese',
+    shortLabel: '毎日日本',
+    organizationName: 'Mainichi Film Awards',
+    categoryNames: ['日本映画大賞', '日本映画優秀賞'],
+    name: '日本映画大賞',
+    organization: '毎日映画コンクール',
+    description:
+      '毎日映画コンクール 日本映画大賞の歴代受賞作と日本映画優秀賞の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'mainichi-foreign',
+    shortLabel: '毎日外国',
+    organizationName: 'Mainichi Film Awards',
+    categoryNames: ['外国映画ベストワン賞'],
+    name: '外国映画ベストワン賞',
+    organization: '毎日映画コンクール',
+    description: '毎日映画コンクール 外国映画ベストワン賞の歴代受賞作の一覧。',
+    grouping: 'year',
+  },
+  {
     slug: '1001-movies',
     shortLabel: '1001本',
     organizationName: '1001 Movies You Must See Before You Die',
