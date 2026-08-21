@@ -26,6 +26,7 @@
     "movie-credits": "tsx src/movie-credits-cli.ts",
     "movie-descriptions": "tsx src/movie-descriptions-cli.ts",
     "tmdb-ja-worklist": "tsx src/tmdb-ja-worklist-cli.ts",
+    "fix-default-translations": "tsx src/fix-default-translations-cli.ts",
     "fix-original-languages": "tsx src/fix-original-languages-cli.ts",
     "fix-poster-contamination": "tsx src/fix-poster-contamination-cli.ts",
     "sns-post": "tsx src/sns-post-cli.ts"

@@ -140,6 +140,35 @@ describe('scrapeAcademyAwards', () => {
     expect(savedNominations[0].movieUid).toBe('existing');
   });
 
+  it('デフォルトでない英語タイトルでも既存映画に紐づける', async () => {
+    const {environment, database} = await createTestEnvironment();
+    await database.insert(movies).values({
+      uid: 'existing',
+      year: 2024,
+      originalLanguage: 'ja',
+    });
+    await database.insert(translations).values({
+      resourceType: 'movie_title',
+      resourceUid: 'existing',
+      languageCode: 'en',
+      content: 'Anora',
+      isDefault: 0,
+    });
+
+    const {scrapeAcademyAwards} = await loadScraper({Anora: {}});
+    await scrapeAcademyAwards({
+      environment,
+      tmdbApiKey: 'test-key',
+      isDryRun: false,
+    });
+
+    const savedMovies = await database.select().from(movies);
+    expect(savedMovies).toHaveLength(1);
+
+    const savedNominations = await database.select().from(nominations);
+    expect(savedNominations[0]?.movieUid).toBe('existing');
+  });
+
   it('soft-delete済みの映画は再作成せずスキップする', async () => {
     const {environment, database} = await createTestEnvironment();
     await seedMovie(database, {

@@ -9,6 +9,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {generateUUID} from '@shine/utils';
+import {withDefaultTranslationFlags} from './common/default-translations';
 import {fetchJsonWithRetry} from './common/fetch-utilities';
 import {fetchTMDBConfig, type TMDBConfig} from './common/tmdb-utilities';
 
@@ -435,7 +436,7 @@ async function searchMovieOnTMDB(
 /**
  * バッチ処理用に新しい映画を作成
  */
-async function createNewMovieForBatch(
+export async function createNewMovieForBatch(
   context: ImportContext,
   tmdbMovie: TMDBMovieData,
 ): Promise<{
@@ -460,17 +461,15 @@ async function createNewMovieForBatch(
     imdbId: tmdbMovie.imdb_id,
   });
 
-  const translationsBatch: Array<typeof translations.$inferInsert> = [];
+  const translationRows: Array<typeof translations.$inferInsert> = [];
 
-  // 英語原題翻訳を追加（デフォルト）
   if (tmdbMovie.original_title) {
     console.log(`  Saving EN title: "${tmdbMovie.original_title}"`);
-    translationsBatch.push({
+    translationRows.push({
       resourceType: 'movie_title',
       resourceUid: movieUid,
       languageCode: 'en',
       content: tmdbMovie.original_title,
-      isDefault: 1,
     });
   } else {
     console.log('  WARN: tmdbMovie.original_title is undefined!');
@@ -479,14 +478,18 @@ async function createNewMovieForBatch(
   // 日本語翻訳を追加
   if (tmdbMovie.title !== tmdbMovie.original_title) {
     console.log(`  Adding JA title: "${tmdbMovie.title}"`);
-    translationsBatch.push({
+    translationRows.push({
       resourceType: 'movie_title',
       resourceUid: movieUid,
       languageCode: 'ja',
       content: tmdbMovie.title,
-      isDefault: 0,
     });
   }
+
+  const translationsBatch = withDefaultTranslationFlags(
+    tmdbMovie.original_language ?? 'en',
+    translationRows,
+  );
 
   // ポスターURL
   let posterUrlData: typeof posterUrls.$inferInsert | undefined;

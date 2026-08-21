@@ -9,6 +9,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
+import {withDefaultTranslationFlags} from './common/default-translations';
 import {
   fetchTMDBConfig,
   fetchTMDBMovieDetails,
@@ -493,7 +494,6 @@ async function createMovie(
       resourceUid: movie.uid,
       languageCode: 'en',
       content: englishTitle,
-      isDefault: 1,
     },
   ];
 
@@ -507,13 +507,17 @@ async function createMovie(
       resourceUid: movie.uid,
       languageCode: 'ja',
       content: japaneseTitle,
-      isDefault: 0,
     });
   }
 
   await database
     .insert(translations)
-    .values(translationValues)
+    .values(
+      withDefaultTranslationFlags(
+        details?.original_language ?? 'en',
+        translationValues,
+      ),
+    )
     .onConflictDoNothing();
 
   await insertReferenceUrls(database, movie.uid, film.imdbId, details?.id);
