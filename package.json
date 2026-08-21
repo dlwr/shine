@@ -33,6 +33,7 @@
     "scrapers:movie-descriptions": "pnpm --filter @shine/scrapers run movie-descriptions",
     "scrapers:tmdb-ja-worklist": "pnpm --filter @shine/scrapers run tmdb-ja-worklist",
     "scrapers:fix-original-languages": "pnpm --filter @shine/scrapers run fix-original-languages",
+    "scrapers:fix-poster-contamination": "pnpm --filter @shine/scrapers run fix-poster-contamination",
     "scrapers:movie-import": "pnpm --filter @shine/scrapers run movie-import",
     "scrapers:import-imdb-list": "pnpm --filter @shine/scrapers run import-imdb-list",
     "scrapers:availability-check": "pnpm --filter @shine/scrapers run availability-check",
