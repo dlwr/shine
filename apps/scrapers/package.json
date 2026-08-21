@@ -20,6 +20,7 @@
     "venice-film-festival": "tsx src/venice-film-festival-cli.ts",
     "berlin-film-festival": "tsx src/berlin-film-festival-cli.ts",
     "kinema-junpo": "tsx src/kinema-junpo-cli.ts",
+    "mainichi-film-concours": "tsx src/mainichi-film-concours-cli.ts",
     "movie-credits": "tsx src/movie-credits-cli.ts",
     "movie-descriptions": "tsx src/movie-descriptions-cli.ts",
     "tmdb-ja-worklist": "tsx src/tmdb-ja-worklist-cli.ts",
