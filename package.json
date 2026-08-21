@@ -28,6 +28,7 @@
     "scrapers:kinema-junpo": "pnpm --filter @shine/scrapers run kinema-junpo",
     "scrapers:mainichi-film-concours": "pnpm --filter @shine/scrapers run mainichi-film-concours",
     "scrapers:blue-ribbon-awards": "pnpm --filter @shine/scrapers run blue-ribbon-awards",
+    "scrapers:hochi-film-awards": "pnpm --filter @shine/scrapers run hochi-film-awards",
     "scrapers:movie-credits": "pnpm --filter @shine/scrapers run movie-credits",
     "scrapers:movie-descriptions": "pnpm --filter @shine/scrapers run movie-descriptions",
     "scrapers:tmdb-ja-worklist": "pnpm --filter @shine/scrapers run tmdb-ja-worklist",
