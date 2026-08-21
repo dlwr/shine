@@ -136,6 +136,20 @@ export function filmKey(film: MainichiFilm): string {
   return film.page ?? `title:${film.title}`;
 }
 
+/** 連作の共有記事や前後編分割で自動同定できない作品 */
+const RESOLUTION_OVERRIDES = new Map([
+  ['1961:人間の條件', 'tt0055233'],
+  ['1993:学校', 'tt0202364'],
+  ['1996:学校II', 'tt0116386'],
+  ['1998:学校III', 'tt0245127'],
+  ['2000:十五才 学校IV', 'tt0338679'],
+  ['2020:アンダードッグ', 'tt14051616'],
+]);
+
+function overrideImdbId(year: number, film: MainichiFilm): string | undefined {
+  return RESOLUTION_OVERRIDES.get(`${year}:${film.title}`);
+}
+
 /** 日本映画は選考年＝公開年。年末公開が翌年扱いになることはある */
 const JAPANESE_PUBLICATION_WINDOW: YearWindow = {min: -1, max: 1};
 
@@ -149,24 +163,29 @@ export function mainichiFilmReferences(
   editions: MainichiEdition[],
 ): FilmReference[] {
   return editions.flatMap(edition => [
-    ...[...edition.grandPrix, ...edition.excellence].map(film => ({
-      key: filmKey(film),
-      title: film.title,
-      targetYear: edition.year,
-      yearWindow: JAPANESE_PUBLICATION_WINDOW,
-      foreign: false,
-    })),
-    ...edition.foreign.map(film => ({
-      key: filmKey(film),
-      title: film.title,
-      targetYear: edition.year,
-      yearWindow: FOREIGN_PUBLICATION_WINDOW,
-      foreign: true,
-    })),
+    ...[...edition.grandPrix, ...edition.excellence]
+      .filter(film => overrideImdbId(edition.year, film) === undefined)
+      .map(film => ({
+        key: filmKey(film),
+        title: film.title,
+        targetYear: edition.year,
+        yearWindow: JAPANESE_PUBLICATION_WINDOW,
+        foreign: false,
+      })),
+    ...edition.foreign
+      .filter(film => overrideImdbId(edition.year, film) === undefined)
+      .map(film => ({
+        key: filmKey(film),
+        title: film.title,
+        targetYear: edition.year,
+        yearWindow: FOREIGN_PUBLICATION_WINDOW,
+        foreign: true,
+      })),
   ]);
 }
 
 function buildNominations(
+  year: number,
   films: MainichiFilm[],
   resolved: Map<string, ResolvedFilm>,
   isWinner: boolean,
@@ -175,7 +194,9 @@ function buildNominations(
   const seen = new Set<string>();
 
   for (const film of films) {
-    const match = resolved.get(filmKey(film));
+    const imdbId = overrideImdbId(year, film);
+    const match: ResolvedFilm | undefined =
+      imdbId === undefined ? resolved.get(filmKey(film)) : {imdbId};
     if (!match || seen.has(match.imdbId)) {
       continue;
     }
@@ -220,6 +241,7 @@ export function toImdbEventData(
                 category: GRAND_PRIX_CATEGORY,
                 total: null, // eslint-disable-line unicorn/no-null -- ImdbEventCollectedDataの型に合わせる
                 nominations: buildNominations(
+                  edition.year,
                   edition.grandPrix,
                   resolved,
                   true,
@@ -229,6 +251,7 @@ export function toImdbEventData(
                 category: EXCELLENCE_CATEGORY,
                 total: null, // eslint-disable-line unicorn/no-null -- ImdbEventCollectedDataの型に合わせる
                 nominations: buildNominations(
+                  edition.year,
                   edition.excellence,
                   resolved,
                   false,
@@ -237,7 +260,12 @@ export function toImdbEventData(
               {
                 category: FOREIGN_CATEGORY,
                 total: null, // eslint-disable-line unicorn/no-null -- ImdbEventCollectedDataの型に合わせる
-                nominations: buildNominations(edition.foreign, resolved, true),
+                nominations: buildNominations(
+                  edition.year,
+                  edition.foreign,
+                  resolved,
+                  true,
+                ),
               },
             ],
           },
@@ -305,20 +333,21 @@ function collectJapaneseTitles(
 ): Map<string, string> {
   const titleByImdbId = new Map<string, string>();
 
-  const films = editions.flatMap(edition => [
-    ...edition.grandPrix,
-    ...edition.excellence,
-    ...edition.foreign,
-  ]);
+  const films = editions.flatMap(edition =>
+    [...edition.grandPrix, ...edition.excellence, ...edition.foreign].map(
+      film => ({year: edition.year, film}),
+    ),
+  );
 
-  for (const film of films) {
-    const match = resolved.get(filmKey(film));
+  for (const {year, film} of films) {
+    const imdbId =
+      overrideImdbId(year, film) ?? resolved.get(filmKey(film))?.imdbId;
     if (
-      match &&
+      imdbId !== undefined &&
       hasJapaneseText(film.title) &&
-      !titleByImdbId.has(match.imdbId)
+      !titleByImdbId.has(imdbId)
     ) {
-      titleByImdbId.set(match.imdbId, film.title);
+      titleByImdbId.set(imdbId, film.title);
     }
   }
 

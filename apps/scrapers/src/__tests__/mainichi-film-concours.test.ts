@@ -247,6 +247,54 @@ describe('toImdbEventData', () => {
   });
 });
 
+describe('resolution overrides', () => {
+  const editions = [
+    {
+      year: 1996,
+      grandPrix: [],
+      excellence: [{page: '学校 (映画)', title: '学校II'}],
+      foreign: [],
+    },
+    {
+      year: 2004,
+      grandPrix: [{page: '血と骨', title: '血と骨'}],
+      excellence: [],
+      foreign: [],
+    },
+  ];
+  const resolved = new Map([
+    ['血と骨', {imdbId: 'tt0427312', englishTitle: 'Blood and Bones'}],
+  ]);
+  const data = toImdbEventData(editions, resolved);
+
+  it('共有記事で同定できない作品をIMDb IDの直指定で取り込む', () => {
+    const nominations = data.editions
+      .find(edition => edition.year === 1996)
+      ?.targetAward[0].categories.find(
+        category => category.category === EXCELLENCE_CATEGORY,
+      )?.nominations;
+    expect(nominations?.[0].titles[0]).toEqual({
+      imdbId: 'tt0116386',
+      title: '学校II',
+      originalTitle: null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationTitleの型に合わせる
+    });
+  });
+
+  it('直指定の無い作品は解決結果を使う', () => {
+    const nominations = data.editions
+      .find(edition => edition.year === 2004)
+      ?.targetAward[0].categories.find(
+        category => category.category === GRAND_PRIX_CATEGORY,
+      )?.nominations;
+    expect(nominations?.[0].titles[0].imdbId).toBe('tt0427312');
+  });
+
+  it('直指定した作品を同定の対象から外す', () => {
+    const references = mainichiFilmReferences(editions);
+    expect(references.map(reference => reference.title)).toEqual(['血と骨']);
+  });
+});
+
 describe('extractAwardEditions', () => {
   const editions = parseMainichiWikitext(sampleWikitext);
   const resolved = new Map([
