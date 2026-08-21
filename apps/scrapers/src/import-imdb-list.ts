@@ -12,6 +12,7 @@ import {posterUrls} from '@shine/database/schema/poster-urls';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import {generateUUID} from '@shine/utils';
+import {withDefaultTranslationFlags} from './common/default-translations';
 import {
   fetchTMDBConfig,
   findTMDBByImdbId,
@@ -862,7 +863,7 @@ async function insertMovieFromCsvRecord({
   });
 }
 
-async function insertTranslations({
+export async function insertTranslations({
   database,
   movieUid,
   tmdbMovie,
@@ -892,7 +893,6 @@ async function insertTranslations({
       resourceUid: movieUid,
       languageCode: 'en',
       content: englishTitle,
-      isDefault: 1,
     });
   }
 
@@ -902,7 +902,6 @@ async function insertTranslations({
       resourceUid: movieUid,
       languageCode: 'ja',
       content: japaneseTitle,
-      isDefault: 0,
     });
   }
 
@@ -913,7 +912,6 @@ async function insertTranslations({
       resourceUid: movieUid,
       languageCode: 'en',
       content: englishOverview,
-      isDefault: 1,
     });
   }
 
@@ -924,7 +922,6 @@ async function insertTranslations({
       resourceUid: movieUid,
       languageCode: 'ja',
       content: japaneseOverview,
-      isDefault: 0,
     });
   }
 
@@ -932,7 +929,12 @@ async function insertTranslations({
     return;
   }
 
-  await database.insert(translations).values(values).onConflictDoNothing();
+  await database
+    .insert(translations)
+    .values(
+      withDefaultTranslationFlags(tmdbMovie.original_language ?? 'en', values),
+    )
+    .onConflictDoNothing();
 }
 
 async function insertReferenceUrls(

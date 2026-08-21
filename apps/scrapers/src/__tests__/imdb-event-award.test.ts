@@ -628,6 +628,78 @@ describe('importImdbEventAward', () => {
     expect(unknown.year).toBe(1951);
   });
 
+  it('原語が日本語なら日本語タイトルがデフォルトになる', async () => {
+    environment.TMDB_API_KEY = 'test-key';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/find/tt0042876')) {
+          return Response.json({
+            movie_results: [{id: 548, media_type: 'movie'}],
+            tv_results: [],
+          });
+        }
+
+        if (url.includes('/movie/548') && url.includes('language=ja')) {
+          return Response.json({
+            id: 548,
+            title: '羅生門',
+            original_title: '羅生門',
+          });
+        }
+
+        if (url.includes('/movie/548')) {
+          return Response.json({
+            id: 548,
+            title: 'Rashomon',
+            original_title: '羅生門',
+            original_language: 'ja',
+            release_date: '1950-08-25',
+            imdb_id: 'tt0042876',
+          });
+        }
+
+        if (url.includes('/configuration')) {
+          return Response.json({
+            images: {secure_base_url: 'https://x/', poster_sizes: ['w500']},
+          });
+        }
+
+        return new Response('not found', {status: 404});
+      }),
+    );
+
+    await importImdbEventAward({
+      environment,
+      config: testConfig,
+      data: collectedData([
+        edition(1951, [
+          nomination('tt0042876', 'Rashômon', true),
+          nomination('tt0000001', 'Unknown'),
+        ]),
+      ]),
+      throttleMs: 0,
+    });
+
+    const [rashomon] = await database
+      .select()
+      .from(movies)
+      .where(eq(movies.imdbId, 'tt0042876'));
+    const titleRows = await database
+      .select()
+      .from(translations)
+      .where(
+        and(
+          eq(translations.resourceUid, rashomon.uid),
+          eq(translations.resourceType, 'movie_title'),
+        ),
+      );
+    const byLanguage = new Map(titleRows.map(row => [row.languageCode, row]));
+    expect(byLanguage.get('ja')?.isDefault).toBe(1);
+    expect(byLanguage.get('en')?.isDefault).toBe(0);
+  });
+
   it('TMDbのja応答が原題フォールバックのときは邦題として保存しない', async () => {
     environment.TMDB_API_KEY = 'test-key';
     vi.stubGlobal(
