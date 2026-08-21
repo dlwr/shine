@@ -556,7 +556,6 @@ async function findExistingMovie(
         eq(translations.resourceUid, movies.uid),
         eq(translations.resourceType, 'movie_title'),
         eq(translations.languageCode, 'en'),
-        eq(translations.isDefault, 1),
       ),
     )
     .where(and(eq(translations.content, title), isNull(movies.deletedAt)))
