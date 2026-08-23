@@ -2,6 +2,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {loader as sitemapAwardsLoader} from './sitemap-awards';
 import {loader as sitemapIndexLoader} from './sitemap-index';
 import {loader as sitemapMoviesLoader} from './sitemap-movies';
+import {loader as sitemapPeopleLoader} from './sitemap-people';
 import {loader as sitemapYearsLoader} from './sitemap-years';
 import {createMockContext} from '@/lib/test-context';
 
@@ -80,6 +81,22 @@ describe('sitemap.xml', () => {
     );
   });
 
+  it('人物の総件数から必要な数の人物sitemapを列挙する', async () => {
+    mockSearchResponse({pagination: {totalCount: 10}});
+    mockSearchResponse({people: [], pagination: {totalCount: 1200}});
+
+    const response = await sitemapIndexLoader(createIndexArguments());
+    const xml = await response.text();
+
+    expect(xml).toContain(
+      '<loc>https://shine-film.com/sitemap/people.xml?page=1</loc>',
+    );
+    expect(xml).toContain(
+      '<loc>https://shine-film.com/sitemap/people.xml?page=3</loc>',
+    );
+    expect(xml).not.toContain('people.xml?page=4');
+  });
+
   it('API取得に失敗しても200でsitemapindexを返す', async () => {
     vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
 
@@ -87,6 +104,63 @@ describe('sitemap.xml', () => {
 
     expect(response.status).toBe(200);
     expect(await response.text()).toContain('<sitemapindex');
+  });
+});
+
+const createPeopleArguments = (page: string) =>
+  cast<Parameters<typeof sitemapPeopleLoader>[0]>({
+    context: createMockContext(),
+    request: new Request(
+      `https://shine-film.com/sitemap/people.xml?page=${page}`,
+    ),
+    params: {},
+  });
+
+describe('sitemap/people.xml', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('指定ページの人物URLを列挙する', async () => {
+    mockSearchResponse({
+      people: [
+        {uid: 'person-1', name: '黒澤明', movieCount: 30},
+        {uid: 'person-2', name: '小津安二郎', movieCount: 20},
+      ],
+      pagination: {totalCount: 2},
+    });
+
+    const response = await sitemapPeopleLoader(createPeopleArguments('1'));
+    const xml = await response.text();
+
+    expect(xml).toContain('<loc>https://shine-film.com/people/person-1</loc>');
+    expect(xml).toContain('<loc>https://shine-film.com/people/person-2</loc>');
+  });
+
+  it('指定されたページ番号と1ページの件数でAPIを呼ぶ', async () => {
+    mockSearchResponse({people: [], pagination: {totalCount: 0}});
+
+    await sitemapPeopleLoader(createPeopleArguments('3'));
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/people?page=3&limit=500'),
+      expect.anything(),
+    );
+  });
+
+  it('不正なページ番号には404を返す', async () => {
+    const response = await sitemapPeopleLoader(createPeopleArguments('0'));
+
+    expect(response.status).toBe(404);
+  });
+
+  it('API取得に失敗しても200で空のurlsetを返す', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+    const response = await sitemapPeopleLoader(createPeopleArguments('1'));
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain('<urlset');
   });
 });
 
