@@ -2,6 +2,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {loader as sitemapAwardsLoader} from './sitemap-awards';
 import {loader as sitemapIndexLoader} from './sitemap-index';
 import {loader as sitemapMoviesLoader} from './sitemap-movies';
+import {loader as sitemapYearsLoader} from './sitemap-years';
 import {createMockContext} from '@/lib/test-context';
 
 vi.stubGlobal('fetch', vi.fn());
@@ -69,6 +70,16 @@ describe('sitemap.xml', () => {
     );
   });
 
+  it('年別のsitemapを列挙する', async () => {
+    mockSearchResponse({pagination: {totalCount: 10}});
+
+    const response = await sitemapIndexLoader(createIndexArguments());
+
+    expect(await response.text()).toContain(
+      '<loc>https://shine-film.com/sitemap/years.xml</loc>',
+    );
+  });
+
   it('API取得に失敗しても200でsitemapindexを返す', async () => {
     vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
 
@@ -76,6 +87,46 @@ describe('sitemap.xml', () => {
 
     expect(response.status).toBe(200);
     expect(await response.text()).toContain('<sitemapindex');
+  });
+});
+
+const createYearsArguments = () =>
+  cast<Parameters<typeof sitemapYearsLoader>[0]>({
+    context: createMockContext(),
+    request: new Request('https://shine-film.com/sitemap/years.xml'),
+    params: {},
+  });
+
+describe('sitemap/years.xml', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('年一覧と各年ページのURLを列挙する', async () => {
+    mockSearchResponse({
+      years: [
+        {year: 1997, movieCount: 91, winnerCount: 14},
+        {year: 1953, movieCount: 92, winnerCount: 9},
+      ],
+    });
+
+    const response = await sitemapYearsLoader(createYearsArguments());
+    const xml = await response.text();
+
+    expect(xml).toContain('<loc>https://shine-film.com/years</loc>');
+    expect(xml).toContain('<loc>https://shine-film.com/years/1997</loc>');
+    expect(xml).toContain('<loc>https://shine-film.com/years/1953</loc>');
+  });
+
+  it('API取得に失敗しても200で/yearsのみのurlsetを返す', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+    const response = await sitemapYearsLoader(createYearsArguments());
+    const xml = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(xml).toContain('<loc>https://shine-film.com/years</loc>');
+    expect(xml).not.toContain('/years/');
   });
 });
 

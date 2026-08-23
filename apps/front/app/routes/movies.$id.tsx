@@ -732,7 +732,16 @@ export default function MovieDetail({
             displaySize="w342"
           />
           <div className="flex flex-col justify-end gap-2">
-            <BigYear year={movieDetail.year} className="text-6xl md:text-7xl" />
+            {movieDetail.year && (
+              <a
+                href={`/years/${movieDetail.year}`}
+                className="no-underline text-ink">
+                <BigYear
+                  year={movieDetail.year}
+                  className="text-6xl md:text-7xl"
+                />
+              </a>
+            )}
             <h1 className="font-display font-black text-2xl md:text-3xl tracking-tight">
               {title}
             </h1>

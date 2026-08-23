@@ -453,6 +453,60 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /years:
+    get:
+      summary: List production years
+      description: Returns every production year that has at least one film selected by an award or editorial list, newest first
+      operationId: listYears
+      tags:
+        - Awards
+      security: []
+      responses:
+        '200':
+          description: Successfully retrieved years
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [years]
+                properties:
+                  years:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/YearSummary'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /years/{year}:
+    get:
+      summary: Get the films of a production year
+      description: |
+        Returns the films produced in the given year that were selected by any
+        award or editorial list, with the awards each film appeared in, and the
+        neighboring years that have films for navigation. Winners come first,
+        then films with more selections.
+      operationId: getYear
+      tags:
+        - Awards
+      security: []
+      parameters:
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved the year
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/YearDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /quiz/daily:
     get:
       summary: Get today's quiz
@@ -2283,6 +2337,90 @@ components:
         - description
         - year
         - movies
+
+    YearSummary:
+      type: object
+      properties:
+        year:
+          type: integer
+        movieCount:
+          type: integer
+          description: Films of this production year selected by any award or list
+        winnerCount:
+          type: integer
+          description: Films of this production year that won at least one award
+      required:
+        - year
+        - movieCount
+        - winnerCount
+
+    YearMovie:
+      type: object
+      properties:
+        uid:
+          type: string
+        title:
+          type: string
+          description: Japanese title when available, otherwise the default title
+        posterUrl:
+          type: string
+        isWinner:
+          type: boolean
+          description: Whether the film won any of its awards
+        awards:
+          type: array
+          description: Award pages the film appears in, in site order
+          items:
+            type: object
+            properties:
+              slug:
+                type: string
+              isWinner:
+                type: boolean
+            required:
+              - slug
+              - isWinner
+      required:
+        - uid
+        - isWinner
+        - awards
+
+    YearDetail:
+      type: object
+      properties:
+        year:
+          type: integer
+        movies:
+          type: array
+          items:
+            $ref: '#/components/schemas/YearMovie'
+        awards:
+          type: array
+          description: Award pages that appear in this year, in site order
+          items:
+            type: object
+            properties:
+              slug:
+                type: string
+              shortLabel:
+                type: string
+              name:
+                type: string
+              organization:
+                type: string
+            required:
+              - slug
+              - shortLabel
+              - name
+              - organization
+        previousYear:
+          type: integer
+        nextYear:
+          type: integer
+      required:
+        - year
+        - movies
+        - awards
 
     AwardCrossings:
       type: object

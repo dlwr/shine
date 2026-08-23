@@ -11,6 +11,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const pageCount = Math.ceil(totalCount / MOVIES_PER_SITEMAP);
   const paths = [
     '/sitemap/awards.xml',
+    '/sitemap/years.xml',
     ...Array.from(
       {length: pageCount},
       (_, index) => `/sitemap/movies.xml?page=${index + 1}`,

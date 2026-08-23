@@ -1,6 +1,7 @@
 import type {Route} from './+types/awards.$slug.$year';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
+import {YearNavLink} from '@/components/editorial/year-nav-link';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {awardHeading} from './awards';
@@ -85,31 +86,6 @@ export async function loader({context, request, params}: Route.LoaderArgs) {
   return {award, locale};
 }
 
-function YearNavLink({
-  slug,
-  year,
-  label,
-}: {
-  slug: string;
-  year?: number;
-  label: 'PREV' | 'NEXT';
-}) {
-  if (!year) {
-    return <span className="w-24" />;
-  }
-
-  const text = label === 'PREV' ? `← ${year}` : `${year} →`;
-  return (
-    <a
-      href={`/awards/${slug}/${year}`}
-      className={`w-24 font-mono text-xs text-ink no-underline ${
-        label === 'NEXT' ? 'text-right' : ''
-      }`}>
-      {text}
-    </a>
-  );
-}
-
 export default function AwardYearPage({loaderData}: Route.ComponentProps) {
   const {award} = loaderData as {award: AwardYearDetailData};
   const locale = 'ja';
@@ -152,7 +128,7 @@ export default function AwardYearPage({loaderData}: Route.ComponentProps) {
 
         <div className="flex items-center justify-between border-t-2 border-ink mt-8 pt-3">
           <YearNavLink
-            slug={award.slug}
+            href={`/awards/${award.slug}/${award.previousYear}`}
             year={award.previousYear}
             label="PREV"
           />
@@ -161,7 +137,11 @@ export default function AwardYearPage({loaderData}: Route.ComponentProps) {
             className="font-mono text-[10px] text-ink-muted no-underline">
             ALL YEARS
           </a>
-          <YearNavLink slug={award.slug} year={award.nextYear} label="NEXT" />
+          <YearNavLink
+            href={`/awards/${award.slug}/${award.nextYear}`}
+            year={award.nextYear}
+            label="NEXT"
+          />
         </div>
 
         <SiteFooter locale={locale} />
