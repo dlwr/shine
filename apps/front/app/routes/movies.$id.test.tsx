@@ -667,6 +667,12 @@ describe('MovieDetail Component', () => {
       // 年号がBigYearのaria-labelとして確認できる
       expect(screen.getByLabelText('2023')).toBeInTheDocument();
 
+      // 年号は年別ページへのリンク
+      expect(screen.getByRole('link', {name: '2023'})).toHaveAttribute(
+        'href',
+        '/years/2023',
+      );
+
       // IMDb情報がメタラインに表示される
       expect(screen.getByText(/IMDb tt1234567/)).toBeInTheDocument();
 
