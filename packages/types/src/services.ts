@@ -295,3 +295,14 @@ export type PersonDetail = {
     character: string | undefined;
   }>;
 };
+
+export type PersonSummary = {
+  uid: string;
+  name: string;
+  movieCount: number;
+};
+
+export type PeopleListResult = {
+  people: PersonSummary[];
+  pagination: AwardPagination;
+};

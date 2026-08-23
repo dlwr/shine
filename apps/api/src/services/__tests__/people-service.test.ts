@@ -35,6 +35,7 @@ async function createTestEnvironment(): Promise<{
   await database.insert(movies).values([
     {uid: 'movie-ran', year: 1985},
     {uid: 'movie-kagemusha', year: 1980},
+    {uid: 'movie-dreams', year: 1990},
     {uid: 'movie-deleted', year: 1990, deletedAt: 1_700_000_000},
   ]);
   await database.insert(translations).values([
@@ -69,6 +70,9 @@ async function createTestEnvironment(): Promise<{
     {uid: 'person-kurosawa', tmdbId: 5026, name: '黒澤明'},
     {uid: 'person-scorsese', tmdbId: 1032, name: 'Martin Scorsese'},
     {uid: 'person-multi', tmdbId: 7450, name: 'ビートたけし'},
+    {uid: 'person-prolific', tmdbId: 1001, name: '仲代達矢'},
+    {uid: 'person-single', tmdbId: 1002, name: '寺尾聰'},
+    {uid: 'person-deleted-only', tmdbId: 1003, name: '消えた俳優'},
   ]);
   await database.insert(translations).values({
     resourceType: 'person_name',
@@ -119,6 +123,41 @@ async function createTestEnvironment(): Promise<{
       department: 'Acting',
       character: '本人',
       castOrder: 0,
+    },
+    {
+      movieUid: 'movie-ran',
+      personUid: 'person-prolific',
+      creditId: 'c7',
+      department: 'Acting',
+      castOrder: 1,
+    },
+    {
+      movieUid: 'movie-kagemusha',
+      personUid: 'person-prolific',
+      creditId: 'c8',
+      department: 'Acting',
+      castOrder: 0,
+    },
+    {
+      movieUid: 'movie-dreams',
+      personUid: 'person-prolific',
+      creditId: 'c9',
+      department: 'Acting',
+      castOrder: 0,
+    },
+    {
+      movieUid: 'movie-ran',
+      personUid: 'person-single',
+      creditId: 'c10',
+      department: 'Acting',
+      castOrder: 2,
+    },
+    {
+      movieUid: 'movie-deleted',
+      personUid: 'person-deleted-only',
+      creditId: 'c11',
+      department: 'Directing',
+      job: 'Director',
     },
   ]);
 
@@ -200,5 +239,107 @@ describe('PeopleService.getPerson', () => {
     const person = await service.getPerson('person-missing', 'ja');
 
     expect(person).toBeUndefined();
+  });
+});
+
+describe('PeopleService.listPeople', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    ({environment} = await createTestEnvironment());
+  });
+
+  it('2本以上に参加した人物を返す', async () => {
+    const service = new PeopleService(environment);
+
+    const result = await service.listPeople({page: 1, limit: 10});
+
+    expect(result.people.map(person => person.uid)).toContain(
+      'person-kurosawa',
+    );
+  });
+
+  it('監督は1本でも返す', async () => {
+    const service = new PeopleService(environment);
+
+    const result = await service.listPeople({page: 1, limit: 10});
+
+    expect(result.people.map(person => person.uid)).toContain('person-multi');
+  });
+
+  it('1本に出演しただけの人物は返さない', async () => {
+    const service = new PeopleService(environment);
+
+    const result = await service.listPeople({page: 1, limit: 10});
+
+    expect(result.people.map(person => person.uid)).not.toContain(
+      'person-single',
+    );
+  });
+
+  it('論理削除された映画だけに参加した人物は返さない', async () => {
+    const service = new PeopleService(environment);
+
+    const result = await service.listPeople({page: 1, limit: 10});
+
+    expect(result.people.map(person => person.uid)).not.toContain(
+      'person-deleted-only',
+    );
+  });
+
+  it('参加作品数に論理削除された映画を数えない', async () => {
+    const service = new PeopleService(environment);
+
+    const result = await service.listPeople({page: 1, limit: 10});
+
+    expect(
+      result.people.find(person => person.uid === 'person-kurosawa')
+        ?.movieCount,
+    ).toBe(2);
+  });
+
+  it('参加作品数の多い順に並べる', async () => {
+    const service = new PeopleService(environment);
+
+    const result = await service.listPeople({page: 1, limit: 10});
+
+    expect(result.people.map(person => person.uid)).toEqual([
+      'person-prolific',
+      'person-kurosawa',
+      'person-multi',
+    ]);
+  });
+
+  it('人物名を返す', async () => {
+    const service = new PeopleService(environment);
+
+    const result = await service.listPeople({page: 1, limit: 10});
+
+    expect(
+      result.people.find(person => person.uid === 'person-prolific')?.name,
+    ).toBe('仲代達矢');
+  });
+
+  it('ページを切り出す', async () => {
+    const service = new PeopleService(environment);
+
+    const result = await service.listPeople({page: 2, limit: 1});
+
+    expect(result.people.map(person => person.uid)).toEqual([
+      'person-kurosawa',
+    ]);
+  });
+
+  it('総件数を返す', async () => {
+    const service = new PeopleService(environment);
+
+    const result = await service.listPeople({page: 2, limit: 1});
+
+    expect(result.pagination).toEqual({
+      page: 2,
+      perPage: 1,
+      totalCount: 3,
+      totalPages: 3,
+    });
   });
 });
