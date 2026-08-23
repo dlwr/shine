@@ -161,8 +161,28 @@ export function filmKey(film: YokohamaFilm): string {
   return film.page ?? `title:${film.title}`;
 }
 
-/** 共有記事や表記揺れで自動同定できない作品 */
-const RESOLUTION_OVERRIDES = new Map<string, string>();
+/** 記事が無く、TMDbの邦題とも表記が合わない作品 */
+const RESOLUTION_OVERRIDES = new Map([
+  ['1979:十代 恵子の場合', 'tt9679368'],
+  ['1983:BLOW THE NIGHT! 夜をぶっとばせ', 'tt10071790'],
+  ['1988:・ふ・た・り・ぼ・っ・ち・', 'tt0823626'],
+  ['1988:SO WHAT', 'tt0183795'],
+  ['1993:眠らない街〜新宿鮫〜', 'tt0256956'],
+  ['1996:岸和田少年愚連隊 BOYS BE AMBITIOUS', 'tt0116780'],
+  ['1998:犬、走る DOG RACE', 'tt0416863'],
+  ['1999:avec mon mari アベックモンマリ', 'tt0204853'],
+  ['2000:漂流街', 'tt0246498'],
+  ['2000:NAGISA', 'tt0269600'],
+  ['2002:OUT', 'tt0340280'],
+  ['2007:魂萌え!', 'tt0906666'],
+  ['2011:八日目の蝉', 'tt1727825'],
+  ['2011:その街のこども 劇場版', 'tt1803208'],
+  ['2014:WOOD JOB! 〜神去なあなあ日常〜', 'tt2964120'],
+  ['2020:海辺の映画館 キネマの玉手箱', 'tt10657812'],
+  ['2020:本気のしるし〈劇場版〉', 'tt13276326'],
+  // TMDbの公開日が2019年の映画祭プレミアなので年の窓から外れる
+  ['2021:街の上で', 'tt11952444'],
+]);
 
 function overrideImdbId(year: number, film: YokohamaFilm): string | undefined {
   return RESOLUTION_OVERRIDES.get(`${year}:${film.title}`);

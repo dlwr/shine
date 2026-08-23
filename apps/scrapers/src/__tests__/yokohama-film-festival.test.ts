@@ -296,8 +296,16 @@ describe('toImdbEventData', () => {
     });
   });
 
+  it('直指定したIMDb IDで取り込む', () => {
+    const overridden = nominationsOf(1979)?.find(
+      nomination => nomination.titles[0].title === '十代 恵子の場合',
+    );
+    expect(overridden?.titles[0].imdbId).toBe('tt9679368');
+    expect(overridden?.notes).toBe('10位');
+  });
+
   it('IMDb IDを解決できた作品だけを取り込む', () => {
-    expect(nominationsOf(1979)).toHaveLength(4);
+    expect(nominationsOf(1979)).toHaveLength(5);
   });
 
   it('解決できた作品が無い回を取り込まない', () => {
