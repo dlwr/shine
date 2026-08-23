@@ -303,6 +303,46 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /people:
+    get:
+      summary: List people who have a page worth indexing
+      description: |
+        Returns people credited on at least two films, or credited as director
+        on any film, ordered by the number of films they worked on. Soft-deleted
+        films are not counted. Intended for the sitemap.
+      operationId: listPeople
+      tags:
+        - Movies
+      security: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 100
+          description: People per page; values above 500 are clamped
+      responses:
+        '200':
+          description: Successfully retrieved people
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeopleListResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /people/{personId}:
     get:
       summary: Get a person and the films they worked on
@@ -2637,6 +2677,36 @@ components:
               description: Related article links (max 3)
             credits:
               $ref: '#/components/schemas/MovieCredits'
+
+    PersonSummary:
+      type: object
+      properties:
+        uid:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Name as stored on the person (Japanese for Japanese people, original name otherwise)
+        movieCount:
+          type: integer
+          description: Films the person is credited on, excluding soft-deleted films
+      required:
+        - uid
+        - name
+        - movieCount
+
+    PeopleListResponse:
+      type: object
+      properties:
+        people:
+          type: array
+          items:
+            $ref: '#/components/schemas/PersonSummary'
+        pagination:
+          $ref: '#/components/schemas/AwardPagination'
+      required:
+        - people
+        - pagination
 
     PersonDetail:
       type: object

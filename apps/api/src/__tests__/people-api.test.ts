@@ -78,3 +78,31 @@ describe('GET /people/:id', () => {
     expect(response.status).toBe(404);
   });
 });
+
+describe('GET /people', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+  });
+
+  it('人物の一覧と件数を返す', async () => {
+    const response = await peopleRoutes.request('/?limit=10', {}, environment);
+
+    const body = (await response.json()) as {
+      people: Array<{uid: string; name: string; movieCount: number}>;
+      pagination: {totalCount: number};
+    };
+    expect(response.status).toBe(200);
+    expect(body.people).toEqual([
+      {uid: 'person-kurosawa', name: '黒澤明', movieCount: 1},
+    ]);
+    expect(body.pagination.totalCount).toBe(1);
+  });
+
+  it('ページ番号が不正なら400を返す', async () => {
+    const response = await peopleRoutes.request('/?page=0', {}, environment);
+
+    expect(response.status).toBe(400);
+  });
+});

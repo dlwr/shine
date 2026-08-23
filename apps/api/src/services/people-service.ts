@@ -4,9 +4,59 @@ import {movies} from '@shine/database/schema/movies';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
 import {BaseService} from './base-service';
-import type {PersonDetail} from '@shine/types';
+import type {PeopleListResult, PersonDetail} from '@shine/types';
+
+const movieCount = sql<number>`COUNT(DISTINCT ${movieCredits.movieUid})`;
 
 export class PeopleService extends BaseService {
+  async listPeople({
+    page,
+    limit,
+  }: {
+    page: number;
+    limit: number;
+  }): Promise<PeopleListResult> {
+    const eligible = this.database
+      .select({
+        uid: people.uid,
+        name: people.name,
+        movieCount: movieCount.as('movie_count'),
+      })
+      .from(people)
+      .innerJoin(movieCredits, eq(movieCredits.personUid, people.uid))
+      .innerJoin(
+        movies,
+        and(eq(movies.uid, movieCredits.movieUid), isNull(movies.deletedAt)),
+      )
+      .groupBy(people.uid)
+      .having(
+        sql`${movieCount} >= 2 OR SUM(${movieCredits.job} = 'Director') > 0`,
+      )
+      .as('eligible');
+
+    const [countRow] = await this.database
+      .select({totalCount: sql<number>`COUNT(*)`})
+      .from(eligible);
+    const totalCount = countRow?.totalCount ?? 0;
+
+    const rows = await this.database
+      .select()
+      .from(eligible)
+      .orderBy(sql`${eligible.movieCount} DESC`, eligible.uid)
+      .limit(limit)
+      .offset((page - 1) * limit);
+
+    return {
+      people: rows,
+      pagination: {
+        page,
+        perPage: limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+      },
+    };
+  }
+
   async getPerson(
     personUid: string,
     locale: string,

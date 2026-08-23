@@ -13,6 +13,51 @@ import {
 export const peopleRoutes = new Hono<{Bindings: Environment}>();
 
 const PERSON_CACHE_TTL = 86_400;
+const PEOPLE_LIST_CACHE_TTL = 604_800;
+const PEOPLE_LIST_DEFAULT_LIMIT = 100;
+const PEOPLE_LIST_MAX_LIMIT = 500;
+
+function parsePositiveInteger(
+  value: string | undefined,
+  fallback: number,
+): number | undefined {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+peopleRoutes.get('/', async c => {
+  const page = parsePositiveInteger(c.req.query('page'), 1);
+  const requestedLimit = parsePositiveInteger(
+    c.req.query('limit'),
+    PEOPLE_LIST_DEFAULT_LIMIT,
+  );
+
+  if (page === undefined || requestedLimit === undefined) {
+    return c.json({error: 'page and limit must be positive integers'}, 400);
+  }
+
+  const limit = Math.min(requestedLimit, PEOPLE_LIST_MAX_LIMIT);
+  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cacheKey = `people:list:${page}:${limit}:v1`;
+  const cached = await cache.get(cacheKey);
+  const result =
+    cached?.data ?? (await new PeopleService(c.env).listPeople({page, limit}));
+
+  if (!cached) {
+    await cache.set(cacheKey, result, PEOPLE_LIST_CACHE_TTL);
+  }
+
+  const etag = createETag(result);
+  if (shouldCheckETag(c.req, etag)) {
+    return new Response(undefined, {status: 304, headers: {ETag: etag}});
+  }
+
+  return createCachedResponse(result, PEOPLE_LIST_CACHE_TTL, {ETag: etag});
+});
 
 peopleRoutes.get('/:id', async c => {
   const personUid = c.req.param('id');
