@@ -30,6 +30,7 @@
     "scrapers:blue-ribbon-awards": "pnpm --filter @shine/scrapers run blue-ribbon-awards",
     "scrapers:hochi-film-awards": "pnpm --filter @shine/scrapers run hochi-film-awards",
     "scrapers:nikkan-sports-film-awards": "pnpm --filter @shine/scrapers run nikkan-sports-film-awards",
+    "scrapers:yokohama-film-festival": "pnpm --filter @shine/scrapers run yokohama-film-festival",
     "scrapers:movie-credits": "pnpm --filter @shine/scrapers run movie-credits",
     "scrapers:movie-descriptions": "pnpm --filter @shine/scrapers run movie-descriptions",
     "scrapers:tmdb-ja-worklist": "pnpm --filter @shine/scrapers run tmdb-ja-worklist",

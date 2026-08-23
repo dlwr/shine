@@ -258,6 +258,17 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
     grouping: 'year',
   },
   {
+    slug: 'yokohama-best-ten',
+    shortLabel: 'ヨコハマ',
+    organizationName: 'Yokohama Film Festival',
+    categoryNames: ['日本映画ベストテン'],
+    name: '日本映画ベストテン',
+    organization: 'ヨコハマ映画祭',
+    description:
+      'ヨコハマ映画祭 日本映画ベストテンの歴代1位（作品賞）と年別ランキングの一覧。映画ファンが市民レベルで1980年から横浜で続けている映画祭。',
+    grouping: 'year',
+  },
+  {
     slug: '1001-movies',
     shortLabel: '1001本',
     organizationName: '1001 Movies You Must See Before You Die',
