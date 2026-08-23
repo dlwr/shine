@@ -17,6 +17,7 @@ const NAV_LINKS = [
   {href: '/quiz', label: 'QUIZ', ariaLabel: 'Quiz'},
   {href: '/daily', label: 'DAILY', ariaLabel: 'Daily picks'},
   {href: '/awards', label: 'AWARDS', ariaLabel: 'Awards'},
+  {href: '/years', label: 'YEARS', ariaLabel: 'Years'},
 ] as const;
 
 export function Masthead({locale = 'en'}: {locale?: string}) {
