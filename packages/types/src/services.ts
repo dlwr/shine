@@ -281,6 +281,19 @@ export type MergeMoviesOptions = {
   preservePosters?: boolean;
 };
 
+export type PersonAwardTag = {
+  slug: string;
+  isWinner: boolean;
+};
+
+export type PersonAwardLegend = {
+  slug: string;
+  shortLabel: string;
+  name: string;
+  organization: string;
+  grouping: 'year' | 'list';
+};
+
 export type PersonDetail = {
   uid: string;
   name: string;
@@ -293,7 +306,9 @@ export type PersonDetail = {
     posterUrl: string | undefined;
     jobs: string[];
     character: string | undefined;
+    awards: PersonAwardTag[];
   }>;
+  awards: PersonAwardLegend[];
 };
 
 export type PersonSummary = {

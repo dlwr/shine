@@ -1,6 +1,7 @@
 import {ImageResponse} from 'workers-og';
 import type {Route} from './+types/og-person';
 import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
+import {pickRepresentativeTitles} from '@/lib/og/person-card';
 import {OG_HEIGHT, OG_WIDTH, buildPersonCardHtml} from '@/lib/og/template';
 import {profileImageUrl} from '@/lib/profile-image';
 import {resolveApiUrl} from '@/lib/api';
@@ -9,7 +10,11 @@ type PersonDetail = {
   name: string;
   originalName: string;
   profilePath?: string;
-  credits: Array<{title?: string}>;
+  credits: Array<{
+    title?: string;
+    awards: Array<{slug: string; isWinner: boolean}>;
+  }>;
+  awards: Array<{slug: string; grouping: 'year' | 'list'}>;
 };
 
 const CACHE_CONTROL = 'public, max-age=86400';
@@ -34,10 +39,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
   }
 
   const person = (await response.json()) as PersonDetail;
-  const topTitles = person.credits
-    .map(credit => credit.title)
-    .filter(title => title !== undefined)
-    .slice(0, 2);
+  const topTitles = pickRepresentativeTitles(person.credits, person.awards);
 
   const cardText =
     BASE_TEXT + person.name + person.originalName + topTitles.join('');

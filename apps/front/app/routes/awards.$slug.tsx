@@ -4,7 +4,7 @@ import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {awardHeading} from './awards';
+import {awardHeading} from '@/lib/awards';
 import {resolveApiUrl} from '@/lib/api';
 
 export type AwardMovieEntryData = {

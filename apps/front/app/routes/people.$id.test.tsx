@@ -4,7 +4,7 @@ import {describe, expect, it} from 'vitest';
 import PersonPage, {meta, type PersonData} from './people.$id';
 import type {Route} from './+types/people.$id';
 
-const person = {
+const person: PersonData = {
   uid: 'person-kurosawa',
   name: '黒澤明',
   originalName: '黒澤明',
@@ -15,6 +15,10 @@ const person = {
       year: 1985,
       posterUrl: 'https://example.com/ran.jpg',
       jobs: ['Director', 'Screenplay'],
+      awards: [
+        {slug: 'academy-best-picture', isWinner: false},
+        {slug: '1001-movies', isWinner: true},
+      ],
     },
     {
       movieUid: 'movie-taxi',
@@ -22,6 +26,30 @@ const person = {
       year: 1980,
       jobs: [],
       character: 'Extra',
+      awards: [{slug: 'palme-dor', isWinner: true}],
+    },
+  ],
+  awards: [
+    {
+      slug: 'palme-dor',
+      shortLabel: 'カンヌ',
+      name: 'パルム・ドール',
+      organization: 'カンヌ国際映画祭',
+      grouping: 'year',
+    },
+    {
+      slug: 'academy-best-picture',
+      shortLabel: 'アカデミー',
+      name: '作品賞',
+      organization: 'アカデミー賞',
+      grouping: 'year',
+    },
+    {
+      slug: '1001-movies',
+      shortLabel: '1001本',
+      name: '死ぬまでに観たい映画1001本',
+      organization: '1001 Movies You Must See Before You Die',
+      grouping: 'list',
     },
   ],
 };
@@ -94,5 +122,54 @@ describe('PersonPage', () => {
       property: 'og:image',
       content: 'https://shine-film.com/og/person.png?id=person-kurosawa',
     });
+  });
+
+  it('参加作に賞の短縮ラベルを出す', () => {
+    renderPage();
+
+    expect(screen.getByText('カンヌ')).toBeInTheDocument();
+  });
+
+  it('リスト型の賞も短縮ラベルを出す', () => {
+    renderPage();
+
+    expect(screen.getByText('1001本')).toBeInTheDocument();
+  });
+
+  it('年度制の賞の勝敗を出す', () => {
+    renderPage();
+
+    expect(
+      screen.getByText(
+        (_, element) => element?.textContent === '1作受賞 / 2作ノミネート',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('年度制の賞に縁が無ければ勝敗を出さない', () => {
+    renderPage({
+      credits: [
+        {
+          movieUid: 'movie-ran',
+          title: '乱',
+          year: 1985,
+          jobs: ['Director'],
+          awards: [{slug: '1001-movies', isWinner: true}],
+        },
+      ],
+    });
+
+    expect(screen.queryByText(/作受賞/)).not.toBeInTheDocument();
+  });
+
+  it('説明文に受賞作の本数を含む', () => {
+    const descriptors = meta({
+      loaderData,
+    } as Route.MetaArgs) as Array<{name?: string; content?: string}>;
+
+    expect(
+      descriptors.find(descriptor => descriptor.name === 'description')
+        ?.content,
+    ).toContain('1本が受賞');
   });
 });

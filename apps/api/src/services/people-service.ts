@@ -7,7 +7,7 @@ import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
-import {awardPageDefinitions} from './awards-service';
+import {awardPageDefinitions, findAwardPageDefinition} from './awards-service';
 import {BaseService} from './base-service';
 import type {
   PeopleListResult,
@@ -162,6 +162,7 @@ export class PeopleService extends BaseService {
         posterUrl: row.posterUrl ?? undefined,
         jobs: [],
         character: undefined,
+        awards: [],
       };
 
       if (row.job && !credit.jobs.includes(row.job)) {
@@ -172,12 +173,23 @@ export class PeopleService extends BaseService {
       byMovie.set(row.movieUid, credit);
     }
 
+    const legendSlugs = await this.attachCreditAwards(byMovie);
+
     return {
       uid: person.uid,
       name: person.localizedName ?? person.name,
       originalName: person.name,
       profilePath: person.profilePath ?? undefined,
       credits: byMovie.values().toArray(),
+      awards: awardPageDefinitions
+        .filter(definition => legendSlugs.has(definition.slug))
+        .map(definition => ({
+          slug: definition.slug,
+          shortLabel: definition.shortLabel,
+          name: definition.name,
+          organization: definition.organization,
+          grouping: definition.grouping,
+        })),
     };
   }
 
@@ -194,6 +206,69 @@ export class PeopleService extends BaseService {
     ]);
 
     return {directors, actors};
+  }
+
+  private async attachCreditAwards(
+    byMovie: Map<string, PersonDetail['credits'][number]>,
+  ): Promise<Set<string>> {
+    const movieUids = byMovie.keys().toArray();
+    const presentSlugs = new Set<string>();
+    if (movieUids.length === 0) {
+      return presentSlugs;
+    }
+
+    const rows = await this.database
+      .select({
+        movieUid: nominations.movieUid,
+        isWinner: nominations.isWinner,
+        organizationName: awardOrganizations.name,
+        categoryName: awardCategories.name,
+      })
+      .from(nominations)
+      .innerJoin(
+        awardCeremonies,
+        eq(awardCeremonies.uid, nominations.ceremonyUid),
+      )
+      .innerJoin(
+        awardOrganizations,
+        eq(awardOrganizations.uid, awardCeremonies.organizationUid),
+      )
+      .innerJoin(
+        awardCategories,
+        eq(awardCategories.uid, nominations.categoryUid),
+      )
+      .where(inArray(nominations.movieUid, movieUids));
+
+    for (const row of rows) {
+      const credit = byMovie.get(row.movieUid);
+      const slug = findAwardPageDefinition(
+        row.organizationName,
+        row.categoryName,
+      )?.slug;
+      if (!credit || !slug) {
+        continue;
+      }
+
+      presentSlugs.add(slug);
+      const isWinner = row.isWinner === 1;
+      const award = credit.awards.find(entry => entry.slug === slug);
+      if (award) {
+        award.isWinner ||= isWinner;
+      } else {
+        credit.awards.push({slug, isWinner});
+      }
+    }
+
+    const slugOrder = new Map(
+      awardPageDefinitions.map((definition, index) => [definition.slug, index]),
+    );
+    for (const credit of byMovie.values()) {
+      credit.awards.sort(
+        (a, b) => (slugOrder.get(a.slug) ?? 0) - (slugOrder.get(b.slug) ?? 0),
+      );
+    }
+
+    return presentSlugs;
   }
 
   private async rankPeople(

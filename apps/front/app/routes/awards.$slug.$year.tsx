@@ -4,7 +4,7 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {YearNavLink} from '@/components/editorial/year-nav-link';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {awardHeading} from './awards';
+import {awardHeading} from '@/lib/awards';
 import {MovieRow, type AwardMovieEntryData} from './awards.$slug';
 import {resolveApiUrl} from '@/lib/api';
 

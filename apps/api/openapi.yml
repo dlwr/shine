@@ -2830,15 +2830,55 @@ components:
                 description: Crew jobs on this film
               character:
                 type: string
+              awards:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    slug:
+                      type: string
+                    isWinner:
+                      type: boolean
+                  required:
+                    - slug
+                    - isWinner
+                description: Award pages this film appears on
             required:
               - movieUid
               - jobs
+              - awards
           description: Films this person worked on, newest first (one entry per film)
+        awards:
+          type: array
+          items:
+            type: object
+            properties:
+              slug:
+                type: string
+              shortLabel:
+                type: string
+              name:
+                type: string
+              organization:
+                type: string
+              grouping:
+                type: string
+                enum:
+                  - year
+                  - list
+            required:
+              - slug
+              - shortLabel
+              - name
+              - organization
+              - grouping
+          description: Legend for the award slugs used by the credits
       required:
         - uid
         - name
         - originalName
         - credits
+        - awards
 
     MovieCredits:
       type: object

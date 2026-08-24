@@ -4,6 +4,7 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {resolveApiUrl} from '@/lib/api';
+import {awardHeading} from '@/lib/awards';
 
 export type AwardSummaryData = {
   slug: string;
@@ -15,15 +16,6 @@ export type AwardSummaryData = {
   firstYear: number;
   lastYear: number;
 };
-
-export function awardHeading(award: {
-  name: string;
-  organization: string;
-}): string {
-  return award.organization === award.name
-    ? award.name
-    : `${award.organization} ${award.name}`;
-}
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {locale} = loaderData as {locale?: Locale};
