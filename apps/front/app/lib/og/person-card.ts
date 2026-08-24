@@ -1,4 +1,5 @@
 const TITLE_LIMIT = 2;
+const WIN_WEIGHT = 1000;
 
 type CreditLike = {
   title?: string;
@@ -18,21 +19,19 @@ export function pickRepresentativeTitles(
     legend.filter(award => award.grouping === 'year').map(award => award.slug),
   );
 
-  const rank = (credit: CreditLike): number => {
+  const score = (credit: CreditLike): number => {
     const contested = credit.awards.filter(award =>
       yearGrouped.has(award.slug),
     );
-    if (contested.some(award => award.isWinner)) {
-      return 0;
-    }
+    const won = contested.filter(award => award.isWinner).length;
 
-    return contested.length > 0 ? 1 : 2;
+    return won * WIN_WEIGHT + contested.length;
   };
 
   return credits
     .filter(credit => credit.title !== undefined)
     .map((credit, index) => ({credit, index}))
-    .toSorted((a, b) => rank(a.credit) - rank(b.credit) || a.index - b.index)
+    .toSorted((a, b) => score(b.credit) - score(a.credit) || a.index - b.index)
     .slice(0, TITLE_LIMIT)
     .map(entry => entry.credit.title!);
 }

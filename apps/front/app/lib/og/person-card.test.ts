@@ -3,6 +3,7 @@ import {pickRepresentativeTitles} from './person-card';
 
 const LEGEND = [
   {slug: 'palme-dor', grouping: 'year' as const},
+  {slug: 'venice-golden-lion', grouping: 'year' as const},
   {slug: '1001-movies', grouping: 'list' as const},
 ];
 
@@ -41,6 +42,24 @@ describe('pickRepresentativeTitles', () => {
     );
 
     expect(titles[0]).toBe('新作');
+  });
+
+  it('受賞数の多い作品を先に選ぶ', () => {
+    const titles = pickRepresentativeTitles(
+      [
+        {title: '1冠', awards: [{slug: 'palme-dor', isWinner: true}]},
+        {
+          title: '2冠',
+          awards: [
+            {slug: 'palme-dor', isWinner: true},
+            {slug: 'venice-golden-lion', isWinner: true},
+          ],
+        },
+      ],
+      LEGEND,
+    );
+
+    expect(titles[0]).toBe('2冠');
   });
 
   it('同じ格なら渡された順を保つ', () => {
