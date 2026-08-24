@@ -690,8 +690,10 @@ describe('japaneseAwardNames', () => {
     expect(japaneseAwardNames('Unknown Org', 'Unknown Category')).toEqual({});
   });
 
-  it('賞ページに属さないカテゴリには何も返さない', () => {
-    expect(japaneseAwardNames('Japan Academy Awards', '監督賞')).toEqual({});
+  it('賞ページに属さないカテゴリでは組織名だけ返す', () => {
+    expect(japaneseAwardNames('Japan Academy Awards', '監督賞')).toEqual({
+      organization: '日本アカデミー賞',
+    });
   });
 });
 

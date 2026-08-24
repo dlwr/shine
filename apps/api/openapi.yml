@@ -2843,10 +2843,27 @@ components:
                     - slug
                     - isWinner
                 description: Award pages this film appears on
+              personAwards:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    organization:
+                      type: string
+                    category:
+                      type: string
+                    isWinner:
+                      type: boolean
+                  required:
+                    - organization
+                    - category
+                    - isWinner
+                description: Awards this person received for this film
             required:
               - movieUid
               - jobs
               - awards
+              - personAwards
           description: Films this person worked on, newest first (one entry per film)
         awards:
           type: array

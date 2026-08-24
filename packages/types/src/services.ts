@@ -286,6 +286,12 @@ export type PersonAwardTag = {
   isWinner: boolean;
 };
 
+export type PersonalAward = {
+  organization: string;
+  category: string;
+  isWinner: boolean;
+};
+
 export type PersonAwardLegend = {
   slug: string;
   shortLabel: string;
@@ -307,6 +313,7 @@ export type PersonDetail = {
     jobs: string[];
     character: string | undefined;
     awards: PersonAwardTag[];
+    personAwards: PersonalAward[];
   }>;
   awards: PersonAwardLegend[];
 };

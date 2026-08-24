@@ -43,13 +43,23 @@ export function awardPageLinkForOrganizationName(
   };
 }
 
+export function japaneseOrganizationName(
+  organizationName: string,
+): string | undefined {
+  return awardPageDefinitions.find(
+    entry => entry.organizationName === organizationName,
+  )?.organization;
+}
+
 export function japaneseAwardNames(
   organizationName: string,
   categoryName: string,
 ): {organization?: string; category?: string} {
   const definition = findAwardPageDefinition(organizationName, categoryName);
   if (!definition) {
-    return {};
+    // 賞ページを持たない部門（個人賞など）でも組織名だけは日本語にできる
+    const organization = japaneseOrganizationName(organizationName);
+    return organization ? {organization} : {};
   }
 
   // 複数カテゴリを束ねるページの name はページ名なので、カテゴリ名には使えない

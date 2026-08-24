@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import {render, screen} from '@testing-library/react';
 import '@testing-library/jest-dom';
-import {AwardTags} from './award-tags';
+import {AwardTags, PersonalAwardTags} from './award-tags';
 
 const LEGEND = [
   {
@@ -64,6 +64,64 @@ describe('AwardTags', () => {
 
   it('タグが無ければ何も描画しない', () => {
     const {container} = render(<AwardTags tags={[]} legend={LEGEND} />);
+    expect(container.firstChild).toBeNull();
+  });
+});
+
+describe('PersonalAwardTags', () => {
+  it('部門名を描画する', () => {
+    render(
+      <PersonalAwardTags
+        awards={[
+          {
+            organization: '日本アカデミー賞',
+            category: '監督賞',
+            isWinner: true,
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText('監督賞')).toBeInTheDocument();
+  });
+
+  it('受賞なら組織名と受賞を説明に付ける', () => {
+    render(
+      <PersonalAwardTags
+        awards={[
+          {
+            organization: '日本アカデミー賞',
+            category: '監督賞',
+            isWinner: true,
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText('監督賞')).toHaveAttribute(
+      'title',
+      '日本アカデミー賞 監督賞 受賞',
+    );
+  });
+
+  it('ノミネート止まりならノミネートと説明する', () => {
+    render(
+      <PersonalAwardTags
+        awards={[
+          {
+            organization: '日本アカデミー賞',
+            category: '主演男優賞',
+            isWinner: false,
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText('主演男優賞')).toHaveAttribute(
+      'title',
+      '日本アカデミー賞 主演男優賞 ノミネート',
+    );
+  });
+
+  it('賞が無ければ何も描画しない', () => {
+    const {container} = render(<PersonalAwardTags awards={[]} />);
     expect(container.firstChild).toBeNull();
   });
 });

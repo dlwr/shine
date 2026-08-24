@@ -7,7 +7,10 @@ import {nominations} from '@shine/database/schema/nominations';
 import type {QuizAnswer, QuizCandidate, QuizHint} from '@shine/types';
 import {EdgeCache} from '../utils/cache';
 import {simpleHash} from '../utils/hash';
-import {findAwardPageDefinition} from './awards-service';
+import {
+  findAwardPageDefinition,
+  japaneseOrganizationName,
+} from './awards-service';
 import {BaseService} from './base-service';
 
 export const QUIZ_MAX_ATTEMPTS = 6;
@@ -107,6 +110,7 @@ function describeNomination(facts: NominationFacts): {
   const organization =
     organizationLabelOverrides[facts.organizationName] ??
     definition?.organization ??
+    japaneseOrganizationName(facts.organizationName) ??
     facts.organizationName;
 
   if (definition?.grouping === 'list') {

@@ -170,6 +170,7 @@ async function createTestEnvironment(): Promise<{
     {uid: 'org-academy', name: 'Academy Awards'},
     {uid: 'org-1001', name: '1001 Movies You Must See Before You Die'},
     {uid: 'org-unlisted', name: 'Golden Globe Awards'},
+    {uid: 'org-japan', name: 'Japan Academy Awards'},
   ]);
   await database.insert(awardCategories).values([
     {uid: 'cat-palme', organizationUid: 'org-cannes', name: "Palme d'Or"},
@@ -184,12 +185,14 @@ async function createTestEnvironment(): Promise<{
       name: 'Best Motion Picture — Drama',
     },
     {uid: 'cat-1001', organizationUid: 'org-1001', name: 'Selected Films'},
+    {uid: 'cat-director', organizationUid: 'org-japan', name: '監督賞'},
   ]);
   await database.insert(awardCeremonies).values([
     {uid: 'ceremony-cannes', organizationUid: 'org-cannes', year: 1980},
     {uid: 'ceremony-academy', organizationUid: 'org-academy', year: 1986},
     {uid: 'ceremony-1001', organizationUid: 'org-1001', year: 2020},
     {uid: 'ceremony-unlisted', organizationUid: 'org-unlisted', year: 1986},
+    {uid: 'ceremony-japan', organizationUid: 'org-japan', year: 1986},
   ]);
   await database.insert(nominations).values([
     {
@@ -215,6 +218,20 @@ async function createTestEnvironment(): Promise<{
       ceremonyUid: 'ceremony-1001',
       categoryUid: 'cat-1001',
       isWinner: 1,
+    },
+    {
+      movieUid: 'movie-ran',
+      ceremonyUid: 'ceremony-japan',
+      categoryUid: 'cat-director',
+      personUid: 'person-kurosawa',
+      isWinner: 1,
+    },
+    {
+      movieUid: 'movie-ran',
+      ceremonyUid: 'ceremony-japan',
+      categoryUid: 'cat-director',
+      personUid: 'person-multi',
+      isWinner: 0,
     },
   ]);
 
@@ -369,6 +386,55 @@ describe('PeopleService.getPerson', () => {
       organization: 'カンヌ国際映画祭',
       grouping: 'year',
     });
+  });
+
+  it('本人が受けた個人賞を参加作に付ける', async () => {
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-kurosawa', 'ja');
+
+    expect(
+      person?.credits.find(credit => credit.movieUid === 'movie-ran')
+        ?.personAwards,
+    ).toEqual([
+      {organization: '日本アカデミー賞', category: '監督賞', isWinner: true},
+    ]);
+  });
+
+  it('受賞していない個人賞も返す', async () => {
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-multi', 'ja');
+
+    expect(
+      person?.credits.find(credit => credit.movieUid === 'movie-ran')
+        ?.personAwards,
+    ).toEqual([
+      {organization: '日本アカデミー賞', category: '監督賞', isWinner: false},
+    ]);
+  });
+
+  it('他人の個人賞は返さない', async () => {
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-prolific', 'ja');
+
+    expect(
+      person?.credits.find(credit => credit.movieUid === 'movie-ran')
+        ?.personAwards,
+    ).toEqual([]);
+  });
+
+  it('個人賞は作品の賞タグには混ぜない', async () => {
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-kurosawa', 'ja');
+
+    expect(
+      person?.credits
+        .find(credit => credit.movieUid === 'movie-ran')
+        ?.awards.map(award => award.slug),
+    ).toEqual(['academy-best-picture', '1001-movies']);
   });
 
   it('凡例はリスト型の賞に grouping list を持つ', async () => {
