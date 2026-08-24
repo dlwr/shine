@@ -106,3 +106,22 @@ describe('GET /people', () => {
     expect(response.status).toBe(400);
   });
 });
+
+describe('GET /people/prominent', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+  });
+
+  it('監督と俳優のランキングを返す', async () => {
+    const response = await peopleRoutes.request('/prominent', {}, environment);
+
+    const body = (await response.json()) as {
+      directors: unknown[];
+      actors: unknown[];
+    };
+    expect(response.status).toBe(200);
+    expect(body).toEqual({directors: [], actors: []});
+  });
+});

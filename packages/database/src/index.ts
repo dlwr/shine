@@ -5,6 +5,7 @@ import * as schema from './schema/index';
 // Re-export drizzle-orm utilities
 export {
   and,
+  desc,
   eq,
   inArray,
   isNull,
@@ -12,6 +13,7 @@ export {
   ne,
   not,
   notInArray,
+  or,
   sql,
 } from 'drizzle-orm';
 

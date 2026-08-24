@@ -343,6 +343,37 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /people/prominent:
+    get:
+      summary: Get the most awarded directors and actors
+      description: |
+        Returns directors and actors ranked by how many films they won an award
+        for, then by how many films they were nominated for. Only awards with
+        year pages count; list-style selections such as 1001 Movies are ignored.
+        Soft-deleted films are excluded.
+      operationId: getProminentPeople
+      tags:
+        - Movies
+      security: []
+      parameters:
+        - name: locale
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ja, en]
+            default: ja
+          description: Language for names and film titles
+      responses:
+        '200':
+          description: Successfully retrieved the rankings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProminentPeople'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /people/{personId}:
     get:
       summary: Get a person and the films they worked on
@@ -2707,6 +2738,63 @@ components:
       required:
         - people
         - pagination
+
+    ProminentPerson:
+      type: object
+      properties:
+        uid:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Localized name when available, otherwise the original
+        originalName:
+          type: string
+        profilePath:
+          type: string
+        wonCount:
+          type: integer
+          description: Films this person won an award for
+        nominatedCount:
+          type: integer
+          description: Films this person was nominated for, wins included
+        topMovies:
+          type: array
+          items:
+            type: object
+            properties:
+              uid:
+                type: string
+                format: uuid
+              title:
+                type: string
+              year:
+                type: integer
+            required:
+              - uid
+          description: Up to three award-winning films, newest first
+      required:
+        - uid
+        - name
+        - originalName
+        - wonCount
+        - nominatedCount
+        - topMovies
+
+    ProminentPeople:
+      type: object
+      properties:
+        directors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProminentPerson'
+        actors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProminentPerson'
+      required:
+        - directors
+        - actors
 
     PersonDetail:
       type: object

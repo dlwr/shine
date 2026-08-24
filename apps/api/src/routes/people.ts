@@ -14,6 +14,7 @@ export const peopleRoutes = new Hono<{Bindings: Environment}>();
 
 const PERSON_CACHE_TTL = 86_400;
 const PEOPLE_LIST_CACHE_TTL = 604_800;
+const PROMINENT_CACHE_TTL = 604_800;
 const PEOPLE_LIST_DEFAULT_LIMIT = 100;
 const PEOPLE_LIST_MAX_LIMIT = 500;
 
@@ -57,6 +58,27 @@ peopleRoutes.get('/', async c => {
   }
 
   return createCachedResponse(result, PEOPLE_LIST_CACHE_TTL, {ETag: etag});
+});
+
+peopleRoutes.get('/prominent', async c => {
+  const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
+  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cacheKey = `people:prominent:${locale}:v1`;
+  const cached = await cache.get(cacheKey);
+  const result =
+    cached?.data ??
+    (await new PeopleService(c.env).getProminentPeople({locale}));
+
+  if (!cached) {
+    await cache.set(cacheKey, result, PROMINENT_CACHE_TTL);
+  }
+
+  const etag = createETag(result);
+  if (shouldCheckETag(c.req, etag)) {
+    return new Response(undefined, {status: 304, headers: {ETag: etag}});
+  }
+
+  return createCachedResponse(result, PROMINENT_CACHE_TTL, {ETag: etag});
 });
 
 peopleRoutes.get('/:id', async c => {

@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import {render, screen} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
-import PersonPage, {meta} from './people.$id';
+import PersonPage, {meta, type PersonData} from './people.$id';
 import type {Route} from './+types/people.$id';
 
 const person = {
@@ -28,10 +28,10 @@ const person = {
 
 const loaderData = {person, locale: 'ja' as const};
 
-function renderPage() {
+function renderPage(overrides: Partial<PersonData> = {}) {
   render(
     <PersonPage
-      loaderData={loaderData}
+      loaderData={{person: {...person, ...overrides}, locale: 'ja' as const}}
       params={{id: 'person-kurosawa'}}
       matches={[] as never}
     />,
@@ -74,5 +74,25 @@ describe('PersonPage', () => {
     renderPage();
 
     expect(screen.getByText('監督・脚本')).toBeInTheDocument();
+  });
+
+  it('顔写真を出す', () => {
+    renderPage({profilePath: '/kurosawa.jpg'});
+
+    expect(screen.getByRole('img', {name: '黒澤明'})).toHaveAttribute(
+      'src',
+      'https://image.tmdb.org/t/p/w342/kurosawa.jpg',
+    );
+  });
+
+  it('OG画像に人物カードを指定する', () => {
+    const descriptors = meta({
+      loaderData,
+    } as Route.MetaArgs) as Array<{property?: string; content?: string}>;
+
+    expect(descriptors).toContainEqual({
+      property: 'og:image',
+      content: 'https://shine-film.com/og/person.png?id=person-kurosawa',
+    });
   });
 });

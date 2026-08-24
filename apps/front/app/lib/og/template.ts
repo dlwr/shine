@@ -194,3 +194,56 @@ export function buildHomeCardHtml(): string {
   </div>
 </div>`;
 }
+
+type PersonCardProperties = {
+  name: string;
+  originalName?: string;
+  filmCount: number;
+  topTitles: string[];
+  portraitDataUri?: string;
+};
+
+export function buildPersonCardHtml({
+  name,
+  originalName,
+  filmCount,
+  topTitles,
+  portraitDataUri,
+}: PersonCardProperties): string {
+  const showOriginal =
+    originalName && originalName.trim() !== name.trim()
+      ? originalName
+      : undefined;
+
+  const chips = topTitles
+    .slice(0, 2)
+    .map(title => chip(title, true))
+    .join('');
+
+  const originalHtml = showOriginal
+    ? `<div style="display:flex;font-size:30px;color:${COLORS.inkMuted};margin-top:16px;">${escapeHtml(showOriginal)}</div>`
+    : '';
+
+  const portraitHtml = portraitDataUri
+    ? `<img src="${portraitDataUri}" width="360" height="540" style="border:6px solid ${COLORS.ink};object-fit:cover;" />`
+    : '';
+
+  return `<div style="display:flex;width:${OG_WIDTH}px;height:${OG_HEIGHT}px;background:${COLORS.paper};border:16px solid ${COLORS.ink};padding:40px 48px;justify-content:space-between;align-items:center;">
+  <div style="display:flex;flex-direction:column;justify-content:space-between;height:100%;flex:1;padding-right:40px;">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:5px solid ${COLORS.ink};padding-bottom:12px;">
+      <div style="display:flex;font-size:54px;font-weight:700;letter-spacing:-3px;color:${COLORS.ink};">SHINE</div>
+      <div style="display:flex;font-size:22px;color:${COLORS.inkMuted};">${TAGLINE}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:flex-end;">
+        <div style="display:flex;font-size:150px;font-weight:700;letter-spacing:-8px;line-height:0.8;color:${COLORS.brand};">${filmCount}</div>
+        <div style="display:flex;font-size:34px;font-weight:700;letter-spacing:4px;color:${COLORS.ink};margin-left:14px;">FILMS</div>
+      </div>
+      <div style="display:flex;font-size:${titleFontSize(name)}px;font-weight:700;line-height:1.15;color:${COLORS.ink};margin-top:20px;">${escapeHtml(name)}</div>
+      ${originalHtml}
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;">${chips}</div>
+  </div>
+  ${portraitHtml}
+</div>`;
+}

@@ -3,6 +3,7 @@ import {
   buildBannerHtml,
   buildHomeCardHtml,
   buildMovieCardHtml,
+  buildPersonCardHtml,
   buildQuizCardHtml,
   escapeHtml,
   splitYear,
@@ -190,5 +191,63 @@ describe('buildBannerHtml', () => {
 
   it('日本語のタグラインを含む', () => {
     expect(buildBannerHtml()).toContain('毎日1本、埋もれた映画に光を当てる');
+  });
+});
+
+describe('buildPersonCardHtml', () => {
+  const baseProperties = {
+    name: 'クリント・イーストウッド',
+    originalName: 'Clint Eastwood',
+    filmCount: 21,
+    topTitles: ['ハドソン川の奇跡', 'グラン・トリノ'],
+    portraitDataUri: 'data:image/jpeg;base64,abc',
+  };
+
+  it('名前を含む', () => {
+    expect(buildPersonCardHtml(baseProperties)).toContain(
+      'クリント・イーストウッド',
+    );
+  });
+
+  it('名前のHTML特殊文字をエスケープする', () => {
+    const html = buildPersonCardHtml({
+      ...baseProperties,
+      name: '<script>alert(1)</script>',
+    });
+
+    expect(html).not.toContain('<script>');
+    expect(html).toContain('&lt;script&gt;');
+  });
+
+  it('原語名が同じなら重複表示しない', () => {
+    const html = buildPersonCardHtml({
+      ...baseProperties,
+      name: 'Clint Eastwood',
+    });
+
+    expect(html.split('Clint Eastwood').length - 1).toBe(1);
+  });
+
+  it('作品数を含む', () => {
+    expect(buildPersonCardHtml(baseProperties)).toContain('21');
+  });
+
+  it('代表作を含む', () => {
+    expect(buildPersonCardHtml(baseProperties)).toContain('ハドソン川の奇跡');
+  });
+
+  it('顔写真をdata URIで埋め込む', () => {
+    expect(buildPersonCardHtml(baseProperties)).toContain(
+      'data:image/jpeg;base64,abc',
+    );
+  });
+
+  it('顔写真が無ければimgタグを出さない', () => {
+    const html = buildPersonCardHtml({
+      ...baseProperties,
+      portraitDataUri: undefined,
+    });
+
+    expect(html).not.toContain('<img');
   });
 });
