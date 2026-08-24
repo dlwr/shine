@@ -15,10 +15,12 @@ import {withDefaultTranslationFlags} from './common/default-translations';
 import {matchPersonName, normalizePersonName} from './common/japanese-name';
 import {
   fetchTMDBConfig,
+  fetchTMDBCredits,
   fetchTMDBMovieDetails,
   findTMDBByImdbId,
   type TMDBMovieData,
 } from './common/tmdb-utilities';
+import {selectCredits, upsertMovieCredits} from './movie-credits';
 
 export type ImdbEventAwardConfig = {
   organizationName: string;
@@ -747,6 +749,79 @@ async function creditedPeople(
   return byName;
 }
 
+/**
+ * TMDbのキャストは上位10名しか保存していないので、助演のノミニーは
+ * 保存済みクレジットに居ないことがある。全キャストから引いて1件だけ足す
+ */
+async function resolveFromTmdbCast(
+  context: ImportContext,
+  movieUid: string,
+  name: string,
+  role: 'director' | 'actor',
+): Promise<string | undefined> {
+  const {database, tmdbApiKey} = context;
+  if (!tmdbApiKey) {
+    return undefined;
+  }
+
+  const [movie] = await database
+    .select({tmdbId: movies.tmdbId})
+    .from(movies)
+    .where(eq(movies.uid, movieUid))
+    .limit(1);
+  if (!movie?.tmdbId) {
+    return undefined;
+  }
+
+  const credits = await fetchTMDBCredits(movie.tmdbId, 'movie', tmdbApiKey);
+  if (!credits) {
+    return undefined;
+  }
+
+  const selected = selectCredits({
+    cast: role === 'director' ? [] : credits.cast,
+    crew: credits.crew,
+  });
+  const candidates = new Map(
+    credits.cast.flatMap(member =>
+      [member.name, member.original_name].map(
+        candidate => [normalizePersonName(candidate), member.id] as const,
+      ),
+    ),
+  );
+  const tmdbPersonId = matchPersonName(name, candidates);
+  if (tmdbPersonId === undefined) {
+    return undefined;
+  }
+
+  const member = credits.cast.find(entry => entry.id === tmdbPersonId);
+  if (!member) {
+    return undefined;
+  }
+
+  const credit = selected.find(
+    entry => entry.creditId === member.credit_id,
+  ) ?? {
+    creditId: member.credit_id,
+    tmdbPersonId: member.id,
+    name: member.original_name,
+    localizedName: member.name,
+    profilePath: member.profile_path ?? undefined,
+    department: 'Acting',
+    job: undefined,
+    character: member.character ?? undefined,
+    castOrder: member.order,
+  };
+
+  const personUidByTmdbId = await upsertMovieCredits(
+    {database, isDryRun: false},
+    movieUid,
+    [credit],
+  );
+
+  return personUidByTmdbId.get(member.id);
+}
+
 async function ensurePersonNominations(
   context: ImportContext,
   movieUid: string,
@@ -775,7 +850,9 @@ async function ensurePersonNominations(
 
   const nominees = film.people ?? [];
   for (const person of nominees) {
-    const personUid = matchPersonName(person.name, candidates);
+    const personUid =
+      matchPersonName(person.name, candidates) ??
+      (await resolveFromTmdbCast(context, movieUid, person.name, role));
     if (!personUid) {
       console.log(
         `  Unresolved person: ${person.name} (${film.title ?? film.imdbId})`,

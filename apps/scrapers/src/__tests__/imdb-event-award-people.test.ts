@@ -11,7 +11,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {
   importImdbEventAward,
   type ImdbEventAwardConfig,
@@ -288,5 +288,90 @@ describe('importImdbEventAward の個人賞', () => {
     const rows = await database.select().from(nominations);
     expect(rows).toHaveLength(1);
     expect(rows[0].isWinner).toBe(1);
+  });
+});
+
+describe('importImdbEventAward の個人賞 TMDbフォールバック', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+    environment.TMDB_API_KEY = 'test-key';
+    await database
+      .update(movies)
+      .set({tmdbId: 4242})
+      .where(eq(movies.uid, 'movie-kokuho'));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json({
+          cast: [
+            {
+              id: 9001,
+              credit_id: 'tmdb-credit-1',
+              name: '田中泯',
+              original_name: 'Min Tanaka',
+              character: '小野川万菊',
+              order: 28,
+              profile_path: '/min.jpg',
+            },
+          ],
+          crew: [],
+        }),
+      ),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('保存済みクレジットに居ない人物をTMDbの全キャストから引き当てる', async () => {
+    await importImdbEventAward({
+      environment,
+      data: collectedData('助演男優賞', [
+        personNomination('tt99999999', '国宝', ['田中泯']),
+      ]),
+      config: actorConfig,
+      throttleMs: 0,
+    });
+
+    const [row] = await database.select().from(nominations);
+    expect(row?.personUid).toBeTruthy();
+  });
+
+  it('引き当てた人物のクレジットを1件だけ足す', async () => {
+    await importImdbEventAward({
+      environment,
+      data: collectedData('助演男優賞', [
+        personNomination('tt99999999', '国宝', ['田中泯']),
+      ]),
+      config: actorConfig,
+      throttleMs: 0,
+    });
+
+    const credits = await database
+      .select()
+      .from(movieCredits)
+      .where(eq(movieCredits.movieUid, 'movie-kokuho'));
+    expect(credits).toHaveLength(4);
+    expect(credits.some(credit => credit.creditId === 'tmdb-credit-1')).toBe(
+      true,
+    );
+  });
+
+  it('TMDbの全キャストにも居なければ取り込まない', async () => {
+    const stats = await importImdbEventAward({
+      environment,
+      data: collectedData('助演男優賞', [
+        personNomination('tt99999999', '国宝', ['居ない俳優']),
+      ]),
+      config: actorConfig,
+      throttleMs: 0,
+    });
+
+    expect(await database.select().from(nominations)).toHaveLength(0);
+    expect(stats.peopleUnresolved).toBe(1);
   });
 });
