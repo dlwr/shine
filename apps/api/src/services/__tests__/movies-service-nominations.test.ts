@@ -38,6 +38,7 @@ async function createTestEnvironment(): Promise<{
 async function seedNomination(
   database: TestDatabase,
   organizationName: string,
+  categoryName = 'Academy Award for Best Picture',
 ): Promise<void> {
   await database
     .insert(awardOrganizations)
@@ -48,7 +49,7 @@ async function seedNomination(
   await database.insert(awardCategories).values({
     uid: 'category-1',
     organizationUid: 'org-1',
-    name: 'Best Picture',
+    name: categoryName,
   });
   await database.insert(movies).values({uid: 'movie-a', year: 2020});
   await database.insert(translations).values({

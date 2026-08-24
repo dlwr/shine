@@ -21,13 +21,11 @@ export function findAwardPageDefinition(
     entry => entry.organizationName === organizationName,
   );
 
-  return candidates.length > 1
-    ? candidates.find(
-        entry =>
-          categoryName !== undefined &&
-          entry.categoryNames.includes(categoryName),
-      )
-    : candidates[0];
+  return categoryName === undefined
+    ? candidates.length === 1
+      ? candidates[0]
+      : undefined
+    : candidates.find(entry => entry.categoryNames.includes(categoryName));
 }
 
 export function awardPageLinkForOrganizationName(
