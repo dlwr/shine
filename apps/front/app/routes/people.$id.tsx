@@ -1,5 +1,6 @@
 import type {Route} from './+types/people.$id';
 import {Masthead} from '@/components/editorial/masthead';
+import {PersonPortrait} from '@/components/editorial/person-portrait';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
@@ -124,14 +125,24 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Masthead locale={locale} />
 
-        <h1 className="font-display font-black text-2xl md:text-3xl tracking-tight mb-2">
-          {person.name}
-        </h1>
-        <p className="font-mono text-xs text-ink-muted mb-8">
-          {person.name === person.originalName
-            ? `${person.credits.length} FILMS`
-            : `${person.originalName} / ${person.credits.length} FILMS`}
-        </p>
+        <div className="mb-8 flex items-start gap-4">
+          <PersonPortrait
+            name={person.name}
+            profilePath={person.profilePath}
+            displaySize="w342"
+            className="w-24 shrink-0 md:w-32"
+          />
+          <div>
+            <h1 className="mb-2 font-display text-2xl font-black tracking-tight md:text-3xl">
+              {person.name}
+            </h1>
+            <p className="font-mono text-xs text-ink-muted">
+              {person.name === person.originalName
+                ? `${person.credits.length} FILMS`
+                : `${person.originalName} / ${person.credits.length} FILMS`}
+            </p>
+          </div>
+        </div>
 
         <div>
           {person.credits.map(credit => (
