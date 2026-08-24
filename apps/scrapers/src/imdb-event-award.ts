@@ -1,11 +1,13 @@
 import {setTimeout as sleep} from 'node:timers/promises';
-import {and, eq, inArray, isNotNull, sql} from 'drizzle-orm';
+import {and, eq, inArray, isNotNull, isNull, sql} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
+import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
+import {people} from '@shine/database/schema/people';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
@@ -25,6 +27,8 @@ export type ImdbEventAwardConfig = {
   ceremonyNumber: (year: number) => number | undefined;
   isCompetitionCategory: (category: string | null) => boolean;
   minimumFilmsPerEdition: number;
+  /** 個人賞のとき、人物をどのクレジットから引き当てるか */
+  personRole?: 'director' | 'actor';
   /** ノミネーションのnotesをspecialMentionとして保存する */
   useNotesAsSpecialMention?: boolean;
   winnerCorrections?: Array<{
@@ -40,10 +44,16 @@ export type ImdbEventNominationTitle = {
   originalTitle: string | null;
 };
 
+export type ImdbEventNominationPerson = {
+  name: string;
+};
+
 export type ImdbEventNomination = {
   isWinner: boolean;
   notes: string | null;
   titles: ImdbEventNominationTitle[];
+  /** 個人賞の受賞者・候補者。指定すると作品だけの行は作らない */
+  people?: ImdbEventNominationPerson[];
 };
 
 export type ImdbEventEdition = {
@@ -64,12 +74,18 @@ export type ImdbEventCollectedData = {
   editions: ImdbEventEdition[];
 };
 
+export type AwardPerson = {
+  name: string;
+  isWinner: boolean;
+};
+
 export type AwardFilm = {
   imdbId: string;
   title: string | null;
   originalTitle: string | null;
   isWinner: boolean;
   specialMention?: string;
+  people?: AwardPerson[];
 };
 
 export type AwardEdition = {
@@ -85,6 +101,7 @@ export type ImdbEventImportStats = {
   nominationsCreated: number;
   winnersUpdated: number;
   tmdbNotFound: number;
+  peopleUnresolved: number;
   failed: number;
 };
 
@@ -107,10 +124,19 @@ function collectNominationFilms(
   nomination: ImdbEventNomination,
   filmsByImdbId: Map<string, AwardFilm>,
 ): void {
+  const nominated = nomination.people?.map(person => ({
+    name: person.name,
+    isWinner: nomination.isWinner,
+  }));
+
   for (const title of nomination.titles) {
     const existing = filmsByImdbId.get(title.imdbId);
     if (existing) {
       existing.isWinner ||= nomination.isWinner;
+      if (nominated) {
+        existing.people = mergePeople(existing.people, nominated);
+      }
+
       continue;
     }
 
@@ -123,8 +149,27 @@ function collectNominationFilms(
         config.useNotesAsSpecialMention && nomination.notes
           ? nomination.notes
           : undefined,
+      people: nominated,
     });
   }
+}
+
+function mergePeople(
+  current: AwardPerson[] | undefined,
+  incoming: AwardPerson[],
+): AwardPerson[] {
+  const merged = current ? [...current] : [];
+
+  for (const person of incoming) {
+    const existing = merged.find(entry => entry.name === person.name);
+    if (existing) {
+      existing.isWinner ||= person.isWinner;
+    } else {
+      merged.push({...person});
+    }
+  }
+
+  return merged;
 }
 
 function applyWinnerCorrections(
@@ -206,6 +251,7 @@ export async function importImdbEventAward({
     nominationsCreated: 0,
     winnersUpdated: 0,
     tmdbNotFound: 0,
+    peopleUnresolved: 0,
     failed: 0,
   };
 
@@ -267,6 +313,7 @@ export async function importImdbEventAward({
   console.log(`  Nominations created: ${stats.nominationsCreated}`);
   console.log(`  Winners updated: ${stats.winnersUpdated}`);
   console.log(`  TMDb not found: ${stats.tmdbNotFound}`);
+  console.log(`  People unresolved: ${stats.peopleUnresolved}`);
   console.log(`  Failed: ${stats.failed}`);
 
   return stats;
@@ -392,6 +439,7 @@ async function processEdition(
       and(
         eq(nominations.ceremonyUid, ceremonyUid),
         eq(nominations.categoryUid, categoryUid),
+        isNull(nominations.personUid),
       ),
     );
   const nominationsByMovieUid = new Map(
@@ -419,14 +467,22 @@ async function processEdition(
         }
       }
 
-      await ensureNomination(
-        context,
-        movieUid,
-        ceremonyUid,
-        categoryUid,
-        film,
-        nominationsByMovieUid,
-      );
+      await (film.people
+        ? ensurePersonNominations(
+            context,
+            movieUid,
+            ceremonyUid,
+            categoryUid,
+            film,
+          )
+        : ensureNomination(
+            context,
+            movieUid,
+            ceremonyUid,
+            categoryUid,
+            film,
+            nominationsByMovieUid,
+          ));
     } catch (error) {
       console.error(`  Failed to process ${film.imdbId}:`, error);
       stats.failed++;
@@ -632,6 +688,7 @@ async function ensureNomination(
         eq(nominations.movieUid, movieUid),
         eq(nominations.ceremonyUid, ceremonyUid),
         eq(nominations.categoryUid, categoryUid),
+        isNull(nominations.personUid),
       ),
     );
 
@@ -644,6 +701,126 @@ async function ensureNomination(
 
   if (promoteWinner) {
     stats.winnersUpdated++;
+  }
+}
+
+function normalizeName(name: string): string {
+  return name.replaceAll(/\s+/gu, '').normalize('NFKC');
+}
+
+async function creditedPeople(
+  database: DatabaseClient,
+  movieUid: string,
+  role: 'director' | 'actor',
+): Promise<Map<string, string>> {
+  const rows = await database
+    .select({
+      uid: people.uid,
+      name: people.name,
+      localizedName: translations.content,
+    })
+    .from(movieCredits)
+    .innerJoin(people, eq(people.uid, movieCredits.personUid))
+    .leftJoin(
+      translations,
+      and(
+        eq(translations.resourceUid, people.uid),
+        eq(translations.resourceType, 'person_name'),
+        eq(translations.languageCode, 'ja'),
+      ),
+    )
+    .where(
+      and(
+        eq(movieCredits.movieUid, movieUid),
+        role === 'director'
+          ? eq(movieCredits.job, 'Director')
+          : eq(movieCredits.department, 'Acting'),
+      ),
+    );
+
+  const byName = new Map<string, string>();
+  for (const row of rows) {
+    for (const name of [row.name, row.localizedName]) {
+      if (name) {
+        byName.set(normalizeName(name), row.uid);
+      }
+    }
+  }
+
+  return byName;
+}
+
+async function ensurePersonNominations(
+  context: ImportContext,
+  movieUid: string,
+  ceremonyUid: string,
+  categoryUid: string,
+  film: AwardFilm,
+): Promise<void> {
+  const {database, config, stats} = context;
+  const role = config.personRole ?? 'actor';
+  const candidates = await creditedPeople(database, movieUid, role);
+
+  const existing = await database
+    .select({personUid: nominations.personUid, isWinner: nominations.isWinner})
+    .from(nominations)
+    .where(
+      and(
+        eq(nominations.movieUid, movieUid),
+        eq(nominations.ceremonyUid, ceremonyUid),
+        eq(nominations.categoryUid, categoryUid),
+        isNotNull(nominations.personUid),
+      ),
+    );
+  const winnerByPersonUid = new Map(
+    existing.map(row => [row.personUid, row.isWinner]),
+  );
+
+  const nominees = film.people ?? [];
+  for (const person of nominees) {
+    const personUid = candidates.get(normalizeName(person.name));
+    if (!personUid) {
+      console.log(
+        `  Unresolved person: ${person.name} (${film.title ?? film.imdbId})`,
+      );
+      stats.peopleUnresolved++;
+      continue;
+    }
+
+    const winnerFlag = person.isWinner ? 1 : 0;
+    const current = winnerByPersonUid.get(personUid);
+
+    if (current === undefined) {
+      await database
+        .insert(nominations)
+        .values({
+          movieUid,
+          ceremonyUid,
+          categoryUid,
+          personUid,
+          isWinner: winnerFlag,
+        })
+        .onConflictDoNothing();
+      winnerByPersonUid.set(personUid, winnerFlag);
+      stats.nominationsCreated++;
+      continue;
+    }
+
+    if (winnerFlag === 1 && current === 0) {
+      await database
+        .update(nominations)
+        .set({isWinner: 1})
+        .where(
+          and(
+            eq(nominations.movieUid, movieUid),
+            eq(nominations.ceremonyUid, ceremonyUid),
+            eq(nominations.categoryUid, categoryUid),
+            eq(nominations.personUid, personUid),
+          ),
+        );
+      winnerByPersonUid.set(personUid, 1);
+      stats.winnersUpdated++;
+    }
   }
 }
 
