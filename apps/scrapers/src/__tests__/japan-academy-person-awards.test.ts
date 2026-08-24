@@ -111,6 +111,33 @@ describe('toImdbEventData', () => {
     ).toBe('ビートたけし');
   });
 
+  it('直指定した作品はWikidataで引けなくても取り込む', () => {
+    const data = toImdbEventData(
+      AWARD,
+      [
+        {
+          year: 2011,
+          ceremonyNumber: 35,
+          entries: [
+            {
+              personName: '井上真央',
+              personPage: '井上真央',
+              filmPage: '八日目の蝉',
+              filmTitle: '八日目の蝉',
+              isWinner: false,
+            },
+          ],
+        },
+      ],
+      new Map(),
+    );
+
+    expect(
+      data.editions[0].targetAward[0].categories[0].nominations[0].titles[0]
+        .imdbId,
+    ).toBe('tt1727825');
+  });
+
   it('同定できなかった作品は落とす', () => {
     const data = toImdbEventData(AWARD, EDITIONS, new Map());
 

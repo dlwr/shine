@@ -23,12 +23,42 @@ import {
 } from './japan-academy-person-wikitext';
 
 /**
+ * 記事名からIMDb IDを引けない作品を直接指す。
+ * TMDbの邦題と表記が違うもの（全角記号・中黒・字体）が大半
+ */
+const RESOLUTION_OVERRIDES = new Map([
+  ['1978:好色五人女', 'tt0287632'],
+  ['1978:曾根崎心中', 'tt0077463'],
+  ['1978:薔薇の肉体', 'tt0287394'],
+  ['1981:魔性の夏', 'tt0226121'],
+  ['1988:優駿', 'tt0204068'],
+  ['1989:舞姫', 'tt0097151'],
+  ['1991:新極道の妻たち', 'tt0226439'],
+  ['1993:新極道の妻たち 覚悟しいや', 'tt0226440'],
+  ['1993:眠らない街〜新宿鮫〜', 'tt0256956'],
+  ['1996:お日柄もよくご愁傷さま', 'tt0349902'],
+  ['2002:OUT', 'tt0340280'],
+  ['2005:蟬しぐれ', 'tt0455748'],
+  ['2011:八日目の蝉', 'tt1727825'],
+  ['2014:WOOD JOB!〜神去なあなあ日常〜', 'tt2964120'],
+  ['2016:ちはやふる -上の句-', 'tt4785440'],
+  ['2019:決算!忠臣蔵', 'tt10315082'],
+  ['2019:閉鎖病棟 -それぞれの朝-', 'tt9721798'],
+  ['2021:老後の資金がありません!', 'tt11354164'],
+  ['2024:カラオケ行こ!', 'tt27957457'],
+]);
+
+/**
  * 記事の表記とTMDbのクレジット名が別名で、表記の正規化では寄らないもの。
  * 芸名を使い分けている人だけを入れる
  */
 const PERSON_NAME_ALIASES: Record<string, string> = {
   北野武: 'ビートたけし',
   夏木勲: '夏八木勲',
+  // 襲名でクレジット名が変わったもの
+  市川海老蔵: '十三代目 市川團十郎',
+  市川染五郎: '十代目 松本幸四郎',
+  瑛太: '永山瑛太',
 };
 
 /** 対象期間は前年12月16日〜当年12月15日。映画祭プレミアで前年公開になることはある */
@@ -122,7 +152,10 @@ function buildNominations(
 
   for (const entry of edition.entries) {
     const match = resolved.get(entry.filmPage ?? entry.filmTitle);
-    if (!match) {
+    const imdbId =
+      match?.imdbId ??
+      RESOLUTION_OVERRIDES.get(`${edition.year}:${entry.filmTitle}`);
+    if (!imdbId) {
       console.log(`Unresolved: ${edition.year} ${entry.filmTitle}`);
       continue;
     }
@@ -132,9 +165,9 @@ function buildNominations(
       notes: null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationの型に合わせる
       titles: [
         {
-          imdbId: match.imdbId,
+          imdbId,
           title: entry.filmTitle,
-          originalTitle: match.englishTitle ?? null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationTitleの型に合わせる
+          originalTitle: match?.englishTitle ?? null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationTitleの型に合わせる
         },
       ],
       people: [

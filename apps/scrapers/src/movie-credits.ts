@@ -74,11 +74,12 @@ export function selectCredits(credits: TMDBCredits): SelectedCredit[] {
   return [...cast, ...crew];
 }
 
-export async function saveMovieCredits(
+/** 人物・日本語名・クレジットを足す。既存のクレジットは消さない */
+export async function upsertMovieCredits(
   context: SaveContext,
   movieUid: string,
   credits: SelectedCredit[],
-): Promise<void> {
+): Promise<Map<number, string>> {
   const tmdbPersonIds = [
     ...new Set(credits.map(credit => credit.tmdbPersonId)),
   ];
@@ -140,7 +141,21 @@ export async function saveMovieCredits(
     );
   }
 
+  return personUidByTmdbId;
+}
+
+export async function saveMovieCredits(
+  context: SaveContext,
+  movieUid: string,
+  credits: SelectedCredit[],
+): Promise<void> {
+  await upsertMovieCredits(context, movieUid, credits);
+
   const keptCreditIds = credits.map(credit => credit.creditId);
+  const currentCredits = await context.database
+    .select()
+    .from(movieCredits)
+    .where(eq(movieCredits.movieUid, movieUid));
   const removable = currentCredits.filter(
     row => !keptCreditIds.includes(row.creditId),
   );
