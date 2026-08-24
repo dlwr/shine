@@ -645,6 +645,24 @@ describe('awardPageLinkForOrganizationName', () => {
       hasYearPages: false,
     });
   });
+
+  it('賞ページが1つの組織でも、そのページに属さないカテゴリには slug を返さない', () => {
+    expect(
+      awardPageLinkForOrganizationName('Japan Academy Awards', '監督賞'),
+    ).toEqual({
+      slug: undefined,
+      hasYearPages: false,
+    });
+  });
+
+  it('賞ページが1つの組織で、そのページのカテゴリなら slug を返す', () => {
+    expect(
+      awardPageLinkForOrganizationName('Japan Academy Awards', '優秀作品賞'),
+    ).toEqual({
+      slug: 'japan-academy-best-picture',
+      hasYearPages: true,
+    });
+  });
 });
 
 describe('japaneseAwardNames', () => {
@@ -670,6 +688,12 @@ describe('japaneseAwardNames', () => {
 
   it('賞ページの無い組織には何も返さない', () => {
     expect(japaneseAwardNames('Unknown Org', 'Unknown Category')).toEqual({});
+  });
+
+  it('賞ページに属さないカテゴリでは組織名だけ返す', () => {
+    expect(japaneseAwardNames('Japan Academy Awards', '監督賞')).toEqual({
+      organization: '日本アカデミー賞',
+    });
   });
 });
 

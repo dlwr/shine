@@ -36,6 +36,7 @@ export type MovieSelection = {
     uid: string;
     isWinner: boolean;
     specialMention?: string | undefined;
+    person?: {uid: string; name: string} | undefined;
     category: {
       uid: string;
       name: string;
@@ -286,6 +287,14 @@ export type PersonAwardTag = {
   isWinner: boolean;
 };
 
+export type PersonalAward = {
+  organization: string;
+  category: string;
+  /** 授賞式の年。第17回までは1回の受賞に複数作品が紐づくので、回数はこれで数える */
+  year: number;
+  isWinner: boolean;
+};
+
 export type PersonAwardLegend = {
   slug: string;
   shortLabel: string;
@@ -307,6 +316,7 @@ export type PersonDetail = {
     jobs: string[];
     character: string | undefined;
     awards: PersonAwardTag[];
+    personAwards: PersonalAward[];
   }>;
   awards: PersonAwardLegend[];
 };

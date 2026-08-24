@@ -133,4 +133,25 @@ describe('AwardTree', () => {
     );
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
+
+  it('個人賞は受賞者名を出す', () => {
+    render(
+      <AwardTree
+        nominations={[
+          {
+            uid: 'n6',
+            isWinner: true,
+            category: {name: '監督賞'},
+            person: {uid: 'person-lee', name: '李相日'},
+            ceremony: {uid: 'c5', year: 2026},
+            organization: {uid: 'o5', name: 'Japan Academy Awards'},
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByRole('link', {name: '李相日'})).toHaveAttribute(
+      'href',
+      '/people/person-lee',
+    );
+  });
 });

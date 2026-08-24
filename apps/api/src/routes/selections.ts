@@ -246,7 +246,7 @@ selectionsRoutes.get('/selections/:type/history', async c => {
     const today = getSelectionDate(new Date(), type);
 
     const historyCache = new EdgeCache(undefined, c.env.CACHE_KV);
-    const cacheKey = `selections:history:${type}:${locale}:${limit}:${today}:v1`;
+    const cacheKey = `selections:history:${type}:${locale}:${limit}:${today}:v2`;
     const cached = await historyCache.get(cacheKey);
     if (cached) {
       return c.json(cached.data as Record<string, unknown>);

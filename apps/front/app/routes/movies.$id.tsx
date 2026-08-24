@@ -34,6 +34,7 @@ type MovieDetailData = {
     uid: string;
     isWinner: boolean;
     specialMention?: string;
+    person?: {uid: string; name: string};
     category: {
       uid: string;
       name: string;

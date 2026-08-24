@@ -2132,6 +2132,18 @@ components:
         specialMention:
           type: [string, 'null']
           description: Special mention or note about the nomination
+        person:
+          type: object
+          description: 個人賞の受賞者・候補者。作品賞では返らない
+          properties:
+            uid:
+              type: string
+              format: uuid
+            name:
+              type: string
+          required:
+            - uid
+            - name
         category:
           $ref: '#/components/schemas/AwardCategory'
         ceremony:
@@ -2843,10 +2855,31 @@ components:
                     - slug
                     - isWinner
                 description: Award pages this film appears on
+              personAwards:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    organization:
+                      type: string
+                    category:
+                      type: string
+                    year:
+                      type: integer
+                      description: 授賞式の年
+                    isWinner:
+                      type: boolean
+                  required:
+                    - organization
+                    - category
+                    - year
+                    - isWinner
+                description: Awards this person received for this film
             required:
               - movieUid
               - jobs
               - awards
+              - personAwards
           description: Films this person worked on, newest first (one entry per film)
         awards:
           type: array

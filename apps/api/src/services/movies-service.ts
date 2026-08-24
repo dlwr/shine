@@ -289,6 +289,9 @@ export class MoviesService extends BaseService {
         nominationUid: nominations.uid,
         isWinner: nominations.isWinner,
         specialMention: nominations.specialMention,
+        personUid: people.uid,
+        personName: people.name,
+        personLocalizedName: translations.content,
         categoryUid: awardCategories.uid,
         categoryName: awardCategories.name,
         ceremonyUid: awardCeremonies.uid,
@@ -310,6 +313,15 @@ export class MoviesService extends BaseService {
       .innerJoin(
         awardOrganizations,
         eq(awardOrganizations.uid, awardCeremonies.organizationUid),
+      )
+      .leftJoin(people, eq(people.uid, nominations.personUid))
+      .leftJoin(
+        translations,
+        and(
+          eq(translations.resourceUid, people.uid),
+          eq(translations.resourceType, 'person_name'),
+          eq(translations.languageCode, locale),
+        ),
       )
       .where(eq(nominations.movieUid, movieId))
       .orderBy(awardCeremonies.year, awardCategories.name);
@@ -357,6 +369,12 @@ export class MoviesService extends BaseService {
           uid: nom.nominationUid,
           isWinner: Boolean(nom.isWinner),
           specialMention: nom.specialMention ?? undefined,
+          person: nom.personUid
+            ? {
+                uid: nom.personUid,
+                name: nom.personLocalizedName ?? nom.personName ?? '',
+              }
+            : undefined,
           category: {
             uid: nom.categoryUid,
             name: nom.categoryName,

@@ -8,6 +8,7 @@ import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
+import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
@@ -38,6 +39,7 @@ async function createTestEnvironment(): Promise<{
 async function seedNomination(
   database: TestDatabase,
   organizationName: string,
+  categoryName = 'Academy Award for Best Picture',
 ): Promise<void> {
   await database
     .insert(awardOrganizations)
@@ -48,7 +50,7 @@ async function seedNomination(
   await database.insert(awardCategories).values({
     uid: 'category-1',
     organizationUid: 'org-1',
-    name: 'Best Picture',
+    name: categoryName,
   });
   await database.insert(movies).values({uid: 'movie-a', year: 2020});
   await database.insert(translations).values({
@@ -62,6 +64,26 @@ async function seedNomination(
     movieUid: 'movie-a',
     ceremonyUid: 'ceremony-1',
     categoryUid: 'category-1',
+  });
+}
+
+async function seedPersonNomination(database: TestDatabase): Promise<void> {
+  await database.insert(awardCategories).values({
+    uid: 'category-director',
+    organizationUid: 'org-1',
+    name: '監督賞',
+  });
+  await database.insert(people).values({
+    uid: 'person-1',
+    tmdbId: 42,
+    name: '李相日',
+  });
+  await database.insert(nominations).values({
+    movieUid: 'movie-a',
+    ceremonyUid: 'ceremony-1',
+    categoryUid: 'category-director',
+    personUid: 'person-1',
+    isWinner: 1,
   });
 }
 
@@ -93,5 +115,40 @@ describe('MoviesService.getMovieDetails nominations', () => {
 
     expect(details?.nominations[0].organization.slug).toBeUndefined();
     expect(details?.nominations[0].organization.hasYearPages).toBe(false);
+  });
+});
+
+describe('MoviesService.getMovieDetails 個人賞', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+    await seedNomination(database, 'Japan Academy Awards', '優秀作品賞');
+    await seedPersonNomination(database);
+  });
+
+  it('個人賞に受賞者を付ける', async () => {
+    const service = new MoviesService(environment);
+
+    const details = await service.getMovieDetails('movie-a', 'ja');
+
+    expect(
+      details?.nominations.find(
+        nomination => nomination.category.name === '監督賞',
+      )?.person,
+    ).toEqual({uid: 'person-1', name: '李相日'});
+  });
+
+  it('作品賞には受賞者を付けない', async () => {
+    const service = new MoviesService(environment);
+
+    const details = await service.getMovieDetails('movie-a', 'ja');
+
+    expect(
+      details?.nominations.find(
+        nomination => nomination.category.name === '優秀作品賞',
+      )?.person,
+    ).toBeUndefined();
   });
 });

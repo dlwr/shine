@@ -15,6 +15,7 @@ import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
+import {people} from '@shine/database/schema/people';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {
@@ -461,6 +462,8 @@ export class SelectionsService extends BaseService {
           nominationUid: nominations.uid,
           isWinner: nominations.isWinner,
           specialMention: nominations.specialMention,
+          personUid: people.uid,
+          personName: people.name,
           categoryUid: awardCategories.uid,
           categoryName: awardCategories.name,
           ceremonyUid: awardCeremonies.uid,
@@ -483,6 +486,7 @@ export class SelectionsService extends BaseService {
           awardOrganizations,
           eq(awardOrganizations.uid, awardCeremonies.organizationUid),
         )
+        .leftJoin(people, eq(people.uid, nominations.personUid))
         .where(eq(nominations.movieUid, movieId))
         .orderBy(awardCeremonies.year, awardCategories.name),
       this.database
@@ -542,6 +546,10 @@ export class SelectionsService extends BaseService {
         uid: nom.nominationUid,
         isWinner: Boolean(nom.isWinner),
         specialMention: nom.specialMention ?? undefined,
+        person:
+          nom.personUid && nom.personName
+            ? {uid: nom.personUid, name: nom.personName}
+            : undefined,
         category: {
           uid: nom.categoryUid,
           name: nom.categoryName,
@@ -679,9 +687,11 @@ export class SelectionsService extends BaseService {
     seed: number | 'random',
     excludeMovieUids: string[] = [],
   ): Promise<string | undefined> {
-    // Movies with more nominations have proportionally higher chance of being selected
+    // Movies with more nominations have proportionally higher chance of being
+    // selected。個人賞は日本の映画にだけ付くので、重み付けからは外す
     const whereClause = and(
       isNull(movies.deletedAt),
+      isNull(nominations.personUid),
       excludeMovieUids.length > 0
         ? notInArray(nominations.movieUid, excludeMovieUids)
         : undefined,

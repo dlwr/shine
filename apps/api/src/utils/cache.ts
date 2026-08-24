@@ -189,7 +189,7 @@ export const getCacheKeyForSelection = (
   type: string,
   date: string,
   locale: string,
-): string => `selections:${type}:${date}:${locale}:v1`;
+): string => `selections:${type}:${date}:${locale}:v2`;
 
 export const getCacheKeyForMovie = (
   movieId: string,
@@ -197,13 +197,13 @@ export const getCacheKeyForMovie = (
   locale: string = 'ja',
 ): string => {
   const suffix = shouldIncludeDetails ? 'full' : 'basic';
-  return `movie:${movieId}:${suffix}:${locale}:v7`;
+  return `movie:${movieId}:${suffix}:${locale}:v8`;
 };
 
 export const getCacheKeyForPerson = (
   personUid: string,
   locale: string,
-): string => `person:${personUid}:${locale}:v3`;
+): string => `person:${personUid}:${locale}:v5`;
 
 export const getMovieCacheKeysForAllLocales = (movieId: string): string[] =>
   CACHEABLE_LOCALES.flatMap(locale => [

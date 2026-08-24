@@ -9,6 +9,7 @@ import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
+import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
@@ -309,5 +310,49 @@ describe('SelectionsService.getNextPeriodPreviews', () => {
     const after = await service.getNextPeriodPreviews('ja');
 
     expect(after.nextDaily.movie?.uid).not.toBe(initialUid);
+  });
+});
+
+describe('SelectionsService 個人賞の扱い', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+  });
+
+  it('個人賞しか無い映画は日替わりの候補にしない', async () => {
+    await seedNominatedMovie(database, 'movie-film-award', 'Film Award Movie');
+    await database.insert(awardCategories).values({
+      uid: 'category-director',
+      organizationUid: 'org-1',
+      name: '監督賞',
+    });
+    await database
+      .insert(people)
+      .values({uid: 'person-1', tmdbId: 1, name: '監督A'});
+    await database
+      .insert(movies)
+      .values({uid: 'movie-person-only', year: 2020});
+    await database.insert(nominations).values({
+      movieUid: 'movie-person-only',
+      ceremonyUid: 'ceremony-1',
+      categoryUid: 'category-director',
+      personUid: 'person-1',
+    });
+
+    const service = new SelectionsService(environment);
+    const picks = await Promise.all(
+      Array.from({length: 10}, async (_, seed) =>
+        service['selectMovieFromNominations'](
+          new Date('2026-08-24'),
+          'daily',
+          false,
+          seed,
+        ),
+      ),
+    );
+
+    expect(new Set(picks)).toEqual(new Set(['movie-film-award']));
   });
 });

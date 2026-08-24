@@ -1,8 +1,10 @@
 import type {Route} from './+types/people.$id';
 import {
   AwardTags,
+  PersonalAwardTags,
   type AwardTag,
   type AwardTagLegend,
+  type PersonalAward,
 } from '@/components/editorial/award-tags';
 import {Masthead} from '@/components/editorial/masthead';
 import {PersonPortrait} from '@/components/editorial/person-portrait';
@@ -20,6 +22,7 @@ export type PersonCreditData = {
   jobs: string[];
   character?: string;
   awards: AwardTag[];
+  personAwards: PersonalAward[];
 };
 
 export type PersonAwardData = AwardTagLegend & {
@@ -53,6 +56,52 @@ function awardRecord(person: PersonData): {won: number; nominated: number} {
     ).length,
     nominated: contested.length,
   };
+}
+
+type PersonalAwardRecord = {
+  organization: string;
+  category: string;
+  won: number;
+  nominated: number;
+};
+
+/** 第17回までは1回の受賞に複数作品が紐づくので、回数は授賞式ごとに数える */
+function personalAwardRecords(person: PersonData): PersonalAwardRecord[] {
+  const ceremonies = new Map<string, PersonalAward>();
+
+  for (const credit of person.credits) {
+    for (const award of credit.personAwards) {
+      const key = `${award.organization}|${award.category}|${award.year}`;
+      const existing = ceremonies.get(key);
+      if (existing) {
+        existing.isWinner ||= award.isWinner;
+      } else {
+        ceremonies.set(key, {...award});
+      }
+    }
+  }
+
+  const records = new Map<string, PersonalAwardRecord>();
+  for (const award of ceremonies.values()) {
+    const key = `${award.organization} ${award.category}`;
+    const record = records.get(key) ?? {
+      organization: award.organization,
+      category: award.category,
+      won: 0,
+      nominated: 0,
+    };
+    record.nominated++;
+    if (award.isWinner) {
+      record.won++;
+    }
+
+    records.set(key, record);
+  }
+
+  return records
+    .values()
+    .toArray()
+    .toSorted((a, b) => b.won - a.won || b.nominated - a.nominated);
 }
 
 const JOB_LABELS: Record<string, string> = {
@@ -144,6 +193,7 @@ function CreditRow({
         <span className="font-display font-extrabold text-sm leading-none">
           {title}
         </span>
+        <PersonalAwardTags awards={credit.personAwards} />
         <AwardTags tags={credit.awards} legend={legend} />
       </span>
       <span className="font-mono text-[10px] text-ink-muted shrink-0">
@@ -162,6 +212,7 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
   const {person} = loaderData as {person: PersonData};
   const locale = 'ja';
   const {won, nominated} = awardRecord(person);
+  const personalRecords = personalAwardRecords(person);
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -190,6 +241,15 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
                 作受賞 / {nominated}作ノミネート
               </p>
             )}
+            {personalRecords.map(record => (
+              <p
+                key={`${record.organization} ${record.category}`}
+                className="mt-1 font-mono text-xs text-ink-muted">
+                {record.organization} {record.category}{' '}
+                <span className="font-bold text-brand">{record.won}</span>
+                受賞 / {record.nominated}ノミネート
+              </p>
+            ))}
           </div>
         </div>
 

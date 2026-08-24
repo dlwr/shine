@@ -19,6 +19,14 @@ const person: PersonData = {
         {slug: 'academy-best-picture', isWinner: false},
         {slug: '1001-movies', isWinner: true},
       ],
+      personAwards: [
+        {
+          organization: '日本アカデミー賞',
+          category: '監督賞',
+          year: 1986,
+          isWinner: true,
+        },
+      ],
     },
     {
       movieUid: 'movie-taxi',
@@ -27,6 +35,14 @@ const person: PersonData = {
       jobs: [],
       character: 'Extra',
       awards: [{slug: 'palme-dor', isWinner: true}],
+      personAwards: [
+        {
+          organization: '日本アカデミー賞',
+          category: '監督賞',
+          year: 1981,
+          isWinner: false,
+        },
+      ],
     },
   ],
   awards: [
@@ -155,11 +171,47 @@ describe('PersonPage', () => {
           year: 1985,
           jobs: ['Director'],
           awards: [{slug: '1001-movies', isWinner: true}],
+          personAwards: [],
         },
       ],
     });
 
     expect(screen.queryByText(/作受賞/)).not.toBeInTheDocument();
+  });
+
+  it('個人賞の部門名を出す', () => {
+    renderPage();
+
+    expect(screen.getAllByText('監督賞')).toHaveLength(2);
+  });
+
+  it('個人賞の通算成績を出す', () => {
+    renderPage();
+
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.textContent ===
+          '日本アカデミー賞 監督賞 1受賞 / 2ノミネート',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('個人賞が無ければ通算成績を出さない', () => {
+    renderPage({
+      credits: [
+        {
+          movieUid: 'movie-ran',
+          title: '乱',
+          year: 1985,
+          jobs: ['Director'],
+          awards: [],
+          personAwards: [],
+        },
+      ],
+    });
+
+    expect(screen.queryByText(/監督賞/)).not.toBeInTheDocument();
   });
 
   it('説明文に受賞作の本数を含む', () => {

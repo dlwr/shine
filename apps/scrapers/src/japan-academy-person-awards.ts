@@ -1,0 +1,269 @@
+import {type Environment} from '@shine/database';
+import {resolveRemainingByTmdb} from './common/tmdb-film-resolver';
+import {
+  dropDuplicateResolutions,
+  dropMisattributedResolutions,
+  resolveFilmsByWikipediaPage,
+  type FilmReference,
+  type ResolvedFilm,
+  type YearWindow,
+} from './common/wikidata-film-resolver';
+import {
+  importImdbEventAward,
+  type ImdbEventAwardConfig,
+  type ImdbEventCollectedData,
+  type ImdbEventImportStats,
+  type ImdbEventNomination,
+} from './imdb-event-award';
+import {japanAcademyCeremonyNumber} from './japan-academy-awards';
+import {
+  fetchJapanAcademyPersonWikitext,
+  parseJapanAcademyPersonWikitext,
+  type JapanAcademyPersonEdition,
+} from './japan-academy-person-wikitext';
+
+/**
+ * 記事の表記とTMDbのクレジット名が別名で、表記の正規化では寄らないもの。
+ * 芸名を使い分けている人だけを入れる
+ */
+const PERSON_NAME_ALIASES: Record<string, string> = {
+  北野武: 'ビートたけし',
+  夏木勲: '夏八木勲',
+};
+
+/** 対象期間は前年12月16日〜当年12月15日。映画祭プレミアで前年公開になることはある */
+const PUBLICATION_WINDOW: YearWindow = {min: -1, max: 1};
+
+export type JapanAcademyPersonAward = {
+  article: string;
+  category: string;
+  role: 'director' | 'actor';
+};
+
+export const JAPAN_ACADEMY_PERSON_AWARDS: JapanAcademyPersonAward[] = [
+  {article: '日本アカデミー賞監督賞', category: '監督賞', role: 'director'},
+  {
+    article: '日本アカデミー賞主演男優賞',
+    category: '主演男優賞',
+    role: 'actor',
+  },
+  {
+    article: '日本アカデミー賞主演女優賞',
+    category: '主演女優賞',
+    role: 'actor',
+  },
+  {
+    article: '日本アカデミー賞助演男優賞',
+    category: '助演男優賞',
+    role: 'actor',
+  },
+  {
+    article: '日本アカデミー賞助演女優賞',
+    category: '助演女優賞',
+    role: 'actor',
+  },
+];
+
+export function japanAcademyPersonFilmReferences(
+  editions: JapanAcademyPersonEdition[],
+): FilmReference[] {
+  const references = new Map<string, FilmReference>();
+
+  for (const edition of editions) {
+    for (const entry of edition.entries) {
+      const key = entry.filmPage ?? entry.filmTitle;
+      references.set(key, {
+        ...(references.get(key) ?? {
+          key,
+          title: entry.filmTitle,
+          targetYear: edition.year,
+          yearWindow: PUBLICATION_WINDOW,
+          foreign: false,
+        }),
+      });
+    }
+  }
+
+  return references.values().toArray();
+}
+
+export function toImdbEventData(
+  award: JapanAcademyPersonAward,
+  editions: JapanAcademyPersonEdition[],
+  resolved: Map<string, ResolvedFilm>,
+  collectedAt = new Date().toISOString().slice(0, 10),
+): ImdbEventCollectedData {
+  return {
+    collectedAt,
+    source: `https://ja.wikipedia.org/wiki/${award.article}`,
+    editions: editions.map(edition => ({
+      year: edition.year + 1,
+      awardNames: [award.category],
+      targetAward: [
+        {
+          categories: [
+            {
+              category: award.category,
+              total: null, // eslint-disable-line unicorn/no-null -- ImdbEventEditionの型に合わせる
+              nominations: buildNominations(edition, resolved),
+            },
+          ],
+        },
+      ],
+    })),
+  };
+}
+
+function buildNominations(
+  edition: JapanAcademyPersonEdition,
+  resolved: Map<string, ResolvedFilm>,
+): ImdbEventNomination[] {
+  const nominations: ImdbEventNomination[] = [];
+
+  for (const entry of edition.entries) {
+    const match = resolved.get(entry.filmPage ?? entry.filmTitle);
+    if (!match) {
+      console.log(`Unresolved: ${edition.year} ${entry.filmTitle}`);
+      continue;
+    }
+
+    nominations.push({
+      isWinner: entry.isWinner,
+      notes: null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationの型に合わせる
+      titles: [
+        {
+          imdbId: match.imdbId,
+          title: entry.filmTitle,
+          originalTitle: match.englishTitle ?? null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationTitleの型に合わせる
+        },
+      ],
+      people: [
+        {name: PERSON_NAME_ALIASES[entry.personName] ?? entry.personName},
+      ],
+    });
+  }
+
+  return nominations;
+}
+
+export function japanAcademyPersonConfig(
+  award: JapanAcademyPersonAward,
+): ImdbEventAwardConfig {
+  return {
+    organizationName: 'Japan Academy Awards',
+    organizationCountry: 'Japan',
+    establishedYear: 1978,
+    categoryName: award.category,
+    ceremonyNumber: japanAcademyCeremonyNumber,
+    isCompetitionCategory: category => category === award.category,
+    minimumFilmsPerEdition: 1,
+    personRole: award.role,
+  };
+}
+
+export async function importJapanAcademyPersonAward({
+  environment,
+  award,
+  dryRun = false,
+  year,
+  throttleMs = 300,
+}: {
+  environment: Environment;
+  award: JapanAcademyPersonAward;
+  dryRun?: boolean;
+  /** 授賞式の年。1978年が第1回 */
+  year?: number;
+  throttleMs?: number;
+}): Promise<ImdbEventImportStats> {
+  const allEditions = parseJapanAcademyPersonWikitext(
+    await fetchJapanAcademyPersonWikitext(award.article),
+  );
+  const editions =
+    year === undefined
+      ? allEditions
+      : allEditions.filter(edition => edition.year + 1 === year);
+
+  console.log(
+    `\n=== ${award.category}: parsed ${editions.length} editions from Wikipedia`,
+  );
+
+  const references = japanAcademyPersonFilmReferences(editions);
+  const pages = references.map(reference => reference.key);
+
+  console.log(`Resolving IMDb IDs for ${pages.length} articles...`);
+  const resolved = await resolveFilmsByWikipediaPage(pages);
+  console.log(`Resolved ${resolved.size}/${pages.length} articles`);
+
+  const dropped = await dropMisattributedResolutions({
+    references,
+    resolved,
+    tmdbApiKey: environment.TMDB_API_KEY,
+    throttleMs,
+  });
+  if (dropped > 0) {
+    console.log(`Dropped ${dropped} misattributed resolutions`);
+  }
+
+  await resolveRemainingByTmdb({
+    references,
+    resolved,
+    tmdbApiKey: environment.TMDB_API_KEY,
+    throttleMs,
+  });
+
+  const duplicates = dropDuplicateResolutions(references, resolved);
+  if (duplicates > 0) {
+    console.log(`Dropped ${duplicates} duplicate resolutions`);
+  }
+
+  return importImdbEventAward({
+    environment,
+    data: toImdbEventData(award, editions, resolved),
+    config: japanAcademyPersonConfig(award),
+    dryRun,
+    year,
+    throttleMs,
+  });
+}
+
+export async function importJapanAcademyPersonAwards({
+  environment,
+  awards = JAPAN_ACADEMY_PERSON_AWARDS,
+  dryRun = false,
+  year,
+  throttleMs = 300,
+}: {
+  environment: Environment;
+  awards?: JapanAcademyPersonAward[];
+  dryRun?: boolean;
+  year?: number;
+  throttleMs?: number;
+}): Promise<ImdbEventImportStats> {
+  const total: ImdbEventImportStats = {
+    editionsProcessed: 0,
+    moviesCreated: 0,
+    moviesExisting: 0,
+    skippedSoftDeleted: 0,
+    nominationsCreated: 0,
+    winnersUpdated: 0,
+    tmdbNotFound: 0,
+    peopleUnresolved: 0,
+    failed: 0,
+  };
+
+  for (const award of awards) {
+    const stats = await importJapanAcademyPersonAward({
+      environment,
+      award,
+      dryRun,
+      year,
+      throttleMs,
+    });
+
+    for (const key of Object.keys(total) as Array<keyof ImdbEventImportStats>) {
+      total[key] += stats[key];
+    }
+  }
+
+  return total;
+}

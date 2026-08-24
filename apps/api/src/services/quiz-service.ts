@@ -7,7 +7,10 @@ import {nominations} from '@shine/database/schema/nominations';
 import type {QuizAnswer, QuizCandidate, QuizHint} from '@shine/types';
 import {EdgeCache} from '../utils/cache';
 import {simpleHash} from '../utils/hash';
-import {findAwardPageDefinition} from './awards-service';
+import {
+  findAwardPageDefinition,
+  japaneseOrganizationName,
+} from './awards-service';
 import {BaseService} from './base-service';
 
 export const QUIZ_MAX_ATTEMPTS = 6;
@@ -88,7 +91,7 @@ export function toQuizAnswer(
   };
 }
 
-type NominationFacts = {
+export type NominationFacts = {
   organizationName: string;
   categoryName: string;
   ceremonyYear: number;
@@ -96,7 +99,7 @@ type NominationFacts = {
   specialMention: string | undefined;
 };
 
-function describeNomination(facts: NominationFacts): {
+export function describeNomination(facts: NominationFacts): {
   organization: string;
   achievement: string;
 } {
@@ -107,6 +110,7 @@ function describeNomination(facts: NominationFacts): {
   const organization =
     organizationLabelOverrides[facts.organizationName] ??
     definition?.organization ??
+    japaneseOrganizationName(facts.organizationName) ??
     facts.organizationName;
 
   if (definition?.grouping === 'list') {
@@ -115,10 +119,14 @@ function describeNomination(facts: NominationFacts): {
 
   const outcome =
     facts.specialMention ?? (facts.isWinner ? '受賞' : 'ノミネート');
+  // 賞ページを持たない部門（個人賞など）は部門名を出さないと作品賞と区別できない
+  const award = definition
+    ? organization
+    : `${organization} ${facts.categoryName}`;
 
   return {
     organization,
-    achievement: `${organization} ${facts.ceremonyYear}年 ${outcome}`,
+    achievement: `${award} ${facts.ceremonyYear}年 ${outcome}`,
   };
 }
 

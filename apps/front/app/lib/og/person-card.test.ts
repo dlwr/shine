@@ -98,4 +98,42 @@ describe('pickRepresentativeTitles', () => {
 
     expect(titles).toEqual(['B']);
   });
+
+  it('本人が受けた個人賞の受賞作を最優先で選ぶ', () => {
+    const titles = pickRepresentativeTitles(
+      [
+        {
+          title: '作品賞受賞作',
+          awards: [{slug: 'palme-dor', isWinner: true}],
+        },
+        {
+          title: '個人賞受賞作',
+          awards: [],
+          personAwards: [{isWinner: true}],
+        },
+      ],
+      LEGEND,
+    );
+
+    expect(titles[0]).toBe('個人賞受賞作');
+  });
+
+  it('個人賞のノミネートも作品賞の受賞より優先する', () => {
+    const titles = pickRepresentativeTitles(
+      [
+        {
+          title: '作品賞受賞作',
+          awards: [{slug: 'palme-dor', isWinner: true}],
+        },
+        {
+          title: '個人賞候補作',
+          awards: [],
+          personAwards: [{isWinner: false}],
+        },
+      ],
+      LEGEND,
+    );
+
+    expect(titles[0]).toBe('個人賞候補作');
+  });
 });

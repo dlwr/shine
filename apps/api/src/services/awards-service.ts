@@ -1,4 +1,4 @@
-import {and, eq, inArray, isNull, sql} from '@shine/database';
+import {and, eq, inArray, isNull, or, sql} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
@@ -21,13 +21,11 @@ export function findAwardPageDefinition(
     entry => entry.organizationName === organizationName,
   );
 
-  return candidates.length > 1
-    ? candidates.find(
-        entry =>
-          categoryName !== undefined &&
-          entry.categoryNames.includes(categoryName),
-      )
-    : candidates[0];
+  return categoryName === undefined
+    ? candidates.length === 1
+      ? candidates[0]
+      : undefined
+    : candidates.find(entry => entry.categoryNames.includes(categoryName));
 }
 
 export function awardPageLinkForOrganizationName(
@@ -45,13 +43,35 @@ export function awardPageLinkForOrganizationName(
   };
 }
 
+/** 賞ページを持つ (組織, 部門) だけに絞る条件。個人賞などは含まない */
+export function awardPageNominations() {
+  return or(
+    ...awardPageDefinitions.map(definition =>
+      and(
+        eq(awardOrganizations.name, definition.organizationName),
+        inArray(awardCategories.name, definition.categoryNames),
+      ),
+    ),
+  );
+}
+
+export function japaneseOrganizationName(
+  organizationName: string,
+): string | undefined {
+  return awardPageDefinitions.find(
+    entry => entry.organizationName === organizationName,
+  )?.organization;
+}
+
 export function japaneseAwardNames(
   organizationName: string,
   categoryName: string,
 ): {organization?: string; category?: string} {
   const definition = findAwardPageDefinition(organizationName, categoryName);
   if (!definition) {
-    return {};
+    // 賞ページを持たない部門（個人賞など）でも組織名だけは日本語にできる
+    const organization = japaneseOrganizationName(organizationName);
+    return organization ? {organization} : {};
   }
 
   // 複数カテゴリを束ねるページの name はページ名なので、カテゴリ名には使えない

@@ -7,7 +7,11 @@ import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
-import {awardPageDefinitions, findAwardPageDefinition} from './awards-service';
+import {
+  awardPageDefinitions,
+  findAwardPageDefinition,
+  japaneseOrganizationName,
+} from './awards-service';
 import {BaseService} from './base-service';
 import type {
   PeopleListResult,
@@ -163,6 +167,7 @@ export class PeopleService extends BaseService {
         jobs: [],
         character: undefined,
         awards: [],
+        personAwards: [],
       };
 
       if (row.job && !credit.jobs.includes(row.job)) {
@@ -174,6 +179,7 @@ export class PeopleService extends BaseService {
     }
 
     const legendSlugs = await this.attachCreditAwards(byMovie);
+    await this.attachPersonAwards(byMovie, personUid);
 
     return {
       uid: person.uid,
@@ -206,6 +212,46 @@ export class PeopleService extends BaseService {
     ]);
 
     return {directors, actors};
+  }
+
+  private async attachPersonAwards(
+    byMovie: Map<string, PersonDetail['credits'][number]>,
+    personUid: string,
+  ): Promise<void> {
+    const rows = await this.database
+      .select({
+        movieUid: nominations.movieUid,
+        isWinner: nominations.isWinner,
+        organizationName: awardOrganizations.name,
+        categoryName: awardCategories.name,
+        ceremonyYear: awardCeremonies.year,
+      })
+      .from(nominations)
+      .innerJoin(
+        awardCeremonies,
+        eq(awardCeremonies.uid, nominations.ceremonyUid),
+      )
+      .innerJoin(
+        awardOrganizations,
+        eq(awardOrganizations.uid, awardCeremonies.organizationUid),
+      )
+      .innerJoin(
+        awardCategories,
+        eq(awardCategories.uid, nominations.categoryUid),
+      )
+      .where(eq(nominations.personUid, personUid))
+      .orderBy(awardCategories.name);
+
+    for (const row of rows) {
+      byMovie.get(row.movieUid)?.personAwards.push({
+        organization:
+          japaneseOrganizationName(row.organizationName) ??
+          row.organizationName,
+        category: row.categoryName,
+        year: row.ceremonyYear,
+        isWinner: row.isWinner === 1,
+      });
+    }
   }
 
   private async attachCreditAwards(
