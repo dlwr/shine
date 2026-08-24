@@ -91,7 +91,7 @@ export function toQuizAnswer(
   };
 }
 
-type NominationFacts = {
+export type NominationFacts = {
   organizationName: string;
   categoryName: string;
   ceremonyYear: number;
@@ -99,7 +99,7 @@ type NominationFacts = {
   specialMention: string | undefined;
 };
 
-function describeNomination(facts: NominationFacts): {
+export function describeNomination(facts: NominationFacts): {
   organization: string;
   achievement: string;
 } {
@@ -119,10 +119,14 @@ function describeNomination(facts: NominationFacts): {
 
   const outcome =
     facts.specialMention ?? (facts.isWinner ? '受賞' : 'ノミネート');
+  // 賞ページを持たない部門（個人賞など）は部門名を出さないと作品賞と区別できない
+  const award = definition
+    ? organization
+    : `${organization} ${facts.categoryName}`;
 
   return {
     organization,
-    achievement: `${organization} ${facts.ceremonyYear}年 ${outcome}`,
+    achievement: `${award} ${facts.ceremonyYear}年 ${outcome}`,
   };
 }
 
