@@ -1,4 +1,9 @@
 import type {Route} from './+types/people.$id';
+import {
+  AwardTags,
+  type AwardTag,
+  type AwardTagLegend,
+} from '@/components/editorial/award-tags';
 import {Masthead} from '@/components/editorial/masthead';
 import {PersonPortrait} from '@/components/editorial/person-portrait';
 import {PosterFrame} from '@/components/editorial/poster-frame';
@@ -14,6 +19,11 @@ export type PersonCreditData = {
   posterUrl?: string;
   jobs: string[];
   character?: string;
+  awards: AwardTag[];
+};
+
+export type PersonAwardData = AwardTagLegend & {
+  grouping: 'year' | 'list';
 };
 
 export type PersonData = {
@@ -22,7 +32,28 @@ export type PersonData = {
   originalName: string;
   profilePath?: string;
   credits: PersonCreditData[];
+  awards: PersonAwardData[];
 };
+
+function awardRecord(person: PersonData): {won: number; nominated: number} {
+  const yearGrouped = new Set(
+    person.awards
+      .filter(award => award.grouping === 'year')
+      .map(award => award.slug),
+  );
+  const contested = person.credits.filter(credit =>
+    credit.awards.some(award => yearGrouped.has(award.slug)),
+  );
+
+  return {
+    won: contested.filter(credit =>
+      credit.awards.some(
+        award => yearGrouped.has(award.slug) && award.isWinner,
+      ),
+    ).length,
+    nominated: contested.length,
+  };
+}
 
 const JOB_LABELS: Record<string, string> = {
   Director: '監督',
@@ -48,7 +79,9 @@ function personDescription(person: PersonData): string {
   const jobs = new Set(
     person.credits.map(credit => roleLabel(credit).split(' — ', 1)[0]),
   );
-  return `${person.name}が関わった映画${person.credits.length}本（${jobs.values().toArray().join('・')}）。SHINEに収録された映画賞の受賞作・ノミネート作から一覧できます。`;
+  const {won} = awardRecord(person);
+  const record = won > 0 ? `うち${won}本が受賞。` : '';
+  return `${person.name}が関わった映画${person.credits.length}本（${jobs.values().toArray().join('・')}）。${record}SHINEに収録された映画賞の受賞作・ノミネート作から一覧できます。`;
 }
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
@@ -88,7 +121,13 @@ export async function loader({context, request, params}: Route.LoaderArgs) {
   return {person, locale};
 }
 
-function CreditRow({credit}: {credit: PersonCreditData}) {
+function CreditRow({
+  credit,
+  legend,
+}: {
+  credit: PersonCreditData;
+  legend: PersonAwardData[];
+}) {
   const title = credit.title ?? 'Unknown Title';
 
   return (
@@ -101,8 +140,11 @@ function CreditRow({credit}: {credit: PersonCreditData}) {
         className="w-9 shrink-0"
         displaySize="w185"
       />
-      <span className="flex-1 font-display font-extrabold text-sm leading-none">
-        {title}
+      <span className="flex flex-1 flex-col gap-1">
+        <span className="font-display font-extrabold text-sm leading-none">
+          {title}
+        </span>
+        <AwardTags tags={credit.awards} legend={legend} />
       </span>
       <span className="font-mono text-[10px] text-ink-muted shrink-0">
         {roleLabel(credit)}
@@ -119,6 +161,7 @@ function CreditRow({credit}: {credit: PersonCreditData}) {
 export default function PersonPage({loaderData}: Route.ComponentProps) {
   const {person} = loaderData as {person: PersonData};
   const locale = 'ja';
+  const {won, nominated} = awardRecord(person);
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -141,12 +184,22 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
                 ? `${person.credits.length} FILMS`
                 : `${person.originalName} / ${person.credits.length} FILMS`}
             </p>
+            {nominated > 0 && (
+              <p className="mt-1 font-mono text-xs text-ink-muted">
+                <span className="font-bold text-brand">{won}</span>
+                作受賞 / {nominated}作ノミネート
+              </p>
+            )}
           </div>
         </div>
 
         <div>
           {person.credits.map(credit => (
-            <CreditRow key={credit.movieUid} credit={credit} />
+            <CreditRow
+              key={credit.movieUid}
+              credit={credit}
+              legend={person.awards}
+            />
           ))}
         </div>
 
