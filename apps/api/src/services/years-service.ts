@@ -4,7 +4,11 @@ import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
-import {awardPageDefinitions, findAwardPageDefinition} from './awards-service';
+import {
+  awardPageDefinitions,
+  awardPageNominations,
+  findAwardPageDefinition,
+} from './awards-service';
 import {BaseService} from './base-service';
 import type {YearDetail, YearMovie, YearSummary} from '@shine/types';
 
@@ -27,7 +31,19 @@ export class YearsService extends BaseService {
       })
       .from(movies)
       .innerJoin(nominations, eq(nominations.movieUid, movies.uid))
-      .where(isNull(movies.deletedAt))
+      .innerJoin(
+        awardCeremonies,
+        eq(awardCeremonies.uid, nominations.ceremonyUid),
+      )
+      .innerJoin(
+        awardOrganizations,
+        eq(awardOrganizations.uid, awardCeremonies.organizationUid),
+      )
+      .innerJoin(
+        awardCategories,
+        eq(awardCategories.uid, nominations.categoryUid),
+      )
+      .where(and(isNull(movies.deletedAt), awardPageNominations()))
       .groupBy(movies.year);
 
     return rows
@@ -85,7 +101,13 @@ export class YearsService extends BaseService {
         eq(nominations.categoryUid, awardCategories.uid),
       )
       .innerJoin(movies, eq(nominations.movieUid, movies.uid))
-      .where(and(eq(movies.year, year), isNull(movies.deletedAt)));
+      .where(
+        and(
+          eq(movies.year, year),
+          isNull(movies.deletedAt),
+          awardPageNominations(),
+        ),
+      );
 
     if (rows.length === 0) {
       return undefined;
@@ -93,6 +115,14 @@ export class YearsService extends BaseService {
 
     const byUid = new Map<string, YearMovie>();
     for (const row of rows) {
+      const slug = findAwardPageDefinition(
+        row.organizationName,
+        row.categoryName,
+      )?.slug;
+      if (!slug) {
+        continue;
+      }
+
       let movie = byUid.get(row.movieUid);
       if (!movie) {
         movie = {
@@ -107,14 +137,6 @@ export class YearsService extends BaseService {
 
       const isWinner = row.isWinner === 1;
       movie.isWinner ||= isWinner;
-
-      const slug = findAwardPageDefinition(
-        row.organizationName,
-        row.categoryName,
-      )?.slug;
-      if (!slug) {
-        continue;
-      }
 
       const award = movie.awards.find(entry => entry.slug === slug);
       if (award) {
@@ -152,7 +174,19 @@ export class YearsService extends BaseService {
       .selectDistinct({year: movies.year})
       .from(movies)
       .innerJoin(nominations, eq(nominations.movieUid, movies.uid))
-      .where(isNull(movies.deletedAt));
+      .innerJoin(
+        awardCeremonies,
+        eq(awardCeremonies.uid, nominations.ceremonyUid),
+      )
+      .innerJoin(
+        awardOrganizations,
+        eq(awardOrganizations.uid, awardCeremonies.organizationUid),
+      )
+      .innerJoin(
+        awardCategories,
+        eq(awardCategories.uid, nominations.categoryUid),
+      )
+      .where(and(isNull(movies.deletedAt), awardPageNominations()));
 
     const years = yearRows
       .map(row => row.year)

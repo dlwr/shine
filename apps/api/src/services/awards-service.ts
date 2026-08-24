@@ -1,4 +1,4 @@
-import {and, eq, inArray, isNull, sql} from '@shine/database';
+import {and, eq, inArray, isNull, or, sql} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
@@ -41,6 +41,18 @@ export function awardPageLinkForOrganizationName(
     slug: definition?.slug,
     hasYearPages: definition?.grouping === 'year',
   };
+}
+
+/** 賞ページを持つ (組織, 部門) だけに絞る条件。個人賞などは含まない */
+export function awardPageNominations() {
+  return or(
+    ...awardPageDefinitions.map(definition =>
+      and(
+        eq(awardOrganizations.name, definition.organizationName),
+        inArray(awardCategories.name, definition.categoryNames),
+      ),
+    ),
+  );
 }
 
 export function japaneseOrganizationName(
