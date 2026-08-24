@@ -36,6 +36,7 @@ export type MovieSelection = {
     uid: string;
     isWinner: boolean;
     specialMention?: string | undefined;
+    person?: {uid: string; name: string} | undefined;
     category: {
       uid: string;
       name: string;

@@ -26,7 +26,7 @@ describe('Cache Utilities', () => {
 
       expect(key1).toBe(key2);
       expect(key1).not.toBe(key3);
-      expect(key1).toMatch(/^selections:daily:2024-06-24:en:v1$/);
+      expect(key1).toMatch(/^selections:daily:2024-06-24:en:v2$/);
     });
 
     it('人物のキャッシュキーにロケールを含める', () => {
@@ -44,8 +44,8 @@ describe('Cache Utilities', () => {
       const fullKey = getCacheKeyForMovie(movieId, true);
       const englishKey = getCacheKeyForMovie(movieId, false, 'en');
 
-      expect(basicKey).toBe(`movie:${movieId}:basic:ja:v7`);
-      expect(fullKey).toBe(`movie:${movieId}:full:ja:v7`);
+      expect(basicKey).toBe(`movie:${movieId}:basic:ja:v8`);
+      expect(fullKey).toBe(`movie:${movieId}:full:ja:v8`);
       expect(basicKey).not.toBe(fullKey);
       expect(englishKey).not.toBe(basicKey);
     });

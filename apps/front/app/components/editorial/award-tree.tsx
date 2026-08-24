@@ -2,6 +2,7 @@ export type AwardNomination = {
   uid: string;
   isWinner: boolean;
   specialMention?: string;
+  person?: {uid: string; name: string};
   category: {name: string; displayName?: string};
   ceremony: {uid: string; year: number; number?: number};
   organization: {
@@ -78,6 +79,13 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
                 className="flex items-center justify-between border-b border-ink/20 px-3 py-1.5 text-sm last:border-b-0">
                 <span>
                   {nomination.category.displayName ?? nomination.category.name}
+                  {nomination.person && (
+                    <a
+                      href={`/people/${nomination.person.uid}`}
+                      className="ml-2 text-ink underline">
+                      {nomination.person.name}
+                    </a>
+                  )}
                   {nomination.specialMention && (
                     <span className="ml-2 font-mono text-xs text-ink-muted">
                       {nomination.specialMention}

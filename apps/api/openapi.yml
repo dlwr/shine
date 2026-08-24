@@ -2132,6 +2132,18 @@ components:
         specialMention:
           type: [string, 'null']
           description: Special mention or note about the nomination
+        person:
+          type: object
+          description: 個人賞の受賞者・候補者。作品賞では返らない
+          properties:
+            uid:
+              type: string
+              format: uuid
+            name:
+              type: string
+          required:
+            - uid
+            - name
         category:
           $ref: '#/components/schemas/AwardCategory'
         ceremony:
