@@ -65,25 +65,37 @@ type PersonalAwardRecord = {
   nominated: number;
 };
 
+/** 第17回までは1回の受賞に複数作品が紐づくので、回数は授賞式ごとに数える */
 function personalAwardRecords(person: PersonData): PersonalAwardRecord[] {
-  const records = new Map<string, PersonalAwardRecord>();
+  const ceremonies = new Map<string, PersonalAward>();
 
   for (const credit of person.credits) {
     for (const award of credit.personAwards) {
-      const key = `${award.organization} ${award.category}`;
-      const record = records.get(key) ?? {
-        organization: award.organization,
-        category: award.category,
-        won: 0,
-        nominated: 0,
-      };
-      record.nominated++;
-      if (award.isWinner) {
-        record.won++;
+      const key = `${award.organization}|${award.category}|${award.year}`;
+      const existing = ceremonies.get(key);
+      if (existing) {
+        existing.isWinner ||= award.isWinner;
+      } else {
+        ceremonies.set(key, {...award});
       }
-
-      records.set(key, record);
     }
+  }
+
+  const records = new Map<string, PersonalAwardRecord>();
+  for (const award of ceremonies.values()) {
+    const key = `${award.organization} ${award.category}`;
+    const record = records.get(key) ?? {
+      organization: award.organization,
+      category: award.category,
+      won: 0,
+      nominated: 0,
+    };
+    record.nominated++;
+    if (award.isWinner) {
+      record.won++;
+    }
+
+    records.set(key, record);
   }
 
   return records

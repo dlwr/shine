@@ -76,6 +76,7 @@ describe('PersonalAwardTags', () => {
           {
             organization: '日本アカデミー賞',
             category: '監督賞',
+            year: 2026,
             isWinner: true,
           },
         ]}
@@ -91,6 +92,7 @@ describe('PersonalAwardTags', () => {
           {
             organization: '日本アカデミー賞',
             category: '監督賞',
+            year: 2026,
             isWinner: true,
           },
         ]}
@@ -98,7 +100,7 @@ describe('PersonalAwardTags', () => {
     );
     expect(screen.getByText('監督賞')).toHaveAttribute(
       'title',
-      '日本アカデミー賞 監督賞 受賞',
+      '日本アカデミー賞 監督賞 2026年 受賞',
     );
   });
 
@@ -109,6 +111,7 @@ describe('PersonalAwardTags', () => {
           {
             organization: '日本アカデミー賞',
             category: '主演男優賞',
+            year: 2026,
             isWinner: false,
           },
         ]}
@@ -116,7 +119,7 @@ describe('PersonalAwardTags', () => {
     );
     expect(screen.getByText('主演男優賞')).toHaveAttribute(
       'title',
-      '日本アカデミー賞 主演男優賞 ノミネート',
+      '日本アカデミー賞 主演男優賞 2026年 ノミネート',
     );
   });
 

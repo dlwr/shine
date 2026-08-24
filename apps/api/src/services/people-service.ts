@@ -224,6 +224,7 @@ export class PeopleService extends BaseService {
         isWinner: nominations.isWinner,
         organizationName: awardOrganizations.name,
         categoryName: awardCategories.name,
+        ceremonyYear: awardCeremonies.year,
       })
       .from(nominations)
       .innerJoin(
@@ -247,6 +248,7 @@ export class PeopleService extends BaseService {
           japaneseOrganizationName(row.organizationName) ??
           row.organizationName,
         category: row.categoryName,
+        year: row.ceremonyYear,
         isWinner: row.isWinner === 1,
       });
     }

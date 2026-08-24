@@ -15,6 +15,7 @@ export type AwardTagLegend = {
 export type PersonalAward = {
   organization: string;
   category: string;
+  year: number;
   isWinner: boolean;
 };
 
@@ -83,7 +84,7 @@ export function PersonalAwardTags({awards}: {awards: PersonalAward[]}) {
         <Chip
           key={`${award.organization} ${award.category}`}
           label={award.category}
-          title={`${award.organization} ${award.category} ${award.isWinner ? '受賞' : 'ノミネート'}`}
+          title={`${award.organization} ${award.category} ${award.year}年 ${award.isWinner ? '受賞' : 'ノミネート'}`}
           isWinner={award.isWinner}
         />
       ))}

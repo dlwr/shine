@@ -2864,11 +2864,15 @@ components:
                       type: string
                     category:
                       type: string
+                    year:
+                      type: integer
+                      description: 授賞式の年
                     isWinner:
                       type: boolean
                   required:
                     - organization
                     - category
+                    - year
                     - isWinner
                 description: Awards this person received for this film
             required:

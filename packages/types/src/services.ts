@@ -290,6 +290,8 @@ export type PersonAwardTag = {
 export type PersonalAward = {
   organization: string;
   category: string;
+  /** 授賞式の年。第17回までは1回の受賞に複数作品が紐づくので、回数はこれで数える */
+  year: number;
   isWinner: boolean;
 };
 

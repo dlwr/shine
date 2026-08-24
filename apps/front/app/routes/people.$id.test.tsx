@@ -20,7 +20,12 @@ const person: PersonData = {
         {slug: '1001-movies', isWinner: true},
       ],
       personAwards: [
-        {organization: '日本アカデミー賞', category: '監督賞', isWinner: true},
+        {
+          organization: '日本アカデミー賞',
+          category: '監督賞',
+          year: 1986,
+          isWinner: true,
+        },
       ],
     },
     {
@@ -31,7 +36,12 @@ const person: PersonData = {
       character: 'Extra',
       awards: [{slug: 'palme-dor', isWinner: true}],
       personAwards: [
-        {organization: '日本アカデミー賞', category: '監督賞', isWinner: false},
+        {
+          organization: '日本アカデミー賞',
+          category: '監督賞',
+          year: 1981,
+          isWinner: false,
+        },
       ],
     },
   ],

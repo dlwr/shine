@@ -397,7 +397,12 @@ describe('PeopleService.getPerson', () => {
       person?.credits.find(credit => credit.movieUid === 'movie-ran')
         ?.personAwards,
     ).toEqual([
-      {organization: '日本アカデミー賞', category: '監督賞', isWinner: true},
+      {
+        organization: '日本アカデミー賞',
+        category: '監督賞',
+        year: 1986,
+        isWinner: true,
+      },
     ]);
   });
 
@@ -410,7 +415,12 @@ describe('PeopleService.getPerson', () => {
       person?.credits.find(credit => credit.movieUid === 'movie-ran')
         ?.personAwards,
     ).toEqual([
-      {organization: '日本アカデミー賞', category: '監督賞', isWinner: false},
+      {
+        organization: '日本アカデミー賞',
+        category: '監督賞',
+        year: 1986,
+        isWinner: false,
+      },
     ]);
   });
 
