@@ -203,7 +203,7 @@ export const getCacheKeyForMovie = (
 export const getCacheKeyForPerson = (
   personUid: string,
   locale: string,
-): string => `person:${personUid}:${locale}:v2`;
+): string => `person:${personUid}:${locale}:v3`;
 
 export const getMovieCacheKeysForAllLocales = (movieId: string): string[] =>
   CACHEABLE_LOCALES.flatMap(locale => [

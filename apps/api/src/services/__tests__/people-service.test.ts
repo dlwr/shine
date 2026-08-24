@@ -3,8 +3,12 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
+import {awardCategories} from '@shine/database/schema/award-categories';
+import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
+import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
+import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
@@ -161,6 +165,59 @@ async function createTestEnvironment(): Promise<{
     },
   ]);
 
+  await database.insert(awardOrganizations).values([
+    {uid: 'org-cannes', name: 'Cannes Film Festival'},
+    {uid: 'org-academy', name: 'Academy Awards'},
+    {uid: 'org-1001', name: '1001 Movies You Must See Before You Die'},
+    {uid: 'org-unlisted', name: 'Golden Globe Awards'},
+  ]);
+  await database.insert(awardCategories).values([
+    {uid: 'cat-palme', organizationUid: 'org-cannes', name: "Palme d'Or"},
+    {
+      uid: 'cat-best-picture',
+      organizationUid: 'org-academy',
+      name: 'Academy Award for Best Picture',
+    },
+    {
+      uid: 'cat-unlisted',
+      organizationUid: 'org-unlisted',
+      name: 'Best Motion Picture — Drama',
+    },
+    {uid: 'cat-1001', organizationUid: 'org-1001', name: 'Selected Films'},
+  ]);
+  await database.insert(awardCeremonies).values([
+    {uid: 'ceremony-cannes', organizationUid: 'org-cannes', year: 1980},
+    {uid: 'ceremony-academy', organizationUid: 'org-academy', year: 1986},
+    {uid: 'ceremony-1001', organizationUid: 'org-1001', year: 2020},
+    {uid: 'ceremony-unlisted', organizationUid: 'org-unlisted', year: 1986},
+  ]);
+  await database.insert(nominations).values([
+    {
+      movieUid: 'movie-kagemusha',
+      ceremonyUid: 'ceremony-cannes',
+      categoryUid: 'cat-palme',
+      isWinner: 1,
+    },
+    {
+      movieUid: 'movie-ran',
+      ceremonyUid: 'ceremony-academy',
+      categoryUid: 'cat-best-picture',
+      isWinner: 0,
+    },
+    {
+      movieUid: 'movie-ran',
+      ceremonyUid: 'ceremony-unlisted',
+      categoryUid: 'cat-unlisted',
+      isWinner: 1,
+    },
+    {
+      movieUid: 'movie-ran',
+      ceremonyUid: 'ceremony-1001',
+      categoryUid: 'cat-1001',
+      isWinner: 1,
+    },
+  ]);
+
   return {environment, database};
 }
 
@@ -239,6 +296,89 @@ describe('PeopleService.getPerson', () => {
     const person = await service.getPerson('person-missing', 'ja');
 
     expect(person).toBeUndefined();
+  });
+
+  it('参加作が受賞した賞を返す', async () => {
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-kurosawa', 'ja');
+
+    expect(
+      person?.credits.find(credit => credit.movieUid === 'movie-kagemusha')
+        ?.awards,
+    ).toEqual([{slug: 'palme-dor', isWinner: true}]);
+  });
+
+  it('ノミネート止まりの賞は isWinner を false で返す', async () => {
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-kurosawa', 'ja');
+
+    expect(
+      person?.credits
+        .find(credit => credit.movieUid === 'movie-ran')
+        ?.awards.find(award => award.slug === 'academy-best-picture'),
+    ).toEqual({slug: 'academy-best-picture', isWinner: false});
+  });
+
+  it('賞ページの定義に無い組織は返さない', async () => {
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-kurosawa', 'ja');
+
+    expect(
+      person?.credits.find(credit => credit.movieUid === 'movie-ran')?.awards,
+    ).toEqual([
+      {slug: 'academy-best-picture', isWinner: false},
+      {slug: '1001-movies', isWinner: true},
+    ]);
+  });
+
+  it('賞の無い参加作は空の配列を返す', async () => {
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-prolific', 'ja');
+
+    expect(
+      person?.credits.find(credit => credit.movieUid === 'movie-dreams')
+        ?.awards,
+    ).toEqual([]);
+  });
+
+  it('参加作に付いた賞の凡例を返す', async () => {
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-kurosawa', 'ja');
+
+    expect(person?.awards.map(award => award.slug)).toEqual([
+      'palme-dor',
+      'academy-best-picture',
+      '1001-movies',
+    ]);
+  });
+
+  it('凡例は賞の短縮ラベルを持つ', async () => {
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-kurosawa', 'ja');
+
+    expect(person?.awards.find(award => award.slug === 'palme-dor')).toEqual({
+      slug: 'palme-dor',
+      shortLabel: 'カンヌ',
+      name: 'パルム・ドール',
+      organization: 'カンヌ国際映画祭',
+      grouping: 'year',
+    });
+  });
+
+  it('凡例はリスト型の賞に grouping list を持つ', async () => {
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-kurosawa', 'ja');
+
+    expect(
+      person?.awards.find(award => award.slug === '1001-movies')?.grouping,
+    ).toBe('list');
   });
 });
 
