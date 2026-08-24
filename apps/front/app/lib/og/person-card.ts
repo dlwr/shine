@@ -1,9 +1,12 @@
 const TITLE_LIMIT = 2;
+const PERSONAL_WIN_WEIGHT = 10_000;
+const PERSONAL_NOMINATION_WEIGHT = 3000;
 const WIN_WEIGHT = 1000;
 
 type CreditLike = {
   title?: string;
   awards: Array<{slug: string; isWinner: boolean}>;
+  personAwards?: Array<{isWinner: boolean}>;
 };
 
 type LegendLike = {
@@ -24,8 +27,15 @@ export function pickRepresentativeTitles(
       yearGrouped.has(award.slug),
     );
     const won = contested.filter(award => award.isWinner).length;
+    const personal = credit.personAwards ?? [];
+    const personalWon = personal.filter(award => award.isWinner).length;
 
-    return won * WIN_WEIGHT + contested.length;
+    return (
+      personalWon * PERSONAL_WIN_WEIGHT +
+      (personal.length - personalWon) * PERSONAL_NOMINATION_WEIGHT +
+      won * WIN_WEIGHT +
+      contested.length
+    );
   };
 
   return credits

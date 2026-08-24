@@ -13,6 +13,7 @@ type PersonDetail = {
   credits: Array<{
     title?: string;
     awards: Array<{slug: string; isWinner: boolean}>;
+    personAwards: Array<{isWinner: boolean}>;
   }>;
   awards: Array<{slug: string; grouping: 'year' | 'list'}>;
 };
