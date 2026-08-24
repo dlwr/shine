@@ -306,3 +306,24 @@ export type PeopleListResult = {
   people: PersonSummary[];
   pagination: AwardPagination;
 };
+
+export type ProminentPersonMovie = {
+  uid: string;
+  title: string | undefined;
+  year: number | undefined;
+};
+
+export type ProminentPerson = {
+  uid: string;
+  name: string;
+  originalName: string;
+  profilePath: string | undefined;
+  wonCount: number;
+  nominatedCount: number;
+  topMovies: ProminentPersonMovie[];
+};
+
+export type ProminentPeople = {
+  directors: ProminentPerson[];
+  actors: ProminentPerson[];
+};
