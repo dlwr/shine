@@ -23,4 +23,10 @@ describe('profileImageUrl', () => {
       'https://example.com/abc.jpg',
     );
   });
+
+  it('高さ指定のサイズも使える', () => {
+    expect(profileImageUrl('/abc.jpg', 'h632')).toBe(
+      'https://image.tmdb.org/t/p/h632/abc.jpg',
+    );
+  });
 });

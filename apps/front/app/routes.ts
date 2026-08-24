@@ -26,6 +26,7 @@ export default [
   route('quiz', 'routes/quiz.tsx'),
   route('quiz/poster.png', 'routes/quiz-poster.tsx'),
   route('og/movie.png', 'routes/og-movie.tsx'),
+  route('og/person.png', 'routes/og-person.tsx'),
   route('og/home.png', 'routes/og-home.tsx'),
   route('og/banner.png', 'routes/og-banner.tsx'),
   route('og/quiz.png', 'routes/og-quiz.tsx'),

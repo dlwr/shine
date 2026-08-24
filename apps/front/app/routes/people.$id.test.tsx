@@ -84,4 +84,15 @@ describe('PersonPage', () => {
       'https://image.tmdb.org/t/p/w342/kurosawa.jpg',
     );
   });
+
+  it('OG画像に人物カードを指定する', () => {
+    const descriptors = meta({
+      loaderData,
+    } as Route.MetaArgs) as Array<{property?: string; content?: string}>;
+
+    expect(descriptors).toContainEqual({
+      property: 'og:image',
+      content: 'https://shine-film.com/og/person.png?id=person-kurosawa',
+    });
+  });
 });

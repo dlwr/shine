@@ -67,7 +67,7 @@ function PersonRow({person, rank}: {person: ProminentPerson; rank: number}) {
       <PersonPortrait
         name={person.name}
         profilePath={person.profilePath}
-        className="w-12 shrink-0"
+        className="w-12 shrink-0 md:w-16"
       />
       <div className="min-w-0 flex-1">
         <a

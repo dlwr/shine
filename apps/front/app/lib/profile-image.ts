@@ -1,4 +1,4 @@
-export type ProfileDisplaySize = 'w185' | 'w342';
+export type ProfileDisplaySize = 'w185' | 'w342' | 'h632';
 
 export function profileImageUrl(
   profilePath: string | undefined,

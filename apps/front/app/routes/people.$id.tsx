@@ -62,7 +62,7 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
     description: personDescription(person),
     path: `/people/${person.uid}`,
     locale: locale ?? DEFAULT_LOCALE,
-    imageUrl: `${SITE_URL}/og/home.png`,
+    imageUrl: `${SITE_URL}/og/person.png?id=${person.uid}`,
     largeImage: true,
   });
 }
