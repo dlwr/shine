@@ -12,6 +12,7 @@ import {posterUrls} from '@shine/database/schema/poster-urls';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import {withDefaultTranslationFlags} from './common/default-translations';
+import {matchPersonName, normalizePersonName} from './common/japanese-name';
 import {
   fetchTMDBConfig,
   fetchTMDBMovieDetails,
@@ -704,10 +705,6 @@ async function ensureNomination(
   }
 }
 
-function normalizeName(name: string): string {
-  return name.replaceAll(/\s+/gu, '').normalize('NFKC');
-}
-
 async function creditedPeople(
   database: DatabaseClient,
   movieUid: string,
@@ -742,7 +739,7 @@ async function creditedPeople(
   for (const row of rows) {
     for (const name of [row.name, row.localizedName]) {
       if (name) {
-        byName.set(normalizeName(name), row.uid);
+        byName.set(normalizePersonName(name), row.uid);
       }
     }
   }
@@ -778,7 +775,7 @@ async function ensurePersonNominations(
 
   const nominees = film.people ?? [];
   for (const person of nominees) {
-    const personUid = candidates.get(normalizeName(person.name));
+    const personUid = matchPersonName(person.name, candidates);
     if (!personUid) {
       console.log(
         `  Unresolved person: ${person.name} (${film.title ?? film.imdbId})`,

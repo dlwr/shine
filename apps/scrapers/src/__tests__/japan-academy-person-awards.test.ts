@@ -84,6 +84,33 @@ describe('toImdbEventData', () => {
     ).toEqual(['佐藤二朗', '横浜流星', '渡辺謙']);
   });
 
+  it('芸名が違う人物は別名に置き換える', () => {
+    const data = toImdbEventData(
+      AWARD,
+      [
+        {
+          year: 1997,
+          ceremonyNumber: 21,
+          entries: [
+            {
+              personName: '北野武',
+              personPage: '北野武',
+              filmPage: '爆弾 (小説)',
+              filmTitle: '爆弾',
+              isWinner: false,
+            },
+          ],
+        },
+      ],
+      RESOLVED,
+    );
+
+    expect(
+      data.editions[0].targetAward[0].categories[0].nominations[0].people?.[0]
+        .name,
+    ).toBe('ビートたけし');
+  });
+
   it('同定できなかった作品は落とす', () => {
     const data = toImdbEventData(AWARD, EDITIONS, new Map());
 

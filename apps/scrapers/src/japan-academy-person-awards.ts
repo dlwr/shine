@@ -22,6 +22,15 @@ import {
   type JapanAcademyPersonEdition,
 } from './japan-academy-person-wikitext';
 
+/**
+ * 記事の表記とTMDbのクレジット名が別名で、表記の正規化では寄らないもの。
+ * 芸名を使い分けている人だけを入れる
+ */
+const PERSON_NAME_ALIASES: Record<string, string> = {
+  北野武: 'ビートたけし',
+  夏木勲: '夏八木勲',
+};
+
 /** 対象期間は前年12月16日〜当年12月15日。映画祭プレミアで前年公開になることはある */
 const PUBLICATION_WINDOW: YearWindow = {min: -1, max: 1};
 
@@ -128,7 +137,9 @@ function buildNominations(
           originalTitle: match.englishTitle ?? null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationTitleの型に合わせる
         },
       ],
-      people: [{name: entry.personName}],
+      people: [
+        {name: PERSON_NAME_ALIASES[entry.personName] ?? entry.personName},
+      ],
     });
   }
 
