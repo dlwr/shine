@@ -176,19 +176,6 @@ export class SelectionsService extends BaseService {
 
     console.log('📅 Next dates calculated:', nextDates);
 
-    // Check cache first for preview results
-    const cacheKey = `preview-selections-${locale}-${nextDates.daily}-${nextDates.weekly}-${nextDates.monthly}`;
-    const cachedResult = await this.cache.get(cacheKey);
-
-    if (cachedResult?.data) {
-      console.log('💾 Using cached preview results');
-      return cachedResult.data as {
-        nextDaily: {date: string; movie?: MovieSelection | undefined};
-        nextWeekly: {date: string; movie?: MovieSelection | undefined};
-        nextMonthly: {date: string; movie?: MovieSelection | undefined};
-      };
-    }
-
     // Get next period selections - use existing if available, otherwise generate preview
     const [nextDailyMovie, nextWeeklyMovie, nextMonthlyMovie] =
       await Promise.all([
@@ -218,11 +205,8 @@ export class SelectionsService extends BaseService {
       },
     };
 
-    // Cache the preview results for 10 minutes
-    await this.cache.set(cacheKey, result, 600); // 10 minutes TTL
-
     console.log(
-      '✅ Final preview result (cached):',
+      '✅ Final preview result:',
       JSON.stringify(result, undefined, 2),
     );
     return result;
