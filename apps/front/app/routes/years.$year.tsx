@@ -1,12 +1,12 @@
 import type {Route} from './+types/years.$year';
 import {BigYear} from '@/components/editorial/big-year';
+import {AwardTags} from '@/components/editorial/award-tags';
 import {Masthead} from '@/components/editorial/masthead';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {YearNavLink} from '@/components/editorial/year-nav-link';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {awardHeading} from './awards';
 import {resolveApiUrl} from '@/lib/api';
 
 export type YearAwardData = {
@@ -109,38 +109,6 @@ export async function loader({context, request, params}: Route.LoaderArgs) {
   return {detail, locale};
 }
 
-function AwardTags({
-  movie,
-  awards,
-}: {
-  movie: YearMovieData;
-  awards: YearAwardData[];
-}) {
-  return (
-    <span className="flex flex-wrap gap-1">
-      {movie.awards.map(entry => {
-        const award = awards.find(item => item.slug === entry.slug);
-        if (!award) {
-          return;
-        }
-
-        return (
-          <span
-            key={entry.slug}
-            title={`${awardHeading(award)} ${entry.isWinner ? '受賞' : '選出'}`}
-            className={
-              entry.isWinner
-                ? 'bg-brand text-brand-on px-1 py-0.5 font-mono text-[10px]'
-                : 'border border-ink-muted px-1 py-0.5 font-mono text-[10px] text-ink-muted'
-            }>
-            {award.shortLabel}
-          </span>
-        );
-      })}
-    </span>
-  );
-}
-
 function MovieRow({
   movie,
   awards,
@@ -165,7 +133,7 @@ function MovieRow({
           <span className="font-display font-extrabold text-base md:text-lg leading-tight">
             {title}
           </span>
-          <AwardTags movie={movie} awards={awards} />
+          <AwardTags tags={movie.awards} legend={awards} />
         </span>
       </a>
     );
@@ -176,7 +144,7 @@ function MovieRow({
       href={`/movies/${movie.uid}`}
       className="flex flex-wrap items-center gap-x-4 gap-y-1 py-1.5 no-underline text-ink">
       <span className="font-mono text-sm leading-tight">{title}</span>
-      <AwardTags movie={movie} awards={awards} />
+      <AwardTags tags={movie.awards} legend={awards} />
     </a>
   );
 }
