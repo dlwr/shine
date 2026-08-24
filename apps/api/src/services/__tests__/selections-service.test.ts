@@ -12,6 +12,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
+import {EdgeCache} from '../../utils/cache';
 import {SelectionsService} from '../selections-service';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -67,6 +68,29 @@ async function seedNominatedMovie(
     ceremonyUid: 'ceremony-1',
     categoryUid: 'category-1',
   });
+}
+
+function createMemoryCache(): EdgeCache {
+  const store = new Map<string, string>();
+  const kv = {
+    async get(key: string, type?: string) {
+      const raw = store.get(key);
+      if (raw === undefined) {
+        // eslint-disable-next-line unicorn/no-null -- KVNamespace.get returns null for missing keys
+        return null;
+      }
+
+      return type === 'json' ? JSON.parse(raw) : raw;
+    },
+    async put(key: string, value: string) {
+      store.set(key, value);
+    },
+    async delete(key: string) {
+      store.delete(key);
+    },
+  } as unknown as KVNamespace;
+
+  return new EdgeCache(undefined, kv);
 }
 
 describe('SelectionsService.reselectMovie with excludeMovieUids', () => {
@@ -257,5 +281,33 @@ describe('SelectionsService nomination payload', () => {
     );
 
     expect(movie.nominations[0].organization.slug).toBeUndefined();
+  });
+});
+
+describe('SelectionsService.getNextPeriodPreviews', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+  });
+
+  it('returns the reselected movie immediately after a reselect', async () => {
+    await seedNominatedMovie(database, 'movie-a', 'Movie A');
+    await seedNominatedMovie(database, 'movie-b', 'Movie B');
+    const service = new SelectionsService(environment, createMemoryCache());
+
+    const before = await service.getNextPeriodPreviews('ja');
+    const initialUid = before.nextDaily.movie?.uid;
+    await service.reselectMovie(
+      'daily',
+      'ja',
+      new Date(`${before.nextDaily.date}T12:00:00`),
+      [initialUid!],
+    );
+
+    const after = await service.getNextPeriodPreviews('ja');
+
+    expect(after.nextDaily.movie?.uid).not.toBe(initialUid);
   });
 });
