@@ -305,6 +305,21 @@ describe('sitemap/awards.xml', () => {
     expect(xml).not.toContain('?page=4');
   });
 
+  it('個人賞は賞ページのURLだけ列挙する', async () => {
+    mockSearchResponse({
+      awards: [{slug: 'japan-academy-director', grouping: 'person'}],
+    });
+    mockSearchResponse({years: [{year: 1994}]});
+
+    const response = await sitemapAwardsLoader(createAwardsArguments());
+    const xml = await response.text();
+
+    expect(xml).toContain(
+      '<loc>https://shine-film.com/awards/japan-academy-director</loc>',
+    );
+    expect(xml).not.toContain('/awards/japan-academy-director/1994');
+  });
+
   it('1ページに収まるリスト型の賞はページURLを出さない', async () => {
     mockSearchResponse({awards: [{slug: 'variety-top-100', grouping: 'list'}]});
     mockSearchResponse({pagination: {totalPages: 1}});

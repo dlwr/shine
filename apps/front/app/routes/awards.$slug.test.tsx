@@ -302,3 +302,138 @@ describe('Award detail page', () => {
     });
   });
 });
+
+const mockPersonAward = {
+  slug: 'japan-academy-director',
+  name: '最優秀監督賞',
+  organization: '日本アカデミー賞',
+  description:
+    '日本アカデミー賞 最優秀監督賞の歴代受賞者と優秀監督賞ノミネートの一覧。',
+  grouping: 'person' as const,
+  years: [
+    {
+      year: 1994,
+      ceremonyNumber: 17,
+      nominees: [
+        {
+          uid: 'person-young',
+          name: '若手',
+          originalName: '若手',
+          profilePath: '/young.jpg',
+          isWinner: true,
+          movies: [{uid: 'movie-d', title: '映画D', movieYear: 1993}],
+        },
+        {
+          uid: 'person-foreign',
+          name: 'ジョン・ウー',
+          originalName: 'John Woo',
+          isWinner: false,
+          movies: [{uid: 'movie-c', title: '映画C', movieYear: 1993}],
+        },
+      ],
+    },
+    {
+      year: 1990,
+      ceremonyNumber: 13,
+      nominees: [
+        {
+          uid: 'person-master',
+          name: '巨匠',
+          originalName: '巨匠',
+          isWinner: true,
+          movies: [
+            {uid: 'movie-a', title: '映画A', movieYear: 1989},
+            {uid: 'movie-b', title: '映画B', movieYear: 1989},
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+function renderPersonAward() {
+  render(
+    <AwardDetailPage
+      {...createComponentProperties(
+        cast<LoaderData>({award: mockPersonAward, locale: 'ja'}),
+      )}
+    />,
+  );
+}
+
+describe('Person award page', () => {
+  it('歴代受賞者一覧のタイトルを組み立てる', () => {
+    const descriptors = meta(
+      cast<Route.MetaArgs>({
+        loaderData: {award: mockPersonAward, locale: 'ja'},
+        params: {slug: 'japan-academy-director'},
+        location: {
+          pathname: '/awards/japan-academy-director',
+          search: '',
+          hash: '',
+          state: undefined,
+          key: 'test',
+        },
+        matches: [],
+      }),
+    );
+    const titleDescriptor = descriptors.find(
+      descriptor => 'title' in descriptor,
+    ) as {title: string};
+
+    expect(titleDescriptor.title).toBe(
+      '日本アカデミー賞 最優秀監督賞 歴代受賞者一覧（1990–1994） | SHINE',
+    );
+  });
+
+  it('受賞者を人物ページへリンクする', () => {
+    renderPersonAward();
+
+    expect(screen.getByRole('link', {name: /若手/})).toHaveAttribute(
+      'href',
+      '/people/person-young',
+    );
+  });
+
+  it('受賞者にWINNERバッジを表示する', () => {
+    renderPersonAward();
+
+    expect(screen.getAllByText('WINNER')).toHaveLength(2);
+  });
+
+  it('ノミネート作を映画ページへリンクする', () => {
+    renderPersonAward();
+
+    expect(screen.getByRole('link', {name: '映画C'})).toHaveAttribute(
+      'href',
+      '/movies/movie-c',
+    );
+  });
+
+  it('複数作品が紐づく受賞は作品を並べて出す', () => {
+    renderPersonAward();
+
+    expect(screen.getByRole('link', {name: '映画A'})).toBeInTheDocument();
+    expect(screen.getByRole('link', {name: '映画B'})).toBeInTheDocument();
+  });
+
+  it('原語名が違えば併記する', () => {
+    renderPersonAward();
+
+    expect(screen.getByText('John Woo')).toBeInTheDocument();
+  });
+
+  it('年ページへのリンクは出さない', () => {
+    renderPersonAward();
+
+    expect(screen.queryByText(/を見る →/)).not.toBeInTheDocument();
+  });
+
+  it('受賞者数を出す', () => {
+    renderPersonAward();
+
+    expect(
+      screen.getByText('1990–1994 / 2 WINNERS / 3 NOMINEES'),
+    ).toBeInTheDocument();
+  });
+});

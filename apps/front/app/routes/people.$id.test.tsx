@@ -21,6 +21,7 @@ const person: PersonData = {
       ],
       personAwards: [
         {
+          slug: 'japan-academy-director',
           organization: '日本アカデミー賞',
           category: '監督賞',
           year: 1986,
@@ -37,6 +38,7 @@ const person: PersonData = {
       awards: [{slug: 'palme-dor', isWinner: true}],
       personAwards: [
         {
+          slug: 'japan-academy-director',
           organization: '日本アカデミー賞',
           category: '監督賞',
           year: 1981,
@@ -195,6 +197,14 @@ describe('PersonPage', () => {
           '日本アカデミー賞 監督賞 1受賞 / 2ノミネート',
       ),
     ).toBeInTheDocument();
+  });
+
+  it('個人賞の通算成績から賞ページへリンクする', () => {
+    renderPage();
+
+    expect(
+      screen.getByRole('link', {name: '日本アカデミー賞 監督賞'}),
+    ).toHaveAttribute('href', '/awards/japan-academy-director');
   });
 
   it('個人賞が無ければ通算成績を出さない', () => {

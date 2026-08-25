@@ -11,11 +11,36 @@ export type AwardSummaryData = {
   name: string;
   organization: string;
   description: string;
-  grouping: 'year' | 'list';
+  grouping: 'year' | 'list' | 'person';
   movieCount: number;
+  personCount?: number;
   firstYear: number;
   lastYear: number;
 };
+
+function AwardRow({award}: {award: AwardSummaryData}) {
+  return (
+    <a
+      href={`/awards/${award.slug}`}
+      className="flex items-baseline gap-3 py-3 border-t-2 border-ink no-underline text-ink">
+      <span className="flex-1">
+        <span className="block font-display font-extrabold text-base md:text-lg leading-tight">
+          {awardHeading(award)}
+        </span>
+        <span className="block font-mono text-[10px] text-ink-muted mt-1">
+          {award.firstYear === award.lastYear
+            ? award.firstYear
+            : `${award.firstYear}–${award.lastYear}`}
+        </span>
+      </span>
+      <span className="font-mono text-xs text-ink-muted shrink-0">
+        {award.grouping === 'person'
+          ? `${award.personCount} PEOPLE`
+          : `${award.movieCount} FILMS`}
+      </span>
+    </a>
+  );
+}
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {locale} = loaderData as {locale?: Locale};
@@ -47,6 +72,8 @@ export async function loader({context, request}: Route.LoaderArgs) {
 export default function AwardsIndex({loaderData}: Route.ComponentProps) {
   const {awards} = loaderData as {awards: AwardSummaryData[]};
   const locale = 'ja';
+  const filmAwards = awards.filter(award => award.grouping !== 'person');
+  const personAwards = awards.filter(award => award.grouping === 'person');
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -74,27 +101,26 @@ export default function AwardsIndex({loaderData}: Route.ComponentProps) {
         </div>
 
         <div>
-          {awards.map(award => (
-            <a
-              key={award.slug}
-              href={`/awards/${award.slug}`}
-              className="flex items-baseline gap-3 py-3 border-t-2 border-ink no-underline text-ink">
-              <span className="flex-1">
-                <span className="block font-display font-extrabold text-base md:text-lg leading-tight">
-                  {awardHeading(award)}
-                </span>
-                <span className="block font-mono text-[10px] text-ink-muted mt-1">
-                  {award.firstYear === award.lastYear
-                    ? award.firstYear
-                    : `${award.firstYear}–${award.lastYear}`}
-                </span>
-              </span>
-              <span className="font-mono text-xs text-ink-muted shrink-0">
-                {award.movieCount} FILMS
-              </span>
-            </a>
+          {filmAwards.map(award => (
+            <AwardRow key={award.slug} award={award} />
           ))}
         </div>
+
+        {personAwards.length > 0 && (
+          <section className="mt-10">
+            <h2 className="font-display font-black text-xl tracking-tight mb-2">
+              PERSONAL AWARDS
+            </h2>
+            <p className="font-mono text-xs text-ink-muted mb-4">
+              監督賞・演技賞から映画人を探す
+            </p>
+            <div>
+              {personAwards.map(award => (
+                <AwardRow key={award.slug} award={award} />
+              ))}
+            </div>
+          </section>
+        )}
 
         <SiteFooter locale={locale} />
       </div>

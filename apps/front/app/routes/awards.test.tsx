@@ -29,6 +29,17 @@ const mockAwards = {
       firstYear: 1929,
       lastYear: 2025,
     },
+    {
+      slug: 'japan-academy-director',
+      name: '最優秀監督賞',
+      organization: '日本アカデミー賞',
+      description: '日本アカデミー賞 最優秀監督賞の一覧。',
+      grouping: 'person' as const,
+      movieCount: 269,
+      personCount: 108,
+      firstYear: 1978,
+      lastYear: 2025,
+    },
   ],
 };
 
@@ -155,6 +166,44 @@ describe('Awards index page', () => {
         'href',
         '/awards/academy-best-picture',
       );
+    });
+
+    it('個人賞は人数を出す', () => {
+      render(
+        <AwardsIndexPage
+          {...cast<ComponentProperties>({
+            loaderData: cast<LoaderData>({
+              awards: mockAwards.awards,
+              locale: 'ja',
+            }),
+            params: {},
+            matches: [],
+          })}
+        />,
+      );
+
+      const link = screen.getByRole('link', {name: /最優秀監督賞/});
+      expect(link).toHaveAttribute('href', '/awards/japan-academy-director');
+      expect(link).toHaveTextContent('108 PEOPLE');
+    });
+
+    it('個人賞は別の見出しの下に並べる', () => {
+      render(
+        <AwardsIndexPage
+          {...cast<ComponentProperties>({
+            loaderData: cast<LoaderData>({
+              awards: mockAwards.awards,
+              locale: 'ja',
+            }),
+            params: {},
+            matches: [],
+          })}
+        />,
+      );
+
+      expect(
+        screen.getByRole('heading', {name: 'PERSONAL AWARDS'}),
+      ).toBeInTheDocument();
     });
   });
 });
