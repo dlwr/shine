@@ -33,7 +33,7 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   return buildSocialMeta({
     title: '映画人 | SHINE',
     description:
-      'SHINEが記録する映画賞で最も多く勝った監督と俳優のランキング。受賞作の本数で並べ、代表作から作品ページへ辿れます。',
+      'SHINEが記録する映画賞の監督賞・演技賞で最も多く勝った監督と俳優のランキング。受賞回数で並べ、受賞作から作品ページへ辿れます。',
     path: '/people',
     locale: locale ?? DEFAULT_LOCALE,
     imageUrl: `${SITE_URL}/og/home.png`,
@@ -82,7 +82,7 @@ function PersonRow({person, rank}: {person: ProminentPerson; rank: number}) {
         )}
         <p className="mt-0.5 font-mono text-[10px] text-ink-muted">
           <span className="font-bold text-brand">{person.wonCount}</span>
-          作受賞 / {person.nominatedCount}作ノミネート
+          回受賞 / {person.nominatedCount}回ノミネート
         </p>
         <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5">
           {person.topMovies.map(movie => (
@@ -145,12 +145,12 @@ export default function PeoplePage({loaderData}: Route.ComponentProps) {
           <p className="font-display text-sm leading-relaxed md:text-base">
             映画賞は作品に贈られる。だが撮ったのは人で、演じたのも人だ。
             <br />
-            SHINEが記録する年度制の映画賞で、受賞作を最も多く持つ監督と俳優を並べた。
+            SHINEが記録する映画賞の監督賞と演技賞で、受賞回数の多い監督と俳優を並べた。
           </p>
         </section>
 
-        <Ranking title="DIRECTORS" subtitle="監督" people={directors} />
-        <Ranking title="ACTORS" subtitle="俳優・女優" people={actors} />
+        <Ranking title="DIRECTORS" subtitle="監督賞" people={directors} />
+        <Ranking title="ACTORS" subtitle="主演・助演の演技賞" people={actors} />
 
         <SiteFooter locale={locale} />
       </div>
