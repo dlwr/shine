@@ -398,6 +398,7 @@ describe('PeopleService.getPerson', () => {
         ?.personAwards,
     ).toEqual([
       {
+        slug: 'japan-academy-director',
         organization: '日本アカデミー賞',
         category: '監督賞',
         year: 1986,
@@ -416,6 +417,7 @@ describe('PeopleService.getPerson', () => {
         ?.personAwards,
     ).toEqual([
       {
+        slug: 'japan-academy-director',
         organization: '日本アカデミー賞',
         category: '監督賞',
         year: 1986,
