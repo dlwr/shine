@@ -13,6 +13,7 @@ export type AwardTagLegend = {
 };
 
 export type PersonalAward = {
+  slug?: string;
   organization: string;
   category: string;
   year: number;

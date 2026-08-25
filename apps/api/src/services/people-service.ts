@@ -10,6 +10,7 @@ import {translations} from '@shine/database/schema/translations';
 import {
   awardPageDefinitions,
   findAwardPageDefinition,
+  findPersonAwardDefinition,
   japaneseOrganizationName,
   personAwardNominations,
 } from './awards-service';
@@ -228,6 +229,8 @@ export class PeopleService extends BaseService {
 
     for (const row of rows) {
       byMovie.get(row.movieUid)?.personAwards.push({
+        slug: findPersonAwardDefinition(row.organizationName, row.categoryName)
+          ?.slug,
         organization:
           japaneseOrganizationName(row.organizationName) ??
           row.organizationName,

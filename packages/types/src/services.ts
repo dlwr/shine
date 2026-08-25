@@ -136,10 +136,40 @@ export type AwardSummary = {
   name: string;
   organization: string;
   description: string;
-  grouping: 'year' | 'list';
+  grouping: 'year' | 'list' | 'person';
   movieCount: number;
+  /** grouping === 'person' のときのみ返る */
+  personCount?: number;
   firstYear: number;
   lastYear: number;
+};
+
+export type PersonAwardNominee = {
+  uid: string;
+  name: string;
+  originalName: string;
+  profilePath: string | undefined;
+  isWinner: boolean;
+  movies: Array<{
+    uid: string;
+    title: string | undefined;
+    movieYear: number | undefined;
+  }>;
+};
+
+export type PersonAwardYearGroup = {
+  year: number;
+  ceremonyNumber: number | undefined;
+  nominees: PersonAwardNominee[];
+};
+
+export type PersonAwardDetail = {
+  slug: string;
+  name: string;
+  organization: string;
+  description: string;
+  grouping: 'person';
+  years: PersonAwardYearGroup[];
 };
 
 export type CrossingMovie = {
@@ -288,6 +318,7 @@ export type PersonAwardTag = {
 };
 
 export type PersonalAward = {
+  slug: string | undefined;
   organization: string;
   category: string;
   /** 授賞式の年。第17回までは1回の受賞に複数作品が紐づくので、回数はこれで数える */

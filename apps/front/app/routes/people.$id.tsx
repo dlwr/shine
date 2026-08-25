@@ -59,6 +59,7 @@ function awardRecord(person: PersonData): {won: number; nominated: number} {
 }
 
 type PersonalAwardRecord = {
+  slug?: string;
   organization: string;
   category: string;
   won: number;
@@ -85,6 +86,7 @@ function personalAwardRecords(person: PersonData): PersonalAwardRecord[] {
   for (const award of ceremonies.values()) {
     const key = `${award.organization} ${award.category}`;
     const record = records.get(key) ?? {
+      slug: award.slug,
       organization: award.organization,
       category: award.category,
       won: 0,
@@ -245,7 +247,13 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
               <p
                 key={`${record.organization} ${record.category}`}
                 className="mt-1 font-mono text-xs text-ink-muted">
-                {record.organization} {record.category}{' '}
+                {record.slug ? (
+                  <a href={`/awards/${record.slug}`} className="text-ink-muted">
+                    {record.organization} {record.category}
+                  </a>
+                ) : (
+                  `${record.organization} ${record.category}`
+                )}{' '}
                 <span className="font-bold text-brand">{record.won}</span>
                 受賞 / {record.nominated}ノミネート
               </p>

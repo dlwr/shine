@@ -5,7 +5,7 @@ import {resolveApiUrl, sitemapResponse} from '@/lib/sitemap-source';
 
 type AwardListing = {
   slug: string;
-  grouping: 'year' | 'list';
+  grouping: 'year' | 'list' | 'person';
 };
 
 type AwardDetailShape = {
@@ -53,6 +53,10 @@ function subPageEntries(
   award: AwardListing,
   detail: AwardDetailShape,
 ): SitemapEntry[] {
+  if (award.grouping === 'person') {
+    return [];
+  }
+
   if (award.grouping === 'year') {
     return (detail.years ?? []).map(group => ({
       path: `/awards/${award.slug}/${group.year}`,
