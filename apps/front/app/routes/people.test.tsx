@@ -137,13 +137,16 @@ describe('People page', () => {
       expect(screen.getByText('クリント・イーストウッド')).toBeInTheDocument();
     });
 
-    it('監督の受賞作数を出す', () => {
+    it('監督の受賞回数を出す', () => {
       renderPage();
 
       const row = screen.getByRole('listitem', {
         name: 'クリント・イーストウッド',
       });
-      expect(within(row).getByText(/10/)).toBeInTheDocument();
+      expect(within(row).getByText('10')).toBeInTheDocument();
+      expect(
+        within(row).getByText(/回受賞 \/ 21回ノミネート/),
+      ).toBeInTheDocument();
     });
 
     it('監督の代表作を出す', () => {

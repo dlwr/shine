@@ -80,6 +80,72 @@ export function japaneseAwardNames(
     : {organization: definition.organization};
 }
 
+export type PersonAwardDefinition = {
+  slug: string;
+  organizationName: string;
+  categoryNames: string[];
+  name: string;
+  organization: string;
+  role: 'director' | 'actor';
+};
+
+export const personAwardDefinitions: PersonAwardDefinition[] = [
+  {
+    slug: 'japan-academy-director',
+    organizationName: 'Japan Academy Awards',
+    categoryNames: ['監督賞'],
+    name: '最優秀監督賞',
+    organization: '日本アカデミー賞',
+    role: 'director',
+  },
+  {
+    slug: 'japan-academy-lead-actor',
+    organizationName: 'Japan Academy Awards',
+    categoryNames: ['主演男優賞'],
+    name: '最優秀主演男優賞',
+    organization: '日本アカデミー賞',
+    role: 'actor',
+  },
+  {
+    slug: 'japan-academy-lead-actress',
+    organizationName: 'Japan Academy Awards',
+    categoryNames: ['主演女優賞'],
+    name: '最優秀主演女優賞',
+    organization: '日本アカデミー賞',
+    role: 'actor',
+  },
+  {
+    slug: 'japan-academy-supporting-actor',
+    organizationName: 'Japan Academy Awards',
+    categoryNames: ['助演男優賞'],
+    name: '最優秀助演男優賞',
+    organization: '日本アカデミー賞',
+    role: 'actor',
+  },
+  {
+    slug: 'japan-academy-supporting-actress',
+    organizationName: 'Japan Academy Awards',
+    categoryNames: ['助演女優賞'],
+    name: '最優秀助演女優賞',
+    organization: '日本アカデミー賞',
+    role: 'actor',
+  },
+];
+
+/** 個人賞の (組織, 部門) を役割で絞る条件 */
+export function personAwardNominations(role: PersonAwardDefinition['role']) {
+  return or(
+    ...personAwardDefinitions
+      .filter(definition => definition.role === role)
+      .map(definition =>
+        and(
+          eq(awardOrganizations.name, definition.organizationName),
+          inArray(awardCategories.name, definition.categoryNames),
+        ),
+      ),
+  );
+}
+
 const RANK_PATTERN = /^(\d+)位$/;
 
 function rankOf(entry: AwardMovieEntry): number {

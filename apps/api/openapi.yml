@@ -347,10 +347,11 @@ paths:
     get:
       summary: Get the most awarded directors and actors
       description: |
-        Returns directors and actors ranked by how many films they won an award
-        for, then by how many films they were nominated for. Only awards with
-        year pages count; list-style selections such as 1001 Movies are ignored.
-        Soft-deleted films are excluded.
+        Returns directors and actors ranked by how many times they won a
+        personal award (Best Director and the acting awards), then by how many
+        times they were nominated. A win or nomination counts once per ceremony
+        and category even when several films are attached to it. Soft-deleted
+        films are excluded.
       operationId: getProminentPeople
       tags:
         - Movies
@@ -2766,10 +2767,10 @@ components:
           type: string
         wonCount:
           type: integer
-          description: Films this person won an award for
+          description: Ceremonies where this person won a personal award
         nominatedCount:
           type: integer
-          description: Films this person was nominated for, wins included
+          description: Ceremonies where this person was nominated for a personal award, wins included
         topMovies:
           type: array
           items:
@@ -2784,7 +2785,7 @@ components:
                 type: integer
             required:
               - uid
-          description: Up to three award-winning films, newest first
+          description: Up to three films the person won a personal award for, newest first
       required:
         - uid
         - name
