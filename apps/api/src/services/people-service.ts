@@ -1,4 +1,4 @@
-import {and, desc, eq, inArray, isNull, or, sql} from '@shine/database';
+import {and, desc, eq, inArray, isNull, sql} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
@@ -11,6 +11,7 @@ import {
   awardPageDefinitions,
   findAwardPageDefinition,
   japaneseOrganizationName,
+  personAwardNominations,
 } from './awards-service';
 import {BaseService} from './base-service';
 import type {
@@ -24,24 +25,7 @@ import type {
 const PROMINENT_LIMIT = 24;
 const TOP_MOVIE_LIMIT = 3;
 
-function yearGroupedAwards() {
-  return or(
-    ...awardPageDefinitions
-      .filter(definition => definition.grouping === 'year')
-      .map(definition =>
-        and(
-          eq(awardOrganizations.name, definition.organizationName),
-          inArray(awardCategories.name, definition.categoryNames),
-        ),
-      ),
-  );
-}
-
-function creditRoleCondition(role: 'director' | 'actor') {
-  return role === 'director'
-    ? eq(movieCredits.job, 'Director')
-    : eq(movieCredits.department, 'Acting');
-}
+const awardOccasion = sql`${nominations.ceremonyUid} || ':' || ${nominations.categoryUid}`;
 
 const movieCount = sql<number>`COUNT(DISTINCT ${movieCredits.movieUid})`;
 
@@ -322,8 +306,8 @@ export class PeopleService extends BaseService {
     locale: string,
     limit: number,
   ): Promise<ProminentPerson[]> {
-    const wonCount = sql<number>`COUNT(DISTINCT CASE WHEN ${nominations.isWinner} = 1 THEN ${nominations.movieUid} END)`;
-    const nominatedCount = sql<number>`COUNT(DISTINCT ${nominations.movieUid})`;
+    const wonCount = sql<number>`COUNT(DISTINCT CASE WHEN ${nominations.isWinner} = 1 THEN ${awardOccasion} END)`;
+    const nominatedCount = sql<number>`COUNT(DISTINCT ${awardOccasion})`;
 
     const rows = await this.database
       .select({
@@ -335,15 +319,11 @@ export class PeopleService extends BaseService {
         nominatedCount: nominatedCount.as('nominated_count'),
       })
       .from(people)
-      .innerJoin(
-        movieCredits,
-        and(eq(movieCredits.personUid, people.uid), creditRoleCondition(role)),
-      )
+      .innerJoin(nominations, eq(nominations.personUid, people.uid))
       .innerJoin(
         movies,
-        and(eq(movies.uid, movieCredits.movieUid), isNull(movies.deletedAt)),
+        and(eq(movies.uid, nominations.movieUid), isNull(movies.deletedAt)),
       )
-      .innerJoin(nominations, eq(nominations.movieUid, movieCredits.movieUid))
       .innerJoin(
         awardCeremonies,
         eq(awardCeremonies.uid, nominations.ceremonyUid),
@@ -364,7 +344,7 @@ export class PeopleService extends BaseService {
           eq(translations.languageCode, locale),
         ),
       )
-      .where(yearGroupedAwards())
+      .where(personAwardNominations(role))
       .groupBy(people.uid)
       .orderBy(desc(wonCount), desc(nominatedCount), people.uid)
       .limit(limit);
@@ -398,7 +378,7 @@ export class PeopleService extends BaseService {
 
     const rows = await this.database
       .select({
-        personUid: movieCredits.personUid,
+        personUid: sql<string>`${nominations.personUid}`.as('person_uid'),
         uid: movies.uid,
         year: movies.year,
         title: sql<string | null>`
@@ -414,17 +394,10 @@ export class PeopleService extends BaseService {
 					)
 				`.as('title'),
       })
-      .from(movieCredits)
+      .from(nominations)
       .innerJoin(
         movies,
-        and(eq(movies.uid, movieCredits.movieUid), isNull(movies.deletedAt)),
-      )
-      .innerJoin(
-        nominations,
-        and(
-          eq(nominations.movieUid, movieCredits.movieUid),
-          eq(nominations.isWinner, 1),
-        ),
+        and(eq(movies.uid, nominations.movieUid), isNull(movies.deletedAt)),
       )
       .innerJoin(
         awardCeremonies,
@@ -440,9 +413,9 @@ export class PeopleService extends BaseService {
       )
       .where(
         and(
-          inArray(movieCredits.personUid, personUids),
-          creditRoleCondition(role),
-          yearGroupedAwards(),
+          inArray(nominations.personUid, personUids),
+          eq(nominations.isWinner, 1),
+          personAwardNominations(role),
         ),
       )
       .orderBy(desc(movies.year));

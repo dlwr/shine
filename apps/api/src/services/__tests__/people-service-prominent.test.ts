@@ -23,33 +23,6 @@ const migrationsFolder = path.resolve(
 
 type TestDatabase = ReturnType<typeof getDatabase>;
 
-const AWARDS = [
-  {
-    orgUid: 'org-cannes',
-    orgName: 'Cannes Film Festival',
-    categoryUid: 'cat-palme',
-    categoryName: "Palme d'Or",
-    ceremonyUid: 'ceremony-cannes',
-    ceremonyYear: 1980,
-  },
-  {
-    orgUid: 'org-academy',
-    orgName: 'Academy Awards',
-    categoryUid: 'cat-best-picture',
-    categoryName: 'Academy Award for Best Picture',
-    ceremonyUid: 'ceremony-academy',
-    ceremonyYear: 1990,
-  },
-  {
-    orgUid: 'org-1001',
-    orgName: '1001 Movies You Must See Before You Die',
-    categoryUid: 'cat-1001',
-    categoryName: 'Selected Films',
-    ceremonyUid: 'ceremony-1001',
-    ceremonyYear: 2020,
-  },
-];
-
 async function createTestEnvironment(): Promise<{
   environment: Environment;
   database: TestDatabase;
@@ -64,27 +37,40 @@ async function createTestEnvironment(): Promise<{
   const database = getDatabase(environment);
   await migrate(database, {migrationsFolder});
 
-  for (const award of AWARDS) {
-    await database
-      .insert(awardOrganizations)
-      .values({uid: award.orgUid, name: award.orgName});
-    await database.insert(awardCategories).values({
-      uid: award.categoryUid,
-      organizationUid: award.orgUid,
-      name: award.categoryName,
-    });
-    await database.insert(awardCeremonies).values({
-      uid: award.ceremonyUid,
-      organizationUid: award.orgUid,
-      year: award.ceremonyYear,
-    });
-  }
+  await database.insert(awardOrganizations).values([
+    {uid: 'org-japan-academy', name: 'Japan Academy Awards'},
+    {uid: 'org-academy', name: 'Academy Awards'},
+  ]);
+  await database.insert(awardCategories).values([
+    {
+      uid: 'cat-director',
+      organizationUid: 'org-japan-academy',
+      name: '監督賞',
+    },
+    {
+      uid: 'cat-lead-actor',
+      organizationUid: 'org-japan-academy',
+      name: '主演男優賞',
+    },
+    {
+      uid: 'cat-best-picture',
+      organizationUid: 'org-academy',
+      name: 'Academy Award for Best Picture',
+    },
+  ]);
+  await database.insert(awardCeremonies).values([
+    {uid: 'ceremony-1990', organizationUid: 'org-japan-academy', year: 1990},
+    {uid: 'ceremony-1991', organizationUid: 'org-japan-academy', year: 1991},
+    {uid: 'ceremony-1992', organizationUid: 'org-japan-academy', year: 1992},
+    {uid: 'ceremony-academy', organizationUid: 'org-academy', year: 1990},
+  ]);
 
   await database.insert(movies).values([
     {uid: 'movie-a', year: 1980},
+    {uid: 'movie-a2', year: 1981},
     {uid: 'movie-b', year: 1990},
     {uid: 'movie-c', year: 2000},
-    {uid: 'movie-listed', year: 2010},
+    {uid: 'movie-picture', year: 2005},
     {uid: 'movie-deleted', year: 2015, deletedAt: 1_700_000_000},
   ]);
 
@@ -94,6 +80,13 @@ async function createTestEnvironment(): Promise<{
       resourceUid: 'movie-a',
       languageCode: 'ja',
       content: '映画A',
+      isDefault: 1,
+    },
+    {
+      resourceType: 'movie_title',
+      resourceUid: 'movie-a2',
+      languageCode: 'ja',
+      content: '映画A2',
       isDefault: 1,
     },
     {
@@ -118,120 +111,100 @@ async function createTestEnvironment(): Promise<{
     },
   ]);
 
-  await database.insert(nominations).values([
-    {
-      movieUid: 'movie-a',
-      ceremonyUid: 'ceremony-cannes',
-      categoryUid: 'cat-palme',
-      isWinner: 1,
-    },
-    {
-      movieUid: 'movie-b',
-      ceremonyUid: 'ceremony-academy',
-      categoryUid: 'cat-best-picture',
-      isWinner: 1,
-    },
-    {
-      movieUid: 'movie-c',
-      ceremonyUid: 'ceremony-academy',
-      categoryUid: 'cat-best-picture',
-      isWinner: 0,
-    },
-    {
-      movieUid: 'movie-listed',
-      ceremonyUid: 'ceremony-1001',
-      categoryUid: 'cat-1001',
-      isWinner: 0,
-    },
-    {
-      movieUid: 'movie-deleted',
-      ceremonyUid: 'ceremony-cannes',
-      categoryUid: 'cat-palme',
-      isWinner: 1,
-    },
-  ]);
-
   await database.insert(people).values([
     {uid: 'person-master', tmdbId: 1, name: '巨匠'},
     {uid: 'person-foreign', tmdbId: 2, name: 'Martin Scorsese'},
-    {uid: 'person-listed', tmdbId: 3, name: 'リストだけの監督'},
+    {uid: 'person-picture', tmdbId: 3, name: '作品賞だけの監督'},
     {uid: 'person-actor', tmdbId: 4, name: '名優', profilePath: '/face.jpg'},
     {uid: 'person-deleted', tmdbId: 5, name: '消えた監督'},
   ]);
 
-  await database.insert(movieCredits).values([
+  await database.insert(nominations).values([
     {
       movieUid: 'movie-a',
+      ceremonyUid: 'ceremony-1990',
+      categoryUid: 'cat-director',
       personUid: 'person-master',
+      isWinner: 1,
+    },
+    {
+      movieUid: 'movie-b',
+      ceremonyUid: 'ceremony-1991',
+      categoryUid: 'cat-director',
+      personUid: 'person-master',
+      isWinner: 1,
+    },
+    {
+      movieUid: 'movie-c',
+      ceremonyUid: 'ceremony-1992',
+      categoryUid: 'cat-director',
+      personUid: 'person-master',
+      isWinner: 0,
+    },
+    {
+      movieUid: 'movie-c',
+      ceremonyUid: 'ceremony-1992',
+      categoryUid: 'cat-lead-actor',
+      personUid: 'person-master',
+      isWinner: 0,
+    },
+    {
+      movieUid: 'movie-picture',
+      ceremonyUid: 'ceremony-1992',
+      categoryUid: 'cat-director',
+      personUid: 'person-foreign',
+      isWinner: 0,
+    },
+    {
+      movieUid: 'movie-picture',
+      ceremonyUid: 'ceremony-academy',
+      categoryUid: 'cat-best-picture',
+      isWinner: 1,
+    },
+    {
+      movieUid: 'movie-deleted',
+      ceremonyUid: 'ceremony-1990',
+      categoryUid: 'cat-director',
+      personUid: 'person-deleted',
+      isWinner: 1,
+    },
+    {
+      movieUid: 'movie-a',
+      ceremonyUid: 'ceremony-1990',
+      categoryUid: 'cat-lead-actor',
+      personUid: 'person-actor',
+      isWinner: 1,
+    },
+    {
+      movieUid: 'movie-a2',
+      ceremonyUid: 'ceremony-1990',
+      categoryUid: 'cat-lead-actor',
+      personUid: 'person-actor',
+      isWinner: 1,
+    },
+    {
+      movieUid: 'movie-b',
+      ceremonyUid: 'ceremony-1991',
+      categoryUid: 'cat-lead-actor',
+      personUid: 'person-actor',
+      isWinner: 1,
+    },
+  ]);
+
+  await database.insert(movieCredits).values([
+    {
+      movieUid: 'movie-picture',
+      personUid: 'person-picture',
       creditId: 'c1',
       department: 'Directing',
       job: 'Director',
     },
     {
-      movieUid: 'movie-b',
+      movieUid: 'movie-a',
       personUid: 'person-master',
       creditId: 'c2',
       department: 'Directing',
       job: 'Director',
-    },
-    {
-      movieUid: 'movie-c',
-      personUid: 'person-master',
-      creditId: 'c3',
-      department: 'Directing',
-      job: 'Director',
-    },
-    {
-      movieUid: 'movie-a',
-      personUid: 'person-master',
-      creditId: 'c4',
-      department: 'Writing',
-      job: 'Screenplay',
-    },
-    {
-      movieUid: 'movie-b',
-      personUid: 'person-foreign',
-      creditId: 'c5',
-      department: 'Directing',
-      job: 'Director',
-    },
-    {
-      movieUid: 'movie-listed',
-      personUid: 'person-listed',
-      creditId: 'c6',
-      department: 'Directing',
-      job: 'Director',
-    },
-    {
-      movieUid: 'movie-deleted',
-      personUid: 'person-deleted',
-      creditId: 'c7',
-      department: 'Directing',
-      job: 'Director',
-    },
-    {
-      movieUid: 'movie-a',
-      personUid: 'person-actor',
-      creditId: 'c8',
-      department: 'Acting',
-      character: '主人公',
-      castOrder: 0,
-    },
-    {
-      movieUid: 'movie-b',
-      personUid: 'person-actor',
-      creditId: 'c9',
-      department: 'Acting',
-      character: '王',
-      castOrder: 1,
-    },
-    {
-      movieUid: 'movie-c',
-      personUid: 'person-master',
-      creditId: 'c10',
-      department: 'Acting',
-      character: '本人',
-      castOrder: 0,
     },
   ]);
 
@@ -245,7 +218,7 @@ describe('PeopleService.getProminentPeople', () => {
     ({environment} = await createTestEnvironment());
   });
 
-  it('監督を受賞作の多い順に並べる', async () => {
+  it('監督を監督賞の受賞回数が多い順に並べる', async () => {
     const service = new PeopleService(environment);
 
     const {directors} = await service.getProminentPeople({locale: 'ja'});
@@ -256,7 +229,7 @@ describe('PeopleService.getProminentPeople', () => {
     ]);
   });
 
-  it('受賞作の本数を数える', async () => {
+  it('受賞回数を数える', async () => {
     const service = new PeopleService(environment);
 
     const {directors} = await service.getProminentPeople({locale: 'ja'});
@@ -264,7 +237,7 @@ describe('PeopleService.getProminentPeople', () => {
     expect(directors[0]?.wonCount).toBe(2);
   });
 
-  it('ノミネート作の本数を数える', async () => {
+  it('ノミネート回数を数える', async () => {
     const service = new PeopleService(environment);
 
     const {directors} = await service.getProminentPeople({locale: 'ja'});
@@ -272,17 +245,25 @@ describe('PeopleService.getProminentPeople', () => {
     expect(directors[0]?.nominatedCount).toBe(3);
   });
 
-  it('リスト型の賞しか持たない監督は含めない', async () => {
+  it('同じ授賞式で複数作品が紐づく受賞は1回と数える', async () => {
+    const service = new PeopleService(environment);
+
+    const {actors} = await service.getProminentPeople({locale: 'ja'});
+
+    expect(actors[0]?.wonCount).toBe(2);
+  });
+
+  it('作品賞しか持たない監督は含めない', async () => {
     const service = new PeopleService(environment);
 
     const {directors} = await service.getProminentPeople({locale: 'ja'});
 
     expect(directors.map(director => director.uid)).not.toContain(
-      'person-listed',
+      'person-picture',
     );
   });
 
-  it('削除済み映画しか持たない監督は含めない', async () => {
+  it('削除済み映画の受賞しか持たない監督は含めない', async () => {
     const service = new PeopleService(environment);
 
     const {directors} = await service.getProminentPeople({locale: 'ja'});
@@ -319,7 +300,19 @@ describe('PeopleService.getProminentPeople', () => {
     ]);
   });
 
-  it('俳優を受賞作の多い順に並べる', async () => {
+  it('代表作は3本までに絞る', async () => {
+    const service = new PeopleService(environment);
+
+    const {actors} = await service.getProminentPeople({locale: 'ja'});
+
+    expect(actors[0]?.topMovies.map(movie => movie.title)).toEqual([
+      '映画B',
+      '映画A2',
+      '映画A',
+    ]);
+  });
+
+  it('俳優を演技賞の受賞回数が多い順に並べる', async () => {
     const service = new PeopleService(environment);
 
     const {actors} = await service.getProminentPeople({locale: 'ja'});
