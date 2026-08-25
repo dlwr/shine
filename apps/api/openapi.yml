@@ -464,6 +464,9 @@ paths:
         Returns the movies of an award or editorial list grouped by ceremony year.
         Year-grouped awards return winners only (with `filmCount` per year); use
         `/awards/{slug}/{year}` for the full lineup. List awards are paginated.
+        Personal awards (Best Director, acting awards) return every nominee per
+        ceremony year with the films they were nominated for; they have no year
+        pages.
       operationId: getAwardBySlug
       tags:
         - Awards
@@ -488,7 +491,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AwardDetail'
+                oneOf:
+                  - $ref: '#/components/schemas/AwardDetail'
+                  - $ref: '#/components/schemas/PersonAwardDetail'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -2344,9 +2349,12 @@ components:
           type: string
         grouping:
           type: string
-          enum: [year, list]
+          enum: [year, list, person]
         movieCount:
           type: integer
+        personCount:
+          type: integer
+          description: Present only when grouping is `person`
         firstYear:
           type: integer
         lastYear:
@@ -2383,6 +2391,85 @@ components:
           allOf:
             - $ref: '#/components/schemas/AwardPagination'
           description: Present only when grouping is `list`
+      required:
+        - slug
+        - name
+        - organization
+        - description
+        - grouping
+        - years
+
+    PersonAwardNominee:
+      type: object
+      properties:
+        uid:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Japanese name when available, otherwise the original
+        originalName:
+          type: string
+        profilePath:
+          type: string
+        isWinner:
+          type: boolean
+        movies:
+          type: array
+          items:
+            type: object
+            properties:
+              uid:
+                type: string
+                format: uuid
+              title:
+                type: string
+              movieYear:
+                type: integer
+            required:
+              - uid
+          description: Films attached to this nomination. Early ceremonies attached several films to one win
+      required:
+        - uid
+        - name
+        - originalName
+        - isWinner
+        - movies
+
+    PersonAwardYearGroup:
+      type: object
+      properties:
+        year:
+          type: integer
+        ceremonyNumber:
+          type: integer
+        nominees:
+          type: array
+          items:
+            $ref: '#/components/schemas/PersonAwardNominee'
+          description: Winners first
+      required:
+        - year
+        - nominees
+
+    PersonAwardDetail:
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        organization:
+          type: string
+        description:
+          type: string
+        grouping:
+          type: string
+          enum: [person]
+        years:
+          type: array
+          items:
+            $ref: '#/components/schemas/PersonAwardYearGroup'
       required:
         - slug
         - name
@@ -2861,6 +2948,9 @@ components:
                 items:
                   type: object
                   properties:
+                    slug:
+                      type: string
+                      description: Slug of the award page for this category, when one exists
                     organization:
                       type: string
                     category:

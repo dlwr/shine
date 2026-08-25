@@ -8,6 +8,7 @@ import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
+import {people} from '@shine/database/schema/people';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
@@ -820,5 +821,249 @@ describe('AwardsService.getAwardYear', () => {
     const result = await service.getAwardYear('1001-movies', 2021);
 
     expect(result).toBeUndefined();
+  });
+});
+
+async function seedJapanAcademyDirector(database: TestDatabase): Promise<void> {
+  await database
+    .insert(awardOrganizations)
+    .values({uid: 'org-jaa', name: 'Japan Academy Awards'});
+  await database.insert(awardCategories).values([
+    {uid: 'cat-jaa-director', organizationUid: 'org-jaa', name: '監督賞'},
+    {uid: 'cat-jaa-picture', organizationUid: 'org-jaa', name: '優秀作品賞'},
+  ]);
+  await database.insert(awardCeremonies).values([
+    {
+      uid: 'ceremony-jaa-1990',
+      organizationUid: 'org-jaa',
+      year: 1990,
+      ceremonyNumber: 13,
+    },
+    {
+      uid: 'ceremony-jaa-1994',
+      organizationUid: 'org-jaa',
+      year: 1994,
+      ceremonyNumber: 17,
+    },
+  ]);
+  await database.insert(people).values([
+    {uid: 'person-master', tmdbId: 1, name: '巨匠'},
+    {uid: 'person-young', tmdbId: 2, name: '若手', profilePath: '/young.jpg'},
+    {uid: 'person-foreign', tmdbId: 3, name: 'John Woo'},
+  ]);
+  await database.insert(translations).values({
+    resourceType: 'person_name',
+    resourceUid: 'person-foreign',
+    languageCode: 'ja',
+    content: 'ジョン・ウー',
+  });
+  await seedMovie(database, 'movie-a', 'Movie A', {
+    year: 1989,
+    jaTitle: '映画A',
+  });
+  await seedMovie(database, 'movie-b', 'Movie B', {
+    year: 1989,
+    jaTitle: '映画B',
+  });
+  await seedMovie(database, 'movie-c', 'Movie C', {
+    year: 1993,
+    jaTitle: '映画C',
+  });
+  await seedMovie(database, 'movie-d', 'Movie D', {
+    year: 1993,
+    jaTitle: '映画D',
+  });
+  await database
+    .insert(movies)
+    .values({uid: 'movie-deleted', year: 1993, deletedAt: 1});
+  await database.insert(nominations).values([
+    {
+      movieUid: 'movie-a',
+      ceremonyUid: 'ceremony-jaa-1990',
+      categoryUid: 'cat-jaa-director',
+      personUid: 'person-master',
+      isWinner: 1,
+    },
+    {
+      movieUid: 'movie-b',
+      ceremonyUid: 'ceremony-jaa-1990',
+      categoryUid: 'cat-jaa-director',
+      personUid: 'person-master',
+      isWinner: 1,
+    },
+    {
+      movieUid: 'movie-c',
+      ceremonyUid: 'ceremony-jaa-1994',
+      categoryUid: 'cat-jaa-director',
+      personUid: 'person-master',
+      isWinner: 0,
+    },
+    {
+      movieUid: 'movie-d',
+      ceremonyUid: 'ceremony-jaa-1994',
+      categoryUid: 'cat-jaa-director',
+      personUid: 'person-young',
+      isWinner: 1,
+    },
+    {
+      movieUid: 'movie-c',
+      ceremonyUid: 'ceremony-jaa-1994',
+      categoryUid: 'cat-jaa-director',
+      personUid: 'person-foreign',
+      isWinner: 0,
+    },
+    {
+      movieUid: 'movie-deleted',
+      ceremonyUid: 'ceremony-jaa-1994',
+      categoryUid: 'cat-jaa-director',
+      personUid: 'person-young',
+      isWinner: 0,
+    },
+    {
+      movieUid: 'movie-d',
+      ceremonyUid: 'ceremony-jaa-1994',
+      categoryUid: 'cat-jaa-picture',
+      isWinner: 1,
+    },
+  ]);
+}
+
+describe('AwardsService.getPersonAwardBySlug', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+  let service: AwardsService;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+    service = new AwardsService(environment);
+    await seedJapanAcademyDirector(database);
+  });
+
+  it('grouping person で賞の名前を返す', async () => {
+    const result = await service.getPersonAwardBySlug('japan-academy-director');
+
+    expect(result).toMatchObject({
+      slug: 'japan-academy-director',
+      name: '最優秀監督賞',
+      organization: '日本アカデミー賞',
+      grouping: 'person',
+    });
+  });
+
+  it('授賞式の年を新しい順に並べる', async () => {
+    const result = await service.getPersonAwardBySlug('japan-academy-director');
+
+    expect(result?.years.map(group => group.year)).toEqual([1994, 1990]);
+  });
+
+  it('回次を返す', async () => {
+    const result = await service.getPersonAwardBySlug('japan-academy-director');
+
+    expect(result?.years[0]?.ceremonyNumber).toBe(17);
+  });
+
+  it('受賞者を先頭に並べる', async () => {
+    const result = await service.getPersonAwardBySlug('japan-academy-director');
+    expect(result?.years[0]?.nominees.map(nominee => nominee.uid)).toEqual([
+      'person-young',
+      'person-foreign',
+      'person-master',
+    ]);
+  });
+
+  it('同じ授賞式で複数作品が紐づく受賞は1人にまとめる', async () => {
+    const result = await service.getPersonAwardBySlug('japan-academy-director');
+    expect(result?.years[1]?.nominees).toHaveLength(1);
+    expect(
+      result?.years[1]?.nominees[0]?.movies.map(movie => movie.title),
+    ).toEqual(['映画A', '映画B']);
+  });
+
+  it('人物の日本語名を優先する', async () => {
+    const result = await service.getPersonAwardBySlug('japan-academy-director');
+    expect(
+      result?.years[0]?.nominees.find(
+        nominee => nominee.uid === 'person-foreign',
+      ),
+    ).toMatchObject({name: 'ジョン・ウー', originalName: 'John Woo'});
+  });
+
+  it('人物の写真を返す', async () => {
+    const result = await service.getPersonAwardBySlug('japan-academy-director');
+    expect(result?.years[0]?.nominees[0]?.profilePath).toBe('/young.jpg');
+  });
+
+  it('削除済み映画のノミネートは除く', async () => {
+    const result = await service.getPersonAwardBySlug('japan-academy-director');
+    expect(
+      result?.years[0]?.nominees
+        .find(nominee => nominee.uid === 'person-young')
+        ?.movies.map(movie => movie.uid),
+    ).toEqual(['movie-d']);
+  });
+
+  it('作品賞のノミネートは混ぜない', async () => {
+    const result = await service.getPersonAwardBySlug('japan-academy-director');
+    expect(result?.years[0]?.nominees).toHaveLength(3);
+  });
+
+  it('年ページは持たない', async () => {
+    const result = await service.getAwardYear('japan-academy-director', 1994);
+
+    expect(result).toBeUndefined();
+  });
+});
+
+describe('AwardsService.listAwards 個人賞', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+  let service: AwardsService;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+    service = new AwardsService(environment);
+  });
+
+  it('ノミネーションが無い個人賞は含めない', async () => {
+    const result = await service.listAwards();
+
+    expect(result.map(award => award.slug)).not.toContain(
+      'japan-academy-director',
+    );
+  });
+
+  it('個人賞を人数と年の範囲付きで含める', async () => {
+    await seedJapanAcademyDirector(database);
+
+    const result = await service.listAwards();
+
+    expect(
+      result.find(award => award.slug === 'japan-academy-director'),
+    ).toMatchObject({
+      grouping: 'person',
+      personCount: 3,
+      movieCount: 4,
+      firstYear: 1990,
+      lastYear: 1994,
+    });
+  });
+
+  it('個人賞は作品賞の後に並べる', async () => {
+    await seedJapanAcademyDirector(database);
+    await seedCannes(database);
+    await seedCannesCeremony(database, 'ceremony-2023', 2023);
+    await database.insert(nominations).values({
+      movieUid: 'movie-a',
+      ceremonyUid: 'ceremony-2023',
+      categoryUid: 'cat-palme',
+    });
+
+    const result = await service.listAwards();
+
+    expect(result.map(award => award.slug)).toEqual([
+      'palme-dor',
+      'japan-academy-best-picture',
+      'japan-academy-director',
+    ]);
   });
 });

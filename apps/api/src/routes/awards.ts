@@ -1,6 +1,6 @@
 import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
-import type {AwardDetail} from '@shine/types';
+import type {AwardDetail, PersonAwardDetail} from '@shine/types';
 import {AwardsService} from '../services';
 import {paginateAwardDetail} from '../services/awards-service';
 import {
@@ -47,9 +47,11 @@ awardsRoutes.get('/:slug', async c => {
   // 全件を1キーに載せて読み出し後に切り出す
   const cacheKey = `awards:${slug}:v2`;
   const cached = await cache.get(cacheKey);
+  const service = new AwardsService(c.env);
   const full =
-    (cached?.data as AwardDetail | undefined) ??
-    (await new AwardsService(c.env).getAwardBySlug(slug));
+    (cached?.data as AwardDetail | PersonAwardDetail | undefined) ??
+    (await service.getAwardBySlug(slug)) ??
+    (await service.getPersonAwardBySlug(slug));
 
   if (!full) {
     return c.json({error: 'Award not found'}, 404);
@@ -59,7 +61,8 @@ awardsRoutes.get('/:slug', async c => {
     await cache.set(cacheKey, full, AWARDS_CACHE_TTL);
   }
 
-  const award = paginateAwardDetail(full, page);
+  const award =
+    full.grouping === 'person' ? full : paginateAwardDetail(full, page);
   if (!award) {
     return c.json({error: 'Award not found'}, 404);
   }

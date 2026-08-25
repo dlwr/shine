@@ -4,6 +4,7 @@ import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
+import {people} from '@shine/database/schema/people';
 import {BaseService} from './base-service';
 import type {
   AwardDetail,
@@ -11,6 +12,9 @@ import type {
   AwardSummary,
   AwardYearDetail,
   AwardYearGroup,
+  PersonAwardDetail,
+  PersonAwardNominee,
+  PersonAwardYearGroup,
 } from '@shine/types';
 
 export function findAwardPageDefinition(
@@ -86,6 +90,7 @@ export type PersonAwardDefinition = {
   categoryNames: string[];
   name: string;
   organization: string;
+  description: string;
   role: 'director' | 'actor';
 };
 
@@ -96,6 +101,8 @@ export const personAwardDefinitions: PersonAwardDefinition[] = [
     categoryNames: ['監督賞'],
     name: '最優秀監督賞',
     organization: '日本アカデミー賞',
+    description:
+      '日本アカデミー賞 最優秀監督賞の歴代受賞者と優秀監督賞ノミネートの一覧。',
     role: 'director',
   },
   {
@@ -104,6 +111,8 @@ export const personAwardDefinitions: PersonAwardDefinition[] = [
     categoryNames: ['主演男優賞'],
     name: '最優秀主演男優賞',
     organization: '日本アカデミー賞',
+    description:
+      '日本アカデミー賞 最優秀主演男優賞の歴代受賞者と優秀主演男優賞ノミネートの一覧。',
     role: 'actor',
   },
   {
@@ -112,6 +121,8 @@ export const personAwardDefinitions: PersonAwardDefinition[] = [
     categoryNames: ['主演女優賞'],
     name: '最優秀主演女優賞',
     organization: '日本アカデミー賞',
+    description:
+      '日本アカデミー賞 最優秀主演女優賞の歴代受賞者と優秀主演女優賞ノミネートの一覧。',
     role: 'actor',
   },
   {
@@ -120,6 +131,8 @@ export const personAwardDefinitions: PersonAwardDefinition[] = [
     categoryNames: ['助演男優賞'],
     name: '最優秀助演男優賞',
     organization: '日本アカデミー賞',
+    description:
+      '日本アカデミー賞 最優秀助演男優賞の歴代受賞者と優秀助演男優賞ノミネートの一覧。',
     role: 'actor',
   },
   {
@@ -128,9 +141,22 @@ export const personAwardDefinitions: PersonAwardDefinition[] = [
     categoryNames: ['助演女優賞'],
     name: '最優秀助演女優賞',
     organization: '日本アカデミー賞',
+    description:
+      '日本アカデミー賞 最優秀助演女優賞の歴代受賞者と優秀助演女優賞ノミネートの一覧。',
     role: 'actor',
   },
 ];
+
+export function findPersonAwardDefinition(
+  organizationName: string,
+  categoryName: string,
+): PersonAwardDefinition | undefined {
+  return personAwardDefinitions.find(
+    entry =>
+      entry.organizationName === organizationName &&
+      entry.categoryNames.includes(categoryName),
+  );
+}
 
 /** 個人賞の (組織, 部門) を役割で絞る条件 */
 export function personAwardNominations(role: PersonAwardDefinition['role']) {
@@ -161,6 +187,21 @@ function compareAwardMovies(a: AwardMovieEntry, b: AwardMovieEntry): number {
     ? Number(b.isWinner) - Number(a.isWinner)
     : rankA - rankB;
 }
+
+function compareCodePoints(a: string, b: string): number {
+  return a < b ? -1 : Number(a > b);
+}
+
+function compareNominees(a: PersonAwardNominee, b: PersonAwardNominee): number {
+  return (
+    Number(b.isWinner) - Number(a.isWinner) || compareCodePoints(a.name, b.name)
+  );
+}
+
+type CategorySelector = {
+  organizationName: string;
+  categoryNames: string[];
+};
 
 export type AwardPageDefinition = {
   slug: string;
@@ -735,56 +776,201 @@ export class AwardsService extends BaseService {
     const summaries: AwardSummary[] = [];
 
     for (const definition of awardPageDefinitions) {
-      const categoryUids = await this.resolveCategoryUids(definition);
-      if (categoryUids.length === 0) {
-        continue;
+      const summary = await this.summarizeAward(
+        definition,
+        definition.grouping,
+      );
+      if (summary) {
+        summaries.push(summary);
       }
+    }
 
-      const [aggregate] = await this.database
-        .select({
-          movieCount: sql<number>`COUNT(DISTINCT ${nominations.movieUid})`,
-          firstYear: sql<number | null>`MIN(${awardCeremonies.year})`,
-          lastYear: sql<number | null>`MAX(${awardCeremonies.year})`,
-        })
-        .from(nominations)
-        .innerJoin(
-          awardCeremonies,
-          eq(nominations.ceremonyUid, awardCeremonies.uid),
-        )
-        .innerJoin(movies, eq(nominations.movieUid, movies.uid))
-        .where(
-          and(
-            inArray(nominations.categoryUid, categoryUids),
-            isNull(movies.deletedAt),
-          ),
-        );
-
-      if (
-        !aggregate ||
-        aggregate.movieCount === 0 ||
-        aggregate.firstYear === null ||
-        aggregate.lastYear === null
-      ) {
-        continue;
+    for (const definition of personAwardDefinitions) {
+      const summary = await this.summarizeAward(definition, 'person');
+      if (summary) {
+        summaries.push(summary);
       }
-
-      summaries.push({
-        slug: definition.slug,
-        name: definition.name,
-        organization: definition.organization,
-        description: definition.description,
-        grouping: definition.grouping,
-        movieCount: aggregate.movieCount,
-        firstYear: aggregate.firstYear,
-        lastYear: aggregate.lastYear,
-      });
     }
 
     return summaries;
   }
 
+  async getPersonAwardBySlug(
+    slug: string,
+  ): Promise<PersonAwardDetail | undefined> {
+    const definition = personAwardDefinitions.find(
+      entry => entry.slug === slug,
+    );
+    if (!definition) {
+      return undefined;
+    }
+
+    const categoryUids = await this.resolveCategoryUids(definition);
+    if (categoryUids.length === 0) {
+      return undefined;
+    }
+
+    const rows = await this.database
+      .select({
+        personUid: people.uid,
+        personName: people.name,
+        profilePath: people.profilePath,
+        jaName: sql<string | null>`(
+          SELECT content FROM translations
+          WHERE translations.resource_uid = people.uid
+            AND translations.resource_type = 'person_name'
+            AND translations.language_code = 'ja'
+          LIMIT 1
+        )`.as('jaName'),
+        isWinner: nominations.isWinner,
+        ceremonyYear: awardCeremonies.year,
+        ceremonyNumber: awardCeremonies.ceremonyNumber,
+        movieUid: movies.uid,
+        movieYear: movies.year,
+        jaTitle: sql<string | null>`(
+          SELECT content FROM translations
+          WHERE translations.resource_uid = movies.uid
+            AND translations.resource_type = 'movie_title'
+            AND translations.language_code = 'ja'
+          LIMIT 1
+        )`.as('jaTitle'),
+        defaultTitle: sql<string | null>`(
+          SELECT content FROM translations
+          WHERE translations.resource_uid = movies.uid
+            AND translations.resource_type = 'movie_title'
+          ORDER BY translations.is_default DESC
+          LIMIT 1
+        )`.as('defaultTitle'),
+      })
+      .from(nominations)
+      .innerJoin(
+        awardCeremonies,
+        eq(nominations.ceremonyUid, awardCeremonies.uid),
+      )
+      .innerJoin(movies, eq(nominations.movieUid, movies.uid))
+      .innerJoin(people, eq(nominations.personUid, people.uid))
+      .where(
+        and(
+          inArray(nominations.categoryUid, categoryUids),
+          isNull(movies.deletedAt),
+        ),
+      );
+
+    if (rows.length === 0) {
+      return undefined;
+    }
+
+    const groups = new Map<number, PersonAwardYearGroup>();
+    for (const row of rows) {
+      let group = groups.get(row.ceremonyYear);
+      if (!group) {
+        group = {
+          year: row.ceremonyYear,
+          ceremonyNumber: row.ceremonyNumber ?? undefined,
+          nominees: [],
+        };
+        groups.set(row.ceremonyYear, group);
+      }
+
+      let nominee = group.nominees.find(entry => entry.uid === row.personUid);
+      if (!nominee) {
+        nominee = {
+          uid: row.personUid,
+          name: row.jaName ?? row.personName,
+          originalName: row.personName,
+          profilePath: row.profilePath ?? undefined,
+          isWinner: false,
+          movies: [],
+        };
+        group.nominees.push(nominee);
+      }
+
+      nominee.isWinner ||= row.isWinner === 1;
+      if (nominee.movies.every(movie => movie.uid !== row.movieUid)) {
+        nominee.movies.push({
+          uid: row.movieUid,
+          title: row.jaTitle ?? row.defaultTitle ?? undefined,
+          movieYear: row.movieYear ?? undefined,
+        });
+      }
+    }
+
+    const years = groups
+      .values()
+      .toArray()
+      .toSorted((a, b) => b.year - a.year);
+    for (const group of years) {
+      group.nominees.sort(compareNominees);
+      for (const nominee of group.nominees) {
+        nominee.movies.sort((a, b) =>
+          compareCodePoints(a.title ?? '', b.title ?? ''),
+        );
+      }
+    }
+
+    return {
+      slug: definition.slug,
+      name: definition.name,
+      organization: definition.organization,
+      description: definition.description,
+      grouping: 'person',
+      years,
+    };
+  }
+
+  private async summarizeAward(
+    definition: AwardPageDefinition | PersonAwardDefinition,
+    grouping: AwardSummary['grouping'],
+  ): Promise<AwardSummary | undefined> {
+    const categoryUids = await this.resolveCategoryUids(definition);
+    if (categoryUids.length === 0) {
+      return undefined;
+    }
+
+    const [aggregate] = await this.database
+      .select({
+        movieCount: sql<number>`COUNT(DISTINCT ${nominations.movieUid})`,
+        personCount: sql<number>`COUNT(DISTINCT ${nominations.personUid})`,
+        firstYear: sql<number | null>`MIN(${awardCeremonies.year})`,
+        lastYear: sql<number | null>`MAX(${awardCeremonies.year})`,
+      })
+      .from(nominations)
+      .innerJoin(
+        awardCeremonies,
+        eq(nominations.ceremonyUid, awardCeremonies.uid),
+      )
+      .innerJoin(movies, eq(nominations.movieUid, movies.uid))
+      .where(
+        and(
+          inArray(nominations.categoryUid, categoryUids),
+          isNull(movies.deletedAt),
+        ),
+      );
+
+    if (
+      !aggregate ||
+      aggregate.movieCount === 0 ||
+      aggregate.firstYear === null ||
+      aggregate.lastYear === null
+    ) {
+      return undefined;
+    }
+
+    return {
+      slug: definition.slug,
+      name: definition.name,
+      organization: definition.organization,
+      description: definition.description,
+      grouping,
+      movieCount: aggregate.movieCount,
+      ...(grouping === 'person' && {personCount: aggregate.personCount}),
+      firstYear: aggregate.firstYear,
+      lastYear: aggregate.lastYear,
+    };
+  }
+
   private async resolveCategoryUids(
-    definition: AwardPageDefinition,
+    definition: CategorySelector,
   ): Promise<string[]> {
     const rows = await this.database
       .select({uid: awardCategories.uid})
