@@ -733,6 +733,12 @@ describe('findPersonAwardDefinition', () => {
       findPersonAwardDefinition('Japan Academy Awards', '監督賞')?.slug,
     ).toBe('japan-academy-director');
   });
+
+  it('カンヌ国際映画祭の女優賞を引く', () => {
+    expect(
+      findPersonAwardDefinition('Cannes Film Festival', 'Best Actress')?.slug,
+    ).toBe('cannes-best-actress');
+  });
 });
 
 describe('AwardsService.getAwardYear', () => {
