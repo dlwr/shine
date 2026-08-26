@@ -315,13 +315,14 @@ export async function fetchTMDBCredits(
   tmdbId: number,
   mediaType: 'movie' | 'tv',
   tmdbApiKey: string,
+  language = 'ja-JP',
 ): Promise<TMDBCredits | undefined> {
   try {
     const creditsUrl = new URL(
       `${TMDB_API_BASE_URL}/${mediaType}/${tmdbId}/credits`,
     );
     creditsUrl.searchParams.append('api_key', tmdbApiKey);
-    creditsUrl.searchParams.append('language', 'ja-JP');
+    creditsUrl.searchParams.append('language', language);
 
     return await fetchJsonWithRetry<TMDBCredits>(creditsUrl.href);
   } catch (error) {
