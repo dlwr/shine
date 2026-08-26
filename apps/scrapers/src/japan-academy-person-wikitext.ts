@@ -1,4 +1,10 @@
 import {buildUrl, fetchJsonWithRetry} from './common/fetch-utilities';
+import {
+  cellsOf,
+  fillRow,
+  type CarriedCell,
+  type Cell,
+} from './common/wikitext-table';
 
 const WIKIPEDIA_API = 'https://ja.wikipedia.org/w/api.php';
 const USER_AGENT = 'shine-film.com movie database (https://shine-film.com)';
@@ -55,42 +61,6 @@ const FILM_HEADER = '作品';
 const YEAR_HEADER = '年';
 const IGNORED_HEADERS = ['脚注', '役名', '備考'];
 
-type Cell = {
-  attributes: string;
-  content: string;
-  rowspan: number;
-};
-
-function parseCell(text: string): Cell {
-  const body = text.slice(1);
-  const separator = body.indexOf('|');
-  const prefix = separator === -1 ? '' : body.slice(0, separator);
-  const hasAttributes =
-    separator !== -1 && prefix.includes('=') && !prefix.includes('[[');
-
-  const attributes = hasAttributes ? prefix : '';
-  const content = hasAttributes ? body.slice(separator + 1) : body;
-  const rowspan = /rowspan="?(\d+)/.exec(attributes);
-
-  return {
-    attributes,
-    content: content.trim(),
-    rowspan: rowspan ? Number(rowspan[1]) : 1,
-  };
-}
-
-function cellsOf(chunk: string, marker: '|' | '!'): Cell[] {
-  return chunk
-    .split('\n')
-    .filter(
-      line =>
-        line.startsWith(marker) &&
-        !line.startsWith('|+') &&
-        !line.startsWith('|}'),
-    )
-    .map(line => parseCell(line));
-}
-
 type ColumnLayout = {
   size: number;
   yearIndex: number;
@@ -112,37 +82,6 @@ function columnLayout(header: Cell[]): ColumnLayout | undefined {
   return yearIndex === -1 || filmIndex === -1 || personIndex === -1
     ? undefined
     : {size: labels.length, yearIndex, personIndex, filmIndex};
-}
-
-function fillRow(
-  own: Cell[],
-  carried: Array<{cell: Cell; rowsLeft: number} | undefined>,
-  size: number,
-): Cell[] {
-  const row: Cell[] = [];
-  let ownIndex = 0;
-
-  for (let column = 0; column < size; column++) {
-    const carry = carried[column];
-    if (carry && carry.rowsLeft > 0) {
-      row[column] = carry.cell;
-      carry.rowsLeft--;
-      continue;
-    }
-
-    const cell = own[ownIndex];
-    ownIndex++;
-    if (!cell) {
-      break;
-    }
-
-    row[column] = cell;
-    if (cell.rowspan > 1) {
-      carried[column] = {cell, rowsLeft: cell.rowspan - 1};
-    }
-  }
-
-  return row;
 }
 
 function parseEntry(
@@ -188,17 +127,17 @@ function parseTable(table: string): JapanAcademyPersonEdition[] {
     return [];
   }
 
-  const layout = columnLayout(cellsOf(chunks[headerIndex], '!'));
+  const layout = columnLayout(cellsOf(chunks[headerIndex], ['!']));
   if (!layout) {
     return [];
   }
 
   const editions: JapanAcademyPersonEdition[] = [];
-  const carried: Array<{cell: Cell; rowsLeft: number} | undefined> = [];
+  const carried: CarriedCell[] = [];
 
   const dataChunks = chunks.slice(headerIndex + 1);
   for (const chunk of dataChunks) {
-    const own = cellsOf(chunk, '|');
+    const own = cellsOf(chunk, ['|']);
     // 記事に `|-` が連続する箇所があり、空行でrowspanを消費すると行がずれる
     if (own.length === 0) {
       continue;
