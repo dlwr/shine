@@ -7,12 +7,15 @@ import {
 } from './common/en-wikipedia-award';
 import {type ImdbEventImportStats} from './imdb-event-award';
 
-/** 記事にリンクの無い作品 */
+/** 記事にリンクの無い作品、原作の小説にリンクしている作品、米国公開が遅れて年窓に入らない作品 */
 const RESOLUTION_OVERRIDES = new Map<string, string>([
   ['13:Eyes of Children', 'tt0262548'],
   ['13:Dangerous Curves', 'tt0154372'],
   ['14:Roses on the Arm', 'tt0049821'],
+  ['14:The White Reindeer', 'tt0045283'],
   ['20:My Son, the Hero (Los Hermanos Del Hierro)', 'tt0054969'],
+  ['37:The Europeans', 'tt0079123'],
+  ['37:Till Marriage Do Us Part', 'tt0071844'],
 ]);
 
 const PERSON_NAME_ALIASES: Record<string, string> = {};
