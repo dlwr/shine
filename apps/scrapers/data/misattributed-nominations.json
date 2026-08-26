@@ -250,5 +250,14 @@
     "correctImdbId": "tt38119721",
     "correctTitle": "宝島",
     "correctYear": 2025
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1951,
+    "wrongImdbId": "tt0236861",
+    "correctImdbId": "tt0040300",
+    "correctTitle": "Doña Diabla",
+    "correctYear": 1950
   }
 ]
