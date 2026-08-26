@@ -407,6 +407,36 @@ describe('PeopleService.getPerson', () => {
     ]);
   });
 
+  it('部門名が英語の個人賞は部門名を日本語で返す', async () => {
+    const database = getDatabase(environment);
+    await database.insert(awardCategories).values({
+      uid: 'cat-academy-director',
+      organizationUid: 'org-academy',
+      name: 'Academy Award for Best Director',
+    });
+    await database.insert(nominations).values({
+      movieUid: 'movie-ran',
+      ceremonyUid: 'ceremony-academy',
+      categoryUid: 'cat-academy-director',
+      personUid: 'person-kurosawa',
+      isWinner: 0,
+    });
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-kurosawa', 'ja');
+
+    expect(
+      person?.credits.find(credit => credit.movieUid === 'movie-ran')
+        ?.personAwards,
+    ).toContainEqual({
+      slug: 'academy-director',
+      organization: 'アカデミー賞',
+      category: '監督賞',
+      year: 1986,
+      isWinner: false,
+    });
+  });
+
   it('受賞していない個人賞も返す', async () => {
     const service = new PeopleService(environment);
 

@@ -38,6 +38,18 @@ describe('describeNomination', () => {
     ).toBe('日本アカデミー賞 監督賞 2026年 受賞');
   });
 
+  it('部門名が英語の個人賞は部門名を日本語で出す', () => {
+    expect(
+      describeNomination({
+        organizationName: 'Academy Awards',
+        categoryName: 'Academy Award for Best Actress',
+        ceremonyYear: 2023,
+        isWinner: true,
+        specialMention: undefined,
+      }).achievement,
+    ).toBe('アカデミー賞 主演女優賞 2023年 受賞');
+  });
+
   it('作品賞は部門名を出さない', () => {
     expect(
       describeNomination({

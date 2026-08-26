@@ -33,11 +33,17 @@ const VARIANTS: Record<string, string> = {
 
 const VARIANT_PATTERN = new RegExp(`[${Object.keys(VARIANTS).join('')}]`, 'gu');
 
+const LATIN_DIACRITICS = /[\u{300}-\u{36F}]/gu;
+
 export function normalizePersonName(name: string): string {
   return name
     .replaceAll(/\s+/gu, '')
     .normalize('NFKC')
-    .replaceAll(VARIANT_PATTERN, character => VARIANTS[character]);
+    .replaceAll(VARIANT_PATTERN, character => VARIANTS[character])
+    .normalize('NFD')
+    .replaceAll(LATIN_DIACRITICS, '')
+    .normalize('NFC')
+    .toLowerCase();
 }
 
 /** 人名の部分一致に使う最小の長さ。短すぎると別人を掴む */

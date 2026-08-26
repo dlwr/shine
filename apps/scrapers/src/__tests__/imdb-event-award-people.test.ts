@@ -5,6 +5,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {eq} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
+import {awardCategories} from '@shine/database/schema/award-categories';
 import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
@@ -139,6 +140,22 @@ describe('importImdbEventAward の個人賞', () => {
 
   beforeEach(async () => {
     ({environment, database} = await createTestEnvironment());
+  });
+
+  it('部門の短い名前を設定から保存する', async () => {
+    await importImdbEventAward({
+      environment,
+      data: collectedData('監督賞', [
+        personNomination('tt99999999', '国宝', ['李相日'], true),
+      ]),
+      config: {...directorConfig, categoryShortName: '監督'},
+      throttleMs: 0,
+    });
+
+    const [category] = await database
+      .select({shortName: awardCategories.shortName})
+      .from(awardCategories);
+    expect(category.shortName).toBe('監督');
   });
 
   it('人物ごとにノミネーションを作る', async () => {

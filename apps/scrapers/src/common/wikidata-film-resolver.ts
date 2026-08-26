@@ -2,7 +2,6 @@ import {setTimeout as sleep} from 'node:timers/promises';
 import {buildUrl, fetchJsonWithRetry} from './fetch-utilities';
 
 const TMDB_API = 'https://api.themoviedb.org/3';
-const WIKIPEDIA_API = 'https://ja.wikipedia.org/w/api.php';
 const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
 const USER_AGENT = 'shine-film.com movie database (https://shine-film.com)';
 const BATCH_SIZE = 50;
@@ -70,10 +69,17 @@ type WikidataEntitiesResponse = {
 
 type TmdbFindResponse = {movie_results?: Array<{release_date?: string}>};
 
+export type WikipediaLanguage = 'ja' | 'en';
+
+function wikipediaApi(language: WikipediaLanguage): string {
+  return `https://${language}.wikipedia.org/w/api.php`;
+}
+
 async function fetchWikibaseItems(
   pages: string[],
+  language: WikipediaLanguage,
 ): Promise<Map<string, string>> {
-  const url = buildUrl(WIKIPEDIA_API, {
+  const url = buildUrl(wikipediaApi(language), {
     action: 'query',
     prop: 'pageprops',
     ppprop: 'wikibase_item',
@@ -171,11 +177,12 @@ export function publicationYearFromClaims(
 
 export async function resolveFilmsByWikipediaPage(
   pages: string[],
+  {language = 'ja'}: {language?: WikipediaLanguage} = {},
 ): Promise<Map<string, ResolvedFilm>> {
   const itemsByPage = new Map<string, string>();
   for (let index = 0; index < pages.length; index += BATCH_SIZE) {
     const batch = pages.slice(index, index + BATCH_SIZE);
-    const wikibaseItems = await fetchWikibaseItems(batch);
+    const wikibaseItems = await fetchWikibaseItems(batch, language);
     for (const [page, item] of wikibaseItems) {
       itemsByPage.set(page, item);
     }

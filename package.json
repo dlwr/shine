@@ -21,6 +21,7 @@
     "scrapers:academy-awards": "pnpm --filter @shine/scrapers run academy-awards",
     "scrapers:japan-academy-awards": "pnpm --filter @shine/scrapers run japan-academy-awards",
     "scrapers:japan-academy-person-awards": "pnpm --filter @shine/scrapers run japan-academy-person-awards",
+    "scrapers:academy-person-awards": "pnpm --filter @shine/scrapers run academy-person-awards",
     "scrapers:japanese-translations": "pnpm --filter @shine/scrapers run japanese-translations",
     "scrapers:wikidata-japanese-titles": "pnpm --filter @shine/scrapers run wikidata-japanese-titles",
     "scrapers:cannes-film-festival": "pnpm --filter @shine/scrapers run cannes-film-festival",

@@ -9,6 +9,7 @@ import {EdgeCache} from '../utils/cache';
 import {simpleHash} from '../utils/hash';
 import {
   findAwardPageDefinition,
+  japaneseAwardNames,
   japaneseOrganizationName,
 } from './awards-service';
 import {BaseService} from './base-service';
@@ -120,9 +121,10 @@ export function describeNomination(facts: NominationFacts): {
   const outcome =
     facts.specialMention ?? (facts.isWinner ? '受賞' : 'ノミネート');
   // 賞ページを持たない部門（個人賞など）は部門名を出さないと作品賞と区別できない
-  const award = definition
-    ? organization
-    : `${organization} ${facts.categoryName}`;
+  const category =
+    japaneseAwardNames(facts.organizationName, facts.categoryName).category ??
+    facts.categoryName;
+  const award = definition ? organization : `${organization} ${category}`;
 
   return {
     organization,
