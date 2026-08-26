@@ -14,11 +14,12 @@ import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {
-  AwardsService,
   awardPageLinkForOrganizationName,
+  AwardsService,
   findPersonAwardDefinition,
   japaneseAwardNames,
   paginateAwardDetail,
+  personAwardDefinitions,
 } from '../awards-service';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -1100,6 +1101,40 @@ describe('AwardsService.listAwards 個人賞', () => {
       'palme-dor',
       'japan-academy-best-picture',
       'japan-academy-director',
+    ]);
+  });
+});
+
+describe('英国アカデミー賞の賞ページ', () => {
+  it('作品賞は組織と部門から賞ページを引ける', () => {
+    expect(
+      awardPageLinkForOrganizationName(
+        'British Academy Film Awards',
+        'BAFTA Award for Best Film',
+      ),
+    ).toEqual({slug: 'bafta-best-film', hasYearPages: true});
+  });
+
+  it('個人賞5部門のページを定義している', () => {
+    expect(
+      personAwardDefinitions
+        .filter(
+          definition =>
+            definition.organizationName === 'British Academy Film Awards',
+        )
+        .map(definition => [definition.slug, definition.categoryNames[0]]),
+    ).toEqual([
+      ['bafta-director', 'BAFTA Award for Best Direction'],
+      ['bafta-lead-actor', 'BAFTA Award for Best Actor in a Leading Role'],
+      ['bafta-lead-actress', 'BAFTA Award for Best Actress in a Leading Role'],
+      [
+        'bafta-supporting-actor',
+        'BAFTA Award for Best Actor in a Supporting Role',
+      ],
+      [
+        'bafta-supporting-actress',
+        'BAFTA Award for Best Actress in a Supporting Role',
+      ],
     ]);
   });
 });
