@@ -27,6 +27,7 @@ export type ImdbEventAwardConfig = {
   organizationCountry: string;
   establishedYear: number;
   categoryName: string;
+  categoryShortName?: string;
   ceremonyNumber: (year: number) => number | undefined;
   isCompetitionCategory: (category: string | null) => boolean;
   minimumFilmsPerEdition: number;
@@ -358,7 +359,7 @@ async function ensureCategory(
     .values({
       organizationUid,
       name: config.categoryName,
-      shortName: config.categoryName,
+      shortName: config.categoryShortName ?? config.categoryName,
     })
     .onConflictDoNothing();
 

@@ -184,6 +184,7 @@ describe('academyPersonConfig', () => {
       organizationCountry: 'United States',
       establishedYear: 1929,
       categoryName: 'Academy Award for Best Supporting Actor',
+      categoryShortName: 'Best Supporting Actor',
       personRole: 'actor',
     });
   });

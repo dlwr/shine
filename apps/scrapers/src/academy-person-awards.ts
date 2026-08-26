@@ -166,6 +166,7 @@ export function academyPersonConfig(
     organizationCountry: 'United States',
     establishedYear: FIRST_CEREMONY_YEAR,
     categoryName: award.category,
+    categoryShortName: award.category.replace('Academy Award for ', ''),
     ceremonyNumber: academyCeremonyNumber,
     isCompetitionCategory: category => category === award.category,
     minimumFilmsPerEdition: 1,
