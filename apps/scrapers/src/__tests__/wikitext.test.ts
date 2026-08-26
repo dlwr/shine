@@ -2,12 +2,11 @@ import {afterEach, describe, expect, it, vi} from 'vitest';
 import {fetchWikitext} from '../common/wikitext';
 
 function stubFetch(body: unknown): ReturnType<typeof vi.fn> {
-  const fetchMock = vi.fn(
-    async () =>
-      Response.json(body, {
-        status: 200,
-        headers: {'content-type': 'application/json'},
-      }),
+  const fetchMock = vi.fn(async () =>
+    Response.json(body, {
+      status: 200,
+      headers: {'content-type': 'application/json'},
+    }),
   );
   vi.stubGlobal('fetch', fetchMock);
   return fetchMock;
