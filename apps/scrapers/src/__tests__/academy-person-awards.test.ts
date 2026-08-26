@@ -152,6 +152,31 @@ describe('toImdbEventData', () => {
     ]);
   });
 
+  it('TMDbのクレジット名と違う表記の人物は別名に寄せる', () => {
+    const aliased = toImdbEventData(
+      AWARD,
+      [
+        {
+          filmYear: 2006,
+          ceremonyNumber: 79,
+          entries: [
+            {
+              personName: 'Alejandro González Iñárritu',
+              filmPage: 'Babel (film)',
+              filmTitle: 'Babel',
+              isWinner: false,
+            },
+          ],
+        },
+      ],
+      new Map([['Babel (film)', {imdbId: 'tt0449467'}]]),
+    );
+
+    expect(
+      aliased.editions[0].targetAward[0].categories[0].nominations[0].people,
+    ).toEqual([{name: 'Alejandro G. Iñárritu'}]);
+  });
+
   it('同定できない作品は落とす', () => {
     expect(
       data.editions[0].targetAward[0].categories[0].nominations.map(
