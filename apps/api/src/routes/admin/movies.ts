@@ -404,24 +404,30 @@ adminMoviesRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
       return c.json({error: 'Movie not found'}, 404);
     }
 
+    // Determine mediaType
+    const updateMediaType: 'movie' | 'tv' =
+      bodyMediaType === 'tv'
+        ? 'tv'
+        : (movieExists[0].mediaType as 'movie' | 'tv') || 'movie';
+
     // Check if TMDb ID is already used by another movie
     if (typeof tmdbId === 'number') {
       const existingMovie = await database
         .select({uid: movies.uid})
         .from(movies)
-        .where(and(eq(movies.tmdbId, tmdbId), not(eq(movies.uid, movieId))))
+        .where(
+          and(
+            eq(movies.tmdbId, tmdbId),
+            eq(movies.mediaType, updateMediaType),
+            not(eq(movies.uid, movieId)),
+          ),
+        )
         .limit(1);
 
       if (existingMovie.length > 0) {
         return c.json({error: 'TMDb ID is already used by another movie'}, 409);
       }
     }
-
-    // Determine mediaType
-    const updateMediaType: 'movie' | 'tv' =
-      bodyMediaType === 'tv'
-        ? 'tv'
-        : (movieExists[0].mediaType as 'movie' | 'tv') || 'movie';
 
     // Update TMDb ID and mediaType
     await database
@@ -535,7 +541,11 @@ adminMoviesRoutes.post(
             .select({uid: movies.uid})
             .from(movies)
             .where(
-              and(eq(movies.tmdbId, movieTmdbId), not(eq(movies.uid, movieId))),
+              and(
+                eq(movies.tmdbId, movieTmdbId),
+                eq(movies.mediaType, detectedMediaType),
+                not(eq(movies.uid, movieId)),
+              ),
             )
             .limit(1);
 
@@ -822,6 +832,8 @@ adminMoviesRoutes.post(
         // Delete source posters
         await tx.delete(posterUrls).where(eq(posterUrls.movieUid, sourceId));
 
+        await tx.delete(movies).where(eq(movies.uid, sourceId));
+
         // Update target movie with merged metadata (preserve existing if target has data)
 
         const updateData: Partial<typeof movies.$inferInsert> = {};
@@ -852,6 +864,7 @@ adminMoviesRoutes.post(
             .where(
               and(
                 eq(movies.tmdbId, sourceMovie.tmdbId),
+                eq(movies.mediaType, sourceMovie.mediaType),
                 not(eq(movies.uid, targetId)),
               ),
             )
@@ -859,6 +872,7 @@ adminMoviesRoutes.post(
 
           if (existingTmdbMovie.length === 0) {
             updateData.tmdbId = sourceMovie.tmdbId;
+            updateData.mediaType = sourceMovie.mediaType;
           }
         }
 
@@ -868,9 +882,6 @@ adminMoviesRoutes.post(
             .set(updateData)
             .where(eq(movies.uid, targetId));
         }
-
-        // Finally, delete the source movie
-        await tx.delete(movies).where(eq(movies.uid, sourceId));
       });
 
       await invalidateMovieDetailsCache(c.env, sourceId);

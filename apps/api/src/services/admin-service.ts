@@ -200,7 +200,12 @@ export class AdminService extends BaseService {
         const existingByTmdb = await this.database
           .select({uid: movies.uid})
           .from(movies)
-          .where(eq(movies.tmdbId, tmdbMovieId))
+          .where(
+            and(
+              eq(movies.tmdbId, tmdbMovieId),
+              eq(movies.mediaType, detectedMediaType),
+            ),
+          )
           .limit(1);
 
         if (existingByTmdb.length > 0) {
