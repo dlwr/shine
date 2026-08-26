@@ -288,3 +288,247 @@ describe('parseFilmAwardWikitext', () => {
     });
   });
 });
+
+const GOLDEN_GLOBE = {
+  ceremonyPage: 'Golden Globe Awards',
+  winnerBackground: /background:\s*#b0c4de/i,
+};
+
+const GLOBE_ACTOR_WIKITEXT = `
+==Winners and nominees==
+===2020s===
+{| class="wikitable sortable"
+!scope="col" style="width:8%;"| Year
+!scope="col" style="width:30%;"| Actor
+!scope="col" style="width:30%;"| Role(s)
+!scope="col" style="width:30%;"| Film
+!scope="col" style="width:2%;" class="unsortable"|{{Abbr|Ref.|Reference}}
+|-
+! rowspan="4" style="text-align:center;" |[[78th Golden Globe Awards|2020]]
+| style="background:#B0C4DE;" | '''[[Chadwick Boseman]] <small>(posthumous)</small>''' || style="background:#B0C4DE;" | '''Levee Green''' || style="background:#B0C4DE;" | '''''[[Ma Rainey's Black Bottom (film)|Ma Rainey's Black Bottom]]'''''
+| rowspan=4|<ref>{{cite web|url=https://example.com/|title=Winners}}</ref>
+|-
+| [[Riz Ahmed]] || Ruben Stone || ''[[Sound of Metal]]''
+|-
+| [[Gary Oldman]] || [[Herman J. Mankiewicz]] || ''[[Mank]]''
+|-
+| [[Howard Rollins|Howard E. Rollins, Jr.]] || Coalhouse Walker, Jr. || ''[[Ragtime (film)|Ragtime]]''
+|}
+
+==Multiple nominations==
+`;
+
+const GLOBE_ACTRESS_WIKITEXT = `
+==Winners and nominees==
+===1980s===
+{| class="wikitable sortable"
+!scope="col" style="width:8%;"| Year
+!scope="col" style="width:30%;"| Actress
+!scope="col" style="width:30%;"| Role(s)
+!scope="col" style="width:30%;"| Film
+!scope="col" style="width:2%;" class="unsortable"|{{Abbr|Ref.|Reference}}
+|-
+! rowspan="2" style="text-align:center;" | [[Golden Globe Awards 1980|1980]] <Br /> <small>([[38th Golden Globe Awards|38th]])</small> 
+| style="background:#B0C4DE;" | '''[[Sissy Spacek]]''' † || style="background:#B0C4DE;" | '''[[Loretta Lynn]]''' || style="background:#B0C4DE;" | '''''[[Coal Miner's Daughter (film)|Coal Miner's Daughter]]''''' || rowspan=2|<ref>{{cite web|url=https://example.com/|title=Winners}}</ref>
+|-
+| [[Irene Cara]] || Coco Hernandez || ''[[Fame (1980 film)|Fame]]''
+|}
+`;
+
+const GLOBE_DRAMA_WIKITEXT = `
+== Winners and Nominees ==
+=== 1940s ===
+{| class="wikitable sortable" style="width:100%; text-align:left"
+|-
+! style="width:6%;" | Year
+! style="width:38%;" | Film
+! style="width:30%;" | Director<ref name="onlyfirstD">When there is more than one director, only the first billed is displayed.</ref>
+! style="width:30%;" | Producer/s<ref name="onlyfirstP" />
+|-
+! rowspan="2" style="text-align:center;" | [[7th Golden Globe Awards|1949]]
+| style="background:#B0C4DE;" | '''''[[All the King's Men (1949 film)|All the King's Men]]'''''  || style="background:#B0C4DE;" | '''[[Robert Rossen]]''' || style="background:#B0C4DE;" | '''[[Robert Rossen]]'''
+|-
+|''[[Come to the Stable]]'' || [[Henry Koster]] || [[Samuel G. Engel]]
+|-
+! style="text-align:center;" | [[11th Golden Globe Awards|1953]]
+
+! colspan="3" style="text-align:center;" | No Award given.
+|}
+
+== Notes ==
+`;
+
+const GLOBE_SPLIT_WIKITEXT = `
+==Winners and nominations==
+===1958–1962===
+{| class="wikitable" style="width:100%; text-align:left"
+|-
+! style="width:4%;"| Year
+! style="width:16%;"| Comedy
+! style="width:16%;"| Director
+! style="width:16%;"| Producer
+! style="width:16%;"| Musical
+! style="width:16%;"| Director
+! style="width:16%;"| Producer
+|-
+! rowspan="2" style="text-align:center;" | [[17th Golden Globe Awards|1959]]
+| style="background:#b0c4de; text-align:left;" | '''''[[Some Like It Hot]]''''' || colspan="2" style="background:#B0C4DE;" | '''[[Billy Wilder]]''' || style="background:#90ee90; text-align:left;" | '''''[[Porgy and Bess (film)|Porgy and Bess]]''''' || [[Otto Preminger]] || [[Samuel Goldwyn]]
+|-
+| style="text-align:left;"|''[[Who Was That Lady?]]'' || George Sidney || Norman Krasna || ''[[Say One for Me]]'' || [[Frank Tashlin]] || Frank Tashlin
+|}
+`;
+
+const GLOBE_FOREIGN_WIKITEXT = `
+==Winners and nominations==
+=== 1950s ===
+{| class="wikitable sortable"
+|-bgcolor="#CCCCCC"
+! width="100" |Year
+! width="300" |English title
+! width="300" |Original title
+! width="200" |Director
+! width="200" |Country
+|-
+! colspan="5" style="text-align:center;" bgcolor="#98FF98" | Best Foreign-Language Foreign Film
+|-
+! rowspan=2, align=center| [[12th Golden Globe Awards|1954]] 
+| style="background:#B0C4DE;" | ''' ''[[Twenty-Four Eyes]]'' '''
+| style="background:#B0C4DE;" | ''' ''Nijushi no hitomi'' '''
+| style="background:#B0C4DE;" | ''' [[Keisuke Kinoshita]] ''' 
+| style="background:#B0C4DE;" | ''' Japan ''' 
+|-
+| style="background:#B0C4DE;", colspan=2 | ''' ''[[Genevieve (film)|Genevieve]]'' '''
+| style="background:#B0C4DE;" | ''' [[Henry Cornelius]] ''' 
+| colspan="2" style="background:#B0C4DE;" | ''' United Kingdom '''
+|}
+`;
+
+describe('ゴールデングローブ形式の個人賞の表', () => {
+  it('回次リンクの表示から公開年を読む', () => {
+    const editions = parsePersonAwardWikitext(
+      GLOBE_ACTOR_WIKITEXT,
+      GOLDEN_GLOBE,
+    );
+
+    expect(
+      editions.map(edition => [edition.filmYear, edition.ceremonyNumber]),
+    ).toEqual([[2020, 78]]);
+  });
+
+  it('年セルが年のリンクと回次の注記でも公開年と回次を読む', () => {
+    const editions = parsePersonAwardWikitext(
+      GLOBE_ACTRESS_WIKITEXT,
+      GOLDEN_GLOBE,
+    );
+
+    expect(
+      editions.map(edition => [
+        edition.filmYear,
+        edition.ceremonyNumber,
+        edition.entries.map(entry => entry.personName),
+      ]),
+    ).toEqual([[1980, 38, ['Sissy Spacek', 'Irene Cara']]]);
+  });
+
+  it('1行に || で並んだセルを列に分け、指定した背景色を受賞にする', () => {
+    const [edition] = parsePersonAwardWikitext(
+      GLOBE_ACTOR_WIKITEXT,
+      GOLDEN_GLOBE,
+    );
+
+    expect(edition.entries).toEqual([
+      {
+        personName: 'Chadwick Boseman',
+        filmPage: "Ma Rainey's Black Bottom (film)",
+        filmTitle: "Ma Rainey's Black Bottom",
+        isWinner: true,
+      },
+      {
+        personName: 'Riz Ahmed',
+        filmPage: 'Sound of Metal',
+        filmTitle: 'Sound of Metal',
+        isWinner: false,
+      },
+      {
+        personName: 'Gary Oldman',
+        filmPage: 'Mank',
+        filmTitle: 'Mank',
+        isWinner: false,
+      },
+      {
+        personName: 'Howard E. Rollins, Jr.',
+        filmPage: 'Ragtime (film)',
+        filmTitle: 'Ragtime',
+        isWinner: false,
+      },
+    ]);
+  });
+});
+
+describe('ゴールデングローブ形式の作品賞の表', () => {
+  it('Winners and Nominees の大文字と |- の後の見出し行を読み、No Award の回は含めない', () => {
+    const editions = parseFilmAwardWikitext(GLOBE_DRAMA_WIKITEXT, GOLDEN_GLOBE);
+
+    expect(editions).toEqual([
+      {
+        filmYear: 1949,
+        ceremonyNumber: 7,
+        entries: [
+          {
+            filmPage: "All the King's Men (1949 film)",
+            filmTitle: "All the King's Men",
+            isWinner: true,
+          },
+          {
+            filmPage: 'Come to the Stable',
+            filmTitle: 'Come to the Stable',
+            isWinner: false,
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('作品列が2つある表は colspan を数えて両方の列から読む', () => {
+    const editions = parseFilmAwardWikitext(GLOBE_SPLIT_WIKITEXT, {
+      ...GOLDEN_GLOBE,
+      winnerBackground: /background:\s*#(?:b0c4de|90ee90)/i,
+      filmHeaders: ['Film', 'Comedy', 'Musical'],
+    });
+
+    expect(
+      editions[0].entries.map(entry => [entry.filmTitle, entry.isWinner]),
+    ).toEqual([
+      ['Some Like It Hot', true],
+      ['Porgy and Bess', true],
+      ['Who Was That Lady?', false],
+      ['Say One for Me', false],
+    ]);
+  });
+
+  it('English title の列を作品にし、表中の小見出しと colspan の作品セルを読む', () => {
+    const editions = parseFilmAwardWikitext(GLOBE_FOREIGN_WIKITEXT, {
+      ...GOLDEN_GLOBE,
+      filmHeaders: ['English title'],
+    });
+
+    expect(editions).toEqual([
+      {
+        filmYear: 1954,
+        ceremonyNumber: 12,
+        entries: [
+          {
+            filmPage: 'Twenty-Four Eyes',
+            filmTitle: 'Twenty-Four Eyes',
+            isWinner: true,
+          },
+          {
+            filmPage: 'Genevieve (film)',
+            filmTitle: 'Genevieve',
+            isWinner: true,
+          },
+        ],
+      },
+    ]);
+  });
+});
