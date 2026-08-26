@@ -82,7 +82,21 @@ export async function fetchWithRetry(
     }
 
     if (response.ok) {
-      return response.text();
+      try {
+        return await response.text();
+      } catch (error) {
+        if (retriesLeft <= 0) {
+          throw error;
+        }
+
+        console.warn(
+          `Reading response failed, retrying in ${currentDelay}ms... (${retriesLeft} retries left)`,
+        );
+        await sleep(currentDelay);
+        retriesLeft--;
+        currentDelay *= 1.5;
+        continue;
+      }
     }
 
     const {status} = response;

@@ -93,6 +93,25 @@ describe('Fetch Utilities', () => {
       expect(result).toBe('success');
     });
 
+    it('should retry when reading the body fails', async () => {
+      vi.mocked(fetch)
+        .mockResolvedValueOnce({
+          ok: true,
+          text: vi
+            .fn()
+            .mockRejectedValue(new DOMException('aborted', 'TimeoutError')),
+        } as unknown as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          text: vi.fn().mockResolvedValue('success'),
+        } as unknown as Response);
+
+      const result = await fetchWithRetry('https://example.com', {}, 2, 10);
+
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(result).toBe('success');
+    });
+
     it('should throw error after exhausting retries', async () => {
       const mockErrorResponse = {
         ok: false,
