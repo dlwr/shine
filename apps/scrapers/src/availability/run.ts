@@ -284,7 +284,12 @@ export function buildSourceRunners(options: {
         const found = await findTMDBByImdbId(movie.imdbId, tmdbApiKey);
         if (found?.tmdbId) {
           tmdbId = found.tmdbId;
-          await saveTMDBId(movie.imdbId, found.tmdbId, options.environment);
+          await saveTMDBId(
+            movie.imdbId,
+            found.tmdbId,
+            options.environment,
+            found.mediaType,
+          );
         }
       }
 

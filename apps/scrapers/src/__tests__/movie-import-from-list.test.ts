@@ -3,9 +3,13 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
+import {movies} from '@shine/database/schema/movies';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {afterEach, describe, expect, it} from 'vitest';
-import {createNewMovieForBatch} from '../movie-import-from-list';
+import {
+  createNewMovieForBatch,
+  findExistingMovieForTmdbMovie,
+} from '../movie-import-from-list';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -84,5 +88,52 @@ describe('createNewMovieForBatch', () => {
     );
     expect(byLanguage.get('en')?.isDefault).toBe(1);
     expect(byLanguage.get('ja')?.isDefault).toBe(0);
+  });
+});
+
+describe('findExistingMovieForTmdbMovie', () => {
+  const tmdbMovie = {
+    id: 42_699,
+    title: 'Yongary, Monster from the Deep',
+    original_title: '대괴수 용가리',
+    original_language: 'ko',
+    release_date: '1967-08-13',
+    poster_path: undefined,
+    imdb_id: 'tt0061549',
+    overview: '',
+  };
+
+  it('同じ TMDb ID の映画があればそれを返す', async () => {
+    const {context} = await createTestContext();
+    const database = getDatabase(context.environment);
+    await database
+      .insert(movies)
+      .values({uid: 'yongary', tmdbId: 42_699, mediaType: 'movie'});
+
+    const found = await findExistingMovieForTmdbMovie(database, tmdbMovie);
+
+    expect(found?.uid).toBe('yongary');
+  });
+
+  it('同じ TMDb ID でも tv の行は返さない', async () => {
+    const {context} = await createTestContext();
+    const database = getDatabase(context.environment);
+    await database
+      .insert(movies)
+      .values({uid: 'dekalog', tmdbId: 42_699, mediaType: 'tv'});
+
+    const found = await findExistingMovieForTmdbMovie(database, tmdbMovie);
+
+    expect(found).toBeUndefined();
+  });
+
+  it('IMDb ID が一致する映画があればそれを返す', async () => {
+    const {context} = await createTestContext();
+    const database = getDatabase(context.environment);
+    await database.insert(movies).values({uid: 'by-imdb', imdbId: 'tt0061549'});
+
+    const found = await findExistingMovieForTmdbMovie(database, tmdbMovie);
+
+    expect(found?.uid).toBe('by-imdb');
   });
 });

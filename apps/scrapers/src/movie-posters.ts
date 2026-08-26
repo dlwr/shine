@@ -189,7 +189,12 @@ async function fetchAndStorePosterUrls(
 
         if (movieData) {
           // TMDB ID を保存
-          await saveTMDBId(movie.imdbId, movieData.tmdbId, environment);
+          await saveTMDBId(
+            movie.imdbId,
+            movieData.tmdbId,
+            environment,
+            movieData.mediaType,
+          );
 
           if (
             !movieData.images.posters ||

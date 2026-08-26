@@ -134,6 +134,13 @@
       "when": 1787559789980,
       "tag": "0018_mean_madame_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1787713068508,
+      "tag": "0019_goofy_warbird",
+      "breakpoints": true
     }
   ]
 }

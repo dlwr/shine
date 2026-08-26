@@ -1,6 +1,5 @@
-import {eq} from 'drizzle-orm';
-import {getDatabase, type Environment} from '@shine/database';
-import {movies} from '@shine/database/schema/movies';
+import type {Environment} from '@shine/database';
+import {saveTMDBId} from '../../common/tmdb-utilities';
 import {isValidImdbId} from './imdb-id';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
@@ -59,7 +58,7 @@ export async function fetchJapaneseTitleFromTMDB(
       console.log(`  Found TMDB ID: ${movieTmdbId}`);
 
       // TMDB IDをデータベースに保存
-      await saveTMDBId(imdbId, movieTmdbId, environment);
+      await saveTMDBId(imdbId, movieTmdbId, environment, 'movie');
     }
 
     // 日本語の映画情報を取得
@@ -100,62 +99,3 @@ export async function fetchJapaneseTitleFromTMDB(
  * @param tmdbId TMDB ID
  * @param environment 環境変数
  */
-async function saveTMDBId(
-  imdbId: string,
-  tmdbId: number,
-  environment: Environment,
-): Promise<void> {
-  const database = getDatabase(environment);
-
-  try {
-    // IMDb IDで映画を検索
-    const movie = await database
-      .select({
-        uid: movies.uid,
-        tmdbId: movies.tmdbId,
-        deletedAt: movies.deletedAt,
-      })
-      .from(movies)
-      .where(eq(movies.imdbId, imdbId))
-      .limit(1);
-
-    if (movie.length === 0) {
-      console.error(`  Movie not found with IMDb ID: ${imdbId}`);
-      return;
-    }
-
-    if (movie[0].deletedAt !== null) {
-      console.log(`  Movie is soft-deleted, skipping: ${imdbId}`);
-      return;
-    }
-
-    if (movie[0].tmdbId !== null) {
-      console.log(`  TMDB ID already exists: ${movie[0].tmdbId}`);
-      return;
-    }
-
-    // 他の映画で同じTMDB IDが使用されていないかチェック
-    const duplicateMovie = await database
-      .select({uid: movies.uid})
-      .from(movies)
-      .where(eq(movies.tmdbId, tmdbId))
-      .limit(1);
-
-    if (duplicateMovie.length > 0) {
-      console.log(
-        `  TMDB ID ${tmdbId} is already used by another movie (${duplicateMovie[0].uid})`,
-      );
-      return;
-    }
-
-    // TMDB IDを更新
-    await database
-      .update(movies)
-      .set({tmdbId})
-      .where(eq(movies.imdbId, imdbId));
-
-    console.log(`  Saved TMDB ID: ${tmdbId}`);
-  } catch (error) {
-    console.error(`Error saving TMDB ID for IMDb ID ${imdbId}:`, error);
-  }
-}

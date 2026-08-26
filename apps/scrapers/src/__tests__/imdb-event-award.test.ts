@@ -833,4 +833,67 @@ describe('importImdbEventAward', () => {
       .where(eq(nominations.movieUid, 'existing-by-tmdb'));
     expect(nominationRows).toHaveLength(1);
   });
+
+  it('TMDbのIDが同じでもtvの行は再利用せず映画を新規作成する', async () => {
+    environment.TMDB_API_KEY = 'test-key';
+    await database.insert(movies).values({
+      uid: 'existing-tv',
+      tmdbId: 548,
+      mediaType: 'tv',
+      year: 1989,
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/find/tt0042876')) {
+          return Response.json({
+            movie_results: [{id: 548, media_type: 'movie'}],
+            tv_results: [],
+          });
+        }
+
+        if (url.includes('/movie/548')) {
+          return Response.json({
+            id: 548,
+            title: 'Rashomon',
+            original_title: '羅生門',
+            release_date: '1950-08-25',
+          });
+        }
+
+        if (url.includes('/configuration')) {
+          return Response.json({
+            images: {secure_base_url: 'https://x/', poster_sizes: ['w500']},
+          });
+        }
+
+        return new Response('not found', {status: 404});
+      }),
+    );
+
+    await importImdbEventAward({
+      environment,
+      config: testConfig,
+      data: collectedData([
+        edition(1951, [
+          nomination('tt0042876', 'Rashômon', true),
+          nomination('tt0043338', 'Ace in the Hole'),
+        ]),
+      ]),
+      throttleMs: 0,
+    });
+
+    const [tvRow] = await database
+      .select()
+      .from(movies)
+      .where(eq(movies.uid, 'existing-tv'));
+    expect(tvRow.imdbId).toBeNull();
+    const [created] = await database
+      .select()
+      .from(movies)
+      .where(eq(movies.imdbId, 'tt0042876'));
+    expect(created.tmdbId).toBe(548);
+    expect(created.mediaType).toBe('movie');
+  });
 });

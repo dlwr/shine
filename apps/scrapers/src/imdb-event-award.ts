@@ -613,7 +613,7 @@ async function reuseMovieByTmdbId(
       deletedAt: movies.deletedAt,
     })
     .from(movies)
-    .where(eq(movies.tmdbId, tmdbId))
+    .where(and(eq(movies.tmdbId, tmdbId), eq(movies.mediaType, 'movie')))
     .limit(1);
 
   if (!existing) {
