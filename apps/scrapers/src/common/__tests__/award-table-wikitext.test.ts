@@ -94,7 +94,7 @@ const FILM_WIKITEXT = `
 | style="background:#FAEB86"| '''[[Samuel Goldwyn]]'''
 | style="background:#FAEB86"| '''[[United States]]'''
 |-
-| rowspan="3"| {{center|'''1948'''<br>{{small|([[2nd British Academy Film Awards|2nd]])}}}}
+| rowspan="4"| {{center|'''1948'''<br>{{small|([[2nd British Academy Film Awards|2nd]])}}}}
 | style="background:#FAEB86"| '''''[[Hamlet (1948 film)|Hamlet]]''''' †
 | style="background:#FAEB86"| '''[[Laurence Olivier]]'''
 | style="background:#FAEB86"| '''[[Laurence Olivier]]'''
@@ -109,6 +109,43 @@ const FILM_WIKITEXT = `
 | [[Roberto Rossellini]]
 | [[Rod E. Geiger]], [[Roberto Rossellini]]
 | [[Italy]]
+|-
+| {{Lang|bn-latn|[[Pather Panchali (film)|Pather Panchali]]}} (''পথের পাঁচালী'', ''Pôther Pãchali'')
+| [[Satyajit Ray]]
+| Government of [[West Bengal]]
+| [[India]]
+|}
+`;
+
+const SUPPORTING_WIKITEXT = `
+==Winners and nominees==
+===1970s===
+{| class="wikitable sortable"
+!scope="col" style="width:8%;"| Year
+!scope="col" style="width:30%;"| Actor
+!scope="col" style="width:30%;"| Role(s)
+!scope="col" style="width:30%;"| Film
+!scope="col" style="width:2%;" class="unsortable"|{{Abbr|Ref.|Reference}}
+|-
+| rowspan="2"| {{center|'''1970'''<br>{{small|([[24th British Academy Film Awards|24th]])}}}}
+| style="background:#FAEB86"| '''[[Colin Welland]]'''
+| style="background:#FAEB86"| '''''[[Kes (film)|Kes]]'''''
+| style="background:#FAEB86"| '''Mr. Farthing'''
+| rowspan=2|
+|-
+| [[Bernard Cribbins]]
+| ''[[The Railway Children (1970 film)|The Railway Children]]''
+| Albert Perks
+|-
+| {{center|'''1980'''<br>{{small|([[34th British Academy Film Awards|34th]])}}}}
+| colspan="3" style="background:#ccc;"| '''''Not awarded'''''
+|
+|-
+| {{center|'''1982'''<br>{{small|([[36th British Academy Film Awards|36th]])}}}}
+| style="background:#FAEB86"| '''[[Rohini Hattangadi]] <small>(TIE)</small> {{ref label|Tie|B|1}}'''
+| style="background:#FAEB86"| '''''[[Gandhi (film)|Gandhi]]'''''
+| style="background:#FAEB86"| '''[[Kasturba Gandhi]]'''
+|
 |}
 `;
 
@@ -181,6 +218,39 @@ describe('parsePersonAwardWikitext', () => {
   });
 });
 
+describe('parsePersonAwardWikitext の見出しと本文の列順が違う表', () => {
+  it('Role 列が Film 列より前にあっても斜体のセルを作品にする', () => {
+    const [edition] = parsePersonAwardWikitext(SUPPORTING_WIKITEXT, BAFTA);
+
+    expect(edition.entries).toEqual([
+      {
+        personName: 'Colin Welland',
+        filmPage: 'Kes (film)',
+        filmTitle: 'Kes',
+        isWinner: true,
+      },
+      {
+        personName: 'Bernard Cribbins',
+        filmPage: 'The Railway Children (1970 film)',
+        filmTitle: 'The Railway Children',
+        isWinner: false,
+      },
+    ]);
+  });
+
+  it('Not awarded の回は回に含めない', () => {
+    const editions = parsePersonAwardWikitext(SUPPORTING_WIKITEXT, BAFTA);
+
+    expect(editions.map(edition => edition.ceremonyNumber)).toEqual([24, 36]);
+  });
+
+  it('同点の注記と ref label を人名から除く', () => {
+    const editions = parsePersonAwardWikitext(SUPPORTING_WIKITEXT, BAFTA);
+
+    expect(editions[1].entries[0].personName).toBe('Rohini Hattangadi');
+  });
+});
+
 describe('parseFilmAwardWikitext', () => {
   it('人物列の無い表から作品だけを読む', () => {
     const editions = parseFilmAwardWikitext(FILM_WIKITEXT, BAFTA);
@@ -201,10 +271,20 @@ describe('parseFilmAwardWikitext', () => {
   it('作品セルの記事名と表示名を分け、括弧の原題は捨てる', () => {
     const [, edition] = parseFilmAwardWikitext(FILM_WIKITEXT, BAFTA);
 
-    expect(edition.entries).toEqual([
+    expect(edition.entries.slice(0, 3)).toEqual([
       {filmPage: 'Hamlet (1948 film)', filmTitle: 'Hamlet', isWinner: true},
       {filmPage: 'Crossfire (film)', filmTitle: 'Crossfire', isWinner: false},
       {filmPage: 'Paisà', filmTitle: 'Paisan', isWinner: false},
     ]);
+  });
+
+  it('{{Lang}} で包まれた作品リンクを読む', () => {
+    const [, edition] = parseFilmAwardWikitext(FILM_WIKITEXT, BAFTA);
+
+    expect(edition.entries[3]).toEqual({
+      filmPage: 'Pather Panchali (film)',
+      filmTitle: 'Pather Panchali',
+      isWinner: false,
+    });
   });
 });

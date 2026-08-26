@@ -36,15 +36,19 @@ const HTML_NOTE = /<small>[\s\S]*?<\/small>/g;
 const HTML_TAG = /<[^>]+>/g;
 const WRITE_IN = /write-in/i;
 const NAME_SEPARATOR = /\s+(?:&|and)\s+|,\s+/;
+const ITALIC = /(?<!')''(?!')|'''''/;
+const NAMED_PARAMETER = /^\s*\w+=/;
 const YEAR_HEADER = 'Year';
 const FILM_HEADERS = new Set(['Film', 'Films']);
-const IGNORED_HEADERS = ['Role', 'Ref'];
+const ROLE_HEADER = 'Role';
+const IGNORED_HEADERS = [ROLE_HEADER, 'Ref'];
 
 type ColumnLayout = {
   size: number;
   yearIndex: number;
   personIndex: number | undefined;
   filmIndex: number;
+  roleIndex: number | undefined;
 };
 
 function ceremonyNumberPattern(options: AwardTableOptions): RegExp {
@@ -69,9 +73,31 @@ function columnLayout(
       )
     : undefined;
 
+  const roleIndex = labels.findIndex(label => label.includes(ROLE_HEADER));
+
   return yearIndex === -1 || filmIndex === -1 || personIndex === -1
     ? undefined
-    : {size: labels.length, yearIndex, personIndex, filmIndex};
+    : {
+        size: labels.length,
+        yearIndex,
+        personIndex,
+        filmIndex,
+        roleIndex: roleIndex === -1 ? undefined : roleIndex,
+      };
+}
+
+/** 見出しは Role | Film でも本文が Film | Role の記事があるので、斜体のセルを作品とみなす */
+function filmCellOf(row: Cell[], layout: ColumnLayout): Cell | undefined {
+  const byHeader = row[layout.filmIndex];
+  if (
+    layout.roleIndex === undefined ||
+    (byHeader && ITALIC.test(byHeader.content))
+  ) {
+    return byHeader;
+  }
+
+  const byRole = row[layout.roleIndex];
+  return byRole && ITALIC.test(byRole.content) ? byRole : byHeader;
 }
 
 function closingBraces(text: string, start: number): number {
@@ -93,7 +119,7 @@ function closingBraces(text: string, start: number): number {
   return -1;
 }
 
-/** {{sort|key|content}} は content に開き、それ以外のテンプレートは捨てる */
+/** {{sort|key|content}} と {{lang|code|content}} は content に開き、それ以外のテンプレートは捨てる */
 function stripTemplates(text: string): string {
   let result = '';
   let cursor = 0;
@@ -114,8 +140,14 @@ function stripTemplates(text: string): string {
     result += text.slice(cursor, open);
     const inner = text.slice(open + 2, close);
     const [name, , ...rest] = inner.split('|');
-    if (name.trim().toLowerCase() === 'sort' && rest.length > 0) {
-      result += stripTemplates(rest.join('|'));
+    const templateName = name.trim().toLowerCase();
+    if (
+      (templateName === 'sort' || templateName === 'lang') &&
+      rest.length > 0
+    ) {
+      result += stripTemplates(
+        rest.filter(part => !NAMED_PARAMETER.test(part)).join('|'),
+      );
     }
 
     cursor = close + 2;
@@ -212,7 +244,7 @@ function parseTable<Entry extends FilmAwardEntry>(
     const ceremonyNumber = yearCell && ceremonyPattern.exec(yearCell.content);
     const personCell =
       layout.personIndex === undefined ? undefined : row[layout.personIndex];
-    const filmCell = row[layout.filmIndex];
+    const filmCell = filmCellOf(row, layout);
     if (!filmYear || !ceremonyNumber || !filmCell) {
       continue;
     }
