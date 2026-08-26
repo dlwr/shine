@@ -166,6 +166,61 @@ export const personAwardDefinitions: PersonAwardDefinition[] = [
     role: 'actor',
   },
   {
+    slug: 'bafta-director',
+    organizationName: 'British Academy Film Awards',
+    categoryNames: ['BAFTA Award for Best Direction'],
+    name: '監督賞',
+    organization: '英国アカデミー賞',
+    categoryLabel: '監督賞',
+    description:
+      '英国アカデミー賞（BAFTA）監督賞の歴代受賞者とノミネートの一覧。',
+    role: 'director',
+  },
+  {
+    slug: 'bafta-lead-actor',
+    organizationName: 'British Academy Film Awards',
+    categoryNames: ['BAFTA Award for Best Actor in a Leading Role'],
+    name: '主演男優賞',
+    organization: '英国アカデミー賞',
+    categoryLabel: '主演男優賞',
+    description:
+      '英国アカデミー賞（BAFTA）主演男優賞の歴代受賞者とノミネートの一覧。',
+    role: 'actor',
+  },
+  {
+    slug: 'bafta-lead-actress',
+    organizationName: 'British Academy Film Awards',
+    categoryNames: ['BAFTA Award for Best Actress in a Leading Role'],
+    name: '主演女優賞',
+    organization: '英国アカデミー賞',
+    categoryLabel: '主演女優賞',
+    description:
+      '英国アカデミー賞（BAFTA）主演女優賞の歴代受賞者とノミネートの一覧。',
+    role: 'actor',
+  },
+  {
+    slug: 'bafta-supporting-actor',
+    organizationName: 'British Academy Film Awards',
+    categoryNames: ['BAFTA Award for Best Actor in a Supporting Role'],
+    name: '助演男優賞',
+    organization: '英国アカデミー賞',
+    categoryLabel: '助演男優賞',
+    description:
+      '英国アカデミー賞（BAFTA）助演男優賞の歴代受賞者とノミネートの一覧。',
+    role: 'actor',
+  },
+  {
+    slug: 'bafta-supporting-actress',
+    organizationName: 'British Academy Film Awards',
+    categoryNames: ['BAFTA Award for Best Actress in a Supporting Role'],
+    name: '助演女優賞',
+    organization: '英国アカデミー賞',
+    categoryLabel: '助演女優賞',
+    description:
+      '英国アカデミー賞（BAFTA）助演女優賞の歴代受賞者とノミネートの一覧。',
+    role: 'actor',
+  },
+  {
     slug: 'japan-academy-director',
     organizationName: 'Japan Academy Awards',
     categoryNames: ['監督賞'],
@@ -327,6 +382,17 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
     organization: 'アカデミー賞',
     description:
       'アカデミー賞（オスカー）作品賞の歴代受賞作とノミネート作品の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'bafta-best-film',
+    shortLabel: 'BAFTA',
+    organizationName: 'British Academy Film Awards',
+    categoryNames: ['BAFTA Award for Best Film'],
+    name: '作品賞',
+    organization: '英国アカデミー賞',
+    description:
+      '英国アカデミー賞（BAFTA）作品賞の歴代受賞作とノミネート作品の一覧。',
     grouping: 'year',
   },
   {
