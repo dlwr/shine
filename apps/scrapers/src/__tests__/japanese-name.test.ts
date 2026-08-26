@@ -75,3 +75,21 @@ describe('matchPersonName', () => {
     expect(matchPersonName('努', candidates)).toBeUndefined();
   });
 });
+
+describe('normalizePersonName のラテン文字', () => {
+  it('ダイアクリティカルマークを外す', () => {
+    expect(normalizePersonName('Penélope Cruz')).toBe(
+      normalizePersonName('Penelope Cruz'),
+    );
+  });
+
+  it('大文字小文字を区別しない', () => {
+    expect(normalizePersonName('Daniel Day-Lewis')).toBe(
+      normalizePersonName('daniel day-lewis'),
+    );
+  });
+
+  it('かなの濁点は保つ', () => {
+    expect(normalizePersonName('がぎぐ')).toBe('がぎぐ');
+  });
+});
