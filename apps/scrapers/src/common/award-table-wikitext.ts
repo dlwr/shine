@@ -2,9 +2,17 @@ import {cellsOf, fillRow, type CarriedCell, type Cell} from './wikitext-table';
 
 export type AwardTableOptions = {
   /** 回次リンクの記事名。[[22nd British Academy Film Awards|22nd]] なら 'British Academy Film Awards' */
-  ceremonyPage: string;
+  ceremonyPage?: string;
+  /** 年セルに回次リンクが無い記事で、年から回次を求める */
+  ceremonyNumberOf?: (year: number) => number | undefined;
+  /** 受賞者を載せる節の見出し。省略時は Winners and nominees */
+  sectionHeading?: RegExp;
   /** 受賞行の背景色。省略時は #FAEB86 */
   winnerBackground?: RegExp;
+  /** 記事が受賞者だけを載せていて、背景色で受賞を判定しない */
+  winnersOnly?: boolean;
+  /** 人物セルに付くと別の賞の受賞者であることを示す印 */
+  otherAwardMarker?: RegExp;
   /** 作品列の見出し。省略時は Film / Films */
   filmHeaders?: string[];
 };
@@ -59,10 +67,19 @@ type ColumnLayout = {
   roleIndex: number | undefined;
 };
 
-function ceremonyNumberPattern(options: AwardTableOptions): RegExp {
-  return new RegExp(
+function ceremonyNumberOf(
+  yearCell: Cell,
+  filmYear: number,
+  options: AwardTableOptions,
+): number | undefined {
+  if (options.ceremonyPage === undefined) {
+    return options.ceremonyNumberOf?.(filmYear);
+  }
+
+  const match = new RegExp(
     String.raw`\[\[(\d+)(?:st|nd|rd|th) ${options.ceremonyPage}`,
-  );
+  ).exec(yearCell.content);
+  return match ? Number(match[1]) : undefined;
 }
 
 function columnLayout(
@@ -132,7 +149,7 @@ function closingBraces(text: string, start: number): number {
   return -1;
 }
 
-/** {{sort|key|content}} と {{lang|code|content}} は content に開き、それ以外のテンプレートは捨てる */
+/** {{sort|key|content}} と {{lang|code|content}} は content に、{{sortname|first|last}} は姓名に開き、それ以外のテンプレートは捨てる */
 function stripTemplates(text: string): string {
   let result = '';
   let cursor = 0;
@@ -152,15 +169,19 @@ function stripTemplates(text: string): string {
 
     result += text.slice(cursor, open);
     const inner = text.slice(open + 2, close);
-    const [name, , ...rest] = inner.split('|');
+    const [name, ...parameters] = inner.split('|');
     const templateName = name.trim().toLowerCase();
-    if (
+    const positional = parameters.filter(part => !NAMED_PARAMETER.test(part));
+    if (templateName === 'sortname') {
+      result += positional
+        .slice(0, 2)
+        .map(part => part.trim())
+        .join(' ');
+    } else if (
       (templateName === 'sort' || templateName === 'lang') &&
-      rest.length > 0
+      positional.length > 1
     ) {
-      result += stripTemplates(
-        rest.filter(part => !NAMED_PARAMETER.test(part)).join('|'),
-      );
+      result += stripTemplates(positional.slice(1).join('|'));
     }
 
     cursor = close + 2;
@@ -241,7 +262,6 @@ function parseTable<Entry extends FilmAwardEntry>(
     return [];
   }
 
-  const ceremonyPattern = ceremonyNumberPattern(options);
   const editions: Array<AwardEdition<Entry>> = [];
   const carried: CarriedCell[] = [];
 
@@ -254,10 +274,14 @@ function parseTable<Entry extends FilmAwardEntry>(
 
     const row = fillRow(own, carried, layout.size);
     const yearCell = row[layout.yearIndex];
-    const filmYear =
+    const yearMatch =
       yearCell &&
       (FILM_YEAR.exec(yearCell.content) ?? FIRST_YEAR.exec(yearCell.content));
-    const ceremonyNumber = yearCell && ceremonyPattern.exec(yearCell.content);
+    const filmYear = yearMatch && Number(yearMatch[1] ?? yearMatch[2]);
+    const ceremonyNumber =
+      yearCell && filmYear
+        ? ceremonyNumberOf(yearCell, filmYear, options)
+        : undefined;
     const personCell =
       layout.personIndex === undefined ? undefined : row[layout.personIndex];
     const filmCells = (
@@ -265,7 +289,7 @@ function parseTable<Entry extends FilmAwardEntry>(
         ? [filmCellOf(row, layout)]
         : layout.filmIndexes.map(index => row[index])
     ).filter(cell => cell !== undefined);
-    if (!filmYear || !ceremonyNumber || filmCells.length === 0) {
+    if (!filmYear || ceremonyNumber === undefined || filmCells.length === 0) {
       continue;
     }
 
@@ -278,12 +302,8 @@ function parseTable<Entry extends FilmAwardEntry>(
     }
 
     let edition = editions.at(-1);
-    if (edition?.ceremonyNumber !== Number(ceremonyNumber[1])) {
-      edition = {
-        filmYear: Number(filmYear[1] ?? filmYear[2]),
-        ceremonyNumber: Number(ceremonyNumber[1]),
-        entries: [],
-      };
+    if (edition?.ceremonyNumber !== ceremonyNumber) {
+      edition = {filmYear, ceremonyNumber, entries: []};
       editions.push(edition);
     }
 
@@ -298,8 +318,8 @@ function parseTable<Entry extends FilmAwardEntry>(
   return editions.filter(edition => edition.entries.length > 0);
 }
 
-function awardTables(wikitext: string): string[] {
-  const heading = AWARDS_SECTION.exec(wikitext);
+function awardTables(wikitext: string, options: AwardTableOptions): string[] {
+  const heading = (options.sectionHeading ?? AWARDS_SECTION).exec(wikitext);
   if (!heading) {
     return [];
   }
@@ -321,17 +341,18 @@ export function parsePersonAwardWikitext(
   options: AwardTableOptions,
 ): Array<AwardEdition<PersonAwardEntry>> {
   const winnerBackground = options.winnerBackground ?? WINNER_BACKGROUND;
-  return awardTables(wikitext).flatMap(table =>
+  return awardTables(wikitext, options).flatMap(table =>
     parseTable<PersonAwardEntry>(
       table,
       options,
       true,
       (film, filmCell, personCell) => {
-        if (!personCell) {
+        if (!personCell || options.otherAwardMarker?.test(personCell.content)) {
           return [];
         }
 
         const isWinner =
+          options.winnersOnly === true ||
           winnerBackground.test(personCell.attributes) ||
           winnerBackground.test(filmCell.attributes);
         return personNames(personCell).map(personName => ({
@@ -349,9 +370,14 @@ export function parseFilmAwardWikitext(
   options: AwardTableOptions,
 ): Array<AwardEdition<FilmAwardEntry>> {
   const winnerBackground = options.winnerBackground ?? WINNER_BACKGROUND;
-  return awardTables(wikitext).flatMap(table =>
+  return awardTables(wikitext, options).flatMap(table =>
     parseTable<FilmAwardEntry>(table, options, false, (film, filmCell) => [
-      {...film, isWinner: winnerBackground.test(filmCell.attributes)},
+      {
+        ...film,
+        isWinner:
+          options.winnersOnly === true ||
+          winnerBackground.test(filmCell.attributes),
+      },
     ]),
   );
 }

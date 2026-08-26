@@ -532,3 +532,156 @@ describe('ゴールデングローブ形式の作品賞の表', () => {
     ]);
   });
 });
+
+const CANNES = {
+  sectionHeading: /^==\s*Winners\s*==/im,
+  ceremonyNumberOf: (year: number) => (year === 1946 ? 1 : year - 1947),
+  winnersOnly: true,
+  otherAwardMarker: /double dagger/,
+};
+
+const CANNES_ACTOR_WIKITEXT = `
+==History==
+The award was first given in 1946.
+
+==Winners==
+{| class="wikitable"
+|+ Table key
+|-
+! scope="row" style="height:20px; width:30px" | {{double dagger|alt=Indicates the Best Supporting Actor winner}}
+| Indicates the Best Supporting Actor winner
+|}
+
+=== 1940s ===
+{| class="wikitable unsortable"
+!scope="col" style="width:3%;" | Year
+!scope="col" style="width:10%;"| Actor
+!scope="col" style="width:10%;"| Role(s)
+!scope="col" style="width:10%;"| Title
+!scope="col" style="width:1%;" class="unsortable"|{{Abbr|Ref.|Reference}}
+|-
+! style="text-align:center;" | [[1946 Cannes Film Festival|1946]]
+| {{sortname|Ray|Milland}}
+| {{sortname|Don|Birnam|nolink=1}}
+| {{sort|Lost Weekend|''[[The Lost Weekend]]''}}
+| style="text-align:center;"| <ref>cite</ref>
+|}
+
+=== 1970s ===
+{| class="wikitable unsortable"
+!scope="col" style="width:3%;" | Year
+!scope="col" style="width:10%;"| Actor
+!scope="col" style="width:10%;"| Role(s)
+!scope="col" style="width:10%;"| English Title
+!scope="col" style="width:10%;"| Original Title
+!scope="col" style="width:1%;" class="unsortable"|{{Abbr|Ref.|Reference}}
+|-
+! rowspan="2" style="text-align:center;" | [[1979 Cannes Film Festival|1979]]
+| {{sortname|Jack|Lemmon}}
+| {{sortname|Jack|Godell|nolink=1}}
+| colspan="2"| {{sort|China Syndrome|''[[The China Syndrome]]''}}
+| rowspan="2" style="text-align:center;"| <ref>cite</ref>
+|-
+| {{sortname|Stefano|Madia}} {{double dagger|alt=Indicates the Best Supporting Actor winner}}
+| {{sortname|Marco|Millozza|nolink=1}}
+| {{sort|Dear Father|''[[Dear Father (1979 film)|Dear Father]]''}}
+| ''Caro papà''
+|-
+! style="text-align:center;" | [[1980 Cannes Film Festival|1980]]
+| {{sortname|Jack|Thompson|Jack Thompson (actor)}}
+| {{sortname|Major J.F.|Thomas|nolink=1}}
+| colspan="2"| {{sort|Breaker Morant|''[[Breaker Morant (film)|Breaker Morant]]''}}
+| style="text-align:center;"| <ref>cite</ref>
+|}
+
+== Multiple winners ==
+{| class="wikitable"
+! style="text-align:center;" | [[1991 Cannes Film Festival|1991]]
+| {{sortname|Samuel L.|Jackson}}
+| ''[[Jackie Brown]]''
+|}
+`;
+
+const CANNES_ENSEMBLE_WIKITEXT = `
+==Winners==
+{| class="wikitable unsortable"
+!scope="col" | Year
+!scope="col" | Actress
+!scope="col" | Role(s)
+!scope="col" | English Title
+!scope="col" | Original Title
+|-
+! rowspan="2" style="text-align:center;" | [[2006 Cannes Film Festival|2006]]
+| {{sortname|Penélope|Cruz}}
+| Raimunda
+| rowspan="2" colspan="2"| {{sort|Volver|''[[Volver]]''}}
+|-
+| {{sortname|Carmen|Maura}}
+| Irene
+|}
+`;
+
+describe('カンヌ国際映画祭形式の受賞者だけの表', () => {
+  it('Winners 節の年リンクから年を読み、回次は年から求め、全員を受賞にする', () => {
+    const editions = parsePersonAwardWikitext(CANNES_ACTOR_WIKITEXT, {
+      ...CANNES,
+      filmHeaders: ['Title', 'English Title'],
+    });
+
+    expect(
+      editions.map(edition => [edition.filmYear, edition.ceremonyNumber]),
+    ).toEqual([
+      [1946, 1],
+      [1979, 32],
+      [1980, 33],
+    ]);
+    expect(editions.flatMap(edition => edition.entries)).toEqual([
+      {
+        personName: 'Ray Milland',
+        filmPage: 'The Lost Weekend',
+        filmTitle: 'The Lost Weekend',
+        isWinner: true,
+      },
+      {
+        personName: 'Jack Lemmon',
+        filmPage: 'The China Syndrome',
+        filmTitle: 'The China Syndrome',
+        isWinner: true,
+      },
+      {
+        personName: 'Jack Thompson',
+        filmPage: 'Breaker Morant (film)',
+        filmTitle: 'Breaker Morant',
+        isWinner: true,
+      },
+    ]);
+  });
+
+  it('同じ作品から複数人が受賞した回は rowspan で人物ごとに読む', () => {
+    const editions = parsePersonAwardWikitext(CANNES_ENSEMBLE_WIKITEXT, {
+      ...CANNES,
+      filmHeaders: ['English Title'],
+    });
+
+    expect(editions).toEqual([
+      {
+        filmYear: 2006,
+        ceremonyNumber: 59,
+        entries: [
+          {
+            personName: 'Penélope Cruz',
+            filmPage: 'Volver',
+            filmTitle: 'Volver',
+            isWinner: true,
+          },
+          {
+            personName: 'Carmen Maura',
+            filmPage: 'Volver',
+            filmTitle: 'Volver',
+            isWinner: true,
+          },
+        ],
+      },
+    ]);
+  });
+});
