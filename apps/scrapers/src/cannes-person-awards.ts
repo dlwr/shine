@@ -13,7 +13,13 @@ const RESOLUTION_OVERRIDES = new Map<string, string>([
   ['61:Che', 'tt0892255'],
 ]);
 
-const PERSON_NAME_ALIASES: Record<string, string> = {};
+const PERSON_NAME_ALIASES: Record<string, string> = {
+  'Brillante Mendoza': 'Brillante Ma Mendoza',
+  'Fernando Solanas': 'Fernando E. Solanas',
+  'Hanna Laslo': 'Hana Laslo',
+  'Nikolay Sergeev': 'Nikolai Sergeyev',
+  'Sergei Vasilyev': 'Sergey Vasilev',
+};
 
 const FILM_HEADERS = ['English Title', 'Title'];
 
