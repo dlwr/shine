@@ -18,6 +18,8 @@ import {
   fetchTMDBCredits,
   fetchTMDBMovieDetails,
   findTMDBByImdbId,
+  type TMDBCastCredit,
+  type TMDBCredits,
   type TMDBMovieData,
 } from './common/tmdb-utilities';
 import {selectCredits, upsertMovieCredits} from './movie-credits';
@@ -750,11 +752,34 @@ async function creditedPeople(
   return byName;
 }
 
+type CreditMember = {id: number; name: string; original_name: string};
+
+function creditMembers(
+  credits: TMDBCredits,
+  role: 'director' | 'actor',
+): CreditMember[] {
+  return role === 'director'
+    ? credits.crew.filter(member => member.job === 'Director')
+    : credits.cast;
+}
+
+function nameCandidates(members: CreditMember[]): Map<string, number> {
+  return new Map(
+    members.flatMap(member =>
+      [member.name, member.original_name].map(
+        candidate => [normalizePersonName(candidate), member.id] as const,
+      ),
+    ),
+  );
+}
+
 /**
- * TMDbのキャストは上位10名しか保存していないので、助演のノミニーは
- * 保存済みクレジットに居ないことがある。全キャストから引いて1件だけ足す
+ * 保存済みクレジットに居ない人物をTMDbから引き当てる。キャストは上位10名しか
+ * 保存していないので助演のノミニーが漏れる。本名が非ラテン文字の人物は
+ * 日本語版のクレジット名と合わないので英語版でも照合する。
+ * クレジットの無い映画は全クレジットを保存し、居なければ当たった1件だけ足す
  */
-async function resolveFromTmdbCast(
+async function resolveFromTmdbCredits(
   context: ImportContext,
   movieUid: string,
   name: string,
@@ -779,48 +804,67 @@ async function resolveFromTmdbCast(
     return undefined;
   }
 
-  const selected = selectCredits({
-    cast: role === 'director' ? [] : credits.cast,
-    crew: credits.crew,
-  });
-  const candidates = new Map(
-    credits.cast.flatMap(member =>
-      [member.name, member.original_name].map(
-        candidate => [normalizePersonName(candidate), member.id] as const,
-      ),
-    ),
-  );
-  const tmdbPersonId = matchPersonName(name, candidates);
+  const members = creditMembers(credits, role);
+  let tmdbPersonId = matchPersonName(name, nameCandidates(members));
+  if (tmdbPersonId === undefined) {
+    const english = await fetchTMDBCredits(
+      movie.tmdbId,
+      'movie',
+      tmdbApiKey,
+      'en-US',
+    );
+    if (english) {
+      tmdbPersonId = matchPersonName(
+        name,
+        nameCandidates(creditMembers(english, role)),
+      );
+    }
+  }
+
   if (tmdbPersonId === undefined) {
     return undefined;
   }
 
-  const member = credits.cast.find(entry => entry.id === tmdbPersonId);
-  if (!member) {
+  const selected = selectCredits(credits);
+  const credit =
+    selected.find(entry => entry.tmdbPersonId === tmdbPersonId) ??
+    castCredit(credits.cast.find(member => member.id === tmdbPersonId));
+  if (!credit) {
     return undefined;
   }
 
-  const credit = selected.find(
-    entry => entry.creditId === member.credit_id,
-  ) ?? {
-    creditId: member.credit_id,
-    tmdbPersonId: member.id,
-    name: member.original_name,
-    localizedName: member.name,
-    profilePath: member.profile_path ?? undefined,
-    department: 'Acting',
-    job: undefined,
-    character: member.character ?? undefined,
-    castOrder: member.order,
-  };
+  const [stored] = await database
+    .select({uid: movieCredits.uid})
+    .from(movieCredits)
+    .where(eq(movieCredits.movieUid, movieUid))
+    .limit(1);
+  const toSave = stored
+    ? [credit]
+    : [...selected.filter(entry => entry.creditId !== credit.creditId), credit];
 
   const personUidByTmdbId = await upsertMovieCredits(
     {database, isDryRun: false},
     movieUid,
-    [credit],
+    toSave,
   );
 
-  return personUidByTmdbId.get(member.id);
+  return personUidByTmdbId.get(tmdbPersonId);
+}
+
+function castCredit(member: TMDBCastCredit | undefined) {
+  return (
+    member && {
+      creditId: member.credit_id,
+      tmdbPersonId: member.id,
+      name: member.original_name,
+      localizedName: member.name,
+      profilePath: member.profile_path ?? undefined,
+      department: 'Acting',
+      job: undefined,
+      character: member.character ?? undefined,
+      castOrder: member.order,
+    }
+  );
 }
 
 async function ensurePersonNominations(
@@ -853,7 +897,7 @@ async function ensurePersonNominations(
   for (const person of nominees) {
     const personUid =
       matchPersonName(person.name, candidates) ??
-      (await resolveFromTmdbCast(context, movieUid, person.name, role));
+      (await resolveFromTmdbCredits(context, movieUid, person.name, role));
     if (!personUid) {
       console.log(
         `  Unresolved person: ${person.name} (${film.title ?? film.imdbId})`,

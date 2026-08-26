@@ -392,3 +392,121 @@ describe('importImdbEventAward の個人賞 TMDbフォールバック', () => {
     expect(stats.peopleUnresolved).toBe(1);
   });
 });
+
+describe('importImdbEventAward の個人賞 英語名フォールバック', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+    environment.TMDB_API_KEY = 'test-key';
+    await database
+      .update(movies)
+      .set({tmdbId: 4242})
+      .where(eq(movies.uid, 'movie-kokuho'));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        const english = url.includes('language=en-US');
+        return Response.json({
+          cast: [
+            {
+              id: 9002,
+              credit_id: 'tmdb-credit-kikuchi',
+              name: english ? 'Rinko Kikuchi' : '菊地凛子',
+              original_name: '菊地凛子',
+              character: 'Chieko',
+              order: 3,
+              profile_path: null,
+            },
+          ],
+          crew: [
+            {
+              id: 9003,
+              credit_id: 'tmdb-credit-kurosawa',
+              name: english ? 'Akira Kurosawa' : '黒澤明',
+              original_name: '黒澤明',
+              department: 'Directing',
+              job: 'Director',
+              profile_path: null,
+            },
+          ],
+        });
+      }),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('本名が非ラテン文字の俳優を英語名で引き当てる', async () => {
+    await importImdbEventAward({
+      environment,
+      data: collectedData('助演男優賞', [
+        personNomination('tt99999999', '国宝', ['Rinko Kikuchi']),
+      ]),
+      config: actorConfig,
+      throttleMs: 0,
+    });
+
+    const [row] = await database.select().from(nominations);
+    const [person] = await database
+      .select()
+      .from(people)
+      .where(eq(people.tmdbId, 9002));
+    expect(row?.personUid).toBe(person?.uid);
+    expect(person?.name).toBe('菊地凛子');
+  });
+
+  it('クレジットの無い映画は全クレジットを保存してから引き当てる', async () => {
+    await database.insert(movies).values({
+      uid: 'movie-empty',
+      imdbId: 'tt88888888',
+      tmdbId: 4343,
+      year: 2006,
+    });
+
+    await importImdbEventAward({
+      environment,
+      data: collectedData('助演女優賞', [
+        personNomination('tt88888888', 'Babel', ['Rinko Kikuchi']),
+      ]),
+      config: {
+        ...actorConfig,
+        categoryName: '助演女優賞',
+        isCompetitionCategory: category => category === '助演女優賞',
+      },
+      throttleMs: 0,
+    });
+
+    const credits = await database
+      .select()
+      .from(movieCredits)
+      .where(eq(movieCredits.movieUid, 'movie-empty'));
+    expect(
+      credits
+        .map(credit => credit.creditId)
+        .toSorted((a, b) => a.localeCompare(b)),
+    ).toEqual(['tmdb-credit-kikuchi', 'tmdb-credit-kurosawa']);
+  });
+
+  it('監督をTMDbのクルーから英語名で引き当てる', async () => {
+    await importImdbEventAward({
+      environment,
+      data: collectedData('監督賞', [
+        personNomination('tt99999999', '国宝', ['Akira Kurosawa'], true),
+      ]),
+      config: directorConfig,
+      throttleMs: 0,
+    });
+
+    const [row] = await database.select().from(nominations);
+    const [credit] = await database
+      .select()
+      .from(movieCredits)
+      .where(eq(movieCredits.creditId, 'tmdb-credit-kurosawa'));
+    expect(row?.personUid).toBe(credit?.personUid);
+    expect(credit?.job).toBe('Director');
+  });
+});
