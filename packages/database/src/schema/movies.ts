@@ -1,5 +1,11 @@
 import {sql} from 'drizzle-orm';
-import {index, integer, sqliteTable, text} from 'drizzle-orm/sqlite-core';
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from 'drizzle-orm/sqlite-core';
 import {generateUUID} from '@shine/utils';
 
 export const movies = sqliteTable(
@@ -11,7 +17,7 @@ export const movies = sqliteTable(
     originalLanguage: text().notNull().default('en'),
     year: integer(),
     imdbId: text().unique(),
-    tmdbId: integer().unique(),
+    tmdbId: integer(),
     mediaType: text().notNull().default('movie'),
     releaseDate: text('release_date'),
     createdAt: integer()
@@ -28,5 +34,9 @@ export const movies = sqliteTable(
     index('movies_original_language_idx').on(table.originalLanguage),
     index('movies_created_at_idx').on(table.createdAt),
     index('movies_deleted_at_idx').on(table.deletedAt),
+    uniqueIndex('movies_tmdb_id_media_type_unique').on(
+      table.tmdbId,
+      table.mediaType,
+    ),
   ],
 );
