@@ -50,11 +50,13 @@ export function buildSparqlQuery(imdbIds: string[]): string {
 }`;
 }
 
-/** Wikidataのラベルや記事名は同名作品を区別するため「(映画)」「(作者名)」等が付くことがある */
+/** Wikidataのラベルや記事名は同名作品を区別するため「(映画)」「(1994年のテレビドラマ)」等が付くことがある */
 export function cleanWikidataLabel(label: string): string {
   return label
-    .replace(/\s*\([^()]*\)\s*$/, '')
-    .replace(/\s*（[^（）]*映画[^（）]*）\s*$/, '')
+    .replace(
+      /\s*[（(][^（()）]*(?:映画|テレビ|ドラマ|アニメ|\d{4}年)[^（()）]*[）)]\s*$/,
+      '',
+    )
     .trim();
 }
 
@@ -62,8 +64,8 @@ export function isSameTitle(a: string, b: string): boolean {
   return a.normalize('NFKC') === b.normalize('NFKC');
 }
 
-/** jaラベルが「1988年版」で、ja.wikipediaの記事も無い */
-const BROKEN_WIKIDATA_ENTRIES = new Set(['tt0093765']);
+/** tt0093765 は ja ラベルが「1988年版」で記事も無く、tt3026308 は P345 が原作小説の項目に付いている */
+const BROKEN_WIKIDATA_ENTRIES = new Set(['tt0093765', 'tt3026308']);
 
 function articleTitleFromUrl(url: string | undefined): string | undefined {
   if (!url) {

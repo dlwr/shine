@@ -12,6 +12,7 @@ import {
   buildSparqlQuery,
   cleanWikidataLabel,
   importJapaneseTitlesFromWikidata,
+  isSameTitle,
   parseSparqlResponse,
 } from '../wikidata-japanese-titles';
 
@@ -123,6 +124,12 @@ describe('cleanWikidataLabel', () => {
     expect(cleanWikidataLabel('オテロ（1986年の映画）')).toBe('オテロ');
   });
 
+  it('テレビドラマの曖昧さ回避も落とす', () => {
+    expect(cleanWikidataLabel('家なき子 (1994年のテレビドラマ)')).toBe(
+      '家なき子',
+    );
+  });
+
   it('映画と無関係な括弧は残す', () => {
     expect(cleanWikidataLabel('ヱヴァンゲリヲン新劇場版:序 (前編)')).toBe(
       'ヱヴァンゲリヲン新劇場版:序 (前編)',
@@ -136,7 +143,32 @@ describe('cleanWikidataLabel', () => {
   });
 });
 
+describe('isSameTitle', () => {
+  it('同じ文字列は同じ題名', () => {
+    expect(isSameTitle('突破口！', '突破口！')).toBe(true);
+  });
+
+  it('全角と半角の記号の違いだけなら同じ題名', () => {
+    expect(isSameTitle('突破口！', '突破口!')).toBe(true);
+  });
+
+  it('文字が違えば別の題名', () => {
+    expect(isSameTitle('DEATH NOTE', 'デスノート')).toBe(false);
+  });
+});
+
 describe('parseSparqlResponse', () => {
+  it('Wikidata側が壊れていると分かっている作品は使わない', () => {
+    const titles = parseSparqlResponse(
+      sparqlResponse([
+        ['tt0093765', '1988年版'],
+        ['tt3026308', '鼠小僧次郎吉 (大佛次郎)'],
+      ]),
+    );
+
+    expect(titles.size).toBe(0);
+  });
+
   it('IMDb IDと日本語ラベルの対応を返す', () => {
     const result = parseSparqlResponse(
       sparqlResponse([['tt0042876', '羅生門']]),
