@@ -40,6 +40,7 @@ const RESOLUTION_OVERRIDES = new Map<string, string>();
 const PERSON_NAME_ALIASES: Record<string, string> = {
   'Alejandro González Iñárritu': 'Alejandro G. Iñárritu',
   'Michael Cacoyannis': 'Mihalis Kakogiannis',
+  'Yuh-jung Youn': 'Youn Yuh-jung',
 };
 
 export type AcademyPersonAward = {
