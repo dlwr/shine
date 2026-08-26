@@ -41,7 +41,7 @@ export type EnWikipediaAwardSource = {
   /** 部門名から取り除いて短縮名にする接頭辞 */
   categoryPrefix: string;
   publicationWindow: YearWindow;
-  /** 記事名からIMDb IDを引けない作品を直接指す。キーは「回次:表示名」 */
+  /** 記事名からIMDb IDを引けない作品や、Wikidataが別の実体（TVミニシリーズ等）を指す作品を直接指す。キーは「回次:表示名」 */
   resolutionOverrides: ReadonlyMap<string, string>;
   /** 記事の表記とTMDbのクレジット名が別名で、表記の正規化では寄らないもの */
   personNameAliases: Readonly<Record<string, string>>;
@@ -120,10 +120,9 @@ function buildNominations(
   for (const entry of edition.entries) {
     const match = resolved.get(referenceKey(entry));
     const imdbId =
-      match?.imdbId ??
       source.resolutionOverrides.get(
         `${edition.ceremonyNumber}:${entry.filmTitle}`,
-      );
+      ) ?? match?.imdbId;
     if (!imdbId) {
       const person = entry.personName ? ` (${entry.personName})` : '';
       console.log(

@@ -204,4 +204,31 @@ describe('BAFTA_SOURCE', () => {
         .imdbId,
     ).toBe('tt0053793');
   });
+
+  it('Wikidata が別の実体に解決した作品も直指定を優先する', () => {
+    const data = toImdbEventData(
+      BAFTA_SOURCE,
+      BAFTA_AWARDS[3],
+      [
+        {
+          filmYear: 1975,
+          ceremonyNumber: 29,
+          entries: [
+            {
+              personName: 'Liv Ullmann',
+              filmPage: 'Scenes from a Marriage',
+              filmTitle: 'Scenes from a Marriage',
+              isWinner: false,
+            },
+          ],
+        },
+      ],
+      new Map([['Scenes from a Marriage', {imdbId: 'tt0070644'}]]),
+    );
+
+    expect(
+      data.editions[0].targetAward[0].categories[0].nominations[0].titles[0]
+        .imdbId,
+    ).toBe('tt6725014');
+  });
 });

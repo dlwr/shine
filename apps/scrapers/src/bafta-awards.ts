@@ -7,7 +7,7 @@ import {
 } from './common/en-wikipedia-award';
 import {type ImdbEventImportStats} from './imdb-event-award';
 
-/** 記事が原作の小説・戯曲にリンクしている作品と、リンクの無い作品 */
+/** 記事が原作の小説・戯曲にリンクしている作品、リンクの無い作品、Wikidata が TV ミニシリーズを指す作品 */
 const RESOLUTION_OVERRIDES = new Map<string, string>([
   ['14:Elmer Gantry', 'tt0053793'],
   ['15:A Raisin in the Sun', 'tt0055353'],
