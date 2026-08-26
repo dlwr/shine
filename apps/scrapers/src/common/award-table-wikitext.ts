@@ -42,7 +42,7 @@ const REFERENCE = /<ref[^>]*\/>|<ref[^>]*>[\s\S]*?<\/ref>/g;
 const HTML_NOTE = /<small>[\s\S]*?<\/small>/g;
 const HTML_TAG = /<[^>]+>/g;
 const WRITE_IN = /write-in/i;
-const NAME_SEPARATOR = /\s+(?:&|and)\s+|,\s+/;
+const NAME_SEPARATOR = /\s+(?:&|and)\s+|,\s+(?!(?:Jr|Sr)\.?(?:\s|$))/;
 const ITALIC = /(?<!')''(?!')|'''''/;
 const NAMED_PARAMETER = /^\s*\w+=/;
 const YEAR_HEADER = 'Year';

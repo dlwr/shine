@@ -304,13 +304,15 @@ const GLOBE_ACTOR_WIKITEXT = `
 !scope="col" style="width:30%;"| Film
 !scope="col" style="width:2%;" class="unsortable"|{{Abbr|Ref.|Reference}}
 |-
-! rowspan="3" style="text-align:center;" |[[78th Golden Globe Awards|2020]]
+! rowspan="4" style="text-align:center;" |[[78th Golden Globe Awards|2020]]
 | style="background:#B0C4DE;" | '''[[Chadwick Boseman]] <small>(posthumous)</small>''' || style="background:#B0C4DE;" | '''Levee Green''' || style="background:#B0C4DE;" | '''''[[Ma Rainey's Black Bottom (film)|Ma Rainey's Black Bottom]]'''''
-| rowspan=3|<ref>{{cite web|url=https://example.com/|title=Winners}}</ref>
+| rowspan=4|<ref>{{cite web|url=https://example.com/|title=Winners}}</ref>
 |-
 | [[Riz Ahmed]] || Ruben Stone || ''[[Sound of Metal]]''
 |-
 | [[Gary Oldman]] || [[Herman J. Mankiewicz]] || ''[[Mank]]''
+|-
+| [[Howard Rollins|Howard E. Rollins, Jr.]] || Coalhouse Walker, Jr. || ''[[Ragtime (film)|Ragtime]]''
 |}
 
 ==Multiple nominations==
@@ -451,6 +453,12 @@ describe('ゴールデングローブ形式の個人賞の表', () => {
         personName: 'Gary Oldman',
         filmPage: 'Mank',
         filmTitle: 'Mank',
+        isWinner: false,
+      },
+      {
+        personName: 'Howard E. Rollins, Jr.',
+        filmPage: 'Ragtime (film)',
+        filmTitle: 'Ragtime',
         isWinner: false,
       },
     ]);
