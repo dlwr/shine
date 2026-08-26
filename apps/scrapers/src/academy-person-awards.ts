@@ -36,6 +36,12 @@ const PUBLICATION_WINDOW: YearWindow = {min: -2, max: 1};
 /** 記事名からIMDb IDを引けない作品を直接指す。キーは「回次:表示名」 */
 const RESOLUTION_OVERRIDES = new Map<string, string>();
 
+/** 記事の表記とTMDbのクレジット名が別名で、表記の正規化では寄らないもの */
+const PERSON_NAME_ALIASES: Record<string, string> = {
+  'Alejandro González Iñárritu': 'Alejandro G. Iñárritu',
+  'Michael Cacoyannis': 'Mihalis Kakogiannis',
+};
+
 export type AcademyPersonAward = {
   article: string;
   category: string;
@@ -124,7 +130,9 @@ function buildNominations(
           originalTitle: match?.englishTitle ?? entry.filmTitle,
         },
       ],
-      people: [{name: entry.personName}],
+      people: [
+        {name: PERSON_NAME_ALIASES[entry.personName] ?? entry.personName},
+      ],
     });
   }
 

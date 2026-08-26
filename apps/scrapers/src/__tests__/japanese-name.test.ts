@@ -93,3 +93,20 @@ describe('normalizePersonName のラテン文字', () => {
     expect(normalizePersonName('がぎぐ')).toBe('がぎぐ');
   });
 });
+
+describe('normalizePersonName の記号', () => {
+  it('ハイフンの有無を区別しない', () => {
+    expect(normalizePersonName('Bong Joon-ho')).toBe(
+      normalizePersonName('Bong Joon Ho'),
+    );
+  });
+
+  it('ピリオドとアポストロフィを区別しない', () => {
+    expect(normalizePersonName('H. B. Warner')).toBe(
+      normalizePersonName('HB Warner'),
+    );
+    expect(normalizePersonName("Mo'Nique")).toBe(
+      normalizePersonName('MoNique'),
+    );
+  });
+});

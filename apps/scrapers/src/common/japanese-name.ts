@@ -35,9 +35,12 @@ const VARIANT_PATTERN = new RegExp(`[${Object.keys(VARIANTS).join('')}]`, 'gu');
 
 const LATIN_DIACRITICS = /[\u{300}-\u{36F}]/gu;
 
+/** 表記ゆれの多い区切り記号。ハイフン・ピリオド・アポストロフィ・中黒 */
+const SEPARATORS = /[\s\-\u{2010}-\u{2015}'’.·・]/gu;
+
 export function normalizePersonName(name: string): string {
   return name
-    .replaceAll(/\s+/gu, '')
+    .replaceAll(SEPARATORS, '')
     .normalize('NFKC')
     .replaceAll(VARIANT_PATTERN, character => VARIANTS[character])
     .normalize('NFD')
