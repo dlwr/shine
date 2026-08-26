@@ -3,6 +3,10 @@ import {cellsOf, fillRow, type CarriedCell, type Cell} from './wikitext-table';
 export type AwardTableOptions = {
   /** 回次リンクの記事名。[[22nd British Academy Film Awards|22nd]] なら 'British Academy Film Awards' */
   ceremonyPage: string;
+  /** 受賞行の背景色。省略時は #FAEB86 */
+  winnerBackground?: RegExp;
+  /** 作品列の見出し。省略時は Film / Films */
+  filmHeaders?: string[];
 };
 
 export type FilmAwardEntry = {
@@ -22,7 +26,7 @@ export type AwardEdition<Entry extends FilmAwardEntry> = {
   entries: Entry[];
 };
 
-const AWARDS_SECTION = /^==\s*Winners and nominees\s*==/m;
+const AWARDS_SECTION = /^==\s*Winners and nomin(?:ees|ations)\s*==/im;
 const NEXT_SECTION = /\n==[^=]/;
 const TABLE_START = /^\{\|/m;
 const TABLE_END = '\n|}';
@@ -31,6 +35,9 @@ const WINNER_BACKGROUND = /background:\s*#faeb86/i;
 const WIKI_LINK = /\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]*))?]]/;
 const WIKI_LINKS = new RegExp(WIKI_LINK.source, 'g');
 const FILM_YEAR = /\[\[(\d{4}) in film|'''(\d{4})'''/;
+/** [[1st Golden Globe Awards|1943]] や [[Golden Globe Awards 1980|1980]] のように年セルの最初の数字が公開年の表 */
+const FIRST_YEAR = /\b(\d{4})\b/;
+const NOT_AWARDED = /^(?:no award|not awarded)/i;
 const REFERENCE = /<ref[^>]*\/>|<ref[^>]*>[\s\S]*?<\/ref>/g;
 const HTML_NOTE = /<small>[\s\S]*?<\/small>/g;
 const HTML_TAG = /<[^>]+>/g;
@@ -39,7 +46,7 @@ const NAME_SEPARATOR = /\s+(?:&|and)\s+|,\s+/;
 const ITALIC = /(?<!')''(?!')|'''''/;
 const NAMED_PARAMETER = /^\s*\w+=/;
 const YEAR_HEADER = 'Year';
-const FILM_HEADERS = new Set(['Film', 'Films']);
+const FILM_HEADERS = ['Film', 'Films'];
 const ROLE_HEADER = 'Role';
 const IGNORED_HEADERS = [ROLE_HEADER, 'Ref'];
 
@@ -48,6 +55,7 @@ type ColumnLayout = {
   yearIndex: number;
   personIndex: number | undefined;
   filmIndex: number;
+  filmIndexes: number[];
   roleIndex: number | undefined;
 };
 
@@ -59,29 +67,34 @@ function ceremonyNumberPattern(options: AwardTableOptions): RegExp {
 
 function columnLayout(
   header: Cell[],
+  options: AwardTableOptions,
   hasPersonColumn: boolean,
 ): ColumnLayout | undefined {
   const labels = header.map(cell => cell.content);
+  const filmHeaders = new Set(options.filmHeaders ?? FILM_HEADERS);
   const yearIndex = labels.indexOf(YEAR_HEADER);
-  const filmIndex = labels.findIndex(label => FILM_HEADERS.has(label));
+  const filmIndexes = labels.flatMap((label, index) =>
+    filmHeaders.has(label) ? [index] : [],
+  );
   const personIndex = hasPersonColumn
     ? labels.findIndex(
         (label, index) =>
           index !== yearIndex &&
-          index !== filmIndex &&
+          !filmIndexes.includes(index) &&
           IGNORED_HEADERS.every(ignored => !label.includes(ignored)),
       )
     : undefined;
 
   const roleIndex = labels.findIndex(label => label.includes(ROLE_HEADER));
 
-  return yearIndex === -1 || filmIndex === -1 || personIndex === -1
+  return yearIndex === -1 || personIndex === -1 || filmIndexes.length === 0
     ? undefined
     : {
         size: labels.length,
         yearIndex,
         personIndex,
-        filmIndex,
+        filmIndex: filmIndexes[0],
+        filmIndexes,
         roleIndex: roleIndex === -1 ? undefined : roleIndex,
       };
 }
@@ -193,7 +206,7 @@ function filmOf(
   }
 
   const filmTitle = cleaned.trim();
-  if (!filmTitle) {
+  if (!filmTitle || NOT_AWARDED.test(filmTitle)) {
     return undefined;
   }
 
@@ -221,6 +234,7 @@ function parseTable<Entry extends FilmAwardEntry>(
 
   const layout = columnLayout(
     cellsOf(chunks[headerIndex], ['!']),
+    options,
     hasPersonColumn,
   );
   if (!layout) {
@@ -240,12 +254,18 @@ function parseTable<Entry extends FilmAwardEntry>(
 
     const row = fillRow(own, carried, layout.size);
     const yearCell = row[layout.yearIndex];
-    const filmYear = yearCell && FILM_YEAR.exec(yearCell.content);
+    const filmYear =
+      yearCell &&
+      (FILM_YEAR.exec(yearCell.content) ?? FIRST_YEAR.exec(yearCell.content));
     const ceremonyNumber = yearCell && ceremonyPattern.exec(yearCell.content);
     const personCell =
       layout.personIndex === undefined ? undefined : row[layout.personIndex];
-    const filmCell = filmCellOf(row, layout);
-    if (!filmYear || !ceremonyNumber || !filmCell) {
+    const filmCells = (
+      hasPersonColumn
+        ? [filmCellOf(row, layout)]
+        : layout.filmIndexes.map(index => row[index])
+    ).filter(cell => cell !== undefined);
+    if (!filmYear || !ceremonyNumber || filmCells.length === 0) {
       continue;
     }
 
@@ -267,15 +287,15 @@ function parseTable<Entry extends FilmAwardEntry>(
       editions.push(edition);
     }
 
-    const film = filmOf(filmCell, edition);
-    if (!film) {
-      continue;
+    for (const filmCell of filmCells) {
+      const film = filmOf(filmCell, edition);
+      if (film) {
+        edition.entries.push(...entriesOf(film, filmCell, personCell));
+      }
     }
-
-    edition.entries.push(...entriesOf(film, filmCell, personCell));
   }
 
-  return editions;
+  return editions.filter(edition => edition.entries.length > 0);
 }
 
 function awardTables(wikitext: string): string[] {
@@ -300,6 +320,7 @@ export function parsePersonAwardWikitext(
   wikitext: string,
   options: AwardTableOptions,
 ): Array<AwardEdition<PersonAwardEntry>> {
+  const winnerBackground = options.winnerBackground ?? WINNER_BACKGROUND;
   return awardTables(wikitext).flatMap(table =>
     parseTable<PersonAwardEntry>(
       table,
@@ -311,8 +332,8 @@ export function parsePersonAwardWikitext(
         }
 
         const isWinner =
-          WINNER_BACKGROUND.test(personCell.attributes) ||
-          WINNER_BACKGROUND.test(filmCell.attributes);
+          winnerBackground.test(personCell.attributes) ||
+          winnerBackground.test(filmCell.attributes);
         return personNames(personCell).map(personName => ({
           personName,
           ...film,
@@ -327,9 +348,10 @@ export function parseFilmAwardWikitext(
   wikitext: string,
   options: AwardTableOptions,
 ): Array<AwardEdition<FilmAwardEntry>> {
+  const winnerBackground = options.winnerBackground ?? WINNER_BACKGROUND;
   return awardTables(wikitext).flatMap(table =>
     parseTable<FilmAwardEntry>(table, options, false, (film, filmCell) => [
-      {...film, isWinner: WINNER_BACKGROUND.test(filmCell.attributes)},
+      {...film, isWinner: winnerBackground.test(filmCell.attributes)},
     ]),
   );
 }

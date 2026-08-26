@@ -29,6 +29,8 @@ export type EnWikipediaAward = {
   category: string;
   /** 個人賞のとき、人物をどのクレジットから引き当てるか。無ければ作品賞 */
   role?: PersonRole;
+  /** 記事の表で作品列の見出しが Film / Films でないときに指定する */
+  filmHeaders?: string[];
 };
 
 export type EnWikipediaAwardSource = {
@@ -41,6 +43,8 @@ export type EnWikipediaAwardSource = {
   /** 部門名から取り除いて短縮名にする接頭辞 */
   categoryPrefix: string;
   publicationWindow: YearWindow;
+  /** 記事の表で受賞行に付く背景色が #FAEB86 でないときに指定する */
+  winnerBackground?: RegExp;
   /** 記事名からIMDb IDを引けない作品や、Wikidataが別の実体（TVミニシリーズ等）を指す作品を直接指す。キーは「回次:表示名」 */
   resolutionOverrides: ReadonlyMap<string, string>;
   /** 記事の表記とTMDbのクレジット名が別名で、表記の正規化では寄らないもの */
@@ -202,7 +206,11 @@ export function parseAwardEditions(
   award: EnWikipediaAward,
   wikitext: string,
 ): EnWikipediaAwardEdition[] {
-  const options = {ceremonyPage: source.ceremonyPage};
+  const options = {
+    ceremonyPage: source.ceremonyPage,
+    winnerBackground: source.winnerBackground,
+    filmHeaders: award.filmHeaders,
+  };
   return award.role === undefined
     ? parseFilmAwardWikitext(wikitext, options)
     : parsePersonAwardWikitext(wikitext, options);
