@@ -50,10 +50,20 @@ export function buildSparqlQuery(imdbIds: string[]): string {
 }`;
 }
 
-/** Wikidataのラベルは同名作品を区別するため「(映画)」等が付くことがある */
+/** Wikidataのラベルや記事名は同名作品を区別するため「(映画)」「(作者名)」等が付くことがある */
 export function cleanWikidataLabel(label: string): string {
-  return label.replace(/\s*[（(][^（()）]*映画[^（()）]*[）)]\s*$/, '').trim();
+  return label
+    .replace(/\s*\([^()]*\)\s*$/, '')
+    .replace(/\s*（[^（）]*映画[^（）]*）\s*$/, '')
+    .trim();
 }
+
+export function isSameTitle(a: string, b: string): boolean {
+  return a.normalize('NFKC') === b.normalize('NFKC');
+}
+
+/** jaラベルが「1988年版」で、ja.wikipediaの記事も無い */
+const BROKEN_WIKIDATA_ENTRIES = new Set(['tt0093765']);
 
 function articleTitleFromUrl(url: string | undefined): string | undefined {
   if (!url) {
@@ -81,7 +91,7 @@ export function parseSparqlResponse(
   const bindings = response.results?.bindings ?? [];
   for (const binding of bindings) {
     const imdbId = binding.imdb?.value;
-    if (!imdbId) {
+    if (!imdbId || BROKEN_WIKIDATA_ENTRIES.has(imdbId)) {
       continue;
     }
 
@@ -263,7 +273,10 @@ async function applyCandidateTitle({
     return;
   }
 
-  if (title === candidate.existingJa) {
+  if (
+    candidate.existingJa !== undefined &&
+    isSameTitle(title, candidate.existingJa)
+  ) {
     return;
   }
 
