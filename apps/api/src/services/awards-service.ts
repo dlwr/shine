@@ -73,7 +73,20 @@ export function japaneseAwardNames(
 ): {organization?: string; category?: string} {
   const definition = findAwardPageDefinition(organizationName, categoryName);
   if (!definition) {
-    // 賞ページを持たない部門（個人賞など）でも組織名だけは日本語にできる
+    const personDefinition = findPersonAwardDefinition(
+      organizationName,
+      categoryName,
+    );
+    if (personDefinition) {
+      return {
+        organization: personDefinition.organization,
+        ...(personDefinition.categoryLabel && {
+          category: personDefinition.categoryLabel,
+        }),
+      };
+    }
+
+    // 賞ページを持たない部門でも組織名だけは日本語にできる
     const organization = japaneseOrganizationName(organizationName);
     return organization ? {organization} : {};
   }
@@ -90,11 +103,68 @@ export type PersonAwardDefinition = {
   categoryNames: string[];
   name: string;
   organization: string;
+  /** DBの部門名が日本語でないときの表示名 */
+  categoryLabel?: string;
   description: string;
   role: 'director' | 'actor';
 };
 
 export const personAwardDefinitions: PersonAwardDefinition[] = [
+  {
+    slug: 'academy-director',
+    organizationName: 'Academy Awards',
+    categoryNames: ['Academy Award for Best Director'],
+    name: '監督賞',
+    organization: 'アカデミー賞',
+    categoryLabel: '監督賞',
+    description:
+      'アカデミー賞（オスカー）監督賞の歴代受賞者とノミネートの一覧。',
+    role: 'director',
+  },
+  {
+    slug: 'academy-lead-actor',
+    organizationName: 'Academy Awards',
+    categoryNames: ['Academy Award for Best Actor'],
+    name: '主演男優賞',
+    organization: 'アカデミー賞',
+    categoryLabel: '主演男優賞',
+    description:
+      'アカデミー賞（オスカー）主演男優賞の歴代受賞者とノミネートの一覧。',
+    role: 'actor',
+  },
+  {
+    slug: 'academy-lead-actress',
+    organizationName: 'Academy Awards',
+    categoryNames: ['Academy Award for Best Actress'],
+    name: '主演女優賞',
+    organization: 'アカデミー賞',
+    categoryLabel: '主演女優賞',
+    description:
+      'アカデミー賞（オスカー）主演女優賞の歴代受賞者とノミネートの一覧。',
+    role: 'actor',
+  },
+  {
+    slug: 'academy-supporting-actor',
+    organizationName: 'Academy Awards',
+    categoryNames: ['Academy Award for Best Supporting Actor'],
+    name: '助演男優賞',
+    organization: 'アカデミー賞',
+    categoryLabel: '助演男優賞',
+    description:
+      'アカデミー賞（オスカー）助演男優賞の歴代受賞者とノミネートの一覧。',
+    role: 'actor',
+  },
+  {
+    slug: 'academy-supporting-actress',
+    organizationName: 'Academy Awards',
+    categoryNames: ['Academy Award for Best Supporting Actress'],
+    name: '助演女優賞',
+    organization: 'アカデミー賞',
+    categoryLabel: '助演女優賞',
+    description:
+      'アカデミー賞（オスカー）助演女優賞の歴代受賞者とノミネートの一覧。',
+    role: 'actor',
+  },
   {
     slug: 'japan-academy-director',
     organizationName: 'Japan Academy Awards',

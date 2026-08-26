@@ -11,7 +11,7 @@ import {
   awardPageDefinitions,
   findAwardPageDefinition,
   findPersonAwardDefinition,
-  japaneseOrganizationName,
+  japaneseAwardNames,
   personAwardNominations,
 } from './awards-service';
 import {BaseService} from './base-service';
@@ -228,13 +228,12 @@ export class PeopleService extends BaseService {
       .orderBy(awardCategories.name);
 
     for (const row of rows) {
+      const names = japaneseAwardNames(row.organizationName, row.categoryName);
       byMovie.get(row.movieUid)?.personAwards.push({
         slug: findPersonAwardDefinition(row.organizationName, row.categoryName)
           ?.slug,
-        organization:
-          japaneseOrganizationName(row.organizationName) ??
-          row.organizationName,
-        category: row.categoryName,
+        organization: names.organization ?? row.organizationName,
+        category: names.category ?? row.categoryName,
         year: row.ceremonyYear,
         isWinner: row.isWinner === 1,
       });

@@ -16,6 +16,7 @@ import {beforeEach, describe, expect, it} from 'vitest';
 import {
   AwardsService,
   awardPageLinkForOrganizationName,
+  findPersonAwardDefinition,
   japaneseAwardNames,
   paginateAwardDetail,
 } from '../awards-service';
@@ -695,6 +696,41 @@ describe('japaneseAwardNames', () => {
     expect(japaneseAwardNames('Japan Academy Awards', '監督賞')).toEqual({
       organization: '日本アカデミー賞',
     });
+  });
+
+  it('部門名が英語の個人賞は部門名も日本語にする', () => {
+    expect(
+      japaneseAwardNames('Academy Awards', 'Academy Award for Best Director'),
+    ).toEqual({
+      organization: 'アカデミー賞',
+      category: '監督賞',
+    });
+  });
+});
+
+describe('findPersonAwardDefinition', () => {
+  it('アカデミー賞の監督賞を引く', () => {
+    expect(
+      findPersonAwardDefinition(
+        'Academy Awards',
+        'Academy Award for Best Director',
+      )?.slug,
+    ).toBe('academy-director');
+  });
+
+  it('アカデミー賞の助演女優賞を引く', () => {
+    expect(
+      findPersonAwardDefinition(
+        'Academy Awards',
+        'Academy Award for Best Supporting Actress',
+      )?.slug,
+    ).toBe('academy-supporting-actress');
+  });
+
+  it('日本アカデミー賞の監督賞を引く', () => {
+    expect(
+      findPersonAwardDefinition('Japan Academy Awards', '監督賞')?.slug,
+    ).toBe('japan-academy-director');
   });
 });
 
