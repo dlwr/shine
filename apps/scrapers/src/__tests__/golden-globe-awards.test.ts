@@ -200,6 +200,34 @@ describe('GOLDEN_GLOBE_SOURCE', () => {
   });
 });
 
+describe('GOLDEN_GLOBE_SOURCE の別名表', () => {
+  it('記事の表記と TMDb のクレジット名が違う人物を寄せる', () => {
+    const data = toImdbEventData(
+      GOLDEN_GLOBE_SOURCE,
+      GOLDEN_GLOBE_AWARDS[9],
+      [
+        {
+          filmYear: 1981,
+          ceremonyNumber: 39,
+          entries: [
+            {
+              personName: 'Howard E. Rollins, Jr.',
+              filmPage: 'Ragtime (film)',
+              filmTitle: 'Ragtime',
+              isWinner: false,
+            },
+          ],
+        },
+      ],
+      new Map([['Ragtime (film)', {imdbId: 'tt0082970'}]]),
+    );
+
+    expect(
+      data.editions[0].targetAward[0].categories[0].nominations[0].people,
+    ).toEqual([{name: 'Howard Rollins'}]);
+  });
+});
+
 describe('awardConfig', () => {
   it('ゴールデングローブ賞の組織に紐づける', () => {
     expect(awardConfig(GOLDEN_GLOBE_SOURCE, DRAMA)).toMatchObject({
