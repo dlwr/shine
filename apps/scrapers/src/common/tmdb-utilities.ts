@@ -1,7 +1,7 @@
 /**
  * TMDb API関連の共通ユーティリティ
  */
-import {eq} from 'drizzle-orm';
+import {and, eq} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {posterUrls} from '@shine/database/schema/poster-urls';
@@ -395,7 +395,7 @@ export async function fetchJapaneseTitleFromTMDB(
 
       console.log(`  Found TMDB ID: ${movieTmdbId} (${mediaType})`);
       // TMDB IDをデータベースに保存
-      await saveTMDBId(imdbId, movieTmdbId, environment);
+      await saveTMDBId(imdbId, movieTmdbId, environment, mediaType);
     }
 
     // 日本語の映画情報を取得
@@ -479,6 +479,7 @@ export async function saveTMDBId(
   imdbId: string,
   tmdbId: number,
   environment: Environment,
+  mediaType: 'movie' | 'tv',
 ): Promise<void> {
   const database = getDatabase(environment);
 
@@ -513,7 +514,7 @@ export async function saveTMDBId(
     const duplicateMovie = await database
       .select({uid: movies.uid})
       .from(movies)
-      .where(eq(movies.tmdbId, tmdbId))
+      .where(and(eq(movies.tmdbId, tmdbId), eq(movies.mediaType, mediaType)))
       .limit(1);
 
     if (duplicateMovie.length > 0) {
@@ -526,7 +527,7 @@ export async function saveTMDBId(
     // TMDB IDを更新
     await database
       .update(movies)
-      .set({tmdbId})
+      .set({tmdbId, mediaType})
       .where(eq(movies.imdbId, imdbId));
 
     console.log(`  Saved TMDB ID: ${tmdbId}`);

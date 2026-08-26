@@ -273,6 +273,26 @@ async function createAwardStructure(
   };
 }
 
+export async function findExistingMovieForTmdbMovie(
+  database: ReturnType<typeof getDatabase>,
+  tmdbMovie: {id: number; imdb_id?: string | undefined},
+): Promise<typeof movies.$inferSelect | undefined> {
+  const sameTmdbMovie = and(
+    eq(movies.tmdbId, tmdbMovie.id),
+    eq(movies.mediaType, 'movie'),
+  );
+  const [existingMovie] = await database
+    .select()
+    .from(movies)
+    .where(
+      tmdbMovie.imdb_id
+        ? or(sameTmdbMovie, eq(movies.imdbId, tmdbMovie.imdb_id))
+        : sameTmdbMovie,
+    )
+    .limit(1);
+  return existingMovie;
+}
+
 /**
  * バッチ処理用に映画を処理
  */
@@ -309,27 +329,10 @@ async function processMovieForBatch(
 
   const database = getDatabase(context.environment);
 
-  // 既存の映画をチェック（TMDB IDまたはIMDb IDで）
-  let existingMovie: typeof movies.$inferSelect | undefined;
-
-  if (tmdbMovie.imdb_id) {
-    [existingMovie] = await database
-      .select()
-      .from(movies)
-      .where(
-        or(
-          eq(movies.tmdbId, tmdbMovie.id),
-          eq(movies.imdbId, tmdbMovie.imdb_id),
-        ),
-      )
-      .limit(1);
-  } else {
-    [existingMovie] = await database
-      .select()
-      .from(movies)
-      .where(eq(movies.tmdbId, tmdbMovie.id))
-      .limit(1);
-  }
+  const existingMovie = await findExistingMovieForTmdbMovie(
+    database,
+    tmdbMovie,
+  );
 
   if (existingMovie?.deletedAt) {
     console.log(

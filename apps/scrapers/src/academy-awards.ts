@@ -709,7 +709,12 @@ async function processMovieForBatch(
           .where(eq(movies.uid, movieUid))
           .limit(1);
         if (currentMovie.length > 0 && !currentMovie[0].tmdbId) {
-          await saveTMDBId(imdbId, movieImages.tmdbId, context.environment);
+          await saveTMDBId(
+            imdbId,
+            movieImages.tmdbId,
+            context.environment,
+            movieImages.mediaType,
+          );
         }
 
         // ポスターを保存

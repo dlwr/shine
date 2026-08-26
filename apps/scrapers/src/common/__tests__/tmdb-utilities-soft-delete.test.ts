@@ -41,7 +41,7 @@ describe('saveTMDBId and soft-deleted movies', () => {
       deletedAt: 1_700_000_000,
     });
 
-    await saveTMDBId('tt0000001', 42, environment);
+    await saveTMDBId('tt0000001', 42, environment, 'movie');
 
     const [row] = await database
       .select({tmdbId: movies.tmdbId})
@@ -56,7 +56,7 @@ describe('saveTMDBId and soft-deleted movies', () => {
       imdbId: 'tt0000002',
     });
 
-    await saveTMDBId('tt0000002', 43, environment);
+    await saveTMDBId('tt0000002', 43, environment, 'movie');
 
     const [row] = await database
       .select({tmdbId: movies.tmdbId})

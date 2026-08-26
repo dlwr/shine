@@ -65,6 +65,7 @@ async function assignTmdbIds() {
           .where(
             and(
               eq(movies.tmdbId, findResult.tmdbId),
+              eq(movies.mediaType, findResult.mediaType),
               not(eq(movies.uid, movie.uid)),
             ),
           )

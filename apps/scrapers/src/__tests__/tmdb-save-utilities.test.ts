@@ -122,7 +122,7 @@ describe('tmdb-utilities save functions (libsql integration)', () => {
 
   describe('saveTMDBId', () => {
     it('saves the TMDb ID for a movie looked up by IMDb ID', async () => {
-      await saveTMDBId('tt0000001', 12_345, environment);
+      await saveTMDBId('tt0000001', 12_345, environment, 'movie');
 
       const database = getDatabase(environment);
       const [movie] = await database
@@ -134,8 +134,8 @@ describe('tmdb-utilities save functions (libsql integration)', () => {
     });
 
     it('does not overwrite an existing TMDb ID', async () => {
-      await saveTMDBId('tt0000001', 12_345, environment);
-      await saveTMDBId('tt0000001', 99_999, environment);
+      await saveTMDBId('tt0000001', 12_345, environment, 'movie');
+      await saveTMDBId('tt0000001', 99_999, environment, 'movie');
 
       const database = getDatabase(environment);
       const [movie] = await database
@@ -152,13 +152,43 @@ describe('tmdb-utilities save functions (libsql integration)', () => {
         .insert(movies)
         .values({uid: 'movie-2', year: 2021, imdbId: 'tt0000002', tmdbId: 777});
 
-      await saveTMDBId('tt0000001', 777, environment);
+      await saveTMDBId('tt0000001', 777, environment, 'movie');
 
       const [movie] = await database
         .select()
         .from(movies)
         .where(eq(movies.uid, 'movie-1'));
       expect(movie.tmdbId).toBeNull();
+    });
+
+    it('同じ TMDb ID を tv の作品が使っていても映画には保存する', async () => {
+      const database = getDatabase(environment);
+      await database.insert(movies).values({
+        uid: 'movie-2',
+        year: 1989,
+        imdbId: 'tt0000002',
+        tmdbId: 777,
+        mediaType: 'tv',
+      });
+
+      await saveTMDBId('tt0000001', 777, environment, 'movie');
+
+      const [movie] = await database
+        .select()
+        .from(movies)
+        .where(eq(movies.uid, 'movie-1'));
+      expect(movie.tmdbId).toBe(777);
+    });
+
+    it('tv として保存すると media_type も tv になる', async () => {
+      await saveTMDBId('tt0000001', 777, environment, 'tv');
+
+      const database = getDatabase(environment);
+      const [movie] = await database
+        .select()
+        .from(movies)
+        .where(eq(movies.uid, 'movie-1'));
+      expect(movie.mediaType).toBe('tv');
     });
   });
 });
