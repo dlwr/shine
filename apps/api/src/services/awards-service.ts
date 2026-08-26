@@ -358,6 +358,36 @@ export const personAwardDefinitions: PersonAwardDefinition[] = [
       '日本アカデミー賞 最優秀助演女優賞の歴代受賞者と優秀助演女優賞ノミネートの一覧。',
     role: 'actor',
   },
+  {
+    slug: 'cannes-best-director',
+    organizationName: 'Cannes Film Festival',
+    categoryNames: ['Best Director'],
+    name: '監督賞',
+    organization: 'カンヌ国際映画祭',
+    categoryLabel: '監督賞',
+    description: 'カンヌ国際映画祭 監督賞の歴代受賞者の一覧。',
+    role: 'director',
+  },
+  {
+    slug: 'cannes-best-actor',
+    organizationName: 'Cannes Film Festival',
+    categoryNames: ['Best Actor'],
+    name: '男優賞',
+    organization: 'カンヌ国際映画祭',
+    categoryLabel: '男優賞',
+    description: 'カンヌ国際映画祭 男優賞の歴代受賞者の一覧。',
+    role: 'actor',
+  },
+  {
+    slug: 'cannes-best-actress',
+    organizationName: 'Cannes Film Festival',
+    categoryNames: ['Best Actress'],
+    name: '女優賞',
+    organization: 'カンヌ国際映画祭',
+    categoryLabel: '女優賞',
+    description: 'カンヌ国際映画祭 女優賞の歴代受賞者の一覧。',
+    role: 'actor',
+  },
 ];
 
 export function findPersonAwardDefinition(

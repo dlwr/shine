@@ -3,7 +3,6 @@ import {type AcademyPersonEdition} from './academy-person-wikitext';
 import {
   awardConfig,
   awardFilmReferences,
-  ceremonyNumberOf,
   ceremonyYearOf,
   importEnWikipediaAward,
   importEnWikipediaAwards,
@@ -36,10 +35,6 @@ export const ACADEMY_SOURCE: EnWikipediaAwardSource = {
 
 export function academyCeremonyYear(ceremonyNumber: number): number {
   return ceremonyYearOf(ACADEMY_SOURCE, ceremonyNumber);
-}
-
-export function academyCeremonyNumber(ceremonyYear: number): number {
-  return ceremonyNumberOf(ACADEMY_SOURCE, ceremonyYear);
 }
 
 export type AcademyPersonAward = EnWikipediaAward & {role: PersonRole};

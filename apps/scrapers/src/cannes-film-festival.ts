@@ -16,6 +16,7 @@ import {
   searchTMDBMovie,
   type TMDBConfig,
 } from './common/tmdb-utilities';
+import {cannesCeremonyNumber} from './cannes-ceremony';
 import {FetchHttpError, fetchWithRetry} from './common/fetch-utilities';
 import {getScrapeDatabase} from './common/dry-run';
 import {withDefaultTranslationFlags} from './common/default-translations';
@@ -198,23 +199,6 @@ const fetchMainData = (() => {
     return mainData;
   };
 })();
-
-// 1946年開始、1948年と1950年は未開催（2020年は中止だが第73回として数える）
-export function cannesCeremonyNumber(year: number): number | undefined {
-  if (year === 1946 || year === 1947) {
-    return year - 1945;
-  }
-
-  if (year === 1949) {
-    return 3;
-  }
-
-  if (year >= 1951) {
-    return year - 1947;
-  }
-
-  return undefined;
-}
 
 async function getOrCreateCeremony(
   context: ScrapeContext,

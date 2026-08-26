@@ -9,9 +9,9 @@ export type CellMarker = '|' | '!';
 
 export type CarriedCell = {cell: Cell; rowsLeft: number} | undefined;
 
-const INLINE_SEPARATOR: Record<CellMarker, RegExp> = {
-  '|': /\|\|/,
-  '!': /!!|\|\|/,
+const INLINE_SEPARATORS: Record<CellMarker, string[]> = {
+  '|': ['||'],
+  '!': ['!!', '||'],
 };
 
 function spanOf(attributes: string, name: string): number {
@@ -37,11 +37,33 @@ export function parseCell(text: string): Cell {
   };
 }
 
-/** 先頭の || は空の属性なので区切りにしない */
+/** 先頭の || は空の属性なので区切りにせず、テンプレートの中の || も区切りにしない */
 function splitInlineCells(line: string): string[] {
   const marker = line[0] as CellMarker;
-  const [first, ...rest] = line.slice(1).split(INLINE_SEPARATOR[marker]);
-  return [first, ...rest].map(piece => `${marker}${piece}`);
+  const separators = INLINE_SEPARATORS[marker];
+  const pieces: string[] = [];
+  let depth = 0;
+  let start = 1;
+
+  for (let index = 1; index < line.length; index++) {
+    if (line.startsWith('{{', index)) {
+      depth++;
+      index++;
+    } else if (line.startsWith('}}', index)) {
+      depth = Math.max(0, depth - 1);
+      index++;
+    } else if (
+      depth === 0 &&
+      separators.some(separator => line.startsWith(separator, index))
+    ) {
+      pieces.push(line.slice(start, index));
+      start = index + 2;
+      index++;
+    }
+  }
+
+  pieces.push(line.slice(start));
+  return pieces.map(piece => `${marker}${piece}`);
 }
 
 export function cellsOf(chunk: string, markers: CellMarker[]): Cell[] {

@@ -38,13 +38,22 @@ export type EnWikipediaAwardSource = {
   organizationCountry: string;
   /** 第1回の授賞式の年 */
   firstCeremonyYear: number;
-  /** 回次リンクの記事名。[[22nd British Academy Film Awards|22nd]] なら 'British Academy Film Awards' */
-  ceremonyPage: string;
+  /** 回次リンクの記事名。[[22nd British Academy Film Awards|22nd]] なら 'British Academy Film Awards'。年セルに回次リンクが無い記事では省略し ceremonyNumber を指定する */
+  ceremonyPage?: string;
+  /** 回次が毎年1つずつ増えないときの、年から回次・回次から年の対応 */
+  ceremonyNumber?: (year: number) => number | undefined;
+  ceremonyYear?: (ceremonyNumber: number) => number;
   /** 部門名から取り除いて短縮名にする接頭辞 */
   categoryPrefix: string;
   publicationWindow: YearWindow;
+  /** 記事の受賞者を載せる節の見出しが Winners and nominees でないときに指定する */
+  sectionHeading?: RegExp;
   /** 記事の表で受賞行に付く背景色が #FAEB86 でないときに指定する */
   winnerBackground?: RegExp;
+  /** 記事が受賞者だけを載せる */
+  winnersOnly?: boolean;
+  /** 人物セルに付くと別の賞の受賞者であることを示す印 */
+  otherAwardMarker?: RegExp;
   /** 記事名からIMDb IDを引けない作品や、Wikidataが別の実体（TVミニシリーズ等）を指す作品を直接指す。キーは「回次:表示名」 */
   resolutionOverrides: ReadonlyMap<string, string>;
   /** 記事の表記とTMDbのクレジット名が別名で、表記の正規化では寄らないもの */
@@ -77,14 +86,19 @@ export function ceremonyYearOf(
   source: EnWikipediaAwardSource,
   ceremonyNumber: number,
 ): number {
-  return source.firstCeremonyYear - 1 + ceremonyNumber;
+  return (
+    source.ceremonyYear?.(ceremonyNumber) ??
+    source.firstCeremonyYear - 1 + ceremonyNumber
+  );
 }
 
 export function ceremonyNumberOf(
   source: EnWikipediaAwardSource,
   ceremonyYear: number,
-): number {
-  return ceremonyYear - (source.firstCeremonyYear - 1);
+): number | undefined {
+  return source.ceremonyNumber
+    ? source.ceremonyNumber(ceremonyYear)
+    : ceremonyYear - (source.firstCeremonyYear - 1);
 }
 
 function referenceKey(entry: EnWikipediaAwardEntry): string {
@@ -208,7 +222,11 @@ export function parseAwardEditions(
 ): EnWikipediaAwardEdition[] {
   const options = {
     ceremonyPage: source.ceremonyPage,
+    ceremonyNumberOf: (year: number) => ceremonyNumberOf(source, year),
+    sectionHeading: source.sectionHeading,
     winnerBackground: source.winnerBackground,
+    winnersOnly: source.winnersOnly,
+    otherAwardMarker: source.otherAwardMarker,
     filmHeaders: award.filmHeaders,
   };
   return award.role === undefined
