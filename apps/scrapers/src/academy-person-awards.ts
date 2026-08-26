@@ -31,11 +31,7 @@ export const ACADEMY_SOURCE: EnWikipediaAwardSource = {
   /** 対象は暦年公開の作品。映画祭プレミアや本国公開が前年になることがある */
   publicationWindow: {min: -2, max: 1},
   resolutionOverrides: new Map<string, string>(),
-  personNameAliases: {
-    'Alejandro González Iñárritu': 'Alejandro G. Iñárritu',
-    'Michael Cacoyannis': 'Mihalis Kakogiannis',
-    'Yuh-jung Youn': 'Youn Yuh-jung',
-  },
+  personNameAliases: {},
 };
 
 export function academyCeremonyYear(ceremonyNumber: number): number {

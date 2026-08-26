@@ -146,3 +146,62 @@ describe('awardConfig', () => {
     expect(config.ceremonyNumber(2026)).toBe(79);
   });
 });
+
+describe('BAFTA_SOURCE', () => {
+  it('英国公開が数年遅れる初期の作品も同定できる年窓を持つ', () => {
+    expect(BAFTA_SOURCE.publicationWindow).toEqual({min: -8, max: 1});
+  });
+
+  it('共通の別名表で人物を寄せる', () => {
+    const data = toImdbEventData(
+      BAFTA_SOURCE,
+      BEST_DIRECTION,
+      [
+        {
+          filmYear: 2006,
+          ceremonyNumber: 60,
+          entries: [
+            {
+              personName: 'Alejandro González Iñárritu',
+              filmPage: 'Babel (film)',
+              filmTitle: 'Babel',
+              isWinner: false,
+            },
+          ],
+        },
+      ],
+      new Map([['Babel (film)', {imdbId: 'tt0449467'}]]),
+    );
+
+    expect(
+      data.editions[0].targetAward[0].categories[0].nominations[0].people,
+    ).toEqual([{name: 'Alejandro G. Iñárritu'}]);
+  });
+
+  it('記事名から引けない作品は回次と表示名で直接指す', () => {
+    const data = toImdbEventData(
+      BAFTA_SOURCE,
+      BAFTA_AWARDS[3],
+      [
+        {
+          filmYear: 1960,
+          ceremonyNumber: 14,
+          entries: [
+            {
+              personName: 'Jean Simmons',
+              filmPage: 'Elmer Gantry',
+              filmTitle: 'Elmer Gantry',
+              isWinner: false,
+            },
+          ],
+        },
+      ],
+      new Map(),
+    );
+
+    expect(
+      data.editions[0].targetAward[0].categories[0].nominations[0].titles[0]
+        .imdbId,
+    ).toBe('tt0053793');
+  });
+});

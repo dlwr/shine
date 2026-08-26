@@ -49,6 +49,24 @@ export type EnWikipediaAwardSource = {
 
 export type EnWikipediaAwardEntry = FilmAwardEntry & {personName?: string};
 
+/** 賞をまたいで現れる、記事の表記とTMDbのクレジット名が別名の人物 */
+const COMMON_PERSON_NAME_ALIASES: Readonly<Record<string, string>> = {
+  'Alejandro González Iñárritu': 'Alejandro G. Iñárritu',
+  'Michael Cacoyannis': 'Mihalis Kakogiannis',
+  'Yuh-jung Youn': 'Youn Yuh-jung',
+};
+
+function creditName(
+  source: EnWikipediaAwardSource,
+  personName: string,
+): string {
+  return (
+    source.personNameAliases[personName] ??
+    COMMON_PERSON_NAME_ALIASES[personName] ??
+    personName
+  );
+}
+
 export type EnWikipediaAwardEdition = AwardEdition<EnWikipediaAwardEntry>;
 
 export function ceremonyYearOf(
@@ -126,9 +144,7 @@ function buildNominations(
       ],
     };
     if (entry.personName !== undefined) {
-      nomination.people = [
-        {name: source.personNameAliases[entry.personName] ?? entry.personName},
-      ];
+      nomination.people = [{name: creditName(source, entry.personName)}];
     }
 
     nominations.push(nomination);
