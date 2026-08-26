@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./common/*": "./src/common/*.ts"
+  },
   "scripts": {
     "start": "tsx src/index.ts",
     "movie-import": "tsx src/movie-import-from-list-cli.ts",
