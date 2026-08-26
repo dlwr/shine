@@ -15,6 +15,7 @@
     "japan-academy-person-awards": "tsx src/japan-academy-person-awards-cli.ts",
     "academy-person-awards": "tsx src/academy-person-awards-cli.ts",
     "bafta-awards": "tsx src/bafta-awards-cli.ts",
+    "golden-globe-awards": "tsx src/golden-globe-awards-cli.ts",
     "assign-imdb-ids": "tsx src/assign-imdb-ids-cli.ts",
     "backfill-posters": "tsx src/backfill-posters-cli.ts",
     "delete-orphan-movies": "tsx src/delete-orphan-movies-cli.ts",
