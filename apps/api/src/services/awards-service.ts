@@ -221,6 +221,94 @@ export const personAwardDefinitions: PersonAwardDefinition[] = [
     role: 'actor',
   },
   {
+    slug: 'golden-globe-director',
+    organizationName: 'Golden Globe Awards',
+    categoryNames: ['Golden Globe Award for Best Director'],
+    name: '監督賞',
+    organization: 'ゴールデングローブ賞',
+    categoryLabel: '監督賞',
+    description: 'ゴールデングローブ賞 監督賞の歴代受賞者とノミネートの一覧。',
+    role: 'director',
+  },
+  {
+    slug: 'golden-globe-lead-actor-drama',
+    organizationName: 'Golden Globe Awards',
+    categoryNames: [
+      'Golden Globe Award for Best Actor in a Motion Picture – Drama',
+    ],
+    name: '主演男優賞（ドラマ部門）',
+    organization: 'ゴールデングローブ賞',
+    categoryLabel: '主演男優賞（ドラマ部門）',
+    description:
+      'ゴールデングローブ賞 主演男優賞（ドラマ部門）の歴代受賞者とノミネートの一覧。',
+    role: 'actor',
+  },
+  {
+    slug: 'golden-globe-lead-actor-musical-comedy',
+    organizationName: 'Golden Globe Awards',
+    categoryNames: [
+      'Golden Globe Award for Best Actor in a Motion Picture – Musical or Comedy',
+    ],
+    name: '主演男優賞（ミュージカル・コメディ部門）',
+    organization: 'ゴールデングローブ賞',
+    categoryLabel: '主演男優賞（ミュージカル・コメディ部門）',
+    description:
+      'ゴールデングローブ賞 主演男優賞（ミュージカル・コメディ部門）の歴代受賞者とノミネートの一覧。',
+    role: 'actor',
+  },
+  {
+    slug: 'golden-globe-lead-actress-drama',
+    organizationName: 'Golden Globe Awards',
+    categoryNames: [
+      'Golden Globe Award for Best Actress in a Motion Picture – Drama',
+    ],
+    name: '主演女優賞（ドラマ部門）',
+    organization: 'ゴールデングローブ賞',
+    categoryLabel: '主演女優賞（ドラマ部門）',
+    description:
+      'ゴールデングローブ賞 主演女優賞（ドラマ部門）の歴代受賞者とノミネートの一覧。',
+    role: 'actor',
+  },
+  {
+    slug: 'golden-globe-lead-actress-musical-comedy',
+    organizationName: 'Golden Globe Awards',
+    categoryNames: [
+      'Golden Globe Award for Best Actress in a Motion Picture – Musical or Comedy',
+    ],
+    name: '主演女優賞（ミュージカル・コメディ部門）',
+    organization: 'ゴールデングローブ賞',
+    categoryLabel: '主演女優賞（ミュージカル・コメディ部門）',
+    description:
+      'ゴールデングローブ賞 主演女優賞（ミュージカル・コメディ部門）の歴代受賞者とノミネートの一覧。',
+    role: 'actor',
+  },
+  {
+    slug: 'golden-globe-supporting-actor',
+    organizationName: 'Golden Globe Awards',
+    categoryNames: [
+      'Golden Globe Award for Best Supporting Actor – Motion Picture',
+    ],
+    name: '助演男優賞',
+    organization: 'ゴールデングローブ賞',
+    categoryLabel: '助演男優賞',
+    description:
+      'ゴールデングローブ賞 助演男優賞の歴代受賞者とノミネートの一覧。',
+    role: 'actor',
+  },
+  {
+    slug: 'golden-globe-supporting-actress',
+    organizationName: 'Golden Globe Awards',
+    categoryNames: [
+      'Golden Globe Award for Best Supporting Actress – Motion Picture',
+    ],
+    name: '助演女優賞',
+    organization: 'ゴールデングローブ賞',
+    categoryLabel: '助演女優賞',
+    description:
+      'ゴールデングローブ賞 助演女優賞の歴代受賞者とノミネートの一覧。',
+    role: 'actor',
+  },
+  {
     slug: 'japan-academy-director',
     organizationName: 'Japan Academy Awards',
     categoryNames: ['監督賞'],
@@ -393,6 +481,54 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
     organization: '英国アカデミー賞',
     description:
       '英国アカデミー賞（BAFTA）作品賞の歴代受賞作とノミネート作品の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'golden-globe-drama',
+    shortLabel: 'GGドラマ',
+    organizationName: 'Golden Globe Awards',
+    categoryNames: ['Golden Globe Award for Best Motion Picture – Drama'],
+    name: '作品賞（ドラマ部門）',
+    organization: 'ゴールデングローブ賞',
+    description:
+      'ゴールデングローブ賞 作品賞（ドラマ部門）の歴代受賞作とノミネート作品の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'golden-globe-musical-comedy',
+    shortLabel: 'GGコメディ',
+    organizationName: 'Golden Globe Awards',
+    categoryNames: [
+      'Golden Globe Award for Best Motion Picture – Musical or Comedy',
+    ],
+    name: '作品賞（ミュージカル・コメディ部門）',
+    organization: 'ゴールデングローブ賞',
+    description:
+      'ゴールデングローブ賞 作品賞（ミュージカル・コメディ部門）の歴代受賞作とノミネート作品の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'golden-globe-non-english',
+    shortLabel: 'GG非英語',
+    organizationName: 'Golden Globe Awards',
+    categoryNames: [
+      'Golden Globe Award for Best Motion Picture – Non-English Language',
+    ],
+    name: '非英語映画賞',
+    organization: 'ゴールデングローブ賞',
+    description:
+      'ゴールデングローブ賞 非英語映画賞（旧・外国語映画賞）の歴代受賞作とノミネート作品の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'golden-globe-animated',
+    shortLabel: 'GGアニメ',
+    organizationName: 'Golden Globe Awards',
+    categoryNames: ['Golden Globe Award for Best Animated Feature Film'],
+    name: 'アニメーション映画賞',
+    organization: 'ゴールデングローブ賞',
+    description:
+      'ゴールデングローブ賞 アニメーション映画賞の歴代受賞作とノミネート作品の一覧。',
     grouping: 'year',
   },
   {

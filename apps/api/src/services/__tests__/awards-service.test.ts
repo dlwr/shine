@@ -1138,3 +1138,59 @@ describe('英国アカデミー賞の賞ページ', () => {
     ]);
   });
 });
+
+describe('ゴールデングローブ賞の賞ページ', () => {
+  it('作品賞4部門は組織と部門から賞ページを引ける', () => {
+    expect(
+      [
+        'Golden Globe Award for Best Motion Picture – Drama',
+        'Golden Globe Award for Best Motion Picture – Musical or Comedy',
+        'Golden Globe Award for Best Motion Picture – Non-English Language',
+        'Golden Globe Award for Best Animated Feature Film',
+      ].map(category =>
+        awardPageLinkForOrganizationName('Golden Globe Awards', category),
+      ),
+    ).toEqual([
+      {slug: 'golden-globe-drama', hasYearPages: true},
+      {slug: 'golden-globe-musical-comedy', hasYearPages: true},
+      {slug: 'golden-globe-non-english', hasYearPages: true},
+      {slug: 'golden-globe-animated', hasYearPages: true},
+    ]);
+  });
+
+  it('個人賞7部門のページを定義している', () => {
+    expect(
+      personAwardDefinitions
+        .filter(
+          definition => definition.organizationName === 'Golden Globe Awards',
+        )
+        .map(definition => [definition.slug, definition.categoryNames[0]]),
+    ).toEqual([
+      ['golden-globe-director', 'Golden Globe Award for Best Director'],
+      [
+        'golden-globe-lead-actor-drama',
+        'Golden Globe Award for Best Actor in a Motion Picture – Drama',
+      ],
+      [
+        'golden-globe-lead-actor-musical-comedy',
+        'Golden Globe Award for Best Actor in a Motion Picture – Musical or Comedy',
+      ],
+      [
+        'golden-globe-lead-actress-drama',
+        'Golden Globe Award for Best Actress in a Motion Picture – Drama',
+      ],
+      [
+        'golden-globe-lead-actress-musical-comedy',
+        'Golden Globe Award for Best Actress in a Motion Picture – Musical or Comedy',
+      ],
+      [
+        'golden-globe-supporting-actor',
+        'Golden Globe Award for Best Supporting Actor – Motion Picture',
+      ],
+      [
+        'golden-globe-supporting-actress',
+        'Golden Globe Award for Best Supporting Actress – Motion Picture',
+      ],
+    ]);
+  });
+});
