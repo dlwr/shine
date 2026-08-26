@@ -5,6 +5,9 @@ const TMDB_API = 'https://api.themoviedb.org/3';
 const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
 const USER_AGENT = 'shine-film.com movie database (https://shine-film.com)';
 const BATCH_SIZE = 50;
+/** claims を含む応答は1件で数百KBになるので、まとめすぎるとタイムアウトする */
+const WIKIDATA_BATCH_SIZE = 10;
+const WIKIDATA_TIMEOUT_MS = 60_000;
 const IMDB_ID_PATTERN = /^tt\d+$/;
 
 export type ResolvedFilm = {
@@ -129,9 +132,13 @@ async function fetchImdbIds(
     ids: itemIds.join('|'),
   });
 
-  const response = await fetchJsonWithRetry<WikidataEntitiesResponse>(url, {
-    headers: {'User-Agent': USER_AGENT},
-  });
+  const response = await fetchJsonWithRetry<WikidataEntitiesResponse>(
+    url,
+    {headers: {'User-Agent': USER_AGENT}},
+    3,
+    1000,
+    WIKIDATA_TIMEOUT_MS,
+  );
 
   const films = new Map<string, ResolvedFilm>();
   const entityEntries = Object.entries(response.entities ?? {});
@@ -194,15 +201,15 @@ export async function resolveFilmsByWikipediaPage(
 
   const itemIds = [...new Set(itemsByPage.values())];
   const filmsByItem = new Map<string, ResolvedFilm>();
-  for (let index = 0; index < itemIds.length; index += BATCH_SIZE) {
-    const batch = itemIds.slice(index, index + BATCH_SIZE);
+  for (let index = 0; index < itemIds.length; index += WIKIDATA_BATCH_SIZE) {
+    const batch = itemIds.slice(index, index + WIKIDATA_BATCH_SIZE);
     const imdbIds = await fetchImdbIds(batch);
     for (const [item, film] of imdbIds) {
       filmsByItem.set(item, film);
     }
 
     console.log(
-      `  Wikidata: ${Math.min(index + BATCH_SIZE, itemIds.length)}/${itemIds.length}`,
+      `  Wikidata: ${Math.min(index + WIKIDATA_BATCH_SIZE, itemIds.length)}/${itemIds.length}`,
     );
   }
 
