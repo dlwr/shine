@@ -757,6 +757,39 @@ describe('findPersonAwardDefinition', () => {
       )?.role,
     ).toBe('director');
   });
+
+  it('ベルリン国際映画祭の銀熊賞（監督賞）を引く', () => {
+    expect(
+      findPersonAwardDefinition(
+        'Berlin International Film Festival',
+        'Silver Bear for Best Director',
+      )?.slug,
+    ).toBe('berlin-best-director');
+  });
+
+  it('ベルリン国際映画祭の2020年までの男優賞と2021年からの主演俳優賞は別のページ', () => {
+    expect(
+      findPersonAwardDefinition(
+        'Berlin International Film Festival',
+        'Silver Bear for Best Actor',
+      )?.slug,
+    ).toBe('berlin-best-actor');
+    expect(
+      findPersonAwardDefinition(
+        'Berlin International Film Festival',
+        'Silver Bear for Best Leading Performance',
+      )?.slug,
+    ).toBe('berlin-best-leading-performance');
+  });
+
+  it('ベルリン国際映画祭の助演俳優賞を俳優の賞として引く', () => {
+    expect(
+      findPersonAwardDefinition(
+        'Berlin International Film Festival',
+        'Silver Bear for Best Supporting Performance',
+      )?.role,
+    ).toBe('actor');
+  });
 });
 
 describe('AwardsService.getAwardYear', () => {

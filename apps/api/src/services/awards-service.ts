@@ -419,6 +419,60 @@ export const personAwardDefinitions: PersonAwardDefinition[] = [
     description: 'ヴェネツィア国際映画祭 ヴォルピ杯 女優賞の歴代受賞者の一覧。',
     role: 'actor',
   },
+  {
+    slug: 'berlin-best-director',
+    organizationName: 'Berlin International Film Festival',
+    categoryNames: ['Silver Bear for Best Director'],
+    name: '銀熊賞（監督賞）',
+    organization: 'ベルリン国際映画祭',
+    categoryLabel: '銀熊賞（監督賞）',
+    description: 'ベルリン国際映画祭 銀熊賞（監督賞）の歴代受賞者の一覧。',
+    role: 'director',
+  },
+  {
+    slug: 'berlin-best-actor',
+    organizationName: 'Berlin International Film Festival',
+    categoryNames: ['Silver Bear for Best Actor'],
+    name: '銀熊賞（男優賞）',
+    organization: 'ベルリン国際映画祭',
+    categoryLabel: '銀熊賞（男優賞）',
+    description:
+      'ベルリン国際映画祭 銀熊賞（男優賞）の歴代受賞者の一覧。2020年を最後に廃止され、2021年からは性別のない主演俳優賞・助演俳優賞に再編された。',
+    role: 'actor',
+  },
+  {
+    slug: 'berlin-best-actress',
+    organizationName: 'Berlin International Film Festival',
+    categoryNames: ['Silver Bear for Best Actress'],
+    name: '銀熊賞（女優賞）',
+    organization: 'ベルリン国際映画祭',
+    categoryLabel: '銀熊賞（女優賞）',
+    description:
+      'ベルリン国際映画祭 銀熊賞（女優賞）の歴代受賞者の一覧。2020年を最後に廃止され、2021年からは性別のない主演俳優賞・助演俳優賞に再編された。',
+    role: 'actor',
+  },
+  {
+    slug: 'berlin-best-leading-performance',
+    organizationName: 'Berlin International Film Festival',
+    categoryNames: ['Silver Bear for Best Leading Performance'],
+    name: '銀熊賞（主演俳優賞）',
+    organization: 'ベルリン国際映画祭',
+    categoryLabel: '銀熊賞（主演俳優賞）',
+    description:
+      'ベルリン国際映画祭 銀熊賞（主演俳優賞）の歴代受賞者の一覧。2021年に男優賞・女優賞を統合して新設された性別のない演技賞。',
+    role: 'actor',
+  },
+  {
+    slug: 'berlin-best-supporting-performance',
+    organizationName: 'Berlin International Film Festival',
+    categoryNames: ['Silver Bear for Best Supporting Performance'],
+    name: '銀熊賞（助演俳優賞）',
+    organization: 'ベルリン国際映画祭',
+    categoryLabel: '銀熊賞（助演俳優賞）',
+    description:
+      'ベルリン国際映画祭 銀熊賞（助演俳優賞）の歴代受賞者の一覧。2021年に新設された性別のない演技賞。',
+    role: 'actor',
+  },
 ];
 
 export function findPersonAwardDefinition(
