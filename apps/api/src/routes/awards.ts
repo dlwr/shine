@@ -16,7 +16,7 @@ const AWARDS_CACHE_TTL = 604_800;
 
 awardsRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = 'awards:list:v12';
+  const cacheKey = 'awards:list:v13';
   const cached = await cache.get(cacheKey);
   const result = (cached?.data as {awards: unknown[]} | undefined) ?? {
     awards: await new AwardsService(c.env).listAwards(),
