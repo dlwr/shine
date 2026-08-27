@@ -9,7 +9,11 @@ import {veniceCeremonyNumber, veniceCeremonyYear} from './venice-ceremony';
 
 const RESOLUTION_OVERRIDES = new Map<string, string>();
 
-const PERSON_NAME_ALIASES: Record<string, string> = {};
+/** TMDb のクレジット名が原語表記の人物 */
+const PERSON_NAME_ALIASES: Record<string, string> = {
+  'Aleksei Alekseivich German': 'Алексей Герман-младший',
+  'Kang Soo-yeon': '강수연',
+};
 
 const FILM_HEADERS = ['English Title', 'Title'];
 
