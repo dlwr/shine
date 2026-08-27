@@ -8,7 +8,14 @@ import {type ImdbEventImportStats} from './imdb-event-award';
 
 const RESOLUTION_OVERRIDES = new Map<string, string>();
 
-const PERSON_NAME_ALIASES: Record<string, string> = {};
+/** TMDb のクレジット名が原語表記か、綴りが違う人物 */
+const PERSON_NAME_ALIASES: Record<string, string> = {
+  'Anatoly Solonitsyn': 'Анатолий Солоницын',
+  'Giorgi Shengelaya': 'გიორგი შენგელაია',
+  'Malgorzata Szumowska': 'Małgorzata Szumowska',
+  'Nelson Carlo De Los Santos Arias': 'Nelson Carlos de los Santos Arias',
+  'Sergei Puskepalis': 'Сергей Пускепалис',
+};
 
 const FILM_HEADERS = ['English Title', 'Title'];
 
