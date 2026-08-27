@@ -31,6 +31,8 @@ export type EnWikipediaAward = {
   role?: PersonRole;
   /** 記事の表で作品列の見出しが Film / Films でないときに指定する */
   filmHeaders?: string[];
+  /** 受賞者を載せる節の見出しが組織の他の部門と違うときに指定する */
+  sectionHeading?: RegExp;
 };
 
 export type EnWikipediaAwardSource = {
@@ -223,7 +225,7 @@ export function parseAwardEditions(
   const options = {
     ceremonyPage: source.ceremonyPage,
     ceremonyNumberOf: (year: number) => ceremonyNumberOf(source, year),
-    sectionHeading: source.sectionHeading,
+    sectionHeading: award.sectionHeading ?? source.sectionHeading,
     winnerBackground: source.winnerBackground,
     winnersOnly: source.winnersOnly,
     otherAwardMarker: source.otherAwardMarker,
