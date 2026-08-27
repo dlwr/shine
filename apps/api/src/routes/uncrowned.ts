@@ -11,7 +11,7 @@ import {
 export const uncrownedRoutes = new Hono<{Bindings: Environment}>();
 
 const UNCROWNED_CACHE_TTL = 604_800;
-const UNCROWNED_CACHE_KEY = 'uncrowned:v10';
+const UNCROWNED_CACHE_KEY = 'uncrowned:v11';
 
 uncrownedRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);

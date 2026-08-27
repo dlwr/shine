@@ -26,6 +26,7 @@
     "scrapers:golden-globe-awards": "pnpm --filter @shine/scrapers run golden-globe-awards",
     "scrapers:cannes-person-awards": "pnpm --filter @shine/scrapers run cannes-person-awards",
     "scrapers:venice-person-awards": "pnpm --filter @shine/scrapers run venice-person-awards",
+    "scrapers:berlin-person-awards": "pnpm --filter @shine/scrapers run berlin-person-awards",
     "scrapers:japanese-translations": "pnpm --filter @shine/scrapers run japanese-translations",
     "scrapers:wikidata-japanese-titles": "pnpm --filter @shine/scrapers run wikidata-japanese-titles",
     "scrapers:cannes-film-festival": "pnpm --filter @shine/scrapers run cannes-film-festival",
