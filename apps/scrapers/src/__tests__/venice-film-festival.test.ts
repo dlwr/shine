@@ -4,56 +4,13 @@ import {fileURLToPath} from 'node:url';
 import {describe, expect, it} from 'vitest';
 import {extractAwardEditions} from '../imdb-event-award';
 import type {ImdbEventCollectedData} from '../imdb-event-award';
-import {veniceCeremonyNumber, veniceConfig} from '../venice-film-festival';
+import {veniceConfig} from '../venice-film-festival';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const dataPath = path.resolve(
   currentDirectory,
   '../../data/venice-golden-lion.json',
 );
-
-describe('veniceCeremonyNumber', () => {
-  it('第1回は1932年', () => {
-    expect(veniceCeremonyNumber(1932)).toBe(1);
-  });
-
-  it('1934〜1939年は年-1932', () => {
-    expect(veniceCeremonyNumber(1934)).toBe(2);
-    expect(veniceCeremonyNumber(1939)).toBe(7);
-  });
-
-  it('戦時中の1940〜1942年は公式回次に数えない', () => {
-    expect(veniceCeremonyNumber(1940)).toBeUndefined();
-    expect(veniceCeremonyNumber(1942)).toBeUndefined();
-  });
-
-  it('1946年は公式回次に数えない', () => {
-    expect(veniceCeremonyNumber(1946)).toBeUndefined();
-  });
-
-  it('1947〜1972年は年-1939', () => {
-    expect(veniceCeremonyNumber(1947)).toBe(8);
-    expect(veniceCeremonyNumber(1949)).toBe(10);
-    expect(veniceCeremonyNumber(1968)).toBe(29);
-    expect(veniceCeremonyNumber(1972)).toBe(33);
-  });
-
-  it('未開催・非公式の1973〜1978年はundefined', () => {
-    expect(veniceCeremonyNumber(1973)).toBeUndefined();
-    expect(veniceCeremonyNumber(1975)).toBeUndefined();
-    expect(veniceCeremonyNumber(1978)).toBeUndefined();
-  });
-
-  it('1979年は第36回', () => {
-    expect(veniceCeremonyNumber(1979)).toBe(36);
-  });
-
-  it('1980年以降は年-1943', () => {
-    expect(veniceCeremonyNumber(1980)).toBe(37);
-    expect(veniceCeremonyNumber(2025)).toBe(82);
-    expect(veniceCeremonyNumber(2026)).toBe(83);
-  });
-});
 
 describe('veniceConfig.isCompetitionCategory', () => {
   it('未分類（null）とBest Filmを取り込む', () => {

@@ -739,6 +739,24 @@ describe('findPersonAwardDefinition', () => {
       findPersonAwardDefinition('Cannes Film Festival', 'Best Actress')?.slug,
     ).toBe('cannes-best-actress');
   });
+
+  it('ヴェネツィア国際映画祭のヴォルピ杯女優賞を引く', () => {
+    expect(
+      findPersonAwardDefinition(
+        'Venice Film Festival',
+        'Volpi Cup for Best Actress',
+      )?.slug,
+    ).toBe('venice-best-actress');
+  });
+
+  it('ヴェネツィア国際映画祭の銀獅子賞を監督賞として引く', () => {
+    expect(
+      findPersonAwardDefinition(
+        'Venice Film Festival',
+        'Silver Lion for Best Director',
+      )?.role,
+    ).toBe('director');
+  });
 });
 
 describe('AwardsService.getAwardYear', () => {

@@ -388,6 +388,37 @@ export const personAwardDefinitions: PersonAwardDefinition[] = [
     description: 'カンヌ国際映画祭 女優賞の歴代受賞者の一覧。',
     role: 'actor',
   },
+  {
+    slug: 'venice-best-director',
+    organizationName: 'Venice Film Festival',
+    categoryNames: ['Silver Lion for Best Director'],
+    name: '銀獅子賞（監督賞）',
+    organization: 'ヴェネツィア国際映画祭',
+    categoryLabel: '銀獅子賞（監督賞）',
+    description:
+      'ヴェネツィア国際映画祭 銀獅子賞（監督賞）の歴代受賞者の一覧。',
+    role: 'director',
+  },
+  {
+    slug: 'venice-best-actor',
+    organizationName: 'Venice Film Festival',
+    categoryNames: ['Volpi Cup for Best Actor'],
+    name: 'ヴォルピ杯 男優賞',
+    organization: 'ヴェネツィア国際映画祭',
+    categoryLabel: 'ヴォルピ杯 男優賞',
+    description: 'ヴェネツィア国際映画祭 ヴォルピ杯 男優賞の歴代受賞者の一覧。',
+    role: 'actor',
+  },
+  {
+    slug: 'venice-best-actress',
+    organizationName: 'Venice Film Festival',
+    categoryNames: ['Volpi Cup for Best Actress'],
+    name: 'ヴォルピ杯 女優賞',
+    organization: 'ヴェネツィア国際映画祭',
+    categoryLabel: 'ヴォルピ杯 女優賞',
+    description: 'ヴェネツィア国際映画祭 ヴォルピ杯 女優賞の歴代受賞者の一覧。',
+    role: 'actor',
+  },
 ];
 
 export function findPersonAwardDefinition(
