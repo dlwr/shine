@@ -715,6 +715,70 @@ export function personAwardNominations(role: PersonAwardDefinition['role']) {
   );
 }
 
+export type PersonAwardOrganization = {
+  key: string;
+  organizationName: string;
+  shortLabel: string;
+};
+
+export const personAwardOrganizations: PersonAwardOrganization[] = [
+  {
+    key: 'academy',
+    organizationName: 'Academy Awards',
+    shortLabel: 'アカデミー',
+  },
+  {
+    key: 'bafta',
+    organizationName: 'British Academy Film Awards',
+    shortLabel: 'BAFTA',
+  },
+  {
+    key: 'golden-globe',
+    organizationName: 'Golden Globe Awards',
+    shortLabel: 'GG',
+  },
+  {
+    key: 'cannes',
+    organizationName: 'Cannes Film Festival',
+    shortLabel: 'カンヌ',
+  },
+  {
+    key: 'venice',
+    organizationName: 'Venice Film Festival',
+    shortLabel: 'ヴェネツィア',
+  },
+  {
+    key: 'berlin',
+    organizationName: 'Berlin International Film Festival',
+    shortLabel: 'ベルリン',
+  },
+  {
+    key: 'japan-academy',
+    organizationName: 'Japan Academy Awards',
+    shortLabel: '日本アカデミー',
+  },
+  {key: 'kinema-junpo', organizationName: 'Kinema Junpo', shortLabel: 'キネ旬'},
+  {
+    key: 'mainichi',
+    organizationName: 'Mainichi Film Awards',
+    shortLabel: '毎日',
+  },
+  {
+    key: 'blue-ribbon',
+    organizationName: 'Blue Ribbon Awards',
+    shortLabel: 'ブルーリボン',
+  },
+  {key: 'hochi', organizationName: 'Hochi Film Awards', shortLabel: '報知'},
+];
+
+export function findPersonAwardOrganization(
+  organizationName: string,
+): PersonAwardOrganization | undefined {
+  return personAwardOrganizations.find(
+    entry => entry.organizationName === organizationName,
+  );
+}
+
 const RANK_PATTERN = /^(\d+)位$/;
 
 function rankOf(entry: AwardMovieEntry): number {
