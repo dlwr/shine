@@ -10,6 +10,40 @@ import {type ImdbEventImportStats} from './imdb-event-award';
 import {kinemaJunpoCeremonyNumber} from './kinema-junpo';
 import {mainichiCeremonyNumber} from './mainichi-film-concours';
 
+/**
+ * 記事の表記とTMDbのクレジット名が別名で、表記の正規化では寄らないもの。
+ * 芸名の使い分け・襲名・改名と、TMDbが平仮名や原語で登録している人
+ */
+const JAPANESE_NAME_ALIASES: Record<string, string> = {
+  北野武: 'ビートたけし',
+  夏木勲: '夏八木勲',
+  藤純子: '富司純子',
+  中村錦之助: '萬屋錦之介',
+  中村賀津雄: '中村嘉葎雄',
+  山本富士子: '山本ふじこ',
+  ヨシ笈田: '笈田ヨシ',
+  市川海老蔵: '十三代目 市川團十郎',
+  市川染五郎: '十代目 松本幸四郎',
+  瑛太: '永山瑛太',
+};
+
+/** 外国映画監督賞の受賞者。TMDbのクレジットが原語表記か綴りが違う */
+const FOREIGN_DIRECTOR_ALIASES: Record<string, string> = {
+  サタジット・レイ: 'Satyajit Ray',
+  ジッロ・ポンテコルヴォ: 'Gillo Pontecorvo',
+  フォルカー・シュレンドルフ: 'Volker Schlöndorff',
+  スティーブン・スピルバーグ: 'スティーヴン・スピルバーグ',
+  ミロシュ・フォアマン: 'ミロス・フォアマン',
+  パオロ・タヴィアーニ: 'Paolo Taviani',
+  ヴィットリオ・タヴィアーニ: 'Vittorio Taviani',
+  ケビン・コスナー: 'ケヴィン・コスナー',
+  エドワード・ヤン: '楊德昌',
+  カーティス・ハンソン: 'Curtis Hanson',
+  チアン・ウェン: 'Jiang Wen',
+  賈樟柯: 'ジャ・ジャンクー',
+  ワン・ビン: '王兵',
+};
+
 function actingCategories(): ListPersonAwardCategory[] {
   return [
     {names: ['主演男優賞'], category: '主演男優賞', role: 'actor'},
@@ -48,7 +82,10 @@ export const JAPAN_PERSON_AWARD_SOURCES: ListPersonAwardSource[] = [
       ['2018:ポルトの恋人たち 時の記憶', 'tt6254732'],
       ['2020:アンダードッグ', 'tt14051616'],
       ['2020:本気のしるし〈劇場版〉', 'tt13276326'],
+      // 記事は原作漫画へのリンクで、Wikidataは第1作を指す
+      ['2023:東京リベンジャーズ2 血のハロウィン編 -運命-', 'tt23218142'],
     ]),
+    personNameAliases: {...JAPANESE_NAME_ALIASES, ...FOREIGN_DIRECTOR_ALIASES},
   },
   {
     key: 'mainichi',
@@ -98,7 +135,10 @@ export const JAPAN_PERSON_AWARD_SOURCES: ListPersonAwardSource[] = [
       ['2011:八日目の蝉', 'tt1727825'],
       ['2014:WOOD JOB! 〜神去なあなあ日常〜', 'tt2964120'],
       ['2020:アンダードッグ', 'tt14051616'],
+      // 同名の1959年版があり、TMDbの題名検索では一意にならない
+      ['2015:野火', 'tt3893038'],
     ]),
+    personNameAliases: JAPANESE_NAME_ALIASES,
   },
   {
     key: 'blue-ribbon',
@@ -123,7 +163,10 @@ export const JAPAN_PERSON_AWARD_SOURCES: ListPersonAwardSource[] = [
       ['2009:のだめカンタービレ 最終楽章', 'tt1337672'],
       ['2011:八日目の蝉', 'tt1727825'],
       ['2018:ちはやふる -結び-', 'tt6821870'],
+      // 記事はテレビドラマと2008年の映画のもので、Wikidataは2008年版を指す
+      ['1959:私は貝になりたい', 'tt0202919'],
     ]),
+    personNameAliases: JAPANESE_NAME_ALIASES,
   },
   {
     key: 'hochi',
@@ -154,6 +197,7 @@ export const JAPAN_PERSON_AWARD_SOURCES: ListPersonAwardSource[] = [
       ['2019:閉鎖病棟 -それぞれの朝-', 'tt9721798'],
       ['2021:老後の資金がありません!', 'tt11354164'],
     ]),
+    personNameAliases: JAPANESE_NAME_ALIASES,
   },
 ];
 
