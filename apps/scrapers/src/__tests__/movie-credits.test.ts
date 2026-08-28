@@ -3,8 +3,12 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
+import {awardCategories} from '@shine/database/schema/award-categories';
+import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
+import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
+import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
 import {eq} from 'drizzle-orm';
@@ -194,6 +198,46 @@ describe('saveMovieCredits', () => {
 
     const rows = await database.select().from(movieCredits);
     expect(rows.map(row => row.creditId)).toEqual(['cast-0']);
+  });
+
+  it('個人賞に紐づく人物のクレジットは取得結果から消えても残す', async () => {
+    const {database, movieUid} = await createTestDatabase();
+    await saveMovieCredits({database, isDryRun: false}, movieUid, sample);
+    const [director] = await database
+      .select({uid: people.uid})
+      .from(people)
+      .where(eq(people.tmdbId, crewMember('Director', 'Directing').id));
+    const [organization] = await database
+      .insert(awardOrganizations)
+      .values({name: 'Japan Academy Awards'})
+      .returning();
+    const [ceremony] = await database
+      .insert(awardCeremonies)
+      .values({organizationUid: organization.uid, year: 1990})
+      .returning();
+    const [category] = await database
+      .insert(awardCategories)
+      .values({organizationUid: organization.uid, name: '監督賞'})
+      .returning();
+    await database.insert(nominations).values({
+      movieUid,
+      ceremonyUid: ceremony.uid,
+      categoryUid: category.uid,
+      personUid: director.uid,
+      isWinner: 1,
+    });
+
+    await saveMovieCredits(
+      {database, isDryRun: false},
+      movieUid,
+      sample.filter(credit => credit.creditId === 'cast-0'),
+    );
+
+    const rows = await database.select().from(movieCredits);
+    expect(rows.map(row => row.creditId).toSorted(byText)).toEqual([
+      'cast-0',
+      'crew-Director',
+    ]);
   });
 
   it('日本語名を translations に保存する', async () => {
