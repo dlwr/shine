@@ -8,6 +8,7 @@ export default [
   route('weekly', 'routes/weekly.tsx'),
   route('monthly', 'routes/monthly.tsx'),
   route('people', 'routes/people.tsx'),
+  route('people/crossings', 'routes/people.crossings.tsx'),
   route('people/:id', 'routes/people.$id.tsx'),
   route('awards', 'routes/awards.tsx'),
   route('crossings', 'routes/crossings.tsx'),
