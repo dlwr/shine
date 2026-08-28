@@ -20,6 +20,10 @@ describe('normalizePersonName', () => {
     );
   });
 
+  it('旧字体の聰を新字体に寄せる', () => {
+    expect(normalizePersonName('山村聰')).toBe(normalizePersonName('山村聡'));
+  });
+
   it('旧字体の惠を新字体に寄せる', () => {
     expect(normalizePersonName('岸惠子')).toBe(normalizePersonName('岸恵子'));
   });

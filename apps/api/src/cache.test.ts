@@ -31,10 +31,10 @@ describe('Cache Utilities', () => {
 
     it('人物のキャッシュキーにロケールを含める', () => {
       expect(getCacheKeyForPerson('person-1', 'ja')).toBe(
-        'person:person-1:ja:v5',
+        'person:person-1:ja:v6',
       );
       expect(getCacheKeyForPerson('person-1', 'en')).toBe(
-        'person:person-1:en:v5',
+        'person:person-1:en:v6',
       );
     });
 

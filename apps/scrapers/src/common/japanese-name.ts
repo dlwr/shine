@@ -29,6 +29,7 @@ const VARIANTS: Record<string, string> = {
   嶋: '島',
   嶌: '島',
   槇: '牧',
+  聰: '聡',
 };
 
 const VARIANT_PATTERN = new RegExp(`[${Object.keys(VARIANTS).join('')}]`, 'gu');
