@@ -96,7 +96,7 @@ describe('PersonPage', () => {
   it('参加作品を映画ページへリンクする', () => {
     renderPage();
 
-    expect(screen.getByRole('link', {name: /乱/})).toHaveAttribute(
+    expect(screen.getByRole('link', {name: /乱 poster/})).toHaveAttribute(
       'href',
       '/movies/movie-ran',
     );
@@ -233,5 +233,25 @@ describe('PersonPage', () => {
       descriptors.find(descriptor => descriptor.name === 'description')
         ?.content,
     ).toContain('1本が受賞');
+  });
+
+  it('個人賞の受賞歴を作品×団体の表で出す', () => {
+    renderPage();
+
+    expect(screen.getByRole('rowheader', {name: /影武者/})).toBeInTheDocument();
+  });
+
+  it('個人賞が無ければ受賞歴の見出しを出さない', () => {
+    renderPage({
+      credits: person.credits.map(credit => ({...credit, personAwards: []})),
+    });
+
+    expect(screen.queryByText('AWARD HISTORY')).toBeNull();
+  });
+
+  it('個人賞があれば受賞歴の見出しを出す', () => {
+    renderPage();
+
+    expect(screen.getByText('AWARD HISTORY')).toBeInTheDocument();
   });
 });
