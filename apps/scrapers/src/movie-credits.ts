@@ -1,7 +1,8 @@
-import {and, eq, inArray, isNull, notInArray} from 'drizzle-orm';
+import {and, eq, inArray, isNotNull, isNull} from 'drizzle-orm';
 import {type Environment, type getDatabase} from '@shine/database';
 import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
+import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
 import {fetchTMDBCredits, type TMDBCredits} from './common/tmdb-utilities';
@@ -151,23 +152,29 @@ export async function saveMovieCredits(
 ): Promise<void> {
   await upsertMovieCredits(context, movieUid, credits);
 
-  const keptCreditIds = credits.map(credit => credit.creditId);
+  const nominated = await context.database
+    .selectDistinct({personUid: nominations.personUid})
+    .from(nominations)
+    .where(
+      and(eq(nominations.movieUid, movieUid), isNotNull(nominations.personUid)),
+    );
   const currentCredits = await context.database
     .select()
     .from(movieCredits)
     .where(eq(movieCredits.movieUid, movieUid));
-  const removable = currentCredits.filter(
-    row => !keptCreditIds.includes(row.creditId),
-  );
+  const keptCreditIds = new Set([
+    ...credits.map(credit => credit.creditId),
+    ...currentCredits
+      .filter(row => nominated.some(entry => entry.personUid === row.personUid))
+      .map(row => row.creditId),
+  ]);
+  const removable = currentCredits
+    .filter(row => !keptCreditIds.has(row.creditId))
+    .map(row => row.creditId);
   if (removable.length > 0 && !context.isDryRun) {
     await context.database
       .delete(movieCredits)
-      .where(
-        and(
-          eq(movieCredits.movieUid, movieUid),
-          notInArray(movieCredits.creditId, keptCreditIds),
-        ),
-      );
+      .where(inArray(movieCredits.creditId, removable));
   }
 }
 
