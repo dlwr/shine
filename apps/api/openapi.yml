@@ -375,6 +375,40 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /people/crossings:
+    get:
+      summary: Get how the personal awards overlap
+      description: |
+        Returns how often the organizations that give personal awards (Best
+        Director and the acting awards) crown the same performance. A
+        performance is one person on one film; only wins count, and a win
+        attached to several films counts for each film. Returns the
+        performance count of each organization, the shared count of every
+        organization pair, how many performances were crowned by 1..N
+        organizations, and the performances crowned by the most organizations.
+      operationId: getPersonCrossings
+      tags:
+        - Movies
+      security: []
+      parameters:
+        - name: locale
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ja, en]
+            default: ja
+          description: Language for names and film titles
+      responses:
+        '200':
+          description: Successfully retrieved personal award crossings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonCrossings'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /people/{personId}:
     get:
       summary: Get a person and the films they worked on
@@ -2665,6 +2699,104 @@ components:
         - pairs
         - distribution
         - topMovies
+
+    PersonCrossings:
+      type: object
+      properties:
+        organizations:
+          type: array
+          description: Organizations whose personal awards crowned at least one performance
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+                description: Stable identifier used in `pairs`
+              name:
+                type: string
+              shortLabel:
+                type: string
+                description: Short label for chart axes
+              performanceCount:
+                type: integer
+            required: [key, name, shortLabel, performanceCount]
+        pairs:
+          type: array
+          description: Organization pairs that crowned at least one performance in common, most shared first
+          items:
+            type: object
+            properties:
+              a:
+                type: string
+                description: Key of the first organization, alphabetically before `b`
+              b:
+                type: string
+              shared:
+                type: integer
+                description: Number of performances crowned by both organizations
+            required: [a, b, shared]
+        distribution:
+          type: array
+          description: How many performances were crowned by exactly N organizations, N descending
+          items:
+            type: object
+            properties:
+              organizationCount:
+                type: integer
+              performanceCount:
+                type: integer
+            required: [organizationCount, performanceCount]
+        topPerformances:
+          type: array
+          description: Performances crowned by the most organizations, at most 48
+          items:
+            type: object
+            properties:
+              person:
+                type: object
+                properties:
+                  uid:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  profilePath:
+                    type: [string, 'null']
+                required: [uid, name]
+              movie:
+                type: object
+                properties:
+                  uid:
+                    type: string
+                    format: uuid
+                  title:
+                    type: [string, 'null']
+                  year:
+                    type: [integer, 'null']
+                  posterUrl:
+                    type: [string, 'null']
+                required: [uid]
+              awards:
+                type: array
+                description: Awards won for this performance, in award page order
+                items:
+                  type: object
+                  properties:
+                    slug:
+                      type: string
+                    organization:
+                      type: string
+                    category:
+                      type: string
+                  required: [slug, organization, category]
+              organizationCount:
+                type: integer
+            required: [person, movie, awards, organizationCount]
+      required:
+        - organizations
+        - pairs
+        - distribution
+        - topPerformances
 
     Uncrowned:
       type: object

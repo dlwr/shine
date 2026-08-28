@@ -209,5 +209,14 @@ describe('Crossings page', () => {
         screen.getByRole('link', {name: '映画賞・リスト一覧'}),
       ).toHaveAttribute('href', '/awards');
     });
+
+    it('映画人の交差への導線を置く', () => {
+      renderPage();
+
+      expect(screen.getByRole('link', {name: '映画人の交差'})).toHaveAttribute(
+        'href',
+        '/people/crossings',
+      );
+    });
   });
 });

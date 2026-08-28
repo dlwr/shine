@@ -1,6 +1,7 @@
 import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {PeopleService} from '../services/people-service';
+import {PersonCrossingsService} from '../services/person-crossings-service';
 import {
   createCachedResponse,
   createETag,
@@ -15,6 +16,7 @@ export const peopleRoutes = new Hono<{Bindings: Environment}>();
 const PERSON_CACHE_TTL = 86_400;
 const PEOPLE_LIST_CACHE_TTL = 604_800;
 const PROMINENT_CACHE_TTL = 604_800;
+const PERSON_CROSSINGS_CACHE_TTL = 604_800;
 const PEOPLE_LIST_DEFAULT_LIMIT = 100;
 const PEOPLE_LIST_MAX_LIMIT = 500;
 
@@ -79,6 +81,29 @@ peopleRoutes.get('/prominent', async c => {
   }
 
   return createCachedResponse(result, PROMINENT_CACHE_TTL, {ETag: etag});
+});
+
+peopleRoutes.get('/crossings', async c => {
+  const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
+  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cacheKey = `people:crossings:${locale}:v1`;
+  const cached = await cache.get(cacheKey);
+  const result =
+    cached?.data ??
+    (await new PersonCrossingsService(c.env).getPersonCrossings({locale}));
+
+  if (!cached) {
+    await cache.set(cacheKey, result, PERSON_CROSSINGS_CACHE_TTL);
+  }
+
+  const etag = createETag(result);
+  if (shouldCheckETag(c.req, etag)) {
+    return new Response(undefined, {status: 304, headers: {ETag: etag}});
+  }
+
+  return createCachedResponse(result, PERSON_CROSSINGS_CACHE_TTL, {
+    ETag: etag,
+  });
 });
 
 peopleRoutes.get('/:id', async c => {
