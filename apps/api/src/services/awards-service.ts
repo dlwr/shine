@@ -702,10 +702,10 @@ export function findPersonAwardDefinition(
 }
 
 /** 個人賞の (組織, 部門) を役割で絞る条件 */
-export function personAwardNominations(role: PersonAwardDefinition['role']) {
+export function personAwardNominations(role?: PersonAwardDefinition['role']) {
   return or(
     ...personAwardDefinitions
-      .filter(definition => definition.role === role)
+      .filter(definition => role === undefined || definition.role === role)
       .map(definition =>
         and(
           eq(awardOrganizations.name, definition.organizationName),
