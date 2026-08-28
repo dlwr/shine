@@ -2,6 +2,7 @@ import type {Route} from './+types/search';
 import type {ProminentPerson} from '@/lib/people';
 import {Masthead} from '@/components/editorial/masthead';
 import {PeopleStrip} from '@/components/editorial/people-strip';
+import {SearchBox} from '@/components/editorial/search-box';
 import {SearchRow} from '@/components/editorial/search-row';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {selectBestPoster} from '@/lib/poster';
@@ -61,17 +62,18 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const page = url.searchParams.get('page') || '1';
   const limit = url.searchParams.get('limit') || '20';
   const locale = getLocaleFromRequest(request);
+  const apiUrl = resolveApiUrl(context);
 
   if (!searchQuery) {
     return {
       searchQuery: '',
       searchResults: undefined,
       people: [] as ProminentPerson[],
+      apiUrl,
       locale,
     };
   }
 
-  const apiUrl = resolveApiUrl(context);
   const [searchResults, people] = await Promise.all([
     fetchMovies(apiUrl, searchQuery, page, limit, request.signal),
     page === '1'
@@ -84,6 +86,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
       searchQuery,
       error: '検索に失敗しました',
       people,
+      apiUrl,
       locale,
     };
   }
@@ -92,6 +95,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
     searchQuery,
     searchResults,
     people,
+    apiUrl,
     locale,
   };
 }
@@ -149,6 +153,7 @@ export default function Search({loaderData}: Route.ComponentProps) {
     searchQuery,
     searchResults,
     people = [],
+    apiUrl,
     error,
   } = loaderData as {
     searchQuery: string;
@@ -157,6 +162,7 @@ export default function Search({loaderData}: Route.ComponentProps) {
       pagination: SearchPaginationData;
     };
     people?: ProminentPerson[];
+    apiUrl: string;
     error?: string;
   };
 
@@ -171,23 +177,14 @@ export default function Search({loaderData}: Route.ComponentProps) {
           SEARCH
         </h2>
 
-        {/* 検索フォーム */}
-        <form method="get" className="mb-8">
-          <div className="flex border-[3px] border-ink shadow-[var(--shadow-offset-sm)]">
-            <input
-              type="text"
-              name="q"
-              defaultValue={searchQuery}
-              placeholder="映画タイトル・人物名を入力..."
-              className="flex-1 bg-surface px-3 py-2.5 text-ink focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="bg-ink text-paper font-display font-black px-4">
-              GO
-            </button>
-          </div>
-        </form>
+        <div className="mb-8">
+          <SearchBox
+            apiUrl={apiUrl}
+            label="映画と映画人を探す"
+            placeholder="映画タイトル・人物名を入力..."
+            defaultValue={searchQuery}
+          />
+        </div>
 
         {/* エラー表示 */}
         {error && (
