@@ -293,6 +293,19 @@ describe('parseListPersonAwardWikitext の受賞者の区切り', () => {
     ]);
   });
 
+  it('受賞者を区切る中黒は人名にしない', () => {
+    const wikitext = `
+==== 第69回（1995年度） ====
+* 主演男優賞 [[竹中直人]]（『[[EAST MEETS WEST]]』）・[[ミッキー・カーチス]]（『[[KAMIKAZE TAXI]]』）
+`;
+
+    expect(
+      parseListPersonAwardWikitext(wikitext, CATEGORIES)[0].entries.map(entry =>
+        entry.people.map(person => person.name),
+      ),
+    ).toEqual([['竹中直人'], ['ミッキー・カーチス']]);
+  });
+
   it('リンク先の曖昧さ回避は名前から外す', () => {
     const wikitext = `
 ==== 第9回（1958年度） ====
