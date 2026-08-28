@@ -1,8 +1,9 @@
 export type CrossingAward = {
-  slug: string;
+  key: string;
   shortLabel: string;
   name: string;
-  filmCount: number;
+  count: number;
+  href?: string;
 };
 
 export type CrossingPair = {
@@ -26,9 +27,11 @@ function sharedCounts(pairs: CrossingPair[]): Map<string, number> {
 export function CrossingMatrix({
   awards,
   pairs,
+  unit = '本',
 }: {
   awards: CrossingAward[];
   pairs: CrossingPair[];
+  unit?: string;
 }) {
   const counts = sharedCounts(pairs);
   const max = Math.max(...pairs.map(pair => pair.shared), 1);
@@ -41,7 +44,7 @@ export function CrossingMatrix({
             <td className="sticky left-0 z-10 bg-paper" />
             {awards.map(award => (
               <th
-                key={award.slug}
+                key={award.key}
                 scope="col"
                 className="w-14 min-w-14 border-b-2 border-ink px-1 pb-1 pt-2 align-bottom font-normal leading-tight text-ink-muted">
                 {award.shortLabel}
@@ -51,36 +54,38 @@ export function CrossingMatrix({
         </thead>
         <tbody>
           {awards.map(rowAward => (
-            <tr key={rowAward.slug}>
+            <tr key={rowAward.key}>
               <th
                 scope="row"
                 className="sticky left-0 z-10 border-r-2 border-ink bg-paper py-0.5 pr-2 text-right font-normal whitespace-nowrap">
-                <a href={`/awards/${rowAward.slug}`} className="text-ink">
-                  {rowAward.shortLabel}
-                </a>
+                {rowAward.href ? (
+                  <a href={rowAward.href} className="text-ink">
+                    {rowAward.shortLabel}
+                  </a>
+                ) : (
+                  rowAward.shortLabel
+                )}
                 <span className="ml-1.5 text-ink-muted">
-                  {rowAward.filmCount.toLocaleString('en-US')}
+                  {rowAward.count.toLocaleString('en-US')}
                 </span>
               </th>
               {awards.map(columnAward => {
-                if (rowAward.slug === columnAward.slug) {
+                if (rowAward.key === columnAward.key) {
                   return (
                     <td
-                      key={columnAward.slug}
+                      key={columnAward.key}
                       className="h-8 bg-ink/10 text-center"
                     />
                   );
                 }
 
-                const shared = counts.get(
-                  `${rowAward.slug} ${columnAward.slug}`,
-                );
+                const shared = counts.get(`${rowAward.key} ${columnAward.key}`);
                 const intensity = shared ? Math.sqrt(shared / max) : 0;
 
                 return (
                   <td
-                    key={columnAward.slug}
-                    title={`${rowAward.shortLabel} × ${columnAward.shortLabel} ${shared ?? 0}本`}
+                    key={columnAward.key}
+                    title={`${rowAward.shortLabel} × ${columnAward.shortLabel} ${shared ?? 0}${unit}`}
                     className="h-8 text-center"
                     style={{
                       backgroundColor: `color-mix(in oklab, var(--brand) ${Math.round(

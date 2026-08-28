@@ -5,22 +5,24 @@ import {CrossingMatrix} from './crossing-matrix';
 
 const awards = [
   {
-    slug: 'palme-dor',
+    key: 'palme-dor',
     shortLabel: 'カンヌ',
     name: 'パルム・ドール',
-    filmCount: 1768,
+    count: 1768,
+    href: '/awards/palme-dor',
   },
   {
-    slug: 'academy-best-picture',
+    key: 'academy-best-picture',
     shortLabel: 'アカデミー',
     name: '作品賞',
-    filmCount: 617,
+    count: 617,
+    href: '/awards/academy-best-picture',
   },
   {
-    slug: 'variety-top-100',
+    key: 'variety-top-100',
     shortLabel: 'Variety',
     name: 'Top 100',
-    filmCount: 100,
+    count: 100,
   },
 ];
 
@@ -29,8 +31,8 @@ const pairs = [
   {a: 'academy-best-picture', b: 'variety-top-100', shared: 37},
 ];
 
-function renderMatrix() {
-  render(<CrossingMatrix awards={awards} pairs={pairs} />);
+function renderMatrix(unit?: string) {
+  render(<CrossingMatrix awards={awards} pairs={pairs} unit={unit} />);
 }
 
 function rowOf(label: RegExp): HTMLElement {
@@ -94,5 +96,22 @@ describe('CrossingMatrix', () => {
       'href',
       '/awards/palme-dor',
     );
+  });
+
+  it('リンク先の無い軸は見出しを文字のまま出す', () => {
+    renderMatrix();
+
+    expect(
+      screen.getByRole('rowheader', {name: /Variety/}),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', {name: /Variety/}),
+    ).not.toBeInTheDocument();
+  });
+
+  it('セルの説明の単位を差し替えられる', () => {
+    renderMatrix('件');
+
+    expect(screen.getByTitle('カンヌ × アカデミー 62件')).toBeInTheDocument();
   });
 });

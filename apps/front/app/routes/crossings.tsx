@@ -170,7 +170,16 @@ export default function Crossings({loaderData}: Route.ComponentProps) {
           <p className="font-mono text-xs text-ink-muted mb-3">
             賞と賞の重なり（両方に選ばれた本数）
           </p>
-          <CrossingMatrix awards={awards} pairs={pairs} />
+          <CrossingMatrix
+            awards={awards.map(award => ({
+              key: award.slug,
+              shortLabel: award.shortLabel,
+              name: award.name,
+              count: award.filmCount,
+              href: `/awards/${award.slug}`,
+            }))}
+            pairs={pairs}
+          />
         </section>
 
         <section className="mb-10">
