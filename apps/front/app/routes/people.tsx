@@ -5,22 +5,7 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {resolveApiUrl} from '@/lib/api';
-
-type ProminentMovie = {
-  uid: string;
-  title?: string;
-  year?: number;
-};
-
-type ProminentPerson = {
-  uid: string;
-  name: string;
-  originalName: string;
-  profilePath?: string;
-  wonCount: number;
-  nominatedCount: number;
-  topMovies: ProminentMovie[];
-};
+import type {ProminentPerson} from '@/lib/people';
 
 type ProminentPeople = {
   directors: ProminentPerson[];
