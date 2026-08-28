@@ -417,6 +417,44 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /search/suggest:
+    get:
+      summary: Suggest movies and people while typing
+      description: |
+        Returns up to five movies and five people for an incremental search
+        box. Movies match the way `/movies/search` does; people match the way
+        `/people/search` does. Queries shorter than two characters return
+        empty lists; longer than fifty characters are truncated.
+      operationId: suggestSearch
+      tags:
+        - Movies
+      security: []
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 50
+          description: Substring of a movie title or a person's name
+        - name: locale
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ja, en]
+            default: ja
+          description: Language for names and film titles
+      responses:
+        '200':
+          description: Successfully retrieved suggestions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchSuggestions'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /people/crossings:
     get:
       summary: Get how the personal awards overlap
@@ -3078,6 +3116,32 @@ components:
           items:
             $ref: '#/components/schemas/ProminentPerson'
       required:
+        - people
+
+    SearchSuggestions:
+      type: object
+      properties:
+        movies:
+          type: array
+          items:
+            type: object
+            properties:
+              uid:
+                type: string
+                format: uuid
+              title:
+                type: string
+              year:
+                type: integer
+            required:
+              - uid
+              - title
+        people:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProminentPerson'
+      required:
+        - movies
         - people
 
     PersonDetail:

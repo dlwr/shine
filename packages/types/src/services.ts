@@ -411,3 +411,14 @@ export type ProminentPeople = {
 export type PeopleSearchResult = {
   people: ProminentPerson[];
 };
+
+export type SuggestedMovie = {
+  uid: string;
+  title: string;
+  year: number | undefined;
+};
+
+export type SearchSuggestions = {
+  movies: SuggestedMovie[];
+  people: ProminentPerson[];
+};
