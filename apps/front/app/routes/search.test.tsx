@@ -110,6 +110,7 @@ describe('Search Component', () => {
     searchQuery: '',
     searchResults: undefined,
     people: [],
+    apiUrl: 'http://localhost:8787',
     locale: 'ja',
     ...overrides,
   });
@@ -161,6 +162,7 @@ describe('Search Component', () => {
         searchQuery: 'test',
         searchResults: mockSearchResults,
         people: mockPeople,
+        apiUrl: 'http://localhost:8787',
         locale: 'ja',
       });
     });
@@ -212,6 +214,7 @@ describe('Search Component', () => {
         searchQuery: 'test',
         searchResults: mockSearchResults,
         people: [],
+        apiUrl: 'http://localhost:8787',
         locale: 'ja',
       });
     });
@@ -227,6 +230,7 @@ describe('Search Component', () => {
         searchQuery: '',
         searchResults: undefined,
         people: [],
+        apiUrl: 'http://localhost:8787',
         locale: 'ja',
       });
     });
@@ -245,6 +249,7 @@ describe('Search Component', () => {
         searchQuery: 'test',
         error: '検索に失敗しました',
         people: [],
+        apiUrl: 'http://localhost:8787',
         locale: 'ja',
       });
     });
