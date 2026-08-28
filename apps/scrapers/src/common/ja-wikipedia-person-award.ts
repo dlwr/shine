@@ -83,6 +83,8 @@ const INTERWIKI_TEMPLATE = /^\{\{仮リンク\|([^|}]+)/;
 const QUOTED_LINK = /『\s*\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]*))?]]\s*』/g;
 const NAME_SEPARATOR = /[、,]/;
 const NAME_TRIM = /^[\s（）()：:]+|[\s（）()：:]+$/g;
+const DISAMBIGUATION = /\s*\([^)]*\)$/;
+const NOT_A_NAME = new Set(['ほか', 'など', '他', '等', 'その他']);
 const NO_WINNER = '該当者なし';
 
 // 記事は既出の映画を再リンクしないので、同じ回の『』内リンクから記事名を補う
@@ -128,8 +130,18 @@ function bareNames(text: string): ListPersonAwardPerson[] {
   return text
     .split(NAME_SEPARATOR)
     .map(part => part.replaceAll(NAME_TRIM, ''))
-    .filter(name => name !== '')
+    .filter(name => name !== '' && !NOT_A_NAME.has(name))
     .map(name => ({name}));
+}
+
+function linkedPerson(
+  page: string,
+  label: string | undefined,
+): ListPersonAwardPerson {
+  return {
+    name: (label ?? page.replace(DISAMBIGUATION, '')).trim(),
+    page: page.trim(),
+  };
 }
 
 function parseGroups(text: string, titlePages: Map<string, string>): Group[] {
@@ -154,13 +166,10 @@ function parseGroups(text: string, titlePages: Map<string, string>): Group[] {
     const [, quotedPage, quotedLabel, linkPage, linkLabel, titleInner] = token;
     const between = text.slice(cursor, token.index);
     cursor = token.index + token[0].length;
-    if (!current || current.films.length === 0) {
-      addPeople(bareNames(between));
-    }
+    addPeople(bareNames(between));
 
     if (linkPage !== undefined) {
-      const page = linkPage.trim();
-      addPeople([{name: (linkLabel ?? page).trim(), page}]);
+      addPeople([linkedPerson(linkPage, linkLabel)]);
       continue;
     }
 
@@ -265,8 +274,9 @@ const JAPANESE_PUBLICATION_WINDOW: YearWindow = {min: -1, max: 1};
 /** 外国映画は本国公開の後に日本公開されるので年度より前になる */
 const FOREIGN_PUBLICATION_WINDOW: YearWindow = {min: -Infinity, max: 1};
 
-function filmKey(film: ListPersonAwardFilm): string {
-  return film.page ?? `title:${film.title}`;
+/** 同じ記事（原作記事など）が別の年度に現れたら別の映画なので、年度ごとに同定する */
+function referenceKey(film: ListPersonAwardFilm, year: number): string {
+  return `${film.page ?? `title:${film.title}`}@${year}`;
 }
 
 function overrideImdbId(
@@ -308,7 +318,7 @@ function addReference(
   film: ListPersonAwardFilm,
   isForeignFilm: boolean,
 ): void {
-  const key = filmKey(film);
+  const key = referenceKey(film, year);
   if (references.has(key) || overrideImdbId(source, year, film) !== undefined) {
     return;
   }
@@ -336,7 +346,7 @@ function resolveTitles(
   for (const film of films) {
     const imdbId = overrideImdbId(source, year, film);
     const match: ResolvedFilm | undefined =
-      imdbId === undefined ? resolved.get(filmKey(film)) : {imdbId};
+      imdbId === undefined ? resolved.get(referenceKey(film, year)) : {imdbId};
     if (!match) {
       console.log(`Unresolved: ${year} ${film.title}`);
       continue;
@@ -448,13 +458,24 @@ async function resolveFilms(
   throttleMs: number,
 ): Promise<Map<string, ResolvedFilm>> {
   const references = listPersonAwardFilmReferences(source, editions);
-  const pages = references
-    .filter(reference => !reference.key.startsWith('title:'))
-    .map(reference => reference.key);
+  const pageByKey = new Map(
+    references
+      .filter(reference => !reference.key.startsWith('title:'))
+      .map(reference => [reference.key, reference.key.replace(/@\d{4}$/, '')]),
+  );
+  const pages = [...new Set(pageByKey.values())];
 
   console.log(`Resolving IMDb IDs for ${pages.length} articles...`);
-  const resolved = await resolveFilmsByWikipediaPage(pages);
-  console.log(`Resolved ${resolved.size}/${pages.length} articles`);
+  const byPage = await resolveFilmsByWikipediaPage(pages);
+  console.log(`Resolved ${byPage.size}/${pages.length} articles`);
+
+  const resolved = new Map<string, ResolvedFilm>();
+  for (const [key, page] of pageByKey) {
+    const film = byPage.get(page);
+    if (film) {
+      resolved.set(key, {...film});
+    }
+  }
 
   const dropped = await dropMisattributedResolutions({
     references,

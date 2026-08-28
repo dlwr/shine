@@ -250,6 +250,61 @@ describe('parseListPersonAwardWikitext', () => {
   });
 });
 
+describe('parseListPersonAwardWikitext の受賞者の区切り', () => {
+  it('作品の後に裸の人名が続けば別の受賞にする', () => {
+    const wikitext = `
+==== 第26回（1971年）====
+:** 監督賞 [[篠田正浩]]『沈黙 SILENCE』、山田洋次『[[男はつらいよ 純情篇]]』『[[男はつらいよ 奮闘篇]]』
+`;
+
+    expect(
+      parseListPersonAwardWikitext(wikitext, CATEGORIES)[0].entries,
+    ).toEqual([
+      {
+        category: '監督賞',
+        people: [{name: '篠田正浩', page: '篠田正浩'}],
+        films: [{title: '沈黙 SILENCE'}],
+      },
+      {
+        category: '監督賞',
+        people: [{name: '山田洋次'}],
+        films: [
+          {page: '男はつらいよ 純情篇', title: '男はつらいよ 純情篇'},
+          {page: '男はつらいよ 奮闘篇', title: '男はつらいよ 奮闘篇'},
+        ],
+      },
+    ]);
+  });
+
+  it('作品の後の「ほか」「など」は人名にしない', () => {
+    const wikitext = `
+==== 第8回（1983年度） ====
+*主演男優賞 [[倍賞美津子]]（『[[陽暉楼]]』ほか）
+*監督賞 [[森田芳光]]（『[[家族ゲーム]]』など）
+`;
+
+    expect(
+      parseListPersonAwardWikitext(wikitext, CATEGORIES)[0].entries.map(
+        entry => entry.people,
+      ),
+    ).toEqual([
+      [{name: '倍賞美津子', page: '倍賞美津子'}],
+      [{name: '森田芳光', page: '森田芳光'}],
+    ]);
+  });
+
+  it('リンク先の曖昧さ回避は名前から外す', () => {
+    const wikitext = `
+==== 第9回（1958年度） ====
+*主演男優賞 [[中村鴈治郎 (2代目)]]『[[炎上 (映画)|炎上]]』
+`;
+
+    expect(
+      parseListPersonAwardWikitext(wikitext, CATEGORIES)[0].entries[0].people,
+    ).toEqual([{name: '中村鴈治郎', page: '中村鴈治郎 (2代目)'}]);
+  });
+});
+
 const DIRECTOR: ListPersonAwardCategory = {
   names: ['監督賞'],
   category: '監督賞',
@@ -324,21 +379,39 @@ const EDITIONS: ListPersonAwardEdition[] = [
 ];
 
 const RESOLVED = new Map<string, ResolvedFilm>([
-  ['座頭市 (2003年の映画)', {imdbId: 'tt0363226', englishTitle: 'Zatoichi'}],
   [
-    'グッドモーニング・バビロン!',
+    '座頭市 (2003年の映画)@1961',
+    {imdbId: 'tt0363226', englishTitle: 'Zatoichi'},
+  ],
+  [
+    '座頭市 (2003年の映画)@1962',
+    {imdbId: 'tt0363226', englishTitle: 'Zatoichi'},
+  ],
+  [
+    'グッドモーニング・バビロン!@1961',
     {imdbId: 'tt0093106', englishTitle: 'Good Morning, Babylon'},
   ],
 ]);
 
 describe('listPersonAwardFilmReferences', () => {
-  it('同じ作品は1件にまとめ、記事の無い作品は題名をキーにする', () => {
+  it('同じ年度の同じ作品は1件にまとめ、記事の無い作品は題名をキーにする', () => {
     const references = listPersonAwardFilmReferences(SOURCE, EDITIONS);
 
     expect(references.map(reference => reference.key)).toEqual([
-      '座頭市 (2003年の映画)',
-      'グッドモーニング・バビロン!',
-      'title:楢山節考',
+      '座頭市 (2003年の映画)@1961',
+      'グッドモーニング・バビロン!@1961',
+      '座頭市 (2003年の映画)@1962',
+      'title:楢山節考@1962',
+    ]);
+  });
+
+  it('同じ記事が別の年度に現れたら年度ごとに同定する', () => {
+    const references = listPersonAwardFilmReferences(SOURCE, EDITIONS).filter(
+      reference => reference.title === '座頭市',
+    );
+
+    expect(references.map(reference => reference.targetYear)).toEqual([
+      1961, 1962,
     ]);
   });
 
