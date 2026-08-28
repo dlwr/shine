@@ -20,7 +20,7 @@ export type PersonalAward = {
   isWinner: boolean;
 };
 
-function Chip({
+export function Chip({
   label,
   title,
   isWinner,

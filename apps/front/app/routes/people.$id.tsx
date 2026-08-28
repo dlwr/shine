@@ -7,6 +7,7 @@ import {
   type PersonalAward,
 } from '@/components/editorial/award-tags';
 import {Masthead} from '@/components/editorial/masthead';
+import {PersonAwardHistory} from '@/components/editorial/person-award-history';
 import {PersonPortrait} from '@/components/editorial/person-portrait';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
@@ -260,6 +261,15 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
             ))}
           </div>
         </div>
+
+        {personalRecords.length > 0 && (
+          <section className="mb-8">
+            <p className="mb-2 font-mono text-xs text-ink-muted">
+              AWARD HISTORY
+            </p>
+            <PersonAwardHistory credits={person.credits} />
+          </section>
+        )}
 
         <div>
           {person.credits.map(credit => (
