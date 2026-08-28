@@ -84,6 +84,7 @@ export const JAPAN_PERSON_AWARD_SOURCES: ListPersonAwardSource[] = [
       ['2020:本気のしるし〈劇場版〉', 'tt13276326'],
       // 記事は原作漫画へのリンクで、Wikidataは第1作を指す
       ['2023:東京リベンジャーズ2 血のハロウィン編 -運命-', 'tt23218142'],
+      ['2025:聖☆おにいさん THE MOVIE〜ホーリーメンVS悪魔軍団〜', 'tt32446009'],
     ]),
     personNameAliases: {...JAPANESE_NAME_ALIASES, ...FOREIGN_DIRECTOR_ALIASES},
   },
@@ -163,6 +164,8 @@ export const JAPAN_PERSON_AWARD_SOURCES: ListPersonAwardSource[] = [
       ['2009:のだめカンタービレ 最終楽章', 'tt1337672'],
       ['2011:八日目の蝉', 'tt1727825'],
       ['2018:ちはやふる -結び-', 'tt6821870'],
+      ['2019:コンフィデンスマンJP -ロマンス編-', 'tt9552258'],
+      ['2020:コンフィデンスマンJP -プリンセス編-', 'tt12767996'],
       // 記事はテレビドラマと2008年の映画のもので、Wikidataは2008年版を指す
       ['1959:私は貝になりたい', 'tt0202919'],
     ]),
@@ -187,7 +190,6 @@ export const JAPAN_PERSON_AWARD_SOURCES: ListPersonAwardSource[] = [
       ['1992:未来の想い出 Last Christmas', 'tt0189741'],
       ['1995:トイレの花子さん', 'tt0114688'],
       ['1998:犬、走る DOG RACE', 'tt0416863'],
-      ['2002:DOGSTAR', 'tt0129885'],
       ['2003:釣りバカ日誌14 お遍路大パニック!', 'tt0417215'],
       ['2005:蟬しぐれ', 'tt0455748'],
       ['2005:フライ,ダディ,フライ', 'tt0455490'],
