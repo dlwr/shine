@@ -108,6 +108,19 @@ describe('年の合わない解決結果の扱い', () => {
     ]);
   });
 
+  it('公開年の無い解決結果も候補に挙げる', () => {
+    const resolved = createResolved();
+    resolved.set('キクとイサム', {imdbId: 'tt0052858'});
+
+    const candidates = collectImplausibleResolutions(references, resolved);
+
+    expect(candidates.map(candidate => candidate.key)).toEqual([
+      '野火',
+      'キクとイサム',
+      '怒り (小説)',
+    ]);
+  });
+
   it('TMDbの公開年でも合わないものを捨てる', async () => {
     const resolved = createResolved();
     vi.spyOn(console, 'warn').mockImplementation(() => {});

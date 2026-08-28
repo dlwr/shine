@@ -248,11 +248,12 @@ export function collectImplausibleResolutions(
     const match = resolved.get(reference.key);
     if (
       !match ||
-      isPlausiblePublicationYear(
-        match.publicationYear,
-        reference.targetYear,
-        reference.yearWindow,
-      )
+      (match.publicationYear !== undefined &&
+        isPlausiblePublicationYear(
+          match.publicationYear,
+          reference.targetYear,
+          reference.yearWindow,
+        ))
     ) {
       continue;
     }
