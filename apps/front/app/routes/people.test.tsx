@@ -131,6 +131,14 @@ describe('People page', () => {
   });
 
   describe('Component', () => {
+    it('映画人を検索するフォームを出す', () => {
+      renderPage();
+
+      const input = screen.getByRole('searchbox', {name: '映画人を探す'});
+      expect(input).toHaveAttribute('name', 'q');
+      expect(input.closest('form')).toHaveAttribute('action', '/search');
+    });
+
     it('監督の名前を出す', () => {
       renderPage();
 

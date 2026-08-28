@@ -134,6 +134,25 @@ export default function PeoplePage({loaderData}: Route.ComponentProps) {
           </p>
         </section>
 
+        <form
+          method="get"
+          action="/search"
+          role="search"
+          className="mb-6 flex border-[3px] border-ink shadow-[var(--shadow-offset-sm)]">
+          <input
+            type="search"
+            name="q"
+            aria-label="映画人を探す"
+            placeholder="映画人を探す"
+            className="flex-1 bg-surface px-3 py-2.5 text-ink focus:outline-none"
+          />
+          <button
+            type="submit"
+            className="bg-ink px-4 font-display font-black text-paper">
+            GO
+          </button>
+        </form>
+
         <div className="mb-8 flex flex-wrap gap-3">
           <a
             href="/people/crossings"
