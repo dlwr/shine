@@ -85,6 +85,14 @@ describe('PersonAwardHistory', () => {
     );
   });
 
+  it('長いタイトルは行の見出しで切り詰める', () => {
+    render(<PersonAwardHistory credits={credits} />);
+
+    expect(screen.getByRole('link', {name: 'PERFECT DAYS'})).toHaveClass(
+      'truncate',
+    );
+  });
+
   it('行の見出しに作品年を出す', () => {
     render(<PersonAwardHistory credits={credits} />);
 

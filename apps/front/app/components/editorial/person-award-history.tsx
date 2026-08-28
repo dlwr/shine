@@ -94,12 +94,13 @@ export function PersonAwardHistory({credits}: {credits: AwardHistoryCredit[]}) {
                 )}
                 <a
                   href={`/movies/${credit.movieUid}`}
-                  className="text-ink no-underline">
+                  title={credit.title}
+                  className="inline-block max-w-36 truncate align-bottom text-ink no-underline md:max-w-56">
                   {credit.title ?? 'Unknown Title'}
                 </a>
               </th>
               {columns.map(column => (
-                <td key={column.organization} className="px-1 text-center">
+                <td key={column.organization} className="h-7 px-1 text-center">
                   <span className="flex flex-wrap justify-center gap-0.5">
                     {credit.personAwards
                       .filter(
