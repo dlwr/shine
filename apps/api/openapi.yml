@@ -375,6 +375,48 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /people/search:
+    get:
+      summary: Search people by name
+      description: |
+        Returns people whose stored name or translated name contains the
+        query, ranked by personal-award wins, then nominations, then the number
+        of films they are credited on. Wins and nominations count once per
+        ceremony and category; soft-deleted films are excluded. At most eight
+        people are returned.
+      operationId: searchPeople
+      tags:
+        - Movies
+      security: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          description: Substring of the person's name; longer values are truncated
+        - name: locale
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ja, en]
+            default: ja
+          description: Language for names and film titles
+      responses:
+        '200':
+          description: Successfully retrieved matching people
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeopleSearchResult'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /people/crossings:
     get:
       summary: Get how the personal awards overlap
@@ -3027,6 +3069,16 @@ components:
       required:
         - directors
         - actors
+
+    PeopleSearchResult:
+      type: object
+      properties:
+        people:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProminentPerson'
+      required:
+        - people
 
     PersonDetail:
       type: object
