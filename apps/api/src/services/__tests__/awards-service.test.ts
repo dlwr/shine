@@ -1251,3 +1251,73 @@ describe('ゴールデングローブ賞の賞ページ', () => {
     ]);
   });
 });
+
+describe('日本の映画賞の個人賞ページ', () => {
+  it('キネマ旬報の個人賞6部門のページを定義している', () => {
+    expect(
+      personAwardDefinitions
+        .filter(definition => definition.organizationName === 'Kinema Junpo')
+        .map(definition => [definition.slug, definition.categoryNames[0]]),
+    ).toEqual([
+      ['kinema-junpo-director', '日本映画監督賞'],
+      ['kinema-junpo-lead-actor', '主演男優賞'],
+      ['kinema-junpo-lead-actress', '主演女優賞'],
+      ['kinema-junpo-supporting-actor', '助演男優賞'],
+      ['kinema-junpo-supporting-actress', '助演女優賞'],
+      ['kinema-junpo-foreign-director', '外国映画監督賞'],
+    ]);
+  });
+
+  it('毎日映画コンクールの個人賞7部門のページを定義している', () => {
+    expect(
+      personAwardDefinitions
+        .filter(
+          definition => definition.organizationName === 'Mainichi Film Awards',
+        )
+        .map(definition => [definition.slug, definition.categoryNames[0]]),
+    ).toEqual([
+      ['mainichi-director', '監督賞'],
+      ['mainichi-lead-actor', '男優主演賞'],
+      ['mainichi-lead-actress', '女優主演賞'],
+      ['mainichi-supporting-actor', '男優助演賞'],
+      ['mainichi-supporting-actress', '女優助演賞'],
+      ['mainichi-lead-performance', '主演俳優賞'],
+      ['mainichi-supporting-performance', '助演俳優賞'],
+    ]);
+  });
+
+  it('ブルーリボン賞と報知映画賞の個人賞5部門のページを定義している', () => {
+    expect(
+      personAwardDefinitions
+        .filter(definition =>
+          ['Blue Ribbon Awards', 'Hochi Film Awards'].includes(
+            definition.organizationName,
+          ),
+        )
+        .map(definition => definition.slug),
+    ).toEqual([
+      'blue-ribbon-director',
+      'blue-ribbon-lead-actor',
+      'blue-ribbon-lead-actress',
+      'blue-ribbon-supporting-actor',
+      'blue-ribbon-supporting-actress',
+      'hochi-director',
+      'hochi-lead-actor',
+      'hochi-lead-actress',
+      'hochi-supporting-actor',
+      'hochi-supporting-actress',
+    ]);
+  });
+
+  it('個人賞の部門はDBの日本語名をそのまま表示に使う', () => {
+    expect(japaneseAwardNames('Kinema Junpo', '外国映画監督賞')).toEqual({
+      organization: 'キネマ旬報',
+    });
+    expect(
+      findPersonAwardDefinition('Mainichi Film Awards', '主演俳優賞'),
+    ).toMatchObject({
+      slug: 'mainichi-lead-performance',
+      role: 'actor',
+    });
+  });
+});
