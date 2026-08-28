@@ -215,11 +215,18 @@ export default function Crossings({loaderData}: Route.ComponentProps) {
           </div>
         </section>
 
-        <a
-          href="/awards"
-          className="inline-block font-mono text-xs font-bold border-2 border-ink px-3 py-1.5 shadow-[3px_3px_0_var(--ink)] no-underline text-ink">
-          映画賞・リスト一覧
-        </a>
+        <div className="flex flex-wrap gap-3">
+          <a
+            href="/awards"
+            className="inline-block font-mono text-xs font-bold border-2 border-ink px-3 py-1.5 shadow-[3px_3px_0_var(--ink)] no-underline text-ink">
+            映画賞・リスト一覧
+          </a>
+          <a
+            href="/people/crossings"
+            className="inline-block font-mono text-xs font-bold border-2 border-ink px-3 py-1.5 shadow-[3px_3px_0_var(--ink)] no-underline text-ink">
+            映画人の交差
+          </a>
+        </div>
 
         <SiteFooter locale={locale} />
       </div>

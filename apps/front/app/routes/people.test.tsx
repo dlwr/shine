@@ -182,5 +182,13 @@ describe('People page', () => {
 
       expect(screen.queryByText('黒澤明 / 黒澤明')).not.toBeInTheDocument();
     });
+
+    it('映画人の交差への導線を置く', () => {
+      renderPage();
+
+      expect(
+        screen.getByRole('link', {name: '映画人の交差を見る →'}),
+      ).toHaveAttribute('href', '/people/crossings');
+    });
   });
 });
