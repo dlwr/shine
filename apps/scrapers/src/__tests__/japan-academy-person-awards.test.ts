@@ -46,17 +46,37 @@ const EDITIONS: JapanAcademyPersonEdition[] = [
 ];
 
 const RESOLVED = new Map<string, ResolvedFilm>([
-  ['爆弾 (小説)', {imdbId: 'tt11111111', englishTitle: 'Bomb'}],
-  ['国宝 (小説)', {imdbId: 'tt22222222', englishTitle: 'Kokuho'}],
+  ['爆弾 (小説)@2025', {imdbId: 'tt11111111', englishTitle: 'Bomb'}],
+  ['国宝 (小説)@2025', {imdbId: 'tt22222222', englishTitle: 'Kokuho'}],
 ]);
+
+function schoolEdition(
+  year: number,
+  ceremonyNumber: number,
+  filmTitle: string,
+): JapanAcademyPersonEdition {
+  return {
+    year,
+    ceremonyNumber,
+    entries: [
+      {
+        personName: '山田洋次',
+        personPage: '山田洋次',
+        filmPage: '学校 (映画)',
+        filmTitle,
+        isWinner: false,
+      },
+    ],
+  };
+}
 
 describe('japanAcademyPersonFilmReferences', () => {
   it('同じ作品は1件にまとめる', () => {
     const references = japanAcademyPersonFilmReferences(EDITIONS);
 
     expect(references.map(reference => reference.key)).toEqual([
-      '爆弾 (小説)',
-      '国宝 (小説)',
+      '爆弾 (小説)@2025',
+      '国宝 (小説)@2025',
     ]);
   });
 
@@ -64,6 +84,62 @@ describe('japanAcademyPersonFilmReferences', () => {
     const references = japanAcademyPersonFilmReferences(EDITIONS);
 
     expect(references[0].targetYear).toBe(2025);
+  });
+
+  it('同じ記事を指す別の年の作品は年ごとに同定する', () => {
+    const references = japanAcademyPersonFilmReferences([
+      schoolEdition(1993, 17, '学校'),
+      schoolEdition(1996, 20, '学校II'),
+    ]);
+
+    expect(
+      references.map(reference => [reference.key, reference.targetYear]),
+    ).toEqual([
+      ['学校 (映画)@1993', 1993],
+      ['学校 (映画)@1996', 1996],
+    ]);
+  });
+
+  it('記事の無い作品は題名をキーにする', () => {
+    const references = japanAcademyPersonFilmReferences([
+      {
+        year: 2025,
+        ceremonyNumber: 49,
+        entries: [
+          {
+            personName: '佐藤二朗',
+            personPage: '佐藤二朗',
+            filmPage: undefined,
+            filmTitle: '爆弾',
+            isWinner: true,
+          },
+        ],
+      },
+    ]);
+
+    expect(references.map(reference => reference.key)).toEqual([
+      'title:爆弾@2025',
+    ]);
+  });
+
+  it('直指定した作品は参照に含めない', () => {
+    const references = japanAcademyPersonFilmReferences([
+      {
+        year: 2011,
+        ceremonyNumber: 35,
+        entries: [
+          {
+            personName: '井上真央',
+            personPage: '井上真央',
+            filmPage: '八日目の蝉',
+            filmTitle: '八日目の蝉',
+            isWinner: false,
+          },
+        ],
+      },
+    ]);
+
+    expect(references).toEqual([]);
   });
 });
 
@@ -102,7 +178,7 @@ describe('toImdbEventData', () => {
           ],
         },
       ],
-      RESOLVED,
+      new Map([['爆弾 (小説)@1997', {imdbId: 'tt11111111'}]]),
     );
 
     expect(

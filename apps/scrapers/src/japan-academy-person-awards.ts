@@ -1,9 +1,9 @@
 import {type Environment} from '@shine/database';
-import {resolveRemainingByTmdb} from './common/tmdb-film-resolver';
 import {
-  dropDuplicateResolutions,
-  dropMisattributedResolutions,
-  resolveFilmsByWikipediaPage,
+  filmReferenceKey,
+  resolveFilmReferences,
+} from './common/film-reference-resolver';
+import {
   type FilmReference,
   type ResolvedFilm,
   type YearWindow,
@@ -20,6 +20,7 @@ import {
   fetchJapanAcademyPersonWikitext,
   parseJapanAcademyPersonWikitext,
   type JapanAcademyPersonEdition,
+  type JapanAcademyPersonEntry,
 } from './japan-academy-person-wikitext';
 
 /**
@@ -101,20 +102,47 @@ export function japanAcademyPersonFilmReferences(
 
   for (const edition of editions) {
     for (const entry of edition.entries) {
-      const key = entry.filmPage ?? entry.filmTitle;
-      references.set(key, {
-        ...(references.get(key) ?? {
-          key,
-          title: entry.filmTitle,
-          targetYear: edition.year,
-          yearWindow: PUBLICATION_WINDOW,
-          foreign: false,
-        }),
-      });
+      addReference(references, edition, entry);
     }
   }
 
   return references.values().toArray();
+}
+
+function addReference(
+  references: Map<string, FilmReference>,
+  edition: JapanAcademyPersonEdition,
+  entry: JapanAcademyPersonEntry,
+): void {
+  const key = referenceKey(edition, entry);
+  if (references.has(key) || overrideImdbId(edition, entry) !== undefined) {
+    return;
+  }
+
+  references.set(key, {
+    key,
+    title: entry.filmTitle,
+    targetYear: edition.year,
+    yearWindow: PUBLICATION_WINDOW,
+    foreign: false,
+  });
+}
+
+function referenceKey(
+  edition: JapanAcademyPersonEdition,
+  entry: JapanAcademyPersonEntry,
+): string {
+  return filmReferenceKey(
+    {page: entry.filmPage, title: entry.filmTitle},
+    edition.year,
+  );
+}
+
+function overrideImdbId(
+  edition: JapanAcademyPersonEdition,
+  entry: JapanAcademyPersonEntry,
+): string | undefined {
+  return RESOLUTION_OVERRIDES.get(`${edition.year}:${entry.filmTitle}`);
 }
 
 export function toImdbEventData(
@@ -151,11 +179,12 @@ function buildNominations(
   const nominations: ImdbEventNomination[] = [];
 
   for (const entry of edition.entries) {
-    const match = resolved.get(entry.filmPage ?? entry.filmTitle);
-    const imdbId =
-      match?.imdbId ??
-      RESOLUTION_OVERRIDES.get(`${edition.year}:${entry.filmTitle}`);
-    if (!imdbId) {
+    const imdbId = overrideImdbId(edition, entry);
+    const match: ResolvedFilm | undefined =
+      imdbId === undefined
+        ? resolved.get(referenceKey(edition, entry))
+        : {imdbId};
+    if (!match) {
       console.log(`Unresolved: ${edition.year} ${entry.filmTitle}`);
       continue;
     }
@@ -165,9 +194,9 @@ function buildNominations(
       notes: null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationの型に合わせる
       titles: [
         {
-          imdbId,
+          imdbId: match.imdbId,
           title: entry.filmTitle,
-          originalTitle: match?.englishTitle ?? null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationTitleの型に合わせる
+          originalTitle: match.englishTitle ?? null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationTitleの型に合わせる
         },
       ],
       people: [
@@ -220,34 +249,11 @@ export async function importJapanAcademyPersonAward({
     `\n=== ${award.category}: parsed ${editions.length} editions from Wikipedia`,
   );
 
-  const references = japanAcademyPersonFilmReferences(editions);
-  const pages = references.map(reference => reference.key);
-
-  console.log(`Resolving IMDb IDs for ${pages.length} articles...`);
-  const resolved = await resolveFilmsByWikipediaPage(pages);
-  console.log(`Resolved ${resolved.size}/${pages.length} articles`);
-
-  const dropped = await dropMisattributedResolutions({
-    references,
-    resolved,
+  const resolved = await resolveFilmReferences({
+    references: japanAcademyPersonFilmReferences(editions),
     tmdbApiKey: environment.TMDB_API_KEY,
     throttleMs,
   });
-  if (dropped > 0) {
-    console.log(`Dropped ${dropped} misattributed resolutions`);
-  }
-
-  await resolveRemainingByTmdb({
-    references,
-    resolved,
-    tmdbApiKey: environment.TMDB_API_KEY,
-    throttleMs,
-  });
-
-  const duplicates = dropDuplicateResolutions(references, resolved);
-  if (duplicates > 0) {
-    console.log(`Dropped ${duplicates} duplicate resolutions`);
-  }
 
   return importImdbEventAward({
     environment,
