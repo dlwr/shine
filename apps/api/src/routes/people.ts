@@ -1,5 +1,7 @@
 import type {Environment} from '@shine/database';
+import type {PeopleSearchResult} from '@shine/types';
 import {Hono} from 'hono';
+import {sanitizeText} from '../middleware/sanitizer';
 import {PeopleService} from '../services/people-service';
 import {PersonCrossingsService} from '../services/person-crossings-service';
 import {
@@ -17,8 +19,16 @@ const PERSON_CACHE_TTL = 86_400;
 const PEOPLE_LIST_CACHE_TTL = 604_800;
 const PROMINENT_CACHE_TTL = 604_800;
 const PERSON_CROSSINGS_CACHE_TTL = 604_800;
+const PEOPLE_SEARCH_CACHE_TTL = 86_400;
 const PEOPLE_LIST_DEFAULT_LIMIT = 100;
 const PEOPLE_LIST_MAX_LIMIT = 500;
+const PEOPLE_SEARCH_QUERY_MAX_LENGTH = 100;
+
+function normalizeSearchQuery(value: string | undefined): string {
+  return sanitizeText(value ?? '')
+    .replaceAll(/\s+/g, ' ')
+    .slice(0, PEOPLE_SEARCH_QUERY_MAX_LENGTH);
+}
 
 function parsePositiveInteger(
   value: string | undefined,
@@ -81,6 +91,34 @@ peopleRoutes.get('/prominent', async c => {
   }
 
   return createCachedResponse(result, PROMINENT_CACHE_TTL, {ETag: etag});
+});
+
+peopleRoutes.get('/search', async c => {
+  const query = normalizeSearchQuery(c.req.query('q'));
+  if (!query) {
+    return c.json({error: 'q is required'}, 400);
+  }
+
+  const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
+  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cacheKey = `people:search:${locale}:${query}:v1`;
+  const cached = await cache.get(cacheKey);
+  const result =
+    cached?.data ??
+    ({
+      people: await new PeopleService(c.env).searchPeople({query, locale}),
+    } satisfies PeopleSearchResult);
+
+  if (!cached) {
+    await cache.set(cacheKey, result, PEOPLE_SEARCH_CACHE_TTL);
+  }
+
+  const etag = createETag(result);
+  if (shouldCheckETag(c.req, etag)) {
+    return new Response(undefined, {status: 304, headers: {ETag: etag}});
+  }
+
+  return createCachedResponse(result, PEOPLE_SEARCH_CACHE_TTL, {ETag: etag});
 });
 
 peopleRoutes.get('/crossings', async c => {

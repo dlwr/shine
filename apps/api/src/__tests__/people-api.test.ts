@@ -107,6 +107,53 @@ describe('GET /people', () => {
   });
 });
 
+describe('GET /people/search', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+  });
+
+  it('名前に一致する人物を返す', async () => {
+    const response = await peopleRoutes.request(
+      '/search?q=%E9%BB%92%E6%BE%A4',
+      {},
+      environment,
+    );
+
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {people: Array<{name: string}>};
+    expect(body.people.map(person => person.name)).toEqual(['黒澤明']);
+  });
+
+  it('一致しなければ空の配列を返す', async () => {
+    const response = await peopleRoutes.request(
+      '/search?q=nobody',
+      {},
+      environment,
+    );
+
+    const body = (await response.json()) as {people: unknown[]};
+    expect(body.people).toEqual([]);
+  });
+
+  it('検索語が無ければ400を返す', async () => {
+    const response = await peopleRoutes.request('/search', {}, environment);
+
+    expect(response.status).toBe(400);
+  });
+
+  it('空白だけの検索語は400を返す', async () => {
+    const response = await peopleRoutes.request(
+      '/search?q=%20%20',
+      {},
+      environment,
+    );
+
+    expect(response.status).toBe(400);
+  });
+});
+
 describe('GET /people/prominent', () => {
   let environment: Environment;
 

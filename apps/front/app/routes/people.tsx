@@ -5,22 +5,7 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {resolveApiUrl} from '@/lib/api';
-
-type ProminentMovie = {
-  uid: string;
-  title?: string;
-  year?: number;
-};
-
-type ProminentPerson = {
-  uid: string;
-  name: string;
-  originalName: string;
-  profilePath?: string;
-  wonCount: number;
-  nominatedCount: number;
-  topMovies: ProminentMovie[];
-};
+import type {ProminentPerson} from '@/lib/people';
 
 type ProminentPeople = {
   directors: ProminentPerson[];
@@ -148,6 +133,25 @@ export default function PeoplePage({loaderData}: Route.ComponentProps) {
             SHINEが記録する映画賞の監督賞と演技賞で、受賞回数の多い監督と俳優を並べた。
           </p>
         </section>
+
+        <form
+          method="get"
+          action="/search"
+          role="search"
+          className="mb-6 flex border-[3px] border-ink shadow-[var(--shadow-offset-sm)]">
+          <input
+            type="search"
+            name="q"
+            aria-label="映画人を探す"
+            placeholder="映画人を探す"
+            className="flex-1 bg-surface px-3 py-2.5 text-ink focus:outline-none"
+          />
+          <button
+            type="submit"
+            className="bg-ink px-4 font-display font-black text-paper">
+            GO
+          </button>
+        </form>
 
         <div className="mb-8 flex flex-wrap gap-3">
           <a

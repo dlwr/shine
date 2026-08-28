@@ -1,5 +1,7 @@
 import type {Route} from './+types/search';
+import type {ProminentPerson} from '@/lib/people';
 import {Masthead} from '@/components/editorial/masthead';
+import {PeopleStrip} from '@/components/editorial/people-strip';
 import {SearchRow} from '@/components/editorial/search-row';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {selectBestPoster} from '@/lib/poster';
@@ -35,12 +37,12 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const copy = searchQuery
     ? {
         title: `「${searchQuery}」の検索結果 | SHINE`,
-        description: `「${searchQuery}」に一致する映画を SHINE で探す。`,
+        description: `「${searchQuery}」に一致する映画と映画人を SHINE で探す。`,
       }
     : {
         title: '映画を検索 | SHINE',
         description:
-          'タイトル・年代・受賞歴から、SHINE に収録された映画を検索できます。',
+          '映画のタイトルや映画人の名前から、SHINE に収録された映画と人物を検索できます。',
       };
 
   return [
@@ -64,45 +66,97 @@ export async function loader({context, request}: Route.LoaderArgs) {
     return {
       searchQuery: '',
       searchResults: undefined,
+      people: [] as ProminentPerson[],
       locale,
     };
   }
 
-  try {
-    const apiUrl = resolveApiUrl(context);
-    const response = await fetch(
-      `${apiUrl}/movies/search?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${limit}`,
-      {
-        signal: request.signal,
-      },
-    );
+  const apiUrl = resolveApiUrl(context);
+  const [searchResults, people] = await Promise.all([
+    fetchMovies(apiUrl, searchQuery, page, limit, request.signal),
+    page === '1'
+      ? fetchPeople(apiUrl, searchQuery, request.signal)
+      : Promise.resolve([]),
+  ]);
 
-    if (!response.ok) {
-      throw new Error('Search failed');
-    }
-
-    const searchResults = await response.json();
-    return {
-      searchQuery,
-      searchResults,
-      locale,
-    };
-  } catch {
+  if (!searchResults) {
     return {
       searchQuery,
       error: '検索に失敗しました',
+      people,
       locale,
     };
+  }
+
+  return {
+    searchQuery,
+    searchResults,
+    people,
+    locale,
+  };
+}
+
+async function fetchMovies(
+  apiUrl: string,
+  searchQuery: string,
+  page: string,
+  limit: string,
+  signal: AbortSignal,
+) {
+  try {
+    const response = await fetch(
+      `${apiUrl}/movies/search?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${limit}`,
+      {signal},
+    );
+
+    if (!response.ok) {
+      return;
+    }
+
+    return (await response.json()) as {
+      movies: SearchMovieData[];
+      pagination: SearchPaginationData;
+    };
+  } catch {
+    return;
+  }
+}
+
+async function fetchPeople(
+  apiUrl: string,
+  searchQuery: string,
+  signal: AbortSignal,
+): Promise<ProminentPerson[]> {
+  try {
+    const response = await fetch(
+      `${apiUrl}/people/search?q=${encodeURIComponent(searchQuery)}&locale=ja`,
+      {signal},
+    );
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const body = (await response.json()) as {people: ProminentPerson[]};
+    return body.people;
+  } catch {
+    return [];
   }
 }
 
 export default function Search({loaderData}: Route.ComponentProps) {
-  const {searchQuery, searchResults, error} = loaderData as {
+  const {
+    searchQuery,
+    searchResults,
+    people = [],
+    error,
+  } = loaderData as {
     searchQuery: string;
     searchResults?: {
       movies: SearchMovieData[];
       pagination: SearchPaginationData;
     };
+    people?: ProminentPerson[];
     error?: string;
   };
 
@@ -124,7 +178,7 @@ export default function Search({loaderData}: Route.ComponentProps) {
               type="text"
               name="q"
               defaultValue={searchQuery}
-              placeholder="映画タイトルを入力..."
+              placeholder="映画タイトル・人物名を入力..."
               className="flex-1 bg-surface px-3 py-2.5 text-ink focus:outline-none"
             />
             <button
@@ -141,6 +195,8 @@ export default function Search({loaderData}: Route.ComponentProps) {
             <p className="font-mono text-sm">{error}</p>
           </div>
         )}
+
+        <PeopleStrip people={people} />
 
         {/* 検索結果 */}
         {searchResults && (

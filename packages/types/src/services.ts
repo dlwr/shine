@@ -407,3 +407,7 @@ export type ProminentPeople = {
   directors: ProminentPerson[];
   actors: ProminentPerson[];
 };
+
+export type PeopleSearchResult = {
+  people: ProminentPerson[];
+};
