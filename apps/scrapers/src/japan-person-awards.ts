@@ -138,6 +138,9 @@ export const JAPAN_PERSON_AWARD_SOURCES: ListPersonAwardSource[] = [
       ['2020:アンダードッグ', 'tt14051616'],
       // 同名の1959年版があり、TMDbの題名検索では一意にならない
       ['2015:野火', 'tt3893038'],
+      // 記事は原作小説へのリンク。前編・後編のうち前編を指す
+      ['2016:64（ロクヨン）', 'tt4471630'],
+      ['2020:本気のしるし 劇場版', 'tt13276326'],
     ]),
     personNameAliases: JAPANESE_NAME_ALIASES,
   },

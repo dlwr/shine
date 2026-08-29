@@ -59,6 +59,8 @@ export type ListPersonAwardEntry = {
   category: string;
   people: ListPersonAwardPerson[];
   films: ListPersonAwardFilm[];
+  /** 候補だけの行は false。受賞者しか並ばない記事では省略する */
+  isWinner?: boolean;
 };
 
 export type ListPersonAwardEdition = {
@@ -384,7 +386,7 @@ function buildNominations(
     }
 
     nominations.push({
-      isWinner: true,
+      isWinner: entry.isWinner ?? true,
       notes: null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationの型に合わせる
       titles,
       people: entry.people.map(person => ({
@@ -500,6 +502,34 @@ export async function importListPersonAward({
     `\n=== ${source.article}: parsed ${editions.length} editions from Wikipedia`,
   );
 
+  return importListPersonAwardEditions({
+    environment,
+    source,
+    categories,
+    editions,
+    dryRun,
+    year,
+    throttleMs,
+  });
+}
+
+export async function importListPersonAwardEditions({
+  environment,
+  source,
+  categories = source.categories,
+  editions,
+  dryRun = false,
+  year,
+  throttleMs = 300,
+}: {
+  environment: Environment;
+  source: ListPersonAwardSource;
+  categories?: ListPersonAwardCategory[];
+  editions: ListPersonAwardEdition[];
+  dryRun?: boolean;
+  year?: number;
+  throttleMs?: number;
+}): Promise<ImdbEventImportStats> {
   const resolved = await resolveFilms(
     source,
     editions,

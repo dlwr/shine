@@ -30,6 +30,7 @@ const VARIANTS: Record<string, string> = {
   嶌: '島',
   槇: '牧',
   聰: '聡',
+  愼: '慎',
 };
 
 const VARIANT_PATTERN = new RegExp(`[${Object.keys(VARIANTS).join('')}]`, 'gu');

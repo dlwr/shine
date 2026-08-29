@@ -518,6 +518,32 @@ describe('toImdbEventData', () => {
     ).toEqual([[{name: '今井正'}]]);
   });
 
+  it('候補だけの行は受賞なしで並べる', () => {
+    const data = toImdbEventData(
+      SOURCE,
+      DIRECTOR,
+      [
+        {
+          year: 1962,
+          ceremonyNumber: 13,
+          entries: [
+            {
+              category: '監督賞',
+              people: [{name: '今井正', page: '今井正'}],
+              films: [{page: '座頭市 (2003年の映画)', title: '座頭市'}],
+              isWinner: false,
+            },
+          ],
+        },
+      ],
+      RESOLVED,
+    );
+
+    expect(
+      data.editions[0].targetAward[0].categories[0].nominations[0].isWinner,
+    ).toBe(false);
+  });
+
   it('受賞の無い年度は落とす', () => {
     const data = toImdbEventData(SOURCE, DIRECTOR, EDITIONS, new Map());
 
