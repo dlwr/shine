@@ -75,7 +75,7 @@ peopleRoutes.get('/', async c => {
 peopleRoutes.get('/prominent', async c => {
   const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = `people:prominent:${locale}:v9`;
+  const cacheKey = `people:prominent:${locale}:v10`;
   const cached = await cache.get(cacheKey);
   const result =
     cached?.data ??
@@ -124,7 +124,7 @@ peopleRoutes.get('/search', async c => {
 peopleRoutes.get('/crossings', async c => {
   const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = `people:crossings:${locale}:v1`;
+  const cacheKey = `people:crossings:${locale}:v2`;
   const cached = await cache.get(cacheKey);
   const result =
     cached?.data ??
