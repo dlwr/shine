@@ -31,6 +31,7 @@
     "availability-check": "tsx src/availability-check-cli.ts",
     "japanese-translations": "tsx src/japanese-translations-cli.ts",
     "wikidata-japanese-titles": "tsx src/wikidata-japanese-titles-cli.ts",
+    "wikidata-japanese-names": "tsx src/wikidata-japanese-names-cli.ts",
     "cannes-film-festival": "tsx src/cannes-film-festival-cli.ts",
     "venice-film-festival": "tsx src/venice-film-festival-cli.ts",
     "berlin-film-festival": "tsx src/berlin-film-festival-cli.ts",
