@@ -204,6 +204,23 @@ describe('Award detail page', () => {
       expect(link).toHaveAttribute('href', '/awards/palme-dor/2023');
     });
 
+    it('受賞作のほかに出品作が無い年は出品作一覧へのリンクを出さない', () => {
+      const award = {
+        ...mockAwardDetail,
+        years: [{...mockAwardDetail.years[0], filmCount: 1}],
+      };
+
+      render(
+        <AwardDetailPage
+          {...createComponentProperties(
+            cast<LoaderData>({award, locale: 'ja'}),
+          )}
+        />,
+      );
+
+      expect(screen.queryByRole('link', {name: /出品作/})).toBeNull();
+    });
+
     it('受賞作がない年は受賞作なしと表示する', () => {
       const award = {
         ...mockAwardDetail,
