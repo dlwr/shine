@@ -33,6 +33,7 @@
     "scrapers:japan-person-awards": "pnpm --filter @shine/scrapers run japan-person-awards",
     "scrapers:japanese-translations": "pnpm --filter @shine/scrapers run japanese-translations",
     "scrapers:wikidata-japanese-titles": "pnpm --filter @shine/scrapers run wikidata-japanese-titles",
+    "scrapers:wikidata-japanese-names": "pnpm --filter @shine/scrapers run wikidata-japanese-names",
     "scrapers:cannes-film-festival": "pnpm --filter @shine/scrapers run cannes-film-festival",
     "scrapers:venice-film-festival": "pnpm --filter @shine/scrapers run venice-film-festival",
     "scrapers:berlin-film-festival": "pnpm --filter @shine/scrapers run berlin-film-festival",
