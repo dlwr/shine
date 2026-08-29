@@ -4,7 +4,10 @@ import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
-import {awardPageDefinitions, findAwardPageDefinition} from './awards-service';
+import {
+  awardPageDefinitions,
+  findTopAwardPageDefinition,
+} from './awards-service';
 import {BaseService} from './base-service';
 import type {AwardCrossings, CrossingMovie} from '@shine/types';
 
@@ -55,7 +58,7 @@ export class CrossingsService extends BaseService {
 
     const slugsByMovie = new Map<string, Set<string>>();
     for (const row of rows) {
-      const slug = findAwardPageDefinition(
+      const slug = findTopAwardPageDefinition(
         row.organizationName,
         row.categoryName,
       )?.slug;

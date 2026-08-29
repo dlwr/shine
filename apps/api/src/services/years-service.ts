@@ -7,7 +7,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {
   awardPageDefinitions,
   awardPageNominations,
-  findAwardPageDefinition,
+  findTopAwardPageDefinition,
 } from './awards-service';
 import {BaseService} from './base-service';
 import type {YearDetail, YearMovie, YearSummary} from '@shine/types';
@@ -115,7 +115,7 @@ export class YearsService extends BaseService {
 
     const byUid = new Map<string, YearMovie>();
     for (const row of rows) {
-      const slug = findAwardPageDefinition(
+      const slug = findTopAwardPageDefinition(
         row.organizationName,
         row.categoryName,
       )?.slug;

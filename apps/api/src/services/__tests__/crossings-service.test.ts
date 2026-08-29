@@ -291,4 +291,25 @@ describe('CrossingsService.getCrossings', () => {
       topMovies.find(movie => movie.uid === 'movie-3')?.awardSlugs,
     ).toEqual(['palme-dor']);
   });
+
+  it('映画祭のサブ賞は同じ映画祭の出品と重ねて数えない', async () => {
+    await database.insert(awardCategories).values({
+      uid: 'cat-grand-prix',
+      organizationUid: 'org-cannes',
+      name: 'Grand Prix',
+    });
+    await database.insert(nominations).values({
+      movieUid: 'movie-3',
+      ceremonyUid: 'ceremony-cannes',
+      categoryUid: 'cat-grand-prix',
+      isWinner: 1,
+    });
+
+    const {awards, topMovies} = await service.getCrossings();
+
+    expect(awards.map(award => award.slug)).not.toContain('cannes-grand-prix');
+    expect(
+      topMovies.find(movie => movie.uid === 'movie-3')?.awardSlugs,
+    ).toEqual(['palme-dor']);
+  });
 });

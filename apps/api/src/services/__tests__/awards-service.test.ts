@@ -17,6 +17,7 @@ import {
   awardPageLinkForOrganizationName,
   AwardsService,
   findPersonAwardDefinition,
+  findTopAwardPageDefinition,
   japaneseAwardNames,
   paginateAwardDetail,
   personAwardDefinitions,
@@ -607,8 +608,17 @@ describe('AwardsService.listAwards', () => {
 
 describe('awardPageLinkForOrganizationName', () => {
   it('returns the slug and year-page availability for a year-grouped award', () => {
-    expect(awardPageLinkForOrganizationName('Cannes Film Festival')).toEqual({
-      slug: 'palme-dor',
+    expect(awardPageLinkForOrganizationName('Academy Awards')).toEqual({
+      slug: 'academy-best-picture',
+      hasYearPages: true,
+    });
+  });
+
+  it('映画祭のサブ賞にも賞ページの slug を返す', () => {
+    expect(
+      awardPageLinkForOrganizationName('Cannes Film Festival', 'Grand Prix'),
+    ).toEqual({
+      slug: 'cannes-grand-prix',
       hasYearPages: true,
     });
   });
@@ -668,11 +678,37 @@ describe('awardPageLinkForOrganizationName', () => {
   });
 });
 
+describe('findTopAwardPageDefinition', () => {
+  it('最高賞の賞ページを返す', () => {
+    expect(
+      findTopAwardPageDefinition('Cannes Film Festival', "Palme d'Or")?.slug,
+    ).toBe('palme-dor');
+  });
+
+  it('サブ賞の賞ページは返さない', () => {
+    expect(
+      findTopAwardPageDefinition('Cannes Film Festival', 'Grand Prix'),
+    ).toBeUndefined();
+  });
+});
+
 describe('japaneseAwardNames', () => {
   it('組織名の日本語表記を返す', () => {
     expect(japaneseAwardNames('Venice Film Festival', 'Golden Lion')).toEqual({
       organization: 'ヴェネツィア国際映画祭',
       category: '金獅子賞',
+    });
+  });
+
+  it('映画祭のサブ賞の日本語表記を返す', () => {
+    expect(
+      japaneseAwardNames(
+        'Berlin International Film Festival',
+        'Silver Bear Grand Jury Prize',
+      ),
+    ).toEqual({
+      organization: 'ベルリン国際映画祭',
+      category: '銀熊賞（審査員グランプリ）',
     });
   });
 

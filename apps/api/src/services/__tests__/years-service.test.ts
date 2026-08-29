@@ -37,14 +37,17 @@ async function createTestEnvironment(): Promise<Environment> {
   ]);
   await database.insert(awardCategories).values([
     {uid: 'cat-palme', organizationUid: 'org-cannes', name: "Palme d'Or"},
+    {uid: 'cat-grand-prix', organizationUid: 'org-cannes', name: 'Grand Prix'},
     {uid: 'cat-director', organizationUid: 'org-japan', name: '監督賞'},
   ]);
   await database.insert(awardCeremonies).values([
     {uid: 'ceremony-cannes', organizationUid: 'org-cannes', year: 1980},
+    {uid: 'ceremony-cannes-1981', organizationUid: 'org-cannes', year: 1981},
     {uid: 'ceremony-japan', organizationUid: 'org-japan', year: 1986},
   ]);
   await database.insert(movies).values([
     {uid: 'movie-palme', year: 1980},
+    {uid: 'movie-grand-prix-only', year: 1981},
     {uid: 'movie-director-only', year: 1985},
   ]);
   await database.insert(translations).values([
@@ -73,6 +76,12 @@ async function createTestEnvironment(): Promise<Environment> {
       movieUid: 'movie-palme',
       ceremonyUid: 'ceremony-cannes',
       categoryUid: 'cat-palme',
+      isWinner: 1,
+    },
+    {
+      movieUid: 'movie-grand-prix-only',
+      ceremonyUid: 'ceremony-cannes-1981',
+      categoryUid: 'cat-grand-prix',
       isWinner: 1,
     },
     {
@@ -132,6 +141,22 @@ describe('YearsService', () => {
     const service = new YearsService(environment);
 
     const detail = await service.getYear(1985);
+
+    expect(detail).toBeUndefined();
+  });
+
+  it('映画祭のサブ賞しか無い映画は年の集計に数えない', async () => {
+    const service = new YearsService(environment);
+
+    const years = await service.listYears();
+
+    expect(years.find(year => year.year === 1981)).toBeUndefined();
+  });
+
+  it('映画祭のサブ賞しか無い映画は年別ページに出さない', async () => {
+    const service = new YearsService(environment);
+
+    const detail = await service.getYear(1981);
 
     expect(detail).toBeUndefined();
   });
