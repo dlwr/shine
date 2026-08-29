@@ -23,6 +23,7 @@
     "venice-jury-awards": "tsx src/venice-jury-awards-cli.ts",
     "berlin-jury-awards": "tsx src/berlin-jury-awards-cli.ts",
     "japan-person-awards": "tsx src/japan-person-awards-cli.ts",
+    "mainichi-person-nominations": "tsx src/mainichi-person-nominations-cli.ts",
     "assign-imdb-ids": "tsx src/assign-imdb-ids-cli.ts",
     "backfill-posters": "tsx src/backfill-posters-cli.ts",
     "delete-orphan-movies": "tsx src/delete-orphan-movies-cli.ts",
