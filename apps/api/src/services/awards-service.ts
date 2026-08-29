@@ -32,6 +32,15 @@ export function findAwardPageDefinition(
     : candidates.find(entry => entry.categoryNames.includes(categoryName));
 }
 
+/** 作品を横断して数える集計（/years・crossings・uncrowned）に使う最高賞の賞ページ */
+export function findTopAwardPageDefinition(
+  organizationName: string,
+  categoryName: string,
+): AwardPageDefinition | undefined {
+  const definition = findAwardPageDefinition(organizationName, categoryName);
+  return definition?.subAward ? undefined : definition;
+}
+
 export function awardPageLinkForOrganizationName(
   organizationName: string,
   categoryName?: string,
@@ -47,15 +56,17 @@ export function awardPageLinkForOrganizationName(
   };
 }
 
-/** 賞ページを持つ (組織, 部門) だけに絞る条件。個人賞などは含まない */
+/** 最高賞の賞ページを持つ (組織, 部門) だけに絞る条件。個人賞や映画祭のサブ賞は含まない */
 export function awardPageNominations() {
   return or(
-    ...awardPageDefinitions.map(definition =>
-      and(
-        eq(awardOrganizations.name, definition.organizationName),
-        inArray(awardCategories.name, definition.categoryNames),
+    ...awardPageDefinitions
+      .filter(definition => !definition.subAward)
+      .map(definition =>
+        and(
+          eq(awardOrganizations.name, definition.organizationName),
+          inArray(awardCategories.name, definition.categoryNames),
+        ),
       ),
-    ),
   );
 }
 
@@ -819,6 +830,8 @@ export type AwardPageDefinition = {
   organization: string;
   description: string;
   grouping: 'year' | 'list';
+  /** 最高賞に次ぐ賞。受賞作は同じ映画祭の出品作でもあるので、作品を横断して数える集計には入れない */
+  subAward?: boolean;
 };
 
 export const awardPageDefinitions: AwardPageDefinition[] = [
@@ -834,6 +847,29 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
     grouping: 'year',
   },
   {
+    slug: 'cannes-grand-prix',
+    shortLabel: 'カンヌGP',
+    organizationName: 'Cannes Film Festival',
+    categoryNames: ['Grand Prix'],
+    name: 'グランプリ',
+    organization: 'カンヌ国際映画祭',
+    description:
+      'カンヌ国際映画祭でパルム・ドールに次ぐグランプリ（審査員グランプリ）の歴代受賞作の一覧。',
+    grouping: 'year',
+    subAward: true,
+  },
+  {
+    slug: 'cannes-jury-prize',
+    shortLabel: 'カンヌ審査員賞',
+    organizationName: 'Cannes Film Festival',
+    categoryNames: ['Jury Prize'],
+    name: '審査員賞',
+    organization: 'カンヌ国際映画祭',
+    description: 'カンヌ国際映画祭 審査員賞の歴代受賞作の一覧。',
+    grouping: 'year',
+    subAward: true,
+  },
+  {
     slug: 'venice-golden-lion',
     shortLabel: 'ヴェネツィア',
     organizationName: 'Venice Film Festival',
@@ -845,6 +881,29 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
     grouping: 'year',
   },
   {
+    slug: 'venice-grand-jury-prize',
+    shortLabel: 'ヴェネツィア審査員大賞',
+    organizationName: 'Venice Film Festival',
+    categoryNames: ['Grand Jury Prize'],
+    name: '審査員大賞',
+    organization: 'ヴェネツィア国際映画祭',
+    description:
+      'ヴェネツィア国際映画祭で金獅子賞に次ぐ審査員大賞（銀獅子賞）の歴代受賞作の一覧。',
+    grouping: 'year',
+    subAward: true,
+  },
+  {
+    slug: 'venice-special-jury-prize',
+    shortLabel: 'ヴェネツィア審査員特別賞',
+    organizationName: 'Venice Film Festival',
+    categoryNames: ['Special Jury Prize'],
+    name: '審査員特別賞',
+    organization: 'ヴェネツィア国際映画祭',
+    description: 'ヴェネツィア国際映画祭 審査員特別賞の歴代受賞作の一覧。',
+    grouping: 'year',
+    subAward: true,
+  },
+  {
     slug: 'berlin-golden-bear',
     shortLabel: 'ベルリン',
     organizationName: 'Berlin International Film Festival',
@@ -854,6 +913,29 @@ export const awardPageDefinitions: AwardPageDefinition[] = [
     description:
       'ベルリン国際映画祭の最高賞・金熊賞の歴代受賞作とコンペティション部門出品作の一覧。',
     grouping: 'year',
+  },
+  {
+    slug: 'berlin-grand-jury-prize',
+    shortLabel: 'ベルリン審査員GP',
+    organizationName: 'Berlin International Film Festival',
+    categoryNames: ['Silver Bear Grand Jury Prize'],
+    name: '銀熊賞（審査員グランプリ）',
+    organization: 'ベルリン国際映画祭',
+    description:
+      'ベルリン国際映画祭で金熊賞に次ぐ銀熊賞（審査員グランプリ）の歴代受賞作の一覧。',
+    grouping: 'year',
+    subAward: true,
+  },
+  {
+    slug: 'berlin-jury-prize',
+    shortLabel: 'ベルリン審査員賞',
+    organizationName: 'Berlin International Film Festival',
+    categoryNames: ['Silver Bear Jury Prize'],
+    name: '銀熊賞（審査員賞）',
+    organization: 'ベルリン国際映画祭',
+    description: 'ベルリン国際映画祭 銀熊賞（審査員賞）の歴代受賞作の一覧。',
+    grouping: 'year',
+    subAward: true,
   },
   {
     slug: 'academy-best-picture',

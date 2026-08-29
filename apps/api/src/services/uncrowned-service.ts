@@ -4,7 +4,10 @@ import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
-import {awardPageDefinitions, findAwardPageDefinition} from './awards-service';
+import {
+  awardPageDefinitions,
+  findTopAwardPageDefinition,
+} from './awards-service';
 import {BaseService} from './base-service';
 import type {Uncrowned, UncrownedLoss, UncrownedMovie} from '@shine/types';
 
@@ -54,7 +57,7 @@ export class UncrownedService extends BaseService {
     const lossSlugs = new Set<string>();
     const lossesByMovie = new Map<string, Map<string, UncrownedLoss>>();
     for (const row of rows) {
-      const definition = findAwardPageDefinition(
+      const definition = findTopAwardPageDefinition(
         row.organizationName,
         row.categoryName,
       );

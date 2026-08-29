@@ -315,6 +315,26 @@ describe('UncrownedService.getUncrowned', () => {
     ).toEqual([{slug: 'palme-dor', year: 2019}]);
   });
 
+  it('映画祭のサブ賞の受賞は戴冠に数えない', async () => {
+    await database.insert(awardCategories).values({
+      uid: 'cat-grand-prix',
+      organizationUid: 'org-cannes',
+      name: 'Grand Prix',
+    });
+    await database.insert(nominations).values({
+      movieUid: 'movie-1loss',
+      ceremonyUid: 'ceremony-cannes',
+      categoryUid: 'cat-grand-prix',
+      isWinner: 1,
+    });
+
+    const {topMovies} = await service.getUncrowned();
+
+    expect(
+      topMovies.find(movie => movie.uid === 'movie-1loss')?.losses,
+    ).toEqual([{slug: 'palme-dor', year: 2019}]);
+  });
+
   it('タグ表示用に敗北のあった賞を返す', async () => {
     const {awards} = await service.getUncrowned();
 

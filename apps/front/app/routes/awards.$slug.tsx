@@ -303,11 +303,13 @@ function YearSection({
             第{group.ceremonyNumber}回
           </span>
         )}
-        <a
-          href={yearHref}
-          className="ml-auto font-mono text-[10px] text-ink-muted no-underline shrink-0">
-          出品作{group.filmCount}本を見る →
-        </a>
+        {group.filmCount > group.movies.length && (
+          <a
+            href={yearHref}
+            className="ml-auto font-mono text-[10px] text-ink-muted no-underline shrink-0">
+            出品作{group.filmCount}本を見る →
+          </a>
+        )}
       </div>
       <div>
         {group.movies.length > 0 ? (
