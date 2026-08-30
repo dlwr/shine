@@ -48,6 +48,14 @@ describe('Masthead', () => {
     );
   });
 
+  it('WATCHED リンクを描画する', () => {
+    render(<Masthead locale="ja" />);
+    expect(screen.getByRole('link', {name: /watched/i})).toHaveAttribute(
+      'href',
+      '/watched',
+    );
+  });
+
   it('PEOPLE リンクを描画する', () => {
     render(<Masthead locale="ja" />);
     expect(screen.getByRole('link', {name: /people/i})).toHaveAttribute(

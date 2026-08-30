@@ -15,6 +15,7 @@ const TAGLINES = {
 
 const NAV_LINKS = [
   {href: '/quiz', label: 'QUIZ', ariaLabel: 'Quiz'},
+  {href: '/watched', label: 'WATCHED', ariaLabel: 'Watched films'},
   {href: '/daily', label: 'DAILY', ariaLabel: 'Daily picks'},
   {href: '/awards', label: 'AWARDS', ariaLabel: 'Awards'},
   {href: '/people', label: 'PEOPLE', ariaLabel: 'People'},
