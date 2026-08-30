@@ -40,6 +40,12 @@ describe('normalizePersonName', () => {
     );
   });
 
+  it('異体字の𠮷を新字体に寄せる', () => {
+    expect(normalizePersonName('𠮷田恵輔')).toBe(
+      normalizePersonName('吉田恵輔'),
+    );
+  });
+
   it('別人の名前までは寄せない', () => {
     expect(normalizePersonName('渡辺謙')).not.toBe(
       normalizePersonName('渡辺裕之'),

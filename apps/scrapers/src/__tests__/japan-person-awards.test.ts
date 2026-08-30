@@ -5,12 +5,14 @@ import {
 } from '../japan-person-awards';
 
 describe('JAPAN_PERSON_AWARD_SOURCES', () => {
-  it('4賞を --award の名前で引ける', () => {
+  it('6賞を --award の名前で引ける', () => {
     expect(JAPAN_PERSON_AWARD_SOURCES.map(source => source.key)).toEqual([
       'kinema-junpo',
       'mainichi',
       'blue-ribbon',
       'hochi',
+      'yokohama',
+      'nikkan-sports',
     ]);
     expect(findJapanPersonAwardSource('hochi')?.organizationName).toBe(
       'Hochi Film Awards',
@@ -52,6 +54,20 @@ describe('JAPAN_PERSON_AWARD_SOURCES', () => {
         '助演女優賞',
       ],
       hochi: ['監督賞', '主演男優賞', '主演女優賞', '助演男優賞', '助演女優賞'],
+      yokohama: [
+        '監督賞',
+        '主演男優賞',
+        '主演女優賞',
+        '助演男優賞',
+        '助演女優賞',
+      ],
+      'nikkan-sports': [
+        '監督賞',
+        '主演男優賞',
+        '主演女優賞',
+        '助演男優賞',
+        '助演女優賞',
+      ],
     });
   });
 
@@ -66,9 +82,17 @@ describe('JAPAN_PERSON_AWARD_SOURCES', () => {
       ['mainichi', 1],
       ['blue-ribbon', 1],
       ['hochi', 1],
+      ['yokohama', 1],
+      ['nikkan-sports', 1],
     ]);
     expect(
       findJapanPersonAwardSource('kinema-junpo')?.ceremonyNumber(1955),
     ).toBe(29);
+    expect(findJapanPersonAwardSource('yokohama')?.ceremonyNumber(2024)).toBe(
+      46,
+    );
+    expect(
+      findJapanPersonAwardSource('nikkan-sports')?.ceremonyNumber(2025),
+    ).toBe(38);
   });
 });

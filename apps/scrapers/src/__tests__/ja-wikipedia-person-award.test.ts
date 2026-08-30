@@ -184,6 +184,29 @@ describe('parseListPersonAwardWikitext', () => {
     ).toEqual([{page: 'あんのこと', title: 'あんのこと'}]);
   });
 
+  it('{{R|…}} の出典テンプレートは人名にも題名にも数えない', () => {
+    const wikitext = `
+==== 第15回（2002年度） ====
+*監督賞 山田洋次（『たそがれ清兵衛{{R|history}}』）
+*主演男優賞 [[真田広之]]{{R|history}}（『たそがれ清兵衛』{{R|ns-cinema2006}}）
+`;
+
+    expect(
+      parseListPersonAwardWikitext(wikitext, CATEGORIES)[0].entries,
+    ).toEqual([
+      {
+        category: '監督賞',
+        people: [{name: '山田洋次'}],
+        films: [{title: 'たそがれ清兵衛'}],
+      },
+      {
+        category: '主演男優賞',
+        people: [{name: '真田広之', page: '真田広之'}],
+        films: [{title: 'たそがれ清兵衛'}],
+      },
+    ]);
+  });
+
   it('改称前の部門名も同じ部門として読む', () => {
     const wikitext = `
 ==== 第1回（1946年）====

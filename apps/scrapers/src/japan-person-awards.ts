@@ -9,6 +9,8 @@ import {hochiCeremonyNumber} from './hochi-film-awards';
 import {type ImdbEventImportStats} from './imdb-event-award';
 import {kinemaJunpoCeremonyNumber} from './kinema-junpo';
 import {mainichiCeremonyNumber} from './mainichi-film-concours';
+import {nikkanSportsCeremonyNumber} from './nikkan-sports-film-awards';
+import {yokohamaCeremonyNumber} from './yokohama-film-festival';
 
 /**
  * 記事の表記とTMDbのクレジット名が別名で、表記の正規化では寄らないもの。
@@ -25,6 +27,10 @@ const JAPANESE_NAME_ALIASES: Record<string, string> = {
   市川海老蔵: '十三代目 市川團十郎',
   市川染五郎: '十代目 松本幸四郎',
   瑛太: '永山瑛太',
+  広田玲央名: '広田レオナ',
+  加賀まり子: '加賀まりこ',
+  斎藤慶子: '斉藤慶子',
+  本阿弥周子: 'Shuko Honami',
 };
 
 /** 外国映画監督賞の受賞者。TMDbのクレジットが原語表記か綴りが違う */
@@ -202,6 +208,60 @@ export const JAPAN_PERSON_AWARD_SOURCES: ListPersonAwardSource[] = [
       ['2019:コンフィデンスマンJP -ロマンス編-', 'tt9552258'],
       ['2019:閉鎖病棟 -それぞれの朝-', 'tt9721798'],
       ['2021:老後の資金がありません!', 'tt11354164'],
+    ]),
+    personNameAliases: JAPANESE_NAME_ALIASES,
+  },
+  {
+    key: 'yokohama',
+    article: 'ヨコハマ映画祭',
+    organizationName: 'Yokohama Film Festival',
+    establishedYear: 1979,
+    ceremonyNumber: yokohamaCeremonyNumber,
+    categories: [
+      {names: ['監督賞'], category: '監督賞', role: 'director'},
+      ...actingCategories(),
+    ],
+    resolutionOverrides: new Map([
+      ['2012:愛と誠', 'tt1980033'],
+      // 記事は第一作の節へのリンクで「第二作」は『』の外に書かれている
+      ['2023:仕掛人・藤枝梅安', 'tt36643694'],
+      ['2023:劇場版TOKYO MER〜走る緊急救命室〜', 'tt27453633'],
+      ['2002:OUT', 'tt0340280'],
+      ['1993:眠らない街～新宿鮫～', 'tt0256956'],
+      ['1993:病は気から 病院へ行こう2', 'tt0324610'],
+      ['2005:SHINOBI-HEART UNDER BLADE-', 'tt0475723'],
+      ['1987:母娘監禁　牝〈めす〉', 'tt0285590'],
+      ['1998:犬、走る DOG RACE', 'tt0416863'],
+      ['2020:本気のしるし〈劇場版〉', 'tt13276326'],
+      ['1992:未来の想い出 Last Christmas', 'tt0189741'],
+      ['2018:ちはやふる -結び-', 'tt6821870'],
+    ]),
+    personNameAliases: JAPANESE_NAME_ALIASES,
+  },
+  {
+    key: 'nikkan-sports',
+    article: '日刊スポーツ映画大賞・石原裕次郎賞',
+    organizationName: 'Nikkan Sports Film Awards',
+    establishedYear: 1988,
+    ceremonyNumber: nikkanSportsCeremonyNumber,
+    categories: [
+      {names: ['監督賞'], category: '監督賞', role: 'director'},
+      ...actingCategories(),
+    ],
+    resolutionOverrides: new Map([
+      ['2020:コンフィデンスマンJP プリンセス編', 'tt12767996'],
+      ['2021:きのう何食べた?', 'tt14865506'],
+      ['2023:劇場版TOKYO MER〜走る緊急救命室〜', 'tt27453633'],
+      ['2005:蟬しぐれ', 'tt0455748'],
+      ['2016:64 -ロクヨン-', 'tt4471630'],
+      ['1993:新極道の妻たち 覚悟しいや', 'tt0226440'],
+      ['2021:老後の資金がありません!', 'tt11354164'],
+      ['2002:OUT', 'tt0340280'],
+      ['2005:フライ、ダディ、フライ', 'tt0455490'],
+      ['2019:閉鎖病棟 -それぞれの朝-', 'tt9721798'],
+      ['1989:蛍', 'tt0375820'],
+      ['2013:少年H', 'tt2299531'],
+      ['2019:お父さん、チビがいなくなりました', 'tt9486162'],
     ]),
     personNameAliases: JAPANESE_NAME_ALIASES,
   },
