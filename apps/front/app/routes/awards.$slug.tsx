@@ -40,6 +40,7 @@ export type AwardDetailData = {
   organization: string;
   description: string;
   grouping: 'year' | 'list';
+  subAward?: boolean;
   years: AwardYearGroupData[];
   pagination?: AwardPaginationData;
 };
@@ -411,9 +412,17 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
         <h1 className="font-display font-black text-2xl md:text-3xl tracking-tight mb-2">
           {heading}
         </h1>
-        <p className="font-mono text-xs text-ink-muted mb-8">
+        <p className="font-mono text-xs text-ink-muted mb-4">
           {summaryLine(award)}
         </p>
+
+        {award.grouping === 'year' && !award.subAward && (
+          <a
+            href={`/watched/${award.slug}`}
+            className="inline-block mb-8 border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold no-underline text-ink shadow-[3px_3px_0_var(--brand)]">
+            受賞作、何本観た？ →
+          </a>
+        )}
 
         <AwardBody award={award} />
 

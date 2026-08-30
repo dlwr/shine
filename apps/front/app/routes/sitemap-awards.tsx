@@ -6,6 +6,7 @@ import {resolveApiUrl, sitemapResponse} from '@/lib/sitemap-source';
 type AwardListing = {
   slug: string;
   grouping: 'year' | 'list' | 'person';
+  subAward?: boolean;
 };
 
 type AwardDetailShape = {
@@ -87,6 +88,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
     {path: '/people', changefreq: 'weekly'},
     {path: '/people/crossings', changefreq: 'weekly'},
     {path: '/quiz', changefreq: 'daily'},
+    {path: '/watched', changefreq: 'weekly'},
     {path: '/daily', changefreq: 'daily'},
     {path: '/weekly', changefreq: 'weekly'},
     {path: '/monthly', changefreq: 'monthly'},
@@ -95,6 +97,12 @@ export async function loader({context, request}: Route.LoaderArgs) {
       changefreq: 'weekly' as const,
     })),
     ...details.flatMap(({award, detail}) => subPageEntries(award, detail)),
+    ...awards
+      .filter(award => award.grouping === 'year' && !award.subAward)
+      .map(award => ({
+        path: `/watched/${award.slug}`,
+        changefreq: 'weekly' as const,
+      })),
   ];
 
   return sitemapResponse(buildUrlSet(entries));

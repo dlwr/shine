@@ -98,6 +98,11 @@ export default function AwardsIndex({loaderData}: Route.ComponentProps) {
             className="inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold no-underline text-ink shadow-[3px_3px_0_var(--brand)]">
             無冠の映画を見る →
           </a>
+          <a
+            href="/watched"
+            className="inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold no-underline text-ink shadow-[3px_3px_0_var(--brand)]">
+            観た映画チェック →
+          </a>
         </div>
 
         <div>

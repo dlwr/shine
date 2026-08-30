@@ -396,6 +396,27 @@ describe('AwardsService.getAwardBySlug 年別グルーピング', () => {
     ]);
   });
 
+  it('最高賞には subAward を付けず、サブ賞には付ける', async () => {
+    await database.insert(awardCategories).values({
+      uid: 'cat-grand-prix',
+      organizationUid: 'org-cannes',
+      name: 'Grand Prix',
+    });
+    await database.insert(nominations).values({
+      movieUid: 'movie-a',
+      ceremonyUid: 'ceremony-2023',
+      categoryUid: 'cat-grand-prix',
+      isWinner: 1,
+    });
+
+    expect(await service.getAwardBySlug('palme-dor')).not.toHaveProperty(
+      'subAward',
+    );
+    expect(await service.getAwardBySlug('cannes-grand-prix')).toMatchObject({
+      subAward: true,
+    });
+  });
+
   it('出品作の総数をfilmCountで返す', async () => {
     const result = await service.getAwardBySlug('palme-dor');
 
@@ -604,6 +625,41 @@ describe('AwardsService.listAwards', () => {
       firstYear: 2021,
       lastYear: 2023,
     });
+  });
+
+  it('映画祭のサブ賞に subAward を立て、最高賞には付けない', async () => {
+    await seedCannes(database);
+    await database.insert(awardCategories).values({
+      uid: 'cat-grand-prix',
+      organizationUid: 'org-cannes',
+      name: 'Grand Prix',
+    });
+    await seedCannesCeremony(database, 'ceremony-2023', 2023);
+    await seedMovie(database, 'movie-a', 'Movie A');
+    await seedMovie(database, 'movie-b', 'Movie B');
+    await database.insert(nominations).values([
+      {
+        movieUid: 'movie-a',
+        ceremonyUid: 'ceremony-2023',
+        categoryUid: 'cat-palme',
+        isWinner: 1,
+      },
+      {
+        movieUid: 'movie-b',
+        ceremonyUid: 'ceremony-2023',
+        categoryUid: 'cat-grand-prix',
+        isWinner: 1,
+      },
+    ]);
+
+    const result = await service.listAwards();
+
+    expect(result.find(award => award.slug === 'palme-dor')).not.toHaveProperty(
+      'subAward',
+    );
+    expect(
+      result.find(award => award.slug === 'cannes-grand-prix'),
+    ).toMatchObject({subAward: true});
   });
 });
 

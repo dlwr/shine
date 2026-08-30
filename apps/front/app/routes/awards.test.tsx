@@ -92,6 +92,21 @@ describe('Awards crossings link', () => {
       '/uncrowned',
     );
   });
+
+  it('観た映画チェックへの導線を置く', () => {
+    render(
+      <AwardsIndexPage
+        loaderData={cast<LoaderData>({...mockAwards, locale: 'ja'})}
+        actionData={undefined}
+        params={cast<ComponentProperties['params']>({})}
+        matches={cast<ComponentProperties['matches']>([])}
+      />,
+    );
+
+    expect(
+      screen.getByRole('link', {name: /観た映画チェック/}),
+    ).toHaveAttribute('href', '/watched');
+  });
 });
 
 describe('Awards index page', () => {

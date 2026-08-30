@@ -114,6 +114,8 @@ export type AwardDetail = {
   organization: string;
   description: string;
   grouping: 'year' | 'list';
+  /** 映画祭のグランプリ・審査員賞など最高賞に次ぐ賞のときのみ true */
+  subAward?: boolean;
   years: AwardYearGroup[];
   /** grouping === 'list' のときのみ返る */
   pagination?: AwardPagination;
@@ -140,6 +142,8 @@ export type AwardSummary = {
   movieCount: number;
   /** grouping === 'person' のときのみ返る */
   personCount?: number;
+  /** 映画祭のグランプリ・審査員賞など最高賞に次ぐ賞のときのみ true */
+  subAward?: boolean;
   firstYear: number;
   lastYear: number;
 };

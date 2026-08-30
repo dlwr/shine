@@ -286,6 +286,29 @@ describe('sitemap/awards.xml', () => {
     );
   });
 
+  it('年度制の最高賞には観た映画チェックのURLも列挙する', async () => {
+    mockSearchResponse({
+      awards: [
+        {slug: 'palme-dor', grouping: 'year'},
+        {slug: 'cannes-grand-prix', grouping: 'year', subAward: true},
+        {slug: '1001-movies', grouping: 'list'},
+      ],
+    });
+    mockSearchResponse({years: [{year: 2023}]});
+    mockSearchResponse({years: [{year: 2023}]});
+    mockSearchResponse({pagination: {totalPages: 1}});
+
+    const response = await sitemapAwardsLoader(createAwardsArguments());
+    const xml = await response.text();
+
+    expect(xml).toContain('<loc>https://shine-film.com/watched</loc>');
+    expect(xml).toContain(
+      '<loc>https://shine-film.com/watched/palme-dor</loc>',
+    );
+    expect(xml).not.toContain('/watched/cannes-grand-prix');
+    expect(xml).not.toContain('/watched/1001-movies');
+  });
+
   it('リスト型の賞は2ページ目以降のURLも列挙する', async () => {
     mockSearchResponse({awards: [{slug: '1001-movies', grouping: 'list'}]});
     mockSearchResponse({pagination: {totalPages: 3}});

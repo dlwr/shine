@@ -247,3 +247,84 @@ export function buildPersonCardHtml({
   ${portraitHtml}
 </div>`;
 }
+
+const WATCHED_GRID_WIDTH = 440;
+const WATCHED_GRID_HEIGHT = 520;
+const WATCHED_GRID_GAP = 6;
+const WATCHED_GRID_MIN_COLUMNS = 6;
+const WATCHED_GRID_MAX_COLUMNS = 12;
+const WATCHED_NAME_MAX_FONT_SIZE = 48;
+
+export function watchedGridLayout(total: number): {
+  columns: number;
+  cellSize: number;
+} {
+  const columns = Math.min(
+    WATCHED_GRID_MAX_COLUMNS,
+    Math.max(WATCHED_GRID_MIN_COLUMNS, Math.ceil(Math.sqrt(total))),
+  );
+  const rows = Math.max(1, Math.ceil(total / columns));
+  const byWidth = Math.floor(
+    (WATCHED_GRID_WIDTH - WATCHED_GRID_GAP * (columns - 1)) / columns,
+  );
+  const byHeight = Math.floor(
+    (WATCHED_GRID_HEIGHT - WATCHED_GRID_GAP * (rows - 1)) / rows,
+  );
+
+  return {columns, cellSize: Math.min(byWidth, byHeight)};
+}
+
+type WatchedCardProperties = {
+  organization: string;
+  name: string;
+  total: number;
+  count: number;
+  percent: number;
+  /** 授賞式年の昇順に並べた1本ごとの観たかどうか */
+  watchedFlags: boolean[];
+};
+
+export function buildWatchedCardHtml({
+  organization,
+  name,
+  total,
+  count,
+  percent,
+  watchedFlags,
+}: WatchedCardProperties): string {
+  const {columns, cellSize} = watchedGridLayout(total);
+  const organizationHtml =
+    organization.trim() === name.trim()
+      ? ''
+      : `<div style="display:flex;font-size:30px;color:${COLORS.inkMuted};margin-top:12px;">${escapeHtml(organization)}</div>`;
+  const gridWidth = columns * cellSize + WATCHED_GRID_GAP * (columns - 1);
+  const cells = watchedFlags
+    .map(watched => {
+      const fill = watched
+        ? `background:${COLORS.brand};border:2px solid ${COLORS.ink};`
+        : `background:${COLORS.surface};border:2px solid ${COLORS.ink};`;
+      return `<div data-cell="${watched ? 'watched' : 'unwatched'}" style="display:flex;width:${cellSize}px;height:${cellSize}px;${fill}"></div>`;
+    })
+    .join('');
+
+  return `<div style="display:flex;width:${OG_WIDTH}px;height:${OG_HEIGHT}px;background:${COLORS.paper};border:16px solid ${COLORS.ink};padding:40px 48px;justify-content:space-between;align-items:center;">
+  <div style="display:flex;flex-direction:column;justify-content:space-between;height:100%;flex:1;padding-right:40px;">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:5px solid ${COLORS.ink};padding-bottom:12px;">
+      <div style="display:flex;font-size:54px;font-weight:700;letter-spacing:-3px;color:${COLORS.ink};">SHINE</div>
+      <div style="display:flex;font-size:22px;color:${COLORS.inkMuted};">${TAGLINE}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;">
+      <div style="display:flex;font-size:28px;font-weight:700;letter-spacing:6px;color:${COLORS.brand};">WATCHED</div>
+      ${organizationHtml}
+      <div style="display:flex;font-size:${Math.min(titleFontSize(name), WATCHED_NAME_MAX_FONT_SIZE)}px;font-weight:700;line-height:1.15;color:${COLORS.ink};margin-top:6px;">${escapeHtml(name)}</div>
+      <div style="display:flex;align-items:flex-end;margin-top:24px;">
+        <div style="display:flex;font-size:150px;font-weight:700;letter-spacing:-8px;line-height:0.8;color:${COLORS.brand};">${count}</div>
+        <div style="display:flex;font-size:44px;font-weight:700;color:${COLORS.ink};margin-left:16px;">/ ${total}</div>
+        <div style="display:flex;font-size:34px;font-weight:700;color:${COLORS.inkMuted};margin-left:24px;">${percent}%</div>
+      </div>
+    </div>
+    <div style="display:flex;background:${COLORS.brand};color:${COLORS.brandOn};border:3px solid ${COLORS.ink};padding:8px 22px;font-size:28px;font-weight:700;">shine-film.com/watched</div>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;width:${gridWidth}px;gap:${WATCHED_GRID_GAP}px;align-content:flex-start;">${cells}</div>
+</div>`;
+}

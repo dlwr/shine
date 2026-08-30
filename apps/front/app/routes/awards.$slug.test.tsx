@@ -162,6 +162,48 @@ describe('Award detail page', () => {
   });
 
   describe('component', () => {
+    it('年度制の賞は観た映画チェックへの導線を出す', () => {
+      render(
+        <AwardDetailPage
+          {...createComponentProperties(
+            cast<LoaderData>({award: mockAwardDetail, locale: 'ja'}),
+          )}
+        />,
+      );
+
+      expect(screen.getByRole('link', {name: /何本観た/})).toHaveAttribute(
+        'href',
+        '/watched/palme-dor',
+      );
+    });
+
+    it('映画祭のサブ賞とリスト型の賞には観た映画チェックの導線を出さない', () => {
+      const {unmount} = render(
+        <AwardDetailPage
+          {...createComponentProperties(
+            cast<LoaderData>({
+              award: {...mockAwardDetail, subAward: true},
+              locale: 'ja',
+            }),
+          )}
+        />,
+      );
+      expect(screen.queryByRole('link', {name: /何本観た/})).toBeNull();
+      unmount();
+
+      render(
+        <AwardDetailPage
+          {...createComponentProperties(
+            cast<LoaderData>({
+              award: {...mockAwardDetail, grouping: 'list'},
+              locale: 'ja',
+            }),
+          )}
+        />,
+      );
+      expect(screen.queryByRole('link', {name: /何本観た/})).toBeNull();
+    });
+
     it('年を降順で表示する', () => {
       render(
         <AwardDetailPage
