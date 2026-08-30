@@ -9,6 +9,8 @@ import {hochiCeremonyNumber} from './hochi-film-awards';
 import {type ImdbEventImportStats} from './imdb-event-award';
 import {kinemaJunpoCeremonyNumber} from './kinema-junpo';
 import {mainichiCeremonyNumber} from './mainichi-film-concours';
+import {nikkanSportsCeremonyNumber} from './nikkan-sports-film-awards';
+import {yokohamaCeremonyNumber} from './yokohama-film-festival';
 
 /**
  * 記事の表記とTMDbのクレジット名が別名で、表記の正規化では寄らないもの。
@@ -203,6 +205,32 @@ export const JAPAN_PERSON_AWARD_SOURCES: ListPersonAwardSource[] = [
       ['2019:閉鎖病棟 -それぞれの朝-', 'tt9721798'],
       ['2021:老後の資金がありません!', 'tt11354164'],
     ]),
+    personNameAliases: JAPANESE_NAME_ALIASES,
+  },
+  {
+    key: 'yokohama',
+    article: 'ヨコハマ映画祭',
+    organizationName: 'Yokohama Film Festival',
+    establishedYear: 1979,
+    ceremonyNumber: yokohamaCeremonyNumber,
+    categories: [
+      {names: ['監督賞'], category: '監督賞', role: 'director'},
+      ...actingCategories(),
+    ],
+    resolutionOverrides: new Map(),
+    personNameAliases: JAPANESE_NAME_ALIASES,
+  },
+  {
+    key: 'nikkan-sports',
+    article: '日刊スポーツ映画大賞・石原裕次郎賞',
+    organizationName: 'Nikkan Sports Film Awards',
+    establishedYear: 1988,
+    ceremonyNumber: nikkanSportsCeremonyNumber,
+    categories: [
+      {names: ['監督賞'], category: '監督賞', role: 'director'},
+      ...actingCategories(),
+    ],
+    resolutionOverrides: new Map(),
     personNameAliases: JAPANESE_NAME_ALIASES,
   },
 ];
