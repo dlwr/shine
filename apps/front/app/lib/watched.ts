@@ -54,9 +54,10 @@ function fromBase64Url(value: string): Uint8Array | undefined {
 
   const base64 = value.replaceAll('-', '+').replaceAll('_', '/');
   try {
-    return Uint8Array.from(atob(base64), character =>
-      character.codePointAt(0),
-    ) as Uint8Array;
+    return Uint8Array.from(
+      atob(base64),
+      character => character.codePointAt(0) ?? 0,
+    );
   } catch {
     return undefined;
   }
