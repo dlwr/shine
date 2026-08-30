@@ -22,6 +22,8 @@ const PERSON_CROSSINGS_CACHE_TTL = 604_800;
 const PEOPLE_SEARCH_CACHE_TTL = 86_400;
 const PEOPLE_LIST_DEFAULT_LIMIT = 100;
 const PEOPLE_LIST_MAX_LIMIT = 500;
+const PROMINENT_DEFAULT_LIMIT = 24;
+const PROMINENT_MAX_LIMIT = 200;
 const PEOPLE_SEARCH_QUERY_MAX_LENGTH = 100;
 
 function normalizeSearchQuery(value: string | undefined): string {
@@ -74,12 +76,22 @@ peopleRoutes.get('/', async c => {
 
 peopleRoutes.get('/prominent', async c => {
   const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
+  const requestedLimit = parsePositiveInteger(
+    c.req.query('limit'),
+    PROMINENT_DEFAULT_LIMIT,
+  );
+
+  if (requestedLimit === undefined) {
+    return c.json({error: 'limit must be a positive integer'}, 400);
+  }
+
+  const limit = Math.min(requestedLimit, PROMINENT_MAX_LIMIT);
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = `people:prominent:${locale}:v11`;
+  const cacheKey = `people:prominent:${locale}:${limit}:v11`;
   const cached = await cache.get(cacheKey);
   const result =
     cached?.data ??
-    (await new PeopleService(c.env).getProminentPeople({locale}));
+    (await new PeopleService(c.env).getProminentPeople({locale, limit}));
 
   if (!cached) {
     await cache.set(cacheKey, result, PROMINENT_CACHE_TTL);
