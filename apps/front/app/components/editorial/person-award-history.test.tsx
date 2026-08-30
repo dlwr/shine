@@ -124,12 +124,12 @@ describe('PersonAwardHistory', () => {
       <PersonAwardHistory
         credits={[
           {
-            movieUid: 'movie-yokohama',
-            title: '横浜の映画',
+            movieUid: 'movie-tokyo',
+            title: '東京の映画',
             year: 2000,
             personAwards: [
               {
-                organization: 'ヨコハマ映画祭',
+                organization: '東京国際映画祭',
                 category: '主演男優賞',
                 year: 2000,
                 isWinner: true,
@@ -151,7 +151,7 @@ describe('PersonAwardHistory', () => {
       .getAllByRole('columnheader')
       .map(header => header.textContent);
 
-    expect(headers).toEqual(['日本アカデミー', 'ヨコハマ映画祭']);
+    expect(headers).toEqual(['日本アカデミー', '東京国際映画祭']);
   });
 
   it('セルに部門の短縮ラベルを出す', () => {
