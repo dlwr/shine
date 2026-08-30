@@ -27,6 +27,10 @@ const JAPANESE_NAME_ALIASES: Record<string, string> = {
   市川海老蔵: '十三代目 市川團十郎',
   市川染五郎: '十代目 松本幸四郎',
   瑛太: '永山瑛太',
+  広田玲央名: '広田レオナ',
+  加賀まり子: '加賀まりこ',
+  斎藤慶子: '斉藤慶子',
+  本阿弥周子: 'Shuko Honami',
 };
 
 /** 外国映画監督賞の受賞者。TMDbのクレジットが原語表記か綴りが違う */
@@ -219,6 +223,8 @@ export const JAPAN_PERSON_AWARD_SOURCES: ListPersonAwardSource[] = [
     ],
     resolutionOverrides: new Map([
       ['2012:愛と誠', 'tt1980033'],
+      // 記事は第一作の節へのリンクで「第二作」は『』の外に書かれている
+      ['2023:仕掛人・藤枝梅安', 'tt36643694'],
       ['2023:劇場版TOKYO MER〜走る緊急救命室〜', 'tt27453633'],
       ['2002:OUT', 'tt0340280'],
       ['1993:眠らない街～新宿鮫～', 'tt0256956'],
