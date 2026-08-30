@@ -4,6 +4,7 @@ import {Form, redirect} from 'react-router';
 import type {Route} from './+types/movies.$id';
 import {resolveApiUrl, resolveEnvironment} from '@/lib/api';
 import {AwardTree} from '@/components/editorial/award-tree';
+import {WatchedToggle} from '@/components/editorial/watched-toggle';
 import {
   CreditsList,
   type MovieCredits,
@@ -747,6 +748,7 @@ export default function MovieDetail({
               {title}
             </h1>
             <MetaLine items={metaItems} />
+            <WatchedToggle uid={movieDetail.uid} />
           </div>
         </div>
 

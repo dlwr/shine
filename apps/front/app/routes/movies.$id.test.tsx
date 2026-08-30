@@ -553,6 +553,25 @@ describe('MovieDetail Component', () => {
       expect(screen.getByText('関連映画')).toBeInTheDocument();
     });
 
+    it('「観た」トグルを表示する', () => {
+      const loaderData = createLoaderData({relatedMovies: []});
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.getByRole('button', {name: '観た'})).toHaveAttribute(
+        'aria-pressed',
+        'false',
+      );
+    });
+
     it('関連映画が無ければセクションを出さない', () => {
       const loaderData = createLoaderData({relatedMovies: []});
       const parameters = createParameters('movie-123');
