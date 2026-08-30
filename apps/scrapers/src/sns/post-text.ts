@@ -31,8 +31,7 @@ function buildBodyLines({
   return lines.join('\n');
 }
 
-export function buildDailyPostText(input: DailyPostInput): string {
-  const body = buildBodyLines(input);
+function withHashtag(body: string): string {
   const maxBodyLength = MAX_POST_LENGTH - [...`\n${HASHTAG}`].length;
   const truncatedBody =
     [...body].length <= maxBodyLength
@@ -40,6 +39,10 @@ export function buildDailyPostText(input: DailyPostInput): string {
       : [...body].slice(0, maxBodyLength - 1).join('') + '…';
 
   return `${truncatedBody}\n${HASHTAG}`;
+}
+
+export function buildDailyPostText(input: DailyPostInput): string {
+  return withHashtag(buildBodyLines(input));
 }
 
 type QuizPostInput = {
@@ -86,9 +89,8 @@ export function xWeightedLength(text: string): number {
   return length;
 }
 
-export function buildXPostText(input: DailyPostInput & {url: string}): string {
-  const body = buildBodyLines(input);
-  const bareUrl = input.url.replace(/^https?:\/\//, '');
+function withBareUrl(body: string, url: string): string {
+  const bareUrl = url.replace(/^https?:\/\//, '');
   const urlWeight = Math.max(X_URL_WEIGHT, xWeightedLength(bareUrl));
   const maxBodyWeight = X_MAX_WEIGHTED_LENGTH - urlWeight - 1;
 
@@ -111,6 +113,10 @@ export function buildXPostText(input: DailyPostInput & {url: string}): string {
   }
 
   return `${truncatedBody}\n${bareUrl}`;
+}
+
+export function buildXPostText(input: DailyPostInput & {url: string}): string {
+  return withBareUrl(buildBodyLines(input), input.url);
 }
 
 type WatchedPostInput = {

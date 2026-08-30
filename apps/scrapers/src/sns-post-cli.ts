@@ -35,7 +35,7 @@ import {
   buildWatchedXPostText,
   buildXPostText,
 } from './sns/post-text';
-import {pickWatchedList} from './sns/watched-rotation';
+import {pickWeeklyItem} from './sns/weekly-rotation';
 import {postTweet, type XCredentials} from './sns/x';
 
 loadEnvironmentFiles();
@@ -245,7 +245,7 @@ async function buildQuizPlan(): Promise<PostPlan> {
 }
 
 async function buildWatchedPlan(): Promise<PostPlan> {
-  const list = pickWatchedList(await fetchWatchedLists(), new Date());
+  const list = pickWeeklyItem(await fetchWatchedLists(), new Date());
   if (!list) {
     throw new Error('No watched lists found');
   }
