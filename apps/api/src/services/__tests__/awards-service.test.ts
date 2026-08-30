@@ -396,6 +396,27 @@ describe('AwardsService.getAwardBySlug 年別グルーピング', () => {
     ]);
   });
 
+  it('最高賞には subAward を付けず、サブ賞には付ける', async () => {
+    await database.insert(awardCategories).values({
+      uid: 'cat-grand-prix',
+      organizationUid: 'org-cannes',
+      name: 'Grand Prix',
+    });
+    await database.insert(nominations).values({
+      movieUid: 'movie-a',
+      ceremonyUid: 'ceremony-2023',
+      categoryUid: 'cat-grand-prix',
+      isWinner: 1,
+    });
+
+    expect(await service.getAwardBySlug('palme-dor')).not.toHaveProperty(
+      'subAward',
+    );
+    expect(await service.getAwardBySlug('cannes-grand-prix')).toMatchObject({
+      subAward: true,
+    });
+  });
+
   it('出品作の総数をfilmCountで返す', async () => {
     const result = await service.getAwardBySlug('palme-dor');
 

@@ -2500,6 +2500,9 @@ components:
         grouping:
           type: string
           enum: [year, list]
+        subAward:
+          type: boolean
+          description: Present (true) only for festival sub-awards such as Grand Prix or Jury Prize
         years:
           type: array
           items:

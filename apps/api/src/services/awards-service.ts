@@ -1495,6 +1495,7 @@ export class AwardsService extends BaseService {
       organization: definition.organization,
       description: definition.description,
       grouping: definition.grouping,
+      ...(definition.subAward && {subAward: true}),
     };
 
     if (definition.grouping === 'year') {

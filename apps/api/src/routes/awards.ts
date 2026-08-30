@@ -45,7 +45,7 @@ awardsRoutes.get('/:slug', async c => {
 
   // ページはキャッシュキーに含めない。利用者入力でキー空間が広がるのを避けるため、
   // 全件を1キーに載せて読み出し後に切り出す
-  const cacheKey = `awards:${slug}:v3`;
+  const cacheKey = `awards:${slug}:v4`;
   const cached = await cache.get(cacheKey);
   const service = new AwardsService(c.env);
   const full =
