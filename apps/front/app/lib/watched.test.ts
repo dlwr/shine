@@ -1,8 +1,10 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {
+  buildWatchedShareLine,
   buildWatchedShareText,
   decodeWatched,
   encodeWatched,
+  isWatchedEncoding,
   mergeWatched,
   orderWinners,
   readWatched,
@@ -132,6 +134,30 @@ describe('buildWatchedShareText', () => {
     ).toBe(
       'カンヌ国際映画祭 パルム・ドールの受賞作、48本中23本観てた（48%）\nhttps://shine-film.com/watched/palme-dor?s=1.abc',
     );
+  });
+});
+
+describe('buildWatchedShareLine', () => {
+  it('URL 無しの1行を返す', () => {
+    expect(
+      buildWatchedShareLine({
+        heading: 'アカデミー賞 作品賞',
+        total: 99,
+        count: 40,
+        percent: 40,
+      }),
+    ).toBe('アカデミー賞 作品賞の受賞作、99本中40本観てた（40%）');
+  });
+});
+
+describe('isWatchedEncoding', () => {
+  it('バージョン接頭辞付きの base64url だけを通す', () => {
+    expect(isWatchedEncoding('1.AQ')).toBe(true);
+    expect(isWatchedEncoding('1.a-_Z')).toBe(true);
+    expect(isWatchedEncoding('2.AQ')).toBe(false);
+    expect(isWatchedEncoding('1.')).toBe(false);
+    expect(isWatchedEncoding('1.a+b')).toBe(false);
+    expect(isWatchedEncoding(undefined)).toBe(false);
   });
 });
 

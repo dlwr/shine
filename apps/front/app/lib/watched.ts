@@ -114,21 +114,35 @@ export function watchedStats(
   return {total, count, percent};
 }
 
-export function buildWatchedShareText({
+export function isWatchedEncoding(value: string | null | undefined): boolean {
+  return typeof value === 'string' && /^1\.[\w-]+$/.test(value);
+}
+
+export function buildWatchedShareLine({
   heading,
   total,
   count,
   percent,
-  url,
-}: WatchedStats & {heading: string; url: string}): string {
-  return `${heading}の受賞作、${total}本中${count}本観てた（${percent}%）\n${url}`;
+}: WatchedStats & {heading: string}): string {
+  return `${heading}の受賞作、${total}本中${count}本観てた（${percent}%）`;
+}
+
+export function buildWatchedShareText(
+  input: WatchedStats & {heading: string; url: string},
+): string {
+  return `${buildWatchedShareLine(input)}\n${input.url}`;
 }
 
 export function mergeWatched(
   a: ReadonlySet<string>,
   b: ReadonlySet<string>,
 ): Set<string> {
-  return a.union(b);
+  const merged = new Set(a);
+  for (const uid of b) {
+    merged.add(uid);
+  }
+
+  return merged;
 }
 
 export function toggleWatched(
