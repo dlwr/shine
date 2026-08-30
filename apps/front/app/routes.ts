@@ -25,6 +25,7 @@ export default [
   route('sitemap/years.xml', 'routes/sitemap-years.tsx'),
   route('sitemap/people.xml', 'routes/sitemap-people.tsx'),
   route('quiz', 'routes/quiz.tsx'),
+  route('watched/:slug', 'routes/watched.$slug.tsx'),
   route('quiz/poster.png', 'routes/quiz-poster.tsx'),
   route('og/movie.png', 'routes/og-movie.tsx'),
   route('og/person.png', 'routes/og-person.tsx'),
