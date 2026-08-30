@@ -1814,6 +1814,7 @@ export class AwardsService extends BaseService {
       grouping,
       movieCount: aggregate.movieCount,
       ...(grouping === 'person' && {personCount: aggregate.personCount}),
+      ...('subAward' in definition && definition.subAward && {subAward: true}),
       firstYear: aggregate.firstYear,
       lastYear: aggregate.lastYear,
     };

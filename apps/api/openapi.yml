@@ -2469,6 +2469,9 @@ components:
         personCount:
           type: integer
           description: Present only when grouping is `person`
+        subAward:
+          type: boolean
+          description: Present (true) only for festival sub-awards such as Grand Prix or Jury Prize
         firstYear:
           type: integer
         lastYear:
