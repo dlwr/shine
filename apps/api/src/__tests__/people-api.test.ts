@@ -3,7 +3,11 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
+import {awardCategories} from '@shine/database/schema/award-categories';
+import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
+import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movieCredits} from '@shine/database/schema/movie-credits';
+import {nominations} from '@shine/database/schema/nominations';
 import {movies} from '@shine/database/schema/movies';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
@@ -171,4 +175,63 @@ describe('GET /people/prominent', () => {
     expect(response.status).toBe(200);
     expect(body).toEqual({directors: [], actors: []});
   });
+
+  it('limit で役割ごとの人数を絞る', async () => {
+    await insertAwardedDirectors(environment, 3);
+
+    const response = await peopleRoutes.request(
+      '/prominent?limit=2',
+      {},
+      environment,
+    );
+
+    const body = (await response.json()) as {directors: unknown[]};
+    expect(body.directors).toHaveLength(2);
+  });
+
+  it('limit が正の整数でなければ400を返す', async () => {
+    const response = await peopleRoutes.request(
+      '/prominent?limit=0',
+      {},
+      environment,
+    );
+
+    expect(response.status).toBe(400);
+  });
 });
+
+async function insertAwardedDirectors(
+  environment: Environment,
+  count: number,
+): Promise<void> {
+  const database = getDatabase(environment);
+  await database
+    .insert(awardOrganizations)
+    .values({uid: 'org-japan-academy', name: 'Japan Academy Awards'});
+  await database.insert(awardCategories).values({
+    uid: 'cat-director',
+    organizationUid: 'org-japan-academy',
+    name: '監督賞',
+  });
+  await database.insert(awardCeremonies).values({
+    uid: 'ceremony-1990',
+    organizationUid: 'org-japan-academy',
+    year: 1990,
+  });
+  await database.insert(people).values(
+    Array.from({length: count}, (_, index) => ({
+      uid: `person-director-${index}`,
+      tmdbId: 100 + index,
+      name: `監督${index}`,
+    })),
+  );
+  await database.insert(nominations).values(
+    Array.from({length: count}, (_, index) => ({
+      movieUid: 'movie-ran',
+      ceremonyUid: 'ceremony-1990',
+      categoryUid: 'cat-director',
+      personUid: `person-director-${index}`,
+      isWinner: 1,
+    })),
+  );
+}

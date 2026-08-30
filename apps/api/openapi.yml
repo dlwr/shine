@@ -365,6 +365,15 @@ paths:
             enum: [ja, en]
             default: ja
           description: Language for names and film titles
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 24
+          description: People per role; values above 200 are clamped
       responses:
         '200':
           description: Successfully retrieved the rankings
@@ -372,6 +381,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProminentPeople'
+        '400':
+          $ref: '#/components/responses/ValidationError'
         '500':
           $ref: '#/components/responses/InternalServerError'
 

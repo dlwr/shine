@@ -8,6 +8,7 @@
  *   pnpm run sns-post             実際に投稿する
  *   pnpm run sns-post --quiz      デイリーセレクションではなく今日のクイズを告知する
  *   pnpm run sns-post --watched   今週の観た映画チェック(週替わりで1リスト)を告知する
+ *   pnpm run sns-post --person    今週の映画人(個人賞の受賞者から週替わりで1人)を紹介する
  *
  * 必要な環境変数(実投稿時、設定があるサービスにだけ投稿する):
  *   BLUESKY_IDENTIFIER   例: shine-film.com
@@ -26,8 +27,11 @@ import {
   publishPost,
   uploadBlob,
 } from './sns/bluesky';
+import {pickPersonOfWeek} from './sns/person-rotation';
 import {
   buildDailyPostText,
+  buildPersonPostText,
+  buildPersonXPostText,
   buildQuizPostText,
   buildQuizShareUrl,
   buildQuizXPostText,
@@ -35,7 +39,7 @@ import {
   buildWatchedXPostText,
   buildXPostText,
 } from './sns/post-text';
-import {pickWatchedList} from './sns/watched-rotation';
+import {pickWeeklyItem} from './sns/weekly-rotation';
 import {postTweet, type XCredentials} from './sns/x';
 
 loadEnvironmentFiles();
@@ -45,6 +49,7 @@ const API_URL =
   process.env.SHINE_API_URL ?? 'https://shine-api.yuta25.workers.dev';
 const MAX_TEXT_ORGANIZATIONS = 2;
 const MAX_TEXT_AVAILABILITY = 2;
+const PROMINENT_POOL_LIMIT = 200;
 
 type SelectionMovie = {
   uid: string;
@@ -122,6 +127,33 @@ async function fetchWinnerCount(slug: string): Promise<number> {
   }
 
   return count;
+}
+
+type ProminentPerson = {
+  uid: string;
+  name: string;
+  wonCount: number;
+  nominatedCount: number;
+  topMovies: Array<{uid: string; title?: string; year?: number}>;
+};
+
+async function fetchProminentPeople(): Promise<{
+  directors: ProminentPerson[];
+  actors: ProminentPerson[];
+}> {
+  const response = await fetch(
+    `${API_URL}/people/prominent?locale=ja&limit=${PROMINENT_POOL_LIMIT}`,
+    {headers: {Origin: SITE_URL}},
+  );
+
+  if (!response.ok) {
+    throw new Error(`Prominent people API failed: HTTP ${response.status}`);
+  }
+
+  return (await response.json()) as {
+    directors: ProminentPerson[];
+    actors: ProminentPerson[];
+  };
 }
 
 async function fetchOgImage(url: string): Promise<ArrayBuffer | undefined> {
@@ -245,7 +277,7 @@ async function buildQuizPlan(): Promise<PostPlan> {
 }
 
 async function buildWatchedPlan(): Promise<PostPlan> {
-  const list = pickWatchedList(await fetchWatchedLists(), new Date());
+  const list = pickWeeklyItem(await fetchWatchedLists(), new Date());
   if (!list) {
     throw new Error('No watched lists found');
   }
@@ -269,6 +301,35 @@ async function buildWatchedPlan(): Promise<PostPlan> {
   };
 }
 
+async function buildPersonPlan(): Promise<PostPlan> {
+  const person = pickPersonOfWeek(await fetchProminentPeople(), new Date());
+  if (!person) {
+    throw new Error('No awarded people found');
+  }
+
+  const url = `${SITE_URL}/people/${person.uid}`;
+  const postInput = {
+    name: person.name,
+    role: person.role,
+    wonCount: person.wonCount,
+    nominatedCount: person.nominatedCount,
+    topMovies: person.topMovies
+      .filter(movie => movie.title)
+      .map(movie => ({title: movie.title!, year: movie.year})),
+  };
+
+  return {
+    text: buildPersonPostText(postInput),
+    xText: buildPersonXPostText({...postInput, url}),
+    link: {
+      uri: url,
+      title: `${person.name}の映画 | SHINE`,
+      description: `${person.name}の受賞歴と関わった映画を、SHINEに収録された映画賞の受賞作・ノミネート作から一覧できます。`,
+    },
+    imageUrl: `${SITE_URL}/og/person.png?id=${person.uid}`,
+  };
+}
+
 async function buildPlan(): Promise<PostPlan> {
   if (process.argv.includes('--quiz')) {
     return buildQuizPlan();
@@ -276,6 +337,10 @@ async function buildPlan(): Promise<PostPlan> {
 
   if (process.argv.includes('--watched')) {
     return buildWatchedPlan();
+  }
+
+  if (process.argv.includes('--person')) {
+    return buildPersonPlan();
   }
 
   return buildDailyPlan();

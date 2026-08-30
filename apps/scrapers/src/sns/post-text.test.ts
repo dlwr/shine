@@ -3,6 +3,8 @@ import {
   buildDailyPostText,
   buildQuizPostText,
   buildQuizShareUrl,
+  buildPersonPostText,
+  buildPersonXPostText,
   buildQuizXPostText,
   buildWatchedPostText,
   buildWatchedXPostText,
@@ -240,5 +242,97 @@ describe('buildWatchedXPostText', () => {
     expect(xWeightedLength(buildWatchedXPostText(input))).toBeLessThanOrEqual(
       280,
     );
+  });
+});
+
+describe('buildPersonPostText', () => {
+  const person = {
+    name: '役所広司',
+    role: 'actor' as const,
+    wonCount: 13,
+    nominatedCount: 20,
+    topMovies: [
+      {title: 'Shall we ダンス？', year: 1996},
+      {title: 'PERFECT DAYS', year: 2023},
+      {title: '孤狼の血', year: 2018},
+    ],
+  };
+
+  it('名前と役割を含む', () => {
+    expect(buildPersonPostText(person)).toContain(
+      '今週の映画人 — 役所広司（俳優）',
+    );
+  });
+
+  it('監督は「監督」と表記する', () => {
+    expect(buildPersonPostText({...person, role: 'director'})).toContain(
+      '役所広司（監督）',
+    );
+  });
+
+  it('受賞回数とノミネート回数を含む', () => {
+    expect(buildPersonPostText(person)).toContain(
+      '監督賞・演技賞で13回受賞 / 20回ノミネート',
+    );
+  });
+
+  it('代表作を年付きで並べる', () => {
+    expect(buildPersonPostText(person)).toContain(
+      '代表作: 『Shall we ダンス？』(1996)・『PERFECT DAYS』(2023)・『孤狼の血』(2018)',
+    );
+  });
+
+  it('年の無い代表作は括弧を出さない', () => {
+    const text = buildPersonPostText({
+      ...person,
+      topMovies: [{title: 'PERFECT DAYS', year: undefined}],
+    });
+
+    expect(text).toContain('代表作: 『PERFECT DAYS』');
+    expect(text).not.toContain('()');
+  });
+
+  it('代表作が無ければその行を出さない', () => {
+    expect(buildPersonPostText({...person, topMovies: []})).not.toContain(
+      '代表作',
+    );
+  });
+
+  it('ハッシュタグで終わる', () => {
+    expect(buildPersonPostText(person)).toMatch(/\n#青空映画部$/);
+  });
+});
+
+describe('buildPersonXPostText', () => {
+  const person = {
+    name: '役所広司',
+    role: 'actor' as const,
+    wonCount: 13,
+    nominatedCount: 20,
+    topMovies: [{title: 'PERFECT DAYS', year: 2023}],
+    url: 'https://shine-film.com/people/abc',
+  };
+
+  it('裸のURLで終わる', () => {
+    expect(buildPersonXPostText(person)).toMatch(
+      /\nshine-film\.com\/people\/abc$/,
+    );
+  });
+
+  it('ハッシュタグを含めない', () => {
+    expect(buildPersonXPostText(person)).not.toContain('#');
+  });
+
+  it('代表作が長くてもXの重み付き文字数に収まる', () => {
+    const text = buildPersonXPostText({
+      ...person,
+      topMovies: Array.from({length: 3}, (_, index) => ({
+        title: `とても長い題名の映画${'あ'.repeat(60)}${index}`,
+        year: 2000 + index,
+      })),
+    });
+
+    expect(xWeightedLength(text)).toBeLessThanOrEqual(280);
+    expect(text).toMatch(/…\nshine-film\.com\/people\/abc$/);
   });
 });
