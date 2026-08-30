@@ -17,6 +17,7 @@ import {
   awardPageLinkForOrganizationName,
   AwardsService,
   findPersonAwardDefinition,
+  findPersonAwardOrganization,
   findTopAwardPageDefinition,
   japaneseAwardNames,
   paginateAwardDetail,
@@ -1343,6 +1344,35 @@ describe('日本の映画賞の個人賞ページ', () => {
       'hochi-supporting-actor',
       'hochi-supporting-actress',
     ]);
+  });
+
+  it('ヨコハマ映画祭と日刊スポーツ映画大賞の個人賞5部門のページを定義している', () => {
+    expect(
+      personAwardDefinitions
+        .filter(definition =>
+          ['Yokohama Film Festival', 'Nikkan Sports Film Awards'].includes(
+            definition.organizationName,
+          ),
+        )
+        .map(definition => [definition.slug, definition.categoryNames[0]]),
+    ).toEqual([
+      ['yokohama-director', '監督賞'],
+      ['yokohama-lead-actor', '主演男優賞'],
+      ['yokohama-lead-actress', '主演女優賞'],
+      ['yokohama-supporting-actor', '助演男優賞'],
+      ['yokohama-supporting-actress', '助演女優賞'],
+      ['nikkan-sports-director', '監督賞'],
+      ['nikkan-sports-lead-actor', '主演男優賞'],
+      ['nikkan-sports-lead-actress', '主演女優賞'],
+      ['nikkan-sports-supporting-actor', '助演男優賞'],
+      ['nikkan-sports-supporting-actress', '助演女優賞'],
+    ]);
+    expect(
+      findPersonAwardOrganization('Yokohama Film Festival')?.shortLabel,
+    ).toBe('ヨコハマ');
+    expect(
+      findPersonAwardOrganization('Nikkan Sports Film Awards')?.shortLabel,
+    ).toBe('日刊');
   });
 
   it('個人賞の部門はDBの日本語名をそのまま表示に使う', () => {
