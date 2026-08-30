@@ -255,17 +255,28 @@ describe('buildPersonCardHtml', () => {
 
 describe('buildWatchedCardHtml', () => {
   const baseProperties = {
-    heading: 'カンヌ国際映画祭 パルム・ドール',
+    organization: 'カンヌ国際映画祭',
+    name: 'パルム・ドール',
     total: 5,
     count: 2,
     percent: 40,
     watchedFlags: [true, false, true, false, false],
   };
 
-  it('賞の見出しを含む', () => {
-    expect(buildWatchedCardHtml(baseProperties)).toContain(
-      'カンヌ国際映画祭 パルム・ドール',
-    );
+  it('団体名と賞名を別の行に出す', () => {
+    const html = buildWatchedCardHtml(baseProperties);
+
+    expect(html).toContain('>カンヌ国際映画祭<');
+    expect(html).toContain('>パルム・ドール<');
+  });
+
+  it('団体名と賞名が同じなら1行にする', () => {
+    const html = buildWatchedCardHtml({
+      ...baseProperties,
+      organization: 'パルム・ドール',
+    });
+
+    expect(html.match(/パルム・ドール/g)).toHaveLength(1);
   });
 
   it('観た本数と総数と割合を含む', () => {
@@ -297,9 +308,9 @@ describe('buildWatchedCardHtml', () => {
   });
 
   it('見出しをエスケープする', () => {
-    expect(
-      buildWatchedCardHtml({...baseProperties, heading: 'A & B'}),
-    ).toContain('A &amp; B');
+    expect(buildWatchedCardHtml({...baseProperties, name: 'A & B'})).toContain(
+      'A &amp; B',
+    );
   });
 });
 

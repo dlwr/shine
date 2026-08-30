@@ -253,6 +253,7 @@ const WATCHED_GRID_HEIGHT = 520;
 const WATCHED_GRID_GAP = 6;
 const WATCHED_GRID_MIN_COLUMNS = 6;
 const WATCHED_GRID_MAX_COLUMNS = 12;
+const WATCHED_NAME_MAX_FONT_SIZE = 48;
 
 export function watchedGridLayout(total: number): {
   columns: number;
@@ -274,7 +275,8 @@ export function watchedGridLayout(total: number): {
 }
 
 type WatchedCardProperties = {
-  heading: string;
+  organization: string;
+  name: string;
   total: number;
   count: number;
   percent: number;
@@ -283,13 +285,18 @@ type WatchedCardProperties = {
 };
 
 export function buildWatchedCardHtml({
-  heading,
+  organization,
+  name,
   total,
   count,
   percent,
   watchedFlags,
 }: WatchedCardProperties): string {
   const {columns, cellSize} = watchedGridLayout(total);
+  const organizationHtml =
+    organization.trim() === name.trim()
+      ? ''
+      : `<div style="display:flex;font-size:30px;color:${COLORS.inkMuted};margin-top:12px;">${escapeHtml(organization)}</div>`;
   const gridWidth = columns * cellSize + WATCHED_GRID_GAP * (columns - 1);
   const cells = watchedFlags
     .map(watched => {
@@ -308,7 +315,8 @@ export function buildWatchedCardHtml({
     </div>
     <div style="display:flex;flex-direction:column;">
       <div style="display:flex;font-size:28px;font-weight:700;letter-spacing:6px;color:${COLORS.brand};">WATCHED</div>
-      <div style="display:flex;font-size:${titleFontSize(heading)}px;font-weight:700;line-height:1.15;color:${COLORS.ink};margin-top:10px;">${escapeHtml(heading)}</div>
+      ${organizationHtml}
+      <div style="display:flex;font-size:${Math.min(titleFontSize(name), WATCHED_NAME_MAX_FONT_SIZE)}px;font-weight:700;line-height:1.15;color:${COLORS.ink};margin-top:6px;">${escapeHtml(name)}</div>
       <div style="display:flex;align-items:flex-end;margin-top:24px;">
         <div style="display:flex;font-size:150px;font-weight:700;letter-spacing:-8px;line-height:0.8;color:${COLORS.brand};">${count}</div>
         <div style="display:flex;font-size:44px;font-weight:700;color:${COLORS.ink};margin-left:16px;">/ ${total}</div>

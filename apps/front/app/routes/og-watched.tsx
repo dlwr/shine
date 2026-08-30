@@ -1,7 +1,6 @@
 import {ImageResponse} from 'workers-og';
 import type {Route} from './+types/og-watched';
 import {resolveApiUrl} from '@/lib/api';
-import {awardHeading} from '@/lib/awards';
 import {loadGoogleFont} from '@/lib/og/assets';
 import {OG_HEIGHT, OG_WIDTH, buildWatchedCardHtml} from '@/lib/og/template';
 import {
@@ -55,7 +54,8 @@ export async function loader({context, request}: Route.LoaderArgs) {
     : new Set<string>();
 
   const html = buildWatchedCardHtml({
-    heading: awardHeading(award),
+    organization: award.organization,
+    name: award.name,
     ...watchedStats(order, watched),
     watchedFlags: order.map(uid => watched.has(uid)),
   });
