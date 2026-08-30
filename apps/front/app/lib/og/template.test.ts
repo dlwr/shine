@@ -5,6 +5,7 @@ import {
   buildMovieCardHtml,
   buildPersonCardHtml,
   buildQuizCardHtml,
+  buildWatchedCardHtml,
   escapeHtml,
   splitYear,
   titleFontSize,
@@ -251,3 +252,57 @@ describe('buildPersonCardHtml', () => {
     expect(html).not.toContain('<img');
   });
 });
+
+describe('buildWatchedCardHtml', () => {
+  const baseProperties = {
+    heading: 'カンヌ国際映画祭 パルム・ドール',
+    total: 5,
+    count: 2,
+    percent: 40,
+    watchedFlags: [true, false, true, false, false],
+  };
+
+  it('賞の見出しを含む', () => {
+    expect(buildWatchedCardHtml(baseProperties)).toContain(
+      'カンヌ国際映画祭 パルム・ドール',
+    );
+  });
+
+  it('観た本数と総数と割合を含む', () => {
+    const html = buildWatchedCardHtml(baseProperties);
+
+    expect(html).toContain('>2<');
+    expect(html).toContain('/ 5');
+    expect(html).toContain('40%');
+  });
+
+  it('1本につき1マス描き、観たマスだけ塗る', () => {
+    const html = buildWatchedCardHtml(baseProperties);
+
+    expect(html.match(/data-cell="watched"/g)).toHaveLength(2);
+    expect(html.match(/data-cell="unwatched"/g)).toHaveLength(3);
+  });
+
+  it('本数が増えると列数を増やしてマスを小さくする', () => {
+    const small = buildWatchedCardHtml(baseProperties);
+    const large = buildWatchedCardHtml({
+      ...baseProperties,
+      total: 99,
+      count: 0,
+      percent: 0,
+      watchedFlags: Array.from({length: 99}, () => false),
+    });
+
+    expect(watchedCellSize(small)).toBeGreaterThan(watchedCellSize(large));
+  });
+
+  it('見出しをエスケープする', () => {
+    expect(
+      buildWatchedCardHtml({...baseProperties, heading: 'A & B'}),
+    ).toContain('A &amp; B');
+  });
+});
+
+function watchedCellSize(html: string): number {
+  return Number(/data-cell="[a-z]+" style="[^"]*width:(\d+)px/.exec(html)?.[1]);
+}
