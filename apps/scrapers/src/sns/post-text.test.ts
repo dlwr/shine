@@ -4,6 +4,8 @@ import {
   buildQuizPostText,
   buildQuizShareUrl,
   buildQuizXPostText,
+  buildWatchedPostText,
+  buildWatchedXPostText,
   buildXPostText,
   xWeightedLength,
 } from './post-text';
@@ -194,5 +196,49 @@ describe('buildXPostText', () => {
 
     expect(xWeightedLength(text)).toBeLessThanOrEqual(280);
     expect(text).toMatch(/\nshine-film\.com\/movies\/abc-123$/);
+  });
+});
+
+describe('buildWatchedPostText', () => {
+  const input = {heading: 'カンヌ国際映画祭 パルム・ドール', total: 48};
+
+  it('賞名と受賞作の本数を含む', () => {
+    expect(buildWatchedPostText(input)).toContain(
+      'カンヌ国際映画祭 パルム・ドールの歴代受賞作48本',
+    );
+  });
+
+  it('何本観たかを問う', () => {
+    expect(buildWatchedPostText(input)).toContain('何本観た？');
+  });
+
+  it('ハッシュタグで終わる', () => {
+    expect(buildWatchedPostText(input).endsWith('\n#青空映画部')).toBe(true);
+  });
+});
+
+describe('buildWatchedXPostText', () => {
+  const input = {
+    heading: 'カンヌ国際映画祭 パルム・ドール',
+    total: 48,
+    url: 'https://shine-film.com/watched/palme-dor',
+  };
+
+  it('裸のURLで終わる', () => {
+    expect(
+      buildWatchedXPostText(input).endsWith(
+        '\nshine-film.com/watched/palme-dor',
+      ),
+    ).toBe(true);
+  });
+
+  it('ハッシュタグを含めない', () => {
+    expect(buildWatchedXPostText(input)).not.toContain('#青空映画部');
+  });
+
+  it('Xの重み付き文字数に収まる', () => {
+    expect(xWeightedLength(buildWatchedXPostText(input))).toBeLessThanOrEqual(
+      280,
+    );
   });
 });

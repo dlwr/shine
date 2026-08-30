@@ -7,6 +7,7 @@
  *   pnpm run sns-post --dry-run   投稿せず本文とカード情報を表示
  *   pnpm run sns-post             実際に投稿する
  *   pnpm run sns-post --quiz      デイリーセレクションではなく今日のクイズを告知する
+ *   pnpm run sns-post --watched   今週の観た映画チェック(週替わりで1リスト)を告知する
  *
  * 必要な環境変数(実投稿時、設定があるサービスにだけ投稿する):
  *   BLUESKY_IDENTIFIER   例: shine-film.com
@@ -30,8 +31,11 @@ import {
   buildQuizPostText,
   buildQuizShareUrl,
   buildQuizXPostText,
+  buildWatchedPostText,
+  buildWatchedXPostText,
   buildXPostText,
 } from './sns/post-text';
+import {pickWatchedList} from './sns/watched-rotation';
 import {postTweet, type XCredentials} from './sns/x';
 
 loadEnvironmentFiles();
@@ -77,6 +81,47 @@ async function fetchQuizPuzzle(): Promise<{date: string; poolSize: number}> {
   }
 
   return (await response.json()) as {date: string; poolSize: number};
+}
+
+type AwardSummary = {
+  slug: string;
+  name: string;
+  organization: string;
+  grouping: 'year' | 'list' | 'person';
+  subAward?: boolean;
+};
+
+async function fetchWatchedLists(): Promise<AwardSummary[]> {
+  const response = await fetch(`${API_URL}/awards`, {
+    headers: {Origin: SITE_URL},
+  });
+
+  if (!response.ok) {
+    throw new Error(`Awards API failed: HTTP ${response.status}`);
+  }
+
+  const {awards} = (await response.json()) as {awards: AwardSummary[]};
+  return awards.filter(award => award.grouping === 'year' && !award.subAward);
+}
+
+async function fetchWinnerCount(slug: string): Promise<number> {
+  const response = await fetch(`${API_URL}/awards/${slug}`, {
+    headers: {Origin: SITE_URL},
+  });
+
+  if (!response.ok) {
+    throw new Error(`Award API failed: HTTP ${response.status}`);
+  }
+
+  const {years} = (await response.json()) as {
+    years: Array<{movies: Array<{isWinner: boolean}>}>;
+  };
+  let count = 0;
+  for (const group of years) {
+    count += group.movies.filter(movie => movie.isWinner).length;
+  }
+
+  return count;
 }
 
 async function fetchOgImage(url: string): Promise<ArrayBuffer | undefined> {
@@ -199,11 +244,46 @@ async function buildQuizPlan(): Promise<PostPlan> {
   };
 }
 
+async function buildWatchedPlan(): Promise<PostPlan> {
+  const list = pickWatchedList(await fetchWatchedLists(), new Date());
+  if (!list) {
+    throw new Error('No watched lists found');
+  }
+
+  const heading =
+    list.organization === list.name
+      ? list.name
+      : `${list.organization} ${list.name}`;
+  const total = await fetchWinnerCount(list.slug);
+  const url = `${SITE_URL}/watched/${list.slug}`;
+
+  return {
+    text: buildWatchedPostText({heading, total}),
+    xText: buildWatchedXPostText({heading, total, url}),
+    link: {
+      uri: url,
+      title: `${heading}受賞作、何本観た？ | SHINE`,
+      description: `${heading}の歴代受賞作${total}本にチェックを付けて、観た本数と割合を共有できます。`,
+    },
+    imageUrl: `${SITE_URL}/og/watched.png?slug=${list.slug}`,
+  };
+}
+
+async function buildPlan(): Promise<PostPlan> {
+  if (process.argv.includes('--quiz')) {
+    return buildQuizPlan();
+  }
+
+  if (process.argv.includes('--watched')) {
+    return buildWatchedPlan();
+  }
+
+  return buildDailyPlan();
+}
+
 async function main() {
   const isDryRun = process.argv.includes('--dry-run');
-  const plan = process.argv.includes('--quiz')
-    ? await buildQuizPlan()
-    : await buildDailyPlan();
+  const plan = await buildPlan();
 
   console.log('--- Bluesky投稿内容 ---');
   console.log(plan.text);
