@@ -463,6 +463,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SearchSuggestions'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
