@@ -13,7 +13,7 @@ import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch} from '@/lib/api';
 
 export type PersonCreditData = {
   movieUid: string;
@@ -154,10 +154,10 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 
 export async function loader({context, request, params}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
-  const apiUrl = resolveApiUrl(context);
 
-  const response = await fetch(
-    `${apiUrl}/people/${params.id}?locale=${locale}`,
+  const response = await apiFetch(
+    context,
+    `/people/${params.id}?locale=${locale}`,
     {signal: request.signal},
   );
 

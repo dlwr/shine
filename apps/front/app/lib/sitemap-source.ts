@@ -1,4 +1,4 @@
-import {resolveApiUrl, type LoadContext} from './api';
+import {apiFetch, type LoadContext} from './api';
 
 export const MOVIES_PER_SITEMAP = 100;
 export const PEOPLE_PER_SITEMAP = 500;
@@ -20,8 +20,9 @@ async function fetchSource<Key extends string>(
   limit: number,
   signal?: AbortSignal,
 ): Promise<PagedResponse<Key>> {
-  const response = await fetch(
-    `${resolveApiUrl(context)}${path}?page=${page}&limit=${limit}`,
+  const response = await apiFetch(
+    context,
+    `${path}?page=${page}&limit=${limit}`,
     {signal},
   );
 

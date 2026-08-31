@@ -1,6 +1,6 @@
 import {ImageResponse} from 'workers-og';
 import type {Route} from './+types/og-quiz';
-import {resolveApiUrl, resolveQuizKey, type LoadContext} from '@/lib/api';
+import {apiFetch, resolveQuizKey, type LoadContext} from '@/lib/api';
 import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
 import {OG_HEIGHT, OG_WIDTH, buildQuizCardHtml} from '@/lib/og/template';
 import {upgradePosterForSharing} from '@/lib/meta';
@@ -24,7 +24,7 @@ async function fetchTodaysPoster(
     return {};
   }
 
-  const response = await fetch(`${resolveApiUrl(context)}/quiz/answer`, {
+  const response = await apiFetch(context, `/quiz/answer`, {
     headers: {'X-Quiz-Key': quizKey},
     signal,
   });
@@ -44,7 +44,7 @@ async function fetchTodaysPoster(
 
 // クエリの date はキャッシュ回避用で、描画は必ずAPIが返す当日分を使う
 export async function loader({context, request}: Route.LoaderArgs) {
-  const dailyResponse = await fetch(`${resolveApiUrl(context)}/quiz/daily`, {
+  const dailyResponse = await apiFetch(context, `/quiz/daily`, {
     signal: request.signal,
   });
   if (!dailyResponse.ok) {

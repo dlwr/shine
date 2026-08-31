@@ -1,14 +1,14 @@
 import type {Route} from './+types/sitemap-years';
-import {type LoadContext} from '@/lib/api';
+import {apiFetch, type LoadContext} from '@/lib/api';
 import {buildUrlSet, type SitemapEntry} from '@/lib/sitemap';
-import {resolveApiUrl, sitemapResponse} from '@/lib/sitemap-source';
+import {sitemapResponse} from '@/lib/sitemap-source';
 
 async function fetchYears(
   context: LoadContext,
   signal?: AbortSignal,
 ): Promise<number[]> {
   try {
-    const response = await fetch(`${resolveApiUrl(context)}/years`, {signal});
+    const response = await apiFetch(context, `/years`, {signal});
     if (!response.ok) {
       return [];
     }

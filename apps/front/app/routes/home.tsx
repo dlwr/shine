@@ -11,7 +11,7 @@ import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {resolveMovieTitle} from '@/lib/movie-title';
 import {FilmCard} from '@/components/editorial/film-card';
 import type {FilmCardMovie} from '@/components/editorial/film-card';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch, resolveApiUrl} from '@/lib/api';
 
 type HighlightedMovies = {
   daily?: FilmCardMovie;
@@ -99,10 +99,9 @@ export async function loader({context, request}: Route.LoaderArgs) {
     // Cloudflare Workers環境ではfetchが利用可能
     // React Router v7公式パターン：loaderでfetchを直接使用
     const cacheKey = createSelectionCacheKey();
-    const fetchUrl = `${apiUrl}/?cache=${cacheKey}&locale=${locale}`;
+    const fetchPath = `/?cache=${cacheKey}&locale=${locale}`;
 
-    // React Router v7推奨：loaderでfetchを直接使用
-    const response = await fetch(fetchUrl, {
+    const response = await apiFetch(context, fetchPath, {
       headers: {
         'Cache-Control': 'no-store',
         'Accept-Language': locale === 'ja' ? 'ja,en;q=0.5' : 'en',

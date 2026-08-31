@@ -9,7 +9,7 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {awardHeading} from '@/lib/awards';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch} from '@/lib/api';
 
 export type AwardMovieEntryData = {
   uid: string;
@@ -192,11 +192,11 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 
 export async function loader({context, request, params}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
-  const apiUrl = resolveApiUrl(context);
 
   const page = new URL(request.url).searchParams.get('page') ?? '1';
-  const response = await fetch(
-    `${apiUrl}/awards/${params.slug}?page=${encodeURIComponent(page)}`,
+  const response = await apiFetch(
+    context,
+    `/awards/${params.slug}?page=${encodeURIComponent(page)}`,
     {signal: request.signal},
   );
 

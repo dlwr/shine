@@ -4,7 +4,7 @@ import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
 import {pickRepresentativeTitles} from '@/lib/og/person-card';
 import {OG_HEIGHT, OG_WIDTH, buildPersonCardHtml} from '@/lib/og/template';
 import {profileImageUrl} from '@/lib/profile-image';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch} from '@/lib/api';
 
 type PersonDetail = {
   name: string;
@@ -30,9 +30,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
     return new Response('Not Found', {status: 404});
   }
 
-  const apiUrl = resolveApiUrl(context);
-
-  const response = await fetch(`${apiUrl}/people/${id}?locale=ja`, {
+  const response = await apiFetch(context, `/people/${id}?locale=ja`, {
     signal: request.signal,
   });
   if (!response.ok) {

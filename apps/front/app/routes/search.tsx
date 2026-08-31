@@ -9,7 +9,7 @@ import {selectBestPoster} from '@/lib/poster';
 import type {PosterInfo} from '@/lib/poster';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {buildSocialMeta} from '@/lib/meta';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch, resolveApiUrl, type LoadContext} from '@/lib/api';
 
 type SearchMovieData = {
   uid: string;
@@ -75,9 +75,9 @@ export async function loader({context, request}: Route.LoaderArgs) {
   }
 
   const [searchResults, people] = await Promise.all([
-    fetchMovies(apiUrl, searchQuery, page, limit, request.signal),
+    fetchMovies(context, searchQuery, page, limit, request.signal),
     page === '1'
-      ? fetchPeople(apiUrl, searchQuery, request.signal)
+      ? fetchPeople(context, searchQuery, request.signal)
       : Promise.resolve([]),
   ]);
 
@@ -101,15 +101,16 @@ export async function loader({context, request}: Route.LoaderArgs) {
 }
 
 async function fetchMovies(
-  apiUrl: string,
+  context: LoadContext,
   searchQuery: string,
   page: string,
   limit: string,
   signal: AbortSignal,
 ) {
   try {
-    const response = await fetch(
-      `${apiUrl}/movies/search?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${limit}`,
+    const response = await apiFetch(
+      context,
+      `/movies/search?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${limit}`,
       {signal},
     );
 
@@ -127,13 +128,14 @@ async function fetchMovies(
 }
 
 async function fetchPeople(
-  apiUrl: string,
+  context: LoadContext,
   searchQuery: string,
   signal: AbortSignal,
 ): Promise<ProminentPerson[]> {
   try {
-    const response = await fetch(
-      `${apiUrl}/people/search?q=${encodeURIComponent(searchQuery)}&locale=ja`,
+    const response = await apiFetch(
+      context,
+      `/people/search?q=${encodeURIComponent(searchQuery)}&locale=ja`,
       {signal},
     );
 

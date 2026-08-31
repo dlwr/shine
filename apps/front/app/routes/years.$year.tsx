@@ -7,7 +7,7 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {YearNavLink} from '@/components/editorial/year-nav-link';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch} from '@/lib/api';
 
 export type YearAwardData = {
   slug: string;
@@ -91,9 +91,8 @@ export async function loader({context, request, params}: Route.LoaderArgs) {
   }
 
   const locale = getLocaleFromRequest(request);
-  const apiUrl = resolveApiUrl(context);
 
-  const response = await fetch(`${apiUrl}/years/${params.year}`, {
+  const response = await apiFetch(context, `/years/${params.year}`, {
     signal: request.signal,
   });
 

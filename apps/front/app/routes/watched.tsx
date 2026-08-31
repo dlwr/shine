@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react';
 import type {Route} from './+types/watched';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch, type LoadContext} from '@/lib/api';
 import {awardHeading} from '@/lib/awards';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
@@ -53,11 +53,11 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 }
 
 async function fetchList(
-  apiUrl: string,
+  context: LoadContext,
   award: AwardSummaryResponse,
   signal: AbortSignal,
 ): Promise<WatchedListSummary> {
-  const response = await fetch(`${apiUrl}/awards/${award.slug}`, {signal});
+  const response = await apiFetch(context, `/awards/${award.slug}`, {signal});
   if (!response.ok) {
     throw new Response('Failed to load award', {status: 502});
   }
@@ -75,9 +75,8 @@ async function fetchList(
 
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
-  const apiUrl = resolveApiUrl(context);
 
-  const response = await fetch(`${apiUrl}/awards`, {signal: request.signal});
+  const response = await apiFetch(context, `/awards`, {signal: request.signal});
   if (!response.ok) {
     throw new Response('Failed to load awards', {status: 502});
   }
@@ -88,7 +87,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const lists = await Promise.all(
     awards
       .filter(award => award.grouping === 'year' && !award.subAward)
-      .map(async award => fetchList(apiUrl, award, request.signal)),
+      .map(async award => fetchList(context, award, request.signal)),
   );
 
   return {lists, locale} satisfies WatchedIndexData;

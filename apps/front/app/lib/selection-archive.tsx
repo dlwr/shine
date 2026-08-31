@@ -1,4 +1,4 @@
-import {resolveApiUrl, type LoadContext} from '@/lib/api';
+import {apiFetch, type LoadContext} from '@/lib/api';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
@@ -53,8 +53,9 @@ export async function loadSelectionArchive(
 ): Promise<SelectionArchiveData> {
   const locale = getLocaleFromRequest(request);
 
-  const response = await fetch(
-    `${resolveApiUrl(context)}/selections/${config.type}/history?locale=${locale}&limit=30`,
+  const response = await apiFetch(
+    context,
+    `/selections/${config.type}/history?locale=${locale}&limit=30`,
     {signal: request.signal},
   );
 
