@@ -106,7 +106,7 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.67.0",
     "vitest": "4.1.10",
-    "wrangler": "4.125.0"
+    "wrangler": "4.127.1"
   },
   "dependencies": {
     "@libsql/client": "^0.17.4",
