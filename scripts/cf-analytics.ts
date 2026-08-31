@@ -130,6 +130,56 @@ query {
 }`;
 }
 
+function argumentValue(argv: string[], name: string): string | undefined {
+  const prefix = `--${name}=`;
+  const found = argv.find(argument => argument.startsWith(prefix));
+  return found?.slice(prefix.length);
+}
+
+function parseDate(value: string, name: string): Date {
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    throw new TypeError(
+      `--${name} の日付を解釈できません: ${value}（例: --${name}=2026-08-31）`,
+    );
+  }
+
+  return parsed;
+}
+
+function resolveWindow(
+  argv: string[],
+  now: Date,
+): {start: string; end: string} {
+  const sinceArgument = argumentValue(argv, 'since');
+  const untilArgument = argumentValue(argv, 'until');
+  const daysArgument = argumentValue(argv, 'days');
+
+  const endDate = untilArgument ? parseDate(untilArgument, 'until') : now;
+
+  let startDate: Date;
+  if (sinceArgument) {
+    startDate = parseDate(sinceArgument, 'since');
+  } else {
+    const days = daysArgument ? Number(daysArgument) : 3;
+
+    if (!Number.isFinite(days) || days <= 0) {
+      throw new TypeError(`--days は正の数で指定してください: ${daysArgument}`);
+    }
+
+    startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
+  }
+
+  if (startDate.getTime() >= endDate.getTime()) {
+    throw new RangeError(
+      `期間の指定が逆転しています: ${startDate.toISOString()} 〜 ${endDate.toISOString()}`,
+    );
+  }
+
+  return {start: startDate.toISOString(), end: endDate.toISOString()};
+}
+
 async function main(): Promise<void> {
   loadDevelopmentVariables();
 
@@ -140,14 +190,7 @@ async function main(): Promise<void> {
     );
   }
 
-  const daysArgument = process.argv.find(argument =>
-    argument.startsWith('--days='),
-  );
-  const days = daysArgument ? Number(daysArgument.split('=', 2)[1]) : 3;
-  const endDate = new Date();
-  const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
-  const start = startDate.toISOString();
-  const end = endDate.toISOString();
+  const {start, end} = resolveWindow(process.argv, new Date());
 
   console.log(`期間: ${start} 〜 ${end}`);
 
