@@ -55,6 +55,16 @@ async function suggest(
 }
 
 searchRoutes.get('/suggest', async c => {
+  const limiter = c.env.SUGGEST_RATE_LIMITER;
+  if (limiter) {
+    const {success} = await limiter.limit({
+      key: c.req.header('cf-connecting-ip') ?? 'unknown',
+    });
+    if (!success) {
+      return c.json({error: 'Too Many Requests'}, 429, {'Retry-After': '10'});
+    }
+  }
+
   const query = normalizeQuery(c.req.query('q'));
   if (query.length < SUGGEST_QUERY_MIN_LENGTH) {
     return c.json(EMPTY_SUGGESTIONS);

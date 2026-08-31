@@ -30,6 +30,7 @@ export type Environment = {
   QUIZ_ANSWER_KEY?: string;
   BROWSER?: Fetcher;
   CACHE_KV?: KVNamespace;
+  SUGGEST_RATE_LIMITER?: RateLimit;
 };
 
 export const getDatabase = (environment: Environment) => {
