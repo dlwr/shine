@@ -106,3 +106,57 @@ describe('GET /search/suggest', () => {
     expect(await response.json()).toEqual({movies: [], people: []});
   });
 });
+
+describe('GET /search/suggest レート制限', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+  });
+
+  it('レート制限を超えたら429を返す', async () => {
+    environment.SUGGEST_RATE_LIMITER = {
+      async limit() {
+        return {success: false};
+      },
+    };
+
+    const response = await searchRoutes.request(
+      '/suggest?q=%E4%B8%83%E4%BA%BA',
+      {},
+      environment,
+    );
+
+    expect(response.status).toBe(429);
+  });
+
+  it('レート制限内なら結果を返す', async () => {
+    environment.SUGGEST_RATE_LIMITER = {
+      async limit() {
+        return {success: true};
+      },
+    };
+
+    const body = await suggest(environment, '七人');
+
+    expect(body.movies.map(movie => movie.uid)).toEqual(['movie-seven']);
+  });
+
+  it('クライアントIPをキーにする', async () => {
+    const keys: string[] = [];
+    environment.SUGGEST_RATE_LIMITER = {
+      async limit({key}) {
+        keys.push(key);
+        return {success: true};
+      },
+    };
+
+    await searchRoutes.request(
+      '/suggest?q=%E4%B8%83%E4%BA%BA',
+      {headers: {'cf-connecting-ip': '203.0.113.7'}},
+      environment,
+    );
+
+    expect(keys).toEqual(['203.0.113.7']);
+  });
+});
