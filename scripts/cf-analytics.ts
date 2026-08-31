@@ -5,7 +5,7 @@ import process from 'node:process';
 const ACCOUNT_ID =
   process.env.CLOUDFLARE_ACCOUNT_ID ?? '2097531fd91db13e3e83de98d54962f1';
 const SITE_TAG =
-  process.env.CF_WEB_ANALYTICS_SITE_TAG ?? 'c0dd704af80b4024bf03df608f5e6123';
+  process.env.CF_WEB_ANALYTICS_SITE_TAG ?? '9602f73a32304a60b7a170124731564a';
 const SCRIPT_NAMES = ['shine-api', 'shine-front'];
 const GRAPHQL_ENDPOINT = 'https://api.cloudflare.com/client/v4/graphql';
 
