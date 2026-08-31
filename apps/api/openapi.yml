@@ -502,6 +502,37 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /people/uncrowned:
+    get:
+      summary: Get the most-nominated people who never won
+      description: |
+        Returns the people with the most nominations in the personal awards
+        (Best Director and the acting awards) who never won any of them, with
+        the awards and ceremony years they lost, plus how many people were
+        nominated for a personal award and how many of them never won.
+      operationId: getPersonUncrowned
+      tags:
+        - Movies
+      security: []
+      parameters:
+        - name: locale
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ja, en]
+            default: ja
+          description: Language for people names
+      responses:
+        '200':
+          description: Successfully retrieved uncrowned people
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonUncrowned'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /people/{personId}:
     get:
       summary: Get a person and the films they worked on
@@ -2954,6 +2985,63 @@ components:
         - uncrownedFilmCount
         - awards
         - topMovies
+
+    PersonUncrowned:
+      type: object
+      properties:
+        nominatedPersonCount:
+          type: integer
+          description: People nominated for a personal award
+        uncrownedPersonCount:
+          type: integer
+          description: Nominated people who never won any personal award
+        awards:
+          type: array
+          description: Personal awards that appear among the losses
+          items:
+            type: object
+            properties:
+              slug:
+                type: string
+              name:
+                type: string
+              shortLabel:
+                type: string
+                description: Short label of the organization giving the award
+              organization:
+                type: string
+            required: [slug, name, shortLabel, organization]
+        topPeople:
+          type: array
+          description: People with the most losses and no wins, at most 24
+          items:
+            type: object
+            properties:
+              uid:
+                type: string
+                format: uuid
+              name:
+                type: string
+              profilePath:
+                type: [string, 'null']
+              losses:
+                type: array
+                description: Lost nominations, oldest ceremony first
+                items:
+                  type: object
+                  properties:
+                    slug:
+                      type: string
+                    year:
+                      type: integer
+                      description: Ceremony year of the lost nomination
+                  required: [slug, year]
+            required: [uid, name, losses]
+      required:
+        - nominatedPersonCount
+        - uncrownedPersonCount
+        - awards
+        - topPeople
 
     AwardOrganization:
       type: object

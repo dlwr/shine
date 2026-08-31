@@ -246,6 +246,30 @@ export type Uncrowned = {
   topMovies: UncrownedMovie[];
 };
 
+export type UncrownedPersonLoss = {
+  slug: string;
+  year: number;
+};
+
+export type UncrownedPerson = {
+  uid: string;
+  name: string;
+  profilePath: string | undefined;
+  losses: UncrownedPersonLoss[];
+};
+
+export type PersonUncrowned = {
+  nominatedPersonCount: number;
+  uncrownedPersonCount: number;
+  awards: Array<{
+    slug: string;
+    name: string;
+    shortLabel: string;
+    organization: string;
+  }>;
+  topPeople: UncrownedPerson[];
+};
+
 export type YearSummary = {
   year: number;
   movieCount: number;
