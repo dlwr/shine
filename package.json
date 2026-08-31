@@ -86,7 +86,7 @@
     "@cloudflare/workers-types": "^5.20260818.1",
     "@eslint/js": "^10.0.1",
     "@redocly/cli": "^2.46.2",
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.4.0",
     "@vitest/coverage-v8": "4.1.10",
     "concurrently": "^10.0.5",
     "drizzle-kit": "^0.31.10",
