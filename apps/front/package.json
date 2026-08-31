@@ -26,7 +26,7 @@
     "workers-og": "^0.0.27"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "1.52.1",
+    "@cloudflare/vite-plugin": "1.54.2",
     "@playwright/test": "^1.62.1",
     "@react-router/dev": "^8.3.0",
     "@tailwindcss/vite": "^4.3.3",
