@@ -1,6 +1,6 @@
 import {ImageResponse} from 'workers-og';
 import type {Route} from './+types/og-watched';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch} from '@/lib/api';
 import {loadGoogleFont} from '@/lib/og/assets';
 import {OG_HEIGHT, OG_WIDTH, buildWatchedCardHtml} from '@/lib/og/template';
 import {
@@ -31,7 +31,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
     return new Response('Not Found', {status: 404});
   }
 
-  const response = await fetch(`${resolveApiUrl(context)}/awards/${slug}`, {
+  const response = await apiFetch(context, `/awards/${slug}`, {
     signal: request.signal,
   });
   if (response.status === 404) {

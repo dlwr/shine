@@ -3,7 +3,7 @@ import type {Route} from './+types/watched.$slug';
 import {Masthead} from '@/components/editorial/masthead';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch} from '@/lib/api';
 import {awardHeading} from '@/lib/awards';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
@@ -83,9 +83,8 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 
 export async function loader({context, request, params}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
-  const apiUrl = resolveApiUrl(context);
 
-  const response = await fetch(`${apiUrl}/awards/${params.slug}`, {
+  const response = await apiFetch(context, `/awards/${params.slug}`, {
     signal: request.signal,
   });
   if (response.status === 404) {

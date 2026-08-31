@@ -1,10 +1,11 @@
 import type {Route} from './+types/feed';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch} from '@/lib/api';
 import {buildRssFeed, type FeedItem} from '@/lib/feed';
 
 export async function loader({context, request}: Route.LoaderArgs) {
-  const response = await fetch(
-    `${resolveApiUrl(context)}/selections/daily/history?locale=ja`,
+  const response = await apiFetch(
+    context,
+    `/selections/daily/history?locale=ja`,
     {signal: request.signal},
   );
 

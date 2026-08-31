@@ -2,7 +2,7 @@ import {useEffect} from 'react';
 import {useNavigate} from 'react-router';
 import type {Route} from './+types/admin.login';
 import {Button} from '@/components/ui/button';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch} from '@/lib/api';
 import {getAdminToken, setAdminToken} from '@/lib/admin-fetch';
 
 export function meta(): Route.MetaDescriptors {
@@ -23,8 +23,7 @@ export async function action({context, request}: Route.ActionArgs) {
     const formData = await request.formData();
     const password = formData.get('password') as string;
 
-    const apiUrl = resolveApiUrl(context);
-    const response = await fetch(`${apiUrl}/auth/login`, {
+    const response = await apiFetch(context, `/auth/login`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({password}),

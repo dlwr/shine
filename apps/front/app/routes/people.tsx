@@ -5,7 +5,7 @@ import {SearchBox} from '@/components/editorial/search-box';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch, resolveApiUrl} from '@/lib/api';
 import type {ProminentPerson} from '@/lib/people';
 
 type ProminentPeople = {
@@ -31,9 +31,13 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
   const apiUrl = resolveApiUrl(context);
 
-  const response = await fetch(`${apiUrl}/people/prominent?locale=${locale}`, {
-    signal: request.signal,
-  });
+  const response = await apiFetch(
+    context,
+    `/people/prominent?locale=${locale}`,
+    {
+      signal: request.signal,
+    },
+  );
   if (!response.ok) {
     throw new Response('Failed to load people', {status: 502});
   }

@@ -104,3 +104,32 @@ describe('GET /awards/:slug', () => {
     expect(response.status).toBe(404);
   });
 });
+
+function createStubKv(): KVNamespace {
+  const store = new Map<string, string>();
+  return {
+    async get(key: string) {
+      const value = store.get(key);
+      return value === undefined ? undefined : JSON.parse(value);
+    },
+    async put(key: string, value: string) {
+      store.set(key, value);
+    },
+    async delete(key: string) {
+      store.delete(key);
+    },
+  } as unknown as KVNamespace;
+}
+
+describe('X-Cache-Status header', () => {
+  it('returns MISS on first request and HIT on second', async () => {
+    const environment = await createTestEnvironment();
+    environment.CACHE_KV = createStubKv();
+
+    const first = await awardsRoutes.request('/', {}, environment);
+    expect(first.headers.get('X-Cache-Status')).toBe('MISS');
+
+    const second = await awardsRoutes.request('/', {}, environment);
+    expect(second.headers.get('X-Cache-Status')).toBe('HIT');
+  });
+});

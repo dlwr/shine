@@ -73,7 +73,10 @@ peopleRoutes.get('/', async c => {
     return new Response(undefined, {status: 304, headers: {ETag: etag}});
   }
 
-  return createCachedResponse(result, PEOPLE_LIST_CACHE_TTL, {ETag: etag});
+  return createCachedResponse(result, PEOPLE_LIST_CACHE_TTL, {
+    ETag: etag,
+    'X-Cache-Status': cached ? 'HIT' : 'MISS',
+  });
 });
 
 peopleRoutes.get('/prominent', async c => {
@@ -104,7 +107,10 @@ peopleRoutes.get('/prominent', async c => {
     return new Response(undefined, {status: 304, headers: {ETag: etag}});
   }
 
-  return createCachedResponse(result, PROMINENT_CACHE_TTL, {ETag: etag});
+  return createCachedResponse(result, PROMINENT_CACHE_TTL, {
+    ETag: etag,
+    'X-Cache-Status': cached ? 'HIT' : 'MISS',
+  });
 });
 
 peopleRoutes.get('/search', async c => {
@@ -132,7 +138,10 @@ peopleRoutes.get('/search', async c => {
     return new Response(undefined, {status: 304, headers: {ETag: etag}});
   }
 
-  return createCachedResponse(result, PEOPLE_SEARCH_CACHE_TTL, {ETag: etag});
+  return createCachedResponse(result, PEOPLE_SEARCH_CACHE_TTL, {
+    ETag: etag,
+    'X-Cache-Status': cached ? 'HIT' : 'MISS',
+  });
 });
 
 peopleRoutes.get('/crossings', async c => {
@@ -155,6 +164,7 @@ peopleRoutes.get('/crossings', async c => {
 
   return createCachedResponse(result, PERSON_CROSSINGS_CACHE_TTL, {
     ETag: etag,
+    'X-Cache-Status': cached ? 'HIT' : 'MISS',
   });
 });
 
@@ -191,7 +201,9 @@ peopleRoutes.get('/:id', async c => {
   const cached = await cache.get(cacheKey);
 
   if (cached?.data) {
-    return c.json(cached.data as Record<string, unknown>);
+    return c.json(cached.data as Record<string, unknown>, 200, {
+      'X-Cache-Status': 'HIT',
+    });
   }
 
   const person = await new PeopleService(c.env).getPerson(personUid, locale);
@@ -207,5 +219,8 @@ peopleRoutes.get('/:id', async c => {
     return new Response(undefined, {status: 304, headers: {ETag: etag}});
   }
 
-  return createCachedResponse(person, PERSON_CACHE_TTL, {ETag: etag});
+  return createCachedResponse(person, PERSON_CACHE_TTL, {
+    ETag: etag,
+    'X-Cache-Status': cached ? 'HIT' : 'MISS',
+  });
 });

@@ -1,7 +1,7 @@
 import type {Route} from './+types/sitemap-awards';
-import {type LoadContext} from '@/lib/api';
+import {apiFetch, type LoadContext} from '@/lib/api';
 import {buildUrlSet, type SitemapEntry} from '@/lib/sitemap';
-import {resolveApiUrl, sitemapResponse} from '@/lib/sitemap-source';
+import {sitemapResponse} from '@/lib/sitemap-source';
 
 type AwardListing = {
   slug: string;
@@ -19,7 +19,7 @@ async function fetchAwards(
   signal?: AbortSignal,
 ): Promise<AwardListing[]> {
   try {
-    const response = await fetch(`${resolveApiUrl(context)}/awards`, {signal});
+    const response = await apiFetch(context, `/awards`, {signal});
     if (!response.ok) {
       return [];
     }
@@ -37,7 +37,7 @@ async function fetchAwardDetail(
   signal?: AbortSignal,
 ): Promise<AwardDetailShape> {
   try {
-    const response = await fetch(`${resolveApiUrl(context)}/awards/${slug}`, {
+    const response = await apiFetch(context, `/awards/${slug}`, {
       signal,
     });
     if (!response.ok) {

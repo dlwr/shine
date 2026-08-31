@@ -58,6 +58,7 @@
     "scrapers:delete-orphan-movies": "pnpm --filter @shine/scrapers run delete-orphan-movies",
     "scrapers:fix-misattributed-nominations": "pnpm --filter @shine/scrapers run fix-misattributed-nominations",
     "scripts:soft-delete-orphan-movies": "tsx scripts/soft-delete-orphan-movies.ts",
+    "scripts:cf-analytics": "tsx scripts/cf-analytics.ts",
     "db:studio": "node scripts/setup-database-environment.cjs drizzle-kit studio",
     "db:generate": "node scripts/setup-database-environment.cjs drizzle-kit generate",
     "db:migrate": "node scripts/setup-database-environment.cjs drizzle-kit migrate",

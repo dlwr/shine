@@ -2,7 +2,12 @@ import {Turnstile} from '@marsidev/react-turnstile';
 import {useCallback, useState, type ChangeEvent, type ElementType} from 'react';
 import {Form, redirect} from 'react-router';
 import type {Route} from './+types/movies.$id';
-import {resolveApiUrl, resolveEnvironment} from '@/lib/api';
+import {
+  apiFetch,
+  resolveApiUrl,
+  resolveEnvironment,
+  type LoadContext,
+} from '@/lib/api';
 import {AwardTree} from '@/components/editorial/award-tree';
 import {WatchedToggle} from '@/components/editorial/watched-toggle';
 import {
@@ -542,14 +547,15 @@ export function meta({
 }
 
 async function fetchRelatedMovies(
-  apiUrl: string,
+  context: LoadContext,
   movieId: string,
   locale: Locale,
   signal?: AbortSignal,
 ): Promise<RelatedMovie[]> {
   try {
-    const response = await fetch(
-      `${apiUrl}/movies/${movieId}/related?locale=${locale}&limit=6`,
+    const response = await apiFetch(
+      context,
+      `/movies/${movieId}/related?locale=${locale}&limit=6`,
       {signal},
     );
 
@@ -575,10 +581,10 @@ export async function loader({
     const environment = resolveEnvironment(context);
     const apiUrl = resolveApiUrl(context);
     const [response, relatedMovies] = await Promise.all([
-      fetch(`${apiUrl}/movies/${params.id}`, {
+      apiFetch(context, `/movies/${params.id}`, {
         signal: request.signal, // React Router v7推奨：abortシグナル
       }),
-      fetchRelatedMovies(apiUrl, params.id, locale, request.signal),
+      fetchRelatedMovies(context, params.id, locale, request.signal),
     ]);
 
     if (response.status === 404) {
@@ -611,7 +617,6 @@ export async function loader({
 
 export async function action({context, params, request}: Route.ActionArgs) {
   try {
-    const apiUrl = resolveApiUrl(context);
     const formData = await request.formData();
 
     const url = formData.get('url') as string;
@@ -626,8 +631,9 @@ export async function action({context, params, request}: Route.ActionArgs) {
       };
     }
 
-    const response = await fetch(
-      `${apiUrl}/movies/${params.id}/article-links`,
+    const response = await apiFetch(
+      context,
+      `/movies/${params.id}/article-links`,
       {
         method: 'POST',
         headers: {

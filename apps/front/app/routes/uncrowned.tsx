@@ -4,7 +4,7 @@ import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch} from '@/lib/api';
 
 type UncrownedAward = {
   slug: string;
@@ -49,9 +49,10 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
-  const apiUrl = resolveApiUrl(context);
 
-  const response = await fetch(`${apiUrl}/uncrowned`, {signal: request.signal});
+  const response = await apiFetch(context, `/uncrowned`, {
+    signal: request.signal,
+  });
   if (!response.ok) {
     throw new Response('Failed to load uncrowned', {status: 502});
   }

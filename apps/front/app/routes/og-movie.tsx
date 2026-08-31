@@ -7,7 +7,7 @@ import {
 import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
 import {OG_HEIGHT, OG_WIDTH, buildMovieCardHtml} from '@/lib/og/template';
 import {upgradePosterForSharing} from '@/lib/meta';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch} from '@/lib/api';
 
 type MovieDetail = {
   title?: string;
@@ -34,9 +34,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
     return new Response('Not Found', {status: 404});
   }
 
-  const apiUrl = resolveApiUrl(context);
-
-  const response = await fetch(`${apiUrl}/movies/${id}`, {
+  const response = await apiFetch(context, `/movies/${id}`, {
     signal: request.signal,
   });
   if (!response.ok) {

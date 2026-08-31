@@ -109,7 +109,9 @@ moviesRoutes.get('/search', async c => {
     const cached = await cache.get(cacheKey);
 
     if (cached?.data) {
-      return c.json(cached.data as Record<string, unknown>);
+      return c.json(cached.data as Record<string, unknown>, 200, {
+        'X-Cache-Status': 'HIT',
+      });
     }
 
     const result = await moviesService.searchMovies({
@@ -139,7 +141,7 @@ moviesRoutes.get('/search', async c => {
       query ? getCacheTTL.search.specific : getCacheTTL.search.common,
     );
 
-    return c.json(body);
+    return c.json(body, 200, {'X-Cache-Status': 'MISS'});
   } catch (error) {
     console.error('Error searching movies:', error);
     return c.json({error: 'Internal server error'}, 500);
@@ -167,7 +169,9 @@ moviesRoutes.get('/:id', async c => {
 
     if (cachedResponse) {
       console.log('Cache hit for movie details:', movieId);
-      return c.json(cachedResponse.data as Record<string, unknown>);
+      return c.json(cachedResponse.data as Record<string, unknown>, 200, {
+        'X-Cache-Status': 'HIT',
+      });
     }
 
     console.log('Cache miss for movie details:', movieId);
@@ -244,7 +248,9 @@ moviesRoutes.get('/:id/related', async c => {
     const cacheKey = `movie:${movieId}:related:${locale}:${limit}:v1`;
     const cached = await relatedCache.get(cacheKey);
     if (cached) {
-      return c.json(cached.data as Record<string, unknown>);
+      return c.json(cached.data as Record<string, unknown>, 200, {
+        'X-Cache-Status': 'HIT',
+      });
     }
 
     const target = await database
@@ -327,7 +333,9 @@ moviesRoutes.get('/:id/related', async c => {
     const result = {movies: relatedMovies};
     await relatedCache.set(cacheKey, result, getCacheTTL.movie.related);
 
-    return createCachedResponse(result, getCacheTTL.movie.related);
+    return createCachedResponse(result, getCacheTTL.movie.related, {
+      'X-Cache-Status': 'MISS',
+    });
   } catch (error) {
     console.error('Error fetching related movies:', error);
     return c.json({error: 'Internal server error'}, 500);

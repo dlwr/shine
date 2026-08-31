@@ -3,7 +3,7 @@ import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch} from '@/lib/api';
 import {awardHeading} from '@/lib/awards';
 
 export type AwardSummaryData = {
@@ -58,9 +58,8 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
-  const apiUrl = resolveApiUrl(context);
 
-  const response = await fetch(`${apiUrl}/awards`, {signal: request.signal});
+  const response = await apiFetch(context, `/awards`, {signal: request.signal});
   if (!response.ok) {
     throw new Response('Failed to load awards', {status: 502});
   }

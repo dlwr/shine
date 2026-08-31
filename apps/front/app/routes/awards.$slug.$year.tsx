@@ -6,7 +6,7 @@ import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {awardHeading} from '@/lib/awards';
 import {MovieRow, type AwardMovieEntryData} from './awards.$slug';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch} from '@/lib/api';
 
 export type AwardYearDetailData = {
   slug: string;
@@ -67,10 +67,10 @@ export async function loader({context, request, params}: Route.LoaderArgs) {
   }
 
   const locale = getLocaleFromRequest(request);
-  const apiUrl = resolveApiUrl(context);
 
-  const response = await fetch(
-    `${apiUrl}/awards/${params.slug}/${params.year}`,
+  const response = await apiFetch(
+    context,
+    `/awards/${params.slug}/${params.year}`,
     {signal: request.signal},
   );
 

@@ -3,6 +3,11 @@
   "name": "shine-front",
   "compatibility_date": "2025-06-27",
   "main": "./workers/app.ts",
+  "observability": {
+    "logs": {
+      "enabled": true,
+    },
+  },
   "env": {
     "development": {
       "vars": {
@@ -17,6 +22,12 @@
         // Cloudflare Web Analytics の siteTag。beacon の token として使う
         "PUBLIC_WEB_ANALYTICS_TOKEN": "c0dd704af80b4024bf03df608f5e6123",
       },
+      "services": [
+        {
+          "binding": "API",
+          "service": "shine-api",
+        },
+      ],
     },
   },
 }

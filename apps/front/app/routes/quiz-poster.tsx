@@ -1,6 +1,6 @@
 import {ImageResponse} from 'workers-og';
 import type {Route} from './+types/quiz-poster';
-import {resolveApiUrl, resolveQuizKey} from '@/lib/api';
+import {apiFetch, resolveQuizKey} from '@/lib/api';
 import {fetchPosterAsDataUri} from '@/lib/og/assets';
 import {
   buildQuizPosterHtml,
@@ -32,10 +32,10 @@ export async function loader({context, request}: Route.LoaderArgs) {
     return new Response('Quiz unavailable', {status: 503});
   }
 
-  const response = await fetch(
-    `${resolveApiUrl(context)}/quiz/answer?date=${date}`,
-    {headers: {'X-Quiz-Key': quizKey}, signal: request.signal},
-  );
+  const response = await apiFetch(context, `/quiz/answer?date=${date}`, {
+    headers: {'X-Quiz-Key': quizKey},
+    signal: request.signal,
+  });
   if (!response.ok) {
     return new Response('Not Found', {status: 404});
   }
