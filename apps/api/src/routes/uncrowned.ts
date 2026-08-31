@@ -28,5 +28,8 @@ uncrownedRoutes.get('/', async c => {
     return new Response(undefined, {status: 304, headers: {ETag: etag}});
   }
 
-  return createCachedResponse(result, UNCROWNED_CACHE_TTL, {ETag: etag, 'X-Cache-Status': cached ? 'HIT' : 'MISS'});
+  return createCachedResponse(result, UNCROWNED_CACHE_TTL, {
+    ETag: etag,
+    'X-Cache-Status': cached ? 'HIT' : 'MISS',
+  });
 });

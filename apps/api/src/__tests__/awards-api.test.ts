@@ -105,22 +105,23 @@ describe('GET /awards/:slug', () => {
   });
 });
 
-describe('X-Cache-Status header', () => {
-  function createStubKv(): KVNamespace {
-    const store = new Map<string, string>();
-    return {
-      async get(key: string) {
-        return store.get(key) ?? null;
-      },
-      async put(key: string, value: string) {
-        store.set(key, value);
-      },
-      async delete(key: string) {
-        store.delete(key);
-      },
-    } as unknown as KVNamespace;
-  }
+function createStubKv(): KVNamespace {
+  const store = new Map<string, string>();
+  return {
+    async get(key: string) {
+      const value = store.get(key);
+      return value === undefined ? undefined : JSON.parse(value);
+    },
+    async put(key: string, value: string) {
+      store.set(key, value);
+    },
+    async delete(key: string) {
+      store.delete(key);
+    },
+  } as unknown as KVNamespace;
+}
 
+describe('X-Cache-Status header', () => {
   it('returns MISS on first request and HIT on second', async () => {
     const environment = await createTestEnvironment();
     environment.CACHE_KV = createStubKv();

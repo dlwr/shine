@@ -216,8 +216,12 @@ selectionsRoutes.get('/', async c => {
     // Determine TTL based on the shortest period (daily)
     const ttl = getCacheTTL.selections.daily;
     const {hits, misses} = cache.getMetrics();
-    const cacheStatus =
-      hits > 0 && misses === 0 ? 'HIT' : hits === 0 ? 'MISS' : 'PARTIAL';
+    let cacheStatus = 'PARTIAL';
+    if (misses === 0 && hits > 0) {
+      cacheStatus = 'HIT';
+    } else if (hits === 0) {
+      cacheStatus = 'MISS';
+    }
 
     // Create cached response with appropriate headers
     const response = createCachedResponse(result, ttl, {
@@ -253,7 +257,9 @@ selectionsRoutes.get('/selections/:type/history', async c => {
     const cacheKey = `selections:history:${type}:${locale}:${limit}:${today}:v2`;
     const cached = await historyCache.get(cacheKey);
     if (cached) {
-      return c.json(cached.data as Record<string, unknown>, 200, {'X-Cache-Status': 'HIT'});
+      return c.json(cached.data as Record<string, unknown>, 200, {
+        'X-Cache-Status': 'HIT',
+      });
     }
 
     const rows = await database
@@ -297,7 +303,9 @@ selectionsRoutes.get('/selections/:type/history', async c => {
 
     await historyCache.set(cacheKey, {items}, getCacheTTL.selections[type]);
 
-    return createCachedResponse({items}, getCacheTTL.selections[type], {'X-Cache-Status': 'MISS'});
+    return createCachedResponse({items}, getCacheTTL.selections[type], {
+      'X-Cache-Status': 'MISS',
+    });
   } catch (error) {
     console.error('Error fetching selection history:', error);
     return c.json({error: 'Internal server error'}, 500);
