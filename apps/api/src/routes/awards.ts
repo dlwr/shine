@@ -31,7 +31,7 @@ awardsRoutes.get('/', async c => {
     return new Response(undefined, {status: 304, headers: {ETag: etag}});
   }
 
-  return createCachedResponse(result, AWARDS_CACHE_TTL, {ETag: etag});
+  return createCachedResponse(result, AWARDS_CACHE_TTL, {ETag: etag, 'X-Cache-Status': cached ? 'HIT' : 'MISS'});
 });
 
 awardsRoutes.get('/:slug', async c => {
@@ -72,7 +72,7 @@ awardsRoutes.get('/:slug', async c => {
     return new Response(undefined, {status: 304, headers: {ETag: etag}});
   }
 
-  return createCachedResponse(award, AWARDS_CACHE_TTL, {ETag: etag});
+  return createCachedResponse(award, AWARDS_CACHE_TTL, {ETag: etag, 'X-Cache-Status': cached ? 'HIT' : 'MISS'});
 });
 
 awardsRoutes.get('/:slug/:year', async c => {
@@ -101,5 +101,5 @@ awardsRoutes.get('/:slug/:year', async c => {
     return new Response(undefined, {status: 304, headers: {ETag: etag}});
   }
 
-  return createCachedResponse(award, AWARDS_CACHE_TTL, {ETag: etag});
+  return createCachedResponse(award, AWARDS_CACHE_TTL, {ETag: etag, 'X-Cache-Status': cached ? 'HIT' : 'MISS'});
 });

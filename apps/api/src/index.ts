@@ -2,6 +2,7 @@ import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {cors} from 'hono/cors';
 import {globalErrorHandler, notFoundHandler} from './middleware/error-handler';
+import {requestLogging} from './middleware/request-logging';
 import {securityHeaders} from './middleware/security';
 import {adminRoutes} from './routes/admin';
 import {authRoutes} from './routes/auth';
@@ -18,6 +19,8 @@ import {utilitiesRoutes} from './routes/utilities';
 import {yearsRoutes} from './routes/years';
 
 const app = new Hono<{Bindings: Environment}>();
+
+app.use('*', requestLogging);
 
 app.use(
   '*',

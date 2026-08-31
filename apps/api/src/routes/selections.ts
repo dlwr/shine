@@ -187,7 +187,8 @@ function parseAcceptLanguage(acceptLanguage?: string): string[] {
 // Main endpoint for date-seeded movie selections
 selectionsRoutes.get('/', async c => {
   try {
-    const selectionsService = new SelectionsService(c.env);
+    const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+    const selectionsService = new SelectionsService(c.env, cache);
     const localeParameter = c.req.query('locale');
     const acceptLanguage = c.req.header('accept-language');
     const preferredLanguages = localeParameter
@@ -214,11 +215,14 @@ selectionsRoutes.get('/', async c => {
 
     // Determine TTL based on the shortest period (daily)
     const ttl = getCacheTTL.selections.daily;
+    const {hits, misses} = cache.getMetrics();
+    const cacheStatus =
+      hits > 0 && misses === 0 ? 'HIT' : hits === 0 ? 'MISS' : 'PARTIAL';
 
     // Create cached response with appropriate headers
     const response = createCachedResponse(result, ttl, {
       ETag: etag,
-      'X-Cache-Status': 'MISS',
+      'X-Cache-Status': cacheStatus,
     });
 
     return response;
@@ -249,7 +253,7 @@ selectionsRoutes.get('/selections/:type/history', async c => {
     const cacheKey = `selections:history:${type}:${locale}:${limit}:${today}:v2`;
     const cached = await historyCache.get(cacheKey);
     if (cached) {
-      return c.json(cached.data as Record<string, unknown>);
+      return c.json(cached.data as Record<string, unknown>, 200, {'X-Cache-Status': 'HIT'});
     }
 
     const rows = await database
@@ -293,7 +297,7 @@ selectionsRoutes.get('/selections/:type/history', async c => {
 
     await historyCache.set(cacheKey, {items}, getCacheTTL.selections[type]);
 
-    return createCachedResponse({items}, getCacheTTL.selections[type]);
+    return createCachedResponse({items}, getCacheTTL.selections[type], {'X-Cache-Status': 'MISS'});
   } catch (error) {
     console.error('Error fetching selection history:', error);
     return c.json({error: 'Internal server error'}, 500);

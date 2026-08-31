@@ -29,7 +29,7 @@ yearsRoutes.get('/', async c => {
     return new Response(undefined, {status: 304, headers: {ETag: etag}});
   }
 
-  return createCachedResponse(result, YEARS_CACHE_TTL, {ETag: etag});
+  return createCachedResponse(result, YEARS_CACHE_TTL, {ETag: etag, 'X-Cache-Status': cached ? 'HIT' : 'MISS'});
 });
 
 yearsRoutes.get('/:year', async c => {
@@ -56,5 +56,5 @@ yearsRoutes.get('/:year', async c => {
     return new Response(undefined, {status: 304, headers: {ETag: etag}});
   }
 
-  return createCachedResponse(detail, YEARS_CACHE_TTL, {ETag: etag});
+  return createCachedResponse(detail, YEARS_CACHE_TTL, {ETag: etag, 'X-Cache-Status': cached ? 'HIT' : 'MISS'});
 });

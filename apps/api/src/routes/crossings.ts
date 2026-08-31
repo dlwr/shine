@@ -28,5 +28,5 @@ crossingsRoutes.get('/', async c => {
     return new Response(undefined, {status: 304, headers: {ETag: etag}});
   }
 
-  return createCachedResponse(result, CROSSINGS_CACHE_TTL, {ETag: etag});
+  return createCachedResponse(result, CROSSINGS_CACHE_TTL, {ETag: etag, 'X-Cache-Status': cached ? 'HIT' : 'MISS'});
 });
