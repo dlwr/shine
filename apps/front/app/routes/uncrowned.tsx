@@ -204,6 +204,11 @@ export default function Uncrowned({loaderData}: Route.ComponentProps) {
             className="inline-block font-mono text-xs font-bold border-2 border-ink px-3 py-1.5 shadow-[3px_3px_0_var(--ink)] no-underline text-ink">
             賞の交差
           </a>
+          <a
+            href="/people/uncrowned"
+            className="inline-block font-mono text-xs font-bold border-2 border-ink px-3 py-1.5 shadow-[3px_3px_0_var(--ink)] no-underline text-ink">
+            無冠の映画人
+          </a>
         </div>
 
         <SiteFooter locale={locale} />

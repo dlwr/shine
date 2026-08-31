@@ -4,6 +4,7 @@ import {Hono} from 'hono';
 import {sanitizeText} from '../middleware/sanitizer';
 import {PeopleService} from '../services/people-service';
 import {PersonCrossingsService} from '../services/person-crossings-service';
+import {PersonUncrownedService} from '../services/person-uncrowned-service';
 import {
   createCachedResponse,
   createETag,
@@ -19,6 +20,7 @@ const PERSON_CACHE_TTL = 86_400;
 const PEOPLE_LIST_CACHE_TTL = 604_800;
 const PROMINENT_CACHE_TTL = 604_800;
 const PERSON_CROSSINGS_CACHE_TTL = 604_800;
+const PERSON_UNCROWNED_CACHE_TTL = 604_800;
 const PEOPLE_SEARCH_CACHE_TTL = 86_400;
 const PEOPLE_LIST_DEFAULT_LIMIT = 100;
 const PEOPLE_LIST_MAX_LIMIT = 500;
@@ -152,6 +154,29 @@ peopleRoutes.get('/crossings', async c => {
   }
 
   return createCachedResponse(result, PERSON_CROSSINGS_CACHE_TTL, {
+    ETag: etag,
+  });
+});
+
+peopleRoutes.get('/uncrowned', async c => {
+  const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
+  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cacheKey = `people:uncrowned:${locale}:v1`;
+  const cached = await cache.get(cacheKey);
+  const result =
+    cached?.data ??
+    (await new PersonUncrownedService(c.env).getPersonUncrowned({locale}));
+
+  if (!cached) {
+    await cache.set(cacheKey, result, PERSON_UNCROWNED_CACHE_TTL);
+  }
+
+  const etag = createETag(result);
+  if (shouldCheckETag(c.req, etag)) {
+    return new Response(undefined, {status: 304, headers: {ETag: etag}});
+  }
+
+  return createCachedResponse(result, PERSON_UNCROWNED_CACHE_TTL, {
     ETag: etag,
   });
 });

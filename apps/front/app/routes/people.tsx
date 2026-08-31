@@ -150,6 +150,11 @@ export default function PeoplePage({loaderData}: Route.ComponentProps) {
             className="inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold text-ink no-underline shadow-[3px_3px_0_var(--brand)]">
             映画人の交差を見る →
           </a>
+          <a
+            href="/people/uncrowned"
+            className="inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold text-ink no-underline shadow-[3px_3px_0_var(--brand)]">
+            無冠の映画人を見る →
+          </a>
         </div>
 
         <Ranking title="DIRECTORS" subtitle="監督賞" people={directors} />
