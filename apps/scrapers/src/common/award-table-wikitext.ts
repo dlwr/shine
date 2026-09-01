@@ -213,9 +213,9 @@ function personNames(cell: Cell): string[] {
     .filter(name => name.length > 0);
 }
 
-function filmOf(
+export function filmOf(
   cell: Cell,
-  edition: AwardEdition<FilmAwardEntry> | undefined,
+  edition?: AwardEdition<FilmAwardEntry>,
 ): {filmPage: string | undefined; filmTitle: string} | undefined {
   const cleaned = cleanContent(cell.content);
   const link = WIKI_LINK.exec(cleaned);
