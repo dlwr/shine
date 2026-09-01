@@ -121,6 +121,20 @@ function parseCompetitionTable(table: string): FilmAwardEntry[] {
   return entries;
 }
 
+/**
+ * 出品作は取り込まず受賞作だけを対象にする。旧スクレイパーが入れた年は
+ * 出品作の同定がずれていて、流し直すと同じ作品が重複して増える
+ */
+export function selectWinners(entries: FilmAwardEntry[]): FilmAwardEntry[] {
+  const winners = entries.filter(entry => entry.isWinner);
+
+  if (winners.length === 0) {
+    throw new Error('コンペティション部門の表から受賞作を読めませんでした');
+  }
+
+  return winners;
+}
+
 function referenceKey(entry: FilmAwardEntry): string {
   return entry.filmPage ?? entry.filmTitle;
 }
@@ -203,26 +217,30 @@ export async function importCannesPalmeDOr({
   environment,
   year,
   dryRun = false,
+  winnersOnly = false,
   throttleMs = 300,
 }: {
   environment: Environment;
   /** 映画祭の開催年 */
   year: number;
   dryRun?: boolean;
+  winnersOnly?: boolean;
   throttleMs?: number;
 }): Promise<ImdbEventImportStats> {
-  const entries = parseCompetitionEntries(
+  const parsed = parseCompetitionEntries(
     await fetchWikitext(`${year} Cannes Film Festival`, {language: 'en'}),
   );
 
-  if (entries.length === 0) {
+  if (parsed.length === 0) {
     throw new Error(
       `${year} Cannes Film Festivalの記事からコンペティション部門の表を読めませんでした`,
     );
   }
 
+  const entries = winnersOnly ? selectWinners(parsed) : parsed;
+
   console.log(
-    `\n=== ${year} Cannes Film Festival: parsed ${entries.length} films in competition`,
+    `\n=== ${year} Cannes Film Festival: parsed ${entries.length} films${winnersOnly ? ' (winners only)' : ' in competition'}`,
   );
 
   const references = competitionFilmReferences(year, entries);
