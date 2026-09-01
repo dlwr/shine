@@ -82,6 +82,29 @@ describe('コンペティション部門の表', () => {
   });
 });
 
+const JURY_SECTION = `
+== Juries ==
+=== Main competition ===
+{| class="wikitable"
+! Name
+! Profession
+|-
+|[[George Miller (filmmaker)|George Miller]]
+|Director
+|}
+`;
+
+describe('審査員の節と同じ見出しを使う記事', () => {
+  const entries = parseCompetitionEntries(
+    JURY_SECTION +
+      ARTICLE.replace('=== In Competition ===', '=== Main Competition ==='),
+  );
+
+  it('作品の表を持つ節まで探す', () => {
+    expect(entries).toHaveLength(5);
+  });
+});
+
 describe('コンペティション部門の取り込みデータ', () => {
   const entries = parseCompetitionEntries(ARTICLE);
   const resolved = new Map([
