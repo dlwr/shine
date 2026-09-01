@@ -434,7 +434,10 @@ function extractYear($row: cheerio.Cheerio<Element>): number | undefined {
   return undefined;
 }
 
-function isWinnerRow($row: cheerio.Cheerio<Element>): boolean {
+/** 受賞を示す星印は題名の末尾に付く。M*A*S*H のように題名自体が星印を含む */
+const WINNER_MARKER = /\*\s*$/;
+
+export function isWinnerRow($row: cheerio.Cheerio<Element>): boolean {
   const filmCell = $row.find('td').first();
 
   if (filmCell.find('b').length > 0) {
@@ -453,7 +456,7 @@ function isWinnerRow($row: cheerio.Cheerio<Element>): boolean {
     return true;
   }
 
-  if (filmCell.text().includes('*')) {
+  if (WINNER_MARKER.test(filmCell.text())) {
     return true;
   }
 
