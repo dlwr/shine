@@ -36,16 +36,22 @@ describe('berlinConfig.isCompetitionCategory', () => {
     expect(berlinConfig.isCompetitionCategory('Competition')).toBe(true);
   });
 
-  it('初期のジャンル別金熊賞・観客投票を取り込む', () => {
+  it('1951年のジャンル別金熊賞を取り込む', () => {
     expect(berlinConfig.isCompetitionCategory('Best Drama')).toBe(true);
     expect(berlinConfig.isCompetitionCategory('Best Musical')).toBe(true);
-    expect(berlinConfig.isCompetitionCategory('Audience Poll')).toBe(true);
+    expect(berlinConfig.isCompetitionCategory('Best Documentary')).toBe(true);
   });
 
-  it('長編ドキュメンタリー部門を取り込む', () => {
+  it('本賞と別枠の長編ドキュメンタリー部門・観客投票を取り込まない', () => {
     expect(
       berlinConfig.isCompetitionCategory('Best Feature-Length Documentary'),
-    ).toBe(true);
+    ).toBe(false);
+    expect(
+      berlinConfig.isCompetitionCategory(
+        'Best Feature-Length Documentary/Cultural Film',
+      ),
+    ).toBe(false);
+    expect(berlinConfig.isCompetitionCategory('Audience Poll')).toBe(false);
   });
 
   it('短編部門を取り込まない', () => {
@@ -95,6 +101,16 @@ describe('収集済みデータ', () => {
   it('ジャンル別に授与された1951年は受賞作を5件持つ', () => {
     const films = editions.find(entry => entry.year === 1951)?.films ?? [];
     expect(films.filter(film => film.isWinner)).toHaveLength(5);
+  });
+
+  it('スペインの出品作に授与された1978年は受賞作を2件持つ', () => {
+    expect(winnersOf(1978)).toEqual(['Las truchas', 'Las palabras de Max']);
+  });
+
+  it('本賞と別枠のドキュメンタリー部門が受賞に混ざらない', () => {
+    for (const year of [1956, 1957, 1958, 1959, 1960, 1961, 1964]) {
+      expect(winnersOf(year)).toHaveLength(1);
+    }
   });
 
   it('審査が中止された1970年は受賞作を持たない', () => {

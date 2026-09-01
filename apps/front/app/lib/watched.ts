@@ -1,7 +1,7 @@
 export const WATCHED_STORAGE_KEY = 'shine-watched-v1';
 
 /** ビット列はリスト内の並び順なので、古い回を足して順序が動いたら上げる */
-const ENCODING_VERSION = '2';
+const ENCODING_VERSION = '3';
 
 export type WatchedFilm = {
   uid: string;

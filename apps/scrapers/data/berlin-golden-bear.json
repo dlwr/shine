@@ -6938,6 +6938,17 @@
                   ]
                 },
                 {
+                  "isWinner": true,
+                  "notes": "IMDbは1978年の金熊賞をLas truchasだけで登録しているが、審査員はスペインの出品作に授与し、長編ではLas palabras de Maxとの同時受賞だった",
+                  "titles": [
+                    {
+                      "imdbId": "tt0076520",
+                      "title": "Las palabras de Max",
+                      "originalTitle": "Las palabras de Max"
+                    }
+                  ]
+                },
+                {
                   "isWinner": false,
                   "notes": null,
                   "titles": [
