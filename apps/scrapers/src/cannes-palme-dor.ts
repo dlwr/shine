@@ -19,7 +19,8 @@ import {
 } from './imdb-event-award';
 
 const CATEGORY = "Palme d'Or";
-const COMPETITION_SECTION = /^===\s*In Competition\s*===/im;
+/** 節の見出しは年によって In Competition と Main Competition が入れ替わる。審査員の節も同じ見出しを使う */
+const COMPETITION_SECTION = /^===\s*(?:In|Main) Competition\s*===/gim;
 const NEXT_HEADING = /\n={2,}[^=]/;
 const TABLE_START = /^\{\|/m;
 const TABLE_END = '\n|}';
@@ -42,31 +43,41 @@ export const CANNES_PALME_DOR_CONFIG: ImdbEventAwardConfig = {
   minimumFilmsPerEdition: 1,
 };
 
-function competitionTable(wikitext: string): string | undefined {
-  const heading = COMPETITION_SECTION.exec(wikitext);
-  if (!heading) {
-    return undefined;
+function competitionTables(wikitext: string): string[] {
+  const tables: string[] = [];
+
+  for (const heading of wikitext.matchAll(COMPETITION_SECTION)) {
+    const afterHeading = wikitext.slice(heading.index + heading[0].length);
+    const nextHeading = NEXT_HEADING.exec(afterHeading);
+    const body = nextHeading
+      ? afterHeading.slice(0, nextHeading.index)
+      : afterHeading;
+    const table = body.split(TABLE_START)[1]?.split(TABLE_END)[0];
+
+    if (table) {
+      tables.push(table);
+    }
   }
 
-  const afterHeading = wikitext.slice(heading.index + heading[0].length);
-  const nextHeading = NEXT_HEADING.exec(afterHeading);
-  const body = nextHeading
-    ? afterHeading.slice(0, nextHeading.index)
-    : afterHeading;
-
-  return body.split(TABLE_START)[1]?.split(TABLE_END)[0];
+  return tables;
 }
 
 /**
- * 開催年ごとの記事の In Competition の表を読む。表に年の列は無く、
+ * 開催年ごとの記事のコンペティション部門の表を読む。表に年の列は無く、
  * パルム・ドール受賞作は行の背景色で示される
  */
 export function parseCompetitionEntries(wikitext: string): FilmAwardEntry[] {
-  const table = competitionTable(wikitext);
-  if (!table) {
-    return [];
+  for (const table of competitionTables(wikitext)) {
+    const entries = parseCompetitionTable(table);
+    if (entries.length > 0) {
+      return entries;
+    }
   }
 
+  return [];
+}
+
+function parseCompetitionTable(table: string): FilmAwardEntry[] {
   const chunks = table.split(ROW_SEPARATOR);
   const headerIndex = chunks.findIndex(chunk =>
     chunk.split('\n').some(line => line.trimStart().startsWith('!')),
@@ -203,6 +214,12 @@ export async function importCannesPalmeDOr({
   const entries = parseCompetitionEntries(
     await fetchWikitext(`${year} Cannes Film Festival`, {language: 'en'}),
   );
+
+  if (entries.length === 0) {
+    throw new Error(
+      `${year} Cannes Film Festivalの記事からコンペティション部門の表を読めませんでした`,
+    );
+  }
 
   console.log(
     `\n=== ${year} Cannes Film Festival: parsed ${entries.length} films in competition`,
