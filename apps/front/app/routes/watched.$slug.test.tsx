@@ -124,10 +124,10 @@ describe('Watched list page', () => {
       mockResponse(AWARD);
 
       const result = await loader(
-        createLoaderArguments('http://localhost:3000/watched/palme-dor?s=1.oA'),
+        createLoaderArguments('http://localhost:3000/watched/palme-dor?s=2.oA'),
       );
 
-      expect(result.shared).toBe('1.oA');
+      expect(result.shared).toBe('2.oA');
     });
 
     it('符号の形式でない s は無視する', async () => {
