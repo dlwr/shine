@@ -46,6 +46,11 @@ program
   )
   .requiredOption('--year <year>', '取り込む映画祭の開催年', parseYear)
   .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
+  .option(
+    '--winners-only',
+    '出品作は取り込まず、受賞作だけを取り込む（既に出品作が入っている年の受賞漏れを埋める用）',
+    false,
+  )
   .option('--throttle <ms>', 'TMDb呼び出し間の待機ミリ秒', parseThrottle, 300)
   .addHelpText(
     'after',
@@ -61,6 +66,7 @@ program.parse();
 const options = program.opts<{
   year: number;
   dryRun: boolean;
+  winnersOnly: boolean;
   throttle: number;
 }>();
 
@@ -72,6 +78,7 @@ const stats = await importCannesPalmeDOr({
   environment,
   year: options.year,
   dryRun: options.dryRun,
+  winnersOnly: options.winnersOnly,
   throttleMs: options.throttle,
 });
 

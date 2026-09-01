@@ -1,5 +1,9 @@
 import {describe, expect, it} from 'vitest';
-import {parseCompetitionEntries, toCompetitionData} from '../cannes-palme-dor';
+import {
+  parseCompetitionEntries,
+  selectWinners,
+  toCompetitionData,
+} from '../cannes-palme-dor';
 
 const ARTICLE = `
 == Official Selection ==
@@ -79,6 +83,22 @@ describe('コンペティション部門の表', () => {
     expect(entries.filter(entry => entry.isWinner)).toEqual([
       {filmPage: 'Fjord (film)', filmTitle: 'Fjord', isWinner: true},
     ]);
+  });
+});
+
+describe('受賞作だけを取り込むモード', () => {
+  it('受賞行だけを残す', () => {
+    expect(selectWinners(parseCompetitionEntries(ARTICLE))).toEqual([
+      {filmPage: 'Fjord (film)', filmTitle: 'Fjord', isWinner: true},
+    ]);
+  });
+
+  it('受賞行が無ければ落とす', () => {
+    const entries = parseCompetitionEntries(
+      ARTICLE.replace('|-style="background:#FFDEAD;"', '|-'),
+    );
+
+    expect(() => selectWinners(entries)).toThrow(/受賞作/);
   });
 });
 
