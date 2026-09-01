@@ -20,6 +20,7 @@
     "venice-person-awards": "tsx src/venice-person-awards-cli.ts",
     "berlin-person-awards": "tsx src/berlin-person-awards-cli.ts",
     "cannes-palme-dor": "tsx src/cannes-palme-dor-cli.ts",
+    "cannes-fill-imdb-ids": "tsx src/cannes-fill-imdb-ids-cli.ts",
     "cannes-jury-awards": "tsx src/cannes-jury-awards-cli.ts",
     "venice-jury-awards": "tsx src/venice-jury-awards-cli.ts",
     "berlin-jury-awards": "tsx src/berlin-jury-awards-cli.ts",
