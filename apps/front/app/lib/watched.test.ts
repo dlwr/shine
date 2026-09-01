@@ -72,7 +72,7 @@ describe('encodeWatched / decodeWatched', () => {
     const watched = new Set(['uid-0', 'uid-7', 'uid-10']);
     const encoded = encodeWatched(order, watched);
 
-    expect(encoded).toMatch(/^2\.[\w-]+$/);
+    expect(encoded).toMatch(/^3\.[\w-]+$/);
     expect(decodeWatched(order, encoded)).toEqual(watched);
   });
 
@@ -83,7 +83,7 @@ describe('encodeWatched / decodeWatched', () => {
   });
 
   it('11本は2バイト（3文字）に収まる', () => {
-    expect(encodeWatched(order, new Set(order))).toHaveLength('2.'.length + 3);
+    expect(encodeWatched(order, new Set(order))).toHaveLength('3.'.length + 3);
   });
 
   it('リストの末尾に映画が増えても古い符号を読める', () => {
@@ -96,8 +96,8 @@ describe('encodeWatched / decodeWatched', () => {
   it('壊れた値や未知のバージョンは空集合にする', () => {
     expect(decodeWatched(order, '')).toEqual(new Set());
     expect(decodeWatched(order, undefined)).toEqual(new Set());
-    expect(decodeWatched(order, '1.AAA')).toEqual(new Set());
-    expect(decodeWatched(order, '2.???')).toEqual(new Set());
+    expect(decodeWatched(order, '2.AAA')).toEqual(new Set());
+    expect(decodeWatched(order, '3.???')).toEqual(new Set());
   });
 });
 
@@ -129,10 +129,10 @@ describe('buildWatchedShareText', () => {
         total: 48,
         count: 23,
         percent: 48,
-        url: 'https://shine-film.com/watched/palme-dor?s=2.abc',
+        url: 'https://shine-film.com/watched/palme-dor?s=3.abc',
       }),
     ).toBe(
-      'カンヌ国際映画祭 パルム・ドールの受賞作、48本中23本観てた（48%）\nhttps://shine-film.com/watched/palme-dor?s=2.abc',
+      'カンヌ国際映画祭 パルム・ドールの受賞作、48本中23本観てた（48%）\nhttps://shine-film.com/watched/palme-dor?s=3.abc',
     );
   });
 });
@@ -152,11 +152,11 @@ describe('buildWatchedShareLine', () => {
 
 describe('isWatchedEncoding', () => {
   it('バージョン接頭辞付きの base64url だけを通す', () => {
-    expect(isWatchedEncoding('2.AQ')).toBe(true);
-    expect(isWatchedEncoding('2.a-_Z')).toBe(true);
-    expect(isWatchedEncoding('1.AQ')).toBe(false);
-    expect(isWatchedEncoding('2.')).toBe(false);
-    expect(isWatchedEncoding('2.a+b')).toBe(false);
+    expect(isWatchedEncoding('3.AQ')).toBe(true);
+    expect(isWatchedEncoding('3.a-_Z')).toBe(true);
+    expect(isWatchedEncoding('2.AQ')).toBe(false);
+    expect(isWatchedEncoding('3.')).toBe(false);
+    expect(isWatchedEncoding('3.a+b')).toBe(false);
     expect(isWatchedEncoding(undefined)).toBe(false);
   });
 });
