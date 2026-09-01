@@ -259,5 +259,320 @@
     "correctImdbId": "tt0040300",
     "correctTitle": "Doña Diabla",
     "correctYear": 1950
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1951,
+    "wrongImdbId": "tt0169408",
+    "correctImdbId": "tt0169118",
+    "correctTitle": "The Trap",
+    "correctYear": 1950
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1952,
+    "wrongImdbId": "tt0267766",
+    "correctImdbId": "tt0137126",
+    "correctTitle": "Dead City",
+    "correctYear": 1951
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1952,
+    "wrongImdbId": "tt0044820",
+    "correctImdbId": "tt0331417",
+    "correctTitle": "The Immortal Song",
+    "correctYear": 1952
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1952,
+    "wrongImdbId": "tt0261771",
+    "correctImdbId": "tt0243440",
+    "correctTitle": "Nami",
+    "correctYear": 1952
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1952,
+    "wrongImdbId": "tt0043305",
+    "correctImdbId": "tt0311416",
+    "correctTitle": "A Night of Love",
+    "correctYear": 1951
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1956,
+    "wrongImdbId": "tt0337466",
+    "correctImdbId": "tt0048391",
+    "correctTitle": "Mozart",
+    "correctYear": 1955
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1956,
+    "wrongImdbId": "tt0134421",
+    "correctImdbId": "tt0048478",
+    "correctTitle": "Road to Life",
+    "correctYear": 1955
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1961,
+    "wrongImdbId": "tt0054931",
+    "correctImdbId": "tt0053781",
+    "correctTitle": "The Judge",
+    "correctYear": 1960
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1964,
+    "wrongImdbId": "tt0057280",
+    "correctImdbId": "tt0122574",
+    "correctTitle": "The Cry",
+    "correctYear": 1964
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1965,
+    "wrongImdbId": "tt0455868",
+    "correctImdbId": "tt0314947",
+    "correctTitle": "The Lark",
+    "correctYear": 1964
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1965,
+    "wrongImdbId": "tt0059846",
+    "correctImdbId": "tt0355521",
+    "correctTitle": "The Sin",
+    "correctYear": 1965
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1965,
+    "wrongImdbId": "tt0282270",
+    "correctImdbId": "tt0059934",
+    "correctTitle": "Yo Yo",
+    "correctYear": 1965
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1966,
+    "wrongImdbId": "tt0059649",
+    "correctImdbId": "tt0060847",
+    "correctTitle": "The Ashes",
+    "correctYear": 1965
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1966,
+    "wrongImdbId": "tt0060070",
+    "correctImdbId": "tt0059153",
+    "correctTitle": "It",
+    "correctYear": 1966
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1966,
+    "wrongImdbId": "tt0060983",
+    "correctImdbId": "tt0060891",
+    "correctTitle": "The Nun",
+    "correctYear": 1967
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1968,
+    "wrongImdbId": "tt0063721",
+    "correctImdbId": "tt0165996",
+    "correctTitle": "Trilogy",
+    "correctYear": 1969
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1970,
+    "wrongImdbId": "tt0065963",
+    "correctImdbId": "tt0064038",
+    "correctTitle": "The Land",
+    "correctYear": 1970
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1972,
+    "wrongImdbId": "tt0171829",
+    "correctImdbId": "tt0067755",
+    "correctTitle": "Silence",
+    "correctYear": 1971
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1973,
+    "wrongImdbId": "tt0070408",
+    "correctImdbId": "tt0068963",
+    "correctTitle": "Monologue",
+    "correctYear": 1973
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1974,
+    "wrongImdbId": "tt0072368",
+    "correctImdbId": "tt0071177",
+    "correctTitle": "The Others",
+    "correctYear": 1975
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1976,
+    "wrongImdbId": "tt0310104",
+    "correctImdbId": "tt0074811",
+    "correctTitle": "The Tenant",
+    "correctYear": 1976
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1977,
+    "wrongImdbId": "tt0226788",
+    "correctImdbId": "tt0076286",
+    "correctTitle": "The Hunters",
+    "correctYear": 1977
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1980,
+    "wrongImdbId": "tt0079362",
+    "correctImdbId": "tt0079361",
+    "correctTitle": "Jaguar",
+    "correctYear": 1979
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1980,
+    "wrongImdbId": "tt1233465",
+    "correctImdbId": "tt0079854",
+    "correctTitle": "Every Man for Himself",
+    "correctYear": 1980
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1988,
+    "wrongImdbId": "tt2154663",
+    "correctImdbId": "tt0093133",
+    "correctTitle": "King of the Children",
+    "correctYear": 1987
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1988,
+    "wrongImdbId": "tt0032145",
+    "correctImdbId": "tt0095786",
+    "correctTitle": "Wuthering Heights",
+    "correctYear": 1988
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1989,
+    "wrongImdbId": "tt0096933",
+    "correctImdbId": "tt0097694",
+    "correctTitle": "Black Rain",
+    "correctYear": 1989
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1993,
+    "wrongImdbId": "tt0108070",
+    "correctImdbId": "tt0108059",
+    "correctTitle": "The Escort",
+    "correctYear": 1993
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 1996,
+    "wrongImdbId": "tt0118022",
+    "correctImdbId": "tt0117909",
+    "correctTitle": "Earth",
+    "correctYear": 1996
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 2000,
+    "wrongImdbId": "tt0269389",
+    "correctImdbId": "tt0246119",
+    "correctTitle": "The Wedding",
+    "correctYear": 2000
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 2015,
+    "wrongImdbId": "tt22312132",
+    "correctImdbId": "tt2884018",
+    "correctTitle": "Macbeth",
+    "correctYear": 2015
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 2016,
+    "wrongImdbId": "tt10304048",
+    "correctImdbId": "tt5221584",
+    "correctTitle": "Aquarius",
+    "correctYear": 2016
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 2016,
+    "wrongImdbId": "tt4982156",
+    "correctImdbId": "tt4936450",
+    "correctTitle": "Graduation",
+    "correctYear": 2016
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 2018,
+    "wrongImdbId": "tt9071180",
+    "correctImdbId": "tt7282468",
+    "correctTitle": "Burning",
+    "correctYear": 2018
+  },
+  {
+    "organization": "Cannes Film Festival",
+    "category": "Palme d'Or",
+    "ceremonyYear": 2018,
+    "wrongImdbId": "tt5537300",
+    "correctImdbId": "tt6543652",
+    "correctTitle": "Cold War",
+    "correctYear": 2018
   }
 ]
