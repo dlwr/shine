@@ -1,5 +1,9 @@
 import {type Environment} from '@shine/database';
 import {cannesCeremonyNumber} from './cannes-ceremony';
+import {
+  parseEarlyEditionEntries,
+  type EarlyEditionEntry,
+} from './cannes-early-edition';
 import {filmOf, type FilmAwardEntry} from './common/award-table-wikitext';
 import {
   dropMisattributedResolutions,
@@ -29,9 +33,22 @@ const WINNER_BACKGROUND = /background:\s*#ffdead/i;
 const FILM_HEADERS = new Set(['English Title', 'English title', 'Title']);
 /** 映画祭で初上映される作品が対象。TMDbの公開年が前年になる作品がある */
 const PUBLICATION_WINDOW: YearWindow = {min: -1, max: 1};
+/** 戦中に公開できなかった作品を集めた初期の回は製作年が大きく遡る（1947年の『ダンボ』は1941年） */
+const EARLY_PUBLICATION_WINDOW: YearWindow = {min: -8, max: 1};
+/** 1951年より前の記事は表でなく箇条書き */
+const FIRST_TABLE_YEAR = 1951;
+
+function publicationWindow(year: number): YearWindow {
+  return year < FIRST_TABLE_YEAR
+    ? EARLY_PUBLICATION_WINDOW
+    : PUBLICATION_WINDOW;
+}
 
 /** 記事名からIMDb IDを引けない作品を直接指す。キーは「開催年:表示名」 */
-const RESOLUTION_OVERRIDES = new Map<string, string>();
+const RESOLUTION_OVERRIDES = new Map<string, string>([
+  ["1949:Images d'Ethiopie", 'tt0286712'],
+  ['1949:Sertao', 'tt10302690'],
+]);
 
 export const CANNES_PALME_DOR_CONFIG: ImdbEventAwardConfig = {
   organizationName: 'Cannes Film Festival',
@@ -41,6 +58,7 @@ export const CANNES_PALME_DOR_CONFIG: ImdbEventAwardConfig = {
   ceremonyNumber: cannesCeremonyNumber,
   isCompetitionCategory: category => category === CATEGORY,
   minimumFilmsPerEdition: 1,
+  useNotesAsSpecialMention: true,
 };
 
 function competitionTables(wikitext: string): string[] {
@@ -152,7 +170,7 @@ export function competitionFilmReferences(
         key,
         title: entry.filmTitle,
         targetYear: year,
-        yearWindow: PUBLICATION_WINDOW,
+        yearWindow: publicationWindow(year),
       });
     }
   }
@@ -162,7 +180,7 @@ export function competitionFilmReferences(
 
 export function toCompetitionData(
   year: number,
-  entries: FilmAwardEntry[],
+  entries: EarlyEditionEntry[],
   resolved: Map<string, ResolvedFilm>,
   collectedAt = new Date().toISOString().slice(0, 10),
 ): ImdbEventCollectedData {
@@ -179,7 +197,7 @@ export function toCompetitionData(
 
     nominations.push({
       isWinner: entry.isWinner,
-      notes: null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationの型に合わせる
+      notes: entry.notes ?? null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationの型に合わせる
       titles: [
         {
           imdbId,
@@ -227,13 +245,17 @@ export async function importCannesPalmeDOr({
   winnersOnly?: boolean;
   throttleMs?: number;
 }): Promise<ImdbEventImportStats> {
-  const parsed = parseCompetitionEntries(
-    await fetchWikitext(`${year} Cannes Film Festival`, {language: 'en'}),
-  );
+  const wikitext = await fetchWikitext(`${year} Cannes Film Festival`, {
+    language: 'en',
+  });
+  const parsed =
+    year < FIRST_TABLE_YEAR
+      ? parseEarlyEditionEntries(wikitext)
+      : parseCompetitionEntries(wikitext);
 
   if (parsed.length === 0) {
     throw new Error(
-      `${year} Cannes Film Festivalの記事からコンペティション部門の表を読めませんでした`,
+      `${year} Cannes Film Festivalの記事からコンペティション部門を読めませんでした`,
     );
   }
 
