@@ -108,3 +108,29 @@ describe('TMDb のクレジット名に寄せる別名', () => {
     }
   });
 });
+
+describe('記事から同定できない作品の直指定', () => {
+  it('ブルーリボン賞 1958年度の果てしなき欲望は TMDb の表記が違う', () => {
+    expect(
+      findJapanPersonAwardSource('blue-ribbon')?.resolutionOverrides?.get(
+        '1958:果てしなき欲望',
+      ),
+    ).toBe('tt0051704');
+  });
+
+  it('ブルーリボン賞 2017年度のミックス。は Wikidata の IMDb ID が TMDb に無い', () => {
+    expect(
+      findJapanPersonAwardSource('blue-ribbon')?.resolutionOverrides?.get(
+        '2017:ミックス。',
+      ),
+    ).toBe('tt4265596');
+  });
+
+  it('キネマ旬報 2022年度のコンフィデンスマンJP 英雄編は Wikidata が TV シリーズを指す', () => {
+    expect(
+      findJapanPersonAwardSource('kinema-junpo')?.resolutionOverrides?.get(
+        '2022:コンフィデンスマンJP 英雄編',
+      ),
+    ).toBe('tt17008472');
+  });
+});
