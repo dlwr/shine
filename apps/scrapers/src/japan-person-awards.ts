@@ -31,6 +31,9 @@ const JAPANESE_NAME_ALIASES: Record<string, string> = {
   加賀まり子: '加賀まりこ',
   斎藤慶子: '斉藤慶子',
   本阿弥周子: 'Shuko Honami',
+  桜田淳子: 'Junko Sakurada',
+  阿木燿子: 'Yoko Aki',
+  ユースケ・サンタマリア: '中山裕介',
 };
 
 /** 外国映画監督賞の受賞者。TMDbのクレジットが原語表記か綴りが違う */
@@ -91,6 +94,8 @@ export const JAPAN_PERSON_AWARD_SOURCES: ListPersonAwardSource[] = [
       // 記事は原作漫画へのリンクで、Wikidataは第1作を指す
       ['2023:東京リベンジャーズ2 血のハロウィン編 -運命-', 'tt23218142'],
       ['2025:聖☆おにいさん THE MOVIE〜ホーリーメンVS悪魔軍団〜', 'tt32446009'],
+      // 記事はシリーズ記事へのリンクで、Wikidataはテレビドラマを指す
+      ['2022:コンフィデンスマンJP 英雄編', 'tt17008472'],
     ]),
     personNameAliases: {...JAPANESE_NAME_ALIASES, ...FOREIGN_DIRECTOR_ALIASES},
   },
@@ -177,6 +182,9 @@ export const JAPAN_PERSON_AWARD_SOURCES: ListPersonAwardSource[] = [
       ['2020:コンフィデンスマンJP -プリンセス編-', 'tt12767996'],
       // 記事はテレビドラマと2008年の映画のもので、Wikidataは2008年版を指す
       ['1959:私は貝になりたい', 'tt0202919'],
+      ['1958:果てしなき欲望', 'tt0051704'],
+      // Wikidata の IMDb ID (tt6523440) は TMDb に実体が無い
+      ['2017:ミックス。', 'tt4265596'],
     ]),
     personNameAliases: JAPANESE_NAME_ALIASES,
   },
