@@ -3,6 +3,7 @@ import {selectTmdbMatch} from '../common/tmdb-film-resolver';
 import {extractAwardEditions} from '../imdb-event-award';
 import {
   kinemaJunpoCeremonyNumber,
+  kinemaJunpoFilmReferences,
   kinemaJunpoJapaneseConfig,
   parseKinemaJunpoWikitext,
   toImdbEventData,
@@ -361,5 +362,45 @@ describe('extractAwardEditions', () => {
       }).find(edition => edition.year === 1932)?.films ?? [];
 
     expect(films.every(film => film.specialMention === undefined)).toBe(true);
+  });
+});
+
+describe('自動同定できない作品の直指定', () => {
+  const wikitext = `== キネマ旬報ベスト・テン ==
+==== 第4回（1927年度） ====
+{{col|
+'''日本映画ベスト・テン'''
+#[[忠次旅日記#第二部「信州血笑篇」|忠次旅日記 信州血笑篇]]（[[伊藤大輔 (映画監督)|伊藤大輔]]監督）
+#[[彼を繞る五人の女]]（阿部豊監督）
+#[[忠次旅日記#第三部「忠次御用篇」|忠次旅日記 御用篇]]（伊藤大輔監督）
+|
+'''外国映画ベスト・テン'''
+#[[第七天国 (1927年の映画)|第七天国]]（フランク・ボーサージ監督）
+}}
+`;
+  const editions = parseKinemaJunpoWikitext(wikitext);
+  const resolved = new Map([
+    ['彼を繞る五人の女', {imdbId: 'tt11337376', englishTitle: undefined}],
+  ]);
+  const nominations = toImdbEventData(editions, resolved).editions[0]
+    .targetAward[0].categories[0].nominations;
+
+  it('同じ記事を共有する連作の各篇を直指定のIMDb IDで取り込む', () => {
+    expect(nominations.map(nomination => nomination.titles[0].imdbId)).toEqual([
+      'tt0432794',
+      'tt11337376',
+      'tt0342196',
+    ]);
+  });
+
+  it('直指定した1位を受賞にする', () => {
+    expect(nominations[0].isWinner).toBe(true);
+    expect(nominations[0].titles[0].title).toBe('忠次旅日記 信州血笑篇');
+  });
+
+  it('直指定した作品を同定の対象から外す', () => {
+    expect(
+      kinemaJunpoFilmReferences(editions).map(reference => reference.title),
+    ).toEqual(['彼を繞る五人の女', '第七天国']);
   });
 });

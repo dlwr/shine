@@ -72,7 +72,7 @@ describe('encodeWatched / decodeWatched', () => {
     const watched = new Set(['uid-0', 'uid-7', 'uid-10']);
     const encoded = encodeWatched(order, watched);
 
-    expect(encoded).toMatch(/^3\.[\w-]+$/);
+    expect(encoded).toMatch(/^4\.[\w-]+$/);
     expect(decodeWatched(order, encoded)).toEqual(watched);
   });
 
@@ -83,7 +83,7 @@ describe('encodeWatched / decodeWatched', () => {
   });
 
   it('11本は2バイト（3文字）に収まる', () => {
-    expect(encodeWatched(order, new Set(order))).toHaveLength('3.'.length + 3);
+    expect(encodeWatched(order, new Set(order))).toHaveLength('4.'.length + 3);
   });
 
   it('リストの末尾に映画が増えても古い符号を読める', () => {
@@ -97,7 +97,7 @@ describe('encodeWatched / decodeWatched', () => {
     expect(decodeWatched(order, '')).toEqual(new Set());
     expect(decodeWatched(order, undefined)).toEqual(new Set());
     expect(decodeWatched(order, '2.AAA')).toEqual(new Set());
-    expect(decodeWatched(order, '3.???')).toEqual(new Set());
+    expect(decodeWatched(order, '4.???')).toEqual(new Set());
   });
 });
 
@@ -152,11 +152,11 @@ describe('buildWatchedShareLine', () => {
 
 describe('isWatchedEncoding', () => {
   it('バージョン接頭辞付きの base64url だけを通す', () => {
-    expect(isWatchedEncoding('3.AQ')).toBe(true);
-    expect(isWatchedEncoding('3.a-_Z')).toBe(true);
+    expect(isWatchedEncoding('4.AQ')).toBe(true);
+    expect(isWatchedEncoding('4.a-_Z')).toBe(true);
     expect(isWatchedEncoding('2.AQ')).toBe(false);
-    expect(isWatchedEncoding('3.')).toBe(false);
-    expect(isWatchedEncoding('3.a+b')).toBe(false);
+    expect(isWatchedEncoding('4.')).toBe(false);
+    expect(isWatchedEncoding('4.a+b')).toBe(false);
     expect(isWatchedEncoding(undefined)).toBe(false);
   });
 });
