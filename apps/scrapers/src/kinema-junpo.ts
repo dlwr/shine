@@ -156,6 +156,29 @@ export function filmKey(film: KinemaJunpoFilm): string {
   return film.page ?? `title:${film.title}`;
 }
 
+/** 連作の共有記事や、ja.wikipedia の記事が Wikidata の映画実体に繋がらない作品 */
+const RESOLUTION_OVERRIDES = new Map([
+  ['1925:嘆きのピエロ', 'tt0014256'],
+  ['1927:忠次旅日記 信州血笑篇', 'tt0432794'],
+  ['1927:忠次旅日記 御用篇', 'tt0342196'],
+  ['1927:ボー・ジェスト', 'tt0016634'],
+  ['1927:チャング', 'tt0017743'],
+  ['1927:帝国ホテル', 'tt0018014'],
+  ['1927:椿姫', 'tt0017731'],
+  ['1927:カルメン', 'tt0016709'],
+  ['1935:最後の億万長者', 'tt0025043'],
+  ['1935:ロスチャイルド', 'tt0025272'],
+  ['1935:生きているモレア', 'tt0026970'],
+  ['1935:情熱なき犯罪', 'tt0025009'],
+]);
+
+function overrideImdbId(
+  year: number,
+  film: KinemaJunpoFilm,
+): string | undefined {
+  return RESOLUTION_OVERRIDES.get(`${year}:${film.title}`);
+}
+
 /** 日本映画は年度＝公開年。映画祭プレミアで前年、年始公開で翌年になることはある */
 const JAPANESE_PUBLICATION_WINDOW: YearWindow = {min: -1, max: 1};
 
@@ -169,24 +192,29 @@ export function kinemaJunpoFilmReferences(
   editions: KinemaJunpoEdition[],
 ): FilmReference[] {
   return editions.flatMap(edition => [
-    ...edition.japanese.map(film => ({
-      key: filmKey(film),
-      title: film.title,
-      targetYear: edition.year,
-      yearWindow: JAPANESE_PUBLICATION_WINDOW,
-      foreign: false,
-    })),
-    ...edition.foreign.map(film => ({
-      key: filmKey(film),
-      title: film.title,
-      targetYear: edition.year,
-      yearWindow: FOREIGN_PUBLICATION_WINDOW,
-      foreign: true,
-    })),
+    ...edition.japanese
+      .filter(film => overrideImdbId(edition.year, film) === undefined)
+      .map(film => ({
+        key: filmKey(film),
+        title: film.title,
+        targetYear: edition.year,
+        yearWindow: JAPANESE_PUBLICATION_WINDOW,
+        foreign: false,
+      })),
+    ...edition.foreign
+      .filter(film => overrideImdbId(edition.year, film) === undefined)
+      .map(film => ({
+        key: filmKey(film),
+        title: film.title,
+        targetYear: edition.year,
+        yearWindow: FOREIGN_PUBLICATION_WINDOW,
+        foreign: true,
+      })),
   ]);
 }
 
 function buildNominations(
+  year: number,
   films: KinemaJunpoFilm[],
   resolved: Map<string, ResolvedFilm>,
 ): ImdbEventNomination[] {
@@ -194,7 +222,9 @@ function buildNominations(
   const seen = new Set<string>();
 
   for (const film of films) {
-    const match = resolved.get(filmKey(film));
+    const imdbId = overrideImdbId(year, film);
+    const match: ResolvedFilm | undefined =
+      imdbId === undefined ? resolved.get(filmKey(film)) : {imdbId};
     if (!match || seen.has(match.imdbId)) {
       continue;
     }
@@ -234,12 +264,20 @@ export function toImdbEventData(
               {
                 category: JAPANESE_CATEGORY,
                 total: null, // eslint-disable-line unicorn/no-null -- ImdbEventCollectedDataの型に合わせる
-                nominations: buildNominations(edition.japanese, resolved),
+                nominations: buildNominations(
+                  edition.year,
+                  edition.japanese,
+                  resolved,
+                ),
               },
               {
                 category: FOREIGN_CATEGORY,
                 total: null, // eslint-disable-line unicorn/no-null -- ImdbEventCollectedDataの型に合わせる
-                nominations: buildNominations(edition.foreign, resolved),
+                nominations: buildNominations(
+                  edition.year,
+                  edition.foreign,
+                  resolved,
+                ),
               },
             ],
           },
@@ -298,13 +336,14 @@ function collectJapaneseTitles(
   titleByImdbId: Map<string, string>,
 ): void {
   for (const film of [...edition.japanese, ...edition.foreign]) {
-    const match = resolved.get(filmKey(film));
-    if (!match || !hasJapaneseText(film.title)) {
+    const imdbId =
+      overrideImdbId(edition.year, film) ?? resolved.get(filmKey(film))?.imdbId;
+    if (imdbId === undefined || !hasJapaneseText(film.title)) {
       continue;
     }
 
-    if (!titleByImdbId.has(match.imdbId)) {
-      titleByImdbId.set(match.imdbId, film.title);
+    if (!titleByImdbId.has(imdbId)) {
+      titleByImdbId.set(imdbId, film.title);
     }
   }
 }
