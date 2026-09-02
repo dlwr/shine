@@ -96,3 +96,15 @@ describe('JAPAN_PERSON_AWARD_SOURCES', () => {
     ).toBe(38);
   });
 });
+
+describe('TMDb のクレジット名に寄せる別名', () => {
+  it.each([
+    ['ユースケ・サンタマリア', '中山裕介'],
+    ['桜田淳子', 'Junko Sakurada'],
+    ['阿木燿子', 'Yoko Aki'],
+  ])('%s は全ての賞で %s として引き当てる', (article, credit) => {
+    for (const source of JAPAN_PERSON_AWARD_SOURCES) {
+      expect(source.personNameAliases?.[article]).toBe(credit);
+    }
+  });
+});

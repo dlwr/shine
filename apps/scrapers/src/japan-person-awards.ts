@@ -31,6 +31,9 @@ const JAPANESE_NAME_ALIASES: Record<string, string> = {
   加賀まり子: '加賀まりこ',
   斎藤慶子: '斉藤慶子',
   本阿弥周子: 'Shuko Honami',
+  桜田淳子: 'Junko Sakurada',
+  阿木燿子: 'Yoko Aki',
+  ユースケ・サンタマリア: '中山裕介',
 };
 
 /** 外国映画監督賞の受賞者。TMDbのクレジットが原語表記か綴りが違う */
