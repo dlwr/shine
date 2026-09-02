@@ -42,7 +42,7 @@ Important schema rules:
 - **`people` / `movie_credits`**: 監督・出演者。`people.tmdbId` と `movie_credits.creditId`（TMDbの`credit_id`）が一意キー。日本人は `people.name` が日本語表記、外国人は `translations` の `person_name` に日本語名が入る二系統なので、表示・検索は両方を見る
 - Schema fields are camelCase (`createdAt`) but map to snake_case columns; always reference schema fields in queries, never hardcoded column names
 - **索引**: 外部キー列にはその列を先頭にした部分条件なしの索引を必ず置く（`foreign-key-indexes.test.ts` が検査する）。一意索引を `.where(...)` の部分索引に変えるときも先頭列の単独索引を残すこと。部分索引は WHERE の条件を含むクエリにしか使われず、#358 で `nominations.movie_uid` の索引が消えて `searchMovies` が映画ごとに全件走査になり、Turso の読み取りが 600 倍になった
-- 映画ごとに評価される相関サブクエリを持つクエリは、`movie-search-query-plan.test.ts` のように `EXPLAIN QUERY PLAN` で CORRELATED の下に SCAN が無いことをテストで固定する
+- 映画ごとに評価される相関サブクエリを持つクエリは、`movie-search-query-plan.test.ts` のように `EXPLAIN QUERY PLAN` で CORRELATED の下に SCAN が無いことをテストで固定する。公開の読み取り経路を足したら `public-read-query-plan.test.ts` の `exercises` にも足す（発行された SQL を全部拾って実行計画を検査する。詳細ページは `indexOnly`）。本番は `ANALYZE` を流していないので実行計画はスキーマだけで決まり、ローカルの空 DB と一致する。本番で `ANALYZE` を流すとこの前提が崩れる
 
 ## Environment Configuration
 
