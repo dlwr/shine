@@ -57,6 +57,12 @@ function isUnderCorrelatedSubquery(rows: PlanRow[], row: PlanRow): boolean {
   return false;
 }
 
+function tablesReadPerMovie(rows: PlanRow[]): string[] {
+  return rows
+    .filter(row => isUnderCorrelatedSubquery(rows, row))
+    .map(row => row.detail);
+}
+
 function fullScansPerMovie(rows: PlanRow[]): string[] {
   return rows
     .filter(
@@ -113,5 +119,19 @@ describe('映画検索クエリの実行計画', () => {
     });
 
     expect(fullScansPerMovie(await explain(database, results))).toEqual([]);
+  });
+
+  it('検索語の人物一致は映画ごとのサブクエリの中で movie_credits を引かない', async () => {
+    const {results} = buildMovieSearchQueries(database, {
+      page: 1,
+      limit: 20,
+      query: '黒澤',
+    });
+
+    expect(
+      tablesReadPerMovie(await explain(database, results)).filter(detail =>
+        detail.includes('movie_credits'),
+      ),
+    ).toEqual([]);
   });
 });
