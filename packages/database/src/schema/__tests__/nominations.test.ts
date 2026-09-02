@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {sql} from 'drizzle-orm';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {getDatabase, type Environment} from '../../index';
@@ -118,5 +119,23 @@ describe('nominations の一意制約', () => {
 
     const rows = await database.select().from(nominations);
     expect(rows).toHaveLength(2);
+  });
+});
+
+describe('nominations の索引', () => {
+  it('movie_uid での絞り込みが全件走査にならない', async () => {
+    const database = await createTestDatabase();
+
+    const plan = await database.all<{detail: string}>(
+      sql`EXPLAIN QUERY PLAN SELECT COUNT(*) FROM nominations WHERE movie_uid = 'movie'`,
+    );
+    const details = plan.map(row => row.detail);
+
+    expect(details.some(detail => detail.startsWith('SCAN nominations'))).toBe(
+      false,
+    );
+    expect(
+      details.some(detail => detail.startsWith('SEARCH nominations USING')),
+    ).toBe(true);
   });
 });

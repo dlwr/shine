@@ -1,0 +1,1 @@
+CREATE INDEX `nominations_movie_idx` ON `nominations` (`movie_uid`);
