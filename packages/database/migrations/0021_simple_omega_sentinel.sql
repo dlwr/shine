@@ -1,0 +1,1 @@
+CREATE INDEX `article_links_movie_idx` ON `article_links` (`movie_uid`);

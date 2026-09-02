@@ -148,6 +148,13 @@
       "when": 1788311624117,
       "tag": "0020_shocking_lightspeed",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1788313837703,
+      "tag": "0021_simple_omega_sentinel",
+      "breakpoints": true
     }
   ]
 }
