@@ -590,4 +590,13 @@ describe('PeopleService.listPeople', () => {
       totalPages: 3,
     });
   });
+
+  it('範囲外のページでも総件数を返す', async () => {
+    const service = new PeopleService(environment);
+
+    const result = await service.listPeople({page: 9, limit: 10});
+
+    expect(result.people).toEqual([]);
+    expect(result.pagination.totalCount).toBe(3);
+  });
 });

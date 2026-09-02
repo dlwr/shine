@@ -5,6 +5,7 @@ import {
   inArray,
   isNotNull,
   isNull,
+  notInArray,
   or,
   sql,
 } from '@shine/database';
@@ -48,38 +49,38 @@ export class PeopleService extends BaseService {
     page: number;
     limit: number;
   }): Promise<PeopleListResult> {
-    const eligible = this.database
+    const eligible = this.eligiblePeople();
+    const pageRows = this.database
+      .select({
+        personUid: eligible.personUid,
+        movieCount: eligible.movieCount,
+        totalCount: sql<number>`COUNT(*) OVER ()`.as('total_count'),
+      })
+      .from(eligible)
+      .orderBy(sql`${eligible.movieCount} DESC`, eligible.personUid)
+      .limit(limit)
+      .offset((page - 1) * limit)
+      .as('page');
+
+    const rows = await this.database
       .select({
         uid: people.uid,
         name: people.name,
-        movieCount: movieCount.as('movie_count'),
+        movieCount: pageRows.movieCount,
+        totalCount: pageRows.totalCount,
       })
-      .from(people)
-      .innerJoin(movieCredits, eq(movieCredits.personUid, people.uid))
-      .innerJoin(
-        movies,
-        and(eq(movies.uid, movieCredits.movieUid), isNull(movies.deletedAt)),
-      )
-      .groupBy(people.uid)
-      .having(
-        sql`${movieCount} >= 2 OR SUM(${movieCredits.job} = 'Director') > 0`,
-      )
-      .as('eligible');
+      .from(pageRows)
+      .innerJoin(people, eq(people.uid, pageRows.personUid))
+      .orderBy(sql`${pageRows.movieCount} DESC`, pageRows.personUid);
 
-    const [countRow] = await this.database
-      .select({totalCount: sql<number>`COUNT(*)`})
-      .from(eligible);
-    const totalCount = countRow?.totalCount ?? 0;
-
-    const rows = await this.database
-      .select()
-      .from(eligible)
-      .orderBy(sql`${eligible.movieCount} DESC`, eligible.uid)
-      .limit(limit)
-      .offset((page - 1) * limit);
+    const totalCount = rows[0]?.totalCount ?? (await this.countEligible());
 
     return {
-      people: rows,
+      people: rows.map(row => ({
+        uid: row.uid,
+        name: row.name,
+        movieCount: row.movieCount,
+      })),
       pagination: {
         page,
         perPage: limit,
@@ -317,6 +318,33 @@ export class PeopleService extends BaseService {
       nominatedCount: row.nominatedCount,
       topMovies: topMovies.get(row.uid) ?? [],
     }));
+  }
+
+  private eligiblePeople() {
+    const deletedMovies = this.database
+      .select({uid: movies.uid})
+      .from(movies)
+      .where(isNotNull(movies.deletedAt));
+
+    return this.database
+      .select({
+        personUid: movieCredits.personUid,
+        movieCount: movieCount.as('movie_count'),
+      })
+      .from(movieCredits)
+      .where(notInArray(movieCredits.movieUid, deletedMovies))
+      .groupBy(movieCredits.personUid)
+      .having(
+        sql`${movieCount} >= 2 OR SUM(${movieCredits.job} = 'Director') > 0`,
+      )
+      .as('eligible');
+  }
+
+  private async countEligible(): Promise<number> {
+    const [row] = await this.database
+      .select({count: sql<number>`COUNT(*)`})
+      .from(this.eligiblePeople());
+    return row?.count ?? 0;
   }
 
   private async attachPersonAwards(
