@@ -19,6 +19,7 @@
     "front:deploy:dev": "pnpm run front:build && cd apps/front && pnpm wrangler deploy --config build/server/wrangler.json --name shine-front-dev",
     "front:deploy:prod": "pnpm run front:build && cd apps/front && pnpm wrangler deploy --config build/server/wrangler.json --name shine-front --minify",
     "scrapers:academy-awards": "pnpm --filter @shine/scrapers run academy-awards",
+    "scrapers:turso-usage-alert": "pnpm --filter @shine/scrapers run turso-usage-alert",
     "scrapers:japan-academy-awards": "pnpm --filter @shine/scrapers run japan-academy-awards",
     "scrapers:japan-academy-person-awards": "pnpm --filter @shine/scrapers run japan-academy-person-awards",
     "scrapers:academy-person-awards": "pnpm --filter @shine/scrapers run academy-person-awards",
