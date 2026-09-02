@@ -24,8 +24,8 @@ describe('robots.txt', () => {
     expect(await robotsBody()).toContain('Disallow: /admin');
   });
 
-  it('検索結果ページはnoindexに任せるためDisallowしない', async () => {
-    expect(await robotsBody()).not.toContain('Disallow: /search');
+  it('検索結果ページをクロール対象から除外する', async () => {
+    expect(await robotsBody()).toContain('Disallow: /search');
   });
 
   it('React Routerのマニフェストをクロール対象から除外する', async () => {

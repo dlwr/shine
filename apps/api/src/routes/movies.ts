@@ -135,11 +135,7 @@ moviesRoutes.get('/search', async c => {
       filters,
     };
 
-    await cache.set(
-      cacheKey,
-      body,
-      query ? getCacheTTL.search.specific : getCacheTTL.search.common,
-    );
+    await cache.set(cacheKey, body, getCacheTTL.search.results);
 
     return c.json(body, 200, {'X-Cache-Status': 'MISS'});
   } catch (error) {

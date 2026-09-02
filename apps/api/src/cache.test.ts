@@ -57,7 +57,7 @@ describe('Cache Utilities', () => {
       expect(getCacheTTL.selections.weekly).toBe(21_600); // 6 hours
       expect(getCacheTTL.selections.monthly).toBe(86_400); // 24 hours
       expect(getCacheTTL.movie.full).toBe(86_400); // 24 hours
-      expect(getCacheTTL.search.common).toBe(86_400); // 24 hours
+      expect(getCacheTTL.search.results).toBe(86_400); // 24 hours
     });
 
     it('should have longer TTL for less frequently changing data', () => {

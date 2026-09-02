@@ -1,10 +1,9 @@
 import {SITE_URL} from '@/lib/meta';
 
-// /search は Disallow せず noindex メタタグに任せる。
-// robots.txt でブロックするとクローラーがページを取得できず、noindex が読まれない。
 const ROBOTS_TXT = `User-agent: *
 Allow: /
 Disallow: /admin
+Disallow: /search
 Disallow: /__manifest
 
 Sitemap: ${SITE_URL}/sitemap.xml
