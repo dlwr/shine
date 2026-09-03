@@ -1,5 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import {
+  buildAnnouncementPostText,
+  buildAnnouncementXPostText,
   buildDailyPostText,
   buildQuizPostText,
   buildQuizShareUrl,
@@ -334,5 +336,48 @@ describe('buildPersonXPostText', () => {
 
     expect(xWeightedLength(text)).toBeLessThanOrEqual(280);
     expect(text).toMatch(/…\nshine-film\.com\/people\/abc$/);
+  });
+});
+
+describe('buildAnnouncementPostText', () => {
+  const text =
+    '第83回ヴェネツィア国際映画祭が開催中。\n金獅子賞の歴代受賞作69本、何本観た？';
+
+  it('本文をそのまま使いハッシュタグで終わる', () => {
+    expect(buildAnnouncementPostText({text})).toBe(`${text}\n#青空映画部`);
+  });
+
+  it('300字を超える本文は切り詰めてもタグを末尾に残す', () => {
+    const result = buildAnnouncementPostText({text: 'あ'.repeat(400)});
+
+    expect([...result].length).toBeLessThanOrEqual(300);
+    expect(result).toMatch(/…\n#青空映画部$/);
+  });
+});
+
+describe('buildAnnouncementXPostText', () => {
+  const input = {
+    text: '第83回ヴェネツィア国際映画祭が開催中。',
+    url: 'https://shine-film.com/watched/venice-golden-lion',
+  };
+
+  it('本文の末尾に裸のURLを付ける', () => {
+    expect(buildAnnouncementXPostText(input)).toBe(
+      '第83回ヴェネツィア国際映画祭が開催中。\nshine-film.com/watched/venice-golden-lion',
+    );
+  });
+
+  it('ハッシュタグを含めない', () => {
+    expect(buildAnnouncementXPostText(input)).not.toContain('#');
+  });
+
+  it('本文が長くてもXの重み付き文字数に収まる', () => {
+    const result = buildAnnouncementXPostText({
+      ...input,
+      text: 'あ'.repeat(200),
+    });
+
+    expect(xWeightedLength(result)).toBeLessThanOrEqual(280);
+    expect(result).toMatch(/…\nshine-film\.com\/watched\/venice-golden-lion$/);
   });
 });

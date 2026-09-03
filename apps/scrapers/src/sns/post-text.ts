@@ -183,3 +183,20 @@ export function buildPersonXPostText(
 ): string {
   return withBareUrl(buildPersonBody(input), input.url);
 }
+
+type AnnouncementPostInput = {
+  text: string;
+};
+
+export function buildAnnouncementPostText({
+  text,
+}: AnnouncementPostInput): string {
+  return withHashtag(text);
+}
+
+export function buildAnnouncementXPostText({
+  text,
+  url,
+}: AnnouncementPostInput & {url: string}): string {
+  return withBareUrl(text, url);
+}

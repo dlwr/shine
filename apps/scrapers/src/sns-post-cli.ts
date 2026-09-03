@@ -9,14 +9,20 @@
  *   pnpm run sns-post --quiz      デイリーセレクションではなく今日のクイズを告知する
  *   pnpm run sns-post --watched   今週の観た映画チェック(週替わりで1リスト)を告知する
  *   pnpm run sns-post --person    今週の映画人(個人賞の受賞者から週替わりで1人)を紹介する
+ *   pnpm run sns-post --announce <name>
+ *                                 data/sns-announcements/<name>.json の本文を1回だけ流す
  *
  * 必要な環境変数(実投稿時、設定があるサービスにだけ投稿する):
  *   BLUESKY_IDENTIFIER   例: shine-film.com
  *   BLUESKY_APP_PASSWORD アプリパスワード
  *   X_API_KEY / X_API_KEY_SECRET / X_ACCESS_TOKEN / X_ACCESS_TOKEN_SECRET
  */
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import process from 'node:process';
+import {fileURLToPath} from 'node:url';
 import {loadEnvironmentFiles} from './common/environment';
+import {parseAnnouncement} from './sns/announcement';
 import {
   buildAvailabilityLabels,
   type AvailabilityEntry,
@@ -29,6 +35,8 @@ import {
 } from './sns/bluesky';
 import {pickPersonOfWeek} from './sns/person-rotation';
 import {
+  buildAnnouncementPostText,
+  buildAnnouncementXPostText,
   buildDailyPostText,
   buildPersonPostText,
   buildPersonXPostText,
@@ -50,6 +58,10 @@ const API_URL =
 const MAX_TEXT_ORGANIZATIONS = 2;
 const MAX_TEXT_AVAILABILITY = 2;
 const PROMINENT_POOL_LIMIT = 200;
+const ANNOUNCEMENTS_DIRECTORY = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../data/sns-announcements',
+);
 
 type SelectionMovie = {
   uid: string;
@@ -330,7 +342,39 @@ async function buildPersonPlan(): Promise<PostPlan> {
   };
 }
 
+async function buildAnnouncementPlan(name: string): Promise<PostPlan> {
+  if (!/^[\w-]+$/.test(name)) {
+    throw new Error(`告知名が不正です: ${name}`);
+  }
+
+  const filePath = path.join(ANNOUNCEMENTS_DIRECTORY, `${name}.json`);
+  const announcement = parseAnnouncement(
+    JSON.parse(await fs.readFile(filePath, 'utf8')),
+  );
+
+  return {
+    text: buildAnnouncementPostText(announcement),
+    xText: buildAnnouncementXPostText(announcement),
+    link: {
+      uri: announcement.url,
+      title: announcement.title,
+      description: announcement.description,
+    },
+    imageUrl: announcement.imageUrl,
+  };
+}
+
 async function buildPlan(): Promise<PostPlan> {
+  const announceIndex = process.argv.indexOf('--announce');
+  if (announceIndex !== -1) {
+    const name = process.argv[announceIndex + 1];
+    if (!name || name.startsWith('--')) {
+      throw new Error('--announce には告知名を指定してください');
+    }
+
+    return buildAnnouncementPlan(name);
+  }
+
   if (process.argv.includes('--quiz')) {
     return buildQuizPlan();
   }
