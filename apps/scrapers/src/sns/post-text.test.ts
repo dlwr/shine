@@ -3,6 +3,12 @@ import {
   buildAnnouncementPostText,
   buildAnnouncementXPostText,
   buildDailyPostText,
+  buildMonthlyPostText,
+  buildMonthlyReminderPostText,
+  buildMonthlyReminderXPostText,
+  buildMonthlyRoundupPostText,
+  buildMonthlyRoundupXPostText,
+  buildMonthlyXPostText,
   buildQuizPostText,
   buildQuizShareUrl,
   buildPersonPostText,
@@ -379,5 +385,184 @@ describe('buildAnnouncementXPostText', () => {
 
     expect(xWeightedLength(result)).toBeLessThanOrEqual(280);
     expect(result).toMatch(/…\nshine-film\.com\/watched\/venice-golden-lion$/);
+  });
+});
+
+describe('buildDailyPostText の今月の1本', () => {
+  it('今月の1本のタイトルを末尾に添える', () => {
+    const text = buildDailyPostText({...base, monthlyTitle: '浮雲'});
+
+    expect(text).toContain('今月の1本は『浮雲』');
+  });
+
+  it('今月の1本が無ければその行を出さない', () => {
+    expect(buildDailyPostText(base)).not.toContain('今月の1本');
+  });
+
+  it('X の本文にも今月の1本を添える', () => {
+    const text = buildXPostText({
+      ...base,
+      monthlyTitle: '浮雲',
+      url: 'https://shine-film.com/movies/abc',
+    });
+
+    expect(text).toContain('今月の1本は『浮雲』');
+  });
+});
+
+describe('buildMonthlyPostText', () => {
+  it('今月の1本として見出しを付ける', () => {
+    expect(buildMonthlyPostText(base)).toContain(
+      '今月の1本 —『ハウスメイド』(2010)',
+    );
+  });
+
+  it('選出元と視聴可否を含む', () => {
+    const text = buildMonthlyPostText(base);
+
+    expect(text).toContain('Cannes Film Festival 選出');
+    expect(text).toContain('▶ U-NEXT 見放題');
+  });
+
+  it('みんなで観ることとリンクを貼る誘いを書く', () => {
+    const text = buildMonthlyPostText(base);
+
+    expect(text).toContain('今月はみんなでこれを観る。');
+    expect(text).toContain(
+      '観たら感想や記事のリンクを映画ページに貼ってください。',
+    );
+  });
+
+  it('ハッシュタグで終わる', () => {
+    expect(buildMonthlyPostText(base)).toMatch(/#青空映画部$/);
+  });
+
+  it('X の本文は裸の URL で終わる', () => {
+    const text = buildMonthlyXPostText({
+      ...base,
+      url: 'https://shine-film.com/movies/abc',
+    });
+
+    expect(text).toMatch(/shine-film\.com\/movies\/abc$/);
+    expect(text).not.toContain('#青空映画部');
+  });
+});
+
+describe('buildMonthlyReminderPostText', () => {
+  const reminder = {
+    title: 'ハウスメイド',
+    year: 2010,
+    availabilityLabels: ['U-NEXT 見放題'],
+    linkCount: 3,
+  };
+
+  it('もう観たかを聞く', () => {
+    expect(buildMonthlyReminderPostText(reminder)).toContain(
+      '今月の1本『ハウスメイド』(2010)、もう観た？',
+    );
+  });
+
+  it('残り半月と視聴可否を書く', () => {
+    expect(buildMonthlyReminderPostText(reminder)).toContain(
+      '今月は残り半分。▶ U-NEXT 見放題',
+    );
+  });
+
+  it('集まった記事・ポストの件数を書く', () => {
+    expect(buildMonthlyReminderPostText(reminder)).toContain(
+      '観た人の記事・ポストが3件集まっています。',
+    );
+  });
+
+  it('件数が0なら最初の1件を誘う', () => {
+    const text = buildMonthlyReminderPostText({...reminder, linkCount: 0});
+
+    expect(text).toContain(
+      'まだ記事・ポストはありません。最初の1件を貼ってください。',
+    );
+    expect(text).not.toContain('集まっています');
+  });
+
+  it('視聴可否が無ければ残り半月だけ書く', () => {
+    const text = buildMonthlyReminderPostText({
+      ...reminder,
+      availabilityLabels: [],
+    });
+
+    expect(text).toContain('今月は残り半分。');
+    expect(text).not.toContain('▶');
+  });
+
+  it('X の本文は裸の URL で終わる', () => {
+    const text = buildMonthlyReminderXPostText({
+      ...reminder,
+      url: 'https://shine-film.com/movies/abc',
+    });
+
+    expect(text).toMatch(/shine-film\.com\/movies\/abc$/);
+  });
+});
+
+describe('buildMonthlyRoundupPostText', () => {
+  const roundup = {
+    title: 'ハウスメイド',
+    year: 2010,
+    linkTitles: ['感想A', '感想B'],
+    nextTitle: '浮雲',
+  };
+
+  it('件数を見出しに書く', () => {
+    expect(buildMonthlyRoundupPostText(roundup)).toContain(
+      '今月の1本『ハウスメイド』(2010)、観た人の記事・ポストは2件',
+    );
+  });
+
+  it('記事・ポストのタイトルを箇条書きにする', () => {
+    const text = buildMonthlyRoundupPostText(roundup);
+
+    expect(text).toContain('・感想A');
+    expect(text).toContain('・感想B');
+  });
+
+  it('タイトルは3件までにする', () => {
+    const text = buildMonthlyRoundupPostText({
+      ...roundup,
+      linkTitles: ['A', 'B', 'C', 'D'],
+    });
+
+    expect(text).toContain('・C');
+    expect(text).not.toContain('・D');
+    expect(text).toContain('観た人の記事・ポストは4件');
+  });
+
+  it('件数が0ならその旨を書く', () => {
+    const text = buildMonthlyRoundupPostText({...roundup, linkTitles: []});
+
+    expect(text).toContain('観た人の記事・ポストはまだありません。');
+    expect(text).not.toMatch(/^・/m);
+  });
+
+  it('来月の1本を予告する', () => {
+    expect(buildMonthlyRoundupPostText(roundup)).toContain(
+      '来月の1本は『浮雲』。明日から。',
+    );
+  });
+
+  it('来月の1本が取れなければ予告を出さない', () => {
+    const text = buildMonthlyRoundupPostText({
+      ...roundup,
+      nextTitle: undefined,
+    });
+
+    expect(text).not.toContain('来月の1本');
+  });
+
+  it('X の本文は裸の URL で終わる', () => {
+    const text = buildMonthlyRoundupXPostText({
+      ...roundup,
+      url: 'https://shine-film.com/movies/abc',
+    });
+
+    expect(text).toMatch(/shine-film\.com\/movies\/abc$/);
   });
 });

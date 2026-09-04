@@ -4,21 +4,28 @@ const HASHTAG = '#青空映画部';
 const X_MAX_WEIGHTED_LENGTH = 280;
 const X_URL_WEIGHT = 23;
 
-type DailyPostInput = {
+const MAX_ROUNDUP_TITLES = 3;
+
+type SelectionPostInput = {
   title: string;
   year?: number;
   organizations: string[];
   availabilityLabels: string[];
 };
 
-function buildBodyLines({
-  title,
-  year,
-  organizations,
-  availabilityLabels,
-}: DailyPostInput): string {
-  const yearPart = year ? `(${year})` : '';
-  const lines = [`今日の1本 —『${title}』${yearPart}`];
+type DailyPostInput = SelectionPostInput & {
+  monthlyTitle?: string;
+};
+
+function formatTitle(title: string, year?: number): string {
+  return `『${title}』${year ? `(${year})` : ''}`;
+}
+
+function buildSelectionLines(
+  heading: string,
+  {title, year, organizations, availabilityLabels}: SelectionPostInput,
+): string[] {
+  const lines = [`${heading} —${formatTitle(title, year)}`];
 
   if (organizations.length > 0) {
     lines.push(`${organizations.slice(0, MAX_ORGANIZATIONS).join('・')} 選出`);
@@ -28,7 +35,117 @@ function buildBodyLines({
     lines.push(`▶ ${availabilityLabels.join(' / ')}`);
   }
 
+  return lines;
+}
+
+function buildBodyLines(input: DailyPostInput): string {
+  const lines = buildSelectionLines('今日の1本', input);
+
+  if (input.monthlyTitle) {
+    lines.push(`今月の1本は『${input.monthlyTitle}』`);
+  }
+
   return lines.join('\n');
+}
+
+function buildMonthlyBody(input: SelectionPostInput): string {
+  return [
+    ...buildSelectionLines('今月の1本', input),
+    '今月はみんなでこれを観る。観たら感想や記事のリンクを映画ページに貼ってください。',
+  ].join('\n');
+}
+
+export function buildMonthlyPostText(input: SelectionPostInput): string {
+  return withHashtag(buildMonthlyBody(input));
+}
+
+export function buildMonthlyXPostText(
+  input: SelectionPostInput & {url: string},
+): string {
+  return withBareUrl(buildMonthlyBody(input), input.url);
+}
+
+type MonthlyReminderInput = {
+  title: string;
+  year?: number;
+  availabilityLabels: string[];
+  linkCount: number;
+};
+
+function buildMonthlyReminderBody({
+  title,
+  year,
+  availabilityLabels,
+  linkCount,
+}: MonthlyReminderInput): string {
+  const availabilityPart =
+    availabilityLabels.length > 0 ? `▶ ${availabilityLabels.join(' / ')}` : '';
+  const linksPart =
+    linkCount > 0
+      ? `観た人の記事・ポストが${linkCount}件集まっています。観たら映画ページにリンクを貼ってください。`
+      : 'まだ記事・ポストはありません。最初の1件を貼ってください。';
+
+  return [
+    `今月の1本${formatTitle(title, year)}、もう観た？`,
+    `今月は残り半分。${availabilityPart}`,
+    linksPart,
+  ].join('\n');
+}
+
+export function buildMonthlyReminderPostText(
+  input: MonthlyReminderInput,
+): string {
+  return withHashtag(buildMonthlyReminderBody(input));
+}
+
+export function buildMonthlyReminderXPostText(
+  input: MonthlyReminderInput & {url: string},
+): string {
+  return withBareUrl(buildMonthlyReminderBody(input), input.url);
+}
+
+type MonthlyRoundupInput = {
+  title: string;
+  year?: number;
+  linkTitles: string[];
+  nextTitle?: string;
+};
+
+function buildMonthlyRoundupBody({
+  title,
+  year,
+  linkTitles,
+  nextTitle,
+}: MonthlyRoundupInput): string {
+  const lines =
+    linkTitles.length > 0
+      ? [
+          `今月の1本${formatTitle(title, year)}、観た人の記事・ポストは${linkTitles.length}件`,
+          ...linkTitles
+            .slice(0, MAX_ROUNDUP_TITLES)
+            .map(linkTitle => `・${linkTitle}`),
+        ]
+      : [
+          `今月の1本${formatTitle(title, year)}、観た人の記事・ポストはまだありません。`,
+        ];
+
+  if (nextTitle) {
+    lines.push(`来月の1本は『${nextTitle}』。明日から。`);
+  }
+
+  return lines.join('\n');
+}
+
+export function buildMonthlyRoundupPostText(
+  input: MonthlyRoundupInput,
+): string {
+  return withHashtag(buildMonthlyRoundupBody(input));
+}
+
+export function buildMonthlyRoundupXPostText(
+  input: MonthlyRoundupInput & {url: string},
+): string {
+  return withBareUrl(buildMonthlyRoundupBody(input), input.url);
 }
 
 function withHashtag(body: string): string {
