@@ -997,6 +997,24 @@ describe('MovieDetail Component', () => {
       ).toBeInTheDocument();
     });
 
+    it('記事・ポストの欄にはホームから飛べるアンカーがある', () => {
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      const section = document.querySelector('#article-links');
+      expect(section).not.toBeNull();
+      expect(section).toHaveTextContent('観た人の記事・ポスト');
+    });
+
     it('記事・ポストの欄は関連映画より前に出る', () => {
       const loaderData = createLoaderData({relatedMovies: mockRelatedMovies});
       const parameters = createParameters('movie-123');
