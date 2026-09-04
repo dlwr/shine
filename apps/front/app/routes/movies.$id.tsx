@@ -807,6 +807,19 @@ export default function MovieDetail({
           />
         </section>
 
+        {/* Article Links */}
+        <ArticleLinksSection
+          articleLinks={movieDetail.articleLinks}
+          isTestMode={isTestMode}
+          formData={formData}
+          handleInputChange={handleInputChange}
+          handleCaptchaTokenChange={handleCaptchaTokenChange}
+          isLoadingTitle={isLoadingTitle}
+          titleError={titleError}
+          submissionResult={submissionResult}
+          turnstileSiteKey={turnstileSiteKey}
+        />
+
         {/* Related Movies */}
         {relatedMovies.length > 0 && (
           <section className="mb-8">
@@ -837,18 +850,6 @@ export default function MovieDetail({
           </section>
         )}
 
-        {/* Article Links */}
-        <ArticleLinksSection
-          articleLinks={movieDetail.articleLinks}
-          isTestMode={isTestMode}
-          formData={formData}
-          handleInputChange={handleInputChange}
-          handleCaptchaTokenChange={handleCaptchaTokenChange}
-          isLoadingTitle={isLoadingTitle}
-          titleError={titleError}
-          submissionResult={submissionResult}
-          turnstileSiteKey={turnstileSiteKey}
-        />
         <SiteFooter locale={locale} />
       </div>
     </div>

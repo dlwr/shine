@@ -999,6 +999,27 @@ describe('MovieDetail Component', () => {
         screen.getByText('まだ関連記事が投稿されていません。'),
       ).toBeInTheDocument();
     });
+
+    it('記事の欄は関連映画より前に出る', () => {
+      const loaderData = createLoaderData({relatedMovies: mockRelatedMovies});
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      const articles = screen.getByText('関連記事');
+      const related = screen.getByText('関連映画');
+      expect(
+        articles.compareDocumentPosition(related) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
   });
 
   describe('action', () => {
