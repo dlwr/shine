@@ -144,8 +144,8 @@ describe('AdminLogin Component', () => {
       const result = meta();
 
       expect(result).toEqual([
-        {title: '管理者ログイン | SHINE'},
-        {name: 'description', content: 'SHINE管理画面へのログイン'},
+        {title: '管理者ログイン | なんか見る'},
+        {name: 'description', content: 'なんか見る 管理画面へのログイン'},
       ]);
     });
   });

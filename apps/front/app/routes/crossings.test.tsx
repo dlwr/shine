@@ -149,7 +149,7 @@ describe('Crossings page', () => {
         }),
       );
 
-      expect(descriptors).toContainEqual({title: '賞の交差 | SHINE'});
+      expect(descriptors).toContainEqual({title: '賞の交差 | なんか見る'});
     });
   });
 

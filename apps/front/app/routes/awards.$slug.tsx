@@ -144,16 +144,16 @@ function pageTitle(award: AwardPageData): string {
   const {first, last} = yearRange(award);
 
   if (award.grouping === 'person') {
-    return `${heading} 歴代受賞者一覧（${first}–${last}） | SHINE`;
+    return `${heading} 歴代受賞者一覧（${first}–${last}） | なんか見る`;
   }
 
   if (award.grouping === 'year') {
-    return `${heading} 歴代受賞作一覧（${first}–${last}） | SHINE`;
+    return `${heading} 歴代受賞作一覧（${first}–${last}） | なんか見る`;
   }
 
   const page = award.pagination?.page ?? 1;
   const pageSuffix = page > 1 ? `（${page}ページ目）` : '';
-  return `${heading} 全${countMovies(award)}作品${pageSuffix} | SHINE`;
+  return `${heading} 全${countMovies(award)}作品${pageSuffix} | なんか見る`;
 }
 
 function summaryLine(award: AwardPageData): string {

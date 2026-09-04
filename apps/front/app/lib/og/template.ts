@@ -5,6 +5,7 @@
  * 配色はサイトのライトテーマ(tokens.css)に固定する。
  */
 import {buildQuizPosterHtml} from './quiz-poster';
+import {SITE_NAME} from '@/lib/meta';
 
 const COLORS = {
   paper: '#ece8df',
@@ -18,7 +19,7 @@ const COLORS = {
 export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
 
-const TAGLINE = '毎日1本、埋もれた映画に光を当てる';
+const TAGLINE = '決められない日に、映画を1本';
 
 export function escapeHtml(value: string): string {
   return value
@@ -107,7 +108,7 @@ export function buildMovieCardHtml({
   return `<div style="display:flex;width:${OG_WIDTH}px;height:${OG_HEIGHT}px;background:${COLORS.paper};border:16px solid ${COLORS.ink};padding:40px 48px;justify-content:space-between;align-items:center;">
   <div style="display:flex;flex-direction:column;justify-content:space-between;height:100%;flex:1;padding-right:40px;">
     <div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:5px solid ${COLORS.ink};padding-bottom:12px;">
-      <div style="display:flex;font-size:54px;font-weight:700;letter-spacing:-3px;color:${COLORS.ink};">SHINE</div>
+      <div style="display:flex;font-size:48px;font-weight:700;color:${COLORS.ink};">${SITE_NAME}</div>
       <div style="display:flex;font-size:22px;color:${COLORS.inkMuted};">${TAGLINE}</div>
     </div>
     <div style="display:flex;flex-direction:column;">
@@ -153,7 +154,7 @@ export function buildQuizCardHtml({
   return `<div style="display:flex;width:${OG_WIDTH}px;height:${OG_HEIGHT}px;background:${COLORS.paper};border:16px solid ${COLORS.ink};padding:40px 48px;justify-content:space-between;align-items:center;">
   <div style="display:flex;flex-direction:column;justify-content:space-between;height:100%;flex:1;padding-right:40px;">
     <div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:5px solid ${COLORS.ink};padding-bottom:12px;">
-      <div style="display:flex;font-size:54px;font-weight:700;letter-spacing:-3px;color:${COLORS.ink};">SHINE</div>
+      <div style="display:flex;font-size:48px;font-weight:700;color:${COLORS.ink};">${SITE_NAME}</div>
       <div style="display:flex;font-size:22px;color:${COLORS.inkMuted};">${TAGLINE}</div>
     </div>
     <div style="display:flex;flex-direction:column;">
@@ -175,7 +176,7 @@ export const BANNER_HEIGHT = 500;
 export function buildBannerHtml(): string {
   return `<div style="display:flex;width:${BANNER_WIDTH}px;height:${BANNER_HEIGHT}px;background:${COLORS.paper};border:14px solid ${COLORS.ink};padding:40px 60px;align-items:center;justify-content:space-between;">
   <div style="display:flex;flex-direction:column;">
-    <div style="display:flex;font-size:150px;font-weight:700;letter-spacing:-9px;color:${COLORS.ink};line-height:0.9;">SHINE</div>
+    <div style="display:flex;font-size:132px;font-weight:700;color:${COLORS.ink};line-height:1;">${SITE_NAME}</div>
     <div style="display:flex;font-size:38px;font-weight:700;color:${COLORS.ink};margin-top:24px;">${TAGLINE}</div>
   </div>
   <div style="display:flex;background:${COLORS.brand};color:${COLORS.brandOn};border:3px solid ${COLORS.ink};padding:10px 26px;font-size:30px;font-weight:700;">shine-film.com</div>
@@ -184,7 +185,7 @@ export function buildBannerHtml(): string {
 
 export function buildHomeCardHtml(): string {
   return `<div style="display:flex;width:${OG_WIDTH}px;height:${OG_HEIGHT}px;background:${COLORS.paper};border:16px solid ${COLORS.ink};padding:60px;flex-direction:column;justify-content:space-between;">
-  <div style="display:flex;font-size:200px;font-weight:700;letter-spacing:-12px;color:${COLORS.ink};line-height:0.9;">SHINE</div>
+  <div style="display:flex;font-size:168px;font-weight:700;color:${COLORS.ink};line-height:1;">${SITE_NAME}</div>
   <div style="display:flex;flex-direction:column;">
     <div style="display:flex;font-size:44px;font-weight:700;color:${COLORS.ink};">${TAGLINE}</div>
     <div style="display:flex;font-size:26px;color:${COLORS.inkMuted};margin-top:18px;">カンヌ・アカデミー賞・日本アカデミー賞などの受賞作から毎日・毎週・毎月1本。いま観られるかも一緒に。</div>
@@ -231,7 +232,7 @@ export function buildPersonCardHtml({
   return `<div style="display:flex;width:${OG_WIDTH}px;height:${OG_HEIGHT}px;background:${COLORS.paper};border:16px solid ${COLORS.ink};padding:40px 48px;justify-content:space-between;align-items:center;">
   <div style="display:flex;flex-direction:column;justify-content:space-between;height:100%;flex:1;padding-right:40px;">
     <div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:5px solid ${COLORS.ink};padding-bottom:12px;">
-      <div style="display:flex;font-size:54px;font-weight:700;letter-spacing:-3px;color:${COLORS.ink};">SHINE</div>
+      <div style="display:flex;font-size:48px;font-weight:700;color:${COLORS.ink};">${SITE_NAME}</div>
       <div style="display:flex;font-size:22px;color:${COLORS.inkMuted};">${TAGLINE}</div>
     </div>
     <div style="display:flex;flex-direction:column;">
@@ -310,7 +311,7 @@ export function buildWatchedCardHtml({
   return `<div style="display:flex;width:${OG_WIDTH}px;height:${OG_HEIGHT}px;background:${COLORS.paper};border:16px solid ${COLORS.ink};padding:40px 48px;justify-content:space-between;align-items:center;">
   <div style="display:flex;flex-direction:column;justify-content:space-between;height:100%;flex:1;padding-right:40px;">
     <div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:5px solid ${COLORS.ink};padding-bottom:12px;">
-      <div style="display:flex;font-size:54px;font-weight:700;letter-spacing:-3px;color:${COLORS.ink};">SHINE</div>
+      <div style="display:flex;font-size:48px;font-weight:700;color:${COLORS.ink};">${SITE_NAME}</div>
       <div style="display:flex;font-size:22px;color:${COLORS.inkMuted};">${TAGLINE}</div>
     </div>
     <div style="display:flex;flex-direction:column;">

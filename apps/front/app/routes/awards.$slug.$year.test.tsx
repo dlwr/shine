@@ -142,7 +142,7 @@ describe('Award year page', () => {
         entry => 'title' in entry && typeof entry.title === 'string',
       ) as {title: string} | undefined;
       expect(title?.title).toBe(
-        'カンヌ国際映画祭 パルム・ドール 2023年（第76回） | SHINE',
+        'カンヌ国際映画祭 パルム・ドール 2023年（第76回） | なんか見る',
       );
 
       const description = result.find(

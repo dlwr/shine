@@ -46,9 +46,9 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {locale} = loaderData as {locale?: Locale};
 
   return buildSocialMeta({
-    title: '映画賞・リスト一覧 | SHINE',
+    title: '映画賞・リスト一覧 | なんか見る',
     description:
-      'パルム・ドール、アカデミー賞作品賞、日本アカデミー賞など、SHINEに収録された映画賞と映画リストの一覧。',
+      'パルム・ドール、アカデミー賞作品賞、日本アカデミー賞など、「なんか見る」に収録された映画賞と映画リストの一覧。',
     path: '/awards',
     locale: locale ?? DEFAULT_LOCALE,
     imageUrl: `${SITE_URL}/og/home.png`,

@@ -37,13 +37,13 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 
   const copy = searchQuery
     ? {
-        title: `「${searchQuery}」の検索結果 | SHINE`,
-        description: `「${searchQuery}」に一致する映画と映画人を SHINE で探す。`,
+        title: `「${searchQuery}」の検索結果 | なんか見る`,
+        description: `「${searchQuery}」に一致する映画と映画人を「なんか見る」で探す。`,
       }
     : {
-        title: '映画を検索 | SHINE',
+        title: '映画を検索 | なんか見る',
         description:
-          '映画のタイトルや映画人の名前から、SHINE に収録された映画と人物を検索できます。',
+          '映画のタイトルや映画人の名前から、「なんか見る」に収録された映画と人物を検索できます。',
       };
 
   return [

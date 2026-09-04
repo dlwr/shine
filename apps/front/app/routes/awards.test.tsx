@@ -155,7 +155,7 @@ describe('Awards index page', () => {
         descriptor => 'title' in descriptor,
       ) as {title: string};
 
-      expect(titleDescriptor.title).toBe('映画賞・リスト一覧 | SHINE');
+      expect(titleDescriptor.title).toBe('映画賞・リスト一覧 | なんか見る');
     });
   });
 

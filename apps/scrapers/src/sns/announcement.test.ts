@@ -4,7 +4,7 @@ import {parseAnnouncement} from './announcement';
 const valid = {
   text: '第83回ヴェネツィア国際映画祭が開催中。',
   url: 'https://shine-film.com/watched/venice-golden-lion',
-  title: '金獅子賞受賞作、何本観た？ | SHINE',
+  title: '金獅子賞受賞作、何本観た？ | なんか見る',
   description: '歴代受賞作69本にチェックを付けて共有できます。',
   imageUrl: 'https://shine-film.com/og/watched.png?slug=venice-golden-lion',
 };

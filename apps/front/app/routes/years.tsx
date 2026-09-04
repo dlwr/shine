@@ -43,7 +43,7 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
     sorted.length > 0 ? `${sorted[0]}年から${sorted.at(-1)}年まで、` : '';
 
   return buildSocialMeta({
-    title: '製作年から探す映画一覧 | SHINE',
+    title: '製作年から探す映画一覧 | なんか見る',
     description: `${range}製作年ごとに映画賞・映画リストに選ばれた映画を一覧。`,
     path: '/years',
     locale: locale ?? DEFAULT_LOCALE,

@@ -108,12 +108,12 @@ describe('buildMovieCardHtml', () => {
 });
 
 describe('buildHomeCardHtml', () => {
-  it('SHINEのロゴタイトルを含む', () => {
-    expect(buildHomeCardHtml()).toContain('SHINE');
+  it('サービス名のロゴタイトルを含む', () => {
+    expect(buildHomeCardHtml()).toContain('なんか見る');
   });
 
   it('日本語のタグラインを含む', () => {
-    expect(buildHomeCardHtml()).toContain('毎日1本、埋もれた映画に光を当てる');
+    expect(buildHomeCardHtml()).toContain('決められない日に、映画を1本');
   });
 });
 
@@ -186,12 +186,12 @@ describe('buildQuizCardHtml', () => {
 });
 
 describe('buildBannerHtml', () => {
-  it('SHINEのロゴタイトルを含む', () => {
-    expect(buildBannerHtml()).toContain('SHINE');
+  it('サービス名のロゴタイトルを含む', () => {
+    expect(buildBannerHtml()).toContain('なんか見る');
   });
 
   it('日本語のタグラインを含む', () => {
-    expect(buildBannerHtml()).toContain('毎日1本、埋もれた映画に光を当てる');
+    expect(buildBannerHtml()).toContain('決められない日に、映画を1本');
   });
 });
 

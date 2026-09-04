@@ -126,7 +126,7 @@ describe('People page', () => {
         }),
       );
 
-      expect(descriptors).toContainEqual({title: '映画人 | SHINE'});
+      expect(descriptors).toContainEqual({title: '映画人 | なんか見る'});
     });
   });
 

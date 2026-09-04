@@ -138,7 +138,7 @@ describe('People uncrowned page', () => {
         }),
       );
 
-      expect(descriptors).toContainEqual({title: '無冠の映画人 | SHINE'});
+      expect(descriptors).toContainEqual({title: '無冠の映画人 | なんか見る'});
     });
   });
 

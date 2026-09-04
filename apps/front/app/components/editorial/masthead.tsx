@@ -1,4 +1,5 @@
 import {ThemeToggle} from './theme-toggle';
+import {SITE_NAME} from '@/lib/meta';
 import {LanguageSelector} from '@/components/molecules/language-selector';
 
 function today(): string {
@@ -9,8 +10,8 @@ function today(): string {
 }
 
 const TAGLINES = {
-  ja: ['毎日1本、埋もれた映画に', '光を当てる'],
-  en: ['A FORGOTTEN FILM,', 'EVERY DAY'],
+  ja: ['決められない日に、', '映画を1本'],
+  en: ['CAN’T DECIDE?', 'ONE FILM A DAY'],
 } as const;
 
 const NAV_LINKS = [
@@ -28,9 +29,9 @@ export function Masthead({locale = 'en'}: {locale?: string}) {
 
   return (
     <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2.5 border-b-2 border-ink pb-2.5 mb-6">
-      <h1 className="font-display font-black text-4xl md:text-5xl tracking-[-0.06em] leading-none">
+      <h1 className="font-display font-black text-4xl md:text-5xl tracking-[-0.02em] leading-none">
         <a href="/" className="no-underline text-ink">
-          SHINE
+          {SITE_NAME}
         </a>
       </h1>
       <div className="ml-auto flex flex-wrap items-center justify-end gap-2 md:gap-3">

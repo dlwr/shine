@@ -42,7 +42,7 @@ export function buildRssFeed(items: FeedItem[]): string {
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<rss version="2.0">',
     '  <channel>',
-    '    <title>SHINE — 今日の1本</title>',
+    '    <title>なんか見る — 今日の1本</title>',
     `    <link>${SITE_URL}</link>`,
     '    <description>映画賞や名作リストに選ばれた映画から毎日1本を紹介します。</description>',
     '    <language>ja</language>',

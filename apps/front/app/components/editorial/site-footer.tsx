@@ -1,6 +1,8 @@
+import {SITE_NAME, SITE_NAME_EN} from '@/lib/meta';
+
 const COPY = {
   ja: {
-    heading: 'SHINE について',
+    heading: `${SITE_NAME} について`,
     lead: '映画賞の受賞作や名作リストから、毎日・毎週・毎月それぞれ1本ずつ映画を選び出すサイトです。',
     sources:
       'カンヌ・ヴェネツィア・ベルリンの三大映画祭、アカデミー賞、日本アカデミー賞、キネマ旬報ベスト・テン、雑誌の特集リストなど7,500本以上から抽選し、いま配信やレンタルで観られるかも一緒に表示します。',
@@ -10,8 +12,8 @@ const COPY = {
     dataCreditTail: 'と Wikipedia を利用しています。',
   },
   en: {
-    heading: 'About SHINE',
-    lead: 'SHINE picks one film a day, a week, and a month from award winners and curated lists.',
+    heading: `About ${SITE_NAME_EN}`,
+    lead: `${SITE_NAME_EN} picks one film a day, a week, and a month from award winners and curated lists.`,
     sources:
       'Drawn from over 7,500 films — Cannes, Venice, Berlin, the Academy Awards, the Japan Academy Film Prize, Kinema Junpo best-ten lists, magazine features — with where you can watch each one right now.',
     searchLabel: 'Search films',

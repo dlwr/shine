@@ -29,8 +29,8 @@ type LoaderData = {
 
 export function meta(): Route.MetaDescriptors {
   return [
-    {title: '映画の編集 - SHINE Admin'},
-    {name: 'description', content: 'SHINE Admin 映画編集画面'},
+    {title: '映画の編集 - なんか見る Admin'},
+    {name: 'description', content: 'なんか見る Admin 映画編集画面'},
   ];
 }
 

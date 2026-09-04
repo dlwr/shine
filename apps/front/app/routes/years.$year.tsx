@@ -74,7 +74,7 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 
   return [
     ...buildSocialMeta({
-      title: `${detail.year}年の映画 | SHINE`,
+      title: `${detail.year}年の映画 | なんか見る`,
       description: buildDescription(detail),
       path: `/years/${detail.year}`,
       locale: locale ?? DEFAULT_LOCALE,

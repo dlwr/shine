@@ -184,7 +184,7 @@ describe('People crossings page', () => {
         }),
       );
 
-      expect(descriptors).toContainEqual({title: '映画人の交差 | SHINE'});
+      expect(descriptors).toContainEqual({title: '映画人の交差 | なんか見る'});
     });
   });
 

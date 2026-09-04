@@ -7,7 +7,7 @@ import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
 import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
-import {SITE_URL, buildSocialMeta} from '@/lib/meta';
+import {SITE_NAME, SITE_NAME_EN, SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {resolveMovieTitle} from '@/lib/movie-title';
 import {FilmCard} from '@/components/editorial/film-card';
 import type {FilmCardMovie} from '@/components/editorial/film-card';
@@ -66,12 +66,12 @@ type MoviesLabels = {
 
 const HOME_COPY = {
   ja: {
-    title: 'SHINE — 毎日1本、埋もれた映画に光を当てる',
+    title: `${SITE_NAME} — 決められない日に、映画を1本`,
     description:
       'カンヌ・アカデミー賞・日本アカデミー賞などの受賞作や名作リストから、毎日・毎週・毎月1本ずつ映画を選びます。いま配信やレンタルで観られるかも一緒に。',
   },
   en: {
-    title: 'SHINE — A forgotten film, every day',
+    title: `${SITE_NAME_EN} — one film a day, so you don’t have to pick`,
     description:
       'One overlooked film a day, a week, and a month — drawn from Cannes, the Academy Awards and curated lists, with where to watch it right now.',
   },

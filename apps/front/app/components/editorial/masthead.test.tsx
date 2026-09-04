@@ -4,10 +4,10 @@ import '@testing-library/jest-dom';
 import {Masthead} from './masthead';
 
 describe('Masthead', () => {
-  it('SHINE を h1 で、検索リンクとテーマトグルを描画する', () => {
+  it('サービス名を h1 で、検索リンクとテーマトグルを描画する', () => {
     render(<Masthead locale="en" />);
     expect(
-      screen.getByRole('heading', {level: 1, name: 'SHINE'}),
+      screen.getByRole('heading', {level: 1, name: 'なんか見る'}),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', {name: /search/i})).toHaveAttribute(
       'href',
@@ -16,9 +16,9 @@ describe('Masthead', () => {
     expect(screen.getByRole('button', {name: /theme/i})).toBeInTheDocument();
   });
 
-  it('SHINE ロゴはトップページへのリンクにする', () => {
+  it('ロゴはトップページへのリンクにする', () => {
     render(<Masthead locale="ja" />);
-    expect(screen.getByRole('link', {name: 'SHINE'})).toHaveAttribute(
+    expect(screen.getByRole('link', {name: 'なんか見る'})).toHaveAttribute(
       'href',
       '/',
     );
@@ -67,13 +67,13 @@ describe('Masthead', () => {
   it('日本語ロケールでは日本語のタグラインを描画する', () => {
     render(<Masthead locale="ja" />);
 
-    expect(screen.getByText(/毎日1本、埋もれた映画に/)).toBeInTheDocument();
+    expect(screen.getByText(/決められない日に、/)).toBeInTheDocument();
   });
 
   it('英語ロケールでは英語のタグラインを描画する', () => {
     render(<Masthead locale="en" />);
 
-    expect(screen.getByText(/A FORGOTTEN FILM/i)).toBeInTheDocument();
+    expect(screen.getByText(/CAN’T DECIDE\?/i)).toBeInTheDocument();
   });
 
   it('ナビゲーションは折り返す(項目を増やしても横幅からはみ出さないため)', () => {

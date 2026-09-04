@@ -70,7 +70,7 @@ const getUrlParameters = () => {
 
 export function meta(): Route.MetaDescriptors {
   return [
-    {title: '映画管理 | SHINE Admin'},
+    {title: '映画管理 | なんか見る Admin'},
     {name: 'description', content: '映画データベースの管理画面'},
   ];
 }

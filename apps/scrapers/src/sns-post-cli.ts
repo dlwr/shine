@@ -263,7 +263,7 @@ async function buildDailyPlan(): Promise<PostPlan> {
     xText,
     link: {
       uri: `${SITE_URL}/movies/${movie.uid}`,
-      title: `${title}${movie.year ? ` (${movie.year})` : ''} | SHINE`,
+      title: `${title}${movie.year ? ` (${movie.year})` : ''} | なんか見る`,
       description: `『${title}』をいま観られるかをまとめています。`,
     },
     imageUrl: `${SITE_URL}/og/movie.png?id=${movie.uid}`,
@@ -280,7 +280,7 @@ async function buildQuizPlan(): Promise<PostPlan> {
     xText: buildQuizXPostText({...puzzle, url}),
     link: {
       uri: url,
-      title: '今日の映画クイズ | SHINE',
+      title: '今日の映画クイズ | なんか見る',
       description:
         'ポスターの一部と5つのヒントから、今日の1本を当てる。毎日1問。',
     },
@@ -306,7 +306,7 @@ async function buildWatchedPlan(): Promise<PostPlan> {
     xText: buildWatchedXPostText({heading, total, url}),
     link: {
       uri: url,
-      title: `${heading}受賞作、何本観た？ | SHINE`,
+      title: `${heading}受賞作、何本観た？ | なんか見る`,
       description: `${heading}の歴代受賞作${total}本にチェックを付けて、観た本数と割合を共有できます。`,
     },
     imageUrl: `${SITE_URL}/og/watched.png?slug=${list.slug}`,
@@ -335,8 +335,8 @@ async function buildPersonPlan(): Promise<PostPlan> {
     xText: buildPersonXPostText({...postInput, url}),
     link: {
       uri: url,
-      title: `${person.name}の映画 | SHINE`,
-      description: `${person.name}の受賞歴と関わった映画を、SHINEに収録された映画賞の受賞作・ノミネート作から一覧できます。`,
+      title: `${person.name}の映画 | なんか見る`,
+      description: `${person.name}の受賞歴と関わった映画を、「なんか見る」に収録された映画賞の受賞作・ノミネート作から一覧できます。`,
     },
     imageUrl: `${SITE_URL}/og/person.png?id=${person.uid}`,
   };

@@ -22,7 +22,7 @@ describe('buildRssFeed', () => {
 
     expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
     expect(xml).toContain('<rss version="2.0">');
-    expect(xml).toContain('<title>SHINE — 今日の1本</title>');
+    expect(xml).toContain('<title>なんか見る — 今日の1本</title>');
     expect(xml).toContain('<link>https://shine-film.com</link>');
   });
 

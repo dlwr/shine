@@ -62,7 +62,7 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
     const query = `s=${encodeURIComponent(shared)}`;
 
     return buildSocialMeta({
-      title: `${heading}の受賞作、${stats.total}本中${stats.count}本観てた | SHINE`,
+      title: `${heading}の受賞作、${stats.total}本中${stats.count}本観てた | なんか見る`,
       description: `${buildWatchedShareLine({heading, ...stats})}。あなたは何本観た？`,
       path: `${path}?${query}`,
       locale: locale ?? DEFAULT_LOCALE,
@@ -72,7 +72,7 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   }
 
   return buildSocialMeta({
-    title: `${heading}受賞作、何本観た？ | SHINE`,
+    title: `${heading}受賞作、何本観た？ | なんか見る`,
     description: `${heading}の歴代受賞作${order.length}本にチェックを付けて、観た本数と割合を共有できます。`,
     path,
     locale: locale ?? DEFAULT_LOCALE,

@@ -184,7 +184,7 @@ describe('Watched list page', () => {
       ) as Array<Record<string, string>>;
 
       expect(descriptors).toContainEqual({
-        title: 'カンヌ国際映画祭 パルム・ドール受賞作、何本観た？ | SHINE',
+        title: 'カンヌ国際映画祭 パルム・ドール受賞作、何本観た？ | なんか見る',
       });
       expect(descriptors).toContainEqual({
         property: 'og:image',
@@ -206,7 +206,7 @@ describe('Watched list page', () => {
 
       expect(descriptors).toContainEqual({
         title:
-          'カンヌ国際映画祭 パルム・ドールの受賞作、3本中2本観てた | SHINE',
+          'カンヌ国際映画祭 パルム・ドールの受賞作、3本中2本観てた | なんか見る',
       });
       expect(descriptors).toContainEqual({
         property: 'og:image',

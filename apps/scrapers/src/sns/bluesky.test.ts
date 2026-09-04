@@ -6,7 +6,7 @@ const base = {
   createdAt: '2026-07-31T00:00:00.000Z',
   link: {
     uri: 'https://shine-film.com/movies/abc',
-    title: 'ハウスメイド (2010) | SHINE',
+    title: 'ハウスメイド (2010) | なんか見る',
     description: '『ハウスメイド』(2010年)。',
   },
 };
@@ -34,7 +34,7 @@ describe('buildPostRecord', () => {
       $type: 'app.bsky.embed.external',
       external: {
         uri: 'https://shine-film.com/movies/abc',
-        title: 'ハウスメイド (2010) | SHINE',
+        title: 'ハウスメイド (2010) | なんか見る',
         description: '『ハウスメイド』(2010年)。',
       },
     });

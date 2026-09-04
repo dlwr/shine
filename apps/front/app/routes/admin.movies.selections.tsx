@@ -103,8 +103,8 @@ const selectionKeyMap: Record<SelectionType, keyof PreviewSelections> = {
 
 export function meta(): Route.MetaDescriptors {
   return [
-    {title: '映画選択管理 - SHINE Admin'},
-    {name: 'description', content: 'SHINE Admin 映画選択管理画面'},
+    {title: '映画選択管理 - なんか見る Admin'},
+    {name: 'description', content: 'なんか見る Admin 映画選択管理画面'},
   ];
 }
 

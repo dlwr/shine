@@ -2,7 +2,8 @@ import type {MetaDescriptor} from 'react-router';
 import type {Locale} from './locale';
 
 export const SITE_URL = 'https://shine-film.com';
-export const SITE_NAME = 'SHINE';
+export const SITE_NAME = 'なんか見る';
+export const SITE_NAME_EN = 'Nanka Miru';
 
 const OPEN_GRAPH_LOCALES: Record<Locale, string> = {
   ja: 'ja_JP',

@@ -111,7 +111,9 @@ describe('Daily archive page', () => {
         }),
       );
 
-      expect(result).toContainEqual({title: '今日の1本 アーカイブ | SHINE'});
+      expect(result).toContainEqual({
+        title: '今日の1本 アーカイブ | なんか見る',
+      });
     });
   });
 

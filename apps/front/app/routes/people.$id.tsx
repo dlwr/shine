@@ -133,7 +133,7 @@ function personDescription(person: PersonData): string {
   );
   const {won} = awardRecord(person);
   const record = won > 0 ? `うち${won}本が受賞。` : '';
-  return `${person.name}が関わった映画${person.credits.length}本（${jobs.values().toArray().join('・')}）。${record}SHINEに収録された映画賞の受賞作・ノミネート作から一覧できます。`;
+  return `${person.name}が関わった映画${person.credits.length}本（${jobs.values().toArray().join('・')}）。${record}「なんか見る」に収録された映画賞の受賞作・ノミネート作から一覧できます。`;
 }
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
@@ -143,7 +143,7 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   };
 
   return buildSocialMeta({
-    title: `${person.name}の映画 全${person.credits.length}本 | SHINE`,
+    title: `${person.name}の映画 全${person.credits.length}本 | なんか見る`,
     description: personDescription(person),
     path: `/people/${person.uid}`,
     locale: locale ?? DEFAULT_LOCALE,

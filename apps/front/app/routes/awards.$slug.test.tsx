@@ -156,7 +156,7 @@ describe('Award detail page', () => {
       ) as {title: string};
 
       expect(titleDescriptor.title).toBe(
-        'カンヌ国際映画祭 パルム・ドール 歴代受賞作一覧（2021–2023） | SHINE',
+        'カンヌ国際映画祭 パルム・ドール 歴代受賞作一覧（2021–2023） | なんか見る',
       );
     });
   });
@@ -441,7 +441,7 @@ describe('Person award page', () => {
     ) as {title: string};
 
     expect(titleDescriptor.title).toBe(
-      '日本アカデミー賞 最優秀監督賞 歴代受賞者一覧（1990–1994） | SHINE',
+      '日本アカデミー賞 最優秀監督賞 歴代受賞者一覧（1990–1994） | なんか見る',
     );
   });
 

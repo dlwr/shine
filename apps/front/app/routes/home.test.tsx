@@ -204,13 +204,13 @@ describe('Home Component', () => {
   describe('meta', () => {
     it('日本語ロケールでは日本語のタイトルを返す', () => {
       expect(meta(createMetaArguments('ja'))).toContainEqual({
-        title: 'SHINE — 毎日1本、埋もれた映画に光を当てる',
+        title: 'なんか見る — 決められない日に、映画を1本',
       });
     });
 
     it('英語ロケールでは英語のタイトルを返す', () => {
       expect(meta(createMetaArguments('en'))).toContainEqual({
-        title: 'SHINE — A forgotten film, every day',
+        title: 'Nanka Miru — one film a day, so you don’t have to pick',
       });
     });
 
@@ -270,7 +270,7 @@ describe('Home Component', () => {
       ).toBeInTheDocument();
     });
 
-    it('h1 に SHINE が表示される', () => {
+    it('h1 にサービス名が表示される', () => {
       const loaderData =
         cast<ComponentProperties['loaderData']>(createLoaderData());
 
@@ -284,7 +284,7 @@ describe('Home Component', () => {
       );
 
       expect(
-        screen.getByRole('heading', {level: 1, name: 'SHINE'}),
+        screen.getByRole('heading', {level: 1, name: 'なんか見る'}),
       ).toBeInTheDocument();
     });
 

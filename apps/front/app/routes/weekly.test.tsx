@@ -111,7 +111,9 @@ describe('Weekly archive page', () => {
         }),
       );
 
-      expect(result).toContainEqual({title: '今週の1本 アーカイブ | SHINE'});
+      expect(result).toContainEqual({
+        title: '今週の1本 アーカイブ | なんか見る',
+      });
     });
   });
 

@@ -17,9 +17,9 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {locale} = loaderData as {locale?: Locale};
 
   return buildSocialMeta({
-    title: '映画人 | SHINE',
+    title: '映画人 | なんか見る',
     description:
-      'SHINEが記録する映画賞の監督賞・演技賞で最も多く勝った監督と俳優のランキング。受賞回数で並べ、受賞作から作品ページへ辿れます。',
+      '「なんか見る」が記録する映画賞の監督賞・演技賞で最も多く勝った監督と俳優のランキング。受賞回数で並べ、受賞作から作品ページへ辿れます。',
     path: '/people',
     locale: locale ?? DEFAULT_LOCALE,
     imageUrl: `${SITE_URL}/og/home.png`,
@@ -136,7 +136,7 @@ export default function PeoplePage({loaderData}: Route.ComponentProps) {
           <p className="font-display text-sm leading-relaxed md:text-base">
             映画賞は作品に贈られる。だが撮ったのは人で、演じたのも人だ。
             <br />
-            SHINEが記録する映画賞の監督賞と演技賞で、受賞回数の多い監督と俳優を並べた。
+            「なんか見る」が記録する映画賞の監督賞と演技賞で、受賞回数の多い監督と俳優を並べた。
           </p>
         </section>
 

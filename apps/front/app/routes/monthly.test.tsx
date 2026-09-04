@@ -111,7 +111,9 @@ describe('Monthly archive page', () => {
         }),
       );
 
-      expect(result).toContainEqual({title: '今月の1本 アーカイブ | SHINE'});
+      expect(result).toContainEqual({
+        title: '今月の1本 アーカイブ | なんか見る',
+      });
     });
   });
 

@@ -91,7 +91,7 @@ export function shareText(state: QuizGameState, maxAttempts: number): string {
     state.status === 'won' ? `${state.guesses.length}/${maxAttempts}` : 'X';
 
   return [
-    `SHINE QUIZ ${state.date} ${score}`,
+    `なんか見る QUIZ ${state.date} ${score}`,
     marks.join('') + padding,
     `https://shine-film.com/quiz?d=${state.date}`,
   ].join('\n');

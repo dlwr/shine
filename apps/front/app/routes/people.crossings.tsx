@@ -32,7 +32,7 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {locale} = loaderData as {locale?: Locale};
 
   return buildSocialMeta({
-    title: '映画人の交差 | SHINE',
+    title: '映画人の交差 | なんか見る',
     description:
       '映画賞の監督賞・演技賞が、同じ演技・演出をどれだけ選んでいるか。最も多くの団体に選ばれた演技・演出と、団体同士の重なりの一覧。',
     path: '/people/crossings',

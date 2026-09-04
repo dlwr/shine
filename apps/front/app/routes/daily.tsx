@@ -12,7 +12,7 @@ const CONFIG: SelectionArchiveConfig = {
   path: '/daily',
   heading: 'DAILY PICKS',
   subtitle: '「今日の1本」の過去のセレクション',
-  metaTitle: '今日の1本 アーカイブ | SHINE',
+  metaTitle: '今日の1本 アーカイブ | なんか見る',
   metaDescription:
     '映画賞や名作リストに選ばれた映画から毎日1本を紹介する「今日の1本」の過去のセレクション一覧。',
 };

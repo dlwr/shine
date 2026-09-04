@@ -266,7 +266,7 @@ describe('Search Component', () => {
       const result = meta(createMetaArguments(loaderData, '?q=test%20movie'));
 
       expect(result).toContainEqual({
-        title: '「test movie」の検索結果 | SHINE',
+        title: '「test movie」の検索結果 | なんか見る',
       });
     });
 
@@ -279,7 +279,7 @@ describe('Search Component', () => {
 
       const result = meta(createMetaArguments(loaderData, '?q=test%20movie'));
 
-      expect(result).toContainEqual({title: '映画を検索 | SHINE'});
+      expect(result).toContainEqual({title: '映画を検索 | なんか見る'});
     });
 
     it('検索結果ページは検索エンジンにインデックスさせない', () => {

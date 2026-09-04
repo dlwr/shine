@@ -131,7 +131,7 @@ describe('Uncrowned page', () => {
         }),
       );
 
-      expect(descriptors).toContainEqual({title: '無冠の映画 | SHINE'});
+      expect(descriptors).toContainEqual({title: '無冠の映画 | なんか見る'});
     });
   });
 

@@ -34,7 +34,7 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {locale} = loaderData as {locale?: Locale};
 
   return buildSocialMeta({
-    title: '賞の交差 | SHINE',
+    title: '賞の交差 | なんか見る',
     description:
       '13の映画賞・映画リストが同じ映画をどれだけ選んでいるか。最も多くの賞に選ばれた作品と、賞同士の重なりの一覧。',
     path: '/crossings',

@@ -42,7 +42,7 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {locale} = loaderData as {locale?: Locale};
 
   return buildSocialMeta({
-    title: '観た映画チェック | SHINE',
+    title: '観た映画チェック | なんか見る',
     description:
       'パルム・ドール、アカデミー賞作品賞、キネマ旬報ベスト・テンなど映画賞の歴代受賞作に、観た映画のチェックを付けて何本観たかを共有できます。',
     path: '/watched',

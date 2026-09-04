@@ -33,7 +33,7 @@ export const links: Route.LinksFunction = () => [
   {
     rel: 'alternate',
     type: 'application/rss+xml',
-    title: 'SHINE — 今日の1本',
+    title: 'なんか見る — 今日の1本',
     href: '/feed.xml',
   },
   {rel: 'preconnect', href: 'https://fonts.googleapis.com'},

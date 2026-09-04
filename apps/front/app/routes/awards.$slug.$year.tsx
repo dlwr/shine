@@ -41,8 +41,8 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   };
   const heading = awardHeading(award);
   const title = award.ceremonyNumber
-    ? `${heading} ${award.year}年（第${award.ceremonyNumber}回） | SHINE`
-    : `${heading} ${award.year}年 | SHINE`;
+    ? `${heading} ${award.year}年（第${award.ceremonyNumber}回） | なんか見る`
+    : `${heading} ${award.year}年 | なんか見る`;
   const winner = award.movies.find(movie => movie.isWinner);
   const description = winner?.title
     ? `${award.year}年の${heading}。受賞は『${winner.title}』。ノミネート含む全${award.movies.length}作品の一覧。`

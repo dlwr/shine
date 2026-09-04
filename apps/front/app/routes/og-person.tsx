@@ -20,7 +20,7 @@ type PersonDetail = {
 
 const CACHE_CONTROL = 'public, max-age=86400';
 /** Satoriへ渡すフォントに最低限含める文字 */
-const BASE_TEXT = 'SHINEFILMS0123456789毎日1本、埋もれた映画に光を当てる ';
+const BASE_TEXT = 'なんか見るFILMS0123456789決められない日に、映画を1本 ';
 
 export async function loader({context, request}: Route.LoaderArgs) {
   const url = new URL(request.url);

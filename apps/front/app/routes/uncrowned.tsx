@@ -37,9 +37,9 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {locale} = loaderData as {locale?: Locale};
 
   return buildSocialMeta({
-    title: '無冠の映画 | SHINE',
+    title: '無冠の映画 | なんか見る',
     description:
-      'ノミネートはされた。しかし一度も勝てなかった。SHINEが記録する映画賞で最も多く敗れた、無冠の映画たちの一覧。',
+      'ノミネートはされた。しかし一度も勝てなかった。「なんか見る」が記録する映画賞で最も多く敗れた、無冠の映画たちの一覧。',
     path: '/uncrowned',
     locale: locale ?? DEFAULT_LOCALE,
     imageUrl: `${SITE_URL}/og/home.png`,
@@ -107,7 +107,7 @@ export default function Uncrowned({loaderData}: Route.ComponentProps) {
 
         <section className="mb-10 border-t-2 border-b-2 border-ink py-4">
           <p className="font-display text-sm md:text-base leading-relaxed">
-            SHINEは映画賞を記録してきた。つまり、勝者を数えてきた。
+            「なんか見る」は映画賞を記録してきた。つまり、勝者を数えてきた。
             <br />
             だがノミネートされた
             {nominatedFilmCount.toLocaleString('en-US')}本のうち

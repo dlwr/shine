@@ -12,7 +12,7 @@ const CONFIG: SelectionArchiveConfig = {
   path: '/weekly',
   heading: 'WEEKLY PICKS',
   subtitle: '「今週の1本」の過去のセレクション（日付は週の開始日・金曜）',
-  metaTitle: '今週の1本 アーカイブ | SHINE',
+  metaTitle: '今週の1本 アーカイブ | なんか見る',
   metaDescription:
     '映画賞や名作リストに選ばれた映画から毎週1本を紹介する「今週の1本」の過去のセレクション一覧。',
 };

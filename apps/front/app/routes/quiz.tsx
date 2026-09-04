@@ -35,7 +35,7 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const path = puzzle ? `/quiz?d=${puzzle.date}` : '/quiz';
 
   return buildSocialMeta({
-    title: '今日の映画クイズ | SHINE',
+    title: '今日の映画クイズ | なんか見る',
     description:
       'ポスターの一部と5つのヒントから、今日の1本を当てる。カンヌ・アカデミー賞・キネマ旬報などに選ばれた映画から毎日1問。',
     path,

@@ -12,7 +12,7 @@ const CONFIG: SelectionArchiveConfig = {
   path: '/monthly',
   heading: 'MONTHLY PICKS',
   subtitle: '「今月の1本」の過去のセレクション',
-  metaTitle: '今月の1本 アーカイブ | SHINE',
+  metaTitle: '今月の1本 アーカイブ | なんか見る',
   metaDescription:
     '映画賞や名作リストに選ばれた映画から毎月1本を紹介する「今月の1本」の過去のセレクション一覧。',
   formatDate: selectionDate => selectionDate.slice(0, 7),

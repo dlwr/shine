@@ -36,9 +36,9 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {locale} = loaderData as {locale?: Locale};
 
   return buildSocialMeta({
-    title: '無冠の映画人 | SHINE',
+    title: '無冠の映画人 | なんか見る',
     description:
-      '監督賞・演技賞にノミネートされながら、一度も受賞していない映画人。SHINEが記録する個人賞で最も多く敗れた人たちの一覧。',
+      '監督賞・演技賞にノミネートされながら、一度も受賞していない映画人。「なんか見る」が記録する個人賞で最も多く敗れた人たちの一覧。',
     path: '/people/uncrowned',
     locale: locale ?? DEFAULT_LOCALE,
     imageUrl: `${SITE_URL}/og/home.png`,

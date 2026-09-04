@@ -235,7 +235,7 @@ function MovieDetailErrorView({
         <a
           href="/"
           className="inline-block border-2 border-ink px-4 py-2 font-mono text-sm shadow-[2px_2px_0_var(--ink)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all">
-          ← SHINE
+          ← なんか見る
         </a>
       </div>
     </div>
@@ -513,7 +513,7 @@ export function meta({
 
   if (payload && isLoaderError(payload) && payload.error) {
     return buildSocialMeta({
-      title: '映画が見つかりません | SHINE',
+      title: '映画が見つかりません | なんか見る',
       description: '指定された映画は見つかりませんでした。',
       path,
       locale,
@@ -531,7 +531,7 @@ export function meta({
 
   return [
     ...buildSocialMeta({
-      title: `${title} (${year}) | SHINE`,
+      title: `${title} (${year}) | なんか見る`,
       description: buildMetaDescription(
         `『${title}』(${year}年)。${selection}`,
         movieDetail?.description,

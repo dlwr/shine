@@ -7,8 +7,8 @@ import {getAdminToken, setAdminToken} from '@/lib/admin-fetch';
 
 export function meta(): Route.MetaDescriptors {
   return [
-    {title: '管理者ログイン | SHINE'},
-    {name: 'description', content: 'SHINE管理画面へのログイン'},
+    {title: '管理者ログイン | なんか見る'},
+    {name: 'description', content: 'なんか見る 管理画面へのログイン'},
   ];
 }
 
@@ -79,7 +79,7 @@ export default function AdminLogin({actionData}: Route.ComponentProps) {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             管理者ログイン
           </h1>
-          <p className="text-gray-600">SHINE管理画面</p>
+          <p className="text-gray-600">なんか見る 管理画面</p>
           <a
             href="/"
             className="inline-block mt-4 px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors">

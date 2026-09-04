@@ -168,7 +168,9 @@ describe('Watched index page', () => {
         cast<Route.MetaArgs>({loaderData: {lists: [], locale: 'ja'}}),
       ) as Array<Record<string, string>>;
 
-      expect(descriptors).toContainEqual({title: '観た映画チェック | SHINE'});
+      expect(descriptors).toContainEqual({
+        title: '観た映画チェック | なんか見る',
+      });
       expect(descriptors).toContainEqual({
         property: 'og:url',
         content: 'https://shine-film.com/watched',

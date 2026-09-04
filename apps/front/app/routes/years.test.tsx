@@ -95,7 +95,7 @@ describe('Years index page', () => {
       const title = result.find(
         entry => 'title' in entry && typeof entry.title === 'string',
       ) as {title: string} | undefined;
-      expect(title?.title).toBe('製作年から探す映画一覧 | SHINE');
+      expect(title?.title).toBe('製作年から探す映画一覧 | なんか見る');
 
       const description = result.find(
         entry => 'name' in entry && entry.name === 'description',

@@ -335,7 +335,7 @@ describe('MovieDetail Component', () => {
   describe('meta', () => {
     it('タイトルに映画名と製作年を含む', () => {
       expect(successMeta()).toContainEqual({
-        title: 'パルム・ドール受賞作品 (2023) | SHINE',
+        title: 'パルム・ドール受賞作品 (2023) | なんか見る',
       });
     });
 
@@ -474,7 +474,9 @@ describe('MovieDetail Component', () => {
         ),
       );
 
-      expect(result).toContainEqual({title: '映画が見つかりません | SHINE'});
+      expect(result).toContainEqual({
+        title: '映画が見つかりません | なんか見る',
+      });
     });
 
     it('schema.org MovieのJSON-LDを返す', () => {
@@ -890,7 +892,7 @@ describe('MovieDetail Component', () => {
         />,
       );
 
-      const backLinks = screen.getAllByRole('link', {name: /SHINE/});
+      const backLinks = screen.getAllByRole('link', {name: /なんか見る/});
       expect(backLinks.length).toBeGreaterThanOrEqual(1);
       expect(backLinks[0]).toBeInTheDocument();
       expect(backLinks[0]).toHaveAttribute('href', '/');

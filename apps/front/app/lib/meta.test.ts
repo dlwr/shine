@@ -46,7 +46,7 @@ describe('buildSocialMeta', () => {
   it('og:site_nameを返す', () => {
     expect(buildSocialMeta(baseInput)).toContainEqual({
       property: 'og:site_name',
-      content: 'SHINE',
+      content: 'なんか見る',
     });
   });
 
