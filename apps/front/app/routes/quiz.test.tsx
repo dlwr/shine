@@ -18,13 +18,18 @@ const CANDIDATES = [
   {uid: 'movie-b', title: '東京物語', year: 1953},
 ];
 
-const createComponentProperties = (): Route.ComponentProps =>
+const MONTHLY = {uid: 'movie-m', title: '浮雲', year: 1955};
+
+const createComponentProperties = (
+  overrides: Record<string, unknown> = {},
+): Route.ComponentProps =>
   cast<Route.ComponentProps>({
     loaderData: {
       puzzle: PUZZLE,
       candidates: CANDIDATES,
       apiUrl: 'http://localhost:8787',
       locale: 'ja',
+      ...overrides,
     },
     params: {},
     matches: [],
@@ -57,6 +62,54 @@ describe('Quiz page', () => {
       );
 
       expect(result.candidates).toEqual(CANDIDATES);
+    });
+
+    it('今月の1本を一緒に取得する', async () => {
+      const mockFetch = vi.mocked(fetch);
+      mockFetch
+        .mockResolvedValueOnce({ok: true, json: async () => PUZZLE} as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({candidates: CANDIDATES}),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({monthly: {...MONTHLY, posterUrl: 'x'}}),
+        } as Response);
+
+      const result = await loader(
+        cast<Route.LoaderArgs>({
+          context: createMockContext(),
+          request: new Request('http://localhost:3000/quiz'),
+          params: {},
+          matches: [],
+        }),
+      );
+
+      expect(result.monthly).toEqual(MONTHLY);
+    });
+
+    it('今月の1本が取れなくてもクイズは出す', async () => {
+      const mockFetch = vi.mocked(fetch);
+      mockFetch
+        .mockResolvedValueOnce({ok: true, json: async () => PUZZLE} as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({candidates: CANDIDATES}),
+        } as Response)
+        .mockRejectedValueOnce(new Error('down'));
+
+      const result = await loader(
+        cast<Route.LoaderArgs>({
+          context: createMockContext(),
+          request: new Request('http://localhost:3000/quiz'),
+          params: {},
+          matches: [],
+        }),
+      );
+
+      expect(result.candidates).toEqual(CANDIDATES);
+      expect(result.monthly).toBeUndefined();
     });
 
     it('APIが失敗したら502を投げる', async () => {
@@ -165,6 +218,46 @@ describe('Quiz page', () => {
       );
 
       expect(await screen.findByText('正解！')).toBeInTheDocument();
+    });
+
+    it('答えが出たら今月の1本へ誘う', async () => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          correct: true,
+          answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+        }),
+      } as Response);
+
+      render(<QuizPage {...createComponentProperties({monthly: MONTHLY})} />);
+      expect(screen.queryByText(/今月の1本/)).not.toBeInTheDocument();
+      await userEvent.type(screen.getByLabelText(/邦題で回答/), '赤ひげ');
+      await userEvent.click(
+        await screen.findByRole('button', {name: /赤ひげ/}),
+      );
+
+      const link = await screen.findByRole('link', {name: /浮雲/});
+      expect(link).toHaveAttribute('href', '/movies/movie-m');
+      expect(screen.getByText(/今月の1本/)).toBeInTheDocument();
+    });
+
+    it('今月の1本が無ければ誘わない', async () => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          correct: true,
+          answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+        }),
+      } as Response);
+
+      render(<QuizPage {...createComponentProperties()} />);
+      await userEvent.type(screen.getByLabelText(/邦題で回答/), '赤ひげ');
+      await userEvent.click(
+        await screen.findByRole('button', {name: /赤ひげ/}),
+      );
+
+      expect(await screen.findByText('正解！')).toBeInTheDocument();
+      expect(screen.queryByText(/今月の1本/)).not.toBeInTheDocument();
     });
 
     it('リロードしても進行を引き継ぐ', async () => {
