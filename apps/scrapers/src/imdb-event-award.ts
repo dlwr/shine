@@ -23,6 +23,7 @@ import {
   type TMDBMovieData,
 } from './common/tmdb-utilities';
 import {selectCredits, upsertMovieCredits} from './movie-credits';
+import {pickJapaneseTitle} from './common/tmdb-japanese-title';
 
 export type ImdbEventAwardConfig = {
   organizationName: string;
@@ -559,10 +560,12 @@ async function createMovie(
     },
   ];
 
-  const isJaFallbackToOriginal =
-    detailsJa?.title === detailsJa?.original_title &&
-    details?.original_language !== 'ja';
-  const japaneseTitle = isJaFallbackToOriginal ? undefined : detailsJa?.title;
+  const japaneseTitle = pickJapaneseTitle({
+    title: detailsJa?.title,
+    original_title: detailsJa?.original_title,
+    original_language:
+      details?.original_language ?? detailsJa?.original_language,
+  });
   if (japaneseTitle && japaneseTitle !== englishTitle) {
     translationValues.push({
       resourceType: 'movie_title',

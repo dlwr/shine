@@ -7,6 +7,7 @@ import {movies} from '@shine/database/schema/movies';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {fetchJsonWithRetry} from './fetch-utilities';
+import {pickJapaneseTitle} from './tmdb-japanese-title';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -411,9 +412,10 @@ export async function fetchJapaneseTitleFromTMDB(
     }
 
     // 日本語タイトルが取得できたか確認
-    if (movieData.title && movieData.title !== movieData.original_title) {
-      console.log(`  Found Japanese title: ${movieData.title}`);
-      return movieData.title;
+    const japaneseTitle = pickJapaneseTitle(movieData);
+    if (japaneseTitle) {
+      console.log(`  Found Japanese title: ${japaneseTitle}`);
+      return japaneseTitle;
     }
 
     console.log('  No Japanese title found in TMDB');

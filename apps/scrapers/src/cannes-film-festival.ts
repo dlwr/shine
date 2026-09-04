@@ -20,6 +20,7 @@ import {cannesCeremonyNumber} from './cannes-ceremony';
 import {FetchHttpError, fetchWithRetry} from './common/fetch-utilities';
 import {getScrapeDatabase} from './common/dry-run';
 import {withDefaultTranslationFlags} from './common/default-translations';
+import {pickJapaneseTitle} from './common/tmdb-japanese-title';
 
 const WIKIPEDIA_BASE_URL = 'https://en.wikipedia.org';
 
@@ -1226,10 +1227,7 @@ async function fetchMovieDetails(
     );
 
     // 日本語タイトルが英語タイトルと異なる場合のみ保存
-    const japaneseTitle =
-      dataJa?.title && dataJa.title !== dataJa.original_title
-        ? dataJa.title
-        : undefined;
+    const japaneseTitle = pickJapaneseTitle(dataJa);
 
     const details: MovieDetailsResult = {
       imdbId: dataEn?.imdb_id || undefined,

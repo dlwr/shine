@@ -18,6 +18,7 @@ import {
   findTMDBByImdbId,
   type TMDBConfig,
 } from './common/tmdb-utilities';
+import {pickJapaneseTitle} from './common/tmdb-japanese-title';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -882,8 +883,11 @@ export async function insertTranslations({
     originalTitle || tmdbMovie.original_title || tmdbMovie.title;
   const japaneseTitle =
     jaTitle ||
-    tmdbMovie.localizedTitle ||
-    (tmdbMovie.title === englishTitle ? undefined : tmdbMovie.title);
+    pickJapaneseTitle({
+      title: tmdbMovie.localizedTitle,
+      original_title: tmdbMovie.original_title,
+      original_language: tmdbMovie.original_language,
+    });
 
   const values: Array<typeof translations.$inferInsert> = [];
 

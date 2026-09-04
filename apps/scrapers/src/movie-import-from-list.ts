@@ -12,6 +12,7 @@ import {generateUUID} from '@shine/utils';
 import {withDefaultTranslationFlags} from './common/default-translations';
 import {fetchJsonWithRetry} from './common/fetch-utilities';
 import {fetchTMDBConfig, type TMDBConfig} from './common/tmdb-utilities';
+import {pickJapaneseTitle} from './common/tmdb-japanese-title';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -479,13 +480,14 @@ export async function createNewMovieForBatch(
   }
 
   // 日本語翻訳を追加
-  if (tmdbMovie.title !== tmdbMovie.original_title) {
-    console.log(`  Adding JA title: "${tmdbMovie.title}"`);
+  const japaneseTitle = pickJapaneseTitle(tmdbMovie);
+  if (japaneseTitle) {
+    console.log(`  Adding JA title: "${japaneseTitle}"`);
     translationRows.push({
       resourceType: 'movie_title',
       resourceUid: movieUid,
       languageCode: 'ja',
-      content: tmdbMovie.title,
+      content: japaneseTitle,
     });
   }
 
