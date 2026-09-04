@@ -17,7 +17,7 @@ import {BaseService} from './base-service';
 export const QUIZ_MAX_ATTEMPTS = 6;
 
 const MINIMUM_ORGANIZATIONS = 2;
-const POOL_CACHE_KEY = 'quiz:pool:v2';
+const POOL_CACHE_KEY = 'quiz:pool:v3';
 const POOL_CACHE_TTL = 604_800;
 
 export type QuizPoolEntry = {

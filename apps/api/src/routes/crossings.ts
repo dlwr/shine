@@ -11,7 +11,7 @@ import {
 export const crossingsRoutes = new Hono<{Bindings: Environment}>();
 
 const CROSSINGS_CACHE_TTL = 604_800;
-const CROSSINGS_CACHE_KEY = 'crossings:v11';
+const CROSSINGS_CACHE_KEY = 'crossings:v12';
 
 crossingsRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);

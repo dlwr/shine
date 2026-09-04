@@ -12,6 +12,7 @@
     "../../packages/types/src/**/*",
     "../../packages/utils/src/**/*",
     "../scrapers/src/common/fetch-utilities.ts",
+    "../scrapers/src/common/tmdb-japanese-title.ts",
     "../scrapers/src/common/tmdb-utilities.ts"
   ],
   "exclude": ["node_modules", "dist"]

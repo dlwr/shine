@@ -67,9 +67,10 @@ describe('insertTranslations', () => {
       database,
       movieUid,
       tmdbMovie: {
-        title: '国宝',
+        title: 'Kokuho',
         original_title: 'Kokuho',
         original_language: 'ja',
+        localizedTitle: '国宝',
       },
     });
 
@@ -85,14 +86,54 @@ describe('insertTranslations', () => {
       database,
       movieUid,
       tmdbMovie: {
-        title: 'オールド・ボーイズ',
+        title: 'Old Boys',
         original_title: 'Old Boys',
         original_language: 'en',
+        localizedTitle: 'オールド・ボーイズ',
       },
     });
 
     const flags = await titleFlags(database, movieUid);
     expect(flags.get('en')).toBe(1);
+    expect(flags.get('ja')).toBe(0);
+  });
+
+  it('TMDbのja応答が原題フォールバックのときは邦題として保存しない', async () => {
+    const {database, movieUid} = await createTestDatabase('fa');
+
+    await insertTranslations({
+      database,
+      movieUid,
+      tmdbMovie: {
+        title: 'A Bit of Light',
+        original_title: 'کمی نور',
+        original_language: 'fa',
+        localizedTitle: 'کمی نور',
+      },
+      originalTitle: 'A Bit of Light',
+    });
+
+    const flags = await titleFlags(database, movieUid);
+    expect(flags.has('ja')).toBe(false);
+    expect(flags.get('en')).toBe(1);
+  });
+
+  it('TMDbに日本語訳があれば邦題として保存する', async () => {
+    const {database, movieUid} = await createTestDatabase('da');
+
+    await insertTranslations({
+      database,
+      movieUid,
+      tmdbMovie: {
+        title: 'Woman Unknown',
+        original_title: 'Kvinde ukendt',
+        original_language: 'da',
+        localizedTitle: '見知らぬ女',
+      },
+      originalTitle: 'Woman Unknown',
+    });
+
+    const flags = await titleFlags(database, movieUid);
     expect(flags.get('ja')).toBe(0);
   });
 });
