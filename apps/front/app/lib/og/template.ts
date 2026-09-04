@@ -18,7 +18,7 @@ const COLORS = {
 export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
 
-const TAGLINE = '毎日1本、埋もれた映画に光を当てる';
+export const TAGLINE = '毎月1本、みんなで同じ映画を観る';
 
 export function escapeHtml(value: string): string {
   return value
@@ -187,7 +187,7 @@ export function buildHomeCardHtml(): string {
   <div style="display:flex;font-size:200px;font-weight:700;letter-spacing:-12px;color:${COLORS.ink};line-height:0.9;">SHINE</div>
   <div style="display:flex;flex-direction:column;">
     <div style="display:flex;font-size:44px;font-weight:700;color:${COLORS.ink};">${TAGLINE}</div>
-    <div style="display:flex;font-size:26px;color:${COLORS.inkMuted};margin-top:18px;">カンヌ・アカデミー賞・日本アカデミー賞などの受賞作から毎日・毎週・毎月1本。いま観られるかも一緒に。</div>
+    <div style="display:flex;font-size:26px;color:${COLORS.inkMuted};margin-top:18px;">カンヌ・アカデミー賞・日本アカデミー賞などの受賞作から今月の1本。日替わり・週替わりの1本と、いま観られるかも一緒に。</div>
   </div>
   <div style="display:flex;justify-content:space-between;align-items:center;">
     <div style="display:flex;background:${COLORS.brand};color:${COLORS.brandOn};border:3px solid ${COLORS.ink};padding:8px 22px;font-size:28px;font-weight:700;">shine-film.com</div>

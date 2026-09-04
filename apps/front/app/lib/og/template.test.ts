@@ -113,7 +113,7 @@ describe('buildHomeCardHtml', () => {
   });
 
   it('日本語のタグラインを含む', () => {
-    expect(buildHomeCardHtml()).toContain('毎日1本、埋もれた映画に光を当てる');
+    expect(buildHomeCardHtml()).toContain('毎月1本、みんなで同じ映画を観る');
   });
 });
 
@@ -191,7 +191,7 @@ describe('buildBannerHtml', () => {
   });
 
   it('日本語のタグラインを含む', () => {
-    expect(buildBannerHtml()).toContain('毎日1本、埋もれた映画に光を当てる');
+    expect(buildBannerHtml()).toContain('毎月1本、みんなで同じ映画を観る');
   });
 });
 

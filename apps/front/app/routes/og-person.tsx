@@ -2,7 +2,12 @@ import {ImageResponse} from 'workers-og';
 import type {Route} from './+types/og-person';
 import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
 import {pickRepresentativeTitles} from '@/lib/og/person-card';
-import {OG_HEIGHT, OG_WIDTH, buildPersonCardHtml} from '@/lib/og/template';
+import {
+  OG_HEIGHT,
+  OG_WIDTH,
+  TAGLINE,
+  buildPersonCardHtml,
+} from '@/lib/og/template';
 import {profileImageUrl} from '@/lib/profile-image';
 import {apiFetch} from '@/lib/api';
 
@@ -20,7 +25,7 @@ type PersonDetail = {
 
 const CACHE_CONTROL = 'public, max-age=86400';
 /** Satoriへ渡すフォントに最低限含める文字 */
-const BASE_TEXT = 'SHINEFILMS0123456789毎日1本、埋もれた映画に光を当てる ';
+const BASE_TEXT = `SHINEFILMS0123456789${TAGLINE} `;
 
 export async function loader({context, request}: Route.LoaderArgs) {
   const url = new URL(request.url);
