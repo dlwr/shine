@@ -9,6 +9,12 @@
  *   pnpm run sns-post --quiz      デイリーセレクションではなく今日のクイズを告知する
  *   pnpm run sns-post --watched   今週の観た映画チェック(週替わりで1リスト)を告知する
  *   pnpm run sns-post --person    今週の映画人(個人賞の受賞者から週替わりで1人)を紹介する
+ *   pnpm run sns-post --monthly   今月の1本を告知する(1日)
+ *   pnpm run sns-post --monthly-reminder
+ *                                 今月の1本の再告知と集まった記事・ポストの件数(15日)
+ *   pnpm run sns-post --monthly-roundup
+ *                                 今月の1本に集まった記事・ポストのまとめと来月の予告(月末)
+ *                                 予告は ADMIN_PASSWORD があるときだけ付く
  *   pnpm run sns-post --announce <name>
  *                                 data/sns-announcements/<name>.json の本文を1回だけ流す
  *
@@ -38,6 +44,12 @@ import {
   buildAnnouncementPostText,
   buildAnnouncementXPostText,
   buildDailyPostText,
+  buildMonthlyPostText,
+  buildMonthlyReminderPostText,
+  buildMonthlyReminderXPostText,
+  buildMonthlyRoundupPostText,
+  buildMonthlyRoundupXPostText,
+  buildMonthlyXPostText,
   buildPersonPostText,
   buildPersonXPostText,
   buildQuizPostText,
@@ -71,7 +83,9 @@ type SelectionMovie = {
   availability?: AvailabilityEntry[];
 };
 
-async function fetchDailyMovie(): Promise<SelectionMovie> {
+type Selections = {daily?: SelectionMovie; monthly?: SelectionMovie};
+
+async function fetchSelections(): Promise<Selections> {
   const response = await fetch(`${API_URL}/?locale=ja`, {
     headers: {Origin: SITE_URL},
   });
@@ -80,12 +94,62 @@ async function fetchDailyMovie(): Promise<SelectionMovie> {
     throw new Error(`Selection API failed: HTTP ${response.status}`);
   }
 
-  const data = (await response.json()) as {daily?: SelectionMovie};
-  if (!data.daily?.uid || !data.daily.title) {
-    throw new Error('No daily selection found');
+  return (await response.json()) as Selections;
+}
+
+function requireSelection(
+  selections: Selections,
+  type: 'daily' | 'monthly',
+): SelectionMovie {
+  const movie = selections[type];
+  if (!movie?.uid || !movie.title) {
+    throw new Error(`No ${type} selection found`);
   }
 
-  return data.daily;
+  return movie;
+}
+
+async function fetchArticleLinkTitles(movieUid: string): Promise<string[]> {
+  const response = await fetch(`${API_URL}/movies/${movieUid}/article-links`, {
+    headers: {Origin: SITE_URL},
+  });
+
+  if (!response.ok) {
+    throw new Error(`Article links API failed: HTTP ${response.status}`);
+  }
+
+  const links = (await response.json()) as Array<{title: string}>;
+  return links.map(link => link.title);
+}
+
+async function fetchNextMonthlyTitle(): Promise<string | undefined> {
+  const password = process.env.ADMIN_PASSWORD;
+  if (!password) {
+    return undefined;
+  }
+
+  const loginResponse = await fetch(`${API_URL}/auth/login`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', Origin: SITE_URL},
+    body: JSON.stringify({password}),
+  });
+  if (!loginResponse.ok) {
+    throw new Error(`Admin login failed: HTTP ${loginResponse.status}`);
+  }
+
+  const {token} = (await loginResponse.json()) as {token: string};
+  const response = await fetch(
+    `${API_URL}/admin/preview-selections?locale=ja`,
+    {headers: {Authorization: `Bearer ${token}`, Origin: SITE_URL}},
+  );
+  if (!response.ok) {
+    throw new Error(`Preview selections API failed: HTTP ${response.status}`);
+  }
+
+  const {nextMonthly} = (await response.json()) as {
+    nextMonthly?: {movie?: {title?: string}};
+  };
+  return nextMonthly?.movie?.title;
 }
 
 async function fetchQuizPuzzle(): Promise<{date: string; poolSize: number}> {
@@ -233,9 +297,7 @@ type PostPlan = {
   imageUrl: string;
 };
 
-async function buildDailyPlan(): Promise<PostPlan> {
-  const movie = await fetchDailyMovie();
-  const title = movie.title!;
+function buildSelectionPostInput(movie: SelectionMovie) {
   const organizations = [
     ...new Set(
       (movie.nominations ?? []).map(
@@ -246,27 +308,107 @@ async function buildDailyPlan(): Promise<PostPlan> {
   ];
   const availabilityLabels = buildAvailabilityLabels(movie.availability ?? []);
 
-  const postInput = {
-    title,
+  return {
+    title: movie.title!,
     year: movie.year,
     organizations: organizations.slice(0, MAX_TEXT_ORGANIZATIONS),
     availabilityLabels: availabilityLabels.slice(0, MAX_TEXT_AVAILABILITY),
   };
-  const text = buildDailyPostText(postInput);
-  const xText = buildXPostText({
-    ...postInput,
-    url: `${SITE_URL}/movies/${movie.uid}`,
-  });
+}
 
+function buildMovieLink(movie: SelectionMovie, description: string) {
   return {
-    text,
-    xText,
     link: {
       uri: `${SITE_URL}/movies/${movie.uid}`,
-      title: `${title}${movie.year ? ` (${movie.year})` : ''} | SHINE`,
-      description: `『${title}』をいま観られるかをまとめています。`,
+      title: `${movie.title}${movie.year ? ` (${movie.year})` : ''} | SHINE`,
+      description,
     },
     imageUrl: `${SITE_URL}/og/movie.png?id=${movie.uid}`,
+  };
+}
+
+async function buildDailyPlan(): Promise<PostPlan> {
+  const selections = await fetchSelections();
+  const movie = requireSelection(selections, 'daily');
+  const postInput = {
+    ...buildSelectionPostInput(movie),
+    monthlyTitle: selections.monthly?.title,
+  };
+
+  return {
+    text: buildDailyPostText(postInput),
+    xText: buildXPostText({
+      ...postInput,
+      url: `${SITE_URL}/movies/${movie.uid}`,
+    }),
+    ...buildMovieLink(
+      movie,
+      `『${movie.title}』をいま観られるかをまとめています。`,
+    ),
+  };
+}
+
+async function buildMonthlyPlan(): Promise<PostPlan> {
+  const movie = requireSelection(await fetchSelections(), 'monthly');
+  const postInput = buildSelectionPostInput(movie);
+
+  return {
+    text: buildMonthlyPostText(postInput),
+    xText: buildMonthlyXPostText({
+      ...postInput,
+      url: `${SITE_URL}/movies/${movie.uid}`,
+    }),
+    ...buildMovieLink(
+      movie,
+      `今月の1本『${movie.title}』。観られる場所と、観た人の記事・ポストをまとめています。`,
+    ),
+  };
+}
+
+async function buildMonthlyReminderPlan(): Promise<PostPlan> {
+  const movie = requireSelection(await fetchSelections(), 'monthly');
+  const linkTitles = await fetchArticleLinkTitles(movie.uid);
+  const postInput = {
+    ...buildSelectionPostInput(movie),
+    linkCount: linkTitles.length,
+  };
+
+  return {
+    text: buildMonthlyReminderPostText(postInput),
+    xText: buildMonthlyReminderXPostText({
+      ...postInput,
+      url: `${SITE_URL}/movies/${movie.uid}`,
+    }),
+    ...buildMovieLink(
+      movie,
+      `今月の1本『${movie.title}』。観られる場所と、観た人の記事・ポストをまとめています。`,
+    ),
+  };
+}
+
+async function buildMonthlyRoundupPlan(): Promise<PostPlan> {
+  const movie = requireSelection(await fetchSelections(), 'monthly');
+  const [linkTitles, nextTitle] = await Promise.all([
+    fetchArticleLinkTitles(movie.uid),
+    fetchNextMonthlyTitle(),
+  ]);
+  const postInput = {
+    title: movie.title!,
+    year: movie.year,
+    linkTitles,
+    nextTitle,
+  };
+
+  return {
+    text: buildMonthlyRoundupPostText(postInput),
+    xText: buildMonthlyRoundupXPostText({
+      ...postInput,
+      url: `${SITE_URL}/movies/${movie.uid}`,
+    }),
+    ...buildMovieLink(
+      movie,
+      `今月の1本『${movie.title}』に集まった、観た人の記事・ポスト。`,
+    ),
   };
 }
 
@@ -385,6 +527,18 @@ async function buildPlan(): Promise<PostPlan> {
 
   if (process.argv.includes('--person')) {
     return buildPersonPlan();
+  }
+
+  if (process.argv.includes('--monthly')) {
+    return buildMonthlyPlan();
+  }
+
+  if (process.argv.includes('--monthly-reminder')) {
+    return buildMonthlyReminderPlan();
+  }
+
+  if (process.argv.includes('--monthly-roundup')) {
+    return buildMonthlyRoundupPlan();
   }
 
   return buildDailyPlan();
