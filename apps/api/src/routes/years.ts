@@ -14,7 +14,7 @@ const YEARS_CACHE_TTL = 604_800;
 
 yearsRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = 'years:list:v2';
+  const cacheKey = 'years:list:v3';
   const cached = await cache.get(cacheKey);
   const result = (cached?.data as {years: unknown[]} | undefined) ?? {
     years: await new YearsService(c.env).listYears(),
@@ -42,7 +42,7 @@ yearsRoutes.get('/:year', async c => {
   }
 
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = `years:${year}:v2`;
+  const cacheKey = `years:${year}:v3`;
   const cached = await cache.get(cacheKey);
   const detail = cached?.data ?? (await new YearsService(c.env).getYear(year));
 

@@ -241,7 +241,7 @@ moviesRoutes.get('/:id/related', async c => {
         : 6;
 
     const relatedCache = new EdgeCache(undefined, c.env.CACHE_KV);
-    const cacheKey = `movie:${movieId}:related:${locale}:${limit}:v1`;
+    const cacheKey = `movie:${movieId}:related:${locale}:${limit}:v2`;
     const cached = await relatedCache.get(cacheKey);
     if (cached) {
       return c.json(cached.data as Record<string, unknown>, 200, {

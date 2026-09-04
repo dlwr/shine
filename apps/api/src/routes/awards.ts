@@ -16,7 +16,7 @@ const AWARDS_CACHE_TTL = 604_800;
 
 awardsRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = 'awards:list:v19';
+  const cacheKey = 'awards:list:v20';
   const cached = await cache.get(cacheKey);
   const result = (cached?.data as {awards: unknown[]} | undefined) ?? {
     awards: await new AwardsService(c.env).listAwards(),
@@ -48,7 +48,7 @@ awardsRoutes.get('/:slug', async c => {
 
   // ページはキャッシュキーに含めない。利用者入力でキー空間が広がるのを避けるため、
   // 全件を1キーに載せて読み出し後に切り出す
-  const cacheKey = `awards:${slug}:v4`;
+  const cacheKey = `awards:${slug}:v5`;
   const cached = await cache.get(cacheKey);
   const service = new AwardsService(c.env);
   const full =
@@ -89,7 +89,7 @@ awardsRoutes.get('/:slug/:year', async c => {
   }
 
   const slug = c.req.param('slug');
-  const cacheKey = `awards:${slug}:${year}:v1`;
+  const cacheKey = `awards:${slug}:${year}:v2`;
   const cached = await cache.get(cacheKey);
   const award =
     cached?.data ?? (await new AwardsService(c.env).getAwardYear(slug, year));
