@@ -7,14 +7,16 @@ describe('SiteFooter', () => {
   it('日本語ロケールではサイトの説明を日本語で表示する', () => {
     render(<SiteFooter locale="ja" />);
 
-    expect(screen.getByText(/毎日・毎週・毎月それぞれ1本ずつ/)).toBeVisible();
+    expect(
+      screen.getByText(/毎月1本を選び、みんなで同じ映画を観る/),
+    ).toBeVisible();
   });
 
   it('英語ロケールではサイトの説明を英語で表示する', () => {
     render(<SiteFooter locale="en" />);
 
     expect(
-      screen.getByText(/one film a day, a week, and a month/i),
+      screen.getByText(/one film a month .* to watch together/i),
     ).toBeVisible();
   });
 
