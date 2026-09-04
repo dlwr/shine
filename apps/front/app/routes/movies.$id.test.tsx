@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import {render, screen} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import MovieDetail, {action, loader, meta} from './movies.$id';
 import type {Route} from './+types/movies.$id';
@@ -911,8 +912,7 @@ describe('MovieDetail Component', () => {
         />,
       );
 
-      // 記事リンクセクションが表示される
-      expect(screen.getByText('関連記事')).toBeInTheDocument();
+      expect(screen.getByText('観た人の記事・ポスト')).toBeInTheDocument();
 
       // 記事リンクが表示される
       expect(screen.getByText('映画レビュー記事')).toBeInTheDocument();
@@ -957,13 +957,11 @@ describe('MovieDetail Component', () => {
         />,
       );
 
-      // 記事投稿フォームが表示される
-      expect(screen.getByText('記事を投稿する')).toBeInTheDocument();
+      expect(screen.getByText('感想や記事のリンクを貼る')).toBeInTheDocument();
 
-      // フォームの各フィールドが存在する
-      expect(screen.getByLabelText('記事URL')).toBeInTheDocument();
-      expect(screen.getByLabelText('記事タイトル')).toBeInTheDocument();
-      expect(screen.getByLabelText('記事の説明（任意）')).toBeInTheDocument();
+      expect(screen.getByLabelText('URL')).toBeInTheDocument();
+      expect(screen.getByLabelText('タイトル')).toBeInTheDocument();
+      expect(screen.getByLabelText('ひとこと（任意）')).toBeInTheDocument();
 
       // 投稿ボタンが存在する
       expect(
@@ -991,13 +989,125 @@ describe('MovieDetail Component', () => {
         />,
       );
 
-      // 関連記事セクションは表示される
-      expect(screen.getByText('関連記事')).toBeInTheDocument();
-
-      // 空の状態メッセージが表示される
+      expect(screen.getByText('観た人の記事・ポスト')).toBeInTheDocument();
       expect(
-        screen.getByText('まだ関連記事が投稿されていません。'),
+        screen.getByText(
+          'まだ投稿がありません。観たら感想や記事のリンクを貼ってください。',
+        ),
       ).toBeInTheDocument();
+    });
+
+    it('記事・ポストの欄は関連映画より前に出る', () => {
+      const loaderData = createLoaderData({relatedMovies: mockRelatedMovies});
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      const articles = screen.getByText('観た人の記事・ポスト');
+      const related = screen.getByText('関連映画');
+      expect(
+        articles.compareDocumentPosition(related) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('URLの説明文にポストも貼れることを書く', () => {
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.getByLabelText('URL')).toHaveAttribute(
+        'placeholder',
+        'ブログ記事や X・Bluesky のポストの URL',
+      );
+    });
+
+    it('タイトルを取れないXのポストURLはアカウント名からタイトルを埋める', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({ok: false} as Response);
+      const user = userEvent.setup();
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      await user.type(
+        screen.getByLabelText('URL'),
+        'https://x.com/shine_film/status/1234567890',
+      );
+
+      expect(await screen.findByLabelText('タイトル')).toHaveValue(
+        '@shine_film のポスト',
+      );
+    });
+
+    it('タイトルを取れないBlueskyのポストURLはハンドルからタイトルを埋める', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({ok: false} as Response);
+      const user = userEvent.setup();
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      await user.type(
+        screen.getByLabelText('URL'),
+        'https://bsky.app/profile/shine-film.com/post/3kabc',
+      );
+
+      expect(await screen.findByLabelText('タイトル')).toHaveValue(
+        '@shine-film.com のポスト',
+      );
+    });
+
+    it('タイトルを取れない他のURLはホスト名でタイトルを埋める', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({ok: false} as Response);
+      const user = userEvent.setup();
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      await user.type(
+        screen.getByLabelText('URL'),
+        'https://note.com/someone/n/abcdef',
+      );
+
+      expect(await screen.findByLabelText('タイトル')).toHaveValue('note.com');
     });
   });
 

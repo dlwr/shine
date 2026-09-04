@@ -118,12 +118,55 @@ type ArticleLinkFormReturn = {
   ) => void;
   handleCaptchaTokenChange: (token: string) => void;
   isLoadingTitle: boolean;
-  titleError: string;
   submissionResult: SubmissionResult;
 };
 
 function useIsTestMode(): boolean {
   return import.meta.env.MODE === 'test';
+}
+
+async function fetchUrlTitle(
+  apiUrl: string,
+  url: string,
+): Promise<string | undefined> {
+  try {
+    const response = await fetch(`${apiUrl}/fetch-url-title`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({url}),
+    });
+    if (!response.ok) {
+      return undefined;
+    }
+
+    const data = (await response.json()) as {title?: string};
+    return data.title || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function fallbackTitleFromUrl(url: string): string {
+  const {hostname, pathname} = new URL(url);
+  const segments = pathname.split('/').filter(Boolean);
+  if (
+    (hostname === 'x.com' || hostname === 'twitter.com') &&
+    segments[1] === 'status'
+  ) {
+    return `@${segments[0]} のポスト`;
+  }
+
+  if (
+    hostname === 'bsky.app' &&
+    segments[0] === 'profile' &&
+    segments[2] === 'post'
+  ) {
+    return `@${segments[1]} のポスト`;
+  }
+
+  return hostname;
 }
 
 function useArticleLinkForm(
@@ -138,7 +181,6 @@ function useArticleLinkForm(
     captchaToken: isTestMode ? 'test-token' : '',
   });
   const [isLoadingTitle, setIsLoadingTitle] = useState(false);
-  const [titleError, setTitleError] = useState('');
   const submissionResult = actionData as SubmissionResult;
 
   const fetchTitleFromUrl = useCallback(
@@ -154,31 +196,10 @@ function useArticleLinkForm(
       }
 
       setIsLoadingTitle(true);
-      setTitleError('');
-
-      try {
-        const response = await fetch(`${apiUrl}/fetch-url-title`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({url}),
-        });
-
-        if (response.ok) {
-          const data = (await response.json()) as {title?: string};
-          setFormData(previous => ({
-            ...previous,
-            title: data.title ?? '',
-          }));
-        } else {
-          setTitleError('タイトルの取得に失敗しました');
-        }
-      } catch {
-        setTitleError('タイトルの取得中にエラーが発生しました');
-      } finally {
-        setIsLoadingTitle(false);
-      }
+      const title =
+        (await fetchUrlTitle(apiUrl, url)) || fallbackTitleFromUrl(url);
+      setFormData(previous => ({...previous, title}));
+      setIsLoadingTitle(false);
     },
     [apiUrl],
   );
@@ -210,7 +231,6 @@ function useArticleLinkForm(
     handleInputChange,
     handleCaptchaTokenChange,
     isLoadingTitle,
-    titleError,
     submissionResult,
   };
 }
@@ -251,7 +271,6 @@ type ArticleLinksSectionProperties = {
   ) => void;
   handleCaptchaTokenChange: (token: string) => void;
   isLoadingTitle: boolean;
-  titleError: string;
   submissionResult: SubmissionResult;
   turnstileSiteKey?: string;
 };
@@ -263,7 +282,6 @@ function ArticleLinksSection({
   handleInputChange,
   handleCaptchaTokenChange,
   isLoadingTitle,
-  titleError,
   submissionResult,
   turnstileSiteKey,
 }: ArticleLinksSectionProperties) {
@@ -278,7 +296,9 @@ function ArticleLinksSection({
 
   return (
     <section>
-      <p className="font-mono text-xs text-ink-muted mb-3">関連記事</p>
+      <p className="font-mono text-xs text-ink-muted mb-3">
+        観た人の記事・ポスト
+      </p>
 
       {/* 記事リンク一覧 */}
       <div className="space-y-2 mb-6">
@@ -303,14 +323,16 @@ function ArticleLinksSection({
           ))
         ) : (
           <p className="text-ink-muted text-sm">
-            まだ関連記事が投稿されていません。
+            まだ投稿がありません。観たら感想や記事のリンクを貼ってください。
           </p>
         )}
       </div>
 
       {/* 記事投稿フォーム */}
       <div className="border-t border-ink/20 pt-6">
-        <h3 className="text-lg font-medium text-ink mb-4">記事を投稿する</h3>
+        <h3 className="text-lg font-medium text-ink mb-4">
+          感想や記事のリンクを貼る
+        </h3>
 
         {submissionResult?.error && (
           <div className="mb-4 p-3 bg-brand/10 border border-brand text-brand">
@@ -330,7 +352,7 @@ function ArticleLinksSection({
             <label
               htmlFor="url"
               className="block text-sm font-medium text-ink mb-1">
-              記事URL
+              URL
             </label>
             <input
               type="url"
@@ -340,7 +362,7 @@ function ArticleLinksSection({
               onChange={handleInputChange}
               required
               className="w-full px-3 py-2 border-2 border-ink focus:outline-none focus:ring-2 focus:ring-brand"
-              placeholder="https://example.com/article"
+              placeholder="ブログ記事や X・Bluesky のポストの URL"
             />
           </div>
 
@@ -348,7 +370,7 @@ function ArticleLinksSection({
             <label
               htmlFor="title"
               className="block text-sm font-medium text-ink mb-1">
-              記事タイトル
+              タイトル
               {isLoadingTitle && (
                 <span className="ml-2 text-sm text-ink-muted">取得中...</span>
               )}
@@ -362,18 +384,15 @@ function ArticleLinksSection({
               required
               maxLength={200}
               className="w-full px-3 py-2 border-2 border-ink focus:outline-none focus:ring-2 focus:ring-brand"
-              placeholder="記事のタイトルを入力"
+              placeholder="URL から自動で入ります。ポストなら一言でも"
             />
-            {titleError && (
-              <p className="mt-1 text-sm text-brand">{titleError}</p>
-            )}
           </div>
 
           <div>
             <label
               htmlFor="description"
               className="block text-sm font-medium text-ink mb-1">
-              記事の説明（任意）
+              ひとこと（任意）
             </label>
             <textarea
               id="description"
@@ -383,7 +402,7 @@ function ArticleLinksSection({
               maxLength={500}
               rows={3}
               className="w-full px-3 py-2 border-2 border-ink focus:outline-none focus:ring-2 focus:ring-brand"
-              placeholder="記事の簡単な説明を入力（任意）"
+              placeholder="どんな内容か、ひとこと（任意）"
             />
           </div>
 
@@ -687,7 +706,6 @@ export default function MovieDetail({
     handleInputChange,
     handleCaptchaTokenChange,
     isLoadingTitle,
-    titleError,
     submissionResult,
   } = useArticleLinkForm(isTestMode, actionData, apiUrl);
 
@@ -807,6 +825,18 @@ export default function MovieDetail({
           />
         </section>
 
+        {/* Article Links */}
+        <ArticleLinksSection
+          articleLinks={movieDetail.articleLinks}
+          isTestMode={isTestMode}
+          formData={formData}
+          handleInputChange={handleInputChange}
+          handleCaptchaTokenChange={handleCaptchaTokenChange}
+          isLoadingTitle={isLoadingTitle}
+          submissionResult={submissionResult}
+          turnstileSiteKey={turnstileSiteKey}
+        />
+
         {/* Related Movies */}
         {relatedMovies.length > 0 && (
           <section className="mb-8">
@@ -837,18 +867,6 @@ export default function MovieDetail({
           </section>
         )}
 
-        {/* Article Links */}
-        <ArticleLinksSection
-          articleLinks={movieDetail.articleLinks}
-          isTestMode={isTestMode}
-          formData={formData}
-          handleInputChange={handleInputChange}
-          handleCaptchaTokenChange={handleCaptchaTokenChange}
-          isLoadingTitle={isLoadingTitle}
-          titleError={titleError}
-          submissionResult={submissionResult}
-          turnstileSiteKey={turnstileSiteKey}
-        />
         <SiteFooter locale={locale} />
       </div>
     </div>
