@@ -45,13 +45,35 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   });
 }
 
+type MonthlyPick = {uid: string; title: string; year: number};
+
+async function fetchMonthlyPick(
+  apiUrl: string,
+  signal: AbortSignal,
+): Promise<MonthlyPick | undefined> {
+  try {
+    const response = await fetch(`${apiUrl}/?locale=ja`, {signal});
+    if (!response.ok) {
+      return undefined;
+    }
+
+    const {monthly} = (await response.json()) as {monthly?: MonthlyPick};
+    return monthly
+      ? {uid: monthly.uid, title: monthly.title, year: monthly.year}
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
   const apiUrl = resolveApiUrl(context);
 
-  const [dailyResponse, candidatesResponse] = await Promise.all([
+  const [dailyResponse, candidatesResponse, monthly] = await Promise.all([
     fetch(`${apiUrl}/quiz/daily`, {signal: request.signal}),
     fetch(`${apiUrl}/quiz/candidates`, {signal: request.signal}),
+    fetchMonthlyPick(apiUrl, request.signal),
   ]);
 
   if (!dailyResponse.ok || !candidatesResponse.ok) {
@@ -67,7 +89,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
     candidates: QuizCandidate[];
   };
 
-  return {puzzle, candidates, apiUrl, locale};
+  return {puzzle, candidates, apiUrl, locale, monthly};
 }
 
 function readStorage<T>(key: string): T | undefined {
@@ -88,7 +110,8 @@ function writeStorage(key: string, value: unknown): void {
 }
 
 export default function QuizPage({loaderData}: Route.ComponentProps) {
-  const {puzzle, candidates, apiUrl} = loaderData as {
+  const {puzzle, candidates, apiUrl, monthly} = loaderData as {
+    monthly?: MonthlyPick;
     puzzle: {date: string; maxAttempts: number; poolSize: number};
     candidates: QuizCandidate[];
     apiUrl: string;
@@ -279,6 +302,19 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
                 <p className="font-mono text-[10px] text-ink-muted mt-3">
                   次の問題は明日9時に出ます
                 </p>
+                {monthly && (
+                  <p className="font-display font-bold text-sm leading-snug mt-4 pt-3 border-t-2 border-ink">
+                    今月の1本は{' '}
+                    <a
+                      href={`/movies/${monthly.uid}`}
+                      className="text-ink underline">
+                      {monthly.title}
+                    </a>
+                    <span className="font-mono text-xs text-ink-muted ml-2">
+                      {monthly.year}
+                    </span>
+                  </p>
+                )}
               </div>
             ) : (
               <div>
