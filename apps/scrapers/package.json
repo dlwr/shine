@@ -50,6 +50,7 @@
     "fix-default-translations": "tsx src/fix-default-translations-cli.ts",
     "fix-original-languages": "tsx src/fix-original-languages-cli.ts",
     "fix-poster-contamination": "tsx src/fix-poster-contamination-cli.ts",
+    "fix-japanese-title-contamination": "tsx src/fix-japanese-title-contamination-cli.ts",
     "sns-post": "tsx src/sns-post-cli.ts",
     "turso-usage-alert": "tsx src/turso-usage-alert-cli.ts"
   },

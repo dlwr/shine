@@ -53,6 +53,7 @@
     "scrapers:fix-default-translations": "pnpm --filter @shine/scrapers run fix-default-translations",
     "scrapers:fix-original-languages": "pnpm --filter @shine/scrapers run fix-original-languages",
     "scrapers:fix-poster-contamination": "pnpm --filter @shine/scrapers run fix-poster-contamination",
+    "scrapers:fix-japanese-title-contamination": "pnpm --filter @shine/scrapers run fix-japanese-title-contamination",
     "scrapers:movie-import": "pnpm --filter @shine/scrapers run movie-import",
     "scrapers:import-imdb-list": "pnpm --filter @shine/scrapers run import-imdb-list",
     "scrapers:availability-check": "pnpm --filter @shine/scrapers run availability-check",
