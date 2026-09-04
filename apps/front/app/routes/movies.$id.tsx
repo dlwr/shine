@@ -295,7 +295,7 @@ function ArticleLinksSection({
     (isCaptchaRequired && formData.captchaToken === '');
 
   return (
-    <section>
+    <section id="article-links">
       <p className="font-mono text-xs text-ink-muted mb-3">
         観た人の記事・ポスト
       </p>

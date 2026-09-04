@@ -9,8 +9,8 @@ function today(): string {
 }
 
 const TAGLINES = {
-  ja: ['毎日1本、埋もれた映画に', '光を当てる'],
-  en: ['A FORGOTTEN FILM,', 'EVERY DAY'],
+  ja: ['毎月1本、みんなで', '同じ映画を観る'],
+  en: ['ONE FILM A MONTH,', 'WATCHED TOGETHER'],
 } as const;
 
 const NAV_LINKS = [

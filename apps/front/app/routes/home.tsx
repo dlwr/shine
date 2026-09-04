@@ -11,17 +11,21 @@ import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {resolveMovieTitle} from '@/lib/movie-title';
 import {FilmCard} from '@/components/editorial/film-card';
 import type {FilmCardMovie} from '@/components/editorial/film-card';
+import {
+  MonthlyPick,
+  type MonthlyPickMovie,
+} from '@/components/editorial/monthly-pick';
 import {apiFetch, resolveApiUrl} from '@/lib/api';
 
 type HighlightedMovies = {
   daily?: FilmCardMovie;
   weekly?: FilmCardMovie;
-  monthly?: FilmCardMovie;
+  monthly?: MonthlyPickMovie;
 };
 
 type PeriodType = keyof HighlightedMovies;
 
-const SELECTION_PERIODS: PeriodType[] = ['daily', 'weekly', 'monthly'];
+const SECONDARY_PERIODS: PeriodType[] = ['daily', 'weekly'];
 
 type SearchMovie = {
   uid: string;
@@ -66,7 +70,7 @@ type MoviesLabels = {
 
 const HOME_COPY = {
   ja: {
-    title: 'SHINE — 毎日1本、埋もれた映画に光を当てる',
+    title: 'SHINE — 毎月1本、みんなで同じ映画を観る',
     description:
       'カンヌ・アカデミー賞・日本アカデミー賞などの受賞作や名作リストから、毎日・毎週・毎月1本ずつ映画を選びます。いま配信やレンタルで観られるかも一緒に。',
   },
@@ -611,9 +615,84 @@ function Movies({
       : 'No movie selected yet.';
 
   const periodLabels: Record<PeriodType, string> = {
-    daily: locale === 'ja' ? 'DAILY / 日替わり' : 'DAILY',
-    weekly: locale === 'ja' ? 'WEEKLY / 週替わり' : 'WEEKLY',
-    monthly: locale === 'ja' ? 'MONTHLY / 月替わり' : 'MONTHLY',
+    daily: 'DAILY',
+    weekly: 'WEEKLY',
+    monthly: 'MONTHLY',
+  };
+
+  const renderAdminControls = (period: PeriodType) => {
+    if (!adminToken) {
+      return;
+    }
+
+    const movie = movies?.[period];
+    // eslint-disable-next-line unicorn/no-computed-property-existence-check -- 存在ではなく値の真偽を見ている
+    const isLoading = Boolean(actionLoading[period]);
+    // eslint-disable-next-line unicorn/no-computed-property-existence-check -- 存在ではなく値の真偽を見ている
+    const isSearchVisible = Boolean(searchOpen[period]);
+
+    return (
+      <div className="flex flex-col gap-2">
+        {movie && (
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="w-full border-2 border-ink font-mono text-xs">
+            <a href={`/admin/movies/${movie.uid}`}>{labels.edit}</a>
+          </Button>
+        )}
+        <Button
+          className="w-full border-2 border-ink font-mono text-xs"
+          size="sm"
+          onClick={() => {
+            void handleReselect(period);
+          }}
+          disabled={isLoading}>
+          {isLoading ? (
+            <div className="flex items-center justify-center">
+              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ink border-t-transparent mr-2" />
+              {processingLabel}
+            </div>
+          ) : (
+            labels.reselect
+          )}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full border-2 border-ink font-mono text-xs"
+          onClick={() => {
+            setSearchOpen(previous => ({
+              ...previous,
+              [period]: !isSearchVisible,
+            }));
+          }}
+          disabled={isLoading}>
+          {isSearchVisible ? closeSearchLabel : manualSetLabel}
+        </Button>
+        {isSearchVisible && (
+          <div className="mt-2">
+            <ManualSelectionPanel
+              period={period}
+              locale={locale}
+              apiUrl={apiUrl}
+              onClose={() => {
+                setSearchOpen(previous => ({
+                  ...previous,
+                  [period]: false,
+                }));
+              }}
+              onOverrideSuccess={() => handleOverrideSuccess(period)}
+              onOverrideLoadingChange={value =>
+                handleOverrideLoadingChange(period, value)
+              }
+              isParentLoading={isLoading}
+            />
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -635,93 +714,34 @@ function Movies({
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {SELECTION_PERIODS.map((period, index) => {
+      <div className="flex flex-col gap-2 anim-rise anim-rise-1">
+        {movies?.monthly ? (
+          <MonthlyPick movie={movies.monthly} locale={locale} />
+        ) : (
+          <p className="text-sm text-ink/50 font-mono">{noMovieLabel}</p>
+        )}
+        {renderAdminControls('monthly')}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        {SECONDARY_PERIODS.map((period, index) => {
           const movie = movies?.[period];
-          // eslint-disable-next-line unicorn/no-computed-property-existence-check -- 存在ではなく値の真偽を見ている
-          const isLoading = Boolean(actionLoading[period]);
-          // eslint-disable-next-line unicorn/no-computed-property-existence-check -- 存在ではなく値の真偽を見ている
-          const isSearchVisible = Boolean(searchOpen[period]);
-          const animClass = `anim-rise anim-rise-${index + 1}`;
 
           return (
-            <div key={period} className={`flex flex-col gap-2 ${animClass}`}>
+            <div
+              key={period}
+              className={`flex flex-col gap-2 anim-rise anim-rise-${index + 2}`}>
               {movie ? (
                 <FilmCard
                   movie={movie}
-                  variant="hero"
+                  variant="compact"
                   locale={locale}
                   label={periodLabels[period]}
-                  index={`NO.00${index + 1}`}
-                  priority
                 />
               ) : (
                 <p className="text-sm text-ink/50 font-mono">{noMovieLabel}</p>
               )}
-
-              {adminToken && (
-                <div className="flex flex-col gap-2">
-                  {movie && (
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="w-full border-2 border-ink font-mono text-xs">
-                      <a href={`/admin/movies/${movie.uid}`}>{labels.edit}</a>
-                    </Button>
-                  )}
-                  <Button
-                    className="w-full border-2 border-ink font-mono text-xs"
-                    size="sm"
-                    onClick={() => {
-                      void handleReselect(period);
-                    }}
-                    disabled={isLoading}>
-                    {isLoading ? (
-                      <div className="flex items-center justify-center">
-                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ink border-t-transparent mr-2" />
-                        {processingLabel}
-                      </div>
-                    ) : (
-                      labels.reselect
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full border-2 border-ink font-mono text-xs"
-                    onClick={() => {
-                      setSearchOpen(previous => ({
-                        ...previous,
-                        [period]: !isSearchVisible,
-                      }));
-                    }}
-                    disabled={isLoading}>
-                    {isSearchVisible ? closeSearchLabel : manualSetLabel}
-                  </Button>
-                </div>
-              )}
-
-              {adminToken && isSearchVisible && (
-                <div className="mt-2">
-                  <ManualSelectionPanel
-                    period={period}
-                    locale={locale}
-                    apiUrl={apiUrl}
-                    onClose={() => {
-                      setSearchOpen(previous => ({
-                        ...previous,
-                        [period]: false,
-                      }));
-                    }}
-                    onOverrideSuccess={() => handleOverrideSuccess(period)}
-                    onOverrideLoadingChange={value =>
-                      handleOverrideLoadingChange(period, value)
-                    }
-                    isParentLoading={isLoading}
-                  />
-                </div>
-              )}
+              {renderAdminControls(period)}
             </div>
           );
         })}

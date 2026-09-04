@@ -204,7 +204,7 @@ describe('Home Component', () => {
   describe('meta', () => {
     it('日本語ロケールでは日本語のタイトルを返す', () => {
       expect(meta(createMetaArguments('ja'))).toContainEqual({
-        title: 'SHINE — 毎日1本、埋もれた映画に光を当てる',
+        title: 'SHINE — 毎月1本、みんなで同じ映画を観る',
       });
     });
 
@@ -266,8 +266,81 @@ describe('Home Component', () => {
       );
 
       expect(
-        screen.getByText(/毎日・毎週・毎月それぞれ1本ずつ/),
+        screen.getByText(/毎月1本を選び、みんなで同じ映画を観る/),
       ).toBeInTheDocument();
+    });
+
+    it('月替わりを「今月の1本」として日替わりより先に出す', () => {
+      const loaderData =
+        cast<ComponentProperties['loaderData']>(createLoaderData());
+
+      render(
+        <Home
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={createParameters()}
+          matches={createMatches(loaderData)}
+        />,
+      );
+
+      expect(screen.getByText(/今月の1本/)).toBeInTheDocument();
+      const monthly = screen.getByText('月間映画');
+      const daily = screen.getByText('テスト映画');
+      expect(
+        monthly.compareDocumentPosition(daily) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('第一画面で「毎月1本、みんなで同じ映画を観る」と伝える', () => {
+      const loaderData =
+        cast<ComponentProperties['loaderData']>(createLoaderData());
+
+      render(
+        <Home
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={createParameters()}
+          matches={createMatches(loaderData)}
+        />,
+      );
+
+      expect(
+        screen.getByText('毎月1本、みんなで同じ映画を観る'),
+      ).toBeInTheDocument();
+    });
+
+    it('月替わりに投稿された記事・ポストを出す', () => {
+      const loaderData = cast<ComponentProperties['loaderData']>(
+        createLoaderData({
+          movies: {
+            ...mockMovies,
+            monthly: {
+              ...mockMovies.monthly,
+              articleLinks: [
+                {
+                  uid: 'link-1',
+                  url: 'https://x.com/someone/status/1',
+                  title: '@someone のポスト',
+                },
+              ],
+            },
+          },
+        }),
+      );
+
+      render(
+        <Home
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={createParameters()}
+          matches={createMatches(loaderData)}
+        />,
+      );
+
+      expect(
+        screen.getByRole('link', {name: '@someone のポスト'}),
+      ).toHaveAttribute('href', 'https://x.com/someone/status/1');
     });
 
     it('h1 に SHINE が表示される', () => {
@@ -370,7 +443,7 @@ describe('Home Component', () => {
 
         const editLinks = await screen.findAllByRole('link', {name: '編集'});
         expect(editLinks).toHaveLength(3);
-        expect(editLinks[0]).toHaveAttribute('href', '/admin/movies/movie-1');
+        expect(editLinks[0]).toHaveAttribute('href', '/admin/movies/movie-3');
       } finally {
         localStorage.removeItem('adminToken');
       }
