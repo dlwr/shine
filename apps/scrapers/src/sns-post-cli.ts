@@ -622,8 +622,10 @@ async function main() {
   }
 
   const errors: Error[] = [];
+  let isPosted = false;
   try {
     await postToBluesky(plan.text, plan.imageUrl, plan.link);
+    isPosted = true;
   } catch (error) {
     errors.push(error as Error);
     console.error('Bluesky: 投稿に失敗しました:', error);
@@ -631,16 +633,20 @@ async function main() {
 
   try {
     await postToX(plan.xText);
+    isPosted = true;
   } catch (error) {
     errors.push(error as Error);
     console.error('X: 投稿に失敗しました:', error);
   }
 
+  // 片方でも出ていれば記録する(次の実行で同じ投稿をもう一度出さないため)
+  if (isPosted) {
+    await plan.afterPost?.();
+  }
+
   if (errors.length > 0) {
     throw new AggregateError(errors, `${errors.length}件の投稿が失敗しました`);
   }
-
-  await plan.afterPost?.();
 }
 
 try {
