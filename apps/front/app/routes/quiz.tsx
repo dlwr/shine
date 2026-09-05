@@ -23,6 +23,15 @@ import {
 
 const SUGGESTION_LIMIT = 8;
 
+function buildShareUrls(text: string): {x: string; bluesky: string} {
+  const encoded = encodeURIComponent(text);
+
+  return {
+    x: `https://x.com/intent/post?text=${encoded}`,
+    bluesky: `https://bsky.app/intent/compose?text=${encoded}`,
+  };
+}
+
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {locale, puzzle} = loaderData as {
     locale?: Locale;
@@ -206,6 +215,7 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
   }
 
   const streak = streakOf(history, puzzle.date);
+  const shareUrls = buildShareUrls(shareText(game, puzzle.maxAttempts));
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -293,12 +303,28 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
                     </span>
                   ) : undefined}
                 </p>
-                <button
-                  type="button"
-                  onClick={copyShareText}
-                  className="mt-4 font-mono text-xs font-bold bg-brand text-brand-on px-3 py-1.5 border-2 border-ink shadow-[3px_3px_0_var(--ink)]">
-                  {copied ? 'コピーしました' : '結果をコピー'}
-                </button>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={copyShareText}
+                    className="font-mono text-xs font-bold bg-brand text-brand-on px-3 py-1.5 border-2 border-ink shadow-[3px_3px_0_var(--ink)]">
+                    {copied ? 'コピーしました' : '結果をコピー'}
+                  </button>
+                  <a
+                    href={shareUrls.x}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-xs font-bold px-3 py-1.5 border-2 border-ink text-ink hover:bg-ink hover:text-surface transition-colors">
+                    X に投稿
+                  </a>
+                  <a
+                    href={shareUrls.bluesky}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-xs font-bold px-3 py-1.5 border-2 border-ink text-ink hover:bg-ink hover:text-surface transition-colors">
+                    Bluesky に投稿
+                  </a>
+                </div>
                 <p className="font-mono text-[10px] text-ink-muted mt-3">
                   次の問題は明日9時に出ます
                 </p>
