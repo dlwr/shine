@@ -432,15 +432,19 @@ moviesRoutes.post('/:id/article-links', async c => {
       captchaToken: rawCaptchaToken,
     } = await c.req.json();
 
-    if (!rawUrl || !rawTitle) {
-      return c.json({error: 'URL and title are required'}, 400);
+    if (!rawUrl && !rawDescription) {
+      return c.json({error: 'URL or description is required'}, 400);
+    }
+
+    if (rawUrl && !rawTitle) {
+      return c.json({error: 'Title is required when URL is given'}, 400);
     }
 
     if (!rawCaptchaToken) {
       return c.json({error: 'Captcha token is required'}, 400);
     }
 
-    if (rawTitle.length > 200) {
+    if (rawTitle && rawTitle.length > 200) {
       return c.json({error: 'Title too long'}, 400);
     }
 
@@ -448,8 +452,8 @@ moviesRoutes.post('/:id/article-links', async c => {
       return c.json({error: 'Description too long'}, 400);
     }
 
-    const url = sanitizeUrl(rawUrl);
-    const title = sanitizeText(rawTitle);
+    const url = rawUrl ? sanitizeUrl(rawUrl) : undefined;
+    const title = rawUrl && rawTitle ? sanitizeText(rawTitle) : undefined;
     const description = rawDescription
       ? sanitizeText(rawDescription)
       : undefined;
@@ -536,7 +540,7 @@ moviesRoutes.post('/:id/article-links', async c => {
       .values({
         movieUid: movieId,
         url,
-        title: title.slice(0, 200), // Limit title length
+        title: title?.slice(0, 200),
         description: description ? description.slice(0, 500) : undefined,
         submitterIp: ip,
       })

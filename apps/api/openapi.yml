@@ -3079,21 +3079,19 @@ components:
         url:
           type: string
           format: uri
-          description: Article URL
+          description: Article URL. Absent for comment-only submissions
         title:
           type: string
-          description: Article title
+          description: Article title. Absent for comment-only submissions
         description:
           type: [string, 'null']
-          description: Article description
+          description: Comment
         submittedAt:
           type: string
           format: date-time
           description: Submission timestamp
       required:
         - uid
-        - url
-        - title
         - submittedAt
 
     MovieSelections:
@@ -3509,21 +3507,19 @@ components:
         url:
           type: string
           format: uri
-          description: Article URL
+          description: Article URL. Required unless description is given
         title:
           type: string
           maxLength: 200
-          description: Article title
+          description: Article title. Required when url is given
         description:
           type: [string, 'null']
           maxLength: 500
-          description: Article description
+          description: Comment. Required unless url is given
         captchaToken:
           type: string
           description: Turnstile captcha response token
       required:
-        - url
-        - title
         - captchaToken
 
     ArticleLinkResponse:
