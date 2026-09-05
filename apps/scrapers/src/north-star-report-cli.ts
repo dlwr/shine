@@ -5,13 +5,13 @@
  */
 import process from 'node:process';
 import {getDatabase} from '@shine/database';
+import {parseOriginRules} from '@shine/utils';
 import {sendDiscordNotification} from './availability/discord';
 import {loadScraperEnvironment} from './common/environment';
 import {
   collectMonthlyLinkCounts,
   DEFAULT_MONTHS,
   formatNorthStarReport,
-  parseOriginRules,
 } from './north-star';
 
 const arguments_ = process.argv.slice(2);

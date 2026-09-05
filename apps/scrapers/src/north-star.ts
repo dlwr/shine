@@ -1,5 +1,6 @@
 import {and, desc, eq, inArray, isNull, lt} from 'drizzle-orm';
 import {type getDatabase} from '@shine/database';
+import {classifySubmission, type OriginRules} from '@shine/utils';
 import {articleLinks} from '@shine/database/schema/article-links';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
@@ -7,17 +8,7 @@ import {translations} from '@shine/database/schema/translations';
 
 type DatabaseClient = ReturnType<typeof getDatabase>;
 
-export const DEFAULT_OWNER_URL_PREFIXES = ['https://scrapbox.io/yuta25/'];
 export const DEFAULT_MONTHS = 12;
-
-const LOOPBACK_IPS = new Set(['127.0.0.1', '::1', 'localhost']);
-
-export type SubmissionOrigin = 'owner' | 'test' | 'other';
-
-export type OriginRules = {
-  ownerUrlPrefixes: string[];
-  ownerIps: string[];
-};
 
 export type MonthlyLinkCount = {
   month: string;
@@ -26,52 +17,6 @@ export type MonthlyLinkCount = {
   owner: number;
   test: number;
 };
-
-function parseList(value: string | undefined): string[] {
-  return (value ?? '')
-    .split(',')
-    .map(item => item.trim())
-    .filter(Boolean);
-}
-
-export function parseOriginRules(source: {
-  NORTH_STAR_OWNER_URL_PREFIXES?: string;
-  NORTH_STAR_OWNER_IPS?: string;
-}): OriginRules {
-  const prefixes = parseList(source.NORTH_STAR_OWNER_URL_PREFIXES);
-
-  return {
-    ownerUrlPrefixes:
-      prefixes.length > 0 ? prefixes : [...DEFAULT_OWNER_URL_PREFIXES],
-    ownerIps: parseList(source.NORTH_STAR_OWNER_IPS),
-  };
-}
-
-export function classifySubmission(
-  link: {
-    url?: string | undefined | null;
-    submitterIp?: string | undefined | null;
-  },
-  rules: OriginRules,
-): SubmissionOrigin {
-  const ip = link.submitterIp ?? '';
-
-  if (rules.ownerIps.includes(ip)) {
-    return 'owner';
-  }
-
-  const url = link.url ?? '';
-
-  if (url && rules.ownerUrlPrefixes.some(prefix => url.startsWith(prefix))) {
-    return 'owner';
-  }
-
-  if (LOOPBACK_IPS.has(ip)) {
-    return 'test';
-  }
-
-  return 'other';
-}
 
 function monthStart(month: string): Date {
   return new Date(`${month}-01T00:00:00+09:00`);
