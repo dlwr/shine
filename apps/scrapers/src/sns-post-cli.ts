@@ -128,28 +128,33 @@ async function fetchNextMonthlyTitle(): Promise<string | undefined> {
     return undefined;
   }
 
-  const loginResponse = await fetch(`${API_URL}/auth/login`, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json', Origin: SITE_URL},
-    body: JSON.stringify({password}),
-  });
-  if (!loginResponse.ok) {
-    throw new Error(`Admin login failed: HTTP ${loginResponse.status}`);
-  }
+  try {
+    const loginResponse = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', Origin: SITE_URL},
+      body: JSON.stringify({password}),
+    });
+    if (!loginResponse.ok) {
+      throw new Error(`Admin login failed: HTTP ${loginResponse.status}`);
+    }
 
-  const {token} = (await loginResponse.json()) as {token: string};
-  const response = await fetch(
-    `${API_URL}/admin/preview-selections?locale=ja`,
-    {headers: {Authorization: `Bearer ${token}`, Origin: SITE_URL}},
-  );
-  if (!response.ok) {
-    throw new Error(`Preview selections API failed: HTTP ${response.status}`);
-  }
+    const {token} = (await loginResponse.json()) as {token: string};
+    const response = await fetch(
+      `${API_URL}/admin/preview-selections?locale=ja`,
+      {headers: {Authorization: `Bearer ${token}`, Origin: SITE_URL}},
+    );
+    if (!response.ok) {
+      throw new Error(`Preview selections API failed: HTTP ${response.status}`);
+    }
 
-  const {nextMonthly} = (await response.json()) as {
-    nextMonthly?: {movie?: {title?: string}};
-  };
-  return nextMonthly?.movie?.title;
+    const {nextMonthly} = (await response.json()) as {
+      nextMonthly?: {movie?: {title?: string}};
+    };
+    return nextMonthly?.movie?.title;
+  } catch (error) {
+    console.log('来月の1本が取れないため予告を省きます:', error);
+    return undefined;
+  }
 }
 
 async function fetchQuizPuzzle(): Promise<{date: string; poolSize: number}> {
