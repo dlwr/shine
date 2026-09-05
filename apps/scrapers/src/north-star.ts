@@ -48,7 +48,10 @@ export function parseOriginRules(source: {
 }
 
 export function classifySubmission(
-  link: {url: string; submitterIp?: string | undefined | null},
+  link: {
+    url?: string | undefined | null;
+    submitterIp?: string | undefined | null;
+  },
   rules: OriginRules,
 ): SubmissionOrigin {
   const ip = link.submitterIp ?? '';
@@ -57,10 +60,9 @@ export function classifySubmission(
     return 'owner';
   }
 
-  if (
-    link.url &&
-    rules.ownerUrlPrefixes.some(prefix => link.url.startsWith(prefix))
-  ) {
+  const url = link.url ?? '';
+
+  if (url && rules.ownerUrlPrefixes.some(prefix => url.startsWith(prefix))) {
     return 'owner';
   }
 

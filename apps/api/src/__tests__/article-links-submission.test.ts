@@ -100,7 +100,7 @@ describe('POST /movies/:id/article-links', () => {
   });
 
   it('空白だけのひとことは投稿として受け付けない', async () => {
-    const response = await submit({description: '   '});
+    const response = await submit({description: ' '.repeat(3)});
 
     expect(response.status).toBe(400);
   });
