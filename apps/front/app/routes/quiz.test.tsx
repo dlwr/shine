@@ -241,6 +241,62 @@ describe('Quiz page', () => {
       expect(screen.getByText(/今月の1本/)).toBeInTheDocument();
     });
 
+    it('答えが出たら X に結果を投稿するリンクを出す', async () => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          correct: true,
+          answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+        }),
+      } as Response);
+
+      render(<QuizPage {...createComponentProperties()} />);
+      await userEvent.type(screen.getByLabelText(/邦題で回答/), '赤ひげ');
+      await userEvent.click(
+        await screen.findByRole('button', {name: /赤ひげ/}),
+      );
+
+      const link = await screen.findByRole('link', {name: 'X に投稿'});
+      const href = link.getAttribute('href');
+
+      expect(href).toContain('https://x.com/intent/post?text=');
+      expect(href).toContain(
+        encodeURIComponent(`https://shine-film.com/quiz?d=${PUZZLE.date}`),
+      );
+      expect(href).toContain(encodeURIComponent('SHINE QUIZ'));
+    });
+
+    it('答えが出たら Bluesky に結果を投稿するリンクを出す', async () => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          correct: true,
+          answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+        }),
+      } as Response);
+
+      render(<QuizPage {...createComponentProperties()} />);
+      await userEvent.type(screen.getByLabelText(/邦題で回答/), '赤ひげ');
+      await userEvent.click(
+        await screen.findByRole('button', {name: /赤ひげ/}),
+      );
+
+      expect(
+        await screen.findByRole('link', {name: 'Bluesky に投稿'}),
+      ).toHaveAttribute(
+        'href',
+        expect.stringContaining('https://bsky.app/intent/compose?text='),
+      );
+    });
+
+    it('遊んでいる途中は投稿するリンクを出さない', () => {
+      render(<QuizPage {...createComponentProperties()} />);
+
+      expect(
+        screen.queryByRole('link', {name: 'X に投稿'}),
+      ).not.toBeInTheDocument();
+    });
+
     it('今月の1本が無ければ誘わない', async () => {
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
