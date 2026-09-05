@@ -557,6 +557,12 @@ describe('buildMonthlyRoundupPostText', () => {
     expect(text).not.toContain('来月の1本');
   });
 
+  const longLinkTitles = [
+    '『ハウスメイド』を観て、住み込みで働くということ、雇う側と雇われる側のあいだにある距離について考えたこと',
+    'ハウスメイド 感想 — 階段のある家がそのまま階級の図になっていて、上下の移動がぜんぶ物語に見えてくる話',
+    '2010年のベスト映画をふりかえる（後編）ハウスメイド・冬の小鳥・息もできない・ほか10本をまとめて',
+  ];
+
   it('X の本文は裸の URL で終わる', () => {
     const text = buildMonthlyRoundupXPostText({
       ...roundup,
@@ -564,5 +570,15 @@ describe('buildMonthlyRoundupPostText', () => {
     });
 
     expect(text).toMatch(/shine-film\.com\/movies\/abc$/);
+  });
+
+  it('X もタイトルが長くて切り詰められたら予告を残す', () => {
+    const text = buildMonthlyRoundupXPostText({
+      ...roundup,
+      linkTitles: longLinkTitles,
+      url: 'https://shine-film.com/movies/abc',
+    });
+
+    expect(text).toContain('来月の1本は『浮雲』。明日から。');
   });
 });

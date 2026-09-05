@@ -121,9 +121,6 @@ function buildMonthlyRoundupBody({
     linkTitles.length > 0
       ? [
           `今月の1本${formatTitle(title, year)}、観た人の記事・ポストは${linkTitles.length}件`,
-          ...linkTitles
-            .slice(0, MAX_ROUNDUP_TITLES)
-            .map(linkTitle => `・${linkTitle}`),
         ]
       : [
           `今月の1本${formatTitle(title, year)}、観た人の記事・ポストはまだありません。`,
@@ -132,6 +129,12 @@ function buildMonthlyRoundupBody({
   if (nextTitle) {
     lines.push(`来月の1本は『${nextTitle}』。明日から。`);
   }
+
+  lines.push(
+    ...linkTitles
+      .slice(0, MAX_ROUNDUP_TITLES)
+      .map(linkTitle => `・${linkTitle}`),
+  );
 
   return lines.join('\n');
 }
