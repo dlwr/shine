@@ -19,6 +19,7 @@ export const articleLinks = sqliteTable(
       .notNull()
       .$default(() => new Date()),
     submitterIp: text('submitter_ip'),
+    announcedAt: integer('announced_at', {mode: 'timestamp'}),
     isSpam: integer('is_spam', {mode: 'boolean'}).notNull().default(false),
     isFlagged: integer('is_flagged', {mode: 'boolean'})
       .notNull()
