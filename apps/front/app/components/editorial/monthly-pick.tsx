@@ -6,7 +6,12 @@ import {selectBestPoster} from '@/lib/poster';
 import {resolveMovieTitle} from '@/lib/movie-title';
 
 export type MonthlyPickMovie = FilmCardMovie & {
-  articleLinks?: Array<{uid: string; url: string; title: string}>;
+  articleLinks?: Array<{
+    uid: string;
+    url?: string;
+    title?: string;
+    description?: string;
+  }>;
 };
 
 const COPY = {
@@ -93,13 +98,19 @@ export function MonthlyPick({
               <ul className="flex flex-col gap-1.5 list-none p-0 m-0">
                 {links.map(link => (
                   <li key={link.uid}>
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-display font-bold text-sm text-ink underline break-words">
-                      {link.title}
-                    </a>
+                    {link.url ? (
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-display font-bold text-sm text-ink underline break-words">
+                        {link.title ?? link.url}
+                      </a>
+                    ) : (
+                      <p className="text-sm text-ink break-words">
+                        {link.description}
+                      </p>
+                    )}
                   </li>
                 ))}
               </ul>

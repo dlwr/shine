@@ -4,8 +4,8 @@ import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
 
 type ArticleLink = {
   uid: string;
-  url: string;
-  title: string;
+  url?: string;
+  title?: string;
   description?: string;
   isSpam: boolean;
 };
@@ -127,13 +127,17 @@ export default function ArticleLinkManager<
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <h3 className="font-medium text-gray-900 mb-1">
-                    <a
-                      href={article.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800">
-                      {article.title}
-                    </a>
+                    {article.url ? (
+                      <a
+                        href={article.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800">
+                        {article.title ?? article.url}
+                      </a>
+                    ) : (
+                      <span>{article.description}</span>
+                    )}
                     {article.isSpam && (
                       <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
                         スパム
@@ -145,7 +149,9 @@ export default function ArticleLinkManager<
                       {article.description}
                     </p>
                   )}
-                  <p className="text-xs text-gray-500">URL: {article.url}</p>
+                  {article.url && (
+                    <p className="text-xs text-gray-500">URL: {article.url}</p>
+                  )}
                 </div>
                 <div className="flex items-center space-x-2 ml-4">
                   {!article.isSpam && (
