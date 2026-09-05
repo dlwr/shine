@@ -12,8 +12,8 @@ export const articleLinks = sqliteTable(
     movieUid: text('movie_uid')
       .notNull()
       .references(() => movies.uid, {onDelete: 'cascade'}),
-    url: text('url').notNull(),
-    title: text('title').notNull(),
+    url: text('url'),
+    title: text('title'),
     description: text('description'),
     submittedAt: integer('submitted_at', {mode: 'timestamp'})
       .notNull()
