@@ -20,7 +20,21 @@ type Badge = {
   label: string;
   title?: string;
   href?: string;
+  form?: {action: string; charset: string; field: string; value: string};
 };
+
+const RENTAL_FORMS = {
+  discas: {
+    action: 'https://movie-tsutaya.tsite.jp/netdvd/dvd/searchDvdBd.do',
+    charset: 'Shift_JIS',
+    field: 'k',
+  },
+  geo: {
+    action: 'https://rental.geo-online.co.jp/search2/',
+    charset: 'euc-jp',
+    field: 'q',
+  },
+} as const;
 
 function watchHref(target: WatchTarget, service?: string): string | undefined {
   if (!target.movieTitle) {
@@ -100,16 +114,22 @@ export function buildBadges(
     });
   }
 
+  const hasDiscas = availability.some(entry => entry.source === 'discas');
   const rentalLabels = [
-    availability.some(entry => entry.source === 'discas')
-      ? 'TSUTAYA DISCAS'
-      : undefined,
+    hasDiscas ? 'TSUTAYA DISCAS' : undefined,
     availability.some(entry => entry.source === 'geo')
       ? 'ゲオ宅配レンタル'
       : undefined,
   ].filter(label => label !== undefined);
   if (rentalLabels.length > 0) {
-    badges.push({label: '宅配レンタル', title: rentalLabels.join(' / ')});
+    const rentalForm = hasDiscas ? RENTAL_FORMS.discas : RENTAL_FORMS.geo;
+    badges.push({
+      label: '宅配レンタル',
+      title: rentalLabels.join(' / '),
+      form: target.movieTitle
+        ? {...rentalForm, value: target.movieTitle}
+        : undefined,
+    });
   }
 
   return badges;
@@ -117,6 +137,8 @@ export function buildBadges(
 
 const BADGE_CLASS =
   'inline-flex items-center rounded-sm border border-ink-muted/30 px-1.5 py-0.5 font-mono text-[10px] text-ink-muted';
+
+const ACTION_BADGE_CLASS = `${BADGE_CLASS} border-ink text-ink underline decoration-dotted underline-offset-2 hover:bg-ink hover:text-surface transition-colors`;
 
 function formatCheckedDate(checkedAt: number): string {
   return new Date(checkedAt * 1000).toLocaleDateString('sv-SE', {
@@ -146,14 +168,36 @@ export function AvailabilityBadges({
   return (
     <div className={`flex flex-wrap items-center gap-1.5 ${className}`}>
       {badges.map(badge =>
-        badge.href ? (
+        badge.form ? (
+          // DISCAS・ゲオの検索は Shift_JIS / euc-jp のクエリしか受け付けないので、
+          // href ではなくフォーム送信でブラウザに変換させる
+          <form
+            key={badge.label}
+            action={badge.form.action}
+            method="GET"
+            acceptCharset={badge.form.charset}
+            target="_blank"
+            className="contents">
+            <input
+              type="hidden"
+              name={badge.form.field}
+              value={badge.form.value}
+            />
+            <button
+              type="submit"
+              title={badge.title}
+              className={ACTION_BADGE_CLASS}>
+              {badge.label}
+            </button>
+          </form>
+        ) : badge.href ? (
           <a
             key={badge.label}
             href={badge.href}
             title={badge.title}
             target="_blank"
             rel="noopener noreferrer"
-            className={`${BADGE_CLASS} border-ink text-ink underline decoration-dotted underline-offset-2 hover:bg-ink hover:text-surface transition-colors`}>
+            className={ACTION_BADGE_CLASS}>
             {badge.label}
           </a>
         ) : (
