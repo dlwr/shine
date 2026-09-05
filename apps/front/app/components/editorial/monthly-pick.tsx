@@ -6,6 +6,7 @@ import {selectBestPoster} from '@/lib/poster';
 import {resolveMovieTitle} from '@/lib/movie-title';
 
 export type MonthlyPickMovie = FilmCardMovie & {
+  tmdbId?: number | string;
   articleLinks?: Array<{
     uid: string;
     url?: string;
@@ -89,7 +90,11 @@ export function MonthlyPick({
               </span>
             ) : undefined}
           </div>
-          <AvailabilityBadges availability={movie.availability} />
+          <AvailabilityBadges
+            availability={movie.availability}
+            movieTitle={title}
+            tmdbId={movie.tmdbId}
+          />
           <div className="border-t-2 border-ink pt-3">
             <p className="font-mono text-xs text-ink-muted mb-2">
               {copy.posts}

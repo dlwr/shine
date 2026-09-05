@@ -115,6 +115,93 @@ describe('AvailabilityBadges', () => {
     );
   });
 
+  it('U-NEXTの見放題バッジはU-NEXTの検索に飛ばす', () => {
+    render(
+      <AvailabilityBadges
+        availability={[{source: 'tmdb', detail: 'U-NEXT(見放題)', checkedAt}]}
+        movieTitle="浮雲"
+        tmdbId={123}
+      />,
+    );
+
+    expect(screen.getByRole('link', {name: 'U-NEXT 見放題'})).toHaveAttribute(
+      'href',
+      `https://video.unext.jp/freeword?query=${encodeURIComponent('浮雲')}`,
+    );
+  });
+
+  it('U-NEXT以外の見放題バッジはTMDbの配信ページに飛ばす', () => {
+    render(
+      <AvailabilityBadges
+        availability={[{source: 'tmdb', detail: 'Hulu(見放題)', checkedAt}]}
+        movieTitle="浮雲"
+        tmdbId={123}
+      />,
+    );
+
+    expect(screen.getByRole('link', {name: 'Hulu 見放題'})).toHaveAttribute(
+      'href',
+      'https://www.themoviedb.org/movie/123/watch?locale=JP',
+    );
+  });
+
+  it('レンタル配信ありバッジもTMDbの配信ページに飛ばす', () => {
+    render(
+      <AvailabilityBadges
+        availability={[
+          {source: 'tmdb', detail: 'Amazon Video(レンタル)', checkedAt},
+        ]}
+        movieTitle="浮雲"
+        tmdbId={123}
+      />,
+    );
+
+    expect(
+      screen.getByRole('link', {name: 'レンタル配信あり'}),
+    ).toHaveAttribute(
+      'href',
+      'https://www.themoviedb.org/movie/123/watch?locale=JP',
+    );
+  });
+
+  it('TMDb IDが無ければJustWatchの検索に飛ばす', () => {
+    render(
+      <AvailabilityBadges
+        availability={[{source: 'tmdb', detail: 'Hulu(見放題)', checkedAt}]}
+        movieTitle="浮雲"
+      />,
+    );
+
+    expect(screen.getByRole('link', {name: 'Hulu 見放題'})).toHaveAttribute(
+      'href',
+      expect.stringContaining('justwatch.com/jp'),
+    );
+  });
+
+  it('宅配レンタルバッジはリンクにしない', () => {
+    render(
+      <AvailabilityBadges
+        availability={[{source: 'discas', detail: 'Matched: 映画X', checkedAt}]}
+        movieTitle="浮雲"
+        tmdbId={123}
+      />,
+    );
+
+    expect(screen.getByText('宅配レンタル')).toBeInTheDocument();
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('映画名が無ければリンクにしない', () => {
+    render(
+      <AvailabilityBadges
+        availability={[{source: 'tmdb', detail: 'U-NEXT(見放題)', checkedAt}]}
+      />,
+    );
+
+    expect(screen.getByText('U-NEXT 見放題')).toBeInTheDocument();
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
   it('チェック日時を表示する', () => {
     render(
       <AvailabilityBadges

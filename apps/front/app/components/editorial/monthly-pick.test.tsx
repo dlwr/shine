@@ -25,6 +25,30 @@ describe('MonthlyPick', () => {
     );
   });
 
+  it('視聴手段のバッジを配信先へのリンクにする', () => {
+    render(
+      <MonthlyPick
+        movie={{
+          ...movie,
+          tmdbId: 456,
+          availability: [
+            {
+              source: 'tmdb',
+              detail: 'U-NEXT(見放題)',
+              checkedAt: 1_784_067_000,
+            },
+          ],
+        }}
+        locale="ja"
+      />,
+    );
+
+    expect(screen.getByRole('link', {name: 'U-NEXT 見放題'})).toHaveAttribute(
+      'href',
+      `https://video.unext.jp/freeword?query=${encodeURIComponent('浮雲')}`,
+    );
+  });
+
   it('「今月の1本」のラベルと、みんなで観ることを書く', () => {
     render(<MonthlyPick movie={movie} locale="ja" />);
 
