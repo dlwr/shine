@@ -28,6 +28,9 @@ export type Environment = {
   JWT_SECRET?: string;
   TURNSTILE_SECRET_KEY?: string;
   QUIZ_ANSWER_KEY?: string;
+  DISCORD_WEBHOOK_URL?: string;
+  NORTH_STAR_OWNER_URL_PREFIXES?: string;
+  NORTH_STAR_OWNER_IPS?: string;
   BROWSER?: Fetcher;
   CACHE_KV?: KVNamespace;
   SUGGEST_RATE_LIMITER?: RateLimit;

@@ -6,6 +6,8 @@ import {
   buildMonthlyPostText,
   buildMonthlyReminderPostText,
   buildMonthlyReminderXPostText,
+  buildMonthlyLinksPostText,
+  buildMonthlyLinksXPostText,
   buildMonthlyRoundupPostText,
   buildMonthlyRoundupXPostText,
   buildMonthlyXPostText,
@@ -580,5 +582,31 @@ describe('buildMonthlyRoundupPostText', () => {
     });
 
     expect(text).toContain('来月の1本は『浮雲』。明日から。');
+  });
+});
+
+describe('buildMonthlyLinksPostText', () => {
+  it('件数と映画名だけを伝え、投稿の本文は載せない', () => {
+    const text = buildMonthlyLinksPostText({
+      title: 'ある映画',
+      year: 2020,
+      count: 2,
+    });
+
+    expect(text).toContain('今月の1本『ある映画』(2020)');
+    expect(text).toContain('2件');
+    expect(text).toContain('#青空映画部');
+  });
+
+  it('X用は本文の後ろにURLを置く', () => {
+    const text = buildMonthlyLinksXPostText({
+      title: 'ある映画',
+      year: 2020,
+      count: 1,
+      url: 'https://shine-film.com/movies/movie-1',
+    });
+
+    expect(text).toContain('shine-film.com/movies/movie-1');
+    expect(text).not.toContain('#青空映画部');
   });
 });

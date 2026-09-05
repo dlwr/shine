@@ -9,6 +9,7 @@ import {
 } from '@shine/database';
 import {articleLinks} from '@shine/database/schema/article-links';
 import {movies} from '@shine/database/schema/movies';
+import {translations} from '@shine/database/schema/translations';
 import {nominations} from '@shine/database/schema/nominations';
 import {Hono} from 'hono';
 import {authMiddleware} from '../auth';
@@ -18,6 +19,10 @@ import {
   buildOnDemandRunners,
   MoviesService,
 } from '../services';
+import {
+  notifyArticleLinkSubmission,
+  type ArticleLinkSubmission,
+} from '../utils/article-link-notification';
 import {invalidateMovieCaches} from '../services/movie-cache-invalidation';
 import {
   shouldCheckETag,
@@ -417,6 +422,30 @@ moviesRoutes.delete('/:id/translations/:lang', authMiddleware, async c => {
 });
 
 // Submit article link
+
+async function notifyWithMovieTitle(
+  environment: Environment,
+  database: ReturnType<typeof getDatabase>,
+  submission: ArticleLinkSubmission,
+): Promise<void> {
+  const [title] = await database
+    .select({content: translations.content})
+    .from(translations)
+    .where(
+      and(
+        eq(translations.resourceType, 'movie_title'),
+        eq(translations.resourceUid, submission.movieUid),
+        eq(translations.languageCode, 'ja'),
+      ),
+    )
+    .limit(1);
+
+  await notifyArticleLinkSubmission(environment, {
+    ...submission,
+    movieTitle: title?.content,
+  });
+}
+
 moviesRoutes.post('/:id/article-links', async c => {
   try {
     const database = getDatabase(c.env);
@@ -552,6 +581,22 @@ moviesRoutes.post('/:id/article-links', async c => {
       .returning();
 
     await invalidateMovieCaches(c.env, movieId);
+
+    if (c.env.DISCORD_WEBHOOK_URL) {
+      const task = notifyWithMovieTitle(c.env, database, {
+        movieUid: movieId,
+        url,
+        title,
+        description,
+        submitterIp: ip,
+      });
+
+      try {
+        c.executionCtx.waitUntil(task);
+      } catch {
+        await task;
+      }
+    }
 
     return c.json(newArticle[0], 201);
   } catch (error) {

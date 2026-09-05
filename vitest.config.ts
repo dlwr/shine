@@ -42,6 +42,7 @@ export default defineConfig({
             'apps/api/src/**/*.test.ts',
             'apps/scrapers/src/**/*.test.ts',
             'packages/database/**/*.test.ts',
+            'packages/utils/**/*.test.ts',
             'packages/availability/**/*.test.ts',
           ],
           environment: 'node',

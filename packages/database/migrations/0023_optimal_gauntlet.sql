@@ -1,0 +1,1 @@
+ALTER TABLE `article_links` ADD `announced_at` integer;

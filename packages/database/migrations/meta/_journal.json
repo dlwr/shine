@@ -162,6 +162,13 @@
       "when": 1788590381434,
       "tag": "0022_broken_scream",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1788612976232,
+      "tag": "0023_optimal_gauntlet",
+      "breakpoints": true
     }
   ]
 }
