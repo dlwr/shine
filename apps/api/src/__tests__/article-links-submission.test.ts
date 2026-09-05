@@ -6,7 +6,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {moviesRoutes} from '../routes/movies';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -130,5 +130,40 @@ describe('POST /movies/:id/article-links', () => {
     const response = await submit({description: 'あ'.repeat(501)});
 
     expect(response.status).toBe(400);
+  });
+});
+
+describe('投稿の Discord 通知', () => {
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('Webhook が設定されていれば映画名つきで通知する', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ok: true} as Response);
+    vi.stubGlobal('fetch', fetchMock);
+    environment.DISCORD_WEBHOOK_URL = 'https://discord.test/hook';
+
+    const response = await submit({description: 'よかった'});
+
+    expect(response.status).toBe(201);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(init.body as string) as {content: string};
+    expect(body.content).toContain('映画1');
+    expect(body.content).toContain('よかった');
+  });
+
+  it('Webhook が無ければ通知しない', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await submit({description: 'よかった'});
+
+    expect(response.status).toBe(201);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
