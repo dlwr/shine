@@ -99,6 +99,12 @@ describe('POST /movies/:id/article-links', () => {
     expect(links[0]?.description).toBe('音がすごかった');
   });
 
+  it('空白だけのひとことは投稿として受け付けない', async () => {
+    const response = await submit({description: '   '});
+
+    expect(response.status).toBe(400);
+  });
+
   it('URL もひとことも無ければ 400 を返す', async () => {
     const response = await submit({});
 

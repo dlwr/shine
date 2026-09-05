@@ -428,9 +428,14 @@ moviesRoutes.post('/:id/article-links', async c => {
     const {
       url: rawUrl,
       title: rawTitle,
-      description: rawDescription,
+      description: rawDescriptionInput,
       captchaToken: rawCaptchaToken,
     } = await c.req.json();
+
+    const rawDescription =
+      typeof rawDescriptionInput === 'string'
+        ? rawDescriptionInput.trim()
+        : rawDescriptionInput;
 
     if (!rawUrl && !rawDescription) {
       return c.json({error: 'URL or description is required'}, 400);
