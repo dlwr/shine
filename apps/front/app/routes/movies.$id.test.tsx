@@ -957,11 +957,10 @@ describe('MovieDetail Component', () => {
         />,
       );
 
-      expect(screen.getByText('感想や記事のリンクを貼る')).toBeInTheDocument();
+      expect(screen.getByText('観たら、ひとこと残す')).toBeInTheDocument();
 
-      expect(screen.getByLabelText('URL')).toBeInTheDocument();
-      expect(screen.getByLabelText('タイトル')).toBeInTheDocument();
-      expect(screen.getByLabelText('ひとこと（任意）')).toBeInTheDocument();
+      expect(screen.getByLabelText('ひとこと')).toBeInTheDocument();
+      expect(screen.getByLabelText('URL（任意）')).toBeInTheDocument();
 
       // 投稿ボタンが存在する
       expect(
@@ -995,6 +994,133 @@ describe('MovieDetail Component', () => {
           'まだ投稿がありません。観たら感想や記事のリンクを貼ってください。',
         ),
       ).toBeInTheDocument();
+    });
+
+    it('URL のないひとことだけの投稿は本文として表示される', () => {
+      const loaderData = {
+        movieDetail: {
+          ...mockMovieDetail,
+          articleLinks: [{uid: 'article-2', description: '音がすごかった'}],
+        },
+      };
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={cast<LoaderResult>(loaderData)}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(cast<LoaderResult>(loaderData), parameters)}
+        />,
+      );
+
+      expect(screen.getByText('音がすごかった')).toBeInTheDocument();
+      expect(
+        screen.queryByRole('link', {name: '音がすごかった'}),
+      ).not.toBeInTheDocument();
+    });
+
+    it('タイトル欄は URL を入れるまで出ない', async () => {
+      const user = userEvent.setup();
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.queryByLabelText('タイトル')).not.toBeInTheDocument();
+
+      await user.type(
+        screen.getByLabelText('URL（任意）'),
+        'https://example.com/review',
+      );
+
+      expect(screen.getByLabelText('タイトル')).toBeInTheDocument();
+    });
+
+    it('何も書いていないと投稿できない', () => {
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.getByRole('button', {name: '投稿する'})).toBeDisabled();
+    });
+
+    it('ひとことだけ書けば投稿できる', async () => {
+      const user = userEvent.setup();
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      await user.type(screen.getByLabelText('ひとこと'), '音がすごかった');
+
+      expect(screen.getByRole('button', {name: '投稿する'})).toBeEnabled();
+    });
+
+    it('X に書きに行くリンクに映画ページの URL が入る', () => {
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      const href = screen
+        .getByRole('link', {name: 'X に書く'})
+        .getAttribute('href');
+
+      expect(href).toContain('https://x.com/intent/post?text=');
+      expect(href).toContain(
+        encodeURIComponent('https://shine-film.com/movies/movie-123'),
+      );
+    });
+
+    it('Bluesky に書きに行くリンクがある', () => {
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(
+        screen.getByRole('link', {name: 'Bluesky に書く'}),
+      ).toHaveAttribute(
+        'href',
+        expect.stringContaining('https://bsky.app/intent/compose?text='),
+      );
     });
 
     it('記事・ポストの欄にはホームから飛べるアンカーがある', () => {
@@ -1049,7 +1175,7 @@ describe('MovieDetail Component', () => {
         />,
       );
 
-      expect(screen.getByLabelText('URL')).toHaveAttribute(
+      expect(screen.getByLabelText('URL（任意）')).toHaveAttribute(
         'placeholder',
         'ブログ記事や X・Bluesky のポストの URL',
       );
@@ -1071,7 +1197,7 @@ describe('MovieDetail Component', () => {
       );
 
       await user.type(
-        screen.getByLabelText('URL'),
+        screen.getByLabelText('URL（任意）'),
         'https://x.com/shine_film/status/1234567890',
       );
 
@@ -1096,7 +1222,7 @@ describe('MovieDetail Component', () => {
       );
 
       await user.type(
-        screen.getByLabelText('URL'),
+        screen.getByLabelText('URL（任意）'),
         'https://bsky.app/profile/shine-film.com/post/3kabc',
       );
 
@@ -1121,7 +1247,7 @@ describe('MovieDetail Component', () => {
       );
 
       await user.type(
-        screen.getByLabelText('URL'),
+        screen.getByLabelText('URL（任意）'),
         'https://note.com/someone/n/abcdef',
       );
 
@@ -1177,7 +1303,9 @@ describe('MovieDetail Component', () => {
       }
 
       expect(result.status).toBe(303);
-      expect(result.headers.get('Location')).toBe('/');
+      expect(result.headers.get('Location')).toBe(
+        '/movies/movie-123#article-links',
+      );
     });
 
     it('記事リンク投稿でバリデーションエラーが発生する', async () => {

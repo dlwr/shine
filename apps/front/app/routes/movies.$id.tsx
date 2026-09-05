@@ -60,8 +60,8 @@ type MovieDetailData = {
   }>;
   articleLinks: Array<{
     uid: string;
-    url: string;
-    title: string;
+    url?: string;
+    title?: string;
     description?: string;
   }>;
   availability?: Array<{
@@ -262,8 +262,24 @@ function MovieDetailErrorView({
   );
 }
 
+function buildShareUrls(
+  movieUid: string,
+  movieTitle: string,
+): {x: string; bluesky: string} {
+  const text = encodeURIComponent(
+    `『${movieTitle}』を観た\n${SITE_URL}/movies/${movieUid}`,
+  );
+
+  return {
+    x: `https://x.com/intent/post?text=${text}`,
+    bluesky: `https://bsky.app/intent/compose?text=${text}`,
+  };
+}
+
 type ArticleLinksSectionProperties = {
   articleLinks: ArticleLink[] | undefined;
+  movieUid: string;
+  movieTitle: string;
   isTestMode: boolean;
   formData: ArticleLinkFormState;
   handleInputChange: (
@@ -277,6 +293,8 @@ type ArticleLinksSectionProperties = {
 
 function ArticleLinksSection({
   articleLinks,
+  movieUid,
+  movieTitle,
   isTestMode,
   formData,
   handleInputChange,
@@ -290,9 +308,12 @@ function ArticleLinksSection({
   const [captchaError, setCaptchaError] = useState('');
   const hasSiteKey = Boolean(turnstileSiteKey);
   const isCaptchaRequired = hasSiteKey && !isTestMode;
+  const isEmpty = !formData.description.trim() && !formData.url.trim();
   const isSubmitDisabled =
+    isEmpty ||
     (!isTestMode && !hasSiteKey) ||
     (isCaptchaRequired && formData.captchaToken === '');
+  const shareUrls = buildShareUrls(movieUid, movieTitle);
 
   return (
     <section id="article-links">
@@ -307,17 +328,23 @@ function ArticleLinksSection({
             <div
               key={article.uid}
               className="border-l-[3px] border-brand bg-surface px-3 py-1.5 text-sm">
-              <a
-                href={article.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-ink hover:text-brand transition-colors">
-                {article.title}
-              </a>
-              {article.description && (
-                <p className="text-ink-muted text-xs mt-0.5">
-                  {article.description}
-                </p>
+              {article.url ? (
+                <>
+                  <a
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-ink hover:text-brand transition-colors">
+                    {article.title ?? article.url}
+                  </a>
+                  {article.description && (
+                    <p className="text-ink-muted text-xs mt-0.5">
+                      {article.description}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-ink">{article.description}</p>
               )}
             </div>
           ))
@@ -330,9 +357,29 @@ function ArticleLinksSection({
 
       {/* 記事投稿フォーム */}
       <div className="border-t border-ink/20 pt-6">
-        <h3 className="text-lg font-medium text-ink mb-4">
-          感想や記事のリンクを貼る
+        <h3 className="text-lg font-medium text-ink mb-1">
+          観たら、ひとこと残す
         </h3>
+        <p className="text-sm text-ink-muted mb-4">
+          短くていい。よそに書いたなら、その URL も貼れる。
+        </p>
+
+        <div className="flex flex-wrap gap-2 mb-4">
+          <a
+            href={shareUrls.x}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border-2 border-ink px-3 py-1.5 text-sm font-medium text-ink hover:bg-ink hover:text-surface transition-colors">
+            X に書く
+          </a>
+          <a
+            href={shareUrls.bluesky}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border-2 border-ink px-3 py-1.5 text-sm font-medium text-ink hover:bg-ink hover:text-surface transition-colors">
+            Bluesky に書く
+          </a>
+        </div>
 
         {submissionResult?.error && (
           <div className="mb-4 p-3 bg-brand/10 border border-brand text-brand">
@@ -350,49 +397,9 @@ function ArticleLinksSection({
 
           <div>
             <label
-              htmlFor="url"
-              className="block text-sm font-medium text-ink mb-1">
-              URL
-            </label>
-            <input
-              type="url"
-              id="url"
-              name="url"
-              value={formData.url}
-              onChange={handleInputChange}
-              required
-              className="w-full px-3 py-2 border-2 border-ink focus:outline-none focus:ring-2 focus:ring-brand"
-              placeholder="ブログ記事や X・Bluesky のポストの URL"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="title"
-              className="block text-sm font-medium text-ink mb-1">
-              タイトル
-              {isLoadingTitle && (
-                <span className="ml-2 text-sm text-ink-muted">取得中...</span>
-              )}
-            </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              required
-              maxLength={200}
-              className="w-full px-3 py-2 border-2 border-ink focus:outline-none focus:ring-2 focus:ring-brand"
-              placeholder="URL から自動で入ります。ポストなら一言でも"
-            />
-          </div>
-
-          <div>
-            <label
               htmlFor="description"
               className="block text-sm font-medium text-ink mb-1">
-              ひとこと（任意）
+              ひとこと
             </label>
             <textarea
               id="description"
@@ -402,9 +409,50 @@ function ArticleLinksSection({
               maxLength={500}
               rows={3}
               className="w-full px-3 py-2 border-2 border-ink focus:outline-none focus:ring-2 focus:ring-brand"
-              placeholder="どんな内容か、ひとこと（任意）"
+              placeholder="観てどうだったか。一行でいい"
             />
           </div>
+
+          <div>
+            <label
+              htmlFor="url"
+              className="block text-sm font-medium text-ink mb-1">
+              URL（任意）
+            </label>
+            <input
+              type="url"
+              id="url"
+              name="url"
+              value={formData.url}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border-2 border-ink focus:outline-none focus:ring-2 focus:ring-brand"
+              placeholder="ブログ記事や X・Bluesky のポストの URL"
+            />
+          </div>
+
+          {formData.url && (
+            <div>
+              <label
+                htmlFor="title"
+                className="block text-sm font-medium text-ink mb-1">
+                タイトル
+                {isLoadingTitle && (
+                  <span className="ml-2 text-sm text-ink-muted">取得中...</span>
+                )}
+              </label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                required
+                maxLength={200}
+                className="w-full px-3 py-2 border-2 border-ink focus:outline-none focus:ring-2 focus:ring-brand"
+                placeholder="URL から自動で入ります"
+              />
+            </div>
+          )}
 
           {hasSiteKey ? (
             isCaptchaRequired ? (
@@ -669,7 +717,7 @@ export async function action({context, params, request}: Route.ActionArgs) {
     );
 
     if (response.ok) {
-      return redirect('/', {status: 303});
+      return redirect(`/movies/${params.id}#article-links`, {status: 303});
     }
 
     let errorMessage = '投稿に失敗しました。';
@@ -828,6 +876,8 @@ export default function MovieDetail({
         {/* Article Links */}
         <ArticleLinksSection
           articleLinks={movieDetail.articleLinks}
+          movieUid={movieDetail.uid}
+          movieTitle={movieDetail.title}
           isTestMode={isTestMode}
           formData={formData}
           handleInputChange={handleInputChange}

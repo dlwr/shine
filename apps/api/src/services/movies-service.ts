@@ -301,8 +301,8 @@ export class MoviesService extends BaseService {
       }),
       articleLinks: topArticles.map(article => ({
         uid: article.uid,
-        url: article.url,
-        title: article.title,
+        url: article.url ?? undefined,
+        title: article.title ?? undefined,
         description: article.description || undefined,
       })),
       credits,

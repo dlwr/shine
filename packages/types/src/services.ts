@@ -58,8 +58,8 @@ export type MovieSelection = {
   }>;
   articleLinks: Array<{
     uid: string;
-    url: string;
-    title: string;
+    url?: string;
+    title?: string;
     description?: string;
   }>;
   availability?: Array<{

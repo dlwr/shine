@@ -45,6 +45,23 @@ describe('MonthlyPick', () => {
     expect(screen.getByRole('link', {name: '@b のポスト'})).toBeInTheDocument();
   });
 
+  it('URL のないひとことは本文として出す', () => {
+    render(
+      <MonthlyPick
+        movie={{
+          ...movie,
+          articleLinks: [{uid: 'l3', description: '音がすごかった'}],
+        }}
+        locale="ja"
+      />,
+    );
+
+    expect(screen.getByText('音がすごかった')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', {name: '音がすごかった'}),
+    ).not.toBeInTheDocument();
+  });
+
   it('投稿が無ければその旨を書く', () => {
     render(<MonthlyPick movie={{...movie, articleLinks: []}} locale="ja" />);
 
