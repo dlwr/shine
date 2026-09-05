@@ -178,7 +178,7 @@ describe('AvailabilityBadges', () => {
     );
   });
 
-  it('宅配レンタルバッジはリンクにしない', () => {
+  it('宅配レンタルは Shift_JIS のフォームで DISCAS の検索に送る', () => {
     render(
       <AvailabilityBadges
         availability={[{source: 'discas', detail: 'Matched: 映画X', checkedAt}]}
@@ -187,8 +187,43 @@ describe('AvailabilityBadges', () => {
       />,
     );
 
+    const button = screen.getByRole('button', {name: '宅配レンタル'});
+    const form = button.closest('form');
+    expect(form).toHaveAttribute(
+      'action',
+      'https://movie-tsutaya.tsite.jp/netdvd/dvd/searchDvdBd.do',
+    );
+    expect(form).toHaveAttribute('accept-charset', 'Shift_JIS');
+    expect(form?.querySelector('input')).toHaveValue('浮雲');
+  });
+
+  it('ゲオだけなら euc-jp のフォームでゲオの検索に送る', () => {
+    render(
+      <AvailabilityBadges
+        availability={[{source: 'geo', detail: 'Matched: 映画X', checkedAt}]}
+        movieTitle="浮雲"
+      />,
+    );
+
+    const form = screen
+      .getByRole('button', {name: '宅配レンタル'})
+      .closest('form');
+    expect(form).toHaveAttribute(
+      'action',
+      'https://rental.geo-online.co.jp/search2/',
+    );
+    expect(form).toHaveAttribute('accept-charset', 'euc-jp');
+  });
+
+  it('映画名が無ければ宅配レンタルはボタンにしない', () => {
+    render(
+      <AvailabilityBadges
+        availability={[{source: 'discas', detail: 'Matched: 映画X', checkedAt}]}
+      />,
+    );
+
     expect(screen.getByText('宅配レンタル')).toBeInTheDocument();
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('映画名が無ければリンクにしない', () => {
