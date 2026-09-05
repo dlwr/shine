@@ -12,6 +12,9 @@
  *   pnpm run sns-post --monthly   今月の1本を告知する(1日)
  *   pnpm run sns-post --monthly-reminder
  *                                 今月の1本の再告知と集まった記事・ポストの件数(15日)
+ *   pnpm run sns-post --monthly-links
+ *                                 今月の1本に他人の記事・ポストが付いたら紹介する
+ *                                 (未紹介のものが無ければ投稿しない)
  *   pnpm run sns-post --monthly-roundup
  *                                 今月の1本に集まった記事・ポストのまとめと来月の予告(月末)
  *                                 予告は ADMIN_PASSWORD があるときだけ付く
@@ -27,7 +30,13 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import {fileURLToPath} from 'node:url';
-import {loadEnvironmentFiles} from './common/environment';
+import {getDatabase} from '@shine/database';
+import {parseOriginRules} from '@shine/utils';
+import {
+  loadEnvironmentFiles,
+  loadScraperEnvironment,
+} from './common/environment';
+import {findUnannouncedMonthlyLinks, markLinksAnnounced} from './north-star';
 import {parseAnnouncement} from './sns/announcement';
 import {
   buildAvailabilityLabels,
@@ -45,6 +54,8 @@ import {
   buildAnnouncementXPostText,
   buildDailyPostText,
   buildMonthlyPostText,
+  buildMonthlyLinksPostText,
+  buildMonthlyLinksXPostText,
   buildMonthlyReminderPostText,
   buildMonthlyReminderXPostText,
   buildMonthlyRoundupPostText,
@@ -300,6 +311,7 @@ type PostPlan = {
   xText: string;
   link: {uri: string; title: string; description: string};
   imageUrl: string;
+  afterPost?: () => Promise<void>;
 };
 
 function buildSelectionPostInput(movie: SelectionMovie) {
@@ -417,6 +429,39 @@ async function buildMonthlyRoundupPlan(): Promise<PostPlan> {
   };
 }
 
+async function buildMonthlyLinksPlan(): Promise<PostPlan | undefined> {
+  const database = getDatabase(loadScraperEnvironment());
+  const found = await findUnannouncedMonthlyLinks(
+    database,
+    parseOriginRules(process.env),
+  );
+
+  if (!found) {
+    return undefined;
+  }
+
+  const url = `${SITE_URL}/movies/${found.movieUid}`;
+  const postInput = {
+    title: found.title,
+    year: found.year,
+    count: found.linkUids.length,
+  };
+
+  return {
+    text: buildMonthlyLinksPostText(postInput),
+    xText: buildMonthlyLinksXPostText({...postInput, url}),
+    link: {
+      uri: `${url}#article-links`,
+      title: `${found.title} | SHINE`,
+      description: `今月の1本『${found.title}』に集まった、観た人の記事・ポスト。`,
+    },
+    imageUrl: `${SITE_URL}/og/movie.png?id=${found.movieUid}`,
+    async afterPost() {
+      await markLinksAnnounced(database, found.linkUids);
+    },
+  };
+}
+
 async function buildQuizPlan(): Promise<PostPlan> {
   // 出題日はAPIに従う(ジョブの起動が遅れても昨日の問題を告知しない)
   const puzzle = await fetchQuizPuzzle();
@@ -511,7 +556,7 @@ async function buildAnnouncementPlan(name: string): Promise<PostPlan> {
   };
 }
 
-async function buildPlan(): Promise<PostPlan> {
+async function buildPlan(): Promise<PostPlan | undefined> {
   const announceIndex = process.argv.indexOf('--announce');
   if (announceIndex !== -1) {
     const name = process.argv[announceIndex + 1];
@@ -542,6 +587,10 @@ async function buildPlan(): Promise<PostPlan> {
     return buildMonthlyReminderPlan();
   }
 
+  if (process.argv.includes('--monthly-links')) {
+    return buildMonthlyLinksPlan();
+  }
+
   if (process.argv.includes('--monthly-roundup')) {
     return buildMonthlyRoundupPlan();
   }
@@ -552,6 +601,11 @@ async function buildPlan(): Promise<PostPlan> {
 async function main() {
   const isDryRun = process.argv.includes('--dry-run');
   const plan = await buildPlan();
+
+  if (!plan) {
+    console.log('投稿するものがありません');
+    return;
+  }
 
   console.log('--- Bluesky投稿内容 ---');
   console.log(plan.text);
@@ -585,6 +639,8 @@ async function main() {
   if (errors.length > 0) {
     throw new AggregateError(errors, `${errors.length}件の投稿が失敗しました`);
   }
+
+  await plan.afterPost?.();
 }
 
 try {

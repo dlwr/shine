@@ -10,7 +10,12 @@ import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {describe, expect, it} from 'vitest';
 import {DEFAULT_OWNER_URL_PREFIXES} from '@shine/utils';
-import {collectMonthlyLinkCounts, formatNorthStarReport} from '../north-star';
+import {
+  collectMonthlyLinkCounts,
+  findUnannouncedMonthlyLinks,
+  formatNorthStarReport,
+  markLinksAnnounced,
+} from '../north-star';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -210,6 +215,129 @@ describe('collectMonthlyLinkCounts', () => {
     const counts = await collectMonthlyLinkCounts(database, defaultRules);
 
     expect(counts).toEqual([]);
+  });
+});
+
+describe('findUnannouncedMonthlyLinks', () => {
+  const now = new Date('2026-09-20T12:00:00+09:00');
+
+  it('今月の1本に付いた他人の未紹介リンクを返す', async () => {
+    const database = await createTestDatabase();
+    await seedMonthlySelection(database, {
+      movieUid: 'movie-1',
+      month: '2026-09',
+      title: 'ある映画',
+    });
+    await database.insert(articleLinks).values([
+      {
+        uid: 'link-other',
+        movieUid: 'movie-1',
+        url: 'https://example.com/review',
+        submitterIp: '203.0.113.9',
+        submittedAt: new Date('2026-09-10T00:00:00+09:00'),
+      },
+      {
+        uid: 'link-owner',
+        movieUid: 'movie-1',
+        url: 'https://scrapbox.io/yuta25/memo',
+        submitterIp: '203.0.113.9',
+        submittedAt: new Date('2026-09-11T00:00:00+09:00'),
+      },
+    ]);
+
+    const found = await findUnannouncedMonthlyLinks(database, defaultRules, {
+      now,
+    });
+
+    expect(found).toEqual({
+      movieUid: 'movie-1',
+      title: 'ある映画',
+      year: 2020,
+      linkUids: ['link-other'],
+    });
+  });
+
+  it('紹介済みのリンクは返さない', async () => {
+    const database = await createTestDatabase();
+    await seedMonthlySelection(database, {
+      movieUid: 'movie-1',
+      month: '2026-09',
+      title: 'ある映画',
+    });
+    await database.insert(articleLinks).values({
+      uid: 'link-announced',
+      movieUid: 'movie-1',
+      url: 'https://example.com/review',
+      submitterIp: '203.0.113.9',
+      submittedAt: new Date('2026-09-10T00:00:00+09:00'),
+      announcedAt: new Date('2026-09-10T21:00:00+09:00'),
+    });
+
+    expect(
+      await findUnannouncedMonthlyLinks(database, defaultRules, {now}),
+    ).toBeUndefined();
+  });
+
+  it('選出された月より前に貼られたリンクは返さない', async () => {
+    const database = await createTestDatabase();
+    await seedMonthlySelection(database, {
+      movieUid: 'movie-1',
+      month: '2026-09',
+      title: 'ある映画',
+    });
+    await database.insert(articleLinks).values({
+      uid: 'link-old',
+      movieUid: 'movie-1',
+      url: 'https://example.com/review',
+      submitterIp: '203.0.113.9',
+      submittedAt: new Date('2026-08-30T00:00:00+09:00'),
+    });
+
+    expect(
+      await findUnannouncedMonthlyLinks(database, defaultRules, {now}),
+    ).toBeUndefined();
+  });
+
+  it('今月の月替わりが無ければ何も返さない', async () => {
+    const database = await createTestDatabase();
+    await seedMonthlySelection(database, {
+      movieUid: 'movie-1',
+      month: '2026-08',
+      title: 'ある映画',
+    });
+    await database.insert(articleLinks).values({
+      uid: 'link-other',
+      movieUid: 'movie-1',
+      url: 'https://example.com/review',
+      submitterIp: '203.0.113.9',
+      submittedAt: new Date('2026-09-10T00:00:00+09:00'),
+    });
+
+    expect(
+      await findUnannouncedMonthlyLinks(database, defaultRules, {now}),
+    ).toBeUndefined();
+  });
+
+  it('紹介済みにすると次からは返さない', async () => {
+    const database = await createTestDatabase();
+    await seedMonthlySelection(database, {
+      movieUid: 'movie-1',
+      month: '2026-09',
+      title: 'ある映画',
+    });
+    await database.insert(articleLinks).values({
+      uid: 'link-other',
+      movieUid: 'movie-1',
+      url: 'https://example.com/review',
+      submitterIp: '203.0.113.9',
+      submittedAt: new Date('2026-09-10T00:00:00+09:00'),
+    });
+
+    await markLinksAnnounced(database, ['link-other'], now);
+
+    expect(
+      await findUnannouncedMonthlyLinks(database, defaultRules, {now}),
+    ).toBeUndefined();
   });
 });
 

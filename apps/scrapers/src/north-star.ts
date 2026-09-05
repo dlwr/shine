@@ -1,4 +1,4 @@
-import {and, desc, eq, inArray, isNull, lt} from 'drizzle-orm';
+import {and, desc, eq, gte, inArray, isNull, lt} from 'drizzle-orm';
 import {type getDatabase} from '@shine/database';
 import {classifySubmission, type OriginRules} from '@shine/utils';
 import {articleLinks} from '@shine/database/schema/article-links';
@@ -166,4 +166,85 @@ export function formatNorthStarReport(
     content: lines.join('\n'),
     hasOutsideLink: monthsWithOutsideLink.length > 0,
   };
+}
+
+export type MonthlyLinksAnnouncement = {
+  movieUid: string;
+  title: string;
+  year?: number;
+  linkUids: string[];
+};
+
+export async function findUnannouncedMonthlyLinks(
+  database: DatabaseClient,
+  rules: OriginRules,
+  options: {now?: Date} = {},
+): Promise<MonthlyLinksAnnouncement | undefined> {
+  const now = options.now ?? new Date();
+  const month = tokyoDate(now).slice(0, 7);
+  const [selection] = await database
+    .select({movieUid: movies.uid, year: movies.year})
+    .from(movieSelections)
+    .innerJoin(movies, eq(movies.uid, movieSelections.movieId))
+    .where(
+      and(
+        eq(movieSelections.selectionType, 'monthly'),
+        eq(movieSelections.selectionDate, `${month}-01`),
+        isNull(movies.deletedAt),
+      ),
+    )
+    .limit(1);
+
+  if (!selection) {
+    return undefined;
+  }
+
+  const links = await database
+    .select({
+      uid: articleLinks.uid,
+      url: articleLinks.url,
+      submitterIp: articleLinks.submitterIp,
+    })
+    .from(articleLinks)
+    .where(
+      and(
+        eq(articleLinks.movieUid, selection.movieUid),
+        isNull(articleLinks.announcedAt),
+        eq(articleLinks.isSpam, false),
+        eq(articleLinks.isFlagged, false),
+        gte(articleLinks.submittedAt, monthStart(month)),
+      ),
+    );
+
+  const linkUids = links
+    .filter(link => classifySubmission(link, rules) === 'other')
+    .map(link => link.uid);
+
+  if (linkUids.length === 0) {
+    return undefined;
+  }
+
+  const titles = await fetchTitles(database, [selection.movieUid]);
+
+  return {
+    movieUid: selection.movieUid,
+    title: titles.get(selection.movieUid) ?? '(タイトル未登録)',
+    year: selection.year ?? undefined,
+    linkUids,
+  };
+}
+
+export async function markLinksAnnounced(
+  database: DatabaseClient,
+  linkUids: string[],
+  now: Date = new Date(),
+): Promise<void> {
+  if (linkUids.length === 0) {
+    return;
+  }
+
+  await database
+    .update(articleLinks)
+    .set({announcedAt: now})
+    .where(inArray(articleLinks.uid, linkUids));
 }

@@ -104,6 +104,33 @@ export function buildMonthlyReminderXPostText(
   return withBareUrl(buildMonthlyReminderBody(input), input.url);
 }
 
+type MonthlyLinksInput = {
+  title: string;
+  year?: number;
+  count: number;
+};
+
+function buildMonthlyLinksBody({
+  title,
+  year,
+  count,
+}: MonthlyLinksInput): string {
+  return [
+    `今月の1本${formatTitle(title, year)}に、観た人の記事・ポストが${count}件付きました。`,
+    '映画ページから読めます。観たら、ひとことでも書いてください。',
+  ].join('\n');
+}
+
+export function buildMonthlyLinksPostText(input: MonthlyLinksInput): string {
+  return withHashtag(buildMonthlyLinksBody(input));
+}
+
+export function buildMonthlyLinksXPostText(
+  input: MonthlyLinksInput & {url: string},
+): string {
+  return withBareUrl(buildMonthlyLinksBody(input), input.url);
+}
+
 type MonthlyRoundupInput = {
   title: string;
   year?: number;
