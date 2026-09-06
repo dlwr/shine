@@ -13,9 +13,11 @@ import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import {withDefaultTranslationFlags} from './common/default-translations';
 import {matchPersonName, normalizePersonName} from './common/japanese-name';
+import {PERSON_OVERRIDES} from './common/person-overrides';
 import {
   fetchTMDBConfig,
   fetchTMDBCredits,
+  fetchTMDBPerson,
   fetchTMDBMovieDetails,
   findTMDBByImdbId,
   type TMDBCastCredit,
@@ -233,6 +235,7 @@ type ImportContext = {
   tmdbApiKey: string | undefined;
   throttleMs: number;
   stats: ImdbEventImportStats;
+  personOverrides: ReadonlyMap<string, number>;
 };
 
 export async function importImdbEventAward({
@@ -242,6 +245,7 @@ export async function importImdbEventAward({
   dryRun = false,
   year,
   throttleMs = 300,
+  personOverrides = PERSON_OVERRIDES,
 }: {
   environment: Environment;
   data: ImdbEventCollectedData;
@@ -249,6 +253,7 @@ export async function importImdbEventAward({
   dryRun?: boolean;
   year?: number;
   throttleMs?: number;
+  personOverrides?: ReadonlyMap<string, number>;
 }): Promise<ImdbEventImportStats> {
   const stats: ImdbEventImportStats = {
     editionsProcessed: 0,
@@ -295,6 +300,7 @@ export async function importImdbEventAward({
     tmdbApiKey: environment.TMDB_API_KEY,
     throttleMs,
     stats,
+    personOverrides,
   };
 
   const organizationUid = await ensureOrganization(database, config);
@@ -854,6 +860,45 @@ async function resolveFromTmdbCredits(
   return personUidByTmdbId.get(tmdbPersonId);
 }
 
+/** 記事の人名が TMDb のクレジットに無い人物を、override の TMDb 人物 ID で足す */
+async function resolveFromPersonOverride(
+  context: ImportContext,
+  movieUid: string,
+  key: string,
+  role: 'director' | 'actor',
+): Promise<string | undefined> {
+  const {database, tmdbApiKey, personOverrides} = context;
+  const tmdbPersonId = personOverrides.get(key);
+  if (tmdbPersonId === undefined || !tmdbApiKey) {
+    return undefined;
+  }
+
+  const person = await fetchTMDBPerson(tmdbPersonId, tmdbApiKey, 'ja-JP');
+  if (!person) {
+    return undefined;
+  }
+
+  const personUidByTmdbId = await upsertMovieCredits(
+    {database, isDryRun: false},
+    movieUid,
+    [
+      {
+        creditId: `override-${tmdbPersonId}-${movieUid}`,
+        tmdbPersonId,
+        name: person.name,
+        localizedName: person.name,
+        profilePath: person.profile_path ?? undefined,
+        department: role === 'director' ? 'Directing' : 'Acting',
+        job: role === 'director' ? 'Director' : undefined,
+        character: undefined,
+        castOrder: undefined,
+      },
+    ],
+  );
+
+  return personUidByTmdbId.get(tmdbPersonId);
+}
+
 function castCredit(member: TMDBCastCredit | undefined) {
   return (
     member && {
@@ -900,10 +945,16 @@ async function ensurePersonNominations(
   for (const person of nominees) {
     const personUid =
       matchPersonName(person.name, candidates) ??
-      (await resolveFromTmdbCredits(context, movieUid, person.name, role));
+      (await resolveFromTmdbCredits(context, movieUid, person.name, role)) ??
+      (await resolveFromPersonOverride(
+        context,
+        movieUid,
+        `${film.imdbId}:${person.name}`,
+        role,
+      ));
     if (!personUid) {
       console.log(
-        `  Unresolved person: ${person.name} (${film.title ?? film.imdbId})`,
+        `  Unresolved person: ${person.name} (${film.title ?? ''} ${film.imdbId})`,
       );
       stats.peopleUnresolved++;
       continue;
