@@ -158,6 +158,7 @@ export function filmKey(film: KinemaJunpoFilm): string {
 
 /** 連作の共有記事や、ja.wikipedia の記事が Wikidata の映画実体に繋がらない作品 */
 const RESOLUTION_OVERRIDES = new Map([
+  ['2023:東京リベンジャーズ2 血のハロウィン編 -決戦-', 'tt26598867'],
   ['1925:嘆きのピエロ', 'tt0014256'],
   ['1927:忠次旅日記 信州血笑篇', 'tt0432794'],
   ['1927:忠次旅日記 御用篇', 'tt0342196'],
