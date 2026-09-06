@@ -639,6 +639,52 @@ describe('importImdbEventAward の個人賞 人物 override', () => {
     ).toHaveLength(4);
   });
 
+  it('クレジットの無い映画は全クレジットを保存してから override の人物を足す', async () => {
+    await database.insert(movies).values({
+      uid: 'movie-empty',
+      imdbId: 'tt88888888',
+      tmdbId: 4343,
+      year: 2006,
+    });
+    vi.mocked(fetch).mockImplementation(
+      async (input: string | URL | Request) =>
+        String(input).includes('/person/9002')
+          ? Response.json({id: 9002, name: '役所広司', profile_path: null})
+          : Response.json({
+              cast: [
+                {
+                  id: 9003,
+                  credit_id: 'tmdb-credit-other',
+                  name: '他の俳優',
+                  original_name: '他の俳優',
+                  order: 0,
+                },
+              ],
+              crew: [],
+            }),
+    );
+
+    await importImdbEventAward({
+      environment,
+      data: collectedData('助演男優賞', [
+        personNomination('tt88888888', 'Babel', ['役所広司']),
+      ]),
+      config: actorConfig,
+      personOverrides: new Map([['tt88888888:役所広司', 9002]]),
+      throttleMs: 0,
+    });
+
+    const credits = await database
+      .select()
+      .from(movieCredits)
+      .where(eq(movieCredits.movieUid, 'movie-empty'));
+    expect(
+      credits
+        .map(credit => credit.creditId)
+        .toSorted((a, b) => a.localeCompare(b)),
+    ).toEqual(['override-9002-movie-empty', 'tmdb-credit-other']);
+  });
+
   it('override に無い人物は取り込まない', async () => {
     const stats = await importImdbEventAward({
       environment,

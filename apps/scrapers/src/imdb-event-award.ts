@@ -24,7 +24,11 @@ import {
   type TMDBCredits,
   type TMDBMovieData,
 } from './common/tmdb-utilities';
-import {selectCredits, upsertMovieCredits} from './movie-credits';
+import {
+  type SelectedCredit,
+  selectCredits,
+  upsertMovieCredits,
+} from './movie-credits';
 import {pickJapaneseTitle} from './common/tmdb-japanese-title';
 
 export type ImdbEventAwardConfig = {
@@ -878,25 +882,52 @@ async function resolveFromPersonOverride(
     return undefined;
   }
 
+  const credit: SelectedCredit = {
+    creditId: `override-${tmdbPersonId}-${movieUid}`,
+    tmdbPersonId,
+    name: person.name,
+    localizedName: person.name,
+    profilePath: person.profile_path ?? undefined,
+    department: role === 'director' ? 'Directing' : 'Acting',
+    job: role === 'director' ? 'Director' : undefined,
+    character: undefined,
+    castOrder: undefined,
+  };
   const personUidByTmdbId = await upsertMovieCredits(
     {database, isDryRun: false},
     movieUid,
-    [
-      {
-        creditId: `override-${tmdbPersonId}-${movieUid}`,
-        tmdbPersonId,
-        name: person.name,
-        localizedName: person.name,
-        profilePath: person.profile_path ?? undefined,
-        department: role === 'director' ? 'Directing' : 'Acting',
-        job: role === 'director' ? 'Director' : undefined,
-        character: undefined,
-        castOrder: undefined,
-      },
-    ],
+    [...(await creditsForEmptyMovie(context, movieUid)), credit],
   );
 
   return personUidByTmdbId.get(tmdbPersonId);
+}
+
+/** クレジットの無い映画には TMDb の全クレジットも入れる。override の人物だけの映画にしない */
+async function creditsForEmptyMovie(
+  context: ImportContext,
+  movieUid: string,
+): Promise<SelectedCredit[]> {
+  const {database, tmdbApiKey} = context;
+  const [stored] = await database
+    .select({uid: movieCredits.uid})
+    .from(movieCredits)
+    .where(eq(movieCredits.movieUid, movieUid))
+    .limit(1);
+  if (stored || !tmdbApiKey) {
+    return [];
+  }
+
+  const [movie] = await database
+    .select({tmdbId: movies.tmdbId})
+    .from(movies)
+    .where(eq(movies.uid, movieUid))
+    .limit(1);
+  if (!movie?.tmdbId) {
+    return [];
+  }
+
+  const credits = await fetchTMDBCredits(movie.tmdbId, 'movie', tmdbApiKey);
+  return credits ? selectCredits(credits) : [];
 }
 
 function castCredit(member: TMDBCastCredit | undefined) {
