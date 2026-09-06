@@ -120,7 +120,7 @@ function requireSelection(
   return movie;
 }
 
-async function fetchArticleLinkTitles(movieUid: string): Promise<string[]> {
+async function fetchArticleLinkCount(movieUid: string): Promise<number> {
   const response = await fetch(`${API_URL}/movies/${movieUid}/article-links`, {
     headers: {Origin: SITE_URL},
   });
@@ -129,8 +129,8 @@ async function fetchArticleLinkTitles(movieUid: string): Promise<string[]> {
     throw new Error(`Article links API failed: HTTP ${response.status}`);
   }
 
-  const links = (await response.json()) as Array<{title: string}>;
-  return links.map(link => link.title);
+  const links = (await response.json()) as unknown[];
+  return links.length;
 }
 
 async function fetchNextMonthlyTitle(): Promise<string | undefined> {
@@ -384,10 +384,9 @@ async function buildMonthlyPlan(): Promise<PostPlan> {
 
 async function buildMonthlyReminderPlan(): Promise<PostPlan> {
   const movie = requireSelection(await fetchSelections(), 'monthly');
-  const linkTitles = await fetchArticleLinkTitles(movie.uid);
   const postInput = {
     ...buildSelectionPostInput(movie),
-    linkCount: linkTitles.length,
+    linkCount: await fetchArticleLinkCount(movie.uid),
   };
 
   return {
@@ -405,14 +404,14 @@ async function buildMonthlyReminderPlan(): Promise<PostPlan> {
 
 async function buildMonthlyRoundupPlan(): Promise<PostPlan> {
   const movie = requireSelection(await fetchSelections(), 'monthly');
-  const [linkTitles, nextTitle] = await Promise.all([
-    fetchArticleLinkTitles(movie.uid),
+  const [linkCount, nextTitle] = await Promise.all([
+    fetchArticleLinkCount(movie.uid),
     fetchNextMonthlyTitle(),
   ]);
   const postInput = {
     title: movie.title!,
     year: movie.year,
-    linkTitles,
+    linkCount,
     nextTitle,
   };
 

@@ -509,39 +509,27 @@ describe('buildMonthlyRoundupPostText', () => {
   const roundup = {
     title: 'ハウスメイド',
     year: 2010,
-    linkTitles: ['感想A', '感想B'],
+    linkCount: 2,
     nextTitle: '浮雲',
   };
 
   it('件数を見出しに書く', () => {
     expect(buildMonthlyRoundupPostText(roundup)).toContain(
-      '今月の1本『ハウスメイド』(2010)、観た人の記事・ポストは2件',
+      '今月の1本『ハウスメイド』(2010)、観た人の記事・ポストは2件。',
     );
   });
 
-  it('記事・ポストのタイトルを箇条書きにする', () => {
-    const text = buildMonthlyRoundupPostText(roundup);
-
-    expect(text).toContain('・感想A');
-    expect(text).toContain('・感想B');
-  });
-
-  it('タイトルは3件までにする', () => {
-    const text = buildMonthlyRoundupPostText({
-      ...roundup,
-      linkTitles: ['A', 'B', 'C', 'D'],
-    });
-
-    expect(text).toContain('・C');
-    expect(text).not.toContain('・D');
-    expect(text).toContain('観た人の記事・ポストは4件');
+  it('映画ページへ誘う', () => {
+    expect(buildMonthlyRoundupPostText(roundup)).toContain(
+      '映画ページから読めます。',
+    );
   });
 
   it('件数が0ならその旨を書く', () => {
-    const text = buildMonthlyRoundupPostText({...roundup, linkTitles: []});
+    const text = buildMonthlyRoundupPostText({...roundup, linkCount: 0});
 
     expect(text).toContain('観た人の記事・ポストはまだありません。');
-    expect(text).not.toMatch(/^・/m);
+    expect(text).not.toContain('映画ページから読めます。');
   });
 
   it('来月の1本を予告する', () => {
@@ -559,12 +547,6 @@ describe('buildMonthlyRoundupPostText', () => {
     expect(text).not.toContain('来月の1本');
   });
 
-  const longLinkTitles = [
-    '『ハウスメイド』を観て、住み込みで働くということ、雇う側と雇われる側のあいだにある距離について考えたこと',
-    'ハウスメイド 感想 — 階段のある家がそのまま階級の図になっていて、上下の移動がぜんぶ物語に見えてくる話',
-    '2010年のベスト映画をふりかえる（後編）ハウスメイド・冬の小鳥・息もできない・ほか10本をまとめて',
-  ];
-
   it('X の本文は裸の URL で終わる', () => {
     const text = buildMonthlyRoundupXPostText({
       ...roundup,
@@ -572,16 +554,6 @@ describe('buildMonthlyRoundupPostText', () => {
     });
 
     expect(text).toMatch(/shine-film\.com\/movies\/abc$/);
-  });
-
-  it('X もタイトルが長くて切り詰められたら予告を残す', () => {
-    const text = buildMonthlyRoundupXPostText({
-      ...roundup,
-      linkTitles: longLinkTitles,
-      url: 'https://shine-film.com/movies/abc',
-    });
-
-    expect(text).toContain('来月の1本は『浮雲』。明日から。');
   });
 });
 
