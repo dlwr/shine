@@ -591,3 +591,21 @@ describe('listPersonAwardConfig', () => {
     expect(config.isCompetitionCategory('外国映画監督賞')).toBe(false);
   });
 });
+
+describe('parseListPersonAwardWikitext 括弧の崩れ', () => {
+  it('『』の対応が崩れた題名の断片を人名にしない', () => {
+    const wikitext = [
+      '==== 第32回（2010年度） ====',
+      '*主演男優賞 [[神楽坂恵]](冷たい熱帯魚』『恋の罪』）',
+      '',
+    ].join('\n');
+
+    expect(
+      parseListPersonAwardWikitext(wikitext, CATEGORIES)[0].entries[0],
+    ).toEqual({
+      category: '主演男優賞',
+      people: [{name: '神楽坂恵', page: '神楽坂恵'}],
+      films: [{title: '恋の罪'}],
+    });
+  });
+});

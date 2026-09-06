@@ -132,7 +132,9 @@ function bareNames(text: string): ListPersonAwardPerson[] {
   return text
     .split(NAME_SEPARATOR)
     .map(part => part.replaceAll(NAME_TRIM, ''))
-    .filter(name => name !== '' && !NOT_A_NAME.has(name))
+    .filter(
+      name => name !== '' && !NOT_A_NAME.has(name) && !/[『』]/.test(name),
+    )
     .map(name => ({name}));
 }
 
