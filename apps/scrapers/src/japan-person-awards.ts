@@ -81,6 +81,7 @@ export const JAPAN_PERSON_AWARD_SOURCES: ListPersonAwardSource[] = [
     ],
     resolutionOverrides: new Map([
       ['1959:人間の條件 第一部・第二部', 'tt0053114'],
+      ['2023:東京リベンジャーズ2 血のハロウィン編 -決戦-', 'tt26598867'],
       ['1966:エロ事師たちより 人類学入門', 'tt0060560'],
       ['1972:一条さゆり・濡れた欲情', 'tt0220570'],
       ['1988:噛む女', 'tt0095427'],
