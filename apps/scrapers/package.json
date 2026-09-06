@@ -67,6 +67,6 @@
     "iconv-lite": "^0.7.3"
   },
   "devDependencies": {
-    "tsx": "^4.23.12"
+    "tsx": "^4.23.13"
   }
 }

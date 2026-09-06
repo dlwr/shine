@@ -10,7 +10,7 @@
     "./seeds/*": "./seeds/*.ts"
   },
   "dependencies": {
-    "@libsql/client": "^0.17.4",
+    "@libsql/client": "^0.18.0",
     "@shine/utils": "workspace:*",
     "drizzle-orm": "^0.45.2"
   }
