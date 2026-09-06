@@ -8,18 +8,27 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: {
-      '@shine/database': path.resolve(
-        dirname,
-        './packages/database/src/index.ts',
-      ),
-      '@shine/utils': path.resolve(dirname, './packages/utils/src/index.ts'),
-      '@shine/types': path.resolve(dirname, './packages/types/src/index.ts'),
-      '@shine/availability': path.resolve(
-        dirname,
-        './packages/availability/src/index.ts',
-      ),
-    },
+    alias: [
+      {
+        find: /^@shine\/database$/,
+        replacement: path.resolve(dirname, './packages/database/src/index.ts'),
+      },
+      {
+        find: /^@shine\/utils$/,
+        replacement: path.resolve(dirname, './packages/utils/src/index.ts'),
+      },
+      {
+        find: /^@shine\/types$/,
+        replacement: path.resolve(dirname, './packages/types/src/index.ts'),
+      },
+      {
+        find: /^@shine\/availability$/,
+        replacement: path.resolve(
+          dirname,
+          './packages/availability/src/index.ts',
+        ),
+      },
+    ],
   },
   test: {
     exclude: ['node_modules/**'],
@@ -29,11 +38,6 @@ export default defineConfig({
       exclude: ['node_modules/**', 'dist/**'],
     },
     pool: 'threads',
-    poolOptions: {
-      threads: {
-        singleThread: true,
-      },
-    },
     projects: [
       {
         test: {
