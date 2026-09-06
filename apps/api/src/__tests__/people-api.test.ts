@@ -76,6 +76,16 @@ describe('GET /people/:id', () => {
     expect(body.credits.map(credit => credit.title)).toEqual(['乱']);
   });
 
+  it('7日間キャッシュする', async () => {
+    const response = await peopleRoutes.request(
+      '/person-kurosawa',
+      {},
+      environment,
+    );
+
+    expect(response.headers.get('X-Cache-TTL')).toBe('604800');
+  });
+
   it('存在しない人物には404を返す', async () => {
     const response = await peopleRoutes.request('/missing', {}, environment);
 

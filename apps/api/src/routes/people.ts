@@ -16,7 +16,7 @@ import {
 
 export const peopleRoutes = new Hono<{Bindings: Environment}>();
 
-const PERSON_CACHE_TTL = 86_400;
+const PERSON_CACHE_TTL = 604_800;
 const PEOPLE_LIST_CACHE_TTL = 604_800;
 const PROMINENT_CACHE_TTL = 604_800;
 const PERSON_CROSSINGS_CACHE_TTL = 604_800;
