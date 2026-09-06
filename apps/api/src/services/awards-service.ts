@@ -16,6 +16,7 @@ import type {
   PersonAwardNominee,
   PersonAwardYearGroup,
 } from '@shine/types';
+import {personLocalizedName} from './person-name';
 
 export function findAwardPageDefinition(
   organizationName: string,
@@ -1666,13 +1667,7 @@ export class AwardsService extends BaseService {
         personUid: people.uid,
         personName: people.name,
         profilePath: people.profilePath,
-        jaName: sql<string | null>`(
-          SELECT content FROM translations
-          WHERE translations.resource_uid = people.uid
-            AND translations.resource_type = 'person_name'
-            AND translations.language_code = 'ja'
-          LIMIT 1
-        )`.as('jaName'),
+        jaName: personLocalizedName('ja').as('jaName'),
         isWinner: nominations.isWinner,
         ceremonyYear: awardCeremonies.year,
         ceremonyNumber: awardCeremonies.ceremonyNumber,

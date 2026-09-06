@@ -213,9 +213,36 @@ async function createTestEnvironment(): Promise<{
 
 describe('PeopleService.getProminentPeople', () => {
   let environment: Environment;
+  let database: TestDatabase;
 
   beforeEach(async () => {
-    ({environment} = await createTestEnvironment());
+    ({environment, database} = await createTestEnvironment());
+  });
+
+  it('日本語名が無ければ英語名を返す', async () => {
+    await database
+      .insert(people)
+      .values({uid: 'person-szor', tmdbId: 4_487_240, name: 'רחל שור'});
+    await database.insert(translations).values({
+      resourceType: 'person_name',
+      resourceUid: 'person-szor',
+      languageCode: 'en',
+      content: 'Rachel Szor',
+    });
+    await database.insert(nominations).values({
+      movieUid: 'movie-a',
+      ceremonyUid: 'ceremony-1990',
+      categoryUid: 'cat-director',
+      personUid: 'person-szor',
+      isWinner: 0,
+    });
+    const service = new PeopleService(environment);
+
+    const {directors} = await service.getProminentPeople({locale: 'ja'});
+
+    expect(
+      directors.find(director => director.uid === 'person-szor')?.name,
+    ).toBe('Rachel Szor');
   });
 
   it('監督を監督賞の受賞回数が多い順に並べる', async () => {
