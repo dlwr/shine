@@ -510,3 +510,146 @@ describe('importImdbEventAward の個人賞 英語名フォールバック', () 
     expect(credit?.job).toBe('Director');
   });
 });
+
+describe('importImdbEventAward の個人賞 人物 override', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+    environment.TMDB_API_KEY = 'test-key';
+    await database
+      .update(movies)
+      .set({tmdbId: 4242})
+      .where(eq(movies.uid, 'movie-kokuho'));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string | URL | Request) =>
+        String(input).includes('/person/9002')
+          ? Response.json({
+              id: 9002,
+              name: '役所広司',
+              profile_path: '/yakusho.jpg',
+            })
+          : Response.json({cast: [], crew: []}),
+      ),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const overrides = new Map([['tt99999999:役所広司', 9002]]);
+
+  it('TMDb のキャストにも居ない人物を override の TMDb 人物 ID で引き当てる', async () => {
+    await importImdbEventAward({
+      environment,
+      data: collectedData('助演男優賞', [
+        personNomination('tt99999999', '国宝', ['役所広司'], true),
+      ]),
+      config: actorConfig,
+      personOverrides: overrides,
+      throttleMs: 0,
+    });
+
+    const [person] = await database
+      .select()
+      .from(people)
+      .where(eq(people.tmdbId, 9002));
+    const [row] = await database.select().from(nominations);
+    expect(person).toMatchObject({
+      name: '役所広司',
+      profilePath: '/yakusho.jpg',
+    });
+    expect(row).toMatchObject({personUid: person.uid, isWinner: 1});
+  });
+
+  it('override で足した人物には出演クレジットを1件足す', async () => {
+    await importImdbEventAward({
+      environment,
+      data: collectedData('助演男優賞', [
+        personNomination('tt99999999', '国宝', ['役所広司']),
+      ]),
+      config: actorConfig,
+      personOverrides: overrides,
+      throttleMs: 0,
+    });
+
+    const [person] = await database
+      .select()
+      .from(people)
+      .where(eq(people.tmdbId, 9002));
+    const credits = await database
+      .select()
+      .from(movieCredits)
+      .where(eq(movieCredits.personUid, person.uid));
+    expect(credits).toHaveLength(1);
+    expect(credits[0]).toMatchObject({
+      movieUid: 'movie-kokuho',
+      department: 'Acting',
+      job: null,
+    });
+  });
+
+  it('監督賞の override には監督クレジットを足す', async () => {
+    await importImdbEventAward({
+      environment,
+      data: collectedData('監督賞', [
+        personNomination('tt99999999', '国宝', ['役所広司']),
+      ]),
+      config: directorConfig,
+      personOverrides: overrides,
+      throttleMs: 0,
+    });
+
+    const [person] = await database
+      .select()
+      .from(people)
+      .where(eq(people.tmdbId, 9002));
+    const [credit] = await database
+      .select()
+      .from(movieCredits)
+      .where(eq(movieCredits.personUid, person.uid));
+    expect(credit).toMatchObject({department: 'Directing', job: 'Director'});
+  });
+
+  it('再実行しても人物・クレジット・ノミネーションを増やさない', async () => {
+    const options = {
+      environment,
+      data: collectedData('助演男優賞', [
+        personNomination('tt99999999', '国宝', ['役所広司']),
+      ]),
+      config: actorConfig,
+      personOverrides: overrides,
+      throttleMs: 0,
+    };
+    await importImdbEventAward(options);
+    await importImdbEventAward(options);
+
+    expect(
+      await database.select().from(people).where(eq(people.tmdbId, 9002)),
+    ).toHaveLength(1);
+    expect(await database.select().from(nominations)).toHaveLength(1);
+    expect(
+      await database
+        .select()
+        .from(movieCredits)
+        .where(eq(movieCredits.movieUid, 'movie-kokuho')),
+    ).toHaveLength(4);
+  });
+
+  it('override に無い人物は取り込まない', async () => {
+    const stats = await importImdbEventAward({
+      environment,
+      data: collectedData('助演男優賞', [
+        personNomination('tt99999999', '国宝', ['居ない俳優']),
+      ]),
+      config: actorConfig,
+      personOverrides: overrides,
+      throttleMs: 0,
+    });
+
+    expect(stats.peopleUnresolved).toBe(1);
+  });
+});
