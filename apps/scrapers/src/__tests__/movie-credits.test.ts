@@ -131,10 +131,80 @@ describe('selectCredits', () => {
   });
 });
 
+function koreanCredits() {
+  return {
+    japanese: {
+      cast: [{...castMember(0), name: 'ソン・ガンホ', original_name: '송강호'}],
+      crew: [],
+    },
+    english: {
+      cast: [{...castMember(0), name: 'Song Kang-ho', original_name: '송강호'}],
+      crew: [],
+    },
+  };
+}
+
+describe('selectCredits 英語名', () => {
+  it('en-US のクレジットから英語名を付ける', () => {
+    const {japanese, english} = koreanCredits();
+
+    const selected = selectCredits(japanese, english);
+
+    expect(selected[0].englishName).toBe('Song Kang-ho');
+  });
+
+  it('en-US のクレジットが無ければ英語名を付けない', () => {
+    const selected = selectCredits(koreanCredits().japanese);
+
+    expect(selected[0].englishName).toBeUndefined();
+  });
+});
+
 describe('saveMovieCredits', () => {
   const sample = selectCredits({
     cast: [castMember(0)],
     crew: [crewMember('Director', 'Directing')],
+  });
+
+  it('原語がラテン文字でも日本語でもない人物の英語名を en の translations に保存する', async () => {
+    const {database, movieUid} = await createTestDatabase();
+    const {japanese, english} = koreanCredits();
+
+    await saveMovieCredits(
+      {database, isDryRun: false},
+      movieUid,
+      selectCredits(japanese, english),
+    );
+
+    const rows = await database.select().from(translations);
+    expect(
+      rows.map(row => `${row.languageCode}:${row.content}`).toSorted(byText),
+    ).toEqual(['en:Song Kang-ho', 'ja:ソン・ガンホ']);
+  });
+
+  it('原語が日本語なら英語名を保存しない', async () => {
+    const {database, movieUid} = await createTestDatabase();
+    const credits = selectCredits(
+      {
+        cast: [{...castMember(0), name: '是枝裕和', original_name: '是枝裕和'}],
+        crew: [],
+      },
+      {
+        cast: [
+          {
+            ...castMember(0),
+            name: 'Hirokazu Kore-eda',
+            original_name: '是枝裕和',
+          },
+        ],
+        crew: [],
+      },
+    );
+
+    await saveMovieCredits({database, isDryRun: false}, movieUid, credits);
+
+    const rows = await database.select().from(translations);
+    expect(rows).toHaveLength(0);
   });
 
   it('未知の人物を people に登録する', async () => {
@@ -296,6 +366,43 @@ describe('saveMovieCredits', () => {
 });
 
 describe('importMovieCredits', () => {
+  it('en-US のクレジットも取得して英語名を保存する', async () => {
+    const {database, environment, movieUid} = await createTestDatabase();
+    await database
+      .update(movies)
+      .set({tmdbId: 346})
+      .where(eq(movies.uid, movieUid));
+    const {japanese, english} = koreanCredits();
+    vi.mocked(fetch).mockImplementation(async input => {
+      const url = String(input);
+      return {
+        ok: true,
+        text: async () =>
+          JSON.stringify(url.includes('language=en-US') ? english : japanese),
+      } as unknown as Response;
+    });
+
+    await importMovieCredits({database, environment, isDryRun: false});
+
+    const rows = await database.select().from(translations);
+    expect(rows.find(row => row.languageCode === 'en')?.content).toBe(
+      'Song Kang-ho',
+    );
+  });
+
+  it('原語がラテン文字か日本語だけなら en-US のクレジットは取得しない', async () => {
+    const {database, environment, movieUid} = await createTestDatabase();
+    await database
+      .update(movies)
+      .set({tmdbId: 346})
+      .where(eq(movies.uid, movieUid));
+    stubTmdbCredits({cast: [castMember(0)], crew: []});
+
+    await importMovieCredits({database, environment, isDryRun: false});
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
   it('クレジット未取得の映画を処理する', async () => {
     const {database, environment, movieUid} = await createTestDatabase();
     await database

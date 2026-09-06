@@ -23,6 +23,7 @@ import {
 import {BaseService} from './base-service';
 import {buildMovieSearchQueries} from './movie-search-query';
 import type {MovieSelection, SearchOptions} from '@shine/types';
+import {personLocalizedName} from './person-name';
 
 const CREW_JOB_ORDER = [
   'Director',
@@ -193,7 +194,7 @@ export class MoviesService extends BaseService {
         specialMention: nominations.specialMention,
         personUid: people.uid,
         personName: people.name,
-        personLocalizedName: translations.content,
+        personLocalizedName: personLocalizedName(locale),
         categoryUid: awardCategories.uid,
         categoryName: awardCategories.name,
         ceremonyUid: awardCeremonies.uid,
@@ -217,14 +218,6 @@ export class MoviesService extends BaseService {
         eq(awardOrganizations.uid, awardCeremonies.organizationUid),
       )
       .leftJoin(people, eq(people.uid, nominations.personUid))
-      .leftJoin(
-        translations,
-        and(
-          eq(translations.resourceUid, people.uid),
-          eq(translations.resourceType, 'person_name'),
-          eq(translations.languageCode, locale),
-        ),
-      )
       .where(eq(nominations.movieUid, movieId))
       .orderBy(awardCeremonies.year, awardCategories.name);
 
@@ -456,18 +449,10 @@ export class MoviesService extends BaseService {
         job: movieCredits.job,
         character: movieCredits.character,
         castOrder: movieCredits.castOrder,
-        localizedName: translations.content,
+        localizedName: personLocalizedName(locale),
       })
       .from(movieCredits)
       .innerJoin(people, eq(people.uid, movieCredits.personUid))
-      .leftJoin(
-        translations,
-        and(
-          eq(translations.resourceUid, people.uid),
-          eq(translations.resourceType, 'person_name'),
-          eq(translations.languageCode, locale),
-        ),
-      )
       .where(eq(movieCredits.movieUid, movieId));
 
     if (rows.length === 0) {

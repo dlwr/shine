@@ -106,7 +106,12 @@ let nextTmdbId = 1;
 async function seedPerson(
   database: TestDatabase,
   uid: string,
-  options: {name?: string; japaneseName?: string; profilePath?: string} = {},
+  options: {
+    name?: string;
+    japaneseName?: string;
+    englishName?: string;
+    profilePath?: string;
+  } = {},
 ): Promise<void> {
   await database.insert(people).values({
     uid,
@@ -120,6 +125,14 @@ async function seedPerson(
       resourceUid: uid,
       languageCode: 'ja',
       content: options.japaneseName,
+    });
+  }
+  if (options.englishName) {
+    await database.insert(translations).values({
+      resourceType: 'person_name',
+      resourceUid: uid,
+      languageCode: 'en',
+      content: options.englishName,
     });
   }
 }
@@ -240,6 +253,20 @@ describe('PersonUncrownedService.getPersonUncrowned', () => {
     const {topPeople} = await service.getPersonUncrowned({locale: 'ja'});
 
     expect(topPeople[1].name).toBe('Two Losses');
+  });
+
+  it('日本語名が無ければ英語名を返す', async () => {
+    await seedPerson(database, 'person-szor', {
+      name: 'רחל שור',
+      englishName: 'Rachel Szor',
+    });
+    await nominate(database, 'person-szor', 'movie-a', [{award: 2}]);
+
+    const {topPeople} = await service.getPersonUncrowned({locale: 'ja'});
+
+    expect(topPeople.find(person => person.uid === 'person-szor')?.name).toBe(
+      'Rachel Szor',
+    );
   });
 
   it('個人賞にノミネートされた映画人の総数を返す', async () => {

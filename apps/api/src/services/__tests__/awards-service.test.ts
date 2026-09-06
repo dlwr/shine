@@ -1158,6 +1158,32 @@ describe('AwardsService.getPersonAwardBySlug', () => {
     ]);
   });
 
+  it('日本語名が無ければ英語名を返す', async () => {
+    await database
+      .insert(people)
+      .values({uid: 'person-szor', tmdbId: 4_487_240, name: 'רחל שור'});
+    await database.insert(translations).values({
+      resourceType: 'person_name',
+      resourceUid: 'person-szor',
+      languageCode: 'en',
+      content: 'Rachel Szor',
+    });
+    await database.insert(nominations).values({
+      movieUid: 'movie-c',
+      ceremonyUid: 'ceremony-jaa-1994',
+      categoryUid: 'cat-jaa-director',
+      personUid: 'person-szor',
+      isWinner: 0,
+    });
+
+    const result = await service.getPersonAwardBySlug('japan-academy-director');
+
+    expect(
+      result?.years[0]?.nominees.find(nominee => nominee.uid === 'person-szor')
+        ?.name,
+    ).toBe('Rachel Szor');
+  });
+
   it('同じ授賞式で複数作品が紐づく受賞は1人にまとめる', async () => {
     const result = await service.getPersonAwardBySlug('japan-academy-director');
     expect(result?.years[1]?.nominees).toHaveLength(1);

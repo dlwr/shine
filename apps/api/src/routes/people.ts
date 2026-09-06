@@ -92,7 +92,7 @@ peopleRoutes.get('/prominent', async c => {
 
   const limit = Math.min(requestedLimit, PROMINENT_MAX_LIMIT);
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = `people:prominent:${locale}:${limit}:v12`;
+  const cacheKey = `people:prominent:${locale}:${limit}:v13`;
   const cached = await cache.get(cacheKey);
   const result =
     cached?.data ??
@@ -147,7 +147,7 @@ peopleRoutes.get('/search', async c => {
 peopleRoutes.get('/crossings', async c => {
   const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = `people:crossings:${locale}:v4`;
+  const cacheKey = `people:crossings:${locale}:v5`;
   const cached = await cache.get(cacheKey);
   const result =
     cached?.data ??
@@ -171,7 +171,7 @@ peopleRoutes.get('/crossings', async c => {
 peopleRoutes.get('/uncrowned', async c => {
   const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = `people:uncrowned:${locale}:v2`;
+  const cacheKey = `people:uncrowned:${locale}:v3`;
   const cached = await cache.get(cacheKey);
   const result =
     cached?.data ??

@@ -332,6 +332,31 @@ export async function fetchTMDBCredits(
   }
 }
 
+export type TMDBPersonData = {
+  id: number;
+  name: string;
+};
+
+/**
+ * TMDb APIから人物を取得。language を変えると name の表記が変わる（ja-JP で翻訳が無ければ原語）
+ */
+export async function fetchTMDBPerson(
+  personId: number,
+  tmdbApiKey: string,
+  language = 'en-US',
+): Promise<TMDBPersonData | undefined> {
+  try {
+    const personUrl = new URL(`${TMDB_API_BASE_URL}/person/${personId}`);
+    personUrl.searchParams.append('api_key', tmdbApiKey);
+    personUrl.searchParams.append('language', language);
+
+    return await fetchJsonWithRetry<TMDBPersonData>(personUrl.href);
+  } catch (error) {
+    console.error(`Error fetching TMDb person for ID ${personId}:`, error);
+    return undefined;
+  }
+}
+
 /**
  * IMDb IDからTMDb IDを取得
  */

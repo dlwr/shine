@@ -23,7 +23,10 @@ const migrationsFolder = path.resolve(
 
 type TestDatabase = ReturnType<typeof getDatabase>;
 
-async function createTestEnvironment(): Promise<Environment> {
+async function createTestEnvironment(): Promise<{
+  environment: Environment;
+  database: TestDatabase;
+}> {
   const directory = await fs.mkdtemp(
     path.join(os.tmpdir(), 'shine-person-crossings-'),
   );
@@ -34,7 +37,7 @@ async function createTestEnvironment(): Promise<Environment> {
   const database = getDatabase(environment);
   await migrate(database, {migrationsFolder});
   await seed(database);
-  return environment;
+  return {environment, database};
 }
 
 async function seed(database: TestDatabase): Promise<void> {
@@ -229,9 +232,39 @@ async function seed(database: TestDatabase): Promise<void> {
 
 describe('PersonCrossingsService.getPersonCrossings', () => {
   let service: PersonCrossingsService;
+  let database: TestDatabase;
 
   beforeEach(async () => {
-    service = new PersonCrossingsService(await createTestEnvironment());
+    const created = await createTestEnvironment();
+    database = created.database;
+    service = new PersonCrossingsService(created.environment);
+  });
+
+  it('日本語名が無ければ英語名を返す', async () => {
+    await database
+      .insert(people)
+      .values({uid: 'person-szor', tmdbId: 4_487_240, name: 'רחל שור'});
+    await database.insert(translations).values({
+      resourceType: 'person_name',
+      resourceUid: 'person-szor',
+      languageCode: 'en',
+      content: 'Rachel Szor',
+    });
+    await database.insert(nominations).values({
+      movieUid: 'movie-late',
+      ceremonyUid: 'ceremony-kj-1996',
+      categoryUid: 'cat-kj-lead',
+      personUid: 'person-szor',
+      isWinner: 1,
+    });
+
+    const {topPerformances} = await service.getPersonCrossings({locale: 'ja'});
+
+    expect(
+      topPerformances.find(
+        performance => performance.person.uid === 'person-szor',
+      )?.person.name,
+    ).toBe('Rachel Szor');
   });
 
   it('ひとつの演技が受賞した団体数を数える', async () => {

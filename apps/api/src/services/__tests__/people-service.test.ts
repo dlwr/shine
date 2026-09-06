@@ -77,13 +77,22 @@ async function createTestEnvironment(): Promise<{
     {uid: 'person-prolific', tmdbId: 1001, name: '仲代達矢'},
     {uid: 'person-single', tmdbId: 1002, name: '寺尾聰'},
     {uid: 'person-deleted-only', tmdbId: 1003, name: '消えた俳優'},
+    {uid: 'person-szor', tmdbId: 4_487_240, name: 'רחל שור'},
   ]);
-  await database.insert(translations).values({
-    resourceType: 'person_name',
-    resourceUid: 'person-scorsese',
-    languageCode: 'ja',
-    content: 'マーティン・スコセッシ',
-  });
+  await database.insert(translations).values([
+    {
+      resourceType: 'person_name',
+      resourceUid: 'person-scorsese',
+      languageCode: 'ja',
+      content: 'マーティン・スコセッシ',
+    },
+    {
+      resourceType: 'person_name',
+      resourceUid: 'person-szor',
+      languageCode: 'en',
+      content: 'Rachel Szor',
+    },
+  ]);
   await database.insert(movieCredits).values([
     {
       movieUid: 'movie-ran',
@@ -259,6 +268,22 @@ describe('PeopleService.getPerson', () => {
     const person = await service.getPerson('person-scorsese', 'ja');
 
     expect(person?.name).toBe('マーティン・スコセッシ');
+  });
+
+  it('日本語名が無ければ英語名を返す', async () => {
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-szor', 'ja');
+
+    expect(person?.name).toBe('Rachel Szor');
+  });
+
+  it('locale が en なら英語名を返す', async () => {
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-szor', 'en');
+
+    expect(person?.name).toBe('Rachel Szor');
   });
 
   it('参加作品を新しい年から並べる', async () => {

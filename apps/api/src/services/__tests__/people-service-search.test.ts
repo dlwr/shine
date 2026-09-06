@@ -21,7 +21,12 @@ const migrationsFolder = path.resolve(
   '../../../../../packages/database/migrations',
 );
 
-async function createTestEnvironment(): Promise<Environment> {
+type TestDatabase = ReturnType<typeof getDatabase>;
+
+async function createTestEnvironment(): Promise<{
+  environment: Environment;
+  database: TestDatabase;
+}> {
   const directory = await fs.mkdtemp(
     path.join(os.tmpdir(), 'shine-people-search-'),
   );
@@ -190,7 +195,7 @@ async function createTestEnvironment(): Promise<Environment> {
       ),
     ]);
 
-  return environment;
+  return {environment, database};
 }
 
 function credit(creditId: string, movieUid: string, personUid: string) {
@@ -221,9 +226,31 @@ function nomination(
 
 describe('PeopleService.searchPeople', () => {
   let service: PeopleService;
+  let database: TestDatabase;
 
   beforeEach(async () => {
-    service = new PeopleService(await createTestEnvironment());
+    const created = await createTestEnvironment();
+    database = created.database;
+    service = new PeopleService(created.environment);
+  });
+
+  it('日本語名が無ければ英語名を返す', async () => {
+    await database
+      .insert(people)
+      .values({uid: 'person-szor', tmdbId: 9, name: 'רחל שור'});
+    await database.insert(translations).values({
+      resourceType: 'person_name',
+      resourceUid: 'person-szor',
+      languageCode: 'en',
+      content: 'Rachel Szor',
+    });
+    await database
+      .insert(movieCredits)
+      .values(credit('c-szor-a', 'movie-a', 'person-szor'));
+
+    const result = await service.searchPeople({query: 'Rachel', locale: 'ja'});
+
+    expect(result.map(person => person.name)).toEqual(['Rachel Szor']);
   });
 
   it('名前の部分一致で人物を返す', async () => {

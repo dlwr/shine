@@ -5,7 +5,6 @@ import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
-import {translations} from '@shine/database/schema/translations';
 import {
   findPersonAwardDefinition,
   findPersonAwardOrganization,
@@ -17,6 +16,7 @@ import type {
   UncrownedPerson,
   UncrownedPersonLoss,
 } from '@shine/types';
+import {personLocalizedName} from './person-name';
 
 const DEFAULT_PERSON_LIMIT = 24;
 
@@ -137,17 +137,9 @@ export class PersonUncrownedService extends BaseService {
         uid: people.uid,
         name: people.name,
         profilePath: people.profilePath,
-        localizedName: translations.content,
+        localizedName: personLocalizedName(locale),
       })
       .from(people)
-      .leftJoin(
-        translations,
-        and(
-          eq(translations.resourceUid, people.uid),
-          eq(translations.resourceType, 'person_name'),
-          eq(translations.languageCode, locale),
-        ),
-      )
       .where(inArray(people.uid, personUids));
 
     return rows

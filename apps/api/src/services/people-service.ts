@@ -16,7 +16,6 @@ import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
-import {translations} from '@shine/database/schema/translations';
 import {
   awardPageDefinitions,
   findAwardPageDefinition,
@@ -32,6 +31,7 @@ import type {
   ProminentPerson,
   ProminentPersonMovie,
 } from '@shine/types';
+import {personLocalizedName} from './person-name';
 
 const PROMINENT_LIMIT = 24;
 const SEARCH_LIMIT = 8;
@@ -99,17 +99,9 @@ export class PeopleService extends BaseService {
         uid: people.uid,
         name: people.name,
         profilePath: people.profilePath,
-        localizedName: translations.content,
+        localizedName: personLocalizedName(locale),
       })
       .from(people)
-      .leftJoin(
-        translations,
-        and(
-          eq(translations.resourceUid, people.uid),
-          eq(translations.resourceType, 'person_name'),
-          eq(translations.languageCode, locale),
-        ),
-      )
       .where(eq(people.uid, personUid))
       .limit(1);
 
@@ -269,20 +261,12 @@ export class PeopleService extends BaseService {
         uid: people.uid,
         name: people.name,
         profilePath: people.profilePath,
-        localizedName: translations.content,
+        localizedName: personLocalizedName(locale),
         wonCount: wonCount.as('won_count'),
         nominatedCount: nominatedCount.as('nominated_count'),
       })
       .from(people)
       .leftJoin(awarded, eq(awarded.personUid, people.uid))
-      .leftJoin(
-        translations,
-        and(
-          eq(translations.resourceUid, people.uid),
-          eq(translations.resourceType, 'person_name'),
-          eq(translations.languageCode, locale),
-        ),
-      )
       .where(
         or(
           sql`${people.name} LIKE ${pattern} ESCAPE '\\'`,
@@ -464,7 +448,7 @@ export class PeopleService extends BaseService {
         uid: people.uid,
         name: people.name,
         profilePath: people.profilePath,
-        localizedName: translations.content,
+        localizedName: personLocalizedName(locale),
         wonCount: wonCount.as('won_count'),
         nominatedCount: nominatedCount.as('nominated_count'),
       })
@@ -485,14 +469,6 @@ export class PeopleService extends BaseService {
       .innerJoin(
         awardCategories,
         eq(awardCategories.uid, nominations.categoryUid),
-      )
-      .leftJoin(
-        translations,
-        and(
-          eq(translations.resourceUid, people.uid),
-          eq(translations.resourceType, 'person_name'),
-          eq(translations.languageCode, locale),
-        ),
       )
       .where(personAwardNominations(role))
       .groupBy(people.uid)

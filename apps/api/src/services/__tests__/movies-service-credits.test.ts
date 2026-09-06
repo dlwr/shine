@@ -132,4 +132,30 @@ describe('MoviesService.getMovieDetails credits', () => {
 
     expect(details?.credits?.crew[0].name).toBe('Martin Scorsese');
   });
+
+  it('日本語名が無ければ英語名を返す', async () => {
+    await database
+      .insert(people)
+      .values({uid: 'person-szor', tmdbId: 4_487_240, name: 'רחל שור'});
+    await database.insert(translations).values({
+      resourceType: 'person_name',
+      resourceUid: 'person-szor',
+      languageCode: 'en',
+      content: 'Rachel Szor',
+    });
+    await database.insert(movieCredits).values({
+      movieUid: 'movie-a',
+      personUid: 'person-szor',
+      creditId: 'cast-2',
+      department: 'Acting',
+      castOrder: 1,
+    });
+    const service = new MoviesService(environment);
+
+    const details = await service.getMovieDetails('movie-a', 'ja');
+
+    expect(details?.credits?.cast.map(member => member.name)).toContain(
+      'Rachel Szor',
+    );
+  });
 });

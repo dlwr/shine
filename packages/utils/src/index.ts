@@ -6,3 +6,4 @@ export {
   type OriginRules,
   type SubmissionOrigin,
 } from './submission-origin';
+export {hasOnlyLatinOrJapaneseScript} from './person-name-script';

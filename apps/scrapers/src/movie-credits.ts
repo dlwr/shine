@@ -5,6 +5,7 @@ import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
+import {hasOnlyLatinOrJapaneseScript} from '@shine/utils';
 import {fetchTMDBCredits, type TMDBCredits} from './common/tmdb-utilities';
 
 type DatabaseClient = ReturnType<typeof getDatabase>;
@@ -23,6 +24,7 @@ export type SelectedCredit = {
   tmdbPersonId: number;
   name: string;
   localizedName: string;
+  englishName?: string;
   profilePath: string | undefined;
   department: string;
   job: string | undefined;
@@ -42,7 +44,15 @@ const CREW_JOBS = new Set([
   'Editor',
 ]);
 
-export function selectCredits(credits: TMDBCredits): SelectedCredit[] {
+export function selectCredits(
+  credits: TMDBCredits,
+  englishCredits?: TMDBCredits,
+): SelectedCredit[] {
+  const englishNames = new Map(
+    [...(englishCredits?.cast ?? []), ...(englishCredits?.crew ?? [])].map(
+      member => [member.id, member.name],
+    ),
+  );
   const cast = credits.cast
     .toSorted((a, b) => a.order - b.order)
     .slice(0, MAX_CAST)
@@ -51,6 +61,7 @@ export function selectCredits(credits: TMDBCredits): SelectedCredit[] {
       tmdbPersonId: member.id,
       name: member.original_name,
       localizedName: member.name,
+      englishName: englishNames.get(member.id),
       profilePath: member.profile_path ?? undefined,
       department: 'Acting',
       job: undefined,
@@ -65,6 +76,7 @@ export function selectCredits(credits: TMDBCredits): SelectedCredit[] {
       tmdbPersonId: member.id,
       name: member.original_name,
       localizedName: member.name,
+      englishName: englishNames.get(member.id),
       profilePath: member.profile_path ?? undefined,
       department: member.department,
       job: member.job,
@@ -119,7 +131,18 @@ export async function upsertMovieCredits(
     .where(inArray(people.tmdbId, tmdbPersonIds));
   const personUidByTmdbId = new Map(stored.map(row => [row.tmdbId, row.uid]));
 
-  await saveJapaneseNames(context, credits, personUidByTmdbId);
+  await savePersonNames(
+    context,
+    'ja',
+    japaneseNames(credits),
+    personUidByTmdbId,
+  );
+  await savePersonNames(
+    context,
+    'en',
+    englishNames(credits),
+    personUidByTmdbId,
+  );
 
   const currentCredits = await context.database
     .select()
@@ -178,20 +201,39 @@ export async function saveMovieCredits(
   }
 }
 
-async function saveJapaneseNames(
+function japaneseNames(credits: SelectedCredit[]): Map<number, string> {
+  return new Map(
+    credits
+      .filter(credit => credit.localizedName !== credit.name)
+      .map(credit => [credit.tmdbPersonId, credit.localizedName]),
+  );
+}
+
+/** 原語がラテン文字でも日本語でもない人物だけ、英語表記を持たせる */
+function englishNames(credits: SelectedCredit[]): Map<number, string> {
+  return new Map(
+    credits
+      .filter(
+        (credit): credit is SelectedCredit & {englishName: string} =>
+          credit.englishName !== undefined &&
+          credit.englishName !== credit.name &&
+          !hasOnlyLatinOrJapaneseScript(credit.name),
+      )
+      .map(credit => [credit.tmdbPersonId, credit.englishName]),
+  );
+}
+
+async function savePersonNames(
   context: SaveContext,
-  credits: SelectedCredit[],
+  languageCode: 'ja' | 'en',
+  namesByTmdbId: Map<number, string>,
   personUidByTmdbId: Map<number, string>,
 ): Promise<void> {
   const translated = new Map<string, string>();
-  for (const credit of credits) {
-    if (credit.localizedName === credit.name) {
-      continue;
-    }
-
-    const personUid = personUidByTmdbId.get(credit.tmdbPersonId);
+  for (const [tmdbPersonId, content] of namesByTmdbId) {
+    const personUid = personUidByTmdbId.get(tmdbPersonId);
     if (personUid) {
-      translated.set(personUid, credit.localizedName);
+      translated.set(personUid, content);
     }
   }
 
@@ -206,7 +248,7 @@ async function saveJapaneseNames(
     .where(
       and(
         eq(translations.resourceType, 'person_name'),
-        eq(translations.languageCode, 'ja'),
+        eq(translations.languageCode, languageCode),
         inArray(translations.resourceUid, personUids),
       ),
     );
@@ -220,7 +262,7 @@ async function saveJapaneseNames(
         added.map(([personUid, content]) => ({
           resourceType: 'person_name' as const,
           resourceUid: personUid,
-          languageCode: 'ja',
+          languageCode,
           content,
         })),
       )
@@ -303,7 +345,22 @@ export async function importMovieCredits(
         );
 
         if (credits) {
-          await saveMovieCredits(context, target.uid, selectCredits(credits));
+          const selected = selectCredits(credits);
+          const english = selected.some(
+            credit => !hasOnlyLatinOrJapaneseScript(credit.name),
+          )
+            ? await fetchTMDBCredits(
+                target.tmdbId ?? 0,
+                target.mediaType === 'tv' ? 'tv' : 'movie',
+                context.environment.TMDB_API_KEY ?? '',
+                'en-US',
+              )
+            : undefined;
+          await saveMovieCredits(
+            context,
+            target.uid,
+            english ? selectCredits(credits, english) : selected,
+          );
           processed++;
         } else {
           failed++;

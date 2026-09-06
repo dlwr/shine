@@ -140,6 +140,34 @@ describe('MoviesService.getMovieDetails 個人賞', () => {
     ).toEqual({uid: 'person-1', name: '李相日'});
   });
 
+  it('受賞者に日本語名が無ければ英語名を付ける', async () => {
+    await database
+      .insert(people)
+      .values({uid: 'person-2', tmdbId: 4_487_240, name: 'רחל שור'});
+    await database.insert(translations).values({
+      resourceType: 'person_name',
+      resourceUid: 'person-2',
+      languageCode: 'en',
+      content: 'Rachel Szor',
+    });
+    await database.insert(nominations).values({
+      movieUid: 'movie-a',
+      ceremonyUid: 'ceremony-1',
+      categoryUid: 'category-director',
+      personUid: 'person-2',
+      isWinner: 0,
+    });
+    const service = new MoviesService(environment);
+
+    const details = await service.getMovieDetails('movie-a', 'ja');
+
+    expect(
+      details?.nominations.find(
+        nomination => nomination.person?.uid === 'person-2',
+      )?.person?.name,
+    ).toBe('Rachel Szor');
+  });
+
   it('作品賞には受賞者を付けない', async () => {
     const service = new MoviesService(environment);
 
