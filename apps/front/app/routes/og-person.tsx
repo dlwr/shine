@@ -2,12 +2,8 @@ import {ImageResponse} from 'workers-og';
 import type {Route} from './+types/og-person';
 import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
 import {pickRepresentativeTitles} from '@/lib/og/person-card';
-import {
-  OG_HEIGHT,
-  OG_WIDTH,
-  TAGLINE,
-  buildPersonCardHtml,
-} from '@/lib/og/template';
+import {OG_HEIGHT, OG_WIDTH, buildPersonCardHtml} from '@/lib/og/template';
+import {TAGLINE} from '@/lib/tagline';
 import {profileImageUrl} from '@/lib/profile-image';
 import {apiFetch} from '@/lib/api';
 

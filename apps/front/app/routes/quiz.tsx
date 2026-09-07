@@ -1,10 +1,13 @@
 import {useEffect, useMemo, useState} from 'react';
 import type {Route} from './+types/quiz';
 import {Masthead} from '@/components/editorial/masthead';
+import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {resolveApiUrl} from '@/lib/api';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
+import {TAGLINE} from '@/lib/tagline';
+import {selectBestPoster, type PosterInfo} from '@/lib/poster';
 import {
   applyGuess,
   createGame,
@@ -54,7 +57,12 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   });
 }
 
-type MonthlyPick = {uid: string; title: string; year: number};
+type MonthlyPick = {
+  uid: string;
+  title: string;
+  year: number;
+  posterUrl?: string;
+};
 
 async function fetchMonthlyPick(
   apiUrl: string,
@@ -66,10 +74,20 @@ async function fetchMonthlyPick(
       return undefined;
     }
 
-    const {monthly} = (await response.json()) as {monthly?: MonthlyPick};
-    return monthly
-      ? {uid: monthly.uid, title: monthly.title, year: monthly.year}
-      : undefined;
+    const {monthly} = (await response.json()) as {
+      monthly?: MonthlyPick & {posterUrls?: PosterInfo[]};
+    };
+    if (!monthly) {
+      return undefined;
+    }
+
+    const posterUrl = selectBestPoster(monthly.posterUrls, 'ja');
+    return {
+      uid: monthly.uid,
+      title: monthly.title,
+      year: monthly.year,
+      ...(posterUrl && {posterUrl}),
+    };
   } catch {
     return undefined;
   }
@@ -325,22 +343,36 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
                     Bluesky に投稿
                   </a>
                 </div>
+                {monthly && (
+                  <a
+                    href={`/movies/${monthly.uid}`}
+                    className="mt-4 flex gap-3 border-2 border-ink bg-paper p-3 text-ink shadow-[3px_3px_0_var(--ink)] hover:bg-ink hover:text-paper transition-colors">
+                    <PosterFrame
+                      posterUrl={monthly.posterUrl}
+                      alt={monthly.title}
+                      displaySize="w185"
+                      className="w-16 shrink-0"
+                    />
+                    <span className="min-w-0 flex flex-col gap-1">
+                      <span className="font-mono text-[10px] font-bold tracking-widest">
+                        MONTHLY / 今月の1本
+                      </span>
+                      <span className="font-display font-black text-base leading-snug">
+                        {monthly.title}
+                        <span className="font-mono text-xs font-normal ml-2">
+                          {monthly.year}
+                        </span>
+                      </span>
+                      <span className="font-mono text-[10px]">{TAGLINE}</span>
+                      <span className="mt-1 self-start font-mono text-xs font-bold bg-brand text-brand-on px-3 py-1 border-2 border-ink">
+                        映画ページへ →
+                      </span>
+                    </span>
+                  </a>
+                )}
                 <p className="font-mono text-[10px] text-ink-muted mt-3">
                   次の問題は明日9時に出ます
                 </p>
-                {monthly && (
-                  <p className="font-display font-bold text-sm leading-snug mt-4 pt-3 border-t-2 border-ink">
-                    今月の1本は{' '}
-                    <a
-                      href={`/movies/${monthly.uid}`}
-                      className="text-ink underline">
-                      {monthly.title}
-                    </a>
-                    <span className="font-mono text-xs text-ink-muted ml-2">
-                      {monthly.year}
-                    </span>
-                  </p>
-                )}
               </div>
             ) : (
               <div>
