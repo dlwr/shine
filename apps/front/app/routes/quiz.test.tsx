@@ -74,7 +74,24 @@ describe('Quiz page', () => {
         } as Response)
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => ({monthly: {...MONTHLY, posterUrl: 'x'}}),
+          json: async () => ({
+            monthly: {
+              ...MONTHLY,
+              description: 'x',
+              posterUrls: [
+                {
+                  url: 'https://example.com/en.jpg',
+                  languageCode: 'en',
+                  isPrimary: 1,
+                },
+                {
+                  url: 'https://example.com/ja.jpg',
+                  languageCode: 'ja',
+                  isPrimary: 0,
+                },
+              ],
+            },
+          }),
         } as Response);
 
       const result = await loader(
@@ -86,7 +103,10 @@ describe('Quiz page', () => {
         }),
       );
 
-      expect(result.monthly).toEqual(MONTHLY);
+      expect(result.monthly).toEqual({
+        ...MONTHLY,
+        posterUrl: 'https://example.com/ja.jpg',
+      });
     });
 
     it('今月の1本が取れなくてもクイズは出す', async () => {
@@ -238,7 +258,58 @@ describe('Quiz page', () => {
 
       const link = await screen.findByRole('link', {name: /浮雲/});
       expect(link).toHaveAttribute('href', '/movies/movie-m');
-      expect(screen.getByText(/今月の1本/)).toBeInTheDocument();
+      expect(link).toHaveTextContent('今月の1本');
+      expect(link).toHaveTextContent('毎月1本、みんなで同じ映画を観る');
+    });
+
+    it('今月の1本のカードにポスターを出す', async () => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          correct: true,
+          answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+        }),
+      } as Response);
+
+      render(
+        <QuizPage
+          {...createComponentProperties({
+            monthly: {...MONTHLY, posterUrl: 'https://example.com/ja.jpg'},
+          })}
+        />,
+      );
+      await userEvent.type(screen.getByLabelText(/邦題で回答/), '赤ひげ');
+      await userEvent.click(
+        await screen.findByRole('button', {name: /赤ひげ/}),
+      );
+
+      const link = await screen.findByRole('link', {name: /浮雲/});
+      expect(link.querySelector('img')).toHaveAttribute(
+        'src',
+        expect.stringContaining('ja.jpg'),
+      );
+    });
+
+    it('今月の1本のカードは次の問題の案内より前に置く', async () => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          correct: true,
+          answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+        }),
+      } as Response);
+
+      render(<QuizPage {...createComponentProperties({monthly: MONTHLY})} />);
+      await userEvent.type(screen.getByLabelText(/邦題で回答/), '赤ひげ');
+      await userEvent.click(
+        await screen.findByRole('button', {name: /赤ひげ/}),
+      );
+
+      const link = await screen.findByRole('link', {name: /浮雲/});
+      const notice = screen.getByText(/次の問題は明日/);
+      expect(
+        link.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
     });
 
     it('答えが出たら X に結果を投稿するリンクを出す', async () => {
