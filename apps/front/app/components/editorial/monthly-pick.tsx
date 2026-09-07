@@ -3,6 +3,7 @@ import {BigYear} from './big-year';
 import type {FilmCardMovie} from './film-card';
 import {PosterFrame} from './poster-frame';
 import {selectBestPoster} from '@/lib/poster';
+import {TAGLINE} from '@/lib/tagline';
 import {resolveMovieTitle} from '@/lib/movie-title';
 
 export type MonthlyPickMovie = FilmCardMovie & {
@@ -18,7 +19,7 @@ export type MonthlyPickMovie = FilmCardMovie & {
 const COPY = {
   ja: {
     label: 'MONTHLY / 今月の1本',
-    tagline: '毎月1本、みんなで同じ映画を観る',
+    tagline: TAGLINE,
     posts: '観た人の記事・ポスト',
     empty: 'まだ投稿がありません。',
     cta: '感想や記事のリンクを貼る',

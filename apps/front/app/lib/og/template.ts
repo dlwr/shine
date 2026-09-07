@@ -5,6 +5,7 @@
  * 配色はサイトのライトテーマ(tokens.css)に固定する。
  */
 import {buildQuizPosterHtml} from './quiz-poster';
+import {TAGLINE} from '@/lib/tagline';
 
 const COLORS = {
   paper: '#ece8df',
@@ -17,8 +18,6 @@ const COLORS = {
 
 export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
-
-export const TAGLINE = '毎月1本、みんなで同じ映画を観る';
 
 export function escapeHtml(value: string): string {
   return value

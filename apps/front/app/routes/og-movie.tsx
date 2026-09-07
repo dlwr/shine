@@ -5,12 +5,8 @@ import {
   type AvailabilityInfo,
 } from '@/components/editorial/availability-badges';
 import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
-import {
-  OG_HEIGHT,
-  OG_WIDTH,
-  TAGLINE,
-  buildMovieCardHtml,
-} from '@/lib/og/template';
+import {OG_HEIGHT, OG_WIDTH, buildMovieCardHtml} from '@/lib/og/template';
+import {TAGLINE} from '@/lib/tagline';
 import {upgradePosterForSharing} from '@/lib/meta';
 import {apiFetch} from '@/lib/api';
 
