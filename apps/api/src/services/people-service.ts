@@ -94,7 +94,7 @@ export class PeopleService extends BaseService {
     personUid: string,
     locale: string,
   ): Promise<PersonDetail | undefined> {
-    const personRows = await this.database
+    const personQuery = this.database
       .select({
         uid: people.uid,
         name: people.name,
@@ -105,12 +105,7 @@ export class PeopleService extends BaseService {
       .where(eq(people.uid, personUid))
       .limit(1);
 
-    const person = personRows[0];
-    if (!person) {
-      return undefined;
-    }
-
-    const creditRows = await this.database
+    const creditsQuery = this.database
       .select({
         movieUid: movies.uid,
         year: movies.year,
@@ -145,6 +140,16 @@ export class PeopleService extends BaseService {
       )
       .orderBy(sql`${movies.year} DESC`);
 
+    const [personRows, creditRows] = await Promise.all([
+      personQuery,
+      creditsQuery,
+    ]);
+
+    const person = personRows[0];
+    if (!person) {
+      return undefined;
+    }
+
     const byMovie = new Map<string, PersonDetail['credits'][number]>();
     for (const row of creditRows) {
       const credit = byMovie.get(row.movieUid) ?? {
@@ -166,8 +171,10 @@ export class PeopleService extends BaseService {
       byMovie.set(row.movieUid, credit);
     }
 
-    const legendSlugs = await this.attachCreditAwards(byMovie);
-    await this.attachPersonAwards(byMovie, personUid);
+    const [legendSlugs] = await Promise.all([
+      this.attachCreditAwards(byMovie),
+      this.attachPersonAwards(byMovie, personUid),
+    ]);
 
     return {
       uid: person.uid,
