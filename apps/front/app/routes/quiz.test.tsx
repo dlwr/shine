@@ -222,6 +222,29 @@ describe('Quiz page', () => {
       expect(await screen.findByText('1965年')).toBeInTheDocument();
     });
 
+    it('答えが出たら結果をポスターより前に置く', async () => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          correct: true,
+          answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+        }),
+      } as Response);
+
+      render(<QuizPage {...createComponentProperties({monthly: MONTHLY})} />);
+      await userEvent.type(screen.getByLabelText(/邦題で回答/), '赤ひげ');
+      await userEvent.click(
+        await screen.findByRole('button', {name: /赤ひげ/}),
+      );
+
+      const result = await screen.findByText('正解！');
+      const poster = screen.getByAltText('赤ひげ');
+      expect(
+        result.compareDocumentPosition(poster) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
     it('当たると答えを見せる', async () => {
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
