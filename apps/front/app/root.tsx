@@ -5,6 +5,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
   useRouteLoaderData,
 } from 'react-router';
 import type {Route} from './+types/root';
@@ -13,15 +14,26 @@ import {NO_FLASH_SCRIPT} from '@/lib/theme';
 import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
 import {resolveEnvironment} from '@/lib/api';
 import {SITE_URL} from '@/lib/meta';
+import {fetchMonthlyPick} from '@/lib/monthly-pick';
+import {MonthlyBand} from '@/components/editorial/monthly-band';
 
-export function loader({context, request}: Route.LoaderArgs) {
+function hasMonthlyBand(pathname: string): boolean {
+  return pathname !== '/' && !pathname.startsWith('/admin');
+}
+
+export async function loader({context, request}: Route.LoaderArgs) {
   const {pathname} = new URL(request.url);
   const environment = resolveEnvironment(context);
+  const locale = getLocaleFromRequest(request);
+  const monthly = hasMonthlyBand(pathname)
+    ? await fetchMonthlyPick(context, locale, request.signal)
+    : undefined;
 
   return {
-    locale: getLocaleFromRequest(request),
+    locale,
     canonicalUrl: new URL(pathname, SITE_URL).href,
     webAnalyticsToken: environment.PUBLIC_WEB_ANALYTICS_TOKEN || undefined,
+    ...(monthly && {monthly}),
   };
 }
 
@@ -107,7 +119,19 @@ export function Layout({children}: {children: React.ReactNode}) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const rootData = useRouteLoaderData<typeof loader>('root');
+  const {pathname} = useLocation();
+
+  return (
+    <>
+      <MonthlyBand
+        monthly={rootData?.monthly}
+        locale={rootData?.locale ?? DEFAULT_LOCALE}
+        currentPath={pathname}
+      />
+      <Outlet />
+    </>
+  );
 }
 
 export function ErrorBoundary({error}: Route.ErrorBoundaryProps) {
