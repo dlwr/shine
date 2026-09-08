@@ -1,40 +1,17 @@
-#!/usr/bin/env node
-
+import {Command} from 'commander';
 import {importMoviesFromList} from './movie-import-from-list';
 import {buildEnvironment, loadEnvironmentFiles} from './common/environment';
 
-loadEnvironmentFiles();
+async function main(
+  filePath: string,
+  awardName: string,
+  limitArgument: string | undefined,
+  options: {dryRun: boolean},
+): Promise<void> {
+  loadEnvironmentFiles();
 
-async function main(): Promise<void> {
-  const arguments_ = process.argv.slice(2);
-
-  // --dry-runオプションをチェック
-  const dryRunIndex = arguments_.indexOf('--dry-run');
-  const isDryRun = dryRunIndex !== -1;
-  if (isDryRun) {
-    arguments_.splice(dryRunIndex, 1);
-  }
-
-  if (arguments_.length < 2) {
-    console.log(
-      'Usage: movie-import-from-list-cli <json-file-path> <award-name> [limit] [--dry-run]',
-    );
-    console.log(
-      'Example: movie-import-from-list-cli ./tmp/1000_movies.json "Best 1000 Movies"',
-    );
-    console.log(
-      'Example: movie-import-from-list-cli ./tmp/1000_movies.json "Best 1000 Movies" 5',
-    );
-    console.log(
-      'Example: movie-import-from-list-cli ./tmp/1000_movies.json "Best 1000 Movies" --dry-run',
-    );
-    process.exitCode = 1;
-    return;
-  }
-
-  const filePath = arguments_[0];
-  const awardName = arguments_[1];
-  const limit = arguments_[2] ? Number(arguments_[2]) : undefined;
+  const isDryRun = options.dryRun;
+  const limit = limitArgument ? Number(limitArgument) : undefined;
 
   // 環境変数から設定を取得
   const tursoUrl = process.env.TURSO_DATABASE_URL;
@@ -89,4 +66,24 @@ async function main(): Promise<void> {
   }
 }
 
-await main();
+export function createCommand(): Command {
+  return new Command()
+    .name('movie-import')
+    .description(
+      'JSON の映画リストから映画を取り込み、賞の候補として登録します',
+    )
+    .argument('<json-file-path>', '映画リストの JSON ファイル')
+    .argument('<award-name>', '賞の名前')
+    .argument('[limit]', '処理する件数の上限')
+    .option('--dry-run', 'データベースへ書き込まず、処理内容のみ表示', false)
+    .addHelpText(
+      'after',
+      `
+例:
+  pnpm scrapers movie-import ./tmp/1000_movies.json "Best 1000 Movies"
+  pnpm scrapers movie-import ./tmp/1000_movies.json "Best 1000 Movies" 5
+  pnpm scrapers movie-import ./tmp/1000_movies.json "Best 1000 Movies" --dry-run
+`,
+    )
+    .action(main);
+}

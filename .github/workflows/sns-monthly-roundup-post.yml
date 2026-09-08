@@ -51,7 +51,7 @@ jobs:
       - name: Post this month's roundup
         if: github.event_name == 'workflow_dispatch' || steps.last-day.outputs.yes == 'true'
         working-directory: apps/scrapers
-        run: pnpm run sns-post --monthly-roundup ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: pnpm run cli sns-post --monthly-roundup ${{ inputs.dry_run && '--dry-run' || '' }}
         env:
           BLUESKY_IDENTIFIER: ${{ secrets.BLUESKY_IDENTIFIER }}
           BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}

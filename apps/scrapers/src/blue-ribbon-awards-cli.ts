@@ -9,9 +9,6 @@ import {
   loadEnvironmentFiles,
 } from './common/environment';
 
-loadEnvironmentFiles();
-const environment = buildEnvironment(process.env);
-
 function parseYear(value: string): number {
   const parsed = Number(value);
 
@@ -32,50 +29,48 @@ function parseThrottle(value: string): number {
   return parsed;
 }
 
-const program = new Command();
-
-program
-  .name('blue-ribbon-awards')
-  .description(
-    [
-      '日本語版Wikipediaの「ブルーリボン賞 (映画)」から作品賞・',
-      '外国作品賞を取り込みます。',
-      '記事名からWikidataのIMDb ID (P345) を引いて映画を同定するため、',
-      'IMDb IDを持たない作品は取り込みません。',
-    ].join('\n'),
-  )
-  .option('--year <year>', '取り込む年度を1つに絞る', parseYear)
-  .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
-  .option('--throttle <ms>', 'TMDb呼び出し間の待機ミリ秒', parseThrottle, 300)
-  .addHelpText(
-    'after',
-    `
+export function createCommand(): Command {
+  return new Command()
+    .name('blue-ribbon-awards')
+    .description(
+      [
+        '日本語版Wikipediaの「ブルーリボン賞 (映画)」から作品賞・',
+        '外国作品賞を取り込みます。',
+        '記事名からWikidataのIMDb ID (P345) を引いて映画を同定するため、',
+        'IMDb IDを持たない作品は取り込みません。',
+      ].join('\n'),
+    )
+    .option('--year <year>', '取り込む年度を1つに絞る', parseYear)
+    .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
+    .option('--throttle <ms>', 'TMDb呼び出し間の待機ミリ秒', parseThrottle, 300)
+    .addHelpText(
+      'after',
+      `
 例:
-  pnpm run scrapers:blue-ribbon-awards --dry-run
-  pnpm run scrapers:blue-ribbon-awards --year 2025
+  pnpm scrapers blue-ribbon-awards --dry-run
+  pnpm scrapers blue-ribbon-awards --year 2025
 `,
-  );
+    )
+    .action(
+      async (options: {year?: number; dryRun: boolean; throttle: number}) => {
+        loadEnvironmentFiles();
+        const environment = buildEnvironment(process.env);
 
-program.parse();
+        if (!options.dryRun) {
+          assertDatabaseEnvironment(environment);
+        }
 
-const options = program.opts<{
-  year?: number;
-  dryRun: boolean;
-  throttle: number;
-}>();
+        const stats = await importBlueRibbonAwards({
+          environment,
+          dryRun: options.dryRun,
+          year: options.year,
+          throttleMs: options.throttle,
+        });
 
-if (!options.dryRun) {
-  assertDatabaseEnvironment(environment);
-}
-
-const stats = await importBlueRibbonAwards({
-  environment,
-  dryRun: options.dryRun,
-  year: options.year,
-  throttleMs: options.throttle,
-});
-
-const failed = stats.bestFilm.failed + stats.foreign.failed;
-if (failed > 0) {
-  process.exitCode = 1;
+        const failed = stats.bestFilm.failed + stats.foreign.failed;
+        if (failed > 0) {
+          process.exitCode = 1;
+        }
+      },
+    );
 }

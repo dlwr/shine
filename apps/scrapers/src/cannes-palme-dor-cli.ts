@@ -9,9 +9,6 @@ import {
   loadEnvironmentFiles,
 } from './common/environment';
 
-loadEnvironmentFiles();
-const environment = buildEnvironment(process.env);
-
 function parseYear(value: string): number {
   const year = Number(value);
 
@@ -32,57 +29,59 @@ function parseThrottle(value: string): number {
   return parsed;
 }
 
-const program = new Command();
-
-program
-  .name('cannes-palme-dor')
-  .description(
-    [
-      '英語版Wikipediaの「YYYY Cannes Film Festival」の In Competition の表から',
-      'コンペティション部門の出品作を取り込みます。',
-      '記事名からWikidataのIMDb ID (P345) を引いて映画を同定し、',
-      '背景色の付いた行をパルム・ドール受賞作として保存します。',
-      '1951年より前の回は表でなく箇条書きなので、Awards 節から受賞作を読みます。',
-    ].join('\n'),
-  )
-  .requiredOption('--year <year>', '取り込む映画祭の開催年', parseYear)
-  .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
-  .option(
-    '--winners-only',
-    '出品作は取り込まず、受賞作だけを取り込む（既に出品作が入っている年の受賞漏れを埋める用）',
-    false,
-  )
-  .option('--throttle <ms>', 'TMDb呼び出し間の待機ミリ秒', parseThrottle, 300)
-  .addHelpText(
-    'after',
-    `
+export function createCommand(): Command {
+  return new Command()
+    .name('cannes-palme-dor')
+    .description(
+      [
+        '英語版Wikipediaの「YYYY Cannes Film Festival」の In Competition の表から',
+        'コンペティション部門の出品作を取り込みます。',
+        '記事名からWikidataのIMDb ID (P345) を引いて映画を同定し、',
+        '背景色の付いた行をパルム・ドール受賞作として保存します。',
+        '1951年より前の回は表でなく箇条書きなので、Awards 節から受賞作を読みます。',
+      ].join('\n'),
+    )
+    .requiredOption('--year <year>', '取り込む映画祭の開催年', parseYear)
+    .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
+    .option(
+      '--winners-only',
+      '出品作は取り込まず、受賞作だけを取り込む（既に出品作が入っている年の受賞漏れを埋める用）',
+      false,
+    )
+    .option('--throttle <ms>', 'TMDb呼び出し間の待機ミリ秒', parseThrottle, 300)
+    .addHelpText(
+      'after',
+      `
 例:
-  pnpm run scrapers:cannes-palme-dor --year ${new Date().getFullYear()} --dry-run
-  pnpm run scrapers:cannes-palme-dor --year ${new Date().getFullYear()}
+  pnpm scrapers cannes-palme-dor --year ${new Date().getFullYear()} --dry-run
+  pnpm scrapers cannes-palme-dor --year ${new Date().getFullYear()}
 `,
-  );
+    )
+    .action(
+      async (options: {
+        year: number;
+        dryRun: boolean;
+        winnersOnly: boolean;
+        throttle: number;
+      }) => {
+        loadEnvironmentFiles();
+        const environment = buildEnvironment(process.env);
 
-program.parse();
+        if (!options.dryRun) {
+          assertDatabaseEnvironment(environment);
+        }
 
-const options = program.opts<{
-  year: number;
-  dryRun: boolean;
-  winnersOnly: boolean;
-  throttle: number;
-}>();
+        const stats = await importCannesPalmeDOr({
+          environment,
+          year: options.year,
+          dryRun: options.dryRun,
+          winnersOnly: options.winnersOnly,
+          throttleMs: options.throttle,
+        });
 
-if (!options.dryRun) {
-  assertDatabaseEnvironment(environment);
-}
-
-const stats = await importCannesPalmeDOr({
-  environment,
-  year: options.year,
-  dryRun: options.dryRun,
-  winnersOnly: options.winnersOnly,
-  throttleMs: options.throttle,
-});
-
-if (stats.failed > 0) {
-  process.exitCode = 1;
+        if (stats.failed > 0) {
+          process.exitCode = 1;
+        }
+      },
+    );
 }

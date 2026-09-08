@@ -1,5 +1,3 @@
-#!/usr/bin/env -S tsx
-
 /**
  * セレクション映画の可用性チェックCLI
  *
@@ -8,6 +6,7 @@
  * APIの /reselect で再抽選する(上限10回)。結果はDiscordに通知する。
  */
 import process from 'node:process';
+import {Command} from 'commander';
 import {
   buildDiscordMessage,
   sendDiscordNotification,
@@ -15,13 +14,10 @@ import {
 import {runAvailabilityCheck} from './availability/run';
 import {buildEnvironment, loadEnvironmentFiles} from './common/environment';
 
-loadEnvironmentFiles();
+async function main(options: {dryRun: boolean}): Promise<void> {
+  loadEnvironmentFiles();
 
-const arguments_ = new Set(process.argv.slice(2));
-const isDryRun = arguments_.has('--dry-run');
-const shouldHelp = arguments_.has('--help') || arguments_.has('-h');
-
-async function main(): Promise<void> {
+  const isDryRun = options.dryRun;
   const environment = buildEnvironment(process.env);
 
   if (!environment.TURSO_DATABASE_URL || !environment.TURSO_AUTH_TOKEN) {
@@ -92,14 +88,23 @@ async function main(): Promise<void> {
   }
 }
 
-if (shouldHelp) {
-  console.log(`
-Usage: availability-check-cli [options]
-
-Options:
-  --dry-run      チェックのみ実行し、再抽選もDiscord通知もしない
-  --help         このヘルプを表示
-
+export function createCommand(): Command {
+  return new Command()
+    .name('availability-check')
+    .description(
+      [
+        'daily/weekly/monthly のセレクション映画が配信・宅配レンタルで観られるかを確認し、',
+        '観られなければ API の /reselect で再抽選します(上限10回)。結果は Discord に通知します。',
+      ].join('\n'),
+    )
+    .option(
+      '--dry-run',
+      'チェックのみ実行し、再抽選もDiscord通知もしない',
+      false,
+    )
+    .addHelpText(
+      'after',
+      `
 Environment variables:
   TURSO_DATABASE_URL     TursoデータベースURL
   TURSO_AUTH_TOKEN       Turso認証トークン
@@ -107,7 +112,7 @@ Environment variables:
   ADMIN_PASSWORD         API管理者パスワード
   SHINE_API_URL          APIのURL (default: https://shine-api.yuta25.workers.dev)
   DISCORD_WEBHOOK_URL    Discord webhook URL (通知先)
-`);
-} else {
-  await main();
+`,
+    )
+    .action(main);
 }

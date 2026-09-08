@@ -35,16 +35,13 @@ function parseThrottle(value: string): number {
   return parsed;
 }
 
-export async function runEnWikipediaAwardCli({
+export function createEnWikipediaAwardCommand({
   name,
   description,
   firstYear,
   awards,
   importAwards,
-}: EnWikipediaAwardCliOptions): Promise<void> {
-  loadEnvironmentFiles();
-  const environment = buildEnvironment(process.env);
-
+}: EnWikipediaAwardCliOptions): Command {
   const categories = awards.map(award => award.category);
 
   const parseYear = (value: string): number => {
@@ -69,9 +66,7 @@ export async function runEnWikipediaAwardCli({
     return value;
   };
 
-  const program = new Command();
-
-  program
+  return new Command()
     .name(name)
     .description(description.join('\n'))
     .option('--year <year>', '取り込む映画祭の開催年を1つに絞る', parseYear)
@@ -85,37 +80,39 @@ export async function runEnWikipediaAwardCli({
 ${categories.map(category => `  ${category}`).join('\n')}
 
 例:
-  pnpm run scrapers:${name} --dry-run
-  pnpm run scrapers:${name} --year ${new Date().getFullYear()}
-  pnpm run scrapers:${name} --category "${categories[0]}"
+  pnpm scrapers ${name} --dry-run
+  pnpm scrapers ${name} --year ${new Date().getFullYear()}
+  pnpm scrapers ${name} --category "${categories[0]}"
 `,
+    )
+    .action(
+      async (options: {
+        year?: number;
+        category?: string;
+        dryRun: boolean;
+        throttle: number;
+      }) => {
+        loadEnvironmentFiles();
+        const environment = buildEnvironment(process.env);
+
+        if (!options.dryRun) {
+          assertDatabaseEnvironment(environment);
+        }
+
+        const stats = await importAwards({
+          environment,
+          awards:
+            options.category === undefined
+              ? undefined
+              : awards.filter(award => award.category === options.category),
+          dryRun: options.dryRun,
+          year: options.year,
+          throttleMs: options.throttle,
+        });
+
+        if (stats.failed > 0) {
+          process.exitCode = 1;
+        }
+      },
     );
-
-  program.parse();
-
-  const options = program.opts<{
-    year?: number;
-    category?: string;
-    dryRun: boolean;
-    throttle: number;
-  }>();
-
-  if (!options.dryRun) {
-    assertDatabaseEnvironment(environment);
-  }
-
-  const stats = await importAwards({
-    environment,
-    awards:
-      options.category === undefined
-        ? undefined
-        : awards.filter(award => award.category === options.category),
-    dryRun: options.dryRun,
-    year: options.year,
-    throttleMs: options.throttle,
-  });
-
-  if (stats.failed > 0) {
-    process.exitCode = 1;
-  }
 }

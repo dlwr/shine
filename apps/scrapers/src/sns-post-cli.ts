@@ -1,25 +1,23 @@
-#!/usr/bin/env -S tsx
-
 /**
  * 今日のデイリーセレクションをBlueskyとXへ投稿するCLI。
  *
  * 使い方:
- *   pnpm run sns-post --dry-run   投稿せず本文とカード情報を表示
- *   pnpm run sns-post             実際に投稿する
- *   pnpm run sns-post --quiz      デイリーセレクションではなく今日のクイズを告知する
- *   pnpm run sns-post --watched   今週の観た映画チェック(週替わりで1リスト)を告知する
- *   pnpm run sns-post --person    今週の映画人(個人賞の受賞者から週替わりで1人)を紹介する
- *   pnpm run sns-post --monthly   今月の1本を告知する(1日)
- *   pnpm run sns-post --monthly-reminder
- *                                 今月の1本の再告知と集まった記事・ポストの件数(15日)
- *   pnpm run sns-post --monthly-links
- *                                 今月の1本に他人の記事・ポストが付いたら紹介する
- *                                 (未紹介のものが無ければ投稿しない)
- *   pnpm run sns-post --monthly-roundup
- *                                 今月の1本に集まった記事・ポストのまとめと来月の予告(月末)
- *                                 予告は ADMIN_PASSWORD があるときだけ付く
- *   pnpm run sns-post --announce <name>
- *                                 data/sns-announcements/<name>.json の本文を1回だけ流す
+ *   pnpm scrapers sns-post --dry-run   投稿せず本文とカード情報を表示
+ *   pnpm scrapers sns-post             実際に投稿する
+ *   pnpm scrapers sns-post --quiz      デイリーセレクションではなく今日のクイズを告知する
+ *   pnpm scrapers sns-post --watched   今週の観た映画チェック(週替わりで1リスト)を告知する
+ *   pnpm scrapers sns-post --person    今週の映画人(個人賞の受賞者から週替わりで1人)を紹介する
+ *   pnpm scrapers sns-post --monthly   今月の1本を告知する(1日)
+ *   pnpm scrapers sns-post --monthly-reminder
+ *                                      今月の1本の再告知と集まった記事・ポストの件数(15日)
+ *   pnpm scrapers sns-post --monthly-links
+ *                                      今月の1本に他人の記事・ポストが付いたら紹介する
+ *                                      (未紹介のものが無ければ投稿しない)
+ *   pnpm scrapers sns-post --monthly-roundup
+ *                                      今月の1本に集まった記事・ポストのまとめと来月の予告(月末)
+ *                                      予告は ADMIN_PASSWORD があるときだけ付く
+ *   pnpm scrapers sns-post --announce <name>
+ *                                      data/sns-announcements/<name>.json の本文を1回だけ流す
  *
  * 必要な環境変数(実投稿時、設定があるサービスにだけ投稿する):
  *   BLUESKY_IDENTIFIER   例: shine-film.com
@@ -30,6 +28,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import {fileURLToPath} from 'node:url';
+import {Command} from 'commander';
 import {getDatabase} from '@shine/database';
 import {parseOriginRules} from '@shine/utils';
 import {
@@ -73,11 +72,7 @@ import {
 import {pickWeeklyItem} from './sns/weekly-rotation';
 import {postTweet, type XCredentials} from './sns/x';
 
-loadEnvironmentFiles();
-
 const SITE_URL = 'https://shine-film.com';
-const API_URL =
-  process.env.SHINE_API_URL ?? 'https://shine-api.yuta25.workers.dev';
 const MAX_TEXT_ORGANIZATIONS = 2;
 const MAX_TEXT_AVAILABILITY = 2;
 const PROMINENT_POOL_LIMIT = 200;
@@ -96,8 +91,12 @@ type SelectionMovie = {
 
 type Selections = {daily?: SelectionMovie; monthly?: SelectionMovie};
 
+function apiUrl(): string {
+  return process.env.SHINE_API_URL ?? 'https://shine-api.yuta25.workers.dev';
+}
+
 async function fetchSelections(): Promise<Selections> {
-  const response = await fetch(`${API_URL}/?locale=ja`, {
+  const response = await fetch(`${apiUrl()}/?locale=ja`, {
     headers: {Origin: SITE_URL},
   });
 
@@ -121,7 +120,7 @@ function requireSelection(
 }
 
 async function fetchArticleLinkCount(movieUid: string): Promise<number> {
-  const response = await fetch(`${API_URL}/movies/${movieUid}/article-links`, {
+  const response = await fetch(`${apiUrl()}/movies/${movieUid}/article-links`, {
     headers: {Origin: SITE_URL},
   });
 
@@ -140,7 +139,7 @@ async function fetchNextMonthlyTitle(): Promise<string | undefined> {
   }
 
   try {
-    const loginResponse = await fetch(`${API_URL}/auth/login`, {
+    const loginResponse = await fetch(`${apiUrl()}/auth/login`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json', Origin: SITE_URL},
       body: JSON.stringify({password}),
@@ -151,7 +150,7 @@ async function fetchNextMonthlyTitle(): Promise<string | undefined> {
 
     const {token} = (await loginResponse.json()) as {token: string};
     const response = await fetch(
-      `${API_URL}/admin/preview-selections?locale=ja`,
+      `${apiUrl()}/admin/preview-selections?locale=ja`,
       {headers: {Authorization: `Bearer ${token}`, Origin: SITE_URL}},
     );
     if (!response.ok) {
@@ -169,7 +168,7 @@ async function fetchNextMonthlyTitle(): Promise<string | undefined> {
 }
 
 async function fetchQuizPuzzle(): Promise<{date: string; poolSize: number}> {
-  const response = await fetch(`${API_URL}/quiz/daily`, {
+  const response = await fetch(`${apiUrl()}/quiz/daily`, {
     headers: {Origin: SITE_URL},
   });
 
@@ -189,7 +188,7 @@ type AwardSummary = {
 };
 
 async function fetchWatchedLists(): Promise<AwardSummary[]> {
-  const response = await fetch(`${API_URL}/awards`, {
+  const response = await fetch(`${apiUrl()}/awards`, {
     headers: {Origin: SITE_URL},
   });
 
@@ -202,7 +201,7 @@ async function fetchWatchedLists(): Promise<AwardSummary[]> {
 }
 
 async function fetchWinnerCount(slug: string): Promise<number> {
-  const response = await fetch(`${API_URL}/awards/${slug}`, {
+  const response = await fetch(`${apiUrl()}/awards/${slug}`, {
     headers: {Origin: SITE_URL},
   });
 
@@ -234,7 +233,7 @@ async function fetchProminentPeople(): Promise<{
   actors: ProminentPerson[];
 }> {
   const response = await fetch(
-    `${API_URL}/people/prominent?locale=ja&limit=${PROMINENT_POOL_LIMIT}`,
+    `${apiUrl()}/people/prominent?locale=ja&limit=${PROMINENT_POOL_LIMIT}`,
     {headers: {Origin: SITE_URL}},
   );
 
@@ -555,51 +554,65 @@ async function buildAnnouncementPlan(name: string): Promise<PostPlan> {
   };
 }
 
-async function buildPlan(): Promise<PostPlan | undefined> {
-  const announceIndex = process.argv.indexOf('--announce');
-  if (announceIndex !== -1) {
-    const name = process.argv[announceIndex + 1];
-    if (!name || name.startsWith('--')) {
+type SnsPostOptions = {
+  dryRun: boolean;
+  quiz: boolean;
+  watched: boolean;
+  person: boolean;
+  monthly: boolean;
+  monthlyReminder: boolean;
+  monthlyLinks: boolean;
+  monthlyRoundup: boolean;
+  announce?: string;
+};
+
+async function buildPlan(
+  options: SnsPostOptions,
+): Promise<PostPlan | undefined> {
+  if (options.announce !== undefined) {
+    if (!options.announce || options.announce.startsWith('--')) {
       throw new Error('--announce には告知名を指定してください');
     }
 
-    return buildAnnouncementPlan(name);
+    return buildAnnouncementPlan(options.announce);
   }
 
-  if (process.argv.includes('--quiz')) {
+  if (options.quiz) {
     return buildQuizPlan();
   }
 
-  if (process.argv.includes('--watched')) {
+  if (options.watched) {
     return buildWatchedPlan();
   }
 
-  if (process.argv.includes('--person')) {
+  if (options.person) {
     return buildPersonPlan();
   }
 
-  if (process.argv.includes('--monthly')) {
+  if (options.monthly) {
     return buildMonthlyPlan();
   }
 
-  if (process.argv.includes('--monthly-reminder')) {
+  if (options.monthlyReminder) {
     return buildMonthlyReminderPlan();
   }
 
-  if (process.argv.includes('--monthly-links')) {
+  if (options.monthlyLinks) {
     return buildMonthlyLinksPlan();
   }
 
-  if (process.argv.includes('--monthly-roundup')) {
+  if (options.monthlyRoundup) {
     return buildMonthlyRoundupPlan();
   }
 
   return buildDailyPlan();
 }
 
-async function main() {
-  const isDryRun = process.argv.includes('--dry-run');
-  const plan = await buildPlan();
+async function main(options: SnsPostOptions) {
+  loadEnvironmentFiles();
+
+  const isDryRun = options.dryRun;
+  const plan = await buildPlan(options);
 
   if (!plan) {
     console.log('投稿するものがありません');
@@ -648,9 +661,63 @@ async function main() {
   }
 }
 
-try {
-  await main();
-} catch (error) {
-  console.error('投稿処理に失敗しました:', error);
-  process.exitCode = 1;
+export function createCommand(): Command {
+  return new Command()
+    .name('sns-post')
+    .description(
+      [
+        '今日のデイリーセレクションをBlueskyとXへ投稿します。',
+        '種別のオプションを付けると、代わりにクイズ・観た映画チェック・今週の映画人・今月の1本などを投稿します。',
+        '実投稿時は、認証情報が設定されているサービスにだけ投稿します。',
+      ].join('\n'),
+    )
+    .option('--dry-run', '投稿せず本文とカード情報を表示', false)
+    .option('--quiz', '今日のクイズを告知する', false)
+    .option(
+      '--watched',
+      '今週の観た映画チェック(週替わりで1リスト)を告知する',
+      false,
+    )
+    .option(
+      '--person',
+      '今週の映画人(個人賞の受賞者から週替わりで1人)を紹介する',
+      false,
+    )
+    .option('--monthly', '今月の1本を告知する(1日)', false)
+    .option(
+      '--monthly-reminder',
+      '今月の1本の再告知と集まった記事・ポストの件数(15日)',
+      false,
+    )
+    .option(
+      '--monthly-links',
+      '今月の1本に他人の記事・ポストが付いたら紹介する(未紹介のものが無ければ投稿しない)',
+      false,
+    )
+    .option(
+      '--monthly-roundup',
+      '今月の1本に集まった記事・ポストのまとめと来月の予告(月末)。予告は ADMIN_PASSWORD があるときだけ付く',
+      false,
+    )
+    .option(
+      '--announce <name>',
+      'data/sns-announcements/<name>.json の本文を1回だけ流す',
+    )
+    .addHelpText(
+      'after',
+      `
+Environment variables (実投稿時、設定があるサービスにだけ投稿する):
+  BLUESKY_IDENTIFIER     例: shine-film.com
+  BLUESKY_APP_PASSWORD   アプリパスワード
+  X_API_KEY / X_API_KEY_SECRET / X_ACCESS_TOKEN / X_ACCESS_TOKEN_SECRET
+`,
+    )
+    .action(async (options: SnsPostOptions) => {
+      try {
+        await main(options);
+      } catch (error) {
+        console.error('投稿処理に失敗しました:', error);
+        process.exitCode = 1;
+      }
+    });
 }

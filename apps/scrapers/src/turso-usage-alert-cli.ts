@@ -1,24 +1,23 @@
-#!/usr/bin/env -S tsx
-
 /**
  * Turso の読み取り量を Platform API から取り、閾値を超えていたら Discord に警告する。
  * --summary を付けると警告が無くても現在値を1行投稿する。
  */
 import process from 'node:process';
+import {Command} from 'commander';
 import {sendDiscordNotification} from './availability/discord';
 import {loadEnvironmentFiles} from './common/environment';
 import {billingCycle, evaluateTursoUsage, fetchRowsRead} from './turso-usage';
 
-loadEnvironmentFiles();
-
 const DAY_MS = 86_400_000;
 
-const arguments_ = new Set(process.argv.slice(2));
-const isDryRun = arguments_.has('--dry-run');
-const shouldPostSummary = arguments_.has('--summary');
-const shouldHelp = arguments_.has('--help') || arguments_.has('-h');
+async function main(options: {
+  summary: boolean;
+  dryRun: boolean;
+}): Promise<void> {
+  loadEnvironmentFiles();
 
-async function main(): Promise<void> {
+  const isDryRun = options.dryRun;
+  const shouldPostSummary = options.summary;
   const token = process.env.TURSO_PLATFORM_API_TOKEN || '';
 
   if (!token) {
@@ -90,20 +89,29 @@ async function main(): Promise<void> {
   }
 }
 
-if (shouldHelp) {
-  console.log(`
-Usage: turso-usage-alert-cli [options]
-
-Options:
-  --summary      警告が無くても現在の読み取り量を Discord に投稿する
-  --dry-run      取得と判定だけ行い、Discord には投稿しない
-  --help         このヘルプを表示
-
+export function createCommand(): Command {
+  return new Command()
+    .name('turso-usage-alert')
+    .description(
+      [
+        'Turso の読み取り量を Platform API から取り、閾値を超えていたら Discord に警告します。',
+        '--summary を付けると警告が無くても現在値を1行投稿します。',
+      ].join('\n'),
+    )
+    .option(
+      '--summary',
+      '警告が無くても現在の読み取り量を Discord に投稿する',
+      false,
+    )
+    .option('--dry-run', '取得と判定だけ行い、Discord には投稿しない', false)
+    .addHelpText(
+      'after',
+      `
 Environment variables:
   TURSO_PLATFORM_API_TOKEN   Turso Platform API トークン (turso auth api-tokens mint)
   TURSO_ORGANIZATION         組織スラッグ (default: dlwr)
   DISCORD_WEBHOOK_URL        Discord webhook URL (通知先)
-`);
-} else {
-  await main();
+`,
+    )
+    .action(main);
 }

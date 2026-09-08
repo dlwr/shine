@@ -9,9 +9,6 @@ import {
   loadEnvironmentFiles,
 } from './common/environment';
 
-loadEnvironmentFiles();
-const environment = buildEnvironment(process.env);
-
 function parsePositiveInteger(label: string) {
   return (value: string): number => {
     const parsed = Number(value);
@@ -26,60 +23,61 @@ function parsePositiveInteger(label: string) {
   };
 }
 
-const program = new Command();
-
-program
-  .name('backfill-posters')
-  .description(
-    [
-      'ポスターが登録されていない映画を対象に、TMDbからポスターを補完します。',
-      'TMDb IDが無い映画はIMDb IDから、それも無ければタイトルと公開年の',
-      '厳格な一致で解決します（一致しない場合は何も書き込みません）。',
-    ].join('\n'),
-  )
-  .option('--limit <count>', '処理件数の上限', parsePositiveInteger('limit'))
-  .option('--dry-run', '実際の書き込みは行わず、処理内容のみ表示', false)
-  .option(
-    '--throttle <ms>',
-    'TMDbリクエスト間の待機ミリ秒 (デフォルト: 300)',
-    parsePositiveInteger('throttle'),
-    300,
-  )
-  .addHelpText(
-    'after',
-    `
+export function createCommand(): Command {
+  return new Command()
+    .name('backfill-posters')
+    .description(
+      [
+        'ポスターが登録されていない映画を対象に、TMDbからポスターを補完します。',
+        'TMDb IDが無い映画はIMDb IDから、それも無ければタイトルと公開年の',
+        '厳格な一致で解決します（一致しない場合は何も書き込みません）。',
+      ].join('\n'),
+    )
+    .option('--limit <count>', '処理件数の上限', parsePositiveInteger('limit'))
+    .option('--dry-run', '実際の書き込みは行わず、処理内容のみ表示', false)
+    .option(
+      '--throttle <ms>',
+      'TMDbリクエスト間の待機ミリ秒 (デフォルト: 300)',
+      parsePositiveInteger('throttle'),
+      300,
+    )
+    .addHelpText(
+      'after',
+      `
 例:
-  pnpm run scrapers:backfill-posters --dry-run
-  pnpm run scrapers:backfill-posters --limit 20
-  pnpm run scrapers:backfill-posters
+  pnpm scrapers backfill-posters --dry-run
+  pnpm scrapers backfill-posters --limit 20
+  pnpm scrapers backfill-posters
 `,
-  )
-  .action(
-    async (options: {limit?: number; dryRun: boolean; throttle: number}) => {
-      assertDatabaseEnvironment(environment);
+    )
+    .action(
+      async (options: {limit?: number; dryRun: boolean; throttle: number}) => {
+        try {
+          loadEnvironmentFiles();
+          const environment = buildEnvironment(process.env);
 
-      if (!environment.TMDB_API_KEY) {
-        console.error('TMDB_API_KEY が設定されていません。');
-        process.exitCode = 1;
-        return;
-      }
+          assertDatabaseEnvironment(environment);
 
-      const stats = await backfillPosters({
-        environment,
-        dryRun: options.dryRun,
-        limit: options.limit,
-        throttleMs: options.throttle,
-      });
+          if (!environment.TMDB_API_KEY) {
+            console.error('TMDB_API_KEY が設定されていません。');
+            process.exitCode = 1;
+            return;
+          }
 
-      if (stats.failed > 0) {
-        process.exitCode = 1;
-      }
-    },
-  );
+          const stats = await backfillPosters({
+            environment,
+            dryRun: options.dryRun,
+            limit: options.limit,
+            throttleMs: options.throttle,
+          });
 
-try {
-  await program.parseAsync(process.argv);
-} catch (error) {
-  console.error('ポスター補完中にエラーが発生しました:', error);
-  process.exitCode = 1;
+          if (stats.failed > 0) {
+            process.exitCode = 1;
+          }
+        } catch (error) {
+          console.error('ポスター補完中にエラーが発生しました:', error);
+          process.exitCode = 1;
+        }
+      },
+    );
 }

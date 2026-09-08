@@ -46,7 +46,7 @@ jobs:
 
       - name: Run availability check
         working-directory: apps/scrapers
-        run: pnpm run availability-check ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: pnpm run cli availability-check ${{ inputs.dry_run && '--dry-run' || '' }}
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}

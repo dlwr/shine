@@ -10,9 +10,6 @@ import {
 } from './common/environment';
 import {buildTmdbJaWorklist} from './tmdb-ja-worklist';
 
-loadEnvironmentFiles();
-const environment = buildEnvironment(process.env);
-
 function parsePositiveInteger(value: string): number {
   const parsed = Number(value);
 
@@ -31,83 +28,84 @@ function parseDate(value: string): string {
   return value;
 }
 
-const program = new Command();
-
-program
-  .name('tmdb-ja-worklist')
-  .description(
-    [
-      'TMDbにja翻訳が無い（または不完全な）映画のワークリストをJSONで出力します。',
-      '対象は、うちのDBにかな入り邦題があり、jaあらすじが無い映画です。',
-      'TMDb APIで裏取りし、邦題・enタイトル・enあらすじ・編集URLを載せます。',
-      '書き込みは行いません。',
-    ].join('\n'),
-  )
-  .option('--limit <n>', '照会する映画の件数上限', parsePositiveInteger)
-  .option('--throttle <ms>', 'リクエスト間隔(ms)', parsePositiveInteger, 150)
-  .option(
-    '--selection-date <date>',
-    'その日の選出映画（daily/weekly/monthly）だけを対象にする',
-    parseDate,
-  )
-  .option('--out <path>', '出力先ファイル（省略時は標準出力）')
-  .addHelpText(
-    'after',
-    `
+export function createCommand(): Command {
+  return new Command()
+    .name('tmdb-ja-worklist')
+    .description(
+      [
+        'TMDbにja翻訳が無い（または不完全な）映画のワークリストをJSONで出力します。',
+        '対象は、うちのDBにかな入り邦題があり、jaあらすじが無い映画です。',
+        'TMDb APIで裏取りし、邦題・enタイトル・enあらすじ・編集URLを載せます。',
+        '書き込みは行いません。',
+      ].join('\n'),
+    )
+    .option('--limit <n>', '照会する映画の件数上限', parsePositiveInteger)
+    .option('--throttle <ms>', 'リクエスト間隔(ms)', parsePositiveInteger, 150)
+    .option(
+      '--selection-date <date>',
+      'その日の選出映画（daily/weekly/monthly）だけを対象にする',
+      parseDate,
+    )
+    .option('--out <path>', '出力先ファイル（省略時は標準出力）')
+    .addHelpText(
+      'after',
+      `
 例:
-  pnpm run scrapers:tmdb-ja-worklist --limit 10
-  pnpm run scrapers:tmdb-ja-worklist --limit 100 --out worklist.json
-  pnpm run scrapers:tmdb-ja-worklist --selection-date 2026-08-21
+  pnpm scrapers tmdb-ja-worklist --limit 10
+  pnpm scrapers tmdb-ja-worklist --limit 100 --out worklist.json
+  pnpm scrapers tmdb-ja-worklist --selection-date 2026-08-21
 `,
-  )
-  .action(
-    async (options: {
-      limit?: number;
-      throttle: number;
-      selectionDate?: string;
-      out?: string;
-    }) => {
-      assertDatabaseEnvironment(environment);
+    )
+    .action(
+      async (options: {
+        limit?: number;
+        throttle: number;
+        selectionDate?: string;
+        out?: string;
+      }) => {
+        try {
+          loadEnvironmentFiles();
+          const environment = buildEnvironment(process.env);
 
-      if (!environment.TMDB_API_KEY) {
-        throw new Error('TMDB_API_KEY が設定されていません。');
-      }
+          assertDatabaseEnvironment(environment);
 
-      const {items, stats} = await buildTmdbJaWorklist({
-        environment,
-        limit: options.limit,
-        throttleMs: options.throttle,
-        selectionDate: options.selectionDate,
-        onProgress(done, total) {
-          if (done === total || done % 50 === 0) {
-            console.error(`  ${done}/${total}`);
+          if (!environment.TMDB_API_KEY) {
+            throw new Error('TMDB_API_KEY が設定されていません。');
           }
-        },
-      });
 
-      const json = JSON.stringify(items, undefined, 2);
-      if (options.out) {
-        await fs.writeFile(options.out, `${json}\n`);
-        console.error(`ワークリストを ${options.out} に書き出しました。`);
-      } else {
-        console.log(json);
-      }
+          const {items, stats} = await buildTmdbJaWorklist({
+            environment,
+            limit: options.limit,
+            throttleMs: options.throttle,
+            selectionDate: options.selectionDate,
+            onProgress(done, total) {
+              if (done === total || done % 50 === 0) {
+                console.error(`  ${done}/${total}`);
+              }
+            },
+          });
 
-      console.error('\n結果:');
-      console.error(`  照会: ${stats.candidates}`);
-      console.error(`  ワークリスト: ${stats.listed}`);
-      console.error(`  TMDbに整備済み: ${stats.tmdbComplete}`);
-      console.error(`  失敗: ${stats.failed}`);
+          const json = JSON.stringify(items, undefined, 2);
+          if (options.out) {
+            await fs.writeFile(options.out, `${json}\n`);
+            console.error(`ワークリストを ${options.out} に書き出しました。`);
+          } else {
+            console.log(json);
+          }
 
-      if (stats.failed > 0) {
-        process.exitCode = 1;
-      }
-    },
-  );
+          console.error('\n結果:');
+          console.error(`  照会: ${stats.candidates}`);
+          console.error(`  ワークリスト: ${stats.listed}`);
+          console.error(`  TMDbに整備済み: ${stats.tmdbComplete}`);
+          console.error(`  失敗: ${stats.failed}`);
 
-try {
-  await program.parseAsync(process.argv);
-} catch (error) {
-  console.error('ワークリスト生成中にエラーが発生しました:', error);
-  process.exitCode = 1;
+          if (stats.failed > 0) {
+            process.exitCode = 1;
+          }
+        } catch (error) {
+          console.error('ワークリスト生成中にエラーが発生しました:', error);
+          process.exitCode = 1;
+        }
+      },
+    );
 }
