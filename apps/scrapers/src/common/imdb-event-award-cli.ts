@@ -36,16 +36,13 @@ export type ImdbEventAwardCliOptions = {
   config: ImdbEventAwardConfig;
 };
 
-export async function runImdbEventAwardCli({
+export function createImdbEventAwardCommand({
   name,
   festivalLabel,
   dataFileName,
   firstYear,
   config,
-}: ImdbEventAwardCliOptions): Promise<void> {
-  loadEnvironmentFiles();
-  const environment = buildEnvironment(process.env);
-
+}: ImdbEventAwardCliOptions): Command {
   const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
   const defaultInputPath = path.resolve(
     currentDirectory,
@@ -68,9 +65,7 @@ export async function runImdbEventAwardCli({
     return year;
   };
 
-  const program = new Command();
-
-  program
+  return new Command()
     .name(name)
     .description(
       [
@@ -93,9 +88,9 @@ export async function runImdbEventAwardCli({
       'after',
       `
 例:
-  pnpm run scrapers:${name}
-  pnpm run scrapers:${name} --year 2025
-  pnpm run scrapers:${name} --dry-run
+  pnpm scrapers ${name}
+  pnpm scrapers ${name} --year 2025
+  pnpm scrapers ${name} --dry-run
 `,
     )
     .action(
@@ -105,45 +100,46 @@ export async function runImdbEventAwardCli({
         dryRun: boolean;
         throttle: number;
       }) => {
-        console.log(
-          options.year
-            ? `${festivalLabel}の取り込みを開始します (対象年: ${options.year})`
-            : `${festivalLabel}の取り込みを開始します`,
-        );
+        try {
+          loadEnvironmentFiles();
+          const environment = buildEnvironment(process.env);
 
-        assertDatabaseEnvironment(environment);
-
-        if (!environment.TMDB_API_KEY) {
-          console.warn(
-            '警告: TMDB_API_KEY が設定されていません。ポスター・邦題の取得がスキップされます。',
+          console.log(
+            options.year
+              ? `${festivalLabel}の取り込みを開始します (対象年: ${options.year})`
+              : `${festivalLabel}の取り込みを開始します`,
           );
-        }
 
-        const data = JSON.parse(
-          readFileSync(options.input, 'utf8'),
-        ) as ImdbEventCollectedData;
+          assertDatabaseEnvironment(environment);
 
-        const stats = await importImdbEventAward({
-          environment,
-          data,
-          config,
-          dryRun: options.dryRun,
-          year: options.year,
-          throttleMs: options.throttle,
-        });
+          if (!environment.TMDB_API_KEY) {
+            console.warn(
+              '警告: TMDB_API_KEY が設定されていません。ポスター・邦題の取得がスキップされます。',
+            );
+          }
 
-        if (stats.failed > 0) {
+          const data = JSON.parse(
+            readFileSync(options.input, 'utf8'),
+          ) as ImdbEventCollectedData;
+
+          const stats = await importImdbEventAward({
+            environment,
+            data,
+            config,
+            dryRun: options.dryRun,
+            year: options.year,
+            throttleMs: options.throttle,
+          });
+
+          if (stats.failed > 0) {
+            process.exitCode = 1;
+          }
+
+          console.log(`${festivalLabel}の取り込みが完了しました`);
+        } catch (error) {
+          console.error('取り込み処理中にエラーが発生しました:', error);
           process.exitCode = 1;
         }
-
-        console.log(`${festivalLabel}の取り込みが完了しました`);
       },
     );
-
-  try {
-    await program.parseAsync(process.argv);
-  } catch (error) {
-    console.error('取り込み処理中にエラーが発生しました:', error);
-    process.exitCode = 1;
-  }
 }
