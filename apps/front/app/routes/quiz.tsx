@@ -4,10 +4,10 @@ import {Masthead} from '@/components/editorial/masthead';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {resolveApiUrl} from '@/lib/api';
+import {fetchMonthlyPick, type MonthlyPick} from '@/lib/monthly-pick';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {TAGLINE} from '@/lib/tagline';
-import {selectBestPoster, type PosterInfo} from '@/lib/poster';
 import {
   applyGuess,
   createGame,
@@ -57,42 +57,6 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   });
 }
 
-type MonthlyPick = {
-  uid: string;
-  title: string;
-  year: number;
-  posterUrl?: string;
-};
-
-async function fetchMonthlyPick(
-  apiUrl: string,
-  signal: AbortSignal,
-): Promise<MonthlyPick | undefined> {
-  try {
-    const response = await fetch(`${apiUrl}/?locale=ja`, {signal});
-    if (!response.ok) {
-      return undefined;
-    }
-
-    const {monthly} = (await response.json()) as {
-      monthly?: MonthlyPick & {posterUrls?: PosterInfo[]};
-    };
-    if (!monthly) {
-      return undefined;
-    }
-
-    const posterUrl = selectBestPoster(monthly.posterUrls, 'ja');
-    return {
-      uid: monthly.uid,
-      title: monthly.title,
-      year: monthly.year,
-      ...(posterUrl && {posterUrl}),
-    };
-  } catch {
-    return undefined;
-  }
-}
-
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
   const apiUrl = resolveApiUrl(context);
@@ -100,7 +64,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const [dailyResponse, candidatesResponse, monthly] = await Promise.all([
     fetch(`${apiUrl}/quiz/daily`, {signal: request.signal}),
     fetch(`${apiUrl}/quiz/candidates`, {signal: request.signal}),
-    fetchMonthlyPick(apiUrl, request.signal),
+    fetchMonthlyPick(context, 'ja', request.signal),
   ]);
 
   if (!dailyResponse.ok || !candidatesResponse.ok) {
