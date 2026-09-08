@@ -12,7 +12,7 @@ SHINE の価値は 3 つ。(1) 観たいときに観る映画が自動で決ま�
 
 - **北極星**: 今月の映画に他人が投稿した関連リンク（`article_links`）の数。本人（Scrapbox への鑑賞ノート）の投稿は数えない。「見た人の数」とは呼ばない
 - **先行指標**: Cloudflare Web Analytics で国=Japan に絞った、今月の映画ページの訪問数
-- **数え方**: `pnpm scrapers:north-star-report`（毎月1日に GitHub Actions が Discord へ投稿する）。URL が `https://scrapbox.io/yuta25/` で始まる投稿は本人、ループバック IP はテストとして除き、その月の1日以降に投稿された分だけを数える
+- **数え方**: `pnpm scrapers north-star-report`（毎月1日に GitHub Actions が Discord へ投稿する）。URL が `https://scrapbox.io/yuta25/` で始まる投稿は本人、ループバック IP はテストとして除き、その月の1日以降に投稿された分だけを数える
 - **判断の締め切り**: 2026-12 末。目標は「他人のリンクが 1 件でも付いた月が 1 つ」。0 のとき、訪問数が 10 月比で伸びていれば投稿のハードル（書く・戻って貼る）を下げ、伸びていなければ導線と SNS を直す。両方伸びていれば続行
 - **動かす施策**: ホームを月替わり中心に組み替えて視聴手段・投稿済みリンク・投稿導線を第一画面に出し「毎月1本、みんなで同じ映画を観る」と書く、映画ページの関連記事欄を視聴手段の直下へ、bot に月替わり枠（1 日の告知・15 日の再告知・月末のリンクまとめと予告）と日替わり本文末尾の導線、`/quiz` の結果に今月の1本への導線、関連リンクの文言を「記事」前提から「その映画について書いたものなら SNS のポストでも」に変える（API に制限はない）
 - **保守**: 賞シーズンの速報と誤紐付けの修正。新しい賞は足さない
@@ -90,8 +90,8 @@ Cloudflare Workers: non-secret vars go in `wrangler.jsonc`/`wrangler.toml` `vars
 
 - TSエラーとLintエラーを絶対に無視するな
 - **Foreign keys / cascading deletes**: most tables lack `onDelete: 'cascade'`. Movie deletion order: article_links → movie_credits → movie_availability_checks → movie_selections → nominations → reference_urls → translations → poster_urls → movies. When adding delete operations, grep the whole schema for FK references first
-- **Scrapers**: `apps/scrapers/` 配下を編集する前に `new-scraper` スキルを読む（env読み込み・soft-deleteスキップ・TMDbユーティリティ・Wikipedia重複防止・dry-run・冪等性の必須パターン）
+- **Scrapers**: `apps/scrapers/` 配下を編集する前に `new-scraper` スキルを読む（env読み込み・soft-deleteスキップ・TMDbユーティリティ・Wikipedia重複防止・dry-run・冪等性の必須パターン）。CLI は `pnpm scrapers <command> [options]` の単一エントリ（`apps/scrapers/src/cli.ts`）で、各 `*-cli.ts` は `createCommand()` を export するだけでトップレベルの副作用を持たない（`cli.test.ts` が検査する）。一覧は `pnpm scrapers --help`
 - **Rate limiting / security**: public submission endpoints need rate limiting; external URL fetches must go through `validateExternalUrl()`
-- **Turso の読み取り量**: 課金はスキャン行数。`turso db inspect shine --queries` で重いクエリを、`pnpm scrapers:turso-usage-alert --dry-run` で直近 24 時間と月累計を確認できる。GitHub Actions が 6 時間ごとに同じ確認をして Discord に警告する。overage は無効なので月の上限に達すると読み取りが止まる
+- **Turso の読み取り量**: 課金はスキャン行数。`turso db inspect shine --queries` で重いクエリを、`pnpm scrapers turso-usage-alert --dry-run` で直近 24 時間と月累計を確認できる。GitHub Actions が 6 時間ごとに同じ確認をして Discord に警告する。overage は無効なので月の上限に達すると読み取りが止まる
 - **Favicon**: `apps/front/public/favicon.svg` is the master; `favicon.ico` and `apple-touch-icon.png` are rasterized from it
 - **Testing DB code**: prefer real libsql `file:` databases with `migrate()` over deep drizzle mocks
