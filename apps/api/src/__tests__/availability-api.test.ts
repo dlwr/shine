@@ -88,6 +88,30 @@ describe('POST /movies/:id/availability/check', () => {
     expect(body.availability[0]?.source).toBe('unext');
   });
 
+  it('古い結果があれば外部確認を待たずにそれを返す', async () => {
+    await database.insert(movieAvailabilityChecks).values({
+      movieUid: 'movie-a',
+      source: 'unext',
+      status: 'ok',
+      detail: 'Matched (stale)',
+      checkedAt: Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60,
+    });
+
+    const response = await moviesRoutes.request(
+      '/movie-a/availability/check',
+      {method: 'POST'},
+      environment,
+    );
+
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      availability: Array<{source: string; detail?: string}>;
+    };
+    expect(body.availability).toEqual([
+      expect.objectContaining({source: 'unext', detail: 'Matched (stale)'}),
+    ]);
+  });
+
   it('同一IPからの過剰リクエストには429を返す', async () => {
     await database.insert(movieAvailabilityChecks).values([
       {

@@ -1,4 +1,4 @@
-import {and, eq, getDatabase, ne} from '@shine/database';
+import {and, eq, getDatabase, inArray, ne} from '@shine/database';
 import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import type {
   AvailabilitySource,
@@ -72,6 +72,51 @@ async function loadFreshResult(
   }
 
   return {source, status: latest.status, detail: latest.detail ?? undefined};
+}
+
+export type LatestSourceResult = SourceCheckResult & {
+  checkedAt: number;
+  isFresh: boolean;
+};
+
+export async function loadLatestResults(
+  database: Database,
+  movieUid: string,
+  sources: AvailabilitySource[],
+  nowEpoch: number,
+): Promise<LatestSourceResult[]> {
+  if (sources.length === 0) {
+    return [];
+  }
+
+  const rows = await database
+    .select({
+      source: movieAvailabilityChecks.source,
+      status: movieAvailabilityChecks.status,
+      detail: movieAvailabilityChecks.detail,
+      checkedAt: movieAvailabilityChecks.checkedAt,
+    })
+    .from(movieAvailabilityChecks)
+    .where(
+      and(
+        eq(movieAvailabilityChecks.movieUid, movieUid),
+        inArray(movieAvailabilityChecks.source, sources),
+      ),
+    )
+    .orderBy(movieAvailabilityChecks.checkedAt);
+
+  const latestBySource = new Map<AvailabilitySource, LatestSourceResult>();
+  for (const row of rows) {
+    latestBySource.set(row.source, {
+      source: row.source,
+      status: row.status,
+      detail: row.detail ?? undefined,
+      checkedAt: row.checkedAt,
+      isFresh: isFresh(row.status, row.checkedAt, nowEpoch),
+    });
+  }
+
+  return latestBySource.values().toArray();
 }
 
 const DEFAULT_RETRY_DELAY_MS = 3000;

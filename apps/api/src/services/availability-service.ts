@@ -4,6 +4,8 @@ import {
   checkTmdbProviders,
   checkUnext,
   fetchJapaneseAlternativeTitles,
+  loadLatestResults,
+  type AvailabilitySource,
   type FetchLike,
   type MovieToCheck,
   type SourceRunners,
@@ -74,22 +76,58 @@ export function buildOnDemandRunners(
   };
 }
 
+async function refreshQuietly(check: () => Promise<unknown>): Promise<void> {
+  try {
+    await check();
+  } catch (error) {
+    console.error('Error refreshing availability:', error);
+  }
+}
+
 export class AvailabilityService extends BaseService {
   async checkMovie(
     movieUid: string,
     runners: SourceRunners,
+    options: {defer?: (task: Promise<void>) => void} = {},
   ): Promise<AvailabilityCheckResult | undefined> {
     const movie = await this.loadMovie(movieUid);
     if (!movie) {
       return undefined;
     }
 
-    const decision = await checkMovieAvailability(this.database, movie, {
-      sourceRunners: runners,
-      retryDelayMs: RETRY_DELAY_MS,
-    });
-
     const nowEpoch = Math.floor(Date.now() / 1000);
+    const check = () =>
+      checkMovieAvailability(this.database, movie, {
+        sourceRunners: runners,
+        retryDelayMs: RETRY_DELAY_MS,
+      });
+
+    if (options.defer) {
+      const known = await loadLatestResults(
+        this.database,
+        movie.uid,
+        Object.keys(runners) as AvailabilitySource[],
+        nowEpoch,
+      );
+      if (known.length > 0) {
+        if (known.some(result => !result.isFresh)) {
+          options.defer(refreshQuietly(check));
+        }
+
+        return {
+          available: known.some(result => result.status === 'ok'),
+          availability: known
+            .filter(result => result.status === 'ok')
+            .map(result => ({
+              source: result.source,
+              detail: result.detail,
+              checkedAt: result.checkedAt,
+            })),
+        };
+      }
+    }
+
+    const decision = await check();
     return {
       available: decision.available,
       availability: decision.results
