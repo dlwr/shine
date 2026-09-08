@@ -43,13 +43,11 @@ async function createTestEnvironment(): Promise<Environment> {
     content: '乱',
     isDefault: 1,
   });
-  await database
-    .insert(people)
-    .values({
-      uid: '2c5d7e1a-6f3b-4a8c-9d0e-1f2a3b4c5d6e',
-      tmdbId: 5026,
-      name: '黒澤明',
-    });
+  await database.insert(people).values({
+    uid: '2c5d7e1a-6f3b-4a8c-9d0e-1f2a3b4c5d6e',
+    tmdbId: 5026,
+    name: '黒澤明',
+  });
   await database.insert(movieCredits).values({
     movieUid: 'movie-ran',
     personUid: '2c5d7e1a-6f3b-4a8c-9d0e-1f2a3b4c5d6e',
