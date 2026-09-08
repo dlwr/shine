@@ -133,4 +133,110 @@ describe('AvailabilityService.checkMovie', () => {
     expect(isRunnerCalled).toBe(false);
     expect(result?.availability[0]?.detail).toBe('Matched (cached)');
   });
+
+  it('古い結果があれば即座に返し、再確認は defer に渡す', async () => {
+    await seedMovie(database);
+    const staleEpoch = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
+    await database.insert(movieAvailabilityChecks).values({
+      movieUid: 'movie-a',
+      source: 'unext',
+      status: 'ok',
+      detail: 'Matched (stale)',
+      checkedAt: staleEpoch,
+    });
+
+    let runnerCalls = 0;
+    const runners: SourceRunners = {
+      async unext() {
+        runnerCalls++;
+        return {source: 'unext', status: 'ng', detail: 'gone'};
+      },
+    };
+    const deferred: Array<Promise<void>> = [];
+
+    const service = new AvailabilityService(environment);
+    const result = await service.checkMovie('movie-a', runners, {
+      defer(task) {
+        deferred.push(task);
+      },
+    });
+
+    expect(result?.availability).toEqual([
+      {source: 'unext', detail: 'Matched (stale)', checkedAt: staleEpoch},
+    ]);
+    expect(deferred).toHaveLength(1);
+
+    await Promise.all(deferred);
+    expect(runnerCalls).toBe(1);
+    const saved = await database.select().from(movieAvailabilityChecks);
+    expect(saved.map(row => row.status)).toEqual(['ok', 'ng']);
+  });
+
+  it('一度も確認していない映画は defer があっても同期で確認する', async () => {
+    await seedMovie(database);
+    const runners: SourceRunners = {
+      async unext() {
+        return {source: 'unext', status: 'ok', detail: 'Matched now'};
+      },
+    };
+    const deferred: Array<Promise<void>> = [];
+
+    const service = new AvailabilityService(environment);
+    const result = await service.checkMovie('movie-a', runners, {
+      defer(task) {
+        deferred.push(task);
+      },
+    });
+
+    expect(result?.availability[0]?.detail).toBe('Matched now');
+    expect(deferred).toHaveLength(0);
+  });
+
+  it('新鮮な結果だけなら再確認を予約しない', async () => {
+    await seedMovie(database);
+    await database.insert(movieAvailabilityChecks).values({
+      movieUid: 'movie-a',
+      source: 'unext',
+      status: 'ok',
+      detail: 'Matched (cached)',
+      checkedAt: Math.floor(Date.now() / 1000) - 60,
+    });
+    const runners: SourceRunners = {
+      async unext() {
+        throw new Error('should not run');
+      },
+    };
+    const deferred: Array<Promise<void>> = [];
+
+    const service = new AvailabilityService(environment);
+    const result = await service.checkMovie('movie-a', runners, {
+      defer(task) {
+        deferred.push(task);
+      },
+    });
+
+    expect(result?.availability[0]?.detail).toBe('Matched (cached)');
+    expect(deferred).toHaveLength(0);
+  });
+
+  it('defer が無ければ古い結果を待って確認し直す', async () => {
+    await seedMovie(database);
+    await database.insert(movieAvailabilityChecks).values({
+      movieUid: 'movie-a',
+      source: 'unext',
+      status: 'ok',
+      detail: 'Matched (stale)',
+      checkedAt: Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60,
+    });
+    const runners: SourceRunners = {
+      async unext() {
+        return {source: 'unext', status: 'ok', detail: 'Matched again'};
+      },
+    };
+
+    const service = new AvailabilityService(environment);
+    const result = await service.checkMovie('movie-a', runners);
+
+    expect(result?.availability[0]?.detail).toBe('Matched again');
+  });
 });
