@@ -676,10 +676,24 @@ moviesRoutes.post('/:id/availability/check', async c => {
 
   try {
     const service = new AvailabilityService(c.env);
+    const background: Array<Promise<void>> = [];
     const result = await service.checkMovie(
       c.req.param('id'),
       buildOnDemandRunners(c.env),
+      {
+        defer(task) {
+          background.push(task);
+        },
+      },
     );
+
+    for (const task of background) {
+      try {
+        c.executionCtx.waitUntil(task);
+      } catch {
+        await task;
+      }
+    }
 
     if (!result) {
       return c.json({error: 'Movie not found'}, 404);
