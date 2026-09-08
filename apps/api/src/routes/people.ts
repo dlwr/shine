@@ -5,6 +5,7 @@ import {sanitizeText} from '../middleware/sanitizer';
 import {PeopleService} from '../services/people-service';
 import {PersonCrossingsService} from '../services/person-crossings-service';
 import {PersonUncrownedService} from '../services/person-uncrowned-service';
+import {isUid} from '../utils/uid';
 import {
   createCachedResponse,
   createETag,
@@ -193,6 +194,10 @@ peopleRoutes.get('/uncrowned', async c => {
 
 peopleRoutes.get('/:id', async c => {
   const personUid = c.req.param('id');
+  if (!isUid(personUid)) {
+    return c.json({error: 'Person not found'}, 404);
+  }
+
   const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
   const cacheLocale = normalizeCacheLocale(locale) ?? 'ja';
   const cacheKey = getCacheKeyForPerson(personUid, cacheLocale);
