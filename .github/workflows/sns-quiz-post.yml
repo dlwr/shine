@@ -47,7 +47,7 @@ jobs:
 
       - name: Post today's quiz
         working-directory: apps/scrapers
-        run: pnpm run sns-post --quiz ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: pnpm run cli sns-post --quiz ${{ inputs.dry_run && '--dry-run' || '' }}
         env:
           BLUESKY_IDENTIFIER: ${{ secrets.BLUESKY_IDENTIFIER }}
           BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}

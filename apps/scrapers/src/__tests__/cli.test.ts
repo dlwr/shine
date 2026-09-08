@@ -13,13 +13,27 @@ vi.mock('@shine/database', async importOriginal => ({
   getDatabase: vi.fn(),
 }));
 
+type CliModule = {createCommand?: () => Command};
+
+const callsAtImport = {
+  config: vi.mocked(config).mock.calls.length,
+  getDatabase: vi.mocked(getDatabase).mock.calls.length,
+};
+
 const sourceDirectory = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '..',
 );
-const cliFiles = readdirSync(sourceDirectory)
+const cliStems = readdirSync(sourceDirectory)
   .filter(file => file.endsWith('-cli.ts'))
-  .sort();
+  .map(file => file.replace(/-cli\.ts$/, ''))
+  .toSorted((a, b) => a.localeCompare(b));
+
+const byName = (a: string, b: string) => a.localeCompare(b);
+
+async function loadCliModule(stem: string): Promise<CliModule> {
+  return (await import(`../${stem}-cli.ts`)) as CliModule;
+}
 
 async function runHelp(command: Command): Promise<string> {
   let output = '';
@@ -42,19 +56,21 @@ describe('createProgram', () => {
     expect(createProgram().name()).toBe('scrapers');
   });
 
+  it('import しただけでは env と DB に触れない', () => {
+    expect(callsAtImport).toEqual({config: 0, getDatabase: 0});
+  });
+
   it('全ての *-cli.ts をサブコマンドとして持つ', async () => {
     const names = createProgram().commands.map(command => command.name());
     const expected = await Promise.all(
-      cliFiles.map(async file => {
-        const module = (await import(`../${file}`)) as {
-          createCommand: () => Command;
-        };
-        return module.createCommand().name();
+      cliStems.map(async stem => {
+        const module = await loadCliModule(stem);
+        return module.createCommand!().name();
       }),
     );
 
-    expect([...names].sort()).toEqual([...expected].sort());
-    expect(names).toHaveLength(cliFiles.length);
+    expect(names.toSorted(byName)).toEqual(expected.toSorted(byName));
+    expect(names).toHaveLength(cliStems.length);
   });
 
   it('サブコマンド名が一意である', () => {
@@ -73,36 +89,24 @@ describe('createProgram', () => {
   });
 });
 
-describe.each(cliFiles)('%s', file => {
+describe.each(cliStems)('%s-cli.ts', stem => {
   it('createCommand を export し、呼んでも env と DB に触れない', async () => {
-    vi.mocked(config).mockClear();
-    vi.mocked(getDatabase).mockClear();
-
-    const module = (await import(`../${file}`)) as {
-      createCommand?: () => Command;
-    };
+    const module = await loadCliModule(stem);
 
     expect(typeof module.createCommand).toBe('function');
 
     const command = module.createCommand!();
 
     expect(command.name()).toBe(
-      file
-        .replace(/-cli\.ts$/, '')
-        .replace('movie-import-from-list', 'movie-import'),
+      stem.replace('movie-import-from-list', 'movie-import'),
     );
     expect(config).not.toHaveBeenCalled();
     expect(getDatabase).not.toHaveBeenCalled();
   });
 
   it('--help を表示できる', async () => {
-    vi.mocked(config).mockClear();
-    vi.mocked(getDatabase).mockClear();
-
-    const module = (await import(`../${file}`)) as {
-      createCommand: () => Command;
-    };
-    const command = module.createCommand();
+    const module = await loadCliModule(stem);
+    const command = module.createCommand!();
     const output = await runHelp(command);
 
     expect(output).toContain(`Usage: ${command.name()}`);

@@ -47,7 +47,7 @@ jobs:
 
       - name: Check Turso usage
         working-directory: apps/scrapers
-        run: pnpm run turso-usage-alert ${{ github.event.schedule == '0 0 * * *' && '--summary' || '' }} ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: pnpm run cli turso-usage-alert ${{ github.event.schedule == '0 0 * * *' && '--summary' || '' }} ${{ inputs.dry_run && '--dry-run' || '' }}
         env:
           TURSO_PLATFORM_API_TOKEN: ${{ secrets.TURSO_PLATFORM_API_TOKEN }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

@@ -47,7 +47,7 @@ jobs:
 
       - name: Post the announcement
         working-directory: apps/scrapers
-        run: pnpm run sns-post --announce "$ANNOUNCEMENT" ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: pnpm run cli sns-post --announce "$ANNOUNCEMENT" ${{ inputs.dry_run && '--dry-run' || '' }}
         env:
           ANNOUNCEMENT: ${{ inputs.announcement }}
           BLUESKY_IDENTIFIER: ${{ secrets.BLUESKY_IDENTIFIER }}
