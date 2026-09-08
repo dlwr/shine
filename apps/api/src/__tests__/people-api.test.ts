@@ -43,12 +43,14 @@ async function createTestEnvironment(): Promise<Environment> {
     content: '乱',
     isDefault: 1,
   });
-  await database
-    .insert(people)
-    .values({uid: 'person-kurosawa', tmdbId: 5026, name: '黒澤明'});
+  await database.insert(people).values({
+    uid: '2c5d7e1a-6f3b-4a8c-9d0e-1f2a3b4c5d6e',
+    tmdbId: 5026,
+    name: '黒澤明',
+  });
   await database.insert(movieCredits).values({
     movieUid: 'movie-ran',
-    personUid: 'person-kurosawa',
+    personUid: '2c5d7e1a-6f3b-4a8c-9d0e-1f2a3b4c5d6e',
     creditId: 'c1',
     department: 'Directing',
     job: 'Director',
@@ -66,7 +68,7 @@ describe('GET /people/:id', () => {
 
   it('人物と参加作品を返す', async () => {
     const response = await peopleRoutes.request(
-      '/person-kurosawa',
+      '/2c5d7e1a-6f3b-4a8c-9d0e-1f2a3b4c5d6e',
       {},
       environment,
     );
@@ -78,7 +80,7 @@ describe('GET /people/:id', () => {
 
   it('7日間キャッシュする', async () => {
     const response = await peopleRoutes.request(
-      '/person-kurosawa',
+      '/2c5d7e1a-6f3b-4a8c-9d0e-1f2a3b4c5d6e',
       {},
       environment,
     );
@@ -87,7 +89,21 @@ describe('GET /people/:id', () => {
   });
 
   it('存在しない人物には404を返す', async () => {
-    const response = await peopleRoutes.request('/missing', {}, environment);
+    const response = await peopleRoutes.request(
+      '/00000000-0000-4000-8000-000000000000',
+      {},
+      environment,
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('uid の形式でない id には DB を引かずに404を返す', async () => {
+    const response = await peopleRoutes.request(
+      '/null',
+      {},
+      {TURSO_DATABASE_URL: 'file:/nonexistent/shine.db', TURSO_AUTH_TOKEN: ''},
+    );
 
     expect(response.status).toBe(404);
   });
@@ -109,7 +125,11 @@ describe('GET /people', () => {
     };
     expect(response.status).toBe(200);
     expect(body.people).toEqual([
-      {uid: 'person-kurosawa', name: '黒澤明', movieCount: 1},
+      {
+        uid: '2c5d7e1a-6f3b-4a8c-9d0e-1f2a3b4c5d6e',
+        name: '黒澤明',
+        movieCount: 1,
+      },
     ]);
     expect(body.pagination.totalCount).toBe(1);
   });
