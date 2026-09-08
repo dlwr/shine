@@ -10,9 +10,6 @@ import {
 import {getScrapeDatabase} from './common/dry-run';
 import {importMovieCredits} from './movie-credits';
 
-loadEnvironmentFiles();
-const environment = buildEnvironment(process.env);
-
 function parsePositiveInteger(value: string): number {
   const parsed = Number(value);
 
@@ -23,85 +20,86 @@ function parsePositiveInteger(value: string): number {
   return parsed;
 }
 
-const program = new Command();
-
-program
-  .name('movie-credits')
-  .description(
-    [
-      'TMDbの credits APIから監督・脚本・撮影・音楽・編集と主要キャスト上位10名を取り込みます。',
-      '人物は people、作品との対応は movie_credits に入り、',
-      '日本語名は translations（person_name / ja）に保存されます。',
-      'クレジットを取得済みの映画は既定でスキップします。',
-    ].join('\n'),
-  )
-  .option('--limit <n>', '処理する映画の件数上限', parsePositiveInteger)
-  .option('--force', '取得済みの映画も取り直す', false)
-  .option('--throttle <ms>', 'リクエスト間隔(ms)', parsePositiveInteger, 150)
-  .option(
-    '--concurrency <n>',
-    '同時に処理する映画の数',
-    parsePositiveInteger,
-    5,
-  )
-  .option('--dry-run', '書き込みは行わず、対象のみ表示', false)
-  .addHelpText(
-    'after',
-    `
+export function createCommand(): Command {
+  return new Command()
+    .name('movie-credits')
+    .description(
+      [
+        'TMDbの credits APIから監督・脚本・撮影・音楽・編集と主要キャスト上位10名を取り込みます。',
+        '人物は people、作品との対応は movie_credits に入り、',
+        '日本語名は translations（person_name / ja）に保存されます。',
+        'クレジットを取得済みの映画は既定でスキップします。',
+      ].join('\n'),
+    )
+    .option('--limit <n>', '処理する映画の件数上限', parsePositiveInteger)
+    .option('--force', '取得済みの映画も取り直す', false)
+    .option('--throttle <ms>', 'リクエスト間隔(ms)', parsePositiveInteger, 150)
+    .option(
+      '--concurrency <n>',
+      '同時に処理する映画の数',
+      parsePositiveInteger,
+      5,
+    )
+    .option('--dry-run', '書き込みは行わず、対象のみ表示', false)
+    .addHelpText(
+      'after',
+      `
 例:
-  pnpm run scrapers:movie-credits --limit 10 --dry-run
-  pnpm run scrapers:movie-credits --limit 100
-  pnpm run scrapers:movie-credits
+  pnpm scrapers movie-credits --limit 10 --dry-run
+  pnpm scrapers movie-credits --limit 100
+  pnpm scrapers movie-credits
 `,
-  )
-  .action(
-    async (options: {
-      limit?: number;
-      force: boolean;
-      throttle: number;
-      concurrency: number;
-      dryRun: boolean;
-    }) => {
-      assertDatabaseEnvironment(environment);
+    )
+    .action(
+      async (options: {
+        limit?: number;
+        force: boolean;
+        throttle: number;
+        concurrency: number;
+        dryRun: boolean;
+      }) => {
+        try {
+          loadEnvironmentFiles();
+          const environment = buildEnvironment(process.env);
 
-      if (!environment.TMDB_API_KEY) {
-        throw new Error('TMDB_API_KEY が設定されていません。');
-      }
+          assertDatabaseEnvironment(environment);
 
-      const database = getScrapeDatabase({
-        environment,
-        isDryRun: options.dryRun,
-      });
+          if (!environment.TMDB_API_KEY) {
+            throw new Error('TMDB_API_KEY が設定されていません。');
+          }
 
-      const result = await importMovieCredits(
-        {database, environment, isDryRun: options.dryRun},
-        {
-          force: options.force,
-          limit: options.limit,
-          throttleMs: options.throttle,
-          concurrency: options.concurrency,
-          onProgress(done, total) {
-            if (done === total || done % 100 === 0) {
-              console.log(`  ${done}/${total}`);
-            }
-          },
-        },
-      );
+          const database = getScrapeDatabase({
+            environment,
+            isDryRun: options.dryRun,
+          });
 
-      console.log('\n結果:');
-      console.log(`  取り込み: ${result.processed}`);
-      console.log(`  スキップ: ${result.skipped}`);
-      console.log(`  失敗: ${result.failed}`);
+          const result = await importMovieCredits(
+            {database, environment, isDryRun: options.dryRun},
+            {
+              force: options.force,
+              limit: options.limit,
+              throttleMs: options.throttle,
+              concurrency: options.concurrency,
+              onProgress(done, total) {
+                if (done === total || done % 100 === 0) {
+                  console.log(`  ${done}/${total}`);
+                }
+              },
+            },
+          );
 
-      if (result.failed > 0) {
-        process.exitCode = 1;
-      }
-    },
-  );
+          console.log('\n結果:');
+          console.log(`  取り込み: ${result.processed}`);
+          console.log(`  スキップ: ${result.skipped}`);
+          console.log(`  失敗: ${result.failed}`);
 
-try {
-  await program.parseAsync(process.argv);
-} catch (error) {
-  console.error('クレジット取り込み中にエラーが発生しました:', error);
-  process.exitCode = 1;
+          if (result.failed > 0) {
+            process.exitCode = 1;
+          }
+        } catch (error) {
+          console.error('クレジット取り込み中にエラーが発生しました:', error);
+          process.exitCode = 1;
+        }
+      },
+    );
 }

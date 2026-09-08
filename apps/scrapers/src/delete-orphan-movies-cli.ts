@@ -9,9 +9,6 @@ import {
 } from './common/environment';
 import {deleteOrphanMovies} from './delete-orphan-movies';
 
-loadEnvironmentFiles();
-const environment = buildEnvironment(process.env);
-
 function parsePositiveInteger(label: string) {
   return (value: string): number => {
     const parsed = Number(value);
@@ -26,60 +23,61 @@ function parsePositiveInteger(label: string) {
   };
 }
 
-const program = new Command();
-
-program
-  .name('delete-orphan-movies')
-  .description(
-    [
-      'ノミネーションが1件も無い映画をソフト削除します。',
-      'IMDb IDを持つ映画はIMDb側のタイトルと突き合わせ、',
-      '別作品を指していた場合はunique制約を解放するためIDも空にします。',
-    ].join('\n'),
-  )
-  .option('--limit <count>', '処理件数の上限', parsePositiveInteger('limit'))
-  .option('--dry-run', '実際の削除は行わず、対象と判定のみ表示', false)
-  .option(
-    '--throttle <ms>',
-    'IMDb照合リクエスト間の待機ミリ秒 (デフォルト: 300)',
-    parsePositiveInteger('throttle'),
-    300,
-  )
-  .addHelpText(
-    'after',
-    `
+export function createCommand(): Command {
+  return new Command()
+    .name('delete-orphan-movies')
+    .description(
+      [
+        'ノミネーションが1件も無い映画をソフト削除します。',
+        'IMDb IDを持つ映画はIMDb側のタイトルと突き合わせ、',
+        '別作品を指していた場合はunique制約を解放するためIDも空にします。',
+      ].join('\n'),
+    )
+    .option('--limit <count>', '処理件数の上限', parsePositiveInteger('limit'))
+    .option('--dry-run', '実際の削除は行わず、対象と判定のみ表示', false)
+    .option(
+      '--throttle <ms>',
+      'IMDb照合リクエスト間の待機ミリ秒 (デフォルト: 300)',
+      parsePositiveInteger('throttle'),
+      300,
+    )
+    .addHelpText(
+      'after',
+      `
 例:
-  pnpm run scrapers:delete-orphan-movies --dry-run
-  pnpm run scrapers:delete-orphan-movies --limit 20
-  pnpm run scrapers:delete-orphan-movies
+  pnpm scrapers delete-orphan-movies --dry-run
+  pnpm scrapers delete-orphan-movies --limit 20
+  pnpm scrapers delete-orphan-movies
 `,
-  )
-  .action(
-    async (options: {limit?: number; dryRun: boolean; throttle: number}) => {
-      assertDatabaseEnvironment(environment);
+    )
+    .action(
+      async (options: {limit?: number; dryRun: boolean; throttle: number}) => {
+        try {
+          loadEnvironmentFiles();
+          const environment = buildEnvironment(process.env);
 
-      if (!environment.TMDB_API_KEY) {
-        console.warn(
-          '警告: TMDB_API_KEY が設定されていません。IMDbとの突き合わせはスキップされます。',
-        );
-      }
+          assertDatabaseEnvironment(environment);
 
-      const stats = await deleteOrphanMovies({
-        environment,
-        dryRun: options.dryRun,
-        limit: options.limit,
-        throttleMs: options.throttle,
-      });
+          if (!environment.TMDB_API_KEY) {
+            console.warn(
+              '警告: TMDB_API_KEY が設定されていません。IMDbとの突き合わせはスキップされます。',
+            );
+          }
 
-      if (stats.failed > 0) {
-        process.exitCode = 1;
-      }
-    },
-  );
+          const stats = await deleteOrphanMovies({
+            environment,
+            dryRun: options.dryRun,
+            limit: options.limit,
+            throttleMs: options.throttle,
+          });
 
-try {
-  await program.parseAsync(process.argv);
-} catch (error) {
-  console.error('削除処理中にエラーが発生しました:', error);
-  process.exitCode = 1;
+          if (stats.failed > 0) {
+            process.exitCode = 1;
+          }
+        } catch (error) {
+          console.error('削除処理中にエラーが発生しました:', error);
+          process.exitCode = 1;
+        }
+      },
+    );
 }

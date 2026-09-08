@@ -2,7 +2,7 @@
  * 日本語翻訳スクレイピングのCLIエントリーポイント
  */
 import {Command, InvalidArgumentError} from 'commander';
-import {getDatabase} from '@shine/database';
+import {getDatabase, type Environment} from '@shine/database';
 import {
   getMoviesWithoutJapaneseTranslation,
   saveJapaneseTranslation,
@@ -14,9 +14,6 @@ import {
   buildEnvironment,
   loadEnvironmentFiles,
 } from './common/environment';
-
-loadEnvironmentFiles();
-const environment = buildEnvironment(process.env);
 
 // 処理するバッチサイズ（デフォルト）
 const DEFAULT_BATCH_SIZE = 20;
@@ -36,11 +33,14 @@ function parseLimit(value: string): number {
 /**
  * 日本語翻訳スクレイピングのメイン処理
  */
-async function main(options: {
-  limit?: number;
-  all: boolean;
-  shouldIncludeNonJapanese: boolean;
-}): Promise<void> {
+async function main(
+  environment: Environment,
+  options: {
+    limit?: number;
+    all: boolean;
+    shouldIncludeNonJapanese: boolean;
+  },
+): Promise<void> {
   const {all: isAllMode, shouldIncludeNonJapanese} = options;
 
   let batchSize = options.limit ?? DEFAULT_BATCH_SIZE;
@@ -160,42 +160,53 @@ async function main(options: {
   }
 }
 
-const program = new Command();
-
-program
-  .name('japanese-translations-cli')
-  .description(
-    '日本語翻訳が未登録の映画にTMDB/Wikipediaから日本語タイトルを取得して保存します',
-  )
-  .option(
-    '--limit <number>',
-    '処理する映画の件数を指定 (デフォルト: 20)',
-    parseLimit,
-  )
-  .option(
-    '--all',
-    '全件処理モード（日本語翻訳がないすべての映画を処理）',
-    false,
-  )
-  .option(
-    '--include-non-japanese',
-    '原題がそのまま ja として保存されている映画も取得し直す',
-    false,
-  )
-  .addHelpText(
-    'after',
-    `
+export function createCommand(): Command {
+  return new Command()
+    .name('japanese-translations')
+    .description(
+      '日本語翻訳が未登録の映画にTMDB/Wikipediaから日本語タイトルを取得して保存します',
+    )
+    .option(
+      '--limit <number>',
+      '処理する映画の件数を指定 (デフォルト: 20)',
+      parseLimit,
+    )
+    .option(
+      '--all',
+      '全件処理モード（日本語翻訳がないすべての映画を処理）',
+      false,
+    )
+    .option(
+      '--include-non-japanese',
+      '原題がそのまま ja として保存されている映画も取得し直す',
+      false,
+    )
+    .addHelpText(
+      'after',
+      `
 例:
-  pnpm run scrape:japanese-translations
-  pnpm run scrape:japanese-translations --limit 50
-  pnpm run scrape:japanese-translations --all
+  pnpm scrapers japanese-translations
+  pnpm scrapers japanese-translations --limit 50
+  pnpm scrapers japanese-translations --all
 `,
-  )
-  .action(main);
-
-try {
-  await program.parseAsync(process.argv);
-} catch (error) {
-  console.error('スクレイピング処理中にエラーが発生しました:', error);
-  process.exitCode = 1;
+    )
+    .action(
+      async (options: {
+        limit?: number;
+        all: boolean;
+        includeNonJapanese: boolean;
+      }) => {
+        try {
+          loadEnvironmentFiles();
+          await main(buildEnvironment(process.env), {
+            limit: options.limit,
+            all: options.all,
+            shouldIncludeNonJapanese: options.includeNonJapanese,
+          });
+        } catch (error) {
+          console.error('スクレイピング処理中にエラーが発生しました:', error);
+          process.exitCode = 1;
+        }
+      },
+    );
 }

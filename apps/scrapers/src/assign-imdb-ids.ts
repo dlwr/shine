@@ -1,54 +1,35 @@
-import {Command} from 'commander';
 import {and, eq, isNull} from 'drizzle-orm';
-import {getDatabase} from '@shine/database';
+import {getDatabase, type Environment} from '@shine/database';
 import {movies, translations} from '@shine/database/schema/index';
 import {
   searchTMDBMovie,
   fetchTMDBMovieDetails,
 } from './common/tmdb-utilities.js';
-import {loadEnvironmentFiles} from './common/environment.js';
 
-loadEnvironmentFiles();
+export type AssignImdbIdsOptions = {
+  environment: Environment;
+  dryRun: boolean;
+  limit?: number;
+  year?: number;
+};
 
-const program = new Command();
-
-program
-  .name('assign-imdb-ids')
-  .description("Assign IMDb IDs to movies that don't have them using TMDb API")
-  .option('--dry-run', 'Perform a dry run without making changes')
-  .option(
-    '--limit <number>',
-    'Limit the number of movies to process',
-    Number.parseInt,
-    10,
-  )
-  .option(
-    '--year <year>',
-    'Process only movies from a specific year',
-    Number.parseInt,
-  )
-  .parse();
-
-const options = program.opts();
-
-async function assignImdbIds() {
+export async function assignImdbIds({
+  environment,
+  dryRun,
+  limit,
+  year,
+}: AssignImdbIdsOptions): Promise<void> {
   console.log('Finding movies without IMDb IDs...');
 
   try {
-    const database = getDatabase({
-      TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL!,
-      TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN!,
-      TMDB_API_KEY: process.env.TMDB_API_KEY || '',
-      TMDB_LEAD_ACCESS_TOKEN: process.env.TMDB_LEAD_ACCESS_TOKEN || '',
-      OMDB_API_KEY: process.env.OMDB_API_KEY || '',
-    });
+    const database = getDatabase(environment);
 
     // Build complete query with all conditions
-    const whereClause = options.year
+    const whereClause = year
       ? and(
           isNull(movies.imdbId),
           isNull(movies.deletedAt),
-          eq(movies.year, options.year),
+          eq(movies.year, year),
         )
       : and(isNull(movies.imdbId), isNull(movies.deletedAt));
 
@@ -63,8 +44,8 @@ async function assignImdbIds() {
       .where(whereClause)
       .orderBy(movies.createdAt);
 
-    const moviesWithoutImdbId = options.limit
-      ? await baseQuery.limit(options.limit)
+    const moviesWithoutImdbId = limit
+      ? await baseQuery.limit(limit)
       : await baseQuery;
 
     console.log(`Found ${moviesWithoutImdbId.length} movies without IMDb IDs`);
@@ -74,7 +55,7 @@ async function assignImdbIds() {
       return;
     }
 
-    const tmdbApiKey = process.env.TMDB_API_KEY;
+    const tmdbApiKey = environment.TMDB_API_KEY;
     if (!tmdbApiKey) {
       console.error('TMDB_API_KEY is not set');
       return;
@@ -137,7 +118,7 @@ async function assignImdbIds() {
         }
 
         if (imdbId) {
-          if (options.dryRun) {
+          if (dryRun) {
             console.log(`[DRY RUN] Would assign IMDb ID: ${imdbId}`);
             if (tmdbId && !movie.tmdbId) {
               console.log(`[DRY RUN] Would also assign TMDb ID: ${tmdbId}`);
@@ -182,7 +163,7 @@ async function assignImdbIds() {
     console.log(`✗ Errors: ${errorCount}`);
     console.log(`📋 Total processed: ${moviesWithoutImdbId.length}`);
 
-    if (options.dryRun) {
+    if (dryRun) {
       console.log('\nThis was a dry run. No changes were made.');
     }
   } catch (error) {
@@ -193,6 +174,3 @@ async function assignImdbIds() {
       : new Error('Failed to assign IMDb IDs');
   }
 }
-
-// Run the script
-await assignImdbIds();
