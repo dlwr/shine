@@ -2,7 +2,9 @@ export {fetchJapaneseAlternativeTitles} from './alternative-titles';
 export {
   checkMovieAvailability,
   deleteNonOkChecks,
+  loadLatestResults,
   type AvailabilityDecision,
+  type LatestSourceResult,
   type MovieToCheck,
   type SourceRunner,
   type SourceRunners,
