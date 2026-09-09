@@ -135,7 +135,7 @@ export class MoviesService extends BaseService {
     }
 
     // Get movie with title and description
-    const movieResult = await this.database
+    const movieQuery = this.database
       .select({
         uid: movies.uid,
         year: movies.year,
@@ -180,14 +180,8 @@ export class MoviesService extends BaseService {
       .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
       .limit(1);
 
-    if (movieResult.length === 0) {
-      throw new Error('Movie not found');
-    }
-
-    const movie = movieResult[0];
-
     // Get nominations
-    const nominationsData = await this.database
+    const nominationsQuery = this.database
       .select({
         nominationUid: nominations.uid,
         isWinner: nominations.isWinner,
@@ -222,7 +216,7 @@ export class MoviesService extends BaseService {
       .orderBy(awardCeremonies.year, awardCategories.name);
 
     // Get article links
-    const topArticles = await this.database
+    const articleLinksQuery = this.database
       .select({
         uid: articleLinks.uid,
         url: articleLinks.url,
@@ -240,7 +234,19 @@ export class MoviesService extends BaseService {
       .orderBy(sql`${articleLinks.submittedAt} DESC`)
       .limit(3);
 
-    const credits = await this.getMovieCredits(movieId, locale);
+    const [movieResult, nominationsData, topArticles, credits] =
+      await Promise.all([
+        movieQuery,
+        nominationsQuery,
+        articleLinksQuery,
+        this.getMovieCredits(movieId, locale),
+      ]);
+
+    if (movieResult.length === 0) {
+      throw new Error('Movie not found');
+    }
+
+    const movie = movieResult[0];
 
     const movieDetails: MovieSelection = {
       uid: movie.uid,
