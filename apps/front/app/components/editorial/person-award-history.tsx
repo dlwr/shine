@@ -77,7 +77,7 @@ export function PersonAwardHistory({credits}: {credits: AwardHistoryCredit[]}) {
               <th
                 key={column.organization}
                 scope="col"
-                className="w-14 min-w-14 border-b-2 border-ink px-1 pb-1 pt-2 align-bottom font-normal leading-tight text-ink-muted">
+                className="w-12 min-w-12 border-b-2 border-ink px-1 pb-1 pt-2 align-bottom font-normal leading-tight text-ink-muted md:w-14 md:min-w-14">
                 {column.shortLabel}
               </th>
             ))}
@@ -97,7 +97,7 @@ export function PersonAwardHistory({credits}: {credits: AwardHistoryCredit[]}) {
                 <a
                   href={`/movies/${credit.movieUid}`}
                   title={credit.title}
-                  className="inline-block max-w-36 truncate align-bottom text-ink no-underline md:max-w-56">
+                  className="inline-block max-w-24 truncate align-bottom text-ink no-underline md:max-w-56">
                   {credit.title ?? 'Unknown Title'}
                 </a>
               </th>
