@@ -38,10 +38,10 @@ export function CrossingMatrix({
 
   return (
     <div className="overflow-x-auto border-2 border-ink">
-      <table className="border-collapse font-mono text-[10px]">
+      <table className="border-separate border-spacing-0 font-mono text-[10px]">
         <thead>
           <tr>
-            <td className="sticky left-0 z-10 bg-paper" />
+            <td className="sticky left-0 z-10 border-b-2 border-r-2 border-ink bg-paper" />
             {awards.map(award => (
               <th
                 key={award.key}
