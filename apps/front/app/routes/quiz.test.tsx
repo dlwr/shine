@@ -20,13 +20,25 @@ const CANDIDATES = [
 
 const MONTHLY = {uid: 'movie-m', title: '浮雲', year: 1955};
 
+function stubApi(guess?: unknown) {
+  vi.mocked(fetch).mockImplementation(async (input: RequestInfo | URL) => {
+    if (String(input).includes('/quiz/candidates')) {
+      return cast<Response>({
+        ok: true,
+        json: async () => ({candidates: CANDIDATES}),
+      });
+    }
+
+    return cast<Response>({ok: true, json: async () => guess});
+  });
+}
+
 const createComponentProperties = (
   overrides: Record<string, unknown> = {},
 ): Route.ComponentProps =>
   cast<Route.ComponentProps>({
     loaderData: {
       puzzle: PUZZLE,
-      candidates: CANDIDATES,
       apiUrl: 'http://localhost:8787',
       locale: 'ja',
       ...overrides,
@@ -42,36 +54,70 @@ describe('Quiz page', () => {
   });
 
   describe('loader', () => {
-    it('出題と回答候補をまとめて取得する', async () => {
+    it('出題を取得する', async () => {
       const mockFetch = vi.mocked(fetch);
-      mockFetch
-        .mockResolvedValueOnce({ok: true, json: async () => PUZZLE} as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({candidates: CANDIDATES}),
-        } as Response);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => PUZZLE,
+      } as Response);
 
-      const request = new Request('http://localhost:3000/quiz');
       const result = await loader(
         cast<Route.LoaderArgs>({
           context: createMockContext(),
-          request,
+          request: new Request('http://localhost:3000/quiz'),
           params: {},
           matches: [],
         }),
       );
 
-      expect(result.candidates).toEqual(CANDIDATES);
+      expect(result.puzzle).toEqual(PUZZLE);
+    });
+
+    it('回答候補は取得しない', async () => {
+      const mockFetch = vi.mocked(fetch);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => PUZZLE,
+      } as Response);
+
+      await loader(
+        cast<Route.LoaderArgs>({
+          context: createMockContext(),
+          request: new Request('http://localhost:3000/quiz'),
+          params: {},
+          matches: [],
+        }),
+      );
+
+      const requested = mockFetch.mock.calls.map(([input]) => String(input));
+      expect(requested.some(url => url.includes('/quiz/candidates'))).toBe(
+        false,
+      );
+    });
+
+    it('回答候補をloaderDataに載せない', async () => {
+      const mockFetch = vi.mocked(fetch);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => PUZZLE,
+      } as Response);
+
+      const result = await loader(
+        cast<Route.LoaderArgs>({
+          context: createMockContext(),
+          request: new Request('http://localhost:3000/quiz'),
+          params: {},
+          matches: [],
+        }),
+      );
+
+      expect(result).not.toHaveProperty('candidates');
     });
 
     it('今月の1本を一緒に取得する', async () => {
       const mockFetch = vi.mocked(fetch);
       mockFetch
         .mockResolvedValueOnce({ok: true, json: async () => PUZZLE} as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({candidates: CANDIDATES}),
-        } as Response)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
@@ -113,10 +159,6 @@ describe('Quiz page', () => {
       const mockFetch = vi.mocked(fetch);
       mockFetch
         .mockResolvedValueOnce({ok: true, json: async () => PUZZLE} as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({candidates: CANDIDATES}),
-        } as Response)
         .mockRejectedValueOnce(new Error('down'));
 
       const result = await loader(
@@ -128,7 +170,7 @@ describe('Quiz page', () => {
         }),
       );
 
-      expect(result.candidates).toEqual(CANDIDATES);
+      expect(result.puzzle).toEqual(PUZZLE);
       expect(result.monthly).toBeUndefined();
     });
 
@@ -194,9 +236,23 @@ describe('Quiz page', () => {
       );
     });
 
-    it('入力に一致する候補を出す', async () => {
+    it('回答候補はブラウザから取りに行く', async () => {
+      stubApi();
+
       render(<QuizPage {...createComponentProperties()} />);
 
+      await waitFor(() => {
+        const requested = vi
+          .mocked(fetch)
+          .mock.calls.map(([input]) => String(input));
+        expect(requested).toContain('http://localhost:8787/quiz/candidates');
+      });
+    });
+
+    it('入力に一致する候補を出す', async () => {
+      stubApi();
+
+      render(<QuizPage {...createComponentProperties()} />);
       await userEvent.type(screen.getByLabelText(/邦題で回答/), '東京');
 
       expect(
@@ -204,14 +260,58 @@ describe('Quiz page', () => {
       ).toBeInTheDocument();
     });
 
+    it('回答候補が取れなくてもパスでヒントは進められる', async () => {
+      vi.mocked(fetch).mockImplementation(async (input: RequestInfo | URL) => {
+        if (String(input).includes('/quiz/candidates')) {
+          return cast<Response>({ok: false});
+        }
+
+        return cast<Response>({
+          ok: true,
+          json: async () => ({
+            correct: false,
+            hint: {label: '製作年', value: '1965年'},
+          }),
+        });
+      });
+
+      render(<QuizPage {...createComponentProperties()} />);
+      await userEvent.click(
+        screen.getByRole('button', {name: /パスしてヒントを見る/}),
+      );
+
+      expect(await screen.findByText('1965年')).toBeInTheDocument();
+    });
+
+    it('回答候補の中身が壊れていてもパスでヒントは進められる', async () => {
+      vi.mocked(fetch).mockImplementation(async (input: RequestInfo | URL) => {
+        if (String(input).includes('/quiz/candidates')) {
+          return cast<Response>({ok: true, json: async () => ({})});
+        }
+
+        return cast<Response>({
+          ok: true,
+          json: async () => ({
+            correct: false,
+            hint: {label: '製作年', value: '1965年'},
+          }),
+        });
+      });
+
+      render(<QuizPage {...createComponentProperties()} />);
+      await userEvent.type(screen.getByLabelText(/邦題で回答/), '東京');
+      await userEvent.click(
+        screen.getByRole('button', {name: /パスしてヒントを見る/}),
+      );
+
+      expect(await screen.findByText('1965年')).toBeInTheDocument();
+    });
+
     it('外すとヒントが開く', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          correct: false,
-          hint: {label: '製作年', value: '1965年'},
-        }),
-      } as Response);
+      stubApi({
+        correct: false,
+        hint: {label: '製作年', value: '1965年'},
+      });
 
       render(<QuizPage {...createComponentProperties()} />);
       await userEvent.type(screen.getByLabelText(/邦題で回答/), '東京');
@@ -223,13 +323,10 @@ describe('Quiz page', () => {
     });
 
     it('答えが出たら結果をポスターより前に置く', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          correct: true,
-          answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
-        }),
-      } as Response);
+      stubApi({
+        correct: true,
+        answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+      });
 
       render(<QuizPage {...createComponentProperties({monthly: MONTHLY})} />);
       await userEvent.type(screen.getByLabelText(/邦題で回答/), '赤ひげ');
@@ -246,13 +343,10 @@ describe('Quiz page', () => {
     });
 
     it('当たると答えを見せる', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          correct: true,
-          answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
-        }),
-      } as Response);
+      stubApi({
+        correct: true,
+        answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+      });
 
       render(<QuizPage {...createComponentProperties()} />);
       await userEvent.type(screen.getByLabelText(/邦題で回答/), '赤ひげ');
@@ -264,13 +358,10 @@ describe('Quiz page', () => {
     });
 
     it('答えが出たら今月の1本へ誘う', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          correct: true,
-          answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
-        }),
-      } as Response);
+      stubApi({
+        correct: true,
+        answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+      });
 
       render(<QuizPage {...createComponentProperties({monthly: MONTHLY})} />);
       expect(screen.queryByText(/今月の1本/)).not.toBeInTheDocument();
@@ -286,13 +377,10 @@ describe('Quiz page', () => {
     });
 
     it('今月の1本のカードにポスターを出す', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          correct: true,
-          answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
-        }),
-      } as Response);
+      stubApi({
+        correct: true,
+        answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+      });
 
       render(
         <QuizPage
@@ -314,13 +402,10 @@ describe('Quiz page', () => {
     });
 
     it('今月の1本のカードは次の問題の案内より前に置く', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          correct: true,
-          answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
-        }),
-      } as Response);
+      stubApi({
+        correct: true,
+        answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+      });
 
       render(<QuizPage {...createComponentProperties({monthly: MONTHLY})} />);
       await userEvent.type(screen.getByLabelText(/邦題で回答/), '赤ひげ');
@@ -336,13 +421,10 @@ describe('Quiz page', () => {
     });
 
     it('答えが出たら X に結果を投稿するリンクを出す', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          correct: true,
-          answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
-        }),
-      } as Response);
+      stubApi({
+        correct: true,
+        answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+      });
 
       render(<QuizPage {...createComponentProperties()} />);
       await userEvent.type(screen.getByLabelText(/邦題で回答/), '赤ひげ');
@@ -361,13 +443,10 @@ describe('Quiz page', () => {
     });
 
     it('答えが出たら Bluesky に結果を投稿するリンクを出す', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          correct: true,
-          answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
-        }),
-      } as Response);
+      stubApi({
+        correct: true,
+        answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+      });
 
       render(<QuizPage {...createComponentProperties()} />);
       await userEvent.type(screen.getByLabelText(/邦題で回答/), '赤ひげ');
@@ -392,13 +471,10 @@ describe('Quiz page', () => {
     });
 
     it('今月の1本が無ければ誘わない', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          correct: true,
-          answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
-        }),
-      } as Response);
+      stubApi({
+        correct: true,
+        answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+      });
 
       render(<QuizPage {...createComponentProperties()} />);
       await userEvent.type(screen.getByLabelText(/邦題で回答/), '赤ひげ');

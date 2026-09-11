@@ -61,13 +61,12 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
   const apiUrl = resolveApiUrl(context);
 
-  const [dailyResponse, candidatesResponse, monthly] = await Promise.all([
+  const [dailyResponse, monthly] = await Promise.all([
     fetch(`${apiUrl}/quiz/daily`, {signal: request.signal}),
-    fetch(`${apiUrl}/quiz/candidates`, {signal: request.signal}),
     fetchMonthlyPick(context, 'ja', request.signal),
   ]);
 
-  if (!dailyResponse.ok || !candidatesResponse.ok) {
+  if (!dailyResponse.ok) {
     throw new Response('Failed to load quiz', {status: 502});
   }
 
@@ -76,11 +75,8 @@ export async function loader({context, request}: Route.LoaderArgs) {
     maxAttempts: number;
     poolSize: number;
   };
-  const {candidates} = (await candidatesResponse.json()) as {
-    candidates: QuizCandidate[];
-  };
 
-  return {puzzle, candidates, apiUrl, locale, monthly};
+  return {puzzle, apiUrl, locale, monthly};
 }
 
 function readStorage<T>(key: string): T | undefined {
@@ -101,14 +97,14 @@ function writeStorage(key: string, value: unknown): void {
 }
 
 export default function QuizPage({loaderData}: Route.ComponentProps) {
-  const {puzzle, candidates, apiUrl, monthly} = loaderData as {
+  const {puzzle, apiUrl, monthly} = loaderData as {
     monthly?: MonthlyPick;
     puzzle: {date: string; maxAttempts: number; poolSize: number};
-    candidates: QuizCandidate[];
     apiUrl: string;
   };
   const locale = 'ja';
 
+  const [candidates, setCandidates] = useState<QuizCandidate[]>([]);
   const [game, setGame] = useState<QuizGameState>(() =>
     createGame(puzzle.date),
   );
@@ -117,6 +113,30 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
   const [query, setQuery] = useState('');
   const [pending, setPending] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void (async () => {
+      try {
+        const response = await fetch(`${apiUrl}/quiz/candidates`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          return;
+        }
+
+        const body = (await response.json()) as {candidates?: QuizCandidate[]};
+        setCandidates(body.candidates ?? []);
+      } catch {
+        // 候補が取れなくてもパスでヒントは進められる
+      }
+    })();
+
+    return () => {
+      controller.abort();
+    };
+  }, [apiUrl]);
 
   useEffect(() => {
     const saved = readStorage<QuizGameState>(QUIZ_STATE_KEY);
