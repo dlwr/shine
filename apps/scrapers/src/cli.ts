@@ -20,7 +20,6 @@ import {createCommand as berlinJuryAwards} from './berlin-jury-awards-cli';
 import {createCommand as berlinPersonAwards} from './berlin-person-awards-cli';
 import {createCommand as blueRibbonAwards} from './blue-ribbon-awards-cli';
 import {createCommand as cannesFillImdbIds} from './cannes-fill-imdb-ids-cli';
-import {createCommand as cannesFilmFestival} from './cannes-film-festival-cli';
 import {createCommand as cannesJuryAwards} from './cannes-jury-awards-cli';
 import {createCommand as cannesPalmeDor} from './cannes-palme-dor-cli';
 import {createCommand as cannesPersonAwards} from './cannes-person-awards-cli';
@@ -83,7 +82,6 @@ const commandFactories: Array<() => Command> = [
   japaneseTranslations,
   wikidataJapaneseTitles,
   wikidataJapaneseNames,
-  cannesFilmFestival,
   veniceFilmFestival,
   berlinFilmFestival,
   kinemaJunpo,
