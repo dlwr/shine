@@ -8,10 +8,12 @@ import {people} from '@shine/database/schema/people';
 import {
   findPersonAwardDefinition,
   findPersonAwardOrganization,
+} from './awards-service';
+import {
   personAwardDefinitions,
   personAwardOrganizations,
   type PersonAwardDefinition,
-} from './awards-service';
+} from './award-definitions';
 import {BaseService} from './base-service';
 import type {PersonCrossingPerformance, PersonCrossings} from '@shine/types';
 import {personLocalizedName} from './person-name';

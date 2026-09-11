@@ -17,12 +17,12 @@ import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import {
-  awardPageDefinitions,
   findAwardPageDefinition,
   findPersonAwardDefinition,
   japaneseAwardNames,
   personAwardNominations,
 } from './awards-service';
+import {awardPageDefinitions} from './award-definitions';
 import {BaseService} from './base-service';
 import type {
   PeopleListResult,
