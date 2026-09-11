@@ -8,8 +8,8 @@ import {people} from '@shine/database/schema/people';
 import {
   findPersonAwardDefinition,
   findPersonAwardOrganization,
-  personAwardDefinitions,
 } from './awards-service';
+import {personAwardDefinitions} from './award-definitions';
 import {BaseService} from './base-service';
 import type {
   PersonUncrowned,

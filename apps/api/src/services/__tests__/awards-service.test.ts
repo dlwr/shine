@@ -21,8 +21,8 @@ import {
   findTopAwardPageDefinition,
   japaneseAwardNames,
   paginateAwardDetail,
-  personAwardDefinitions,
 } from '../awards-service';
+import {personAwardDefinitions} from '../award-definitions';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(

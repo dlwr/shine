@@ -5,10 +5,10 @@ import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {
-  awardPageDefinitions,
   awardPageNominations,
   findTopAwardPageDefinition,
 } from './awards-service';
+import {awardPageDefinitions} from './award-definitions';
 import {BaseService} from './base-service';
 import type {YearDetail, YearMovie, YearSummary} from '@shine/types';
 
