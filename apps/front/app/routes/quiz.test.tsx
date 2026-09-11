@@ -283,6 +283,30 @@ describe('Quiz page', () => {
       expect(await screen.findByText('1965年')).toBeInTheDocument();
     });
 
+    it('回答候補の中身が壊れていてもパスでヒントは進められる', async () => {
+      vi.mocked(fetch).mockImplementation(async (input: RequestInfo | URL) => {
+        if (String(input).includes('/quiz/candidates')) {
+          return cast<Response>({ok: true, json: async () => ({})});
+        }
+
+        return cast<Response>({
+          ok: true,
+          json: async () => ({
+            correct: false,
+            hint: {label: '製作年', value: '1965年'},
+          }),
+        });
+      });
+
+      render(<QuizPage {...createComponentProperties()} />);
+      await userEvent.type(screen.getByLabelText(/邦題で回答/), '東京');
+      await userEvent.click(
+        screen.getByRole('button', {name: /パスしてヒントを見る/}),
+      );
+
+      expect(await screen.findByText('1965年')).toBeInTheDocument();
+    });
+
     it('外すとヒントが開く', async () => {
       stubApi({
         correct: false,
