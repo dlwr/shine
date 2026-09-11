@@ -41,6 +41,7 @@ import {
   buildAvailabilityLabels,
   type AvailabilityEntry,
 } from './sns/availability-labels';
+import {buildOrganizationLabels} from './sns/organization-names';
 import {
   buildPostRecord,
   createSession,
@@ -85,7 +86,9 @@ type SelectionMovie = {
   uid: string;
   title?: string;
   year?: number;
-  nominations?: Array<{organization: {name: string; shortName?: string}}>;
+  nominations?: Array<{
+    organization: {name: string; shortName?: string; slug?: string};
+  }>;
   availability?: AvailabilityEntry[];
 };
 
@@ -187,7 +190,7 @@ type AwardSummary = {
   subAward?: boolean;
 };
 
-async function fetchWatchedLists(): Promise<AwardSummary[]> {
+async function fetchAwardPages(): Promise<AwardSummary[]> {
   const response = await fetch(`${apiUrl()}/awards`, {
     headers: {Origin: SITE_URL},
   });
@@ -197,6 +200,20 @@ async function fetchWatchedLists(): Promise<AwardSummary[]> {
   }
 
   const {awards} = (await response.json()) as {awards: AwardSummary[]};
+  return awards;
+}
+
+async function fetchAwardPagesQuietly(): Promise<AwardSummary[]> {
+  try {
+    return await fetchAwardPages();
+  } catch (error) {
+    console.log('賞ページ一覧が取れないため団体名は原語のまま:', error);
+    return [];
+  }
+}
+
+async function fetchWatchedLists(): Promise<AwardSummary[]> {
+  const awards = await fetchAwardPages();
   return awards.filter(award => award.grouping === 'year' && !award.subAward);
 }
 
@@ -313,15 +330,11 @@ type PostPlan = {
   afterPost?: () => Promise<void>;
 };
 
-function buildSelectionPostInput(movie: SelectionMovie) {
-  const organizations = [
-    ...new Set(
-      (movie.nominations ?? []).map(
-        nomination =>
-          nomination.organization.shortName || nomination.organization.name,
-      ),
-    ),
-  ];
+async function buildSelectionPostInput(movie: SelectionMovie) {
+  const organizations = buildOrganizationLabels(
+    movie.nominations ?? [],
+    await fetchAwardPagesQuietly(),
+  );
   const availabilityLabels = buildAvailabilityLabels(movie.availability ?? []);
 
   return {
@@ -347,7 +360,7 @@ async function buildDailyPlan(): Promise<PostPlan> {
   const selections = await fetchSelections();
   const movie = requireSelection(selections, 'daily');
   const postInput = {
-    ...buildSelectionPostInput(movie),
+    ...(await buildSelectionPostInput(movie)),
     monthlyTitle: selections.monthly?.title,
   };
 
@@ -366,7 +379,7 @@ async function buildDailyPlan(): Promise<PostPlan> {
 
 async function buildMonthlyPlan(): Promise<PostPlan> {
   const movie = requireSelection(await fetchSelections(), 'monthly');
-  const postInput = buildSelectionPostInput(movie);
+  const postInput = await buildSelectionPostInput(movie);
 
   return {
     text: buildMonthlyPostText(postInput),
@@ -384,7 +397,7 @@ async function buildMonthlyPlan(): Promise<PostPlan> {
 async function buildMonthlyReminderPlan(): Promise<PostPlan> {
   const movie = requireSelection(await fetchSelections(), 'monthly');
   const postInput = {
-    ...buildSelectionPostInput(movie),
+    ...(await buildSelectionPostInput(movie)),
     linkCount: await fetchArticleLinkCount(movie.uid),
   };
 
