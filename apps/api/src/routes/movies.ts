@@ -164,7 +164,7 @@ moviesRoutes.get('/:id', async c => {
     // Check cache first
     const cacheLocale = normalizeCacheLocale(locale);
     const cacheKey = cacheLocale
-      ? getCacheKeyForMovie(movieId, true, cacheLocale)
+      ? getCacheKeyForMovie(movieId, cacheLocale)
       : undefined;
     const cachedResponse = cacheKey ? await cache.get(cacheKey) : undefined;
 
@@ -210,15 +210,19 @@ moviesRoutes.get('/:id', async c => {
     }
 
     // Create cached response with 24 hour TTL
-    const ttl = getCacheTTL.movie.full;
+    const ttl = getCacheTTL.movie.details;
     const response = createCachedResponse(result, ttl, {
       ETag: etag,
       'X-Cache-Status': 'MISS',
     });
 
-    // Store in cache (reader expects the {data, cachedAt} envelope from set())
     if (cacheKey) {
-      await cache.set(cacheKey, result, ttl);
+      const store = cache.set(cacheKey, result, ttl);
+      try {
+        c.executionCtx.waitUntil(store);
+      } catch {
+        await store;
+      }
     }
 
     return response;
