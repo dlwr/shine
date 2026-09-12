@@ -114,3 +114,22 @@ export function matchesTitleAsVolume(
 
   return matchesAnyTarget(baseKeys, targetTitles);
 }
+
+const compilationSeparatorPattern = /[／/]/;
+
+// 2作品収録のディスクやBOXの分売は「作品A／作品B」で登録される
+export function matchesTitleAsCompilation(
+  candidate: string,
+  targetTitles: string[],
+): boolean {
+  const segments = candidate.split(compilationSeparatorPattern);
+  if (segments.length < 2) {
+    return false;
+  }
+
+  const segmentKeys = segments
+    .map(segment => comparisonKey(segment))
+    .filter(key => key !== '');
+
+  return matchesAnyTarget(segmentKeys, targetTitles);
+}

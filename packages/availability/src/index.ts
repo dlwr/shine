@@ -11,7 +11,7 @@ export {
 } from './checker';
 export {
   checkDiscas,
-  parseDiscasProductionYear,
+  containsYear,
   parseDiscasResults,
   parseDiscasTitles,
 } from './sources/discas';
@@ -21,6 +21,7 @@ export {
   hasJapaneseText,
   normalizeTitle,
   matchesTitle,
+  matchesTitleAsCompilation,
   matchesTitleAsVolume,
   volumeBaseTitles,
 } from './title-match';

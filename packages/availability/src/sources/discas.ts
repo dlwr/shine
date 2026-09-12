@@ -1,6 +1,10 @@
 import * as cheerio from 'cheerio';
 import iconv from 'iconv-lite';
-import {matchesTitle, matchesTitleAsVolume} from '../title-match';
+import {
+  matchesTitle,
+  matchesTitleAsCompilation,
+  matchesTitleAsVolume,
+} from '../title-match';
 import type {FetchLike, SourceCheckResult} from '../types';
 
 const USER_AGENT =
@@ -34,13 +38,6 @@ export function parseDiscasResults(html: string): DiscasSearchResult[] {
 
 export function parseDiscasTitles(html: string): string[] {
   return parseDiscasResults(html).map(result => result.title);
-}
-
-const productionYearPattern = /製作年[\s\S]{0,50}?(\d{4})\s*年/;
-
-export function parseDiscasProductionYear(html: string): number | undefined {
-  const match = productionYearPattern.exec(cheerio.load(html).root().text());
-  return match ? Number(match[1]) : undefined;
 }
 
 class CookieJar {
@@ -99,9 +96,21 @@ async function fetchWithSession(
   throw new Error(`Too many redirects for ${url}`);
 }
 
-const MAX_VOLUME_LOOKUPS = 3;
+// 2作品収録のディスクは製作年欄に先頭作品の年しか出ないので解説文も見る。
+// レビュー欄は他作品の年に触れるので対象にしない
+const detailInformationSelector = 'p.p-text-content, table.c_table_product';
 
-async function findMatchingVolume(
+export function containsYear(html: string, year: number): boolean {
+  const text = cheerio
+    .load(html)(detailInformationSelector)
+    .text()
+    .normalize('NFKC');
+  return new RegExp(String.raw`${year}\s*年`).test(text);
+}
+
+const MAX_DETAIL_LOOKUPS = 3;
+
+async function findMatchingRelease(
   results: DiscasSearchResult[],
   targetTitles: string[],
   year: number | undefined,
@@ -109,8 +118,12 @@ async function findMatchingVolume(
   fetchImpl: FetchLike,
 ): Promise<DiscasSearchResult | undefined> {
   const candidates = results
-    .filter(result => matchesTitleAsVolume(result.title, targetTitles))
-    .slice(0, MAX_VOLUME_LOOKUPS);
+    .filter(
+      result =>
+        matchesTitleAsVolume(result.title, targetTitles) ||
+        matchesTitleAsCompilation(result.title, targetTitles),
+    )
+    .slice(0, MAX_DETAIL_LOOKUPS);
 
   for (const candidate of candidates) {
     const response = await fetchWithSession(
@@ -122,10 +135,10 @@ async function findMatchingVolume(
       continue;
     }
 
-    const productionYear = parseDiscasProductionYear(
-      new TextDecoder('shift_jis').decode(await response.arrayBuffer()),
+    const html = new TextDecoder('shift_jis').decode(
+      await response.arrayBuffer(),
     );
-    if (year && productionYear && productionYear !== year) {
+    if (year && !containsYear(html, year)) {
       continue;
     }
 
@@ -186,7 +199,7 @@ export async function checkDiscas(
       };
     }
 
-    const volume = await findMatchingVolume(
+    const release = await findMatchingRelease(
       results,
       targetTitles,
       options.year,
@@ -194,11 +207,11 @@ export async function checkDiscas(
       fetchImpl,
     );
 
-    return volume
+    return release
       ? {
           source: 'discas',
           status: 'ok',
-          detail: `Matched volume: ${volume.title}`,
+          detail: `Matched release: ${release.title}`,
         }
       : {
           source: 'discas',
