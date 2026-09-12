@@ -43,8 +43,9 @@ const awardOccasion = sql`${nominations.ceremonyUid} || ':' || ${nominations.cat
 
 const movieCount = sql<number>`COUNT(DISTINCT ${movieCredits.movieUid})`;
 
-const ELIGIBLE_RANKING_CACHE_KEY = 'people:eligible:v1';
+const ELIGIBLE_RANKING_CACHE_PREFIX = 'people:eligible:v2';
 const ELIGIBLE_RANKING_CACHE_TTL = 604_800;
+const ELIGIBLE_RANKING_CHUNK_SIZE = 500;
 
 type RankedPerson = {uid: string; movieCount: number};
 
@@ -65,8 +66,11 @@ export class PeopleService extends BaseService {
     page: number;
     limit: number;
   }): Promise<PeopleListResult> {
-    const ranking = await this.eligibleRanking();
-    const pageRows = ranking.slice((page - 1) * limit, page * limit);
+    const start = (page - 1) * limit;
+    const {totalCount, rows: pageRows} = await this.rankingSlice(
+      start,
+      start + limit,
+    );
     const names = await this.namesOf(pageRows.map(row => row.uid));
 
     return {
@@ -79,8 +83,8 @@ export class PeopleService extends BaseService {
       pagination: {
         page,
         perPage: limit,
-        totalCount: ranking.length,
-        totalPages: Math.ceil(ranking.length / limit),
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
       },
     };
   }
@@ -338,25 +342,91 @@ export class PeopleService extends BaseService {
     return new Map(rows.map(row => [row.uid, row.name]));
   }
 
-  private async eligibleRanking(): Promise<RankedPerson[]> {
-    const cached = await this.rankingCache?.get(ELIGIBLE_RANKING_CACHE_KEY);
-    if (cached?.data) {
-      return cached.data as RankedPerson[];
+  private async rankingSlice(
+    start: number,
+    end: number,
+  ): Promise<{totalCount: number; rows: RankedPerson[]}> {
+    const cached = await this.cachedRankingSlice(start, end);
+    if (cached) {
+      return cached;
     }
 
+    const ranking = await this.computeRanking();
+    await this.storeRanking(ranking);
+    return {totalCount: ranking.length, rows: ranking.slice(start, end)};
+  }
+
+  private async cachedRankingSlice(
+    start: number,
+    end: number,
+  ): Promise<{totalCount: number; rows: RankedPerson[]} | undefined> {
+    if (!this.rankingCache) {
+      return undefined;
+    }
+
+    const count = await this.rankingCache.get(
+      `${ELIGIBLE_RANKING_CACHE_PREFIX}:count`,
+    );
+    if (typeof count?.data !== 'number') {
+      return undefined;
+    }
+
+    const totalCount = count.data;
+    if (start >= totalCount) {
+      return {totalCount, rows: []};
+    }
+
+    const firstChunk = Math.floor(start / ELIGIBLE_RANKING_CHUNK_SIZE);
+    const lastChunk = Math.floor(
+      (Math.min(end, totalCount) - 1) / ELIGIBLE_RANKING_CHUNK_SIZE,
+    );
+    const chunks = await Promise.all(
+      Array.from({length: lastChunk - firstChunk + 1}, (_, offset) =>
+        this.rankingCache?.get(
+          `${ELIGIBLE_RANKING_CACHE_PREFIX}:chunk:${firstChunk + offset}`,
+        ),
+      ),
+    );
+    if (chunks.some(chunk => !Array.isArray(chunk?.data))) {
+      return undefined;
+    }
+
+    const rows = chunks.flatMap(chunk => chunk?.data as RankedPerson[]);
+    const offset = firstChunk * ELIGIBLE_RANKING_CHUNK_SIZE;
+    return {totalCount, rows: rows.slice(start - offset, end - offset)};
+  }
+
+  private async computeRanking(): Promise<RankedPerson[]> {
     const eligible = this.eligiblePeople();
-    const ranking = await this.database
+    return this.database
       .select({uid: eligible.personUid, movieCount: eligible.movieCount})
       .from(eligible)
       .orderBy(sql`${eligible.movieCount} DESC`, eligible.personUid);
+  }
 
-    await this.rankingCache?.set(
-      ELIGIBLE_RANKING_CACHE_KEY,
-      ranking,
-      ELIGIBLE_RANKING_CACHE_TTL,
-    );
+  private async storeRanking(ranking: RankedPerson[]): Promise<void> {
+    if (!this.rankingCache) {
+      return;
+    }
 
-    return ranking;
+    const chunkCount = Math.ceil(ranking.length / ELIGIBLE_RANKING_CHUNK_SIZE);
+    await Promise.all([
+      this.rankingCache.set(
+        `${ELIGIBLE_RANKING_CACHE_PREFIX}:count`,
+        ranking.length,
+        ELIGIBLE_RANKING_CACHE_TTL,
+      ),
+      ...Array.from({length: chunkCount}, (_, index) =>
+        this.rankingCache?.set(
+          `${ELIGIBLE_RANKING_CACHE_PREFIX}:chunk:${index}`,
+          ranking.slice(
+            index * ELIGIBLE_RANKING_CHUNK_SIZE,
+            (index + 1) * ELIGIBLE_RANKING_CHUNK_SIZE,
+          ),
+          ELIGIBLE_RANKING_CACHE_TTL,
+        ),
+      ),
+    ]);
   }
 
   private async attachPersonAwards(

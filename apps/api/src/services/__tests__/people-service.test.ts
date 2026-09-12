@@ -626,10 +626,11 @@ describe('PeopleService.listPeople', () => {
   });
 });
 
-function createKvStub(puts: string[]): KVNamespace {
+function createKvStub(puts: string[], gets: string[] = []): KVNamespace {
   const store = new Map<string, string>();
   return {
     async get(key: string) {
+      gets.push(key);
       const value = store.get(key);
       // eslint-disable-next-line unicorn/no-null -- KVNamespace.get returns null for missing keys
       return value === undefined ? null : JSON.parse(value);
@@ -641,8 +642,32 @@ function createKvStub(puts: string[]): KVNamespace {
   } as unknown as KVNamespace;
 }
 
+async function insertDirectors(
+  database: TestDatabase,
+  count: number,
+): Promise<void> {
+  const uids = Array.from(
+    {length: count},
+    (_, index) => `director-${String(index).padStart(4, '0')}`,
+  );
+  await database
+    .insert(people)
+    .values(
+      uids.map((uid, index) => ({uid, tmdbId: 100_000 + index, name: uid})),
+    );
+  await database.insert(movieCredits).values(
+    uids.map(uid => ({
+      movieUid: 'movie-ran',
+      personUid: uid,
+      creditId: `credit-${uid}`,
+      department: 'Directing',
+      job: 'Director',
+    })),
+  );
+}
+
 describe('PeopleService.listPeople の対象人物の並び', () => {
-  it('KV に 1 キーで置き、次のページでは集計し直さない', async () => {
+  it('KV に件数と 500 件ごとのチャンクで置き、次のページでは集計し直さない', async () => {
     const {environment, database} = await createTestEnvironment();
     const puts: string[] = [];
     environment.CACHE_KV = createKvStub(puts);
@@ -661,8 +686,62 @@ describe('PeopleService.listPeople の対象人物の並び', () => {
 
     const result = await service.listPeople({page: 2, limit: 1});
 
-    expect(puts).toEqual(['people:eligible:v1']);
+    expect(puts).toEqual([
+      'people:eligible:v2:count',
+      'people:eligible:v2:chunk:0',
+    ]);
     expect(result.pagination.totalCount).toBe(3);
+  });
+
+  it('ページは自分のチャンクだけ読む', async () => {
+    const {environment, database} = await createTestEnvironment();
+    await insertDirectors(database, 1001);
+    const gets: string[] = [];
+    environment.CACHE_KV = createKvStub([], gets);
+    const service = new PeopleService(environment);
+    await service.listPeople({page: 1, limit: 50});
+    gets.length = 0;
+
+    const result = await service.listPeople({page: 21, limit: 50});
+
+    expect(gets).toEqual([
+      'people:eligible:v2:count',
+      'people:eligible:v2:chunk:2',
+    ]);
+    expect(result.people.map(person => person.uid)).toEqual([
+      'director-0998',
+      'director-0999',
+      'director-1000',
+      'person-multi',
+    ]);
+  });
+
+  it('チャンクをまたぐページは両方のチャンクから続けて切り出す', async () => {
+    const {environment, database} = await createTestEnvironment();
+    await insertDirectors(database, 1001);
+    environment.CACHE_KV = createKvStub([]);
+    const service = new PeopleService(environment);
+
+    const result = await service.listPeople({page: 2, limit: 300});
+
+    expect(result.people).toHaveLength(300);
+    expect(result.people[0]?.uid).toBe('director-0298');
+    expect(result.people.at(-1)?.uid).toBe('director-0597');
+  });
+
+  it('範囲外のページはチャンクを読まずに空を返す', async () => {
+    const {environment} = await createTestEnvironment();
+    const gets: string[] = [];
+    environment.CACHE_KV = createKvStub([], gets);
+    const service = new PeopleService(environment);
+    await service.listPeople({page: 1, limit: 50});
+    gets.length = 0;
+
+    const result = await service.listPeople({page: 9, limit: 50});
+
+    expect(result.people).toEqual([]);
+    expect(result.pagination.totalCount).toBe(3);
+    expect(gets).toEqual(['people:eligible:v2:count']);
   });
 
   it('KV が無ければ毎回集計する', async () => {
