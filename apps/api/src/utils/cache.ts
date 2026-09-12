@@ -1,3 +1,4 @@
+import {type Context} from 'hono';
 export type CacheConfig = {
   key: string;
   ttl: number;
@@ -326,4 +327,15 @@ export const shouldCheckETag = (
 ): boolean => {
   const ifNoneMatch = request.header('If-None-Match');
   return ifNoneMatch === etag;
+};
+
+export const writeCacheAfterResponse = async (
+  context: Pick<Context, 'executionCtx'>,
+  write: Promise<void>,
+): Promise<void> => {
+  try {
+    context.executionCtx.waitUntil(write);
+  } catch {
+    await write;
+  }
 };

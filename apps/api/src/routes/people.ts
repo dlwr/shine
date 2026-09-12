@@ -11,6 +11,7 @@ import {
   createETag,
   EdgeCache,
   getCacheKeyForPerson,
+  writeCacheAfterResponse,
   normalizeCacheLocale,
   shouldCheckETag,
 } from '../utils/cache';
@@ -217,7 +218,10 @@ peopleRoutes.get('/:id', async c => {
     return c.json({error: 'Person not found'}, 404);
   }
 
-  await cache.set(cacheKey, person, PERSON_CACHE_TTL);
+  await writeCacheAfterResponse(
+    c,
+    cache.set(cacheKey, person, PERSON_CACHE_TTL),
+  );
 
   const etag = createETag(person);
   if (shouldCheckETag(c.req, etag)) {
