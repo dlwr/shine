@@ -191,14 +191,8 @@ export const getCacheKeyForSelection = (
   locale: string,
 ): string => `selections:${type}:${date}:${locale}:v2`;
 
-export const getCacheKeyForMovie = (
-  movieId: string,
-  shouldIncludeDetails = false,
-  locale: string = 'ja',
-): string => {
-  const suffix = shouldIncludeDetails ? 'full' : 'basic';
-  return `movie:${movieId}:${suffix}:${locale}:v8`;
-};
+export const getCacheKeyForMovie = (movieId: string, locale: string): string =>
+  `movie:${movieId}:${locale}:v9`;
 
 export const getCacheKeyForPerson = (
   personUid: string,
@@ -206,10 +200,7 @@ export const getCacheKeyForPerson = (
 ): string => `person:${personUid}:${locale}:v6`;
 
 export const getMovieCacheKeysForAllLocales = (movieId: string): string[] =>
-  CACHEABLE_LOCALES.flatMap(locale => [
-    getCacheKeyForMovie(movieId, true, locale),
-    getCacheKeyForMovie(movieId, false, locale),
-  ]);
+  CACHEABLE_LOCALES.map(locale => getCacheKeyForMovie(movieId, locale));
 
 export const getCacheKeyForSearch = (
   query: string,
@@ -257,8 +248,7 @@ export const getCacheTTL = {
     monthly: 86_400, // 24 hours
   },
   movie: {
-    basic: 3600, // 1 hour
-    full: 86_400, // 24 hours
+    details: 86_400, // 24 hours
     related: 2_592_000, // 30 days
   },
   search: {

@@ -9,13 +9,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
-import {
-  EdgeCache,
-  getCacheKeyForMovie,
-  getCacheTTL,
-  getMovieCacheKeysForAllLocales,
-  normalizeCacheLocale,
-} from '../utils/cache';
+import {EdgeCache, getMovieCacheKeysForAllLocales} from '../utils/cache';
 import {
   awardPageLinkForOrganizationName,
   japaneseAwardNames,
@@ -123,17 +117,6 @@ export class MoviesService extends BaseService {
     movieId: string,
     locale = 'ja',
   ): Promise<MovieSelection> {
-    const cacheLocale = normalizeCacheLocale(locale);
-    const cacheKey = cacheLocale
-      ? getCacheKeyForMovie(movieId, false, cacheLocale)
-      : undefined;
-
-    // Try to get cached result
-    const cached = cacheKey ? await this.cache.get(cacheKey) : undefined;
-    if (cached?.data) {
-      return cached.data as MovieSelection;
-    }
-
     // Get movie with title and description
     const movieQuery = this.database
       .select({
@@ -306,11 +289,6 @@ export class MoviesService extends BaseService {
       })),
       credits,
     };
-
-    // Cache result
-    if (cacheKey) {
-      await this.cache.set(cacheKey, movieDetails, getCacheTTL.movie.basic);
-    }
 
     return movieDetails;
   }

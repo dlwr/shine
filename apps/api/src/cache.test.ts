@@ -40,14 +40,11 @@ describe('Cache Utilities', () => {
 
     it('should generate consistent cache keys for movies', () => {
       const movieId = 'test-movie-123';
-      const basicKey = getCacheKeyForMovie(movieId, false);
-      const fullKey = getCacheKeyForMovie(movieId, true);
-      const englishKey = getCacheKeyForMovie(movieId, false, 'en');
+      const japaneseKey = getCacheKeyForMovie(movieId, 'ja');
+      const englishKey = getCacheKeyForMovie(movieId, 'en');
 
-      expect(basicKey).toBe(`movie:${movieId}:basic:ja:v8`);
-      expect(fullKey).toBe(`movie:${movieId}:full:ja:v8`);
-      expect(basicKey).not.toBe(fullKey);
-      expect(englishKey).not.toBe(basicKey);
+      expect(japaneseKey).toBe(`movie:${movieId}:ja:v9`);
+      expect(englishKey).toBe(`movie:${movieId}:en:v9`);
     });
   });
 
@@ -56,12 +53,12 @@ describe('Cache Utilities', () => {
       expect(getCacheTTL.selections.daily).toBe(3600); // 1 hour
       expect(getCacheTTL.selections.weekly).toBe(21_600); // 6 hours
       expect(getCacheTTL.selections.monthly).toBe(86_400); // 24 hours
-      expect(getCacheTTL.movie.full).toBe(86_400); // 24 hours
+      expect(getCacheTTL.movie.details).toBe(86_400); // 24 hours
       expect(getCacheTTL.search.results).toBe(86_400); // 24 hours
     });
 
     it('should have longer TTL for less frequently changing data', () => {
-      expect(getCacheTTL.movie.full).toBeGreaterThan(
+      expect(getCacheTTL.movie.details).toBeGreaterThan(
         getCacheTTL.selections.daily,
       );
       expect(getCacheTTL.selections.monthly).toBeGreaterThan(
@@ -254,32 +251,13 @@ describe('Cache Integration Scenarios', () => {
     });
   });
 
-  describe('Movie Details Caching', () => {
-    it('should differentiate between basic and full movie data', () => {
-      const movieId = 'movie-123';
-      const basicKey = getCacheKeyForMovie(movieId, false);
-      const fullKey = getCacheKeyForMovie(movieId, true);
-
-      expect(basicKey).toContain('basic');
-      expect(fullKey).toContain('full');
-      expect(basicKey).not.toBe(fullKey);
-    });
-
-    it('should use longer TTL for full movie details', () => {
-      const basicTTL = getCacheTTL.movie.basic;
-      const fullTTL = getCacheTTL.movie.full;
-
-      expect(fullTTL).toBeGreaterThanOrEqual(basicTTL);
-    });
-  });
-
   describe('Cache Performance Expectations', () => {
     it('should have reasonable TTL values for production use', () => {
       // Daily selections: 1 hour (reasonable for content that changes daily)
       expect(getCacheTTL.selections.daily).toBe(3600);
 
       // Movie details: 24 hours (movie data rarely changes)
-      expect(getCacheTTL.movie.full).toBe(86_400);
+      expect(getCacheTTL.movie.details).toBe(86_400);
 
       // URL titles: 1 week (URLs don't change their titles)
       expect(getCacheTTL.utility.urlTitle).toBe(604_800);
@@ -290,7 +268,7 @@ describe('Cache Integration Scenarios', () => {
       const selectionsTTL = getCacheTTL.selections.daily;
 
       // Movie details - medium frequency, longer TTL
-      const movieTTL = getCacheTTL.movie.full;
+      const movieTTL = getCacheTTL.movie.details;
 
       // Selections should refresh more frequently than movie details
       expect(movieTTL).toBeGreaterThan(selectionsTTL);
