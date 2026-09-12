@@ -9,5 +9,6 @@ export * from './movies';
 export * from './nominations';
 export * from './people';
 export * from './poster-urls';
+export * from './quiz-selections';
 export * from './reference-urls';
 export * from './translations';
