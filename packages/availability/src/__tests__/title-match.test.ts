@@ -3,6 +3,7 @@ import {
   hasJapaneseText,
   normalizeTitle,
   matchesTitle,
+  matchesTitleAsCompilation,
   matchesTitleAsVolume,
 } from '../title-match';
 
@@ -194,6 +195,53 @@ describe('matchesTitleAsVolume', () => {
   it('ignores empty target titles', () => {
     expect(
       matchesTitleAsVolume('愛と宿命の泉　１　フロレット家のジャン', ['', ' ']),
+    ).toBe(false);
+  });
+});
+
+describe('matchesTitleAsCompilation', () => {
+  it('matches a title listed after ／ on a double feature disc', () => {
+    expect(
+      matchesTitleAsCompilation(
+        '罪と罰　白夜のラスコーリニコフ／マッチ工場の少女',
+        ['マッチ工場の少女'],
+      ),
+    ).toBe(true);
+  });
+
+  it('matches a title listed before ／', () => {
+    expect(
+      matchesTitleAsCompilation(
+        'マッチ工場の少女／罪と罰　白夜のラスコーリニコフ',
+        ['マッチ工場の少女'],
+      ),
+    ).toBe(true);
+  });
+
+  it('matches a title inside a box set volume', () => {
+    expect(
+      matchesTitleAsCompilation(
+        'トータル　カウリスマキ　５　ハムレット・ゴーズ・ビジネス／マッチ工場の少女',
+        ['マッチ工場の少女'],
+      ),
+    ).toBe(true);
+  });
+
+  it('does not match a title without ／', () => {
+    expect(
+      matchesTitleAsCompilation('マッチ工場の少女', ['マッチ工場の少女']),
+    ).toBe(false);
+  });
+
+  it('does not match a segment that only contains the title', () => {
+    expect(
+      matchesTitleAsCompilation('スター・ウォーズ／帝国の逆襲', ['帝国']),
+    ).toBe(false);
+  });
+
+  it('ignores empty target titles', () => {
+    expect(
+      matchesTitleAsCompilation('罪と罰／マッチ工場の少女', ['', ' ']),
     ).toBe(false);
   });
 });
