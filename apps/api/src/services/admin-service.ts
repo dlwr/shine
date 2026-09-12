@@ -6,6 +6,7 @@ import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movieSelections} from '@shine/database/schema/movie-selections';
+import {quizSelections} from '@shine/database/schema/quiz-selections';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {posterUrls} from '@shine/database/schema/poster-urls';
@@ -337,6 +338,9 @@ export class AdminService extends BaseService {
       await trx
         .delete(movieSelections)
         .where(eq(movieSelections.movieId, movieId));
+      await trx
+        .delete(quizSelections)
+        .where(eq(quizSelections.movieUid, movieId));
       await trx.delete(nominations).where(eq(nominations.movieUid, movieId));
       await trx
         .delete(referenceUrls)
@@ -870,6 +874,11 @@ export class AdminService extends BaseService {
           movieId: targetMovieId,
         })
         .where(eq(movieSelections.movieId, sourceMovieId));
+
+      await trx
+        .update(quizSelections)
+        .set({movieUid: targetMovieId})
+        .where(eq(quizSelections.movieUid, sourceMovieId));
 
       // Merge article links
       await trx

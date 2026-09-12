@@ -169,6 +169,13 @@
       "when": 1788612976232,
       "tag": "0023_optimal_gauntlet",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1789147974310,
+      "tag": "0024_glorious_betty_brant",
+      "breakpoints": true
     }
   ]
 }

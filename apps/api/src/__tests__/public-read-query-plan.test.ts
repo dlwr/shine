@@ -442,6 +442,13 @@ const exercises: Exercise[] = [
     run: environment => new QuizService(environment).getPool(),
   },
   {
+    name: 'クイズの出題',
+    run: environment =>
+      new QuizService(environment).getEntry(
+        new Date().toISOString().slice(0, 10),
+      ),
+  },
+  {
     name: '日替わり選出',
     run: environment =>
       new SelectionsService(environment).getDateSeededSelections({

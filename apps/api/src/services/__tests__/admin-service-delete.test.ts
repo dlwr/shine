@@ -7,6 +7,7 @@ import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability
 import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
 import {people} from '@shine/database/schema/people';
+import {quizSelections} from '@shine/database/schema/quiz-selections';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {AdminService} from '../admin-service';
@@ -53,6 +54,21 @@ describe('AdminService.deleteMovie', () => {
       .from(movieAvailabilityChecks)
       .where(eq(movieAvailabilityChecks.movieUid, 'movie-a'));
     expect(remainingChecks).toHaveLength(0);
+  });
+
+  it('deletes quiz selections together with the movie', async () => {
+    await database.insert(movies).values({uid: 'movie-a', year: 2020});
+    await database
+      .insert(quizSelections)
+      .values({quizDate: '2026-09-12', movieUid: 'movie-a'});
+
+    await new AdminService(environment).deleteMovie('movie-a');
+
+    const remaining = await database
+      .select()
+      .from(quizSelections)
+      .where(eq(quizSelections.movieUid, 'movie-a'));
+    expect(remaining).toHaveLength(0);
   });
 
   it('deletes credits together with the movie', async () => {
@@ -113,6 +129,20 @@ describe('AdminService.mergeMovies', () => {
     });
 
     const remaining = await database.select().from(movieCredits);
+    expect(remaining.map(row => row.movieUid)).toEqual(['movie-target']);
+  });
+
+  it('moves quiz selections to the target movie', async () => {
+    await database
+      .insert(quizSelections)
+      .values({quizDate: '2026-09-12', movieUid: 'movie-source'});
+
+    await new AdminService(environment).mergeMovies({
+      sourceMovieId: 'movie-source',
+      targetMovieId: 'movie-target',
+    });
+
+    const remaining = await database.select().from(quizSelections);
     expect(remaining.map(row => row.movieUid)).toEqual(['movie-target']);
   });
 
