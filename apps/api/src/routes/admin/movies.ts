@@ -3,6 +3,7 @@ import {articleLinks} from '@shine/database/schema/article-links';
 import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movieSelections} from '@shine/database/schema/movie-selections';
+import {quizSelections} from '@shine/database/schema/quiz-selections';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {posterUrls} from '@shine/database/schema/poster-urls';
@@ -726,6 +727,11 @@ adminMoviesRoutes.post(
           .update(movieSelections)
           .set({movieId: targetId})
           .where(eq(movieSelections.movieId, sourceId));
+
+        await tx
+          .update(quizSelections)
+          .set({movieUid: targetId})
+          .where(eq(quizSelections.movieUid, sourceId));
 
         // Delete source availability checks
         await tx

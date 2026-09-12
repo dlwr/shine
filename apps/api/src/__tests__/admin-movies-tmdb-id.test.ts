@@ -4,6 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {eq, getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
+import {quizSelections} from '@shine/database/schema/quiz-selections';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {createJWT} from '../auth';
@@ -148,6 +149,24 @@ describe('admin movies の TMDb ID と media_type', () => {
 
     expect(response.status).toBe(200);
     expect(await tmdbIdOf('movie-1')).toBe(42_699);
+  });
+
+  it('merge は統合元のクイズ出題を統合先に移す', async () => {
+    await database.insert(movies).values({uid: 'target', year: 1967});
+    await database.insert(movies).values({uid: 'source', year: 1967});
+    await database
+      .insert(quizSelections)
+      .values({quizDate: '2026-09-12', movieUid: 'source'});
+
+    const response = await adminMoviesRoutes.request(
+      '/movies/source/merge/target',
+      {method: 'POST', headers: authHeaders},
+      environment,
+    );
+
+    expect(response.status).toBe(200);
+    const rows = await database.select().from(quizSelections);
+    expect(rows.map(row => row.movieUid)).toEqual(['target']);
   });
 
   it('merge は統合元の IMDb ID を統合先に引き継ぐ', async () => {
