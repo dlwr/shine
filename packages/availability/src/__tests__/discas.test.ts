@@ -2,11 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {describe, expect, it, vi} from 'vitest';
-import {
-  checkDiscas,
-  parseDiscasProductionYear,
-  parseDiscasTitles,
-} from '../sources/discas';
+import {checkDiscas, containsYear, parseDiscasTitles} from '../sources/discas';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const readFixture = (name: string) =>
@@ -15,6 +11,8 @@ const fixtureBytes = readFixture('discas-search.html');
 const fixtureHtml = new TextDecoder('shift_jis').decode(fixtureBytes);
 const volumeSearchBytes = readFixture('discas-search-volumes.html');
 const detailBytes = readFixture('discas-detail.html');
+const compilationSearchBytes = readFixture('discas-search-compilations.html');
+const compilationDetailBytes = readFixture('discas-detail-compilation.html');
 
 describe('parseDiscasTitles', () => {
   it('extracts titles from goodsDetail links, decoding character references', () => {
@@ -30,16 +28,38 @@ describe('parseDiscasTitles', () => {
   });
 });
 
-describe('parseDiscasProductionYear', () => {
-  it('extracts the production year from a detail page', () => {
+describe('containsYear', () => {
+  it('finds the production year of a detail page', () => {
     const detailHtml = new TextDecoder('shift_jis').decode(detailBytes);
-    expect(parseDiscasProductionYear(detailHtml)).toBe(1986);
+    expect(containsYear(detailHtml, 1986)).toBe(true);
   });
 
-  it('returns undefined when the page has no production year', () => {
-    expect(parseDiscasProductionYear('<html><body></body></html>')).toBe(
-      undefined,
+  it('finds a full-width year written in the story text', () => {
+    const detailHtml = new TextDecoder('shift_jis').decode(
+      compilationDetailBytes,
     );
+    expect(containsYear(detailHtml, 1990)).toBe(true);
+  });
+
+  it('returns false when the page never mentions the year', () => {
+    const detailHtml = new TextDecoder('shift_jis').decode(detailBytes);
+    expect(containsYear(detailHtml, 1975)).toBe(false);
+  });
+
+  it('ignores a year mentioned only in a review', () => {
+    const detailHtml = new TextDecoder('shift_jis').decode(
+      compilationDetailBytes,
+    );
+    expect(containsYear(detailHtml, 1975)).toBe(false);
+  });
+
+  it('does not treat a bare number as a year', () => {
+    expect(
+      containsYear(
+        '<html><body><p class="p-text-content">1986</p></body></html>',
+        1986,
+      ),
+    ).toBe(false);
   });
 });
 
@@ -175,6 +195,44 @@ describe('checkDiscas', () => {
     const result = await checkDiscas(['愛と宿命の泉'], fetchSpy, {year: 1986});
 
     expect(result.status).toBe('ng');
+  });
+
+  it('returns ok when a double feature disc lists the title and its detail page mentions the movie year', async () => {
+    const fetchSpy = createSessionFetch(
+      compilationSearchBytes,
+      compilationDetailBytes,
+    );
+
+    const result = await checkDiscas(['マッチ工場の少女'], fetchSpy, {
+      year: 1990,
+    });
+
+    expect(result.status).toBe('ok');
+    expect(result.detail).toContain('マッチ工場の少女');
+  });
+
+  it('returns ng when a double feature disc lists the title but its detail page never mentions the movie year', async () => {
+    const fetchSpy = createSessionFetch(
+      compilationSearchBytes,
+      compilationDetailBytes,
+    );
+
+    const result = await checkDiscas(['マッチ工場の少女'], fetchSpy, {
+      year: 1975,
+    });
+
+    expect(result.status).toBe('ng');
+  });
+
+  it('returns ok for a double feature disc when the movie year is unknown', async () => {
+    const fetchSpy = createSessionFetch(
+      compilationSearchBytes,
+      compilationDetailBytes,
+    );
+
+    const result = await checkDiscas(['マッチ工場の少女'], fetchSpy);
+
+    expect(result.status).toBe('ok');
   });
 
   it('does not fetch detail pages when an exact title matches', async () => {
