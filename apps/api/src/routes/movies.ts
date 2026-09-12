@@ -217,7 +217,12 @@ moviesRoutes.get('/:id', async c => {
     });
 
     if (cacheKey) {
-      await cache.set(cacheKey, result, ttl);
+      const store = cache.set(cacheKey, result, ttl);
+      try {
+        c.executionCtx.waitUntil(store);
+      } catch {
+        await store;
+      }
     }
 
     return response;

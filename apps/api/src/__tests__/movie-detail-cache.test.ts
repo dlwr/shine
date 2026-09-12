@@ -85,4 +85,34 @@ describe('GET /movies/:id のキャッシュ', () => {
 
     expect(response.headers.get('X-Cache-Status')).toBe('HIT');
   });
+
+  it('KV への書き込みが終わる前に応答を返す', async () => {
+    const put = Promise.withResolvers<void>();
+    const environment = await createTestEnvironment(puts, () => put.promise);
+    const background: Promise<unknown>[] = [];
+    const executionContext = {
+      waitUntil(promise: Promise<unknown>) {
+        background.push(promise);
+      },
+      passThroughOnException() {},
+    } as ExecutionContext;
+
+    const outcome = await Promise.race([
+      moviesRoutes.request(
+        '/movie-ran?locale=ja',
+        {},
+        environment,
+        executionContext,
+      ),
+      new Promise<'blocked'>(resolve => {
+        setTimeout(() => resolve('blocked'), 300);
+      }),
+    ]);
+
+    expect(outcome).toBeInstanceOf(Response);
+    expect(background).toHaveLength(1);
+    put.resolve();
+    await Promise.all(background);
+    expect(puts).toHaveLength(1);
+  });
 });
