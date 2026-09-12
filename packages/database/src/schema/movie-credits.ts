@@ -31,6 +31,10 @@ export const movieCredits = sqliteTable(
   },
   table => [
     index('movie_credits_movie_idx').on(table.movieUid),
-    index('movie_credits_person_idx').on(table.personUid),
+    index('movie_credits_person_movie_job_idx').on(
+      table.personUid,
+      table.movieUid,
+      table.job,
+    ),
   ],
 );
