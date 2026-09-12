@@ -33,7 +33,7 @@ export const movies = sqliteTable(
     index('movies_year_idx').on(table.year),
     index('movies_original_language_idx').on(table.originalLanguage),
     index('movies_created_at_idx').on(table.createdAt),
-    index('movies_deleted_at_idx').on(table.deletedAt),
+    index('movies_deleted_at_uid_idx').on(table.deletedAt, table.uid),
     uniqueIndex('movies_tmdb_id_media_type_unique').on(
       table.tmdbId,
       table.mediaType,

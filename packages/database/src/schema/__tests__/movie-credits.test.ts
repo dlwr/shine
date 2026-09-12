@@ -43,4 +43,24 @@ describe('movie_credits の索引', () => {
     ).toBe(true);
     expect(details).not.toContain('USE TEMP B-TREE FOR GROUP BY');
   });
+
+  it('削除済み映画の副問合せを movies の全走査にしない', async () => {
+    const database = await createTestDatabase();
+
+    const plan = await database.all<{detail: string}>(sql`
+      EXPLAIN QUERY PLAN
+      SELECT person_uid, COUNT(DISTINCT movie_uid) AS movie_count
+      FROM movie_credits
+      WHERE movie_uid NOT IN (SELECT uid FROM movies WHERE deleted_at IS NOT NULL)
+      GROUP BY person_uid
+      HAVING COUNT(DISTINCT movie_uid) >= 2 OR SUM(job = 'Director') > 0
+    `);
+    const details = plan.map(row => row.detail);
+
+    expect(details, details.join('\n')).not.toContain('SCAN movies');
+    expect(
+      details.some(detail => /movies USING COVERING INDEX/.test(detail)),
+      details.join('\n'),
+    ).toBe(true);
+  });
 });
