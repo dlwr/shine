@@ -625,3 +625,63 @@ describe('PeopleService.listPeople', () => {
     expect(result.pagination.totalCount).toBe(3);
   });
 });
+
+function createKvStub(puts: string[]): KVNamespace {
+  const store = new Map<string, string>();
+  return {
+    async get(key: string) {
+      const value = store.get(key);
+      // eslint-disable-next-line unicorn/no-null -- KVNamespace.get returns null for missing keys
+      return value === undefined ? null : JSON.parse(value);
+    },
+    async put(key: string, value: string) {
+      puts.push(key);
+      store.set(key, value);
+    },
+  } as unknown as KVNamespace;
+}
+
+describe('PeopleService.listPeople の対象人物の並び', () => {
+  it('KV に 1 キーで置き、次のページでは集計し直さない', async () => {
+    const {environment, database} = await createTestEnvironment();
+    const puts: string[] = [];
+    environment.CACHE_KV = createKvStub(puts);
+    const service = new PeopleService(environment);
+    await service.listPeople({page: 1, limit: 1});
+    await database
+      .insert(people)
+      .values({uid: 'person-new', tmdbId: 9999, name: '新人'});
+    await database.insert(movieCredits).values({
+      movieUid: 'movie-ran',
+      personUid: 'person-new',
+      creditId: 'credit-new',
+      department: 'Directing',
+      job: 'Director',
+    });
+
+    const result = await service.listPeople({page: 2, limit: 1});
+
+    expect(puts).toEqual(['people:eligible:v1']);
+    expect(result.pagination.totalCount).toBe(3);
+  });
+
+  it('KV が無ければ毎回集計する', async () => {
+    const {environment, database} = await createTestEnvironment();
+    const service = new PeopleService(environment);
+    await service.listPeople({page: 1, limit: 1});
+    await database
+      .insert(people)
+      .values({uid: 'person-new', tmdbId: 9999, name: '新人'});
+    await database.insert(movieCredits).values({
+      movieUid: 'movie-ran',
+      personUid: 'person-new',
+      creditId: 'credit-new',
+      department: 'Directing',
+      job: 'Director',
+    });
+
+    const result = await service.listPeople({page: 2, limit: 1});
+
+    expect(result.pagination.totalCount).toBe(4);
+  });
+});

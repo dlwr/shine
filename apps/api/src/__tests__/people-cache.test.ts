@@ -16,7 +16,10 @@ const migrationsFolder = path.resolve(
 
 const PERSON_UID = '2c5d7e1a-6f3b-4a8c-9d0e-1f2a3b4c5d6e';
 
-function createKv(puts: string[], onPut: () => Promise<void>): KVNamespace {
+function createKv(
+  puts: string[],
+  onPut: (key: string) => Promise<void>,
+): KVNamespace {
   return {
     async get() {
       // eslint-disable-next-line unicorn/no-null -- KVNamespace.get returns null for missing keys
@@ -24,17 +27,17 @@ function createKv(puts: string[], onPut: () => Promise<void>): KVNamespace {
     },
     async put(key: string) {
       puts.push(key);
-      await onPut();
+      await onPut(key);
     },
   } as unknown as KVNamespace;
 }
 
 async function createTestEnvironment(
   puts: string[],
-  onPut: () => Promise<void>,
+  onPut: (key: string) => Promise<void>,
 ): Promise<Environment> {
   const directory = await fs.mkdtemp(
-    path.join(os.tmpdir(), 'shine-person-detail-cache-'),
+    path.join(os.tmpdir(), 'shine-people-cache-'),
   );
   const environment: Environment = {
     TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
@@ -51,35 +54,42 @@ async function createTestEnvironment(
 
 describe('people ルートのキャッシュ', () => {
   it.each([
-    [`/${PERSON_UID}?locale=ja`, `person:${PERSON_UID}:ja:v6`],
-    ['/?page=1&limit=10', 'people:list:1:10:v1'],
-    ['/prominent?locale=ja&limit=5', 'people:prominent:ja:5:v13'],
-    ['/search?q=%E9%BB%92%E6%BE%A4&locale=ja', 'people:search:ja:黒澤:v1'],
-    ['/crossings?locale=ja', 'people:crossings:ja:v5'],
-    ['/uncrowned?locale=ja', 'people:uncrowned:ja:v3'],
-  ])('%s は KV への書き込みが終わる前に応答を返す', async (path, key) => {
-    const puts: string[] = [];
-    const put = Promise.withResolvers<void>();
-    const environment = await createTestEnvironment(puts, () => put.promise);
-    const background: Promise<unknown>[] = [];
-    const executionContext = {
-      waitUntil(promise: Promise<unknown>) {
-        background.push(promise);
-      },
-      passThroughOnException() {},
-    } as ExecutionContext;
+    [`/${PERSON_UID}?locale=ja`, `person:${PERSON_UID}:ja:v6`, []],
+    ['/?page=1&limit=10', 'people:list:1:10:v1', ['people:eligible:v1']],
+    ['/prominent?locale=ja&limit=5', 'people:prominent:ja:5:v13', []],
+    ['/search?q=%E9%BB%92%E6%BE%A4&locale=ja', 'people:search:ja:黒澤:v1', []],
+    ['/crossings?locale=ja', 'people:crossings:ja:v5', []],
+    ['/uncrowned?locale=ja', 'people:uncrowned:ja:v3', []],
+  ])(
+    '%s は KV への書き込みが終わる前に応答を返す',
+    async (path, key, putsBeforeResponse) => {
+      const puts: string[] = [];
+      const put = Promise.withResolvers<void>();
+      const environment = await createTestEnvironment(puts, async written => {
+        if (written === key) {
+          await put.promise;
+        }
+      });
+      const background: Promise<unknown>[] = [];
+      const executionContext = {
+        waitUntil(promise: Promise<unknown>) {
+          background.push(promise);
+        },
+        passThroughOnException() {},
+      } as ExecutionContext;
 
-    const outcome = await Promise.race([
-      peopleRoutes.request(path, {}, environment, executionContext),
-      new Promise<'blocked'>(resolve => {
-        setTimeout(() => resolve('blocked'), 300);
-      }),
-    ]);
+      const outcome = await Promise.race([
+        peopleRoutes.request(path, {}, environment, executionContext),
+        new Promise<'blocked'>(resolve => {
+          setTimeout(() => resolve('blocked'), 300);
+        }),
+      ]);
 
-    expect(outcome).toBeInstanceOf(Response);
-    expect(background).toHaveLength(1);
-    put.resolve();
-    await Promise.all(background);
-    expect(puts).toEqual([key]);
-  });
+      expect(outcome).toBeInstanceOf(Response);
+      expect(background).toHaveLength(1);
+      put.resolve();
+      await Promise.all(background);
+      expect(puts).toEqual([...putsBeforeResponse, key]);
+    },
+  );
 });

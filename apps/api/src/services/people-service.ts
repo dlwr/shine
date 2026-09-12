@@ -1,4 +1,5 @@
 import {
+  type Environment,
   and,
   desc,
   eq,
@@ -24,6 +25,7 @@ import {
 } from './awards-service';
 import {awardPageDefinitions} from './award-definitions';
 import {BaseService} from './base-service';
+import {EdgeCache} from '../utils/cache';
 import type {
   PeopleListResult,
   PersonDetail,
@@ -41,7 +43,21 @@ const awardOccasion = sql`${nominations.ceremonyUid} || ':' || ${nominations.cat
 
 const movieCount = sql<number>`COUNT(DISTINCT ${movieCredits.movieUid})`;
 
+const ELIGIBLE_RANKING_CACHE_KEY = 'people:eligible:v1';
+const ELIGIBLE_RANKING_CACHE_TTL = 604_800;
+
+type RankedPerson = {uid: string; movieCount: number};
+
 export class PeopleService extends BaseService {
+  private readonly rankingCache?: EdgeCache;
+
+  constructor(environment: Environment) {
+    super(environment);
+    this.rankingCache = environment.CACHE_KV
+      ? new EdgeCache(undefined, environment.CACHE_KV)
+      : undefined;
+  }
+
   async listPeople({
     page,
     limit,
@@ -49,43 +65,22 @@ export class PeopleService extends BaseService {
     page: number;
     limit: number;
   }): Promise<PeopleListResult> {
-    const eligible = this.eligiblePeople();
-    const pageRows = this.database
-      .select({
-        personUid: eligible.personUid,
-        movieCount: eligible.movieCount,
-        totalCount: sql<number>`COUNT(*) OVER ()`.as('total_count'),
-      })
-      .from(eligible)
-      .orderBy(sql`${eligible.movieCount} DESC`, eligible.personUid)
-      .limit(limit)
-      .offset((page - 1) * limit)
-      .as('page');
-
-    const rows = await this.database
-      .select({
-        uid: people.uid,
-        name: people.name,
-        movieCount: pageRows.movieCount,
-        totalCount: pageRows.totalCount,
-      })
-      .from(pageRows)
-      .innerJoin(people, eq(people.uid, pageRows.personUid))
-      .orderBy(sql`${pageRows.movieCount} DESC`, pageRows.personUid);
-
-    const totalCount = rows[0]?.totalCount ?? (await this.countEligible());
+    const ranking = await this.eligibleRanking();
+    const pageRows = ranking.slice((page - 1) * limit, page * limit);
+    const names = await this.namesOf(pageRows.map(row => row.uid));
 
     return {
-      people: rows.map(row => ({
-        uid: row.uid,
-        name: row.name,
-        movieCount: row.movieCount,
-      })),
+      people: pageRows.flatMap(row => {
+        const name = names.get(row.uid);
+        return name === undefined
+          ? []
+          : [{uid: row.uid, name, movieCount: row.movieCount}];
+      }),
       pagination: {
         page,
         perPage: limit,
-        totalCount,
-        totalPages: Math.ceil(totalCount / limit),
+        totalCount: ranking.length,
+        totalPages: Math.ceil(ranking.length / limit),
       },
     };
   }
@@ -331,11 +326,37 @@ export class PeopleService extends BaseService {
       .as('eligible');
   }
 
-  private async countEligible(): Promise<number> {
-    const [row] = await this.database
-      .select({count: sql<number>`COUNT(*)`})
-      .from(this.eligiblePeople());
-    return row?.count ?? 0;
+  private async namesOf(uids: string[]): Promise<Map<string, string>> {
+    if (uids.length === 0) {
+      return new Map();
+    }
+
+    const rows = await this.database
+      .select({uid: people.uid, name: people.name})
+      .from(people)
+      .where(inArray(people.uid, uids));
+    return new Map(rows.map(row => [row.uid, row.name]));
+  }
+
+  private async eligibleRanking(): Promise<RankedPerson[]> {
+    const cached = await this.rankingCache?.get(ELIGIBLE_RANKING_CACHE_KEY);
+    if (cached?.data) {
+      return cached.data as RankedPerson[];
+    }
+
+    const eligible = this.eligiblePeople();
+    const ranking = await this.database
+      .select({uid: eligible.personUid, movieCount: eligible.movieCount})
+      .from(eligible)
+      .orderBy(sql`${eligible.movieCount} DESC`, eligible.personUid);
+
+    await this.rankingCache?.set(
+      ELIGIBLE_RANKING_CACHE_KEY,
+      ranking,
+      ELIGIBLE_RANKING_CACHE_TTL,
+    );
+
+    return ranking;
   }
 
   private async attachPersonAwards(
