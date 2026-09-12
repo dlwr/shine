@@ -31,6 +31,7 @@ import {
   createETag,
   EdgeCache,
   getCacheKeyForMovie,
+  writeCacheAfterResponse,
   getCacheKeyForSearch,
   getCacheTTL,
 } from '../utils/cache';
@@ -217,12 +218,7 @@ moviesRoutes.get('/:id', async c => {
     });
 
     if (cacheKey) {
-      const store = cache.set(cacheKey, result, ttl);
-      try {
-        c.executionCtx.waitUntil(store);
-      } catch {
-        await store;
-      }
+      await writeCacheAfterResponse(c, cache.set(cacheKey, result, ttl));
     }
 
     return response;
