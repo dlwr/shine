@@ -2,6 +2,7 @@ import {and, eq, isNull, sql} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
+import {quizSelections} from '@shine/database/schema/quiz-selections';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import type {QuizAnswer, QuizCandidate, QuizHint} from '@shine/types';
@@ -65,6 +66,10 @@ export function quizFocalPoint(date: string): {focalX: number; focalY: number} {
     focalX: 0.3 + ((seed % 1000) / 1000) * 0.4,
     focalY: 0.25 + (((seed >>> 10) % 1000) / 1000) * 0.35,
   };
+}
+
+function utcToday(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
 export function pickQuizEntry(
@@ -156,7 +161,61 @@ export class QuizService extends BaseService {
   }
 
   async getEntry(date: string): Promise<QuizPoolEntry | undefined> {
-    return pickQuizEntry(await this.getPool(), date);
+    const pool = await this.getPool();
+    const storedUid = await this.findSelectedUid(date);
+    const stored = storedUid
+      ? pool.find(entry => entry.uid === storedUid)
+      : undefined;
+    if (stored) {
+      return stored;
+    }
+
+    const picked = pickQuizEntry(pool, date);
+    // プールは出題後も増えるので、選んだ映画を残さないと hash % length が
+    // ずれて同じ日の答えが別の映画になる。過去日は当時の記録が無いので残さない
+    if (!picked || date !== utcToday()) {
+      return picked;
+    }
+
+    return (await this.persistSelection(date, picked.uid, storedUid)) ?? picked;
+  }
+
+  private async findSelectedUid(date: string): Promise<string | undefined> {
+    const rows = await this.database
+      .select({movieUid: quizSelections.movieUid})
+      .from(quizSelections)
+      .where(eq(quizSelections.quizDate, date))
+      .limit(1);
+
+    return rows[0]?.movieUid;
+  }
+
+  private async persistSelection(
+    date: string,
+    movieUid: string,
+    staleUid: string | undefined,
+  ): Promise<QuizPoolEntry | undefined> {
+    if (staleUid === undefined) {
+      await this.database
+        .insert(quizSelections)
+        .values({quizDate: date, movieUid})
+        .onConflictDoNothing();
+    } else {
+      await this.database
+        .update(quizSelections)
+        .set({movieUid})
+        .where(eq(quizSelections.quizDate, date));
+      return undefined;
+    }
+
+    // 同時アクセスで別の行が先に入ることがあるので、勝った行に従う
+    const winner = await this.findSelectedUid(date);
+    if (winner === undefined || winner === movieUid) {
+      return undefined;
+    }
+
+    const pool = await this.getPool();
+    return pool.find(entry => entry.uid === winner);
   }
 
   private async buildPool(): Promise<QuizPoolEntry[]> {
