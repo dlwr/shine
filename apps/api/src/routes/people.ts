@@ -67,7 +67,10 @@ peopleRoutes.get('/', async c => {
     cached?.data ?? (await new PeopleService(c.env).listPeople({page, limit}));
 
   if (!cached) {
-    await cache.set(cacheKey, result, PEOPLE_LIST_CACHE_TTL);
+    await writeCacheAfterResponse(
+      c,
+      cache.set(cacheKey, result, PEOPLE_LIST_CACHE_TTL),
+    );
   }
 
   const etag = createETag(result);
@@ -101,7 +104,10 @@ peopleRoutes.get('/prominent', async c => {
     (await new PeopleService(c.env).getProminentPeople({locale, limit}));
 
   if (!cached) {
-    await cache.set(cacheKey, result, PROMINENT_CACHE_TTL);
+    await writeCacheAfterResponse(
+      c,
+      cache.set(cacheKey, result, PROMINENT_CACHE_TTL),
+    );
   }
 
   const etag = createETag(result);
@@ -132,7 +138,10 @@ peopleRoutes.get('/search', async c => {
     } satisfies PeopleSearchResult);
 
   if (!cached) {
-    await cache.set(cacheKey, result, PEOPLE_SEARCH_CACHE_TTL);
+    await writeCacheAfterResponse(
+      c,
+      cache.set(cacheKey, result, PEOPLE_SEARCH_CACHE_TTL),
+    );
   }
 
   const etag = createETag(result);
@@ -156,7 +165,10 @@ peopleRoutes.get('/crossings', async c => {
     (await new PersonCrossingsService(c.env).getPersonCrossings({locale}));
 
   if (!cached) {
-    await cache.set(cacheKey, result, PERSON_CROSSINGS_CACHE_TTL);
+    await writeCacheAfterResponse(
+      c,
+      cache.set(cacheKey, result, PERSON_CROSSINGS_CACHE_TTL),
+    );
   }
 
   const etag = createETag(result);
@@ -180,7 +192,10 @@ peopleRoutes.get('/uncrowned', async c => {
     (await new PersonUncrownedService(c.env).getPersonUncrowned({locale}));
 
   if (!cached) {
-    await cache.set(cacheKey, result, PERSON_UNCROWNED_CACHE_TTL);
+    await writeCacheAfterResponse(
+      c,
+      cache.set(cacheKey, result, PERSON_UNCROWNED_CACHE_TTL),
+    );
   }
 
   const etag = createETag(result);

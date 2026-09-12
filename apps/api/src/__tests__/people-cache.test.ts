@@ -49,8 +49,15 @@ async function createTestEnvironment(
   return environment;
 }
 
-describe('GET /people/:id のキャッシュ', () => {
-  it('KV への書き込みが終わる前に応答を返す', async () => {
+describe('people ルートのキャッシュ', () => {
+  it.each([
+    [`/${PERSON_UID}?locale=ja`, `person:${PERSON_UID}:ja:v6`],
+    ['/?page=1&limit=10', 'people:list:1:10:v1'],
+    ['/prominent?locale=ja&limit=5', 'people:prominent:ja:5:v13'],
+    ['/search?q=%E9%BB%92%E6%BE%A4&locale=ja', 'people:search:ja:黒澤:v1'],
+    ['/crossings?locale=ja', 'people:crossings:ja:v5'],
+    ['/uncrowned?locale=ja', 'people:uncrowned:ja:v3'],
+  ])('%s は KV への書き込みが終わる前に応答を返す', async (path, key) => {
     const puts: string[] = [];
     const put = Promise.withResolvers<void>();
     const environment = await createTestEnvironment(puts, () => put.promise);
@@ -63,12 +70,7 @@ describe('GET /people/:id のキャッシュ', () => {
     } as ExecutionContext;
 
     const outcome = await Promise.race([
-      peopleRoutes.request(
-        `/${PERSON_UID}?locale=ja`,
-        {},
-        environment,
-        executionContext,
-      ),
+      peopleRoutes.request(path, {}, environment, executionContext),
       new Promise<'blocked'>(resolve => {
         setTimeout(() => resolve('blocked'), 300);
       }),
@@ -78,6 +80,6 @@ describe('GET /people/:id のキャッシュ', () => {
     expect(background).toHaveLength(1);
     put.resolve();
     await Promise.all(background);
-    expect(puts).toEqual([`person:${PERSON_UID}:ja:v6`]);
+    expect(puts).toEqual([key]);
   });
 });
