@@ -38,9 +38,18 @@ import {
 import {findUnannouncedMonthlyLinks, markLinksAnnounced} from './north-star';
 import {parseAnnouncement} from './sns/announcement';
 import {
-  buildAvailabilityLabels,
-  type AvailabilityEntry,
-} from './sns/availability-labels';
+  fetchArticleLinkCount,
+  fetchAwardPagesQuietly,
+  fetchNextMonthlyTitle,
+  fetchProminentPeople,
+  fetchQuizPuzzle,
+  fetchSelections,
+  fetchWatchedLists,
+  fetchWinnerCount,
+  requireSelection,
+  type SelectionMovie,
+} from './sns/api-client';
+import {buildAvailabilityLabels} from './sns/availability-labels';
 import {buildOrganizationLabels} from './sns/organization-names';
 import {
   buildPostRecord,
@@ -70,199 +79,16 @@ import {
   buildWatchedXPostText,
   buildXPostText,
 } from './sns/post-text';
+import {SITE_URL} from './sns/site';
 import {pickWeeklyItem} from './sns/weekly-rotation';
 import {postTweet, type XCredentials} from './sns/x';
 
-const SITE_URL = 'https://shine-film.com';
 const MAX_TEXT_ORGANIZATIONS = 2;
 const MAX_TEXT_AVAILABILITY = 2;
-const PROMINENT_POOL_LIMIT = 200;
 const ANNOUNCEMENTS_DIRECTORY = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '../data/sns-announcements',
 );
-
-type SelectionMovie = {
-  uid: string;
-  title?: string;
-  year?: number;
-  nominations?: Array<{
-    organization: {name: string; shortName?: string; slug?: string};
-  }>;
-  availability?: AvailabilityEntry[];
-};
-
-type Selections = {daily?: SelectionMovie; monthly?: SelectionMovie};
-
-function apiUrl(): string {
-  return process.env.SHINE_API_URL ?? 'https://shine-api.yuta25.workers.dev';
-}
-
-async function fetchSelections(): Promise<Selections> {
-  const response = await fetch(`${apiUrl()}/?locale=ja`, {
-    headers: {Origin: SITE_URL},
-  });
-
-  if (!response.ok) {
-    throw new Error(`Selection API failed: HTTP ${response.status}`);
-  }
-
-  return (await response.json()) as Selections;
-}
-
-function requireSelection(
-  selections: Selections,
-  type: 'daily' | 'monthly',
-): SelectionMovie {
-  const movie = selections[type];
-  if (!movie?.uid || !movie.title) {
-    throw new Error(`No ${type} selection found`);
-  }
-
-  return movie;
-}
-
-async function fetchArticleLinkCount(movieUid: string): Promise<number> {
-  const response = await fetch(`${apiUrl()}/movies/${movieUid}/article-links`, {
-    headers: {Origin: SITE_URL},
-  });
-
-  if (!response.ok) {
-    throw new Error(`Article links API failed: HTTP ${response.status}`);
-  }
-
-  const links = (await response.json()) as unknown[];
-  return links.length;
-}
-
-async function fetchNextMonthlyTitle(): Promise<string | undefined> {
-  const password = process.env.ADMIN_PASSWORD;
-  if (!password) {
-    return undefined;
-  }
-
-  try {
-    const loginResponse = await fetch(`${apiUrl()}/auth/login`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', Origin: SITE_URL},
-      body: JSON.stringify({password}),
-    });
-    if (!loginResponse.ok) {
-      throw new Error(`Admin login failed: HTTP ${loginResponse.status}`);
-    }
-
-    const {token} = (await loginResponse.json()) as {token: string};
-    const response = await fetch(
-      `${apiUrl()}/admin/preview-selections?locale=ja`,
-      {headers: {Authorization: `Bearer ${token}`, Origin: SITE_URL}},
-    );
-    if (!response.ok) {
-      throw new Error(`Preview selections API failed: HTTP ${response.status}`);
-    }
-
-    const {nextMonthly} = (await response.json()) as {
-      nextMonthly?: {movie?: {title?: string}};
-    };
-    return nextMonthly?.movie?.title;
-  } catch (error) {
-    console.log('来月の1本が取れないため予告を省きます:', error);
-    return undefined;
-  }
-}
-
-async function fetchQuizPuzzle(): Promise<{date: string; poolSize: number}> {
-  const response = await fetch(`${apiUrl()}/quiz/daily`, {
-    headers: {Origin: SITE_URL},
-  });
-
-  if (!response.ok) {
-    throw new Error(`Quiz API failed: HTTP ${response.status}`);
-  }
-
-  return (await response.json()) as {date: string; poolSize: number};
-}
-
-type AwardSummary = {
-  slug: string;
-  name: string;
-  organization: string;
-  grouping: 'year' | 'list' | 'person';
-  subAward?: boolean;
-};
-
-async function fetchAwardPages(): Promise<AwardSummary[]> {
-  const response = await fetch(`${apiUrl()}/awards`, {
-    headers: {Origin: SITE_URL},
-  });
-
-  if (!response.ok) {
-    throw new Error(`Awards API failed: HTTP ${response.status}`);
-  }
-
-  const {awards} = (await response.json()) as {awards: AwardSummary[]};
-  return awards;
-}
-
-async function fetchAwardPagesQuietly(): Promise<AwardSummary[]> {
-  try {
-    return await fetchAwardPages();
-  } catch (error) {
-    console.log('賞ページ一覧が取れないため団体名は原語のまま:', error);
-    return [];
-  }
-}
-
-async function fetchWatchedLists(): Promise<AwardSummary[]> {
-  const awards = await fetchAwardPages();
-  return awards.filter(award => award.grouping === 'year' && !award.subAward);
-}
-
-async function fetchWinnerCount(slug: string): Promise<number> {
-  const response = await fetch(`${apiUrl()}/awards/${slug}`, {
-    headers: {Origin: SITE_URL},
-  });
-
-  if (!response.ok) {
-    throw new Error(`Award API failed: HTTP ${response.status}`);
-  }
-
-  const {years} = (await response.json()) as {
-    years: Array<{movies: Array<{isWinner: boolean}>}>;
-  };
-  let count = 0;
-  for (const group of years) {
-    count += group.movies.filter(movie => movie.isWinner).length;
-  }
-
-  return count;
-}
-
-type ProminentPerson = {
-  uid: string;
-  name: string;
-  wonCount: number;
-  nominatedCount: number;
-  topMovies: Array<{uid: string; title?: string; year?: number}>;
-};
-
-async function fetchProminentPeople(): Promise<{
-  directors: ProminentPerson[];
-  actors: ProminentPerson[];
-}> {
-  const response = await fetch(
-    `${apiUrl()}/people/prominent?locale=ja&limit=${PROMINENT_POOL_LIMIT}`,
-    {headers: {Origin: SITE_URL}},
-  );
-
-  if (!response.ok) {
-    throw new Error(`Prominent people API failed: HTTP ${response.status}`);
-  }
-
-  return (await response.json()) as {
-    directors: ProminentPerson[];
-    actors: ProminentPerson[];
-  };
-}
 
 async function fetchOgImage(url: string): Promise<ArrayBuffer | undefined> {
   const response = await fetch(url);
