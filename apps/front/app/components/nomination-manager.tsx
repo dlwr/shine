@@ -3,42 +3,19 @@ import {Link} from 'react-router';
 import type {ChangeEvent, FormEvent} from 'react';
 import type {MovieDetails} from '../routes/admin.movies.$id';
 import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
-
-type Nomination = MovieDetails['nominations'][number];
+import type {
+  AwardsCategory,
+  AwardsCeremony,
+  AwardsOrganization,
+  Nomination,
+} from './admin/nominations/types';
+import {useAwardsData} from './admin/nominations/use-awards-data';
 
 type NominationManagerProperties = {
   movieId: string;
   apiUrl: string;
   nominations: Nomination[];
   onNominationsUpdate: (movieData: MovieDetails) => void;
-};
-
-type AwardsOrganization = {
-  uid: string;
-  name: string;
-  country: string | null;
-  shortName?: string | null;
-};
-
-type AwardsCeremony = {
-  uid: string;
-  organizationUid: string;
-  year: number;
-  ceremonyNumber: number | null;
-  organizationName: string;
-};
-
-type AwardsCategory = {
-  uid: string;
-  organizationUid: string;
-  name: string;
-  organizationName: string;
-};
-
-type AwardsData = {
-  organizations: AwardsOrganization[];
-  ceremonies: AwardsCeremony[];
-  categories: AwardsCategory[];
 };
 
 const ensureToken = () => {
@@ -105,9 +82,7 @@ export default function NominationManager({
   nominations,
   onNominationsUpdate,
 }: NominationManagerProperties) {
-  const [awardsData, setAwardsData] = useState<AwardsData | undefined>();
-  const [loadingAwards, setLoadingAwards] = useState(true);
-  const [awardsError, setAwardsError] = useState<string | undefined>();
+  const {awardsData, loadingAwards, awardsError} = useAwardsData(apiUrl);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newNomination, setNewNomination] = useState({
@@ -132,44 +107,6 @@ export default function NominationManager({
   >();
 
   const [nominationError, setNominationError] = useState<string | undefined>();
-
-  useEffect(() => {
-    const loadAwards = async () => {
-      if (globalThis.window === undefined) {
-        return;
-      }
-
-      if (!getAdminToken()) {
-        location.assign('/admin/login');
-        return;
-      }
-
-      setLoadingAwards(true);
-      setAwardsError(undefined);
-
-      try {
-        const response = await adminFetch(`${apiUrl}/admin/awards`);
-
-        if (response.status === 401) {
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch awards data');
-        }
-
-        const data = (await response.json()) as AwardsData;
-        setAwardsData(data);
-      } catch (error) {
-        console.error('Error loading awards data:', error);
-        setAwardsError('授賞データの取得に失敗しました');
-      } finally {
-        setLoadingAwards(false);
-      }
-    };
-
-    void loadAwards();
-  }, [apiUrl]);
 
   useEffect(() => {
     if (
