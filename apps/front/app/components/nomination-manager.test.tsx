@@ -59,26 +59,21 @@ const mockLocalStorage = {
   clear: vi.fn(),
 };
 
-Object.defineProperty(globalThis, 'localStorage', {
-  value: mockLocalStorage,
-  writable: true,
-  configurable: true,
-});
+vi.stubGlobal('localStorage', mockLocalStorage);
 
 describe('NominationManager', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockLocalStorage.getItem.mockReturnValue('admin-token');
 
-    Object.defineProperty(globalThis, 'fetch', {
-      value: vi.fn().mockResolvedValue({
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
         json: () => Promise.resolve(awardsResponse),
       } as Response),
-      writable: true,
-      configurable: true,
-    });
+    );
   });
 
   it('renders nominations table and toggles add form', async () => {

@@ -14,7 +14,15 @@ import {people} from '@shine/database/schema/people';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
-import {beforeAll, beforeEach, describe, expect, it, vi} from 'vitest';
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import {moviesRoutes} from '../routes/movies';
 import {AwardsService} from '../services/awards-service';
 import {CrossingsService} from '../services/crossings-service';
@@ -34,6 +42,14 @@ type Statement = Extract<Parameters<Client['batch']>[0][number], {sql: string}>;
 type PlanRow = {id: number; parent: number; detail: string};
 
 const {captured} = vi.hoisted(() => ({captured: [] as Statement[]}));
+
+vi.hoisted(() => {
+  vi.resetModules();
+});
+
+afterAll(() => {
+  vi.resetModules();
+});
 
 vi.mock('@shine/database', async importOriginal => {
   const original = await importOriginal<typeof import('@shine/database')>();

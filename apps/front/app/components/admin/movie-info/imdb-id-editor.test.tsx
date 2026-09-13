@@ -4,11 +4,7 @@ import {ImdbIdEditor} from './imdb-id-editor';
 
 beforeEach(() => {
   vi.resetAllMocks();
-  Object.defineProperty(globalThis, 'alert', {
-    value: vi.fn(),
-    writable: true,
-    configurable: true,
-  });
+  vi.stubGlobal('alert', vi.fn());
 });
 
 describe('ImdbIdEditor', () => {

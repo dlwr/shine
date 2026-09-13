@@ -1,6 +1,7 @@
 import {webcrypto} from 'node:crypto';
-import {vi} from 'vitest';
+import {afterAll, afterEach, vi} from 'vitest';
 import React from 'react';
+import {cleanup} from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 type DomLikeGlobal = typeof globalThis & {
@@ -175,3 +176,11 @@ vi.stubGlobal(
   globalThis.atob ??
     ((input: string) => Buffer.from(input, 'base64').toString('binary')),
 );
+
+afterEach(() => {
+  cleanup();
+});
+
+afterAll(() => {
+  vi.unstubAllGlobals();
+});

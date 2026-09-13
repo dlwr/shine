@@ -16,6 +16,8 @@ export default defineConfig({
     },
   },
   test: {
+    pool: 'forks',
+    isolate: false,
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],

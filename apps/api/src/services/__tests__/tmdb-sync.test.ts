@@ -6,8 +6,24 @@ import {and, eq, getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import {syncTmdbData} from '../tmdb-sync';
+
+vi.hoisted(() => {
+  vi.resetModules();
+});
+
+afterAll(() => {
+  vi.resetModules();
+});
 
 vi.mock('@shine/scrapers/common/tmdb-utilities', () => ({
   fetchTMDBMovieTranslations: vi.fn(async () => ({

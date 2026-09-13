@@ -7,7 +7,7 @@ import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
 import {people} from '@shine/database/schema/people';
 import {migrate} from 'drizzle-orm/libsql/migrator';
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterAll, beforeEach, describe, expect, it, vi} from 'vitest';
 import {PeopleService} from '../people-service';
 
 type Database = ReturnType<typeof getDatabase>;
@@ -16,6 +16,14 @@ type Client = Database['$client'];
 const {tracker} = vi.hoisted(() => ({
   tracker: {inFlight: 0, rounds: 0},
 }));
+
+vi.hoisted(() => {
+  vi.resetModules();
+});
+
+afterAll(() => {
+  vi.resetModules();
+});
 
 vi.mock('@shine/database', async importOriginal => {
   const original = await importOriginal<typeof import('@shine/database')>();

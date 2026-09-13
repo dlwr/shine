@@ -1,24 +1,6 @@
 import * as cheerio from 'cheerio';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
-// Mock external dependencies
-vi.mock('@shine/database/seeds/academy-awards', () => ({
-  seedAcademyAwards: vi.fn(),
-}));
-
-vi.mock('@shine/database', () => ({
-  getDatabase: vi.fn(),
-}));
-
-vi.mock('./common/tmdb-utilities', () => ({
-  fetchTMDBMovieSummary: vi.fn(),
-  fetchJapaneseTitleFromTMDB: vi.fn(),
-  fetchTMDBMovieImages: vi.fn(),
-  saveJapaneseTranslation: vi.fn(),
-  savePosterUrls: vi.fn(),
-  saveTMDBId: vi.fn(),
-}));
-
 describe('Academy Awards Scraper', () => {
   beforeEach(() => {
     vi.clearAllMocks();

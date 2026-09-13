@@ -1,6 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
-// Mock the db module
 const defaultMovies = [
   {
     uid: 'movie-1',
@@ -72,14 +71,6 @@ const mockDatabase = {
     }),
   })),
 };
-
-vi.mock('@shine/database', async importOriginal => {
-  const actual: Record<string, unknown> = await importOriginal();
-  return {
-    ...actual,
-    getDatabase: vi.fn(() => mockDatabase),
-  };
-});
 
 beforeEach(() => {
   vi.clearAllMocks();

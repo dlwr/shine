@@ -22,20 +22,12 @@ const mockLocalStorage = {
   clear: vi.fn(),
 };
 
-Object.defineProperty(globalThis, 'localStorage', {
-  value: mockLocalStorage,
-  writable: true,
-  configurable: true,
-});
+vi.stubGlobal('localStorage', mockLocalStorage);
 
 beforeEach(() => {
   vi.resetAllMocks();
   mockLocalStorage.getItem.mockReturnValue('admin-token');
-  Object.defineProperty(globalThis, 'fetch', {
-    value: vi.fn(),
-    writable: true,
-    configurable: true,
-  });
+  vi.stubGlobal('fetch', vi.fn());
 });
 
 describe('MediaTypeToggle', () => {
