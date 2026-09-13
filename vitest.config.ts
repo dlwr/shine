@@ -37,7 +37,8 @@ export default defineConfig({
       reporter: ['text', 'lcov', 'html'],
       exclude: ['node_modules/**', 'dist/**'],
     },
-    pool: 'threads',
+    pool: 'forks',
+    isolate: false,
     projects: [
       {
         test: {
