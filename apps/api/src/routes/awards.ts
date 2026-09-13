@@ -4,10 +4,11 @@ import type {AwardDetail, PersonAwardDetail} from '@shine/types';
 import {AwardsService} from '../services';
 import {paginateAwardDetail} from '../services/awards-service';
 import {
-  shouldCheckETag,
   createCachedResponse,
   createETag,
   EdgeCache,
+  IMPORTED_DATA_EDGE_TTL,
+  shouldCheckETag,
 } from '../utils/cache';
 
 export const awardsRoutes = new Hono<{Bindings: Environment}>();
@@ -17,7 +18,7 @@ const AWARDS_CACHE_TTL = 604_800;
 awardsRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
   const cacheKey = 'awards:list:v20';
-  const cached = await cache.get(cacheKey);
+  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
   const result = (cached?.data as {awards: unknown[]} | undefined) ?? {
     awards: await new AwardsService(c.env).listAwards(),
   };
@@ -49,7 +50,7 @@ awardsRoutes.get('/:slug', async c => {
   // ページはキャッシュキーに含めない。利用者入力でキー空間が広がるのを避けるため、
   // 全件を1キーに載せて読み出し後に切り出す
   const cacheKey = `awards:${slug}:v7`;
-  const cached = await cache.get(cacheKey);
+  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
   const service = new AwardsService(c.env);
   const full =
     (cached?.data as AwardDetail | PersonAwardDetail | undefined) ??
@@ -90,7 +91,7 @@ awardsRoutes.get('/:slug/:year', async c => {
 
   const slug = c.req.param('slug');
   const cacheKey = `awards:${slug}:${year}:v2`;
-  const cached = await cache.get(cacheKey);
+  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
   const award =
     cached?.data ?? (await new AwardsService(c.env).getAwardYear(slug, year));
 

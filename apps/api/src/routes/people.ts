@@ -11,9 +11,10 @@ import {
   createETag,
   EdgeCache,
   getCacheKeyForPerson,
-  writeCacheAfterResponse,
+  IMPORTED_DATA_EDGE_TTL,
   normalizeCacheLocale,
   shouldCheckETag,
+  writeCacheAfterResponse,
 } from '../utils/cache';
 
 export const peopleRoutes = new Hono<{Bindings: Environment}>();
@@ -62,7 +63,7 @@ peopleRoutes.get('/', async c => {
   const limit = Math.min(requestedLimit, PEOPLE_LIST_MAX_LIMIT);
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
   const cacheKey = `people:list:${page}:${limit}:v1`;
-  const cached = await cache.get(cacheKey);
+  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
   const result =
     cached?.data ?? (await new PeopleService(c.env).listPeople({page, limit}));
 
@@ -98,7 +99,7 @@ peopleRoutes.get('/prominent', async c => {
   const limit = Math.min(requestedLimit, PROMINENT_MAX_LIMIT);
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
   const cacheKey = `people:prominent:${locale}:${limit}:v13`;
-  const cached = await cache.get(cacheKey);
+  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
   const result =
     cached?.data ??
     (await new PeopleService(c.env).getProminentPeople({locale, limit}));
@@ -130,7 +131,7 @@ peopleRoutes.get('/search', async c => {
   const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
   const cacheKey = `people:search:${locale}:${query}:v1`;
-  const cached = await cache.get(cacheKey);
+  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
   const result =
     cached?.data ??
     ({
@@ -159,7 +160,7 @@ peopleRoutes.get('/crossings', async c => {
   const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
   const cacheKey = `people:crossings:${locale}:v5`;
-  const cached = await cache.get(cacheKey);
+  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
   const result =
     cached?.data ??
     (await new PersonCrossingsService(c.env).getPersonCrossings({locale}));
@@ -186,7 +187,7 @@ peopleRoutes.get('/uncrowned', async c => {
   const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
   const cacheKey = `people:uncrowned:${locale}:v3`;
-  const cached = await cache.get(cacheKey);
+  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
   const result =
     cached?.data ??
     (await new PersonUncrownedService(c.env).getPersonUncrowned({locale}));
@@ -219,7 +220,7 @@ peopleRoutes.get('/:id', async c => {
   const cacheKey = getCacheKeyForPerson(personUid, cacheLocale);
 
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cached = await cache.get(cacheKey);
+  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
 
   if (cached?.data) {
     return c.json(cached.data as Record<string, unknown>, 200, {

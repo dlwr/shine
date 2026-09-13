@@ -3,7 +3,7 @@ import type {Route} from './+types/quiz';
 import {Masthead} from '@/components/editorial/masthead';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
-import {resolveApiUrl} from '@/lib/api';
+import {apiFetch, resolveApiUrl} from '@/lib/api';
 import {fetchMonthlyPick, type MonthlyPick} from '@/lib/monthly-pick';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
@@ -62,7 +62,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const apiUrl = resolveApiUrl(context);
 
   const [dailyResponse, monthly] = await Promise.all([
-    fetch(`${apiUrl}/quiz/daily`, {signal: request.signal}),
+    apiFetch(context, '/quiz/daily', {signal: request.signal}),
     fetchMonthlyPick(context, 'ja', request.signal),
   ]);
 
