@@ -688,6 +688,34 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /watched/lists:
+    get:
+      summary: List the watched-checklist lists
+      description: |
+        Returns every year-grouped top award (sub-awards such as Grand Prix
+        excluded) with the uids of its winners, ordered by ceremony year then
+        uid. This is the order the `/watched/{slug}?s=` share URL encodes, so
+        the whole `/watched` index can be rendered from one request.
+      operationId: listWatchedLists
+      tags:
+        - Awards
+      security: []
+      responses:
+        '200':
+          description: Successfully retrieved the lists
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [lists]
+                properties:
+                  lists:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WatchedList'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /years:
     get:
       summary: List production years
@@ -2529,6 +2557,18 @@ components:
         - movieCount
         - firstYear
         - lastYear
+
+    WatchedList:
+      allOf:
+        - $ref: '#/components/schemas/AwardSummary'
+        - type: object
+          required: [uids]
+          properties:
+            uids:
+              type: array
+              description: Winner uids ordered by ceremony year, then uid
+              items:
+                type: string
 
     AwardDetail:
       type: object

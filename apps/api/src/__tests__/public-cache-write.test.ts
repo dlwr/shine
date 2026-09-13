@@ -11,6 +11,7 @@ import {moviesRoutes} from '../routes/movies';
 import {searchRoutes} from '../routes/search';
 import {selectionsRoutes} from '../routes/selections';
 import {uncrownedRoutes} from '../routes/uncrowned';
+import {watchedRoutes} from '../routes/watched';
 import {yearsRoutes} from '../routes/years';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -58,6 +59,7 @@ describe('公開ルートのキャッシュ書き込み', () => {
     ['years', '/', yearsRoutes],
     ['crossings', '/', crossingsRoutes],
     ['uncrowned', '/', uncrownedRoutes],
+    ['watched', '/lists', watchedRoutes],
     ['search', '/suggest?q=%E9%BB%92%E6%BE%A4&locale=ja', searchRoutes],
     ['movies', '/search?q=kurosawa', moviesRoutes],
     ['selections', '/selections/daily/history?locale=ja', selectionsRoutes],

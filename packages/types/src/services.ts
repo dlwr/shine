@@ -148,6 +148,11 @@ export type AwardSummary = {
   lastYear: number;
 };
 
+export type WatchedList = AwardSummary & {
+  /** 受賞作の uid。授賞式の年の昇順、同じ年は uid の昇順（共有 URL のビット列の並び） */
+  uids: string[];
+};
+
 export type PersonAwardNominee = {
   uid: string;
   name: string;
