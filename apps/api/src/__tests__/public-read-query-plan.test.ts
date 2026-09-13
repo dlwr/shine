@@ -25,6 +25,7 @@ import {PersonUncrownedService} from '../services/person-uncrowned-service';
 import {QuizService} from '../services/quiz-service';
 import {SelectionsService} from '../services/selections-service';
 import {UncrownedService} from '../services/uncrowned-service';
+import {WatchedService} from '../services/watched-service';
 import {YearsService} from '../services/years-service';
 
 type Database = ReturnType<typeof getDatabase>;
@@ -450,6 +451,10 @@ const exercises: Exercise[] = [
       new QuizService(environment).getEntry(
         new Date().toISOString().slice(0, 10),
       ),
+  },
+  {
+    name: '観た映画チェックのリスト',
+    run: environment => new WatchedService(environment).listWatchedLists(),
   },
   {
     name: '日替わり選出',

@@ -16,6 +16,7 @@ import {quizRoutes} from './routes/quiz';
 import {selectionsRoutes} from './routes/selections';
 import {uncrownedRoutes} from './routes/uncrowned';
 import {utilitiesRoutes} from './routes/utilities';
+import {watchedRoutes} from './routes/watched';
 import {yearsRoutes} from './routes/years';
 
 const app = new Hono<{Bindings: Environment}>();
@@ -61,6 +62,7 @@ app.route('/search', searchRoutes);
 app.route('/crossings', crossingsRoutes);
 app.route('/uncrowned', uncrownedRoutes);
 app.route('/years', yearsRoutes);
+app.route('/watched', watchedRoutes);
 app.route('/quiz', quizRoutes);
 app.route('/admin', adminRoutes);
 app.route('/', utilitiesRoutes); // Utility endpoints like fetch-url-title
