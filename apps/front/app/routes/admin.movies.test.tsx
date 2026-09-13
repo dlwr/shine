@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import {fireEvent, render, screen} from '@testing-library/react';
 import {MemoryRouter} from 'react-router';
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterAll, beforeEach, describe, expect, it, vi} from 'vitest';
 import AdminMovies, {loader, meta} from './admin.movies';
 import type {Route} from './+types/admin.movies';
 import {createMockContext} from '@/lib/test-context';
@@ -9,6 +9,15 @@ import {createMockContext} from '@/lib/test-context';
 // UseSearchParamsのモック
 const mockSearchParameters = new URLSearchParams();
 const mockSetSearchParameters = vi.fn();
+
+vi.hoisted(() => {
+  vi.resetModules();
+});
+
+afterAll(() => {
+  vi.resetModules();
+});
+
 vi.mock('react-router', async importOriginal => ({
   ...(await importOriginal<typeof import('react-router')>()),
   useSearchParams: () => [mockSearchParameters, mockSetSearchParameters],
@@ -29,10 +38,7 @@ const mockLocalStorage = {
   clear: vi.fn(),
 };
 
-Object.defineProperty(globalThis, 'localStorage', {
-  value: mockLocalStorage,
-  writable: true,
-});
+vi.stubGlobal('localStorage', mockLocalStorage);
 
 // Fetchのモック
 vi.stubGlobal('fetch', vi.fn());

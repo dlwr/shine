@@ -1,5 +1,13 @@
 import {renderToStaticMarkup} from 'react-dom/server';
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import {createEnvironmentContext} from '@/lib/api';
 
 let mockRootLoaderData:
@@ -13,6 +21,14 @@ let mockRootLoaderData:
   locale: 'ja',
 };
 let mockPathname = '/';
+
+vi.hoisted(() => {
+  vi.resetModules();
+});
+
+afterAll(() => {
+  vi.resetModules();
+});
 
 vi.mock('react-router', async importOriginal => ({
   ...(await importOriginal<typeof import('react-router')>()),

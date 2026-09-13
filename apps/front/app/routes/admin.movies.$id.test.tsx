@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from 'vitest';
+import {afterAll, describe, it, expect, vi, beforeEach} from 'vitest';
 import {render, screen} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import type {Route} from '../../.react-router/types/app/routes/+types/admin.movies.$id';
@@ -9,6 +9,15 @@ type AdminMovieEditLoaderArguments = Route.LoaderArgs;
 type AdminMovieEditComponentProperties = Route.ComponentProps;
 
 // react-router モック
+
+vi.hoisted(() => {
+  vi.resetModules();
+});
+
+afterAll(() => {
+  vi.resetModules();
+});
+
 vi.mock('react-router', async importOriginal => ({
   ...(await importOriginal<typeof import('react-router')>()),
   useLocation: () => ({
@@ -28,10 +37,7 @@ const mockLocalStorage = {
   clear: vi.fn(),
 };
 
-Object.defineProperty(globalThis, 'localStorage', {
-  value: mockLocalStorage,
-  writable: true,
-});
+vi.stubGlobal('localStorage', mockLocalStorage);
 
 // Fetchのモック
 vi.stubGlobal('fetch', vi.fn());

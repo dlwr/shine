@@ -4,8 +4,16 @@ import {fileURLToPath} from 'node:url';
 import {type Command} from 'commander';
 import {config} from 'dotenv';
 import {getDatabase} from '@shine/database';
-import {describe, expect, it, vi} from 'vitest';
+import {afterAll, describe, expect, it, vi} from 'vitest';
 import {createProgram} from '../cli';
+
+vi.hoisted(() => {
+  vi.resetModules();
+});
+
+afterAll(() => {
+  vi.resetModules();
+});
 
 vi.mock('dotenv', () => ({config: vi.fn()}));
 vi.mock('@shine/database', async importOriginal => ({

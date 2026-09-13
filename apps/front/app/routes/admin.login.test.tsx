@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {MemoryRouter} from 'react-router';
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterAll, beforeEach, describe, expect, it, vi} from 'vitest';
 import type {Route} from '../../.react-router/types/app/routes/+types/admin.login';
 import AdminLogin, {action, meta} from './admin.login';
 import {createMockContext} from '@/lib/test-context';
@@ -10,6 +10,15 @@ type AdminLoginComponentProperties = Route.ComponentProps;
 
 // UseNavigateのモック
 const mockNavigate = vi.fn();
+
+vi.hoisted(() => {
+  vi.resetModules();
+});
+
+afterAll(() => {
+  vi.resetModules();
+});
+
 vi.mock('react-router', async importOriginal => ({
   ...(await importOriginal<typeof import('react-router')>()),
   useNavigate: () => mockNavigate,
@@ -23,10 +32,7 @@ const mockLocalStorage = {
   clear: vi.fn(),
 };
 
-Object.defineProperty(globalThis, 'localStorage', {
-  value: mockLocalStorage,
-  writable: true,
-});
+vi.stubGlobal('localStorage', mockLocalStorage);
 
 // Fetchのモック
 vi.stubGlobal('fetch', vi.fn());

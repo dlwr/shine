@@ -1,6 +1,6 @@
 import type {Context} from 'hono';
 import type {Environment} from '@shine/database';
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterAll, beforeEach, describe, expect, it, vi} from 'vitest';
 import {authMiddleware} from '../auth';
 import {sanitizeText, sanitizeUrl} from '../middleware/sanitizer';
 
@@ -41,6 +41,14 @@ const createDeleteStub = () =>
   vi.fn(() => ({
     where: createAsyncSuccessFunction(),
   }));
+
+vi.hoisted(() => {
+  vi.resetModules();
+});
+
+afterAll(() => {
+  vi.resetModules();
+});
 
 vi.mock('@shine/database', () => {
   const select = createSelectStub();
