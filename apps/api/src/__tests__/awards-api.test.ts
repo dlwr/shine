@@ -10,7 +10,7 @@ import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {awardsRoutes} from '../routes/awards';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -131,5 +131,24 @@ describe('X-Cache-Status header', () => {
 
     const second = await awardsRoutes.request('/', {}, environment);
     expect(second.headers.get('X-Cache-Status')).toBe('HIT');
+  });
+});
+
+describe('edge TTL of KV reads', () => {
+  it('lets the colo keep the awards list for 10 minutes', async () => {
+    const environment = await createTestEnvironment();
+    const get = vi.fn().mockResolvedValue(undefined);
+    environment.CACHE_KV = {
+      get,
+      put: vi.fn(),
+      delete: vi.fn(),
+    } as unknown as KVNamespace;
+
+    await awardsRoutes.request('/', {}, environment);
+
+    expect(get).toHaveBeenCalledWith(
+      'awards:list:v20',
+      expect.objectContaining({type: 'json', cacheTtl: 600}),
+    );
   });
 });

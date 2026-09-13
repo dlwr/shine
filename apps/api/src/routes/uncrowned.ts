@@ -2,10 +2,11 @@ import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {UncrownedService} from '../services/uncrowned-service';
 import {
-  shouldCheckETag,
   createCachedResponse,
   createETag,
   EdgeCache,
+  IMPORTED_DATA_EDGE_TTL,
+  shouldCheckETag,
 } from '../utils/cache';
 
 export const uncrownedRoutes = new Hono<{Bindings: Environment}>();
@@ -15,7 +16,9 @@ const UNCROWNED_CACHE_KEY = 'uncrowned:v12';
 
 uncrownedRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cached = await cache.get(UNCROWNED_CACHE_KEY);
+  const cached = await cache.get(UNCROWNED_CACHE_KEY, {
+    edgeTtl: IMPORTED_DATA_EDGE_TTL,
+  });
   const result =
     cached?.data ?? (await new UncrownedService(c.env).getUncrowned());
 

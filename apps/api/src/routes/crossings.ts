@@ -2,10 +2,11 @@ import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {CrossingsService} from '../services/crossings-service';
 import {
-  shouldCheckETag,
   createCachedResponse,
   createETag,
   EdgeCache,
+  IMPORTED_DATA_EDGE_TTL,
+  shouldCheckETag,
 } from '../utils/cache';
 
 export const crossingsRoutes = new Hono<{Bindings: Environment}>();
@@ -15,7 +16,9 @@ const CROSSINGS_CACHE_KEY = 'crossings:v12';
 
 crossingsRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cached = await cache.get(CROSSINGS_CACHE_KEY);
+  const cached = await cache.get(CROSSINGS_CACHE_KEY, {
+    edgeTtl: IMPORTED_DATA_EDGE_TTL,
+  });
   const result =
     cached?.data ?? (await new CrossingsService(c.env).getCrossings());
 

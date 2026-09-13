@@ -6,7 +6,7 @@ import {quizSelections} from '@shine/database/schema/quiz-selections';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import type {QuizAnswer, QuizCandidate, QuizHint} from '@shine/types';
-import {EdgeCache} from '../utils/cache';
+import {EdgeCache, IMPORTED_DATA_EDGE_TTL} from '../utils/cache';
 import {simpleHash} from '../utils/hash';
 import {
   findAwardPageDefinition,
@@ -140,7 +140,9 @@ export function describeNomination(facts: NominationFacts): {
 export class QuizService extends BaseService {
   async getPool(): Promise<QuizPoolEntry[]> {
     const cache = new EdgeCache(undefined, this.env.CACHE_KV);
-    const cached = await cache.get(POOL_CACHE_KEY);
+    const cached = await cache.get(POOL_CACHE_KEY, {
+      edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    });
     if (cached) {
       return cached.data as QuizPoolEntry[];
     }

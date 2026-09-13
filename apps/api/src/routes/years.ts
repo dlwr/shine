@@ -2,10 +2,11 @@ import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {YearsService} from '../services/years-service';
 import {
-  shouldCheckETag,
   createCachedResponse,
   createETag,
   EdgeCache,
+  IMPORTED_DATA_EDGE_TTL,
+  shouldCheckETag,
 } from '../utils/cache';
 
 export const yearsRoutes = new Hono<{Bindings: Environment}>();
@@ -15,7 +16,7 @@ const YEARS_CACHE_TTL = 604_800;
 yearsRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
   const cacheKey = 'years:list:v3';
-  const cached = await cache.get(cacheKey);
+  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
   const result = (cached?.data as {years: unknown[]} | undefined) ?? {
     years: await new YearsService(c.env).listYears(),
   };
@@ -43,7 +44,7 @@ yearsRoutes.get('/:year', async c => {
 
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
   const cacheKey = `years:${year}:v3`;
-  const cached = await cache.get(cacheKey);
+  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
   const detail = cached?.data ?? (await new YearsService(c.env).getYear(year));
 
   if (!detail) {

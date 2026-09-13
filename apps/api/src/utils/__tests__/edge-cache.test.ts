@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {EdgeCache} from '../cache';
 
 function createStatefulCacheStub() {
@@ -122,5 +122,28 @@ describe('EdgeCache with KV backend', () => {
     await cache.delete('kv:gone');
 
     expect(await cache.get('kv:gone')).toBeUndefined();
+  });
+});
+
+describe('EdgeCache KV reads', () => {
+  it('reads KV as json without an edge TTL by default', async () => {
+    const get = vi.fn().mockResolvedValue(undefined);
+    const cache = new EdgeCache(undefined, {get} as unknown as KVNamespace);
+
+    await cache.get('awards:list:v20');
+
+    expect(get).toHaveBeenCalledWith('awards:list:v20', 'json');
+  });
+
+  it('lets the colo keep the value for the given edge TTL', async () => {
+    const get = vi.fn().mockResolvedValue(undefined);
+    const cache = new EdgeCache(undefined, {get} as unknown as KVNamespace);
+
+    await cache.get('awards:list:v20', {edgeTtl: 600});
+
+    expect(get).toHaveBeenCalledWith('awards:list:v20', {
+      type: 'json',
+      cacheTtl: 600,
+    });
   });
 });

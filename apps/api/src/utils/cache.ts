@@ -88,10 +88,13 @@ export class EdgeCache {
 
   async get(
     key: string,
+    options?: {edgeTtl?: number},
   ): Promise<{data: unknown; cachedAt: number} | undefined> {
     try {
       if (this.kv) {
-        const cached = (await this.kv.get(key, 'json')) as {
+        const cached = (await (options?.edgeTtl
+          ? this.kv.get(key, {type: 'json', cacheTtl: options.edgeTtl})
+          : this.kv.get(key, 'json'))) as {
           data: unknown;
           cachedAt: number;
         } | null;
@@ -174,6 +177,8 @@ export class EdgeCache {
     this.metrics.hitRate = total > 0 ? this.metrics.hits / total : 0;
   }
 }
+
+export const IMPORTED_DATA_EDGE_TTL = 600;
 
 export const CACHEABLE_LOCALES = ['en', 'ja'] as const;
 export type CacheableLocale = (typeof CACHEABLE_LOCALES)[number];
