@@ -10,7 +10,7 @@ import {people} from '@shine/database/schema/people';
 import {quizSelections} from '@shine/database/schema/quiz-selections';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
-import {AdminService} from '../admin-service';
+import {MovieMergeService} from '../movie-merge-service';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -18,7 +18,7 @@ const migrationsFolder = path.resolve(
   '../../../../../packages/database/migrations',
 );
 
-describe('AdminService.deleteMovie', () => {
+describe('MovieMergeService.deleteMovie', () => {
   let environment: Environment;
   let database: ReturnType<typeof getDatabase>;
 
@@ -40,7 +40,7 @@ describe('AdminService.deleteMovie', () => {
       status: 'ok',
     });
 
-    const service = new AdminService(environment);
+    const service = new MovieMergeService(environment);
     await service.deleteMovie('movie-a');
 
     const remainingMovies = await database
@@ -62,7 +62,7 @@ describe('AdminService.deleteMovie', () => {
       .insert(quizSelections)
       .values({quizDate: '2026-09-12', movieUid: 'movie-a'});
 
-    await new AdminService(environment).deleteMovie('movie-a');
+    await new MovieMergeService(environment).deleteMovie('movie-a');
 
     const remaining = await database
       .select()
@@ -84,7 +84,7 @@ describe('AdminService.deleteMovie', () => {
       job: 'Director',
     });
 
-    const service = new AdminService(environment);
+    const service = new MovieMergeService(environment);
     await service.deleteMovie('movie-a');
 
     const remainingCredits = await database.select().from(movieCredits);
@@ -92,7 +92,7 @@ describe('AdminService.deleteMovie', () => {
   });
 });
 
-describe('AdminService.mergeMovies', () => {
+describe('MovieMergeService.mergeMovies', () => {
   let environment: Environment;
   let database: ReturnType<typeof getDatabase>;
 
@@ -122,7 +122,7 @@ describe('AdminService.mergeMovies', () => {
       job: 'Director',
     });
 
-    const service = new AdminService(environment);
+    const service = new MovieMergeService(environment);
     await service.mergeMovies({
       sourceMovieId: 'movie-source',
       targetMovieId: 'movie-target',
@@ -137,7 +137,7 @@ describe('AdminService.mergeMovies', () => {
       .insert(quizSelections)
       .values({quizDate: '2026-09-12', movieUid: 'movie-source'});
 
-    await new AdminService(environment).mergeMovies({
+    await new MovieMergeService(environment).mergeMovies({
       sourceMovieId: 'movie-source',
       targetMovieId: 'movie-target',
     });
@@ -164,7 +164,7 @@ describe('AdminService.mergeMovies', () => {
       },
     ]);
 
-    const service = new AdminService(environment);
+    const service = new MovieMergeService(environment);
     await service.mergeMovies({
       sourceMovieId: 'movie-source',
       targetMovieId: 'movie-target',
