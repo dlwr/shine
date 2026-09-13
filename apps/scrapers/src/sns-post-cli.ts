@@ -24,71 +24,28 @@
  *   BLUESKY_APP_PASSWORD アプリパスワード
  *   X_API_KEY / X_API_KEY_SECRET / X_ACCESS_TOKEN / X_ACCESS_TOKEN_SECRET
  */
-import fs from 'node:fs/promises';
-import path from 'node:path';
 import process from 'node:process';
-import {fileURLToPath} from 'node:url';
 import {Command} from 'commander';
-import {getDatabase} from '@shine/database';
-import {parseOriginRules} from '@shine/utils';
-import {
-  loadEnvironmentFiles,
-  loadScraperEnvironment,
-} from './common/environment';
-import {findUnannouncedMonthlyLinks, markLinksAnnounced} from './north-star';
-import {parseAnnouncement} from './sns/announcement';
-import {
-  fetchArticleLinkCount,
-  fetchAwardPagesQuietly,
-  fetchNextMonthlyTitle,
-  fetchProminentPeople,
-  fetchQuizPuzzle,
-  fetchSelections,
-  fetchWatchedLists,
-  fetchWinnerCount,
-  requireSelection,
-  type SelectionMovie,
-} from './sns/api-client';
-import {buildAvailabilityLabels} from './sns/availability-labels';
-import {buildOrganizationLabels} from './sns/organization-names';
+import {loadEnvironmentFiles} from './common/environment';
 import {
   buildPostRecord,
   createSession,
   publishPost,
   uploadBlob,
 } from './sns/bluesky';
-import {pickPersonOfWeek} from './sns/person-rotation';
+import {buildAnnouncementPlan} from './sns/plans/announcement';
+import {buildDailyPlan} from './sns/plans/daily';
 import {
-  buildAnnouncementPostText,
-  buildAnnouncementXPostText,
-  buildDailyPostText,
-  buildMonthlyPostText,
-  buildMonthlyLinksPostText,
-  buildMonthlyLinksXPostText,
-  buildMonthlyReminderPostText,
-  buildMonthlyReminderXPostText,
-  buildMonthlyRoundupPostText,
-  buildMonthlyRoundupXPostText,
-  buildMonthlyXPostText,
-  buildPersonPostText,
-  buildPersonXPostText,
-  buildQuizPostText,
-  buildQuizShareUrl,
-  buildQuizXPostText,
-  buildWatchedPostText,
-  buildWatchedXPostText,
-  buildXPostText,
-} from './sns/post-text';
-import {SITE_URL} from './sns/site';
-import {pickWeeklyItem} from './sns/weekly-rotation';
+  buildMonthlyLinksPlan,
+  buildMonthlyPlan,
+  buildMonthlyReminderPlan,
+  buildMonthlyRoundupPlan,
+} from './sns/plans/monthly';
+import {buildPersonPlan} from './sns/plans/person';
+import {buildQuizPlan} from './sns/plans/quiz';
+import {buildWatchedPlan} from './sns/plans/watched';
+import {type PostPlan} from './sns/post-plan';
 import {postTweet, type XCredentials} from './sns/x';
-
-const MAX_TEXT_ORGANIZATIONS = 2;
-const MAX_TEXT_AVAILABILITY = 2;
-const ANNOUNCEMENTS_DIRECTORY = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  '../data/sns-announcements',
-);
 
 async function fetchOgImage(url: string): Promise<ArrayBuffer | undefined> {
   const response = await fetch(url);
@@ -146,251 +103,6 @@ async function postToX(text: string): Promise<void> {
 
   const result = await postTweet(credentials, text);
   console.log(`X: 投稿しました https://x.com/i/status/${result.id}`);
-}
-
-type PostPlan = {
-  text: string;
-  xText: string;
-  link: {uri: string; title: string; description: string};
-  imageUrl: string;
-  afterPost?: () => Promise<void>;
-};
-
-async function buildSelectionPostInput(movie: SelectionMovie) {
-  const organizations = buildOrganizationLabels(
-    movie.nominations ?? [],
-    await fetchAwardPagesQuietly(),
-  );
-  const availabilityLabels = buildAvailabilityLabels(movie.availability ?? []);
-
-  return {
-    title: movie.title!,
-    year: movie.year,
-    organizations: organizations.slice(0, MAX_TEXT_ORGANIZATIONS),
-    availabilityLabels: availabilityLabels.slice(0, MAX_TEXT_AVAILABILITY),
-  };
-}
-
-function buildMovieLink(movie: SelectionMovie, description: string) {
-  return {
-    link: {
-      uri: `${SITE_URL}/movies/${movie.uid}`,
-      title: `${movie.title}${movie.year ? ` (${movie.year})` : ''} | SHINE`,
-      description,
-    },
-    imageUrl: `${SITE_URL}/og/movie.png?id=${movie.uid}`,
-  };
-}
-
-async function buildDailyPlan(): Promise<PostPlan> {
-  const selections = await fetchSelections();
-  const movie = requireSelection(selections, 'daily');
-  const postInput = {
-    ...(await buildSelectionPostInput(movie)),
-    monthlyTitle: selections.monthly?.title,
-  };
-
-  return {
-    text: buildDailyPostText(postInput),
-    xText: buildXPostText({
-      ...postInput,
-      url: `${SITE_URL}/movies/${movie.uid}`,
-    }),
-    ...buildMovieLink(
-      movie,
-      `『${movie.title}』をいま観られるかをまとめています。`,
-    ),
-  };
-}
-
-async function buildMonthlyPlan(): Promise<PostPlan> {
-  const movie = requireSelection(await fetchSelections(), 'monthly');
-  const postInput = await buildSelectionPostInput(movie);
-
-  return {
-    text: buildMonthlyPostText(postInput),
-    xText: buildMonthlyXPostText({
-      ...postInput,
-      url: `${SITE_URL}/movies/${movie.uid}`,
-    }),
-    ...buildMovieLink(
-      movie,
-      `今月の1本『${movie.title}』。観られる場所と、観た人の記事・ポストをまとめています。`,
-    ),
-  };
-}
-
-async function buildMonthlyReminderPlan(): Promise<PostPlan> {
-  const movie = requireSelection(await fetchSelections(), 'monthly');
-  const postInput = {
-    ...(await buildSelectionPostInput(movie)),
-    linkCount: await fetchArticleLinkCount(movie.uid),
-  };
-
-  return {
-    text: buildMonthlyReminderPostText(postInput),
-    xText: buildMonthlyReminderXPostText({
-      ...postInput,
-      url: `${SITE_URL}/movies/${movie.uid}`,
-    }),
-    ...buildMovieLink(
-      movie,
-      `今月の1本『${movie.title}』。観られる場所と、観た人の記事・ポストをまとめています。`,
-    ),
-  };
-}
-
-async function buildMonthlyRoundupPlan(): Promise<PostPlan> {
-  const movie = requireSelection(await fetchSelections(), 'monthly');
-  const [linkCount, nextTitle] = await Promise.all([
-    fetchArticleLinkCount(movie.uid),
-    fetchNextMonthlyTitle(),
-  ]);
-  const postInput = {
-    title: movie.title!,
-    year: movie.year,
-    linkCount,
-    nextTitle,
-  };
-
-  return {
-    text: buildMonthlyRoundupPostText(postInput),
-    xText: buildMonthlyRoundupXPostText({
-      ...postInput,
-      url: `${SITE_URL}/movies/${movie.uid}`,
-    }),
-    ...buildMovieLink(
-      movie,
-      `今月の1本『${movie.title}』に集まった、観た人の記事・ポスト。`,
-    ),
-  };
-}
-
-async function buildMonthlyLinksPlan(): Promise<PostPlan | undefined> {
-  const database = getDatabase(loadScraperEnvironment());
-  const found = await findUnannouncedMonthlyLinks(
-    database,
-    parseOriginRules(process.env),
-  );
-
-  if (!found) {
-    return undefined;
-  }
-
-  const url = `${SITE_URL}/movies/${found.movieUid}`;
-  const postInput = {
-    title: found.title,
-    year: found.year,
-    count: found.linkUids.length,
-  };
-
-  return {
-    text: buildMonthlyLinksPostText(postInput),
-    xText: buildMonthlyLinksXPostText({...postInput, url}),
-    link: {
-      uri: `${url}#article-links`,
-      title: `${found.title} | SHINE`,
-      description: `今月の1本『${found.title}』に集まった、観た人の記事・ポスト。`,
-    },
-    imageUrl: `${SITE_URL}/og/movie.png?id=${found.movieUid}`,
-    async afterPost() {
-      await markLinksAnnounced(database, found.linkUids);
-    },
-  };
-}
-
-async function buildQuizPlan(): Promise<PostPlan> {
-  // 出題日はAPIに従う(ジョブの起動が遅れても昨日の問題を告知しない)
-  const puzzle = await fetchQuizPuzzle();
-  const url = buildQuizShareUrl({siteUrl: SITE_URL, date: puzzle.date});
-
-  return {
-    text: buildQuizPostText(puzzle),
-    xText: buildQuizXPostText({...puzzle, url}),
-    link: {
-      uri: url,
-      title: '今日の映画クイズ | SHINE',
-      description:
-        'ポスターの一部と5つのヒントから、今日の1本を当てる。毎日1問。',
-    },
-    imageUrl: `${SITE_URL}/og/quiz.png?date=${puzzle.date}`,
-  };
-}
-
-async function buildWatchedPlan(): Promise<PostPlan> {
-  const list = pickWeeklyItem(await fetchWatchedLists(), new Date());
-  if (!list) {
-    throw new Error('No watched lists found');
-  }
-
-  const heading =
-    list.organization === list.name
-      ? list.name
-      : `${list.organization} ${list.name}`;
-  const total = await fetchWinnerCount(list.slug);
-  const url = `${SITE_URL}/watched/${list.slug}`;
-
-  return {
-    text: buildWatchedPostText({heading, total}),
-    xText: buildWatchedXPostText({heading, total, url}),
-    link: {
-      uri: url,
-      title: `${heading}受賞作、何本観た？ | SHINE`,
-      description: `${heading}の歴代受賞作${total}本にチェックを付けて、観た本数と割合を共有できます。`,
-    },
-    imageUrl: `${SITE_URL}/og/watched.png?slug=${list.slug}`,
-  };
-}
-
-async function buildPersonPlan(): Promise<PostPlan> {
-  const person = pickPersonOfWeek(await fetchProminentPeople(), new Date());
-  if (!person) {
-    throw new Error('No awarded people found');
-  }
-
-  const url = `${SITE_URL}/people/${person.uid}`;
-  const postInput = {
-    name: person.name,
-    role: person.role,
-    wonCount: person.wonCount,
-    nominatedCount: person.nominatedCount,
-    topMovies: person.topMovies
-      .filter(movie => movie.title)
-      .map(movie => ({title: movie.title!, year: movie.year})),
-  };
-
-  return {
-    text: buildPersonPostText(postInput),
-    xText: buildPersonXPostText({...postInput, url}),
-    link: {
-      uri: url,
-      title: `${person.name}の映画 | SHINE`,
-      description: `${person.name}の受賞歴と関わった映画を、SHINEに収録された映画賞の受賞作・ノミネート作から一覧できます。`,
-    },
-    imageUrl: `${SITE_URL}/og/person.png?id=${person.uid}`,
-  };
-}
-
-async function buildAnnouncementPlan(name: string): Promise<PostPlan> {
-  if (!/^[\w-]+$/.test(name)) {
-    throw new Error(`告知名が不正です: ${name}`);
-  }
-
-  const filePath = path.join(ANNOUNCEMENTS_DIRECTORY, `${name}.json`);
-  const announcement = parseAnnouncement(
-    JSON.parse(await fs.readFile(filePath, 'utf8')),
-  );
-
-  return {
-    text: buildAnnouncementPostText(announcement),
-    xText: buildAnnouncementXPostText(announcement),
-    link: {
-      uri: announcement.url,
-      title: announcement.title,
-      description: announcement.description,
-    },
-    imageUrl: announcement.imageUrl,
-  };
 }
 
 type SnsPostOptions = {
