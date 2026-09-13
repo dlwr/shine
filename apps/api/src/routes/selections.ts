@@ -19,11 +19,13 @@ import {Hono} from 'hono';
 import {authMiddleware} from '../auth';
 import {SelectionsService} from '../services';
 import {
-  shouldCheckETag,
   createCachedResponse,
   createETag,
   EdgeCache,
   getCacheTTL,
+  IMPORTED_DATA_EDGE_TTL,
+  shouldCheckETag,
+  writeCacheAfterResponse,
 } from '../utils/cache';
 import {simpleHash} from '../utils/hash';
 
@@ -255,7 +257,9 @@ selectionsRoutes.get('/selections/:type/history', async c => {
 
     const historyCache = new EdgeCache(undefined, c.env.CACHE_KV);
     const cacheKey = `selections:history:${type}:${locale}:${limit}:${today}:v2`;
-    const cached = await historyCache.get(cacheKey);
+    const cached = await historyCache.get(cacheKey, {
+      edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    });
     if (cached) {
       return c.json(cached.data as Record<string, unknown>, 200, {
         'X-Cache-Status': 'HIT',
@@ -301,7 +305,10 @@ selectionsRoutes.get('/selections/:type/history', async c => {
       selectionDate: row.selectionDate,
     }));
 
-    await historyCache.set(cacheKey, {items}, getCacheTTL.selections[type]);
+    await writeCacheAfterResponse(
+      c,
+      historyCache.set(cacheKey, {items}, getCacheTTL.selections[type]),
+    );
 
     return createCachedResponse({items}, getCacheTTL.selections[type], {
       'X-Cache-Status': 'MISS',
