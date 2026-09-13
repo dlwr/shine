@@ -7,6 +7,7 @@ import {
   EdgeCache,
   IMPORTED_DATA_EDGE_TTL,
   shouldCheckETag,
+  writeCacheAfterResponse,
 } from '../utils/cache';
 
 export const yearsRoutes = new Hono<{Bindings: Environment}>();
@@ -22,7 +23,10 @@ yearsRoutes.get('/', async c => {
   };
 
   if (!cached) {
-    await cache.set(cacheKey, result, YEARS_CACHE_TTL);
+    await writeCacheAfterResponse(
+      c,
+      cache.set(cacheKey, result, YEARS_CACHE_TTL),
+    );
   }
 
   const etag = createETag(result);
@@ -52,7 +56,10 @@ yearsRoutes.get('/:year', async c => {
   }
 
   if (!cached) {
-    await cache.set(cacheKey, detail, YEARS_CACHE_TTL);
+    await writeCacheAfterResponse(
+      c,
+      cache.set(cacheKey, detail, YEARS_CACHE_TTL),
+    );
   }
 
   const etag = createETag(detail);

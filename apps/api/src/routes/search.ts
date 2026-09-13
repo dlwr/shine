@@ -9,6 +9,7 @@ import {
   createETag,
   EdgeCache,
   shouldCheckETag,
+  writeCacheAfterResponse,
 } from '../utils/cache';
 
 export const searchRoutes = new Hono<{Bindings: Environment}>();
@@ -79,7 +80,10 @@ searchRoutes.get('/suggest', async c => {
     (await suggest(c.env, query, locale));
 
   if (!cached) {
-    await cache.set(cacheKey, result, SUGGEST_CACHE_TTL);
+    await writeCacheAfterResponse(
+      c,
+      cache.set(cacheKey, result, SUGGEST_CACHE_TTL),
+    );
   }
 
   const etag = createETag(result);

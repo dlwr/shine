@@ -7,6 +7,7 @@ import {
   EdgeCache,
   IMPORTED_DATA_EDGE_TTL,
   shouldCheckETag,
+  writeCacheAfterResponse,
 } from '../utils/cache';
 
 export const crossingsRoutes = new Hono<{Bindings: Environment}>();
@@ -23,7 +24,10 @@ crossingsRoutes.get('/', async c => {
     cached?.data ?? (await new CrossingsService(c.env).getCrossings());
 
   if (!cached) {
-    await cache.set(CROSSINGS_CACHE_KEY, result, CROSSINGS_CACHE_TTL);
+    await writeCacheAfterResponse(
+      c,
+      cache.set(CROSSINGS_CACHE_KEY, result, CROSSINGS_CACHE_TTL),
+    );
   }
 
   const etag = createETag(result);
