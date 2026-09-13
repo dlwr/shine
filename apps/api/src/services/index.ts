@@ -1,3 +1,4 @@
+export {AdminCeremoniesService} from './admin-ceremonies-service';
 export {AdminMoviesService} from './admin-movies-service';
 export {
   AvailabilityService,
