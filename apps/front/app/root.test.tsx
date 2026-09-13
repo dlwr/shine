@@ -42,7 +42,7 @@ vi.mock('react-router', async importOriginal => ({
   useLocation: () => ({pathname: mockPathname}),
 }));
 
-const {default: App, Layout, headers, loader} = await import('./root');
+const {default: App, Layout, headers, links, loader} = await import('./root');
 
 const MONTHLY_RESPONSE = JSON.stringify({
   monthly: {uid: 'm1', title: '邦題', year: 2023, posterUrls: []},
@@ -344,6 +344,34 @@ describe('root Layout のアイコン', () => {
 
   it('アイコンのlinkが全部public配下に実在する', () => {
     const missing = iconHrefs().filter(href => !PUBLIC_FILES.has(href));
+
+    expect(missing).toEqual([]);
+  });
+});
+
+const linkHrefs = () =>
+  links().flatMap(link =>
+    'href' in link ? [{href: String(link.href), as: link.as}] : [],
+  );
+
+const fontHrefs = () =>
+  linkHrefs()
+    .filter(link => link.as === 'font')
+    .map(link => link.href);
+
+describe('root links のフォント', () => {
+  it('Google Fonts を読まない', () => {
+    const external = linkHrefs().filter(link => link.href.includes('fonts.g'));
+
+    expect(external).toEqual([]);
+  });
+
+  it('Inter を self-host で preload する', () => {
+    expect(fontHrefs()).toContain('/fonts/inter.woff2');
+  });
+
+  it('preload するフォントが全部 public 配下に実在する', () => {
+    const missing = fontHrefs().filter(href => !PUBLIC_FILES.has(href));
 
     expect(missing).toEqual([]);
   });
