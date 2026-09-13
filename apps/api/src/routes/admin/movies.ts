@@ -1,18 +1,15 @@
 import {and, eq, getDatabase, not, type Environment} from '@shine/database';
-import {articleLinks} from '@shine/database/schema/article-links';
-import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
-import {movieCredits} from '@shine/database/schema/movie-credits';
-import {movieSelections} from '@shine/database/schema/movie-selections';
-import {quizSelections} from '@shine/database/schema/quiz-selections';
 import {movies} from '@shine/database/schema/movies';
-import {nominations} from '@shine/database/schema/nominations';
-import {posterUrls} from '@shine/database/schema/poster-urls';
-import {referenceUrls} from '@shine/database/schema/reference-urls';
-import {translations} from '@shine/database/schema/translations';
 import {Hono} from 'hono';
 import {authMiddleware} from '../../auth';
 import {sanitizeText} from '../../middleware/sanitizer';
-import {AdminService, SelectionsService} from '../../services';
+import {
+  AdminMoviesService,
+  ExternalIdSearchService,
+  MovieImportService,
+  MovieMergeService,
+  SelectionsService,
+} from '../../services';
 import {
   ConflictError,
   NotFoundError,
@@ -31,13 +28,14 @@ export const adminMoviesRoutes = new Hono<{Bindings: Environment}>();
 // Get movie details for admin with all translations, posters, and nominations
 adminMoviesRoutes.get('/movies/:id', authMiddleware, async c => {
   try {
-    const adminService = new AdminService(c.env);
     const movieId = c.req.param('id');
     if (!movieId) {
       return c.json({error: 'Missing id parameter'}, 400);
     }
 
-    const movieDetails = await adminService.getMovieForAdmin(movieId);
+    const movieDetails = await new AdminMoviesService(c.env).getMovieForAdmin(
+      movieId,
+    );
 
     return c.json(movieDetails);
   } catch (error) {
@@ -56,7 +54,6 @@ adminMoviesRoutes.get(
   authMiddleware,
   async c => {
     try {
-      const adminService = new AdminService(c.env);
       const movieId = c.req.param('id');
       if (!movieId) {
         return c.json({error: 'Missing id parameter'}, 400);
@@ -98,7 +95,9 @@ adminMoviesRoutes.get(
         return c.json({error: 'Invalid limit parameter'}, 400);
       }
 
-      const result = await adminService.searchExternalMovieIds(movieId, {
+      const result = await new ExternalIdSearchService(
+        c.env,
+      ).searchExternalMovieIds(movieId, {
         query,
         language,
         year,
@@ -129,12 +128,15 @@ adminMoviesRoutes.get(
 // Get all movies for admin
 adminMoviesRoutes.get('/movies', authMiddleware, async c => {
   try {
-    const adminService = new AdminService(c.env);
     const {page, limit} = parsePagination(c, {defaultLimit: 50});
     const rawSearch = c.req.query('search');
     const search = rawSearch ? sanitizeText(rawSearch) : undefined;
 
-    const result = await adminService.getMovies({page, limit, search});
+    const result = await new AdminMoviesService(c.env).getMovies({
+      page,
+      limit,
+      search,
+    });
 
     return c.json({
       movies: result.movies.map(movie => ({
@@ -163,8 +165,6 @@ adminMoviesRoutes.get('/movies', authMiddleware, async c => {
 
 adminMoviesRoutes.post('/movies', authMiddleware, async c => {
   try {
-    const adminService = new AdminService(c.env);
-
     let body: unknown;
     try {
       body = await c.req.json();
@@ -183,9 +183,12 @@ adminMoviesRoutes.post('/movies', authMiddleware, async c => {
 
     const sanitizedImdbId = sanitizeText(imdbId);
 
-    const result = await adminService.createMovieFromImdbId(sanitizedImdbId, {
-      fetchTMDBData: refreshData !== false,
-    });
+    const result = await new MovieImportService(c.env).createMovieFromImdbId(
+      sanitizedImdbId,
+      {
+        fetchTMDBData: refreshData !== false,
+      },
+    );
 
     return c.json(
       {
@@ -226,14 +229,13 @@ adminMoviesRoutes.post('/movies', authMiddleware, async c => {
 // Delete movie
 adminMoviesRoutes.delete('/movies/:id', authMiddleware, async c => {
   try {
-    const adminService = new AdminService(c.env);
     const movieId = c.req.param('id');
     if (!movieId) {
       return c.json({error: 'Missing id parameter'}, 400);
     }
 
     await new SelectionsService(c.env).purgeSelectionCachesForMovie(movieId);
-    await adminService.deleteMovie(movieId);
+    await new MovieMergeService(c.env).deleteMovie(movieId);
     await invalidateMovieDetailsCache(c.env, movieId);
 
     return c.json({success: true});
@@ -327,7 +329,6 @@ adminMoviesRoutes.put('/movies/:id', authMiddleware, async c => {
 // Update movie IMDB ID
 adminMoviesRoutes.put('/movies/:id/imdb-id', authMiddleware, async c => {
   try {
-    const adminService = new AdminService(c.env);
     const movieId = c.req.param('id');
     if (!movieId) {
       return c.json({error: 'Missing id parameter'}, 400);
@@ -335,10 +336,13 @@ adminMoviesRoutes.put('/movies/:id/imdb-id', authMiddleware, async c => {
 
     const {imdbId, refreshData = false} = await c.req.json();
 
-    const refreshResults = await adminService.updateIMDbId(movieId, {
-      imdbId,
-      fetchTMDBData: refreshData,
-    });
+    const refreshResults = await new MovieImportService(c.env).updateIMDbId(
+      movieId,
+      {
+        imdbId,
+        fetchTMDBData: refreshData,
+      },
+    );
 
     await invalidateMovieCaches(c.env, movieId);
 
@@ -679,7 +683,6 @@ adminMoviesRoutes.post(
   authMiddleware,
   async c => {
     try {
-      const database = getDatabase(c.env);
       const sourceId = c.req.param('sourceId');
       const targetId = c.req.param('targetId');
       if (!sourceId || !targetId) {
@@ -693,201 +696,9 @@ adminMoviesRoutes.post(
         );
       }
 
-      // Verify both movies exist
-      const [sourceMovie] = await database
-        .select()
-        .from(movies)
-        .where(eq(movies.uid, sourceId))
-        .limit(1);
-
-      const [targetMovie] = await database
-        .select()
-        .from(movies)
-        .where(eq(movies.uid, targetId))
-        .limit(1);
-
-      if (!sourceMovie) {
-        return c.json({error: 'Source movie not found'}, 404);
-      }
-
-      if (!targetMovie) {
-        return c.json({error: 'Target movie not found'}, 404);
-      }
-
-      // Merge operations in transaction
-      await database.transaction(async tx => {
-        // Update article_links
-        await tx
-          .update(articleLinks)
-          .set({movieUid: targetId})
-          .where(eq(articleLinks.movieUid, sourceId));
-
-        // Update movie_selections
-        await tx
-          .update(movieSelections)
-          .set({movieId: targetId})
-          .where(eq(movieSelections.movieId, sourceId));
-
-        await tx
-          .update(quizSelections)
-          .set({movieUid: targetId})
-          .where(eq(quizSelections.movieUid, sourceId));
-
-        // Delete source availability checks
-        await tx
-          .delete(movieAvailabilityChecks)
-          .where(eq(movieAvailabilityChecks.movieUid, sourceId));
-
-        // Merge credits: keep the target's own set when it already has one
-        const targetCredits = await tx
-          .select({uid: movieCredits.uid})
-          .from(movieCredits)
-          .where(eq(movieCredits.movieUid, targetId));
-
-        await (targetCredits.length > 0
-          ? tx.delete(movieCredits).where(eq(movieCredits.movieUid, sourceId))
-          : tx
-              .update(movieCredits)
-              .set({movieUid: targetId})
-              .where(eq(movieCredits.movieUid, sourceId)));
-
-        // Update nominations
-        await tx
-          .update(nominations)
-          .set({movieUid: targetId})
-          .where(eq(nominations.movieUid, sourceId));
-
-        // Update reference_urls
-        await tx
-          .update(referenceUrls)
-          .set({movieUid: targetId})
-          .where(eq(referenceUrls.movieUid, sourceId));
-
-        // Merge translations (avoid duplicates)
-        const sourceTranslations = await tx
-          .select()
-          .from(translations)
-          .where(
-            and(
-              eq(translations.resourceType, 'movie_title'),
-              eq(translations.resourceUid, sourceId),
-            ),
-          );
-
-        for (const translation of sourceTranslations) {
-          await tx
-            .insert(translations)
-            .values({
-              resourceType: 'movie_title',
-              resourceUid: targetId,
-              languageCode: translation.languageCode,
-              content: translation.content,
-              isDefault: translation.isDefault,
-            })
-            .onConflictDoNothing({
-              target: [
-                translations.resourceType,
-                translations.resourceUid,
-                translations.languageCode,
-              ],
-            });
-        }
-
-        // Delete source translations
-        await tx
-          .delete(translations)
-          .where(
-            and(
-              eq(translations.resourceType, 'movie_title'),
-              eq(translations.resourceUid, sourceId),
-            ),
-          );
-
-        // Merge poster URLs (avoid duplicates by URL)
-        const sourcePosters = await tx
-          .select()
-          .from(posterUrls)
-          .where(eq(posterUrls.movieUid, sourceId));
-
-        // Get existing target posters to check for URL duplicates
-        const existingTargetPosters = await tx
-          .select({url: posterUrls.url})
-          .from(posterUrls)
-          .where(eq(posterUrls.movieUid, targetId));
-
-        const existingUrls = new Set(
-          existingTargetPosters.map((p: {url: string}) => p.url),
-        );
-
-        for (const poster of sourcePosters) {
-          // Only insert if URL doesn't already exist for target movie
-          if (!existingUrls.has(poster.url)) {
-            await tx.insert(posterUrls).values({
-              movieUid: targetId,
-              url: poster.url,
-              width: poster.width,
-              height: poster.height,
-              languageCode: poster.languageCode,
-              countryCode: poster.countryCode,
-              sourceType: poster.sourceType,
-              isPrimary: poster.isPrimary,
-            });
-          }
-        }
-
-        // Delete source posters
-        await tx.delete(posterUrls).where(eq(posterUrls.movieUid, sourceId));
-
-        await tx.delete(movies).where(eq(movies.uid, sourceId));
-
-        // Update target movie with merged metadata (preserve existing if target has data)
-
-        const updateData: Partial<typeof movies.$inferInsert> = {};
-
-        if (!targetMovie.imdbId && sourceMovie.imdbId) {
-          // Check if IMDb ID is already used by another movie
-          const existingImdbMovie = await tx
-            .select({uid: movies.uid})
-            .from(movies)
-            .where(
-              and(
-                eq(movies.imdbId, sourceMovie.imdbId),
-                not(eq(movies.uid, targetId)),
-              ),
-            )
-            .limit(1);
-
-          if (existingImdbMovie.length === 0) {
-            updateData.imdbId = sourceMovie.imdbId;
-          }
-        }
-
-        if (!targetMovie.tmdbId && sourceMovie.tmdbId) {
-          // Check if TMDb ID is already used by another movie
-          const existingTmdbMovie = await tx
-            .select({uid: movies.uid})
-            .from(movies)
-            .where(
-              and(
-                eq(movies.tmdbId, sourceMovie.tmdbId),
-                eq(movies.mediaType, sourceMovie.mediaType),
-                not(eq(movies.uid, targetId)),
-              ),
-            )
-            .limit(1);
-
-          if (existingTmdbMovie.length === 0) {
-            updateData.tmdbId = sourceMovie.tmdbId;
-            updateData.mediaType = sourceMovie.mediaType;
-          }
-        }
-
-        if (Object.keys(updateData).length > 0) {
-          await tx
-            .update(movies)
-            .set(updateData)
-            .where(eq(movies.uid, targetId));
-        }
+      await new MovieMergeService(c.env).mergeMovies({
+        sourceMovieId: sourceId,
+        targetMovieId: targetId,
       });
 
       await invalidateMovieDetailsCache(c.env, sourceId);
@@ -899,6 +710,11 @@ adminMoviesRoutes.post(
       });
     } catch (error) {
       console.error('Error merging movies:', error);
+
+      if (error instanceof NotFoundError) {
+        return c.json({error: error.message}, 404);
+      }
+
       return c.json(
         {
           error: 'Internal server error',

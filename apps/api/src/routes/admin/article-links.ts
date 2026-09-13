@@ -1,7 +1,7 @@
 import {type Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {authMiddleware} from '../../auth';
-import {AdminService} from '../../services';
+import {AdminMoviesService} from '../../services';
 import {invalidateMovieCaches} from '../../services/movie-cache-invalidation';
 
 export const adminArticleLinksRoutes = new Hono<{Bindings: Environment}>();
@@ -23,7 +23,7 @@ adminArticleLinksRoutes.post(
   authMiddleware,
   async c => {
     try {
-      const adminService = new AdminService(c.env);
+      const adminService = new AdminMoviesService(c.env);
       const articleId = c.req.param('id');
       if (!articleId) {
         return c.json({error: 'Missing id parameter'}, 400);
@@ -46,7 +46,7 @@ adminArticleLinksRoutes.delete(
   authMiddleware,
   async c => {
     try {
-      const adminService = new AdminService(c.env);
+      const adminService = new AdminMoviesService(c.env);
       const articleId = c.req.param('id');
       if (!articleId) {
         return c.json({error: 'Missing id parameter'}, 400);

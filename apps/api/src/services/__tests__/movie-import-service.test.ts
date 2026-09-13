@@ -6,7 +6,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {AdminService} from '../admin-service';
+import {MovieImportService} from '../movie-import-service';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -42,7 +42,7 @@ function stubTmdb(): void {
   );
 }
 
-describe('AdminService.createMovieFromImdbId', () => {
+describe('MovieImportService.createMovieFromImdbId', () => {
   let environment: Environment;
   let database: ReturnType<typeof getDatabase>;
 
@@ -67,7 +67,7 @@ describe('AdminService.createMovieFromImdbId', () => {
       .insert(movies)
       .values({uid: 'dekalog', tmdbId: 42_699, mediaType: 'tv', year: 1989});
 
-    const service = new AdminService(environment);
+    const service = new MovieImportService(environment);
     const result = await service.createMovieFromImdbId('tt0061549');
 
     expect(result.movie.tmdbId).toBe(42_699);
@@ -79,7 +79,7 @@ describe('AdminService.createMovieFromImdbId', () => {
       .insert(movies)
       .values({uid: 'yongary', tmdbId: 42_699, mediaType: 'movie'});
 
-    const service = new AdminService(environment);
+    const service = new MovieImportService(environment);
 
     await expect(service.createMovieFromImdbId('tt0061549')).rejects.toThrow(
       'TMDB ID is already used by another movie',
