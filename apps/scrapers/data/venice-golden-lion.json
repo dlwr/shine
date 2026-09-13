@@ -1,5 +1,5 @@
 {
-  "collectedAt": "2026-09-04",
+  "collectedAt": "2026-09-13T00:00:00.000Z",
   "source": "https://www.imdb.com/event/ev0000681/",
   "editions": [
     {
@@ -19215,7 +19215,7 @@
                   ]
                 },
                 {
-                  "isWinner": false,
+                  "isWinner": true,
                   "notes": null,
                   "titles": [
                     {
