@@ -23,6 +23,7 @@ import {
   EdgeCache,
   getCacheKeyForSelection,
   getCacheTTL,
+  IMPORTED_DATA_EDGE_TTL,
   normalizeCacheLocale,
 } from '../utils/cache';
 import {simpleHash} from '../utils/hash';
@@ -302,7 +303,9 @@ export class SelectionsService extends BaseService {
       : undefined;
 
     // Try to get cached result
-    const cached = cacheKey ? await this.cache.get(cacheKey) : undefined;
+    const cached = cacheKey
+      ? await this.cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL})
+      : undefined;
     if (cached?.data) {
       return cached.data as MovieSelection;
     }

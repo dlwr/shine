@@ -12,7 +12,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {EdgeCache} from '../../utils/cache';
 import {SelectionsService} from '../selections-service';
 
@@ -74,14 +74,17 @@ async function seedNominatedMovie(
 function createMemoryCache(): EdgeCache {
   const store = new Map<string, string>();
   const kv = {
-    async get(key: string, type?: string) {
+    async get(key: string, type?: string | {type?: string}) {
       const raw = store.get(key);
       if (raw === undefined) {
         // eslint-disable-next-line unicorn/no-null -- KVNamespace.get returns null for missing keys
         return null;
       }
 
-      return type === 'json' ? JSON.parse(raw) : raw;
+      return type === 'json' ||
+        (typeof type === 'object' && type.type === 'json')
+        ? JSON.parse(raw)
+        : raw;
     },
     async put(key: string, value: string) {
       store.set(key, value);
@@ -354,5 +357,29 @@ describe('SelectionsService 個人賞の扱い', () => {
     );
 
     expect(new Set(picks)).toEqual(new Set(['movie-film-award']));
+  });
+});
+
+describe('SelectionsService selection cache reads', () => {
+  it('lets the colo keep a selection for 10 minutes', async () => {
+    const {environment} = await createTestEnvironment();
+    const get = vi.fn().mockResolvedValue(undefined);
+    const kv = {get, put: vi.fn(), delete: vi.fn()} as unknown as KVNamespace;
+
+    const service = new SelectionsService(
+      environment,
+      new EdgeCache(undefined, kv),
+    );
+    await expect(
+      service.getDateSeededSelections({
+        locale: 'ja',
+        date: new Date('2026-09-13'),
+      }),
+    ).rejects.toThrow('No movies available');
+
+    expect(get).toHaveBeenCalledWith(
+      expect.stringMatching(/^selections:daily:/),
+      expect.objectContaining({type: 'json', cacheTtl: 600}),
+    );
   });
 });

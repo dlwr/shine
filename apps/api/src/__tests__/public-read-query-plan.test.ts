@@ -259,14 +259,17 @@ async function seed(database: Database): Promise<void> {
 function createMemoryKv(): KVNamespace {
   const store = new Map<string, string>();
   return {
-    async get(key: string, type?: string) {
+    async get(key: string, type?: string | {type?: string}) {
       const raw = store.get(key);
       if (raw === undefined) {
         // eslint-disable-next-line unicorn/no-null -- KVNamespace.get returns null for missing keys
         return null;
       }
 
-      return type === 'json' ? JSON.parse(raw) : raw;
+      return type === 'json' ||
+        (typeof type === 'object' && type.type === 'json')
+        ? JSON.parse(raw)
+        : raw;
     },
     async put(key: string, value: string) {
       store.set(key, value);
