@@ -1,5 +1,4 @@
-import {and, eq, getDatabase, not, type Environment} from '@shine/database';
-import {movies} from '@shine/database/schema/movies';
+import {type Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {authMiddleware} from '../../auth';
 import {sanitizeText} from '../../middleware/sanitizer';
@@ -8,19 +7,20 @@ import {
   ExternalIdSearchService,
   MovieImportService,
   MovieMergeService,
+  MovieTmdbService,
   SelectionsService,
 } from '../../services';
 import {
   ConflictError,
   NotFoundError,
   TmdbConfigError,
+  TmdbSyncError,
   ValidationError,
 } from '../../services/errors';
 import {
   invalidateMovieCaches,
   invalidateMovieDetailsCache,
 } from '../../services/movie-cache-invalidation';
-import {syncTmdbData, type TmdbSyncResult} from '../../services/tmdb-sync';
 import {parsePagination} from '../../utils/pagination';
 
 export const adminMoviesRoutes = new Hono<{Bindings: Environment}>();
@@ -247,7 +247,6 @@ adminMoviesRoutes.delete('/movies/:id', authMiddleware, async c => {
 // Update movie basic info (year, original language)
 adminMoviesRoutes.put('/movies/:id', authMiddleware, async c => {
   try {
-    const database = getDatabase(c.env);
     const movieId = c.req.param('id');
     if (!movieId) {
       return c.json({error: 'Missing id parameter'}, 400);
@@ -255,73 +254,24 @@ adminMoviesRoutes.put('/movies/:id', authMiddleware, async c => {
 
     const {year, originalLanguage, mediaType} = await c.req.json();
 
-    // Check if movie exists
-    const movieExists = await database
-      .select({uid: movies.uid})
-      .from(movies)
-      .where(eq(movies.uid, movieId))
-      .limit(1);
-
-    if (movieExists.length === 0) {
-      return c.json({error: 'Movie not found'}, 404);
-    }
-
-    const updateData: Partial<typeof movies.$inferInsert> = {};
-
-    // Validate year if provided
-    if (year !== undefined) {
-      if (
-        typeof year !== 'number' ||
-        !Number.isSafeInteger(year) ||
-        year < 1888 ||
-        year > 2100
-      ) {
-        return c.json(
-          {error: 'Year must be a valid integer between 1888 and 2100'},
-          400,
-        );
-      }
-
-      updateData.year = year;
-    }
-
-    // Validate original language if provided
-    if (originalLanguage !== undefined) {
-      if (originalLanguage && typeof originalLanguage !== 'string') {
-        return c.json({error: 'Original language must be a string'}, 400);
-      }
-
-      if (originalLanguage && originalLanguage.length !== 2) {
-        return c.json(
-          {error: 'Original language must be a 2-letter ISO 639-1 code'},
-          400,
-        );
-      }
-
-      updateData.originalLanguage = originalLanguage || 'en';
-    }
-
-    // Validate mediaType if provided
-    if (mediaType !== undefined) {
-      if (mediaType !== 'movie' && mediaType !== 'tv') {
-        return c.json({error: "mediaType must be 'movie' or 'tv'"}, 400);
-      }
-
-      updateData.mediaType = mediaType;
-    }
-
-    // Update movie
-    if (Object.keys(updateData).length > 0) {
-      await database
-        .update(movies)
-        .set(updateData)
-        .where(eq(movies.uid, movieId));
-      await invalidateMovieCaches(c.env, movieId);
-    }
+    await new AdminMoviesService(c.env).updateMovie(movieId, {
+      year,
+      originalLanguage,
+      mediaType,
+    });
 
     return c.json({success: true});
   } catch (error) {
     console.error('Error updating movie:', error);
+
+    if (error instanceof NotFoundError) {
+      return c.json({error: error.message}, 404);
+    }
+
+    if (error instanceof ValidationError) {
+      return c.json({error: error.message}, 400);
+    }
+
     return c.json({error: 'Internal server error'}, 500);
   }
 });
@@ -372,106 +322,37 @@ adminMoviesRoutes.put('/movies/:id/imdb-id', authMiddleware, async c => {
 // Update movie TMDb ID
 adminMoviesRoutes.put('/movies/:id/tmdb-id', authMiddleware, async c => {
   try {
-    const database = getDatabase(c.env);
     const movieId = c.req.param('id');
     if (!movieId) {
       return c.json({error: 'Missing id parameter'}, 400);
     }
 
-    const {
-      tmdbId,
-      refreshData = false,
-      mediaType: bodyMediaType,
-    } = await c.req.json();
+    const {tmdbId, refreshData = false, mediaType} = await c.req.json();
 
-    // Validate TMDb ID (must be a positive integer)
-    if (
-      tmdbId !== undefined &&
-      (typeof tmdbId !== 'number' ||
-        !Number.isSafeInteger(tmdbId) ||
-        tmdbId <= 0)
-    ) {
-      return c.json({error: 'TMDb ID must be a positive integer'}, 400);
-    }
-
-    // Check if movie exists
-    const movieExists = await database
-      .select({
-        uid: movies.uid,
-        imdbId: movies.imdbId,
-        mediaType: movies.mediaType,
-      })
-      .from(movies)
-      .where(eq(movies.uid, movieId))
-      .limit(1);
-
-    if (movieExists.length === 0) {
-      return c.json({error: 'Movie not found'}, 404);
-    }
-
-    // Determine mediaType
-    const updateMediaType: 'movie' | 'tv' =
-      bodyMediaType === 'tv'
-        ? 'tv'
-        : (movieExists[0].mediaType as 'movie' | 'tv') || 'movie';
-
-    // Check if TMDb ID is already used by another movie
-    if (typeof tmdbId === 'number') {
-      const existingMovie = await database
-        .select({uid: movies.uid})
-        .from(movies)
-        .where(
-          and(
-            eq(movies.tmdbId, tmdbId),
-            eq(movies.mediaType, updateMediaType),
-            not(eq(movies.uid, movieId)),
-          ),
-        )
-        .limit(1);
-
-      if (existingMovie.length > 0) {
-        return c.json({error: 'TMDb ID is already used by another movie'}, 409);
-      }
-    }
-
-    // Update TMDb ID and mediaType
-    await database
-      .update(movies)
-      .set({
-        tmdbId: typeof tmdbId === 'number' ? tmdbId : undefined,
-        mediaType: updateMediaType,
-      })
-      .where(eq(movies.uid, movieId));
-
-    // If refreshData is true and tmdbId is provided, fetch additional data from TMDb
-    let refreshResults: TmdbSyncResult = {
-      postersAdded: 0,
-      translationsAdded: 0,
-    };
-
-    if (refreshData && typeof tmdbId === 'number' && c.env.TMDB_API_KEY) {
-      try {
-        refreshResults = await syncTmdbData(
-          database,
-          movieId,
-          tmdbId,
-          updateMediaType,
-          c.env,
-        );
-      } catch (refreshError) {
-        console.warn('Error during data refresh:', refreshError);
-        // Continue without failing the main operation
-      }
-    }
-
-    await invalidateMovieCaches(c.env, movieId);
+    const {refreshResults} = await new MovieTmdbService(c.env).updateTmdbId(
+      movieId,
+      {tmdbId, refreshData, mediaType},
+    );
 
     return c.json({
       success: true,
-      refreshResults: refreshData ? refreshResults : undefined,
+      refreshResults,
     });
   } catch (error) {
     console.error('Error updating TMDb ID:', error);
+
+    if (error instanceof ValidationError) {
+      return c.json({error: error.message}, 400);
+    }
+
+    if (error instanceof NotFoundError) {
+      return c.json({error: error.message}, 404);
+    }
+
+    if (error instanceof ConflictError) {
+      return c.json({error: error.message}, 409);
+    }
+
     return c.json({error: 'Internal server error'}, 500);
   }
 });
@@ -482,136 +363,51 @@ adminMoviesRoutes.post(
   authMiddleware,
   async c => {
     try {
-      const database = getDatabase(c.env);
       const movieId = c.req.param('id');
       if (!movieId) {
         return c.json({error: 'Missing id parameter'}, 400);
       }
 
-      // Check if movie exists and has IMDb ID
-      const movie = await database
-        .select({
-          uid: movies.uid,
-          imdbId: movies.imdbId,
-          tmdbId: movies.tmdbId,
-          originalLanguage: movies.originalLanguage,
-          mediaType: movies.mediaType,
-        })
-        .from(movies)
-        .where(eq(movies.uid, movieId))
-        .limit(1);
+      const fetchResults = await new MovieTmdbService(c.env).autoFetchTmdb(
+        movieId,
+      );
 
-      if (movie.length === 0) {
-        return c.json({error: 'Movie not found'}, 404);
+      return c.json({
+        success: true,
+        fetchResults,
+      });
+    } catch (error) {
+      console.error('Error auto-fetching TMDb data:', error);
+
+      if (error instanceof NotFoundError) {
+        return c.json({error: error.message}, 404);
       }
 
-      const {imdbId, tmdbId} = movie[0];
-      if (!imdbId) {
-        return c.json({error: 'Movie does not have an IMDb ID'}, 400);
+      if (error instanceof ValidationError) {
+        return c.json({error: error.message}, 400);
       }
 
-      const tmdbApiKey = c.env.TMDB_API_KEY;
-      if (!tmdbApiKey || tmdbApiKey === '') {
-        return c.json({error: 'TMDb API key not configured'}, 500);
+      if (error instanceof ConflictError) {
+        return c.json({error: error.message}, 409);
       }
 
-      const fetchResults = {
-        tmdbIdSet: false,
-        postersAdded: 0,
-        translationsAdded: 0,
-      };
+      if (error instanceof TmdbConfigError) {
+        return c.json({error: error.message}, 500);
+      }
 
-      try {
-        // Import TMDb utilities
-        const {findTMDBByImdbId} =
-          await import('@shine/scrapers/common/tmdb-utilities');
-
-        let movieTmdbId: number | undefined = tmdbId ?? undefined;
-        let detectedMediaType: 'movie' | 'tv' =
-          (movie[0].mediaType as 'movie' | 'tv') || 'movie';
-
-        // Find TMDb ID if not already set
-        if (!movieTmdbId) {
-          const findResult = await findTMDBByImdbId(imdbId, tmdbApiKey);
-
-          if (!findResult) {
-            return c.json({error: 'TMDb映画が見つかりませんでした'}, 404);
-          }
-
-          movieTmdbId = findResult.tmdbId;
-          detectedMediaType = findResult.mediaType;
-
-          // Check if TMDb ID is already used by another movie
-          const existingMovie = await database
-            .select({uid: movies.uid})
-            .from(movies)
-            .where(
-              and(
-                eq(movies.tmdbId, movieTmdbId),
-                eq(movies.mediaType, detectedMediaType),
-                not(eq(movies.uid, movieId)),
-              ),
-            )
-            .limit(1);
-
-          if (existingMovie.length > 0) {
-            return c.json(
-              {error: 'このTMDb IDは既に他の映画で使用されています'},
-              409,
-            );
-          }
-
-          // Save TMDb ID and mediaType to database
-          try {
-            await database
-              .update(movies)
-              .set({
-                tmdbId: movieTmdbId,
-                mediaType: detectedMediaType,
-              })
-              .where(eq(movies.uid, movieId));
-          } catch (databaseError) {
-            console.error('Database update error:', {
-              error: databaseError,
-              movieId,
-              tmdbId: movieTmdbId,
-            });
-            throw databaseError;
-          }
-
-          fetchResults.tmdbIdSet = true;
-        }
-
-        const syncResult = await syncTmdbData(
-          database,
-          movieId,
-          movieTmdbId,
-          detectedMediaType,
-          c.env,
-        );
-        fetchResults.postersAdded = syncResult.postersAdded;
-        fetchResults.translationsAdded = syncResult.translationsAdded;
-
-        await invalidateMovieCaches(c.env, movieId);
-
-        return c.json({
-          success: true,
-          fetchResults,
-        });
-      } catch (fetchError) {
-        console.error('Error during TMDb auto-fetch:', fetchError);
-        const errorMessage =
-          fetchError instanceof Error ? fetchError.message : 'Unknown error';
+      if (error instanceof TmdbSyncError) {
         return c.json(
           {
-            error: 'TMDbデータの自動取得に失敗しました',
-            details: errorMessage,
+            error: error.message,
+            details:
+              error.cause instanceof Error
+                ? error.cause.message
+                : 'Unknown error',
           },
           500,
         );
       }
-    } catch (error) {
-      console.error('Error auto-fetching TMDb data:', error);
+
       return c.json({error: 'Internal server error'}, 500);
     }
   },
@@ -620,59 +416,38 @@ adminMoviesRoutes.post(
 // Refresh TMDb data (posters and translations)
 adminMoviesRoutes.post('/movies/:id/refresh-tmdb', authMiddleware, async c => {
   try {
-    const database = getDatabase(c.env);
     const movieId = c.req.param('id');
     if (!movieId) {
       return c.json({error: 'Missing id parameter'}, 400);
     }
 
-    // Check if movie exists and has TMDb ID
-    const movie = await database
-      .select({
-        uid: movies.uid,
-        tmdbId: movies.tmdbId,
-        mediaType: movies.mediaType,
-      })
-      .from(movies)
-      .where(eq(movies.uid, movieId))
-      .limit(1);
+    const refreshResults = await new MovieTmdbService(c.env).refreshTmdb(
+      movieId,
+    );
 
-    if (movie.length === 0) {
-      return c.json({error: 'Movie not found'}, 404);
-    }
-
-    const {tmdbId} = movie[0];
-    if (!tmdbId) {
-      return c.json({error: 'Movie does not have a TMDb ID'}, 400);
-    }
-
-    if (!c.env.TMDB_API_KEY) {
-      return c.json({error: 'TMDb API key not configured'}, 500);
-    }
-
-    const refreshMediaType = (movie[0].mediaType as 'movie' | 'tv') || 'movie';
-
-    try {
-      const refreshResults = await syncTmdbData(
-        database,
-        movieId,
-        tmdbId,
-        refreshMediaType,
-        c.env,
-      );
-
-      await invalidateMovieCaches(c.env, movieId);
-
-      return c.json({
-        success: true,
-        refreshResults,
-      });
-    } catch (refreshError) {
-      console.error('Error during TMDb data refresh:', refreshError);
-      return c.json({error: 'Failed to refresh TMDb data'}, 500);
-    }
+    return c.json({
+      success: true,
+      refreshResults,
+    });
   } catch (error) {
     console.error('Error refreshing TMDb data:', error);
+
+    if (error instanceof NotFoundError) {
+      return c.json({error: error.message}, 404);
+    }
+
+    if (error instanceof ValidationError) {
+      return c.json({error: error.message}, 400);
+    }
+
+    if (error instanceof TmdbConfigError) {
+      return c.json({error: error.message}, 500);
+    }
+
+    if (error instanceof TmdbSyncError) {
+      return c.json({error: error.message}, 500);
+    }
+
     return c.json({error: 'Internal server error'}, 500);
   }
 });
