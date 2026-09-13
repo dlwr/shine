@@ -8,56 +8,20 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
 import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {resolveMovieTitle} from '@/lib/movie-title';
 import {FilmCard} from '@/components/editorial/film-card';
-import type {FilmCardMovie} from '@/components/editorial/film-card';
-import {
-  MonthlyPick,
-  type MonthlyPickMovie,
-} from '@/components/editorial/monthly-pick';
+import {MonthlyPick} from '@/components/editorial/monthly-pick';
 import {apiFetch, resolveApiUrl} from '@/lib/api';
-
-type HighlightedMovies = {
-  daily?: FilmCardMovie;
-  weekly?: FilmCardMovie;
-  monthly?: MonthlyPickMovie;
-};
-
-type PeriodType = keyof HighlightedMovies;
+import {
+  buildSelectionPath,
+  fetchHighlightedMovies,
+  getLocalizedMovieTitle,
+  selectionRequestHeaders,
+  type HighlightedMovies,
+  type PeriodType,
+  type SearchMovie,
+} from '@/lib/home';
 
 const SECONDARY_PERIODS: PeriodType[] = ['daily', 'weekly'];
-
-type SearchMovie = {
-  uid: string;
-  title?: string;
-  year?: number;
-  translations?: Array<{
-    languageCode: string;
-    content: string;
-    isDefault: number;
-  }>;
-};
-
-function createSelectionCacheKey() {
-  const now = new Date();
-
-  if (now.getHours() < 6) {
-    now.setDate(now.getDate() - 1);
-  }
-
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const day = now.getDate();
-
-  return `${year}-${month}-${day}`;
-}
-
-function getLocalizedMovieTitle(movie: SearchMovie, locale: string) {
-  return resolveMovieTitle(movie, {
-    locale,
-    fallback: locale === 'ja' ? 'タイトル不明' : 'Untitled',
-  });
-}
 
 type MoviesLabels = {
   randomMovie: string;
@@ -100,18 +64,9 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const apiUrl = resolveApiUrl(context);
 
   try {
-    // Cloudflare Workers環境ではfetchが利用可能
-    // React Router v7公式パターン：loaderでfetchを直接使用
-    const cacheKey = createSelectionCacheKey();
-    const fetchPath = `/?cache=${cacheKey}&locale=${locale}`;
-
-    const response = await apiFetch(context, fetchPath, {
-      headers: {
-        'Cache-Control': 'no-store',
-        'Accept-Language': locale === 'ja' ? 'ja,en;q=0.5' : 'en',
-        // Request signal for abort handling
-      },
-      signal: request.signal, // React Router v7推奨：abortシグナル
+    const response = await apiFetch(context, buildSelectionPath(locale), {
+      headers: selectionRequestHeaders(locale),
+      signal: request.signal,
     });
 
     if (!response.ok) {
@@ -194,23 +149,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
     const fetchMovies = async () => {
       try {
         setLoading(true);
-
-        const cacheKey = createSelectionCacheKey();
-        const fetchUrl = `${apiUrl}/?cache=${cacheKey}&locale=${locale}`;
-
-        const response = await fetch(fetchUrl, {
-          headers: {
-            'Cache-Control': 'no-store',
-            'Accept-Language': locale === 'ja' ? 'ja,en;q=0.5' : 'en',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`API request failed: ${response.status}`);
-        }
-
-        const fetchedMovies = (await response.json()) as HighlightedMovies;
-        setMovies(fetchedMovies);
+        setMovies(await fetchHighlightedMovies(apiUrl, locale));
         setError(undefined);
       } catch (error_) {
         console.error('Error fetching movies:', error_);
@@ -512,23 +451,7 @@ function Movies({
   >({});
 
   const refreshHighlightedMovies = useCallback(async () => {
-    const cacheKey = createSelectionCacheKey();
-    const response = await fetch(
-      `${apiUrl}/?cache=${cacheKey}&locale=${locale}`,
-      {
-        headers: {
-          'Cache-Control': 'no-store',
-          'Accept-Language': locale === 'ja' ? 'ja,en;q=0.5' : 'en',
-        },
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status}`);
-    }
-
-    const updatedMovies = (await response.json()) as HighlightedMovies;
-    onMoviesChange(updatedMovies);
+    onMoviesChange(await fetchHighlightedMovies(apiUrl, locale));
   }, [apiUrl, locale, onMoviesChange]);
 
   const handleReselect = useCallback(
