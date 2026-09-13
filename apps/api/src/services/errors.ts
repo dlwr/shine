@@ -46,3 +46,10 @@ export class UnprocessableContentError extends Error {
     this.name = 'UnprocessableContentError';
   }
 }
+
+export class TmdbSyncError extends Error {
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = 'TmdbSyncError';
+  }
+}

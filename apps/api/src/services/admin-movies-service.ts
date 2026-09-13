@@ -8,8 +8,15 @@ import {nominations} from '@shine/database/schema/nominations';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {BaseService} from './base-service';
-import {NotFoundError} from './errors';
+import {NotFoundError, ValidationError} from './errors';
+import {invalidateMovieCaches} from './movie-cache-invalidation';
 import type {PaginationOptions} from '@shine/types';
+
+export type UpdateMovieInput = {
+  year?: unknown;
+  originalLanguage?: unknown;
+  mediaType?: unknown;
+};
 
 function titleSubquery(languageCode?: string) {
   const languageFilter = languageCode
@@ -233,6 +240,69 @@ export class AdminMoviesService extends BaseService {
       })),
       articleLinks: articleLinksResult,
     };
+  }
+
+  async updateMovie(movieId: string, input: UpdateMovieInput): Promise<void> {
+    const {year, originalLanguage, mediaType} = input;
+
+    const movieExists = await this.database
+      .select({uid: movies.uid})
+      .from(movies)
+      .where(eq(movies.uid, movieId))
+      .limit(1);
+
+    if (movieExists.length === 0) {
+      throw new NotFoundError('Movie not found');
+    }
+
+    const updateData: Partial<typeof movies.$inferInsert> = {};
+
+    if (year !== undefined) {
+      if (
+        typeof year !== 'number' ||
+        !Number.isSafeInteger(year) ||
+        year < 1888 ||
+        year > 2100
+      ) {
+        throw new ValidationError(
+          'Year must be a valid integer between 1888 and 2100',
+        );
+      }
+
+      updateData.year = year;
+    }
+
+    if (originalLanguage !== undefined) {
+      if (!originalLanguage) {
+        updateData.originalLanguage = 'en';
+      } else if (typeof originalLanguage !== 'string') {
+        throw new ValidationError('Original language must be a string');
+      } else if (originalLanguage.length === 2) {
+        updateData.originalLanguage = originalLanguage;
+      } else {
+        throw new ValidationError(
+          'Original language must be a 2-letter ISO 639-1 code',
+        );
+      }
+    }
+
+    if (mediaType !== undefined) {
+      if (mediaType !== 'movie' && mediaType !== 'tv') {
+        throw new ValidationError("mediaType must be 'movie' or 'tv'");
+      }
+
+      updateData.mediaType = mediaType;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return;
+    }
+
+    await this.database
+      .update(movies)
+      .set(updateData)
+      .where(eq(movies.uid, movieId));
+    await invalidateMovieCaches(this.env, movieId);
   }
 
   async addPoster(
