@@ -1,7 +1,7 @@
 import {type Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {authMiddleware} from '../../auth';
-import {AdminService} from '../../services';
+import {AdminMoviesService} from '../../services';
 import {invalidateMovieCaches} from '../../services/movie-cache-invalidation';
 
 export const adminPostersRoutes = new Hono<{Bindings: Environment}>();
@@ -9,7 +9,7 @@ export const adminPostersRoutes = new Hono<{Bindings: Environment}>();
 // Add poster URL
 adminPostersRoutes.post('/movies/:id/posters', authMiddleware, async c => {
   try {
-    const adminService = new AdminService(c.env);
+    const adminService = new AdminMoviesService(c.env);
     const movieId = c.req.param('id');
     if (!movieId) {
       return c.json({error: 'Missing id parameter'}, 400);
@@ -60,7 +60,7 @@ adminPostersRoutes.delete(
   authMiddleware,
   async c => {
     try {
-      const adminService = new AdminService(c.env);
+      const adminService = new AdminMoviesService(c.env);
       const movieId = c.req.param('movieId');
       const posterId = c.req.param('posterId');
       if (!movieId || !posterId) {

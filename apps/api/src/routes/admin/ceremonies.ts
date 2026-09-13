@@ -9,7 +9,7 @@ import {Hono} from 'hono';
 import {inArray, sql} from 'drizzle-orm';
 import {authMiddleware} from '../../auth';
 import {sanitizeText, sanitizeUrl} from '../../middleware/sanitizer';
-import {AdminService} from '../../services';
+import {CeremonyNominationSyncService} from '../../services';
 import {
   ExternalFetchError,
   NotFoundError,
@@ -647,11 +647,11 @@ adminCeremoniesRoutes.post(
         return c.json({error: 'Category UID is required'}, 400);
       }
 
-      const adminService = new AdminService(c.env);
-      const result = await adminService.syncCeremonyNominationsFromImdb(
-        ceremonyUid,
-        {categoryUid: sanitizedCategoryUid},
-      );
+      const result = await new CeremonyNominationSyncService(
+        c.env,
+      ).syncCeremonyNominationsFromImdb(ceremonyUid, {
+        categoryUid: sanitizedCategoryUid,
+      });
 
       const database = getDatabase(c.env);
       const detail = await loadCeremonyDetail(database, ceremonyUid);

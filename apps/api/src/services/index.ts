@@ -1,4 +1,3 @@
-export {AdminService} from './admin-service';
 export {AdminMoviesService} from './admin-movies-service';
 export {
   AvailabilityService,
