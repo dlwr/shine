@@ -1,21 +1,10 @@
 import {redirect} from 'react-router';
 import type {Route} from './+types/movies.$id';
-import {
-  apiFetch,
-  resolveApiUrl,
-  resolveEnvironment,
-  type LoadContext,
-} from '@/lib/api';
-import {
-  ArticleLinksSection,
-  type ArticleLink,
-} from '@/components/editorial/article-links-section';
+import {apiFetch, resolveApiUrl, resolveEnvironment} from '@/lib/api';
+import {ArticleLinksSection} from '@/components/editorial/article-links-section';
 import {AwardTree} from '@/components/editorial/award-tree';
 import {WatchedToggle} from '@/components/editorial/watched-toggle';
-import {
-  CreditsList,
-  type MovieCredits,
-} from '@/components/editorial/credits-list';
+import {CreditsList} from '@/components/editorial/credits-list';
 import {Masthead} from '@/components/editorial/masthead';
 import {BigYear} from '@/components/editorial/big-year';
 import {MetaLine} from '@/components/editorial/meta-line';
@@ -25,79 +14,15 @@ import {WatchMenu} from '@/components/editorial/watch-menu';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {useArticleLinkForm, useIsTestMode} from '@/hooks/use-article-link-form';
 import {useOnDemandAvailability} from '@/hooks/use-on-demand-availability';
-import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
+import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-
-type MovieDetailData = {
-  uid: string;
-  year: number;
-  originalLanguage: string;
-  imdbId: string;
-  tmdbId: number;
-  imdbUrl?: string;
-  posterUrl?: string;
-  title: string;
-  description?: string;
-  nominations: Array<{
-    uid: string;
-    isWinner: boolean;
-    specialMention?: string;
-    person?: {uid: string; name: string};
-    category: {
-      uid: string;
-      name: string;
-      displayName?: string;
-    };
-    ceremony: {
-      uid: string;
-      number?: number;
-      year: number;
-    };
-    organization: {
-      uid: string;
-      name: string;
-      shortName?: string;
-      displayName?: string;
-    };
-  }>;
-  articleLinks: ArticleLink[];
-  availability?: Array<{
-    source: string;
-    detail?: string;
-    checkedAt: number;
-  }>;
-  credits?: MovieCredits;
-};
-type LoaderErrorResponse = {
-  error: string;
-  status?: number;
-  locale: Locale;
-};
-
-type RelatedMovie = {
-  uid: string;
-  title: string;
-  year?: number;
-  posterUrl?: string;
-};
-
-type LoaderSuccessResponse = {
-  movieDetail: MovieDetailData;
-  relatedMovies?: RelatedMovie[];
-  turnstileSiteKey?: string;
-  locale: Locale;
-  apiUrl?: string;
-};
-
-type LoaderData = LoaderErrorResponse | LoaderSuccessResponse;
-
-function isLoaderError(data: LoaderData): data is LoaderErrorResponse {
-  return 'error' in data;
-}
-
-function isLoaderSuccess(data: LoaderData): data is LoaderSuccessResponse {
-  return 'movieDetail' in data;
-}
+import {
+  fetchRelatedMovies,
+  isLoaderError,
+  isLoaderSuccess,
+  type LoaderData,
+  type MovieDetailData,
+} from '@/lib/movie-detail';
 
 function MovieDetailErrorView({
   error,
@@ -230,30 +155,6 @@ export function meta({
     }),
     ...(movieDetail ? [{'script:ld+json': buildMovieJsonLd(movieDetail)}] : []),
   ];
-}
-
-async function fetchRelatedMovies(
-  context: LoadContext,
-  movieId: string,
-  locale: Locale,
-  signal?: AbortSignal,
-): Promise<RelatedMovie[]> {
-  try {
-    const response = await apiFetch(
-      context,
-      `/movies/${movieId}/related?locale=${locale}&limit=6`,
-      {signal},
-    );
-
-    if (!response?.ok) {
-      return [];
-    }
-
-    const body = (await response.json()) as {movies?: RelatedMovie[]};
-    return body.movies ?? [];
-  } catch {
-    return [];
-  }
 }
 
 export async function loader({
