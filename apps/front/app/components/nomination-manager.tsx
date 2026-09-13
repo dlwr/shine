@@ -1,8 +1,6 @@
-import {useEffect, useMemo, useState} from 'react';
+import {useMemo} from 'react';
 import {Link} from 'react-router';
-import type {ChangeEvent, FormEvent} from 'react';
 import type {MovieDetails} from '../routes/admin.movies.$id';
-import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
 import type {
   AwardsCategory,
   AwardsCeremony,
@@ -10,21 +8,13 @@ import type {
   Nomination,
 } from './admin/nominations/types';
 import {useAwardsData} from './admin/nominations/use-awards-data';
+import {useNominationEditor} from './admin/nominations/use-nomination-editor';
 
 type NominationManagerProperties = {
   movieId: string;
   apiUrl: string;
   nominations: Nomination[];
   onNominationsUpdate: (movieData: MovieDetails) => void;
-};
-
-const ensureToken = () => {
-  const token = getAdminToken();
-  if (!token) {
-    location.assign('/admin/login');
-    return;
-  }
-  return token;
 };
 
 const sortCeremoniesByYearDesc = (ceremonies: AwardsCeremony[]) => {
@@ -84,38 +74,26 @@ export default function NominationManager({
 }: NominationManagerProperties) {
   const {awardsData, loadingAwards, awardsError} = useAwardsData(apiUrl);
 
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newNomination, setNewNomination] = useState({
-    organizationUid: '',
-    ceremonyUid: '',
-    categoryUid: '',
-    isWinner: false,
-    specialMention: '',
-  });
-  const [isAdding, setIsAdding] = useState(false);
-
-  const [editingNominationId, setEditingNominationId] = useState<
-    string | undefined
-  >();
-  const [editValues, setEditValues] = useState({
-    isWinner: false,
-    specialMention: '',
-  });
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [deletingNominationId, setDeletingNominationId] = useState<
-    string | undefined
-  >();
-
-  const [nominationError, setNominationError] = useState<string | undefined>();
-
-  useEffect(() => {
-    if (
-      editingNominationId &&
-      nominations.every(nomination => nomination.uid !== editingNominationId)
-    ) {
-      setEditingNominationId(undefined);
-    }
-  }, [nominations, editingNominationId]);
+  const {
+    showAddForm,
+    newNomination,
+    isAdding,
+    editingNominationId,
+    editValues,
+    isUpdating,
+    deletingNominationId,
+    error: nominationError,
+    toggleAddForm,
+    closeAddForm,
+    changeOrganization,
+    changeNewNomination,
+    handleAddNomination,
+    handleStartEdit,
+    changeEditValues,
+    cancelEdit,
+    handleUpdateNomination,
+    handleDeleteNomination,
+  } = useNominationEditor({movieId, apiUrl, nominations, onNominationsUpdate});
 
   const filteredCeremonies = useMemo<AwardsCeremony[]>(() => {
     if (!awardsData || !newNomination.organizationUid) {
@@ -139,228 +117,13 @@ export default function NominationManager({
     return sortCategoriesByName(categoriesForOrganization);
   }, [awardsData, newNomination.organizationUid]);
 
-  const resetAddForm = () => {
-    setNewNomination({
-      organizationUid: '',
-      ceremonyUid: '',
-      categoryUid: '',
-      isWinner: false,
-      specialMention: '',
-    });
-    setNominationError(undefined);
-  };
-
-  const refreshMovieData = async () => {
-    const response = await adminFetch(`${apiUrl}/admin/movies/${movieId}`);
-
-    if (response.ok) {
-      const movie = (await response.json()) as MovieDetails;
-      onNominationsUpdate(movie);
-    }
-  };
-
-  const handleOrganizationChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const value = event.target.value;
-    setNewNomination(current => ({
-      organizationUid: value,
-      ceremonyUid: '',
-      categoryUid: '',
-      isWinner: current.isWinner,
-      specialMention: current.specialMention,
-    }));
-  };
-
-  const handleAddNomination = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setNominationError(undefined);
-
-    if (
-      !newNomination.organizationUid ||
-      !newNomination.ceremonyUid ||
-      !newNomination.categoryUid
-    ) {
-      setNominationError('組織・授賞式・部門をすべて選択してください');
-      return;
-    }
-
-    if (!ensureToken()) {
-      return;
-    }
-
-    setIsAdding(true);
-
-    try {
-      const response = await adminFetch(
-        `${apiUrl}/admin/movies/${movieId}/nominations`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            ceremonyUid: newNomination.ceremonyUid,
-            categoryUid: newNomination.categoryUid,
-            isWinner: newNomination.isWinner,
-            specialMention:
-              newNomination.specialMention.trim() === ''
-                ? undefined
-                : newNomination.specialMention.trim(),
-          }),
-        },
-      );
-
-      if (response.status === 401) {
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          await readErrorMessage(response, 'ノミネートの追加に失敗しました'),
-        );
-      }
-
-      await refreshMovieData();
-      resetAddForm();
-      setShowAddForm(false);
-      globalThis.alert?.('ノミネートを追加しました');
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'ノミネートの追加に失敗しました';
-      setNominationError(message);
-      console.error('Add nomination error:', error);
-    } finally {
-      setIsAdding(false);
-    }
-  };
-
-  const handleStartEdit = (nomination: Nomination) => {
-    setEditingNominationId(nomination.uid);
-    setEditValues({
-      isWinner: nomination.isWinner,
-      specialMention: nomination.specialMention ?? '',
-    });
-    setNominationError(undefined);
-  };
-
-  const handleUpdateNomination = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!editingNominationId) {
-      return;
-    }
-
-    if (!ensureToken()) {
-      return;
-    }
-
-    setIsUpdating(true);
-    setNominationError(undefined);
-
-    try {
-      const response = await adminFetch(
-        `${apiUrl}/admin/nominations/${editingNominationId}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            isWinner: editValues.isWinner,
-            specialMention:
-              editValues.specialMention.trim() === ''
-                ? undefined
-                : editValues.specialMention.trim(),
-          }),
-        },
-      );
-
-      if (response.status === 401) {
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          await readErrorMessage(response, 'ノミネートの更新に失敗しました'),
-        );
-      }
-
-      await refreshMovieData();
-      setEditingNominationId(undefined);
-      globalThis.alert?.('ノミネートを更新しました');
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'ノミネートの更新に失敗しました';
-      setNominationError(message);
-      console.error('Update nomination error:', error);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const handleDeleteNomination = async (nomination: Nomination) => {
-    if (
-      !globalThis.confirm?.(
-        `「${nomination.organization.name} ${nomination.category.name}」のノミネートを削除しますか？`,
-      )
-    ) {
-      return;
-    }
-
-    if (!ensureToken()) {
-      return;
-    }
-
-    setDeletingNominationId(nomination.uid);
-    setNominationError(undefined);
-
-    try {
-      const response = await adminFetch(
-        `${apiUrl}/admin/nominations/${nomination.uid}`,
-        {
-          method: 'DELETE',
-        },
-      );
-
-      if (response.status === 401) {
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          await readErrorMessage(response, 'ノミネートの削除に失敗しました'),
-        );
-      }
-
-      await refreshMovieData();
-      globalThis.alert?.('ノミネートを削除しました');
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'ノミネートの削除に失敗しました';
-      setNominationError(message);
-      console.error('Delete nomination error:', error);
-    } finally {
-      setDeletingNominationId(undefined);
-    }
-  };
-
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-medium text-gray-900">ノミネート管理</h3>
         <button
           type="button"
-          onClick={() => {
-            const isNext = !showAddForm;
-            setShowAddForm(isNext);
-            if (!isNext) {
-              resetAddForm();
-            }
-          }}
+          onClick={toggleAddForm}
           className="bg-blue-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-blue-700"
           disabled={loadingAwards}>
           {showAddForm ? 'キャンセル' : 'ノミネートを追加'}
@@ -385,7 +148,7 @@ export default function NominationManager({
               <select
                 className="mt-1 rounded border border-gray-300 px-3 py-2"
                 value={newNomination.organizationUid}
-                onChange={handleOrganizationChange}
+                onChange={event => changeOrganization(event.target.value)}
                 required>
                 <option value="">選択してください</option>
                 {(awardsData?.organizations ?? []).map(organization => (
@@ -401,10 +164,7 @@ export default function NominationManager({
                 className="mt-1 rounded border border-gray-300 px-3 py-2"
                 value={newNomination.ceremonyUid}
                 onChange={event =>
-                  setNewNomination(current => ({
-                    ...current,
-                    ceremonyUid: event.target.value,
-                  }))
+                  changeNewNomination({ceremonyUid: event.target.value})
                 }
                 disabled={!newNomination.organizationUid}
                 required>
@@ -422,10 +182,7 @@ export default function NominationManager({
                 className="mt-1 rounded border border-gray-300 px-3 py-2"
                 value={newNomination.categoryUid}
                 onChange={event =>
-                  setNewNomination(current => ({
-                    ...current,
-                    categoryUid: event.target.value,
-                  }))
+                  changeNewNomination({categoryUid: event.target.value})
                 }
                 disabled={!newNomination.organizationUid}
                 required>
@@ -443,10 +200,7 @@ export default function NominationManager({
                 className="mr-2 rounded border-gray-300"
                 checked={newNomination.isWinner}
                 onChange={event =>
-                  setNewNomination(current => ({
-                    ...current,
-                    isWinner: event.target.checked,
-                  }))
+                  changeNewNomination({isWinner: event.target.checked})
                 }
               />
               受賞（Winner）
@@ -458,10 +212,7 @@ export default function NominationManager({
               className="mt-1 rounded border border-gray-300 px-3 py-2"
               value={newNomination.specialMention}
               onChange={event =>
-                setNewNomination(current => ({
-                  ...current,
-                  specialMention: event.target.value,
-                }))
+                changeNewNomination({specialMention: event.target.value})
               }
               placeholder="例：特別賞、審査員賞 など"
             />
@@ -470,10 +221,7 @@ export default function NominationManager({
             <button
               type="button"
               className="text-sm text-gray-600 hover:text-gray-800"
-              onClick={() => {
-                setShowAddForm(false);
-                resetAddForm();
-              }}
+              onClick={closeAddForm}
               disabled={isAdding}>
               キャンセル
             </button>
@@ -593,10 +341,7 @@ export default function NominationManager({
               className="mr-2 rounded border-gray-300"
               checked={editValues.isWinner}
               onChange={event =>
-                setEditValues(current => ({
-                  ...current,
-                  isWinner: event.target.checked,
-                }))
+                changeEditValues({isWinner: event.target.checked})
               }
             />
             受賞（Winner）
@@ -607,10 +352,7 @@ export default function NominationManager({
               className="mt-1 rounded border border-gray-300 px-3 py-2"
               value={editValues.specialMention}
               onChange={event =>
-                setEditValues(current => ({
-                  ...current,
-                  specialMention: event.target.value,
-                }))
+                changeEditValues({specialMention: event.target.value})
               }
               placeholder="例：特別賞、審査員賞 など"
             />
@@ -619,10 +361,7 @@ export default function NominationManager({
             <button
               type="button"
               className="text-sm text-gray-600 hover:text-gray-800"
-              onClick={() => {
-                setEditingNominationId(undefined);
-                setEditValues({isWinner: false, specialMention: ''});
-              }}
+              onClick={cancelEdit}
               disabled={isUpdating}>
               キャンセル
             </button>
