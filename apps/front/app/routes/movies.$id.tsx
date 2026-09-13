@@ -8,7 +8,9 @@ import {CreditsList} from '@/components/editorial/credits-list';
 import {Masthead} from '@/components/editorial/masthead';
 import {BigYear} from '@/components/editorial/big-year';
 import {MetaLine} from '@/components/editorial/meta-line';
+import {MovieDetailErrorView} from '@/components/editorial/movie-detail-error-view';
 import {PosterFrame} from '@/components/editorial/poster-frame';
+import {RelatedMovies} from '@/components/editorial/related-movies';
 import {AvailabilityBadges} from '@/components/editorial/availability-badges';
 import {WatchMenu} from '@/components/editorial/watch-menu';
 import {SiteFooter} from '@/components/editorial/site-footer';
@@ -28,31 +30,6 @@ import {
   buildMovieJsonLd,
   summarizeOrganizations,
 } from '@/lib/movie-detail-meta';
-
-function MovieDetailErrorView({
-  error,
-  status,
-}: {
-  error: string;
-  status?: number;
-}) {
-  const title =
-    status === 404 ? '映画が見つかりません' : 'エラーが発生しました';
-
-  return (
-    <div className="min-h-screen bg-paper flex items-center justify-center">
-      <div className="max-w-md w-full bg-surface border-2 border-ink p-6">
-        <h1 className="text-xl font-bold text-brand mb-4">{title}</h1>
-        <p className="text-ink mb-6">{error}</p>
-        <a
-          href="/"
-          className="inline-block border-2 border-ink px-4 py-2 font-mono text-sm shadow-[2px_2px_0_var(--ink)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all">
-          ← SHINE
-        </a>
-      </div>
-    </div>
-  );
-}
 
 export function meta({
   loaderData,
@@ -348,34 +325,7 @@ export default function MovieDetail({
         />
 
         {/* Related Movies */}
-        {relatedMovies.length > 0 && (
-          <section className="mb-8">
-            <p className="font-mono text-xs text-ink-muted mb-3">関連映画</p>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-              {relatedMovies.map(relatedMovie => (
-                <a
-                  key={relatedMovie.uid}
-                  href={`/movies/${relatedMovie.uid}`}
-                  className="no-underline text-ink">
-                  <PosterFrame
-                    posterUrl={relatedMovie.posterUrl}
-                    alt={`${relatedMovie.title} poster`}
-                    className="w-full"
-                    displaySize="w342"
-                  />
-                  <span className="block font-display font-bold text-xs leading-tight mt-1.5">
-                    {relatedMovie.title}
-                  </span>
-                  {relatedMovie.year && (
-                    <span className="block font-mono text-[10px] text-ink-muted mt-0.5">
-                      {relatedMovie.year}
-                    </span>
-                  )}
-                </a>
-              ))}
-            </div>
-          </section>
-        )}
+        <RelatedMovies movies={relatedMovies} />
 
         <SiteFooter locale={locale} />
       </div>
