@@ -1,10 +1,12 @@
 import {setTimeout as sleep} from 'node:timers/promises';
 import {and, eq} from 'drizzle-orm';
 import {movies} from '@shine/database/schema/movies';
-import {posterUrls} from '@shine/database/schema/poster-urls';
-import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import {withDefaultTranslationFlags} from '../common/default-translations';
+import {
+  insertImdbAndTmdbReferenceUrls,
+  insertTmdbPosterUrl,
+} from '../common/movie-reference-records';
 import {pickJapaneseTitle} from '../common/tmdb-japanese-title';
 import {
   fetchTMDBConfig,
@@ -102,7 +104,12 @@ export async function createMovie(
     )
     .onConflictDoNothing();
 
-  await insertReferenceUrls(database, movie.uid, film.imdbId, details?.id);
+  await insertImdbAndTmdbReferenceUrls(
+    database,
+    movie.uid,
+    film.imdbId,
+    details?.id,
+  );
 
   if (details?.poster_path && context.tmdbApiKey) {
     await insertPoster(
@@ -160,36 +167,6 @@ async function reuseMovieByTmdbId(
   return existing.uid;
 }
 
-async function insertReferenceUrls(
-  database: DatabaseClient,
-  movieUid: string,
-  imdbId: string,
-  tmdbId: number | undefined,
-): Promise<void> {
-  const values: Array<typeof referenceUrls.$inferInsert> = [
-    {
-      movieUid,
-      url: `https://www.imdb.com/title/${imdbId}/`,
-      sourceType: 'imdb',
-      languageCode: 'en',
-      isPrimary: 1,
-    },
-  ];
-
-  if (tmdbId !== undefined) {
-    values.push({
-      movieUid,
-      url: `https://www.themoviedb.org/movie/${tmdbId}`,
-      sourceType: 'other',
-      languageCode: 'en',
-      isPrimary: 0,
-      description: 'TMDb entry',
-    });
-  }
-
-  await database.insert(referenceUrls).values(values).onConflictDoNothing();
-}
-
 async function insertPoster(
   database: DatabaseClient,
   movieUid: string,
@@ -204,17 +181,5 @@ async function insertPoster(
     return;
   }
 
-  const size = config.images.poster_sizes.includes('w500')
-    ? 'w500'
-    : 'original';
-
-  await database
-    .insert(posterUrls)
-    .values({
-      movieUid,
-      url: `${config.images.secure_base_url}${size}${posterPath}`,
-      sourceType: 'tmdb',
-      isPrimary: 1,
-    })
-    .onConflictDoNothing();
+  await insertTmdbPosterUrl(database, config, movieUid, posterPath);
 }

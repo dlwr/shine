@@ -1,9 +1,11 @@
 import {movies} from '@shine/database/schema/movies';
-import {posterUrls} from '@shine/database/schema/poster-urls';
-import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import {generateUUID} from '@shine/utils';
 import {withDefaultTranslationFlags} from '../common/default-translations';
+import {
+  insertImdbAndTmdbReferenceUrls,
+  insertTmdbPosterUrl,
+} from '../common/movie-reference-records';
 import {pickJapaneseTitle} from '../common/tmdb-japanese-title';
 import {type TMDBConfig} from '../common/tmdb-utilities';
 import {
@@ -73,14 +75,21 @@ export async function insertMovieWithTranslations({
     csvDescription,
   });
 
-  await insertReferenceUrls(
+  await insertImdbAndTmdbReferenceUrls(
     database,
     movieUid,
     imdbId,
     tmdbId,
     tmdbMovie.media_type,
   );
-  await insertPoster(database, tmdbConfig, movieUid, tmdbMovie.poster_path);
+  if (tmdbConfig && tmdbMovie.poster_path) {
+    await insertTmdbPosterUrl(
+      database,
+      tmdbConfig,
+      movieUid,
+      tmdbMovie.poster_path,
+    );
+  }
 
   return movieUid;
 }
@@ -197,63 +206,5 @@ export async function insertTranslations({
     .values(
       withDefaultTranslationFlags(tmdbMovie.original_language ?? 'en', values),
     )
-    .onConflictDoNothing();
-}
-
-async function insertReferenceUrls(
-  database: DatabaseClient,
-  movieUid: string,
-  imdbId: string,
-  tmdbId: number | undefined,
-  mediaType: 'movie' | 'tv' | undefined,
-) {
-  const values: Array<typeof referenceUrls.$inferInsert> = [
-    {
-      movieUid,
-      url: `https://www.imdb.com/title/${imdbId}/`,
-      sourceType: 'imdb',
-      languageCode: 'en',
-      isPrimary: 1,
-    },
-  ];
-
-  if (tmdbId) {
-    const tmdbPath = mediaType === 'tv' ? 'tv' : 'movie';
-    values.push({
-      movieUid,
-      url: `https://www.themoviedb.org/${tmdbPath}/${tmdbId}`,
-      sourceType: 'other',
-      languageCode: 'en',
-      isPrimary: 0,
-      description: 'TMDb entry',
-    });
-  }
-
-  await database.insert(referenceUrls).values(values).onConflictDoNothing();
-}
-
-async function insertPoster(
-  database: DatabaseClient,
-  tmdbConfig: TMDBConfig | undefined,
-  movieUid: string,
-  posterPath?: string,
-) {
-  if (!posterPath || !tmdbConfig) {
-    return;
-  }
-
-  const baseUrl = tmdbConfig.images.secure_base_url;
-  const size = tmdbConfig.images.poster_sizes.includes('w500')
-    ? 'w500'
-    : 'original';
-
-  await database
-    .insert(posterUrls)
-    .values({
-      movieUid,
-      url: `${baseUrl}${size}${posterPath}`,
-      sourceType: 'tmdb',
-      isPrimary: 1,
-    })
     .onConflictDoNothing();
 }

@@ -1,33 +1,20 @@
-import {and, eq, sql} from 'drizzle-orm';
-import {awardCategories} from '@shine/database/schema/award-categories';
+import {sql} from 'drizzle-orm';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
-import {awardOrganizations} from '@shine/database/schema/award-organizations';
+import {
+  ensureAwardCategory,
+  ensureAwardOrganization,
+} from '../common/award-records';
 import {type DatabaseClient, type ImdbEventAwardConfig} from './types';
 
 export async function ensureOrganization(
   database: DatabaseClient,
   config: ImdbEventAwardConfig,
 ): Promise<string> {
-  await database
-    .insert(awardOrganizations)
-    .values({
-      name: config.organizationName,
-      country: config.organizationCountry,
-      establishedYear: config.establishedYear,
-    })
-    .onConflictDoNothing();
-
-  const [row] = await database
-    .select({uid: awardOrganizations.uid})
-    .from(awardOrganizations)
-    .where(eq(awardOrganizations.name, config.organizationName))
-    .limit(1);
-
-  if (!row) {
-    throw new Error(`Failed to create ${config.organizationName} organization`);
-  }
-
-  return row.uid;
+  return ensureAwardOrganization(database, {
+    name: config.organizationName,
+    country: config.organizationCountry,
+    establishedYear: config.establishedYear,
+  });
 }
 
 export async function ensureCategory(
@@ -35,31 +22,10 @@ export async function ensureCategory(
   organizationUid: string,
   config: ImdbEventAwardConfig,
 ): Promise<string> {
-  await database
-    .insert(awardCategories)
-    .values({
-      organizationUid,
-      name: config.categoryName,
-      shortName: config.categoryShortName ?? config.categoryName,
-    })
-    .onConflictDoNothing();
-
-  const [row] = await database
-    .select({uid: awardCategories.uid})
-    .from(awardCategories)
-    .where(
-      and(
-        eq(awardCategories.organizationUid, organizationUid),
-        eq(awardCategories.name, config.categoryName),
-      ),
-    )
-    .limit(1);
-
-  if (!row) {
-    throw new Error(`Failed to create ${config.categoryName} category`);
-  }
-
-  return row.uid;
+  return ensureAwardCategory(database, organizationUid, {
+    name: config.categoryName,
+    shortName: config.categoryShortName ?? config.categoryName,
+  });
 }
 
 export async function ensureCeremony(

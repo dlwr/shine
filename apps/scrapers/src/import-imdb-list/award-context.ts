@@ -1,60 +1,10 @@
-import {and, desc, eq} from 'drizzle-orm';
-import {awardCategories} from '@shine/database/schema/award-categories';
+import {desc, eq} from 'drizzle-orm';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
-import {awardOrganizations} from '@shine/database/schema/award-organizations';
+import {
+  ensureAwardCategory,
+  ensureAwardOrganization,
+} from '../common/award-records';
 import {type AwardContext, type DatabaseClient} from './types';
-
-async function findOrCreateOrganization(
-  database: DatabaseClient,
-  name: string,
-): Promise<string> {
-  await database
-    .insert(awardOrganizations)
-    .values({name})
-    .onConflictDoNothing();
-
-  const [row] = await database
-    .select({uid: awardOrganizations.uid})
-    .from(awardOrganizations)
-    .where(eq(awardOrganizations.name, name))
-    .limit(1);
-
-  if (!row) {
-    throw new Error(
-      `Award organization "${name}" could not be created or found.`,
-    );
-  }
-
-  return row.uid;
-}
-
-async function findOrCreateCategory(
-  database: DatabaseClient,
-  organizationUid: string,
-  name: string,
-): Promise<string> {
-  await database
-    .insert(awardCategories)
-    .values({organizationUid, name})
-    .onConflictDoNothing();
-
-  const [row] = await database
-    .select({uid: awardCategories.uid})
-    .from(awardCategories)
-    .where(
-      and(
-        eq(awardCategories.organizationUid, organizationUid),
-        eq(awardCategories.name, name),
-      ),
-    )
-    .limit(1);
-
-  if (!row) {
-    throw new Error(`Award category "${name}" could not be created or found.`);
-  }
-
-  return row.uid;
-}
 
 async function findOrCreateCeremony(
   database: DatabaseClient,
@@ -109,12 +59,12 @@ export const getAwardContext = (() => {
       'Selected Films';
     const ceremonyDescription = options?.ceremonyName ?? orgName;
 
-    const organizationUid = await findOrCreateOrganization(database, orgName);
-    const categoryUid = await findOrCreateCategory(
-      database,
-      organizationUid,
-      catName,
-    );
+    const organizationUid = await ensureAwardOrganization(database, {
+      name: orgName,
+    });
+    const categoryUid = await ensureAwardCategory(database, organizationUid, {
+      name: catName,
+    });
     const ceremonyUid = await findOrCreateCeremony(
       database,
       organizationUid,
