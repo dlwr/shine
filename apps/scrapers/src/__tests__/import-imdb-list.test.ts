@@ -8,7 +8,7 @@ import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {afterEach, describe, expect, it} from 'vitest';
-import {insertTranslations} from '../import-imdb-list';
+import {insertTranslations} from '../import-imdb-list/insert-movie';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
