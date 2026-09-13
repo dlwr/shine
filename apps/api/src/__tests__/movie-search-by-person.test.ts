@@ -96,13 +96,16 @@ async function createTestEnvironment(): Promise<Environment> {
 function createKvMock(): Environment['CACHE_KV'] {
   const store = new Map<string, string>();
   return {
-    async get(key: string, type?: string) {
+    async get(key: string, type?: string | {type?: string}) {
       const value = store.get(key);
       if (!value) {
         return;
       }
 
-      return type === 'json' ? JSON.parse(value) : value;
+      return type === 'json' ||
+        (typeof type === 'object' && type.type === 'json')
+        ? JSON.parse(value)
+        : value;
     },
     async put(key: string, value: string) {
       store.set(key, value);
