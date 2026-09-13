@@ -82,6 +82,44 @@ describe('Quiz page', () => {
       expect(vi.mocked(fetch)).not.toHaveBeenCalled();
     });
 
+    it('本番では Image Transformations を使う印を載せる', async () => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => PUZZLE,
+      } as Response);
+
+      const result = await loader(
+        cast<Route.LoaderArgs>({
+          context: createMockContext('http://localhost:8787', {
+            PUBLIC_IMAGE_TRANSFORMATIONS: 'true',
+          }),
+          request: new Request('http://localhost:3000/quiz'),
+          params: {},
+          matches: [],
+        }),
+      );
+
+      expect(result.transformImages).toBe(true);
+    });
+
+    it('印が無ければ Image Transformations を使わない', async () => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => PUZZLE,
+      } as Response);
+
+      const result = await loader(
+        cast<Route.LoaderArgs>({
+          context: createMockContext(),
+          request: new Request('http://localhost:3000/quiz'),
+          params: {},
+          matches: [],
+        }),
+      );
+
+      expect(result.transformImages).toBe(false);
+    });
+
     it('出題を取得する', async () => {
       const mockFetch = vi.mocked(fetch);
       mockFetch.mockResolvedValue({
@@ -261,6 +299,17 @@ describe('Quiz page', () => {
       expect(screen.getByAltText('ポスターの一部')).toHaveAttribute(
         'src',
         '/quiz/poster.png?date=2026-08-16&stage=0',
+      );
+    });
+
+    it('Image Transformations が使えるならポスターをその経路で出す', () => {
+      render(
+        <QuizPage {...createComponentProperties({transformImages: true})} />,
+      );
+
+      expect(screen.getByAltText('ポスターの一部')).toHaveAttribute(
+        'src',
+        '/cdn-cgi/image/format=auto,quality=80/quiz/poster.png?date=2026-08-16&stage=0',
       );
     });
 

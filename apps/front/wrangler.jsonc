@@ -21,6 +21,7 @@
         "PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAACBZwqj0sn-sCTK5",
         // Cloudflare Web Analytics の siteTag。beacon の token として使う
         "PUBLIC_WEB_ANALYTICS_TOKEN": "c0dd704af80b4024bf03df608f5e6123",
+        "PUBLIC_IMAGE_TRANSFORMATIONS": "true",
       },
       "services": [
         {

@@ -3,7 +3,8 @@ import type {Route} from './+types/quiz';
 import {Masthead} from '@/components/editorial/masthead';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
-import {apiFetch, resolveApiUrl} from '@/lib/api';
+import {apiFetch, resolveApiUrl, canTransformImages} from '@/lib/api';
+import {transformedImageUrl} from '@/lib/image-transformations';
 import {fetchMonthlyPick, type MonthlyPick} from '@/lib/monthly-pick';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
@@ -60,6 +61,7 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
   const apiUrl = resolveApiUrl(context);
+  const transformImages = canTransformImages(context);
 
   const [dailyResponse, monthly] = await Promise.all([
     apiFetch(context, '/quiz/daily', {signal: request.signal}),
@@ -76,7 +78,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
     poolSize: number;
   };
 
-  return {puzzle, apiUrl, locale, monthly};
+  return {puzzle, apiUrl, locale, monthly, transformImages};
 }
 
 function readStorage<T>(key: string): T | undefined {
@@ -97,10 +99,11 @@ function writeStorage(key: string, value: unknown): void {
 }
 
 export default function QuizPage({loaderData}: Route.ComponentProps) {
-  const {puzzle, apiUrl, monthly} = loaderData as {
+  const {puzzle, apiUrl, monthly, transformImages} = loaderData as {
     monthly?: MonthlyPick;
     puzzle: {date: string; maxAttempts: number; poolSize: number};
     apiUrl: string;
+    transformImages?: boolean;
   };
   const locale = 'ja';
 
@@ -317,7 +320,10 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
 
           <div className="border-2 border-ink bg-surface md:col-start-1 md:row-start-1 md:row-span-2">
             <img
-              src={`/quiz/poster.png?date=${puzzle.date}&stage=${stage}`}
+              src={transformedImageUrl(
+                `/quiz/poster.png?date=${puzzle.date}&stage=${stage}`,
+                transformImages ?? false,
+              )}
               alt={isFinished ? game.answer?.title : 'ポスターの一部'}
               width={480}
               height={720}

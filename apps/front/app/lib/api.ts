@@ -4,6 +4,7 @@ export type FrontEnvironment = {
   PUBLIC_API_URL?: string;
   PUBLIC_TURNSTILE_SITE_KEY?: string;
   PUBLIC_WEB_ANALYTICS_TOKEN?: string;
+  PUBLIC_IMAGE_TRANSFORMATIONS?: string;
   QUIZ_ANSWER_KEY?: string;
   API?: {
     fetch: (url: string, init?: RequestInit) => Promise<Response>;
@@ -32,6 +33,10 @@ export function resolveApiUrl(context: LoadContext): string {
 
 export function resolveQuizKey(context: LoadContext): string | undefined {
   return resolveEnvironment(context).QUIZ_ANSWER_KEY;
+}
+
+export function canTransformImages(context: LoadContext): boolean {
+  return resolveEnvironment(context).PUBLIC_IMAGE_TRANSFORMATIONS === 'true';
 }
 
 export async function apiFetch(
