@@ -1,11 +1,10 @@
-import {useCallback, useEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 import type {Dispatch, SetStateAction} from 'react';
 import type {Route} from './+types/home';
-import {Button} from '@/components/ui/button';
 import {AdminLogin} from '@/components/molecules/admin-login';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
-import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+import {useAdminToken} from '@/hooks/use-admin-token';
 import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {FilmCard} from '@/components/editorial/film-card';
@@ -18,18 +17,9 @@ import {
   type HighlightedMovies,
   type PeriodType,
 } from '@/lib/home';
-import {ManualSelectionPanel} from '@/components/admin/manual-selection-panel';
+import {SelectionAdminControls} from '@/components/admin/selection-admin-controls';
 
 const SECONDARY_PERIODS: PeriodType[] = ['daily', 'weekly'];
-
-type MoviesLabels = {
-  randomMovie: string;
-  daily: string;
-  weekly: string;
-  monthly: string;
-  reselect: string;
-  edit: string;
-};
 
 const HOME_COPY = {
   ja: {
@@ -113,31 +103,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
   );
   const [error, setError] = useState<string | undefined>(initialError);
   const [loading, setLoading] = useState(shouldFetchOnClient);
-  const [adminToken, setAdminToken] = useState<string | undefined>();
-
-  useEffect(() => {
-    if (globalThis.window === undefined) {
-      return;
-    }
-
-    setAdminToken(getAdminToken());
-
-    const handleAdminLogin = () => {
-      setAdminToken(getAdminToken());
-    };
-
-    const handleAdminLogout = () => {
-      setAdminToken(undefined);
-    };
-
-    addEventListener('adminLogin', handleAdminLogin);
-    addEventListener('adminLogout', handleAdminLogout);
-
-    return () => {
-      removeEventListener('adminLogin', handleAdminLogin);
-      removeEventListener('adminLogout', handleAdminLogout);
-    };
-  }, []);
+  const adminToken = useAdminToken();
 
   // クライアントサイドでデータフェッチ
   useEffect(() => {
@@ -163,27 +129,6 @@ export default function Home({loaderData}: Route.ComponentProps) {
     void fetchMovies();
   }, [shouldFetchOnClient, apiUrl, locale]);
 
-  const labels = {
-    en: {
-      randomMovie: 'Random Movie',
-      daily: 'Daily',
-      weekly: 'Weekly',
-      monthly: 'Monthly',
-      reselect: 'Re-select',
-      edit: 'Edit',
-    },
-    ja: {
-      randomMovie: 'ランダム映画',
-      daily: '日替わり',
-      weekly: '週替わり',
-      monthly: '月替わり',
-      reselect: '再抽選',
-      edit: '編集',
-    },
-  };
-
-  const t = labels[locale as keyof typeof labels] || labels.en;
-
   return (
     <div className="m-0 w-full h-full">
       <AdminLogin locale={locale} apiUrl={apiUrl} />
@@ -195,7 +140,6 @@ export default function Home({loaderData}: Route.ComponentProps) {
           locale={locale}
           apiUrl={apiUrl}
           adminToken={adminToken}
-          labels={t}
           loading={loading}
           onMoviesChange={setMovies}
           onError={setError}
@@ -212,7 +156,6 @@ function Movies({
   locale,
   apiUrl,
   adminToken,
-  labels,
   loading: isDataLoading,
   onMoviesChange,
   onError,
@@ -222,100 +165,10 @@ function Movies({
   locale: string;
   apiUrl: string;
   adminToken: string | undefined;
-  labels: MoviesLabels;
   loading?: boolean;
   onMoviesChange: Dispatch<SetStateAction<HighlightedMovies | undefined>>;
   onError: Dispatch<SetStateAction<string | undefined>>;
 }) {
-  const [actionLoading, setActionLoading] = useState<
-    Partial<Record<PeriodType, boolean>>
-  >({});
-  const [searchOpen, setSearchOpen] = useState<
-    Partial<Record<PeriodType, boolean>>
-  >({});
-
-  const refreshHighlightedMovies = useCallback(async () => {
-    onMoviesChange(await fetchHighlightedMovies(apiUrl, locale));
-  }, [apiUrl, locale, onMoviesChange]);
-
-  const handleReselect = useCallback(
-    async (type: PeriodType) => {
-      if (!adminToken) {
-        alert(
-          locale === 'ja'
-            ? '管理者としてログインしてください'
-            : 'Please login as admin',
-        );
-        return;
-      }
-
-      setActionLoading(previous => ({...previous, [type]: true}));
-
-      try {
-        const response = await adminFetch(`${apiUrl}/reselect`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            type,
-            locale,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`API request failed: ${response.status}`);
-        }
-
-        await refreshHighlightedMovies();
-        onError(() => undefined); // eslint-disable-line unicorn/no-useless-undefined
-      } catch (error_) {
-        console.error('Error re-selecting movie:', error_);
-        alert(
-          locale === 'ja'
-            ? 'エラーが発生しました。再度お試しください。'
-            : 'An error occurred. Please try again.',
-        );
-        onError(
-          locale === 'ja'
-            ? '最新の映画情報を取得できませんでした。'
-            : 'Failed to update selections.',
-        );
-      } finally {
-        setActionLoading(previous => ({...previous, [type]: false}));
-      }
-    },
-    [adminToken, apiUrl, locale, onError, refreshHighlightedMovies],
-  );
-
-  const handleOverrideSuccess = useCallback(
-    async (type: PeriodType) => {
-      try {
-        await refreshHighlightedMovies();
-        onError(() => '');
-        setSearchOpen(previous => ({...previous, [type]: false}));
-      } catch (error_) {
-        console.error('Error refreshing movies after override:', error_);
-        onError(
-          locale === 'ja'
-            ? '最新の映画情報を取得できませんでした。'
-            : 'Failed to update selections.',
-        );
-      }
-    },
-    [locale, onError, refreshHighlightedMovies],
-  );
-
-  const handleOverrideLoadingChange = useCallback(
-    (type: PeriodType, isLoading: boolean) => {
-      setActionLoading(previous => ({...previous, [type]: isLoading}));
-    },
-    [],
-  );
-
-  const manualSetLabel = locale === 'ja' ? '検索して設定' : 'Search & Set';
-  const closeSearchLabel = locale === 'ja' ? '検索を閉じる' : 'Close Search';
-  const processingLabel = locale === 'ja' ? '処理中...' : 'Processing...';
   const noMovieLabel =
     locale === 'ja'
       ? '現在表示できる映画がありません。'
@@ -332,73 +185,16 @@ function Movies({
       return;
     }
 
-    const movie = movies?.[period];
-    // eslint-disable-next-line unicorn/no-computed-property-existence-check -- 存在ではなく値の真偽を見ている
-    const isLoading = Boolean(actionLoading[period]);
-    // eslint-disable-next-line unicorn/no-computed-property-existence-check -- 存在ではなく値の真偽を見ている
-    const isSearchVisible = Boolean(searchOpen[period]);
-
     return (
-      <div className="flex flex-col gap-2">
-        {movie && (
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="w-full border-2 border-ink font-mono text-xs">
-            <a href={`/admin/movies/${movie.uid}`}>{labels.edit}</a>
-          </Button>
-        )}
-        <Button
-          className="w-full border-2 border-ink font-mono text-xs"
-          size="sm"
-          onClick={() => {
-            void handleReselect(period);
-          }}
-          disabled={isLoading}>
-          {isLoading ? (
-            <div className="flex items-center justify-center">
-              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ink border-t-transparent mr-2" />
-              {processingLabel}
-            </div>
-          ) : (
-            labels.reselect
-          )}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full border-2 border-ink font-mono text-xs"
-          onClick={() => {
-            setSearchOpen(previous => ({
-              ...previous,
-              [period]: !isSearchVisible,
-            }));
-          }}
-          disabled={isLoading}>
-          {isSearchVisible ? closeSearchLabel : manualSetLabel}
-        </Button>
-        {isSearchVisible && (
-          <div className="mt-2">
-            <ManualSelectionPanel
-              period={period}
-              locale={locale}
-              apiUrl={apiUrl}
-              onClose={() => {
-                setSearchOpen(previous => ({
-                  ...previous,
-                  [period]: false,
-                }));
-              }}
-              onOverrideSuccess={() => handleOverrideSuccess(period)}
-              onOverrideLoadingChange={value =>
-                handleOverrideLoadingChange(period, value)
-              }
-              isParentLoading={isLoading}
-            />
-          </div>
-        )}
-      </div>
+      <SelectionAdminControls
+        period={period}
+        movieUid={movies?.[period]?.uid}
+        locale={locale}
+        apiUrl={apiUrl}
+        adminToken={adminToken}
+        onMoviesChange={onMoviesChange}
+        onError={onError}
+      />
     );
   };
 
