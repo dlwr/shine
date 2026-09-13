@@ -54,6 +54,34 @@ describe('Quiz page', () => {
   });
 
   describe('loader', () => {
+    it('出題は API の service binding 経由で取得する', async () => {
+      const bindingFetch = vi.fn(async (url: string) =>
+        cast<Response>({
+          ok: true,
+          json: async () =>
+            url.includes('/quiz/daily') ? PUZZLE : {monthly: undefined},
+        }),
+      );
+
+      const result = await loader(
+        cast<Route.LoaderArgs>({
+          context: createMockContext('http://localhost:8787', {
+            API: {fetch: bindingFetch},
+          }),
+          request: new Request('http://localhost:3000/quiz'),
+          params: {},
+          matches: [],
+        }),
+      );
+
+      expect(result.puzzle).toEqual(PUZZLE);
+      expect(bindingFetch).toHaveBeenCalledWith(
+        'https://shine-api/quiz/daily',
+        expect.anything(),
+      );
+      expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+    });
+
     it('出題を取得する', async () => {
       const mockFetch = vi.mocked(fetch);
       mockFetch.mockResolvedValue({
