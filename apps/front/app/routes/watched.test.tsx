@@ -18,50 +18,6 @@ const mockResponse = (body: unknown, status = 200) => {
   } as Response);
 };
 
-const AWARDS = [
-  {
-    slug: 'palme-dor',
-    name: 'パルム・ドール',
-    organization: 'カンヌ国際映画祭',
-    grouping: 'year',
-    firstYear: 1955,
-    lastYear: 2025,
-  },
-  {
-    slug: 'cannes-grand-prix',
-    name: 'グランプリ',
-    organization: 'カンヌ国際映画祭',
-    grouping: 'year',
-    subAward: true,
-    firstYear: 1967,
-    lastYear: 2025,
-  },
-  {
-    slug: '1001-movies',
-    name: '死ぬまでに観たい映画1001本',
-    organization: '死ぬまでに観たい映画1001本',
-    grouping: 'list',
-    firstYear: 2003,
-    lastYear: 2003,
-  },
-  {
-    slug: 'academy-director',
-    name: '監督賞',
-    organization: 'アカデミー賞',
-    grouping: 'person',
-    firstYear: 1929,
-    lastYear: 2026,
-  },
-  {
-    slug: 'kinema-junpo-japanese',
-    name: '日本映画',
-    organization: 'キネマ旬報ベスト・テン',
-    grouping: 'year',
-    firstYear: 1926,
-    lastYear: 2025,
-  },
-];
-
 const LISTS = [
   {
     slug: 'palme-dor',
@@ -101,22 +57,28 @@ describe('Watched index page', () => {
   });
 
   describe('loader', () => {
-    it('最高賞の年度制リストだけを受賞作の uid 付きで返す', async () => {
-      mockResponse({awards: AWARDS});
+    it('リストの要約に団体名と賞名をつないだ見出しを付けて返す', async () => {
       mockResponse({
-        years: [
+        lists: [
           {
-            year: 2023,
-            movies: [
-              {uid: 'uid-2023', isWinner: true},
-              {uid: 'uid-nominee', isWinner: false},
-            ],
+            slug: 'palme-dor',
+            name: 'パルム・ドール',
+            organization: 'カンヌ国際映画祭',
+            grouping: 'year',
+            firstYear: 1955,
+            lastYear: 2025,
+            uids: ['uid-2022', 'uid-2023'],
           },
-          {year: 2022, movies: [{uid: 'uid-2022', isWinner: true}]},
+          {
+            slug: 'kinema-junpo-japanese',
+            name: '日本映画',
+            organization: 'キネマ旬報ベスト・テン',
+            grouping: 'year',
+            firstYear: 1926,
+            lastYear: 2025,
+            uids: ['uid-1956'],
+          },
         ],
-      });
-      mockResponse({
-        years: [{year: 1956, movies: [{uid: 'uid-1956', isWinner: true}]}],
       });
 
       const result = await loader(createLoaderArguments());
@@ -137,23 +99,19 @@ describe('Watched index page', () => {
           uids: ['uid-1956'],
         },
       ]);
+    });
+
+    it('リストは 1 回の API 呼び出しで取る', async () => {
+      mockResponse({lists: []});
+
+      await loader(createLoaderArguments());
+
       expect(vi.mocked(fetch).mock.calls.map(call => call[0])).toEqual([
-        'http://localhost:8787/awards',
-        'http://localhost:8787/awards/palme-dor',
-        'http://localhost:8787/awards/kinema-junpo-japanese',
+        'http://localhost:8787/watched/lists',
       ]);
     });
 
-    it('賞一覧の取得に失敗したら502にする', async () => {
-      mockResponse({}, 500);
-
-      await expect(loader(createLoaderArguments())).rejects.toMatchObject({
-        status: 502,
-      });
-    });
-
-    it('賞ページの取得に失敗したら502にする', async () => {
-      mockResponse({awards: [AWARDS[0]]});
+    it('リストの取得に失敗したら502にする', async () => {
       mockResponse({}, 500);
 
       await expect(loader(createLoaderArguments())).rejects.toMatchObject({

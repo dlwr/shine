@@ -2,27 +2,19 @@ import {useEffect, useState} from 'react';
 import type {Route} from './+types/watched';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
-import {apiFetch, type LoadContext} from '@/lib/api';
+import {apiFetch} from '@/lib/api';
 import {awardHeading} from '@/lib/awards';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {orderWinners, readWatched, watchedStats} from '@/lib/watched';
+import {readWatched, watchedStats} from '@/lib/watched';
 
-type AwardSummaryResponse = {
+type WatchedListResponse = {
   slug: string;
   name: string;
   organization: string;
-  grouping: 'year' | 'list' | 'person';
-  subAward?: boolean;
   firstYear: number;
   lastYear: number;
-};
-
-type AwardDetailResponse = {
-  years: Array<{
-    year: number;
-    movies: Array<{uid: string; isWinner: boolean}>;
-  }>;
+  uids: string[];
 };
 
 export type WatchedListSummary = {
@@ -52,45 +44,28 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   });
 }
 
-async function fetchList(
-  context: LoadContext,
-  award: AwardSummaryResponse,
-  signal: AbortSignal,
-): Promise<WatchedListSummary> {
-  const response = await apiFetch(context, `/awards/${award.slug}`, {signal});
-  if (!response.ok) {
-    throw new Response('Failed to load award', {status: 502});
-  }
-
-  const detail = (await response.json()) as AwardDetailResponse;
-
-  return {
-    slug: award.slug,
-    heading: awardHeading(award),
-    firstYear: award.firstYear,
-    lastYear: award.lastYear,
-    uids: orderWinners(detail).map(film => film.uid),
-  };
-}
-
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
 
-  const response = await apiFetch(context, `/awards`, {signal: request.signal});
+  const response = await apiFetch(context, `/watched/lists`, {
+    signal: request.signal,
+  });
   if (!response.ok) {
-    throw new Response('Failed to load awards', {status: 502});
+    throw new Response('Failed to load watched lists', {status: 502});
   }
 
-  const {awards} = (await response.json()) as {
-    awards: AwardSummaryResponse[];
-  };
-  const lists = await Promise.all(
-    awards
-      .filter(award => award.grouping === 'year' && !award.subAward)
-      .map(async award => fetchList(context, award, request.signal)),
-  );
+  const {lists} = (await response.json()) as {lists: WatchedListResponse[]};
 
-  return {lists, locale} satisfies WatchedIndexData;
+  return {
+    lists: lists.map(list => ({
+      slug: list.slug,
+      heading: awardHeading(list),
+      firstYear: list.firstYear,
+      lastYear: list.lastYear,
+      uids: list.uids,
+    })),
+    locale,
+  } satisfies WatchedIndexData;
 }
 
 function yearRange(list: WatchedListSummary): string {
