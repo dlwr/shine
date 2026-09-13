@@ -46,6 +46,7 @@ import {createCommand as nikkanSportsFilmAwards} from './nikkan-sports-film-awar
 import {createCommand as northStarReport} from './north-star-report-cli';
 import {createCommand as personEnglishNames} from './person-english-names-cli';
 import {createCommand as snsPost} from './sns-post-cli';
+import {createCommand as survey} from './survey-cli';
 import {createCommand as tmdbJaWorklist} from './tmdb-ja-worklist-cli';
 import {createCommand as tursoUsageAlert} from './turso-usage-alert-cli';
 import {createCommand as veniceFilmFestival} from './venice-film-festival-cli';
@@ -101,6 +102,7 @@ const commandFactories: Array<() => Command> = [
   snsPost,
   tursoUsageAlert,
   northStarReport,
+  survey,
 ];
 
 export function createProgram(): Command {
