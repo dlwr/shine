@@ -7,6 +7,7 @@ import {
   EdgeCache,
   IMPORTED_DATA_EDGE_TTL,
   shouldCheckETag,
+  writeCacheAfterResponse,
 } from '../utils/cache';
 
 export const uncrownedRoutes = new Hono<{Bindings: Environment}>();
@@ -23,7 +24,10 @@ uncrownedRoutes.get('/', async c => {
     cached?.data ?? (await new UncrownedService(c.env).getUncrowned());
 
   if (!cached) {
-    await cache.set(UNCROWNED_CACHE_KEY, result, UNCROWNED_CACHE_TTL);
+    await writeCacheAfterResponse(
+      c,
+      cache.set(UNCROWNED_CACHE_KEY, result, UNCROWNED_CACHE_TTL),
+    );
   }
 
   const etag = createETag(result);

@@ -141,7 +141,10 @@ moviesRoutes.get('/search', async c => {
       filters,
     };
 
-    await cache.set(cacheKey, body, getCacheTTL.search.results);
+    await writeCacheAfterResponse(
+      c,
+      cache.set(cacheKey, body, getCacheTTL.search.results),
+    );
 
     return c.json(body, 200, {'X-Cache-Status': 'MISS'});
   } catch (error) {
@@ -332,7 +335,10 @@ moviesRoutes.get('/:id/related', async c => {
     });
 
     const result = {movies: relatedMovies};
-    await relatedCache.set(cacheKey, result, getCacheTTL.movie.related);
+    await writeCacheAfterResponse(
+      c,
+      relatedCache.set(cacheKey, result, getCacheTTL.movie.related),
+    );
 
     return createCachedResponse(result, getCacheTTL.movie.related, {
       'X-Cache-Status': 'MISS',

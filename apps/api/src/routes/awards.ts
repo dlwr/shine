@@ -9,6 +9,7 @@ import {
   EdgeCache,
   IMPORTED_DATA_EDGE_TTL,
   shouldCheckETag,
+  writeCacheAfterResponse,
 } from '../utils/cache';
 
 export const awardsRoutes = new Hono<{Bindings: Environment}>();
@@ -24,7 +25,10 @@ awardsRoutes.get('/', async c => {
   };
 
   if (!cached) {
-    await cache.set(cacheKey, result, AWARDS_CACHE_TTL);
+    await writeCacheAfterResponse(
+      c,
+      cache.set(cacheKey, result, AWARDS_CACHE_TTL),
+    );
   }
 
   const etag = createETag(result);
@@ -62,7 +66,10 @@ awardsRoutes.get('/:slug', async c => {
   }
 
   if (!cached) {
-    await cache.set(cacheKey, full, AWARDS_CACHE_TTL);
+    await writeCacheAfterResponse(
+      c,
+      cache.set(cacheKey, full, AWARDS_CACHE_TTL),
+    );
   }
 
   const award =
@@ -100,7 +107,10 @@ awardsRoutes.get('/:slug/:year', async c => {
   }
 
   if (!cached) {
-    await cache.set(cacheKey, award, AWARDS_CACHE_TTL);
+    await writeCacheAfterResponse(
+      c,
+      cache.set(cacheKey, award, AWARDS_CACHE_TTL),
+    );
   }
 
   const etag = createETag(award);
