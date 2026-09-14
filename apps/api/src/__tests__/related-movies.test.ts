@@ -13,6 +13,7 @@ import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {moviesRoutes} from '../routes/movies';
+import {invalidateMovieCaches} from '../services/movie-cache-invalidation';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -244,8 +245,25 @@ describe('GET /movies/:id/related', () => {
   });
 });
 
-describe('GET /movies/:id/related の KV 読み取り', () => {
-  it('関連映画は colo に 10 分置く', async () => {
+function createMemoryKv(): KVNamespace {
+  const store = new Map<string, string>();
+  return {
+    async get(key: string) {
+      const raw = store.get(key);
+      // eslint-disable-next-line unicorn/no-null -- KVNamespace.get returns null for missing keys
+      return raw === undefined ? null : JSON.parse(raw);
+    },
+    async put(key: string, value: string) {
+      store.set(key, value);
+    },
+    async delete(key: string) {
+      store.delete(key);
+    },
+  } as unknown as KVNamespace;
+}
+
+describe('GET /movies/:id/related のキャッシュ', () => {
+  it('limit を含めない鍵を colo に 10 分置いて読む', async () => {
     const environment = await createTestEnvironment();
     const get = vi.fn().mockResolvedValue(undefined);
     environment.CACHE_KV = {
@@ -254,11 +272,53 @@ describe('GET /movies/:id/related の KV 読み取り', () => {
       delete: vi.fn(),
     } as unknown as KVNamespace;
 
-    await moviesRoutes.request('/movie-target/related', {}, environment);
+    await moviesRoutes.request(
+      '/movie-target/related?limit=1',
+      {},
+      environment,
+    );
 
     expect(get).toHaveBeenCalledWith(
-      'movie:movie-target:related:ja:6:v2',
+      'movie:movie-target:related:ja:v3',
       expect.objectContaining({type: 'json', cacheTtl: 600}),
     );
+  });
+
+  it('limit が違っても同じ鍵から件数を切り出す', async () => {
+    const environment = await createTestEnvironment();
+    environment.CACHE_KV = createMemoryKv();
+    await moviesRoutes.request(
+      '/movie-target/related?limit=1',
+      {},
+      environment,
+    );
+
+    const response = await moviesRoutes.request(
+      '/movie-target/related?limit=2',
+      {},
+      environment,
+    );
+
+    const body = (await response.json()) as RelatedResponse;
+    expect(response.headers.get('X-Cache-Status')).toBe('HIT');
+    expect(body.movies.map(movie => movie.uid)).toEqual([
+      'movie-winner',
+      'movie-nominee',
+    ]);
+  });
+
+  it('映画のキャッシュを無効化すると関連映画も引き直す', async () => {
+    const environment = await createTestEnvironment();
+    environment.CACHE_KV = createMemoryKv();
+    await moviesRoutes.request('/movie-target/related', {}, environment);
+
+    await invalidateMovieCaches(environment, 'movie-target');
+
+    const response = await moviesRoutes.request(
+      '/movie-target/related',
+      {},
+      environment,
+    );
+    expect(response.headers.get('X-Cache-Status')).toBe('MISS');
   });
 });

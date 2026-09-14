@@ -1,5 +1,10 @@
 import {type Environment} from '@shine/database';
-import {EdgeCache, getMovieCacheKeysForAllLocales} from '../utils/cache';
+import {
+  CACHEABLE_LOCALES,
+  EdgeCache,
+  getCacheKeyForRelatedMovies,
+  getMovieCacheKeysForAllLocales,
+} from '../utils/cache';
 import {SelectionsService} from './selections-service';
 
 export async function invalidateMovieDetailsCache(
@@ -19,6 +24,12 @@ export async function invalidateMovieCaches(
   movieUid: string,
 ): Promise<void> {
   await invalidateMovieDetailsCache(environment, movieUid);
+  const cache = new EdgeCache(undefined, environment.CACHE_KV);
+  await Promise.all(
+    CACHEABLE_LOCALES.map(async locale =>
+      cache.delete(getCacheKeyForRelatedMovies(movieUid, locale)),
+    ),
+  );
   await new SelectionsService(environment).purgeSelectionCachesForMovie(
     movieUid,
   );

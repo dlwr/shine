@@ -195,6 +195,11 @@ export const getCacheKeyForSelection = (
 export const getCacheKeyForMovie = (movieId: string, locale: string): string =>
   `movie:${movieId}:${locale}:v9`;
 
+export const getCacheKeyForRelatedMovies = (
+  movieId: string,
+  locale: string,
+): string => `movie:${movieId}:related:${locale}:v3`;
+
 export const getCacheKeyForPerson = (
   personUid: string,
   locale: string,
@@ -238,7 +243,7 @@ export const getCacheTTL = {
   },
   movie: {
     details: 86_400, // 24 hours
-    related: 2_592_000, // 30 days
+    related: 604_800, // 7 days
   },
   search: {
     results: 86_400, // 24 hours
