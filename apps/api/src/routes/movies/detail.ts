@@ -8,6 +8,7 @@ import {
   EdgeCache,
   getCacheKeyForMovie,
   getCacheTTL,
+  IMPORTED_DATA_EDGE_TTL,
   normalizeCacheLocale,
   shouldCheckETag,
   writeCacheAfterResponse,
@@ -111,7 +112,9 @@ movieDetailRoutes.get('/:id/related', async c => {
 
     const relatedCache = new EdgeCache(undefined, c.env.CACHE_KV);
     const cacheKey = `movie:${movieId}:related:${locale}:${limit}:v2`;
-    const cached = await relatedCache.get(cacheKey);
+    const cached = await relatedCache.get(cacheKey, {
+      edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    });
     if (cached) {
       return c.json(cached.data as Record<string, unknown>, 200, {
         'X-Cache-Status': 'HIT',
