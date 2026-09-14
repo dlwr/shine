@@ -113,7 +113,7 @@ const parseOptionalUrl = (value: unknown): string | undefined => {
   return sanitizeUrl(trimmed);
 };
 
-export function parseCeremonyBody(body: CeremonyBody): CeremonyInput {
+function parseCeremonyBody(body: CeremonyBody): CeremonyInput {
   const rawOrganizationUid = body.organizationUid;
   if (
     typeof rawOrganizationUid !== 'string' ||

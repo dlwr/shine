@@ -39,7 +39,7 @@ const TEMPLATE = /{{[^}]*}}/g;
 const BRACKETED_TITLE = /『([^』]*)』/g;
 const WIKI_LINK = /^\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]*))?]]/;
 
-export type NikkanSportsFilm = {
+type NikkanSportsFilm = {
   page?: string;
   title: string;
 };
@@ -130,7 +130,7 @@ export function parseNikkanSportsWikitext(
 }
 
 /** 記事が無い作品はWikipediaの表示名で引けるようにする */
-export function filmKey(film: NikkanSportsFilm): string {
+function filmKey(film: NikkanSportsFilm): string {
   return film.page ?? `title:${film.title}`;
 }
 
@@ -294,25 +294,25 @@ const baseConfig = {
   minimumFilmsPerEdition: 1,
 };
 
-export const nikkanSportsBestFilmConfig: ImdbEventAwardConfig = {
+const nikkanSportsBestFilmConfig: ImdbEventAwardConfig = {
   ...baseConfig,
   categoryName: BEST_FILM_CATEGORY,
   isCompetitionCategory: category => category === BEST_FILM_CATEGORY,
 };
 
-export const nikkanSportsForeignConfig: ImdbEventAwardConfig = {
+const nikkanSportsForeignConfig: ImdbEventAwardConfig = {
   ...baseConfig,
   categoryName: FOREIGN_CATEGORY,
   isCompetitionCategory: category => category === FOREIGN_CATEGORY,
 };
 
-export const nikkanSportsYujiroConfig: ImdbEventAwardConfig = {
+const nikkanSportsYujiroConfig: ImdbEventAwardConfig = {
   ...baseConfig,
   categoryName: YUJIRO_CATEGORY,
   isCompetitionCategory: category => category === YUJIRO_CATEGORY,
 };
 
-export async function fetchNikkanSportsWikitext(): Promise<string> {
+async function fetchNikkanSportsWikitext(): Promise<string> {
   const url = buildUrl(WIKIPEDIA_API, {
     action: 'parse',
     page: WIKIPEDIA_ARTICLE,

@@ -18,7 +18,7 @@ export type TmdbTitleDetails = {
   original_language?: string | undefined;
 };
 
-export type KeepFlag = 'foreignScript' | 'kanjiEqualsOriginal';
+type KeepFlag = 'foreignScript' | 'kanjiEqualsOriginal';
 
 export type TitleFixDecision =
   | {action: 'replace'; title: string}

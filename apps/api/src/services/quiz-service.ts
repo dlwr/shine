@@ -59,7 +59,7 @@ export function buildQuizHints(entry: QuizPoolEntry): QuizHint[] {
 }
 
 /** ポスターを拡大表示するときに中心へ置く点。日付ごとに変えて絵面を変化させる */
-export function quizFocalPoint(date: string): {focalX: number; focalY: number} {
+function quizFocalPoint(date: string): {focalX: number; focalY: number} {
   const seed = simpleHash(`quiz-focal-${date}`);
 
   return {
@@ -72,7 +72,7 @@ function utcToday(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function pickQuizEntry(
+function pickQuizEntry(
   pool: QuizPoolEntry[],
   date: string,
 ): QuizPoolEntry | undefined {

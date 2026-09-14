@@ -10,8 +10,6 @@ import {
 import {type PosterInfo, selectBestPoster} from '@/lib/poster';
 import {resolveMovieTitle} from '@/lib/movie-title';
 
-export {type PosterInfo, selectBestPoster} from '@/lib/poster';
-
 type MovieCardProperties = {
   movie: MovieCardMovie;
   locale?: string;

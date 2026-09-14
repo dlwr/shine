@@ -36,7 +36,7 @@ const REF_TAG = /<ref[^>]*\/>|<ref[^>]*>.*?<\/ref>/g;
 const BRACKETED_TITLE = /『([^』]*)』/g;
 const WIKI_LINK = /^\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]*))?]]/;
 
-export type HochiFilm = {
+type HochiFilm = {
   page?: string;
   title: string;
 };
@@ -122,7 +122,7 @@ export function parseHochiWikitext(wikitext: string): HochiEdition[] {
 }
 
 /** 記事が無い作品はWikipediaの表示名で引けるようにする */
-export function filmKey(film: HochiFilm): string {
+function filmKey(film: HochiFilm): string {
   return film.page ?? `title:${film.title}`;
 }
 
@@ -256,19 +256,19 @@ const baseConfig = {
   minimumFilmsPerEdition: 1,
 };
 
-export const hochiBestFilmConfig: ImdbEventAwardConfig = {
+const hochiBestFilmConfig: ImdbEventAwardConfig = {
   ...baseConfig,
   categoryName: BEST_FILM_CATEGORY,
   isCompetitionCategory: category => category === BEST_FILM_CATEGORY,
 };
 
-export const hochiForeignConfig: ImdbEventAwardConfig = {
+const hochiForeignConfig: ImdbEventAwardConfig = {
   ...baseConfig,
   categoryName: FOREIGN_CATEGORY,
   isCompetitionCategory: category => category === FOREIGN_CATEGORY,
 };
 
-export async function fetchHochiWikitext(): Promise<string> {
+async function fetchHochiWikitext(): Promise<string> {
   const url = buildUrl(WIKIPEDIA_API, {
     action: 'parse',
     page: WIKIPEDIA_ARTICLE,

@@ -50,7 +50,7 @@ const RESOLUTION_OVERRIDES = new Map<string, string>([
   ['1949:Sertao', 'tt10302690'],
 ]);
 
-export const CANNES_PALME_DOR_CONFIG: ImdbEventAwardConfig = {
+const CANNES_PALME_DOR_CONFIG: ImdbEventAwardConfig = {
   organizationName: 'Cannes Film Festival',
   organizationCountry: 'France',
   establishedYear: 1946,
@@ -157,7 +157,7 @@ function referenceKey(entry: FilmAwardEntry): string {
   return entry.filmPage ?? entry.filmTitle;
 }
 
-export function competitionFilmReferences(
+function competitionFilmReferences(
   year: number,
   entries: FilmAwardEntry[],
 ): FilmReference[] {

@@ -52,7 +52,7 @@ export const normalizeCategoryName = (value: string): string =>
     .replaceAll(/\s+/g, ' ')
     .trim();
 
-export const extractNoteText = (note: unknown): string | undefined => {
+const extractNoteText = (note: unknown): string | undefined => {
   if (typeof note === 'string') {
     const trimmed = note.trim();
     return trimmed === '' ? undefined : trimmed;

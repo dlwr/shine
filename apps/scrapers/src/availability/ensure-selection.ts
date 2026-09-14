@@ -9,7 +9,7 @@ export type LoadedMovie = MovieToCheck & {
   japaneseTitleMissing?: boolean;
 };
 
-export type SelectionAttempt = {
+type SelectionAttempt = {
   movieUid: string;
   title: string;
   available: boolean;

@@ -25,7 +25,7 @@ const SOURCE_URL = 'https://ja.wikipedia.org/wiki/ヨコハマ映画祭';
 const USER_AGENT = 'shine-film.com movie database (https://shine-film.com)';
 
 export const BEST_TEN_CATEGORY = '日本映画ベストテン';
-export const RUNNER_UP_RANK = 11;
+const RUNNER_UP_RANK = 11;
 
 const EDITION_HEADING = /^====\s*第(\d+)回（(\d{4})年度）\s*====\s*$/m;
 const HIGHER_HEADING = /^={2,3}[^=]/m;
@@ -40,7 +40,7 @@ const LEADING_WIKI_LINK = new RegExp(`^${WIKI_LINK.source}`);
 const DIRECTOR_SUFFIX = /[（(].*$/;
 const QUOTED_LINK = new RegExp(String.raw`『\s*${WIKI_LINK.source}`, 'g');
 
-export type YokohamaFilm = {
+type YokohamaFilm = {
   rank: number;
   page?: string;
   title: string;
@@ -157,7 +157,7 @@ export function parseYokohamaWikitext(wikitext: string): YokohamaEdition[] {
 }
 
 /** 記事が無い作品はWikipediaの表示名で引けるようにする */
-export function filmKey(film: YokohamaFilm): string {
+function filmKey(film: YokohamaFilm): string {
   return film.page ?? `title:${film.title}`;
 }
 
@@ -274,7 +274,7 @@ export function toImdbEventData(
   };
 }
 
-export const yokohamaBestTenConfig: ImdbEventAwardConfig = {
+const yokohamaBestTenConfig: ImdbEventAwardConfig = {
   organizationName: 'Yokohama Film Festival',
   organizationCountry: 'Japan',
   establishedYear: 1979,
@@ -285,7 +285,7 @@ export const yokohamaBestTenConfig: ImdbEventAwardConfig = {
   useNotesAsSpecialMention: true,
 };
 
-export async function fetchYokohamaWikitext(): Promise<string> {
+async function fetchYokohamaWikitext(): Promise<string> {
   const url = buildUrl(WIKIPEDIA_API, {
     action: 'parse',
     page: WIKIPEDIA_ARTICLE,

@@ -39,7 +39,7 @@ const REF_TAG = /<ref[^>]*\/>|<ref[^>]*>.*?<\/ref>/g;
 const BRACKETED_TITLE = /『([^』]*)』/g;
 const WIKI_LINK = /^\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]*))?]]/;
 
-export type BlueRibbonFilm = {
+type BlueRibbonFilm = {
   page?: string;
   title: string;
 };
@@ -125,7 +125,7 @@ export function parseBlueRibbonWikitext(wikitext: string): BlueRibbonEdition[] {
 }
 
 /** 記事が無い作品はWikipediaの表示名で引けるようにする */
-export function filmKey(film: BlueRibbonFilm): string {
+function filmKey(film: BlueRibbonFilm): string {
   return film.page ?? `title:${film.title}`;
 }
 
@@ -262,19 +262,19 @@ const baseConfig = {
   minimumFilmsPerEdition: 1,
 };
 
-export const blueRibbonBestFilmConfig: ImdbEventAwardConfig = {
+const blueRibbonBestFilmConfig: ImdbEventAwardConfig = {
   ...baseConfig,
   categoryName: BEST_FILM_CATEGORY,
   isCompetitionCategory: category => category === BEST_FILM_CATEGORY,
 };
 
-export const blueRibbonForeignConfig: ImdbEventAwardConfig = {
+const blueRibbonForeignConfig: ImdbEventAwardConfig = {
   ...baseConfig,
   categoryName: FOREIGN_CATEGORY,
   isCompetitionCategory: category => category === FOREIGN_CATEGORY,
 };
 
-export async function fetchBlueRibbonWikitext(): Promise<string> {
+async function fetchBlueRibbonWikitext(): Promise<string> {
   const url = buildUrl(WIKIPEDIA_API, {
     action: 'parse',
     page: WIKIPEDIA_ARTICLE,

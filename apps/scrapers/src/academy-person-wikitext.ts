@@ -4,8 +4,6 @@ import {
   type PersonAwardEntry,
 } from './common/award-table-wikitext';
 
-export type AcademyPersonEntry = PersonAwardEntry;
-
 export type AcademyPersonEdition = AwardEdition<PersonAwardEntry>;
 
 const ACADEMY_TABLE = {ceremonyPage: 'Academy Awards'};

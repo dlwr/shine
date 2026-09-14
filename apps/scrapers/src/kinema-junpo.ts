@@ -24,8 +24,8 @@ const WIKIPEDIA_ARTICLE = 'キネマ旬報';
 const SOURCE_URL = 'https://ja.wikipedia.org/wiki/キネマ旬報';
 const USER_AGENT = 'shine-film.com movie database (https://shine-film.com)';
 
-export const JAPANESE_CATEGORY = 'Best Japanese Film';
-export const FOREIGN_CATEGORY = 'Best Foreign Film';
+const JAPANESE_CATEGORY = 'Best Japanese Film';
+const FOREIGN_CATEGORY = 'Best Foreign Film';
 
 const JAPANESE_SECTIONS = new Set([
   '日本映画ベスト・テン',
@@ -52,7 +52,7 @@ const WIKI_LINK = /^\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]*))?]]/;
 const LINE_BREAK = /<br\s*\/?>/;
 const EMPTY_RANK = new Set(['-', '－', '―']);
 
-export type KinemaJunpoFilm = {
+type KinemaJunpoFilm = {
   rank: number;
   page?: string;
   title: string;
@@ -152,7 +152,7 @@ export function parseKinemaJunpoWikitext(
 }
 
 /** 記事が無い作品はWikipediaの表示名で引けるようにする */
-export function filmKey(film: KinemaJunpoFilm): string {
+function filmKey(film: KinemaJunpoFilm): string {
   return film.page ?? `title:${film.title}`;
 }
 
@@ -302,13 +302,13 @@ export const kinemaJunpoJapaneseConfig: ImdbEventAwardConfig = {
   useNotesAsSpecialMention: true,
 };
 
-export const kinemaJunpoForeignConfig: ImdbEventAwardConfig = {
+const kinemaJunpoForeignConfig: ImdbEventAwardConfig = {
   ...kinemaJunpoJapaneseConfig,
   categoryName: FOREIGN_CATEGORY,
   isCompetitionCategory: category => category === FOREIGN_CATEGORY,
 };
 
-export async function fetchKinemaJunpoWikitext(): Promise<string> {
+async function fetchKinemaJunpoWikitext(): Promise<string> {
   const url = buildUrl(WIKIPEDIA_API, {
     action: 'parse',
     page: WIKIPEDIA_ARTICLE,

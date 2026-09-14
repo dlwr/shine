@@ -1,6 +1,6 @@
-export const PLAN_ROWS_READ_LIMIT = 100_000_000_000;
-export const DAILY_ROWS_READ_THRESHOLD = 1_000_000_000;
-export const MONTHLY_WARNING_RATIO = 0.8;
+const PLAN_ROWS_READ_LIMIT = 100_000_000_000;
+const DAILY_ROWS_READ_THRESHOLD = 1_000_000_000;
+const MONTHLY_WARNING_RATIO = 0.8;
 
 const USAGE_API_BASE = 'https://api.turso.tech/v1/organizations';
 const DAY_MS = 86_400_000;

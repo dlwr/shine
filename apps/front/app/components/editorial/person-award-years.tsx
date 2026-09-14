@@ -1,12 +1,12 @@
 import {PersonPortrait} from './person-portrait';
 
-export type PersonAwardMovieData = {
+type PersonAwardMovieData = {
   uid: string;
   title?: string;
   movieYear?: number;
 };
 
-export type PersonAwardNomineeData = {
+type PersonAwardNomineeData = {
   uid: string;
   name: string;
   originalName: string;

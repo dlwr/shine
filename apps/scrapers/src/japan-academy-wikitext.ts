@@ -28,7 +28,7 @@ export async function fetchJapanAcademyWikitext(): Promise<string> {
   return wikitext;
 }
 
-export type JapanAcademyFilm = {
+type JapanAcademyFilm = {
   page: string;
   title: string;
   isWinner: boolean;
