@@ -2155,7 +2155,7 @@ paths:
   /admin/random-movie-preview:
     post:
       summary: Generate random movie preview (admin)
-      description: Generate a random movie preview for a specific date and period type without writing a selection
+      description: Pick a random candidate for a manual selection override with the same nomination weighting as the automatic selection, without writing a selection
       operationId: adminRandomMoviePreview
       tags:
         - Admin - Selections
@@ -4343,22 +4343,11 @@ components:
     RandomMoviePreviewRequest:
       type: object
       properties:
-        type:
-          type: string
-          enum: [daily, weekly, monthly]
-          description: Selection period type
-        date:
-          type: string
-          pattern: '^\d{4}-\d{2}-\d{2}$'
-          description: Target date (YYYY-MM-DD)
         locale:
           type: string
           enum: [en, ja]
           default: en
           description: Language preference
-      required:
-        - type
-        - date
 
     SuccessResponse:
       type: object
