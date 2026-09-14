@@ -1,35 +1,6 @@
 import {describe, expect, it} from 'vitest';
+import {getSelectionDate} from '../services/selection-dates';
 import {simpleHash} from '../utils/hash';
-
-function getSelectionDate(
-  date: Date,
-  type: 'daily' | 'weekly' | 'monthly',
-): string {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-
-  switch (type) {
-    case 'daily': {
-      return `${year}-${month.toString().padStart(2, '0')}-${day
-        .toString()
-        .padStart(2, '0')}`;
-    }
-
-    case 'weekly': {
-      const daysSinceFriday = (date.getDay() - 5 + 7) % 7;
-      const fridayDate = new Date(date);
-      fridayDate.setDate(day - daysSinceFriday);
-      return `${fridayDate.getFullYear()}-${(fridayDate.getMonth() + 1)
-        .toString()
-        .padStart(2, '0')}-${fridayDate.getDate().toString().padStart(2, '0')}`;
-    }
-
-    case 'monthly': {
-      return `${year}-${month.toString().padStart(2, '0')}-01`;
-    }
-  }
-}
 
 describe('Utility Functions', () => {
   describe('simpleHash', () => {

@@ -1,23 +1,6 @@
-import {
-  and,
-  eq,
-  inArray,
-  isNull,
-  notInArray,
-  sql,
-  type Environment,
-} from '@shine/database';
-import {articleLinks} from '@shine/database/schema/article-links';
-import {awardCategories} from '@shine/database/schema/award-categories';
-import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
-import {awardOrganizations} from '@shine/database/schema/award-organizations';
-import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
+import {and, eq, inArray, isNull, type Environment} from '@shine/database';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
-import {nominations} from '@shine/database/schema/nominations';
-import {people} from '@shine/database/schema/people';
-import {posterUrls} from '@shine/database/schema/poster-urls';
-import {translations} from '@shine/database/schema/translations';
 import {
   CACHEABLE_LOCALES,
   EdgeCache,
@@ -26,12 +9,15 @@ import {
   IMPORTED_DATA_EDGE_TTL,
   normalizeCacheLocale,
 } from '../utils/cache';
-import {simpleHash} from '../utils/hash';
-import {awardPageLinkForOrganizationName} from './awards-service';
 import {BaseService} from './base-service';
+import {
+  getDateSeed,
+  getSelectionDate,
+  type SelectionType,
+} from './selection-dates';
+import {loadSelectionMovie} from './selection-movie';
+import {pickNominatedMovieUid} from './selection-pick';
 import type {DateSeedOptions, MovieSelection} from '@shine/types';
-
-type SelectionType = 'daily' | 'weekly' | 'monthly';
 
 export class SelectionsService extends BaseService {
   private readonly cache: EdgeCache;
@@ -70,7 +56,7 @@ export class SelectionsService extends BaseService {
     date = new Date(),
     excludeMovieUids: string[] = [],
   ): Promise<MovieSelection> {
-    const selectionDate = this.getSelectionDate(date, type);
+    const selectionDate = getSelectionDate(date, type);
 
     // Delete existing selection
     await this.database
@@ -98,7 +84,7 @@ export class SelectionsService extends BaseService {
     }
 
     // Get complete movie data and cache it
-    const movie = await this.getCompleteMovieData(movieUid, locale);
+    const movie = await loadSelectionMovie(this.database, movieUid, locale);
 
     // Cache result
     const cacheLocale = normalizeCacheLocale(locale);
@@ -171,9 +157,9 @@ export class SelectionsService extends BaseService {
     nextMonth.setMonth(now.getMonth() + 1);
 
     const nextDates = {
-      daily: this.getSelectionDate(nextDay, 'daily'),
-      weekly: this.getSelectionDate(nextFriday, 'weekly'),
-      monthly: this.getSelectionDate(nextMonth, 'monthly'),
+      daily: getSelectionDate(nextDay, 'daily'),
+      weekly: getSelectionDate(nextFriday, 'weekly'),
+      monthly: getSelectionDate(nextMonth, 'monthly'),
     };
 
     console.log('📅 Next dates calculated:', nextDates);
@@ -219,7 +205,7 @@ export class SelectionsService extends BaseService {
     movieId: string,
     date = new Date(),
   ): Promise<void> {
-    const selectionDate = this.getSelectionDate(date, type);
+    const selectionDate = getSelectionDate(date, type);
 
     // Check if movie exists
     const movieExists = await this.database
@@ -270,7 +256,7 @@ export class SelectionsService extends BaseService {
           eq(movieSelections.movieId, movieUid),
           inArray(
             movieSelections.selectionDate,
-            types.map(type => this.getSelectionDate(date, type)),
+            types.map(type => getSelectionDate(date, type)),
           ),
         ),
       );
@@ -280,7 +266,7 @@ export class SelectionsService extends BaseService {
         .filter(
           selection =>
             selection.selectionDate ===
-            this.getSelectionDate(date, selection.selectionType),
+            getSelectionDate(date, selection.selectionType),
         )
         .map(async selection =>
           this.purgeSelectionCache(
@@ -296,7 +282,7 @@ export class SelectionsService extends BaseService {
     type: SelectionType,
     locale: string,
   ): Promise<MovieSelection> {
-    const selectionDate = this.getSelectionDate(date, type);
+    const selectionDate = getSelectionDate(date, type);
     const cacheLocale = normalizeCacheLocale(locale);
     const cacheKey = cacheLocale
       ? getCacheKeyForSelection(type, selectionDate, cacheLocale)
@@ -344,7 +330,7 @@ export class SelectionsService extends BaseService {
     // Get complete movie data
     let movie: MovieSelection;
     try {
-      movie = await this.getCompleteMovieData(movieId, locale);
+      movie = await loadSelectionMovie(this.database, movieId, locale);
     } catch (error) {
       if (error instanceof Error && error.message === 'Movie not found') {
         console.warn(
@@ -387,7 +373,7 @@ export class SelectionsService extends BaseService {
     locale: string,
     shouldPersistSelection: boolean,
   ): Promise<MovieSelection | undefined> {
-    const seed = this.getDateSeed(date, type);
+    const seed = getDateSeed(date, type);
     const movieUid = await this.selectMovieFromNominations(
       date,
       type,
@@ -398,289 +384,7 @@ export class SelectionsService extends BaseService {
       return undefined;
     }
 
-    return this.getCompleteMovieData(movieUid, locale);
-  }
-
-  private async getCompleteMovieData(
-    movieId: string,
-    locale: string,
-  ): Promise<MovieSelection> {
-    // Get movie basic data
-    const movieResult = await this.database
-      .select({
-        uid: movies.uid,
-        year: movies.year,
-        originalLanguage: movies.originalLanguage,
-        imdbId: movies.imdbId,
-        tmdbId: movies.tmdbId,
-      })
-      .from(movies)
-      .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
-      .limit(1);
-
-    if (movieResult.length === 0) {
-      throw new Error('Movie not found');
-    }
-
-    const movie = movieResult[0];
-
-    // Fetch the movie's related data in parallel
-    const [
-      allTranslations,
-      descriptionResult,
-      nominationsData,
-      posters,
-      topArticles,
-      availability,
-    ] = await Promise.all([
-      this.database
-        .select({
-          languageCode: translations.languageCode,
-          content: translations.content,
-          isDefault: translations.isDefault,
-          resourceType: translations.resourceType,
-        })
-        .from(translations)
-        .where(
-          and(
-            eq(translations.resourceUid, movieId),
-            eq(translations.resourceType, 'movie_title'),
-          ),
-        ),
-      this.database
-        .select({
-          content: translations.content,
-        })
-        .from(translations)
-        .where(
-          and(
-            eq(translations.resourceUid, movieId),
-            eq(translations.resourceType, 'movie_description'),
-            eq(translations.languageCode, locale),
-          ),
-        )
-        .limit(1),
-      this.database
-        .select({
-          nominationUid: nominations.uid,
-          isWinner: nominations.isWinner,
-          specialMention: nominations.specialMention,
-          personUid: people.uid,
-          personName: people.name,
-          categoryUid: awardCategories.uid,
-          categoryName: awardCategories.name,
-          ceremonyUid: awardCeremonies.uid,
-          ceremonyNumber: awardCeremonies.ceremonyNumber,
-          ceremonyYear: awardCeremonies.year,
-          organizationUid: awardOrganizations.uid,
-          organizationName: awardOrganizations.name,
-          organizationShortName: awardOrganizations.shortName,
-        })
-        .from(nominations)
-        .innerJoin(
-          awardCategories,
-          eq(awardCategories.uid, nominations.categoryUid),
-        )
-        .innerJoin(
-          awardCeremonies,
-          eq(awardCeremonies.uid, nominations.ceremonyUid),
-        )
-        .innerJoin(
-          awardOrganizations,
-          eq(awardOrganizations.uid, awardCeremonies.organizationUid),
-        )
-        .leftJoin(people, eq(people.uid, nominations.personUid))
-        .where(eq(nominations.movieUid, movieId))
-        .orderBy(awardCeremonies.year, awardCategories.name),
-      this.database
-        .select({
-          url: posterUrls.url,
-          languageCode: posterUrls.languageCode,
-          isPrimary: posterUrls.isPrimary,
-        })
-        .from(posterUrls)
-        .where(eq(posterUrls.movieUid, movieId))
-        .orderBy(
-          sql`${posterUrls.isPrimary} DESC, ${posterUrls.createdAt} ASC`,
-        ),
-      this.database
-        .select({
-          uid: articleLinks.uid,
-          url: articleLinks.url,
-          title: articleLinks.title,
-          description: articleLinks.description || undefined,
-        })
-        .from(articleLinks)
-        .where(
-          and(
-            eq(articleLinks.movieUid, movieId),
-            eq(articleLinks.isSpam, false),
-            eq(articleLinks.isFlagged, false),
-          ),
-        )
-        .orderBy(sql`${articleLinks.submittedAt} DESC`)
-        .limit(3),
-      this.getMovieAvailability(movieId),
-    ]);
-
-    const selectedTitle = this.resolveTitle(allTranslations, locale);
-    const description = descriptionResult[0]?.content || undefined;
-
-    // Generate IMDb URL if IMDb ID exists
-    const imdbUrl = movie.imdbId
-      ? `https://www.imdb.com/title/${movie.imdbId}/`
-      : undefined;
-
-    return {
-      uid: movie.uid,
-      year: movie.year ?? 0,
-      originalLanguage: movie.originalLanguage,
-      imdbId: movie.imdbId ?? undefined,
-      tmdbId: movie.tmdbId ?? undefined,
-      title: selectedTitle || `Unknown Title (${movie.year})`,
-      description: description || undefined,
-      posterUrls: posters.map(p => ({
-        url: p.url,
-        languageCode: p.languageCode ?? undefined,
-        isPrimary: p.isPrimary ?? 0,
-      })),
-      imdbUrl,
-      nominations: nominationsData.map(nom => ({
-        uid: nom.nominationUid,
-        isWinner: Boolean(nom.isWinner),
-        specialMention: nom.specialMention ?? undefined,
-        person:
-          nom.personUid && nom.personName
-            ? {uid: nom.personUid, name: nom.personName}
-            : undefined,
-        category: {
-          uid: nom.categoryUid,
-          name: nom.categoryName,
-        },
-        ceremony: {
-          uid: nom.ceremonyUid,
-          number: nom.ceremonyNumber ?? undefined,
-          year: nom.ceremonyYear,
-        },
-        organization: {
-          uid: nom.organizationUid,
-          name: nom.organizationName,
-          shortName: nom.organizationShortName ?? undefined,
-          ...awardPageLinkForOrganizationName(
-            nom.organizationName,
-            nom.categoryName,
-          ),
-        },
-      })),
-      articleLinks: topArticles.map(article => ({
-        uid: article.uid,
-        url: article.url ?? undefined,
-        title: article.title ?? undefined,
-        description: article.description || undefined,
-      })),
-      availability,
-    };
-  }
-
-  private async getMovieAvailability(movieId: string): Promise<
-    Array<{
-      source: string;
-      detail: string | undefined;
-      checkedAt: number;
-    }>
-  > {
-    const sourceOrder = ['tmdb', 'unext', 'discas', 'geo'];
-    const rows = await this.database
-      .select({
-        source: movieAvailabilityChecks.source,
-        status: movieAvailabilityChecks.status,
-        detail: movieAvailabilityChecks.detail,
-        checkedAt: movieAvailabilityChecks.checkedAt,
-      })
-      .from(movieAvailabilityChecks)
-      .where(eq(movieAvailabilityChecks.movieUid, movieId))
-      .orderBy(movieAvailabilityChecks.checkedAt);
-
-    // Latest record per source; expose only sources currently judged watchable
-    const latestBySource = new Map<string, (typeof rows)[number]>();
-    for (const row of rows) {
-      latestBySource.set(row.source, row);
-    }
-
-    return sourceOrder
-      .map(source => latestBySource.get(source))
-      .filter((row): row is NonNullable<typeof row> => row?.status === 'ok')
-      .map(row => ({
-        source: row.source,
-        detail: row.detail ?? undefined,
-        checkedAt: row.checkedAt,
-      }));
-  }
-
-  private resolveTitle(
-    allTranslations: Array<{
-      languageCode: string;
-      content: string;
-      isDefault: number | null;
-    }>,
-    locale: string,
-  ): string | undefined {
-    const languageCode = locale.split('-', 1)[0];
-
-    // Priority-ordered list of matchers: locale match, default, Japanese, English
-    const matchers: Array<
-      (t: {languageCode: string; isDefault: number | null}) => boolean
-    > = [
-      t => t.languageCode === languageCode,
-      t => t.isDefault === 1,
-      t => t.languageCode === 'ja',
-      t => t.languageCode === 'en',
-    ];
-
-    for (const matcher of matchers) {
-      const match = allTranslations.find(t => matcher(t));
-      if (match) {
-        return match.content;
-      }
-    }
-
-    // Fallback: first available translation
-    return allTranslations[0]?.content;
-  }
-
-  private getSelectionDate(date: Date, type: SelectionType): string {
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-
-    switch (type) {
-      case 'daily': {
-        return `${year}-${month.toString().padStart(2, '0')}-${day
-          .toString()
-          .padStart(2, '0')}`;
-      }
-
-      case 'weekly': {
-        const daysSinceFriday = (date.getDay() - 5 + 7) % 7;
-        const fridayDate = new Date(date);
-        fridayDate.setDate(day - daysSinceFriday);
-        return `${fridayDate.getFullYear()}-${(fridayDate.getMonth() + 1)
-          .toString()
-          .padStart(2, '0')}-${fridayDate
-          .getDate()
-          .toString()
-          .padStart(2, '0')}`;
-      }
-
-      case 'monthly': {
-        return `${year}-${month.toString().padStart(2, '0')}-01`;
-      }
-    }
-  }
-
-  private getDateSeed(date: Date, type: SelectionType): number {
-    const selectionDate = this.getSelectionDate(date, type);
-    return simpleHash(`${type}-${selectionDate}`);
+    return loadSelectionMovie(this.database, movieUid, locale);
   }
 
   private async selectMovieFromNominations(
@@ -690,54 +394,19 @@ export class SelectionsService extends BaseService {
     seed: number | 'random',
     excludeMovieUids: string[] = [],
   ): Promise<string | undefined> {
-    // Movies with more nominations have proportionally higher chance of being
-    // selected。個人賞は日本の映画にだけ付くので、重み付けからは外す
-    const whereClause = and(
-      isNull(movies.deletedAt),
-      isNull(nominations.personUid),
-      excludeMovieUids.length > 0
-        ? notInArray(nominations.movieUid, excludeMovieUids)
-        : undefined,
+    const selectedMovieUid = await pickNominatedMovieUid(
+      this.database,
+      seed,
+      excludeMovieUids,
     );
 
-    const [countRow] = await this.database
-      .select({total: sql<number>`count(*)`})
-      .from(nominations)
-      .innerJoin(movies, eq(movies.uid, nominations.movieUid))
-      .where(whereClause);
-
-    const total = Number(countRow?.total ?? 0);
-    if (total === 0) {
-      return undefined;
-    }
-
-    const selectedIndex =
-      seed === 'random' ? Math.floor(Math.random() * total) : seed % total;
-
-    const [selectedNomination] = await this.database
-      .select({movieUid: nominations.movieUid})
-      .from(nominations)
-      .innerJoin(movies, eq(movies.uid, nominations.movieUid))
-      .where(whereClause)
-      .orderBy(nominations.movieUid, nominations.uid)
-      .limit(1)
-      .offset(selectedIndex);
-
-    if (!selectedNomination) {
-      return undefined;
-    }
-
-    const selectedMovieUid = selectedNomination.movieUid;
-
-    if (shouldPersistSelection) {
-      const selectionDate = this.getSelectionDate(date, type);
-
+    if (selectedMovieUid && shouldPersistSelection) {
       await this.database
         .insert(movieSelections)
         .values({
           movieId: selectedMovieUid,
           selectionType: type,
-          selectionDate,
+          selectionDate: getSelectionDate(date, type),
           createdAt: Math.floor(Date.now() / 1000),
         })
         .onConflictDoNothing({
