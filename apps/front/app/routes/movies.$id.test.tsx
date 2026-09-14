@@ -1256,6 +1256,33 @@ describe('MovieDetail Component', () => {
   });
 
   describe('action', () => {
+    it('admin トークンがあれば Authorization ヘッダで API に渡す', async () => {
+      const mockFetch = vi.mocked(fetch);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({success: true}),
+      } as Response);
+
+      const formData = new FormData();
+      formData.append('description', 'よかった');
+      formData.append('captchaToken', 'test-token');
+      formData.append('adminToken', 'admin-jwt');
+
+      const request = {
+        formData: async () => formData,
+        signal: undefined,
+      } as unknown as Request;
+
+      await action(
+        createActionArguments(createMockContext(), request, {id: 'movie-123'}),
+      );
+
+      const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+      expect(init.headers).toMatchObject({
+        Authorization: 'Bearer admin-jwt',
+      });
+    });
+
     it('記事リンク投稿が正常に処理される', async () => {
       const mockFetch = vi.mocked(fetch);
       mockFetch.mockResolvedValueOnce({

@@ -16,6 +16,7 @@ type ArticleLink = {
   title: string;
   description?: string;
   isSpam: boolean;
+  isOwnerSubmission: boolean;
 };
 
 export type MovieDetails = BaseMovieDetails & {

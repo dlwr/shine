@@ -135,6 +135,7 @@ export async function action({context, params, request}: Route.ActionArgs) {
       };
     }
 
+    const adminToken = formData.get('adminToken');
     const response = await apiFetch(
       context,
       `/movies/${params.id}/article-links`,
@@ -142,6 +143,8 @@ export async function action({context, params, request}: Route.ActionArgs) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(typeof adminToken === 'string' &&
+            adminToken && {Authorization: `Bearer ${adminToken}`}),
         },
         body: JSON.stringify({
           url,
