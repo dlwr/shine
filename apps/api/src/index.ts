@@ -10,7 +10,6 @@ import {awardsRoutes} from './routes/awards';
 import {peopleRoutes} from './routes/people';
 import {searchRoutes} from './routes/search';
 import {crossingsRoutes} from './routes/crossings';
-import {documentationRoutes} from './routes/documentation';
 import {moviesRoutes} from './routes/movies';
 import {quizRoutes} from './routes/quiz';
 import {selectionsRoutes} from './routes/selections';
@@ -45,15 +44,11 @@ app.use(
   }),
 );
 
-// Apply security headers to all routes except documentation
-app.use('*', async (c, next) =>
-  c.req.path.startsWith('/docs') ? next() : securityHeaders(c, next),
-);
+app.use('*', securityHeaders);
 app.use('*', globalErrorHandler);
 
 // Mount route modules
 app.route('/auth', authRoutes);
-app.route('/docs', documentationRoutes); // API documentation
 app.route('/', selectionsRoutes); // Main endpoint for movie selections
 app.route('/movies', moviesRoutes);
 app.route('/awards', awardsRoutes);
