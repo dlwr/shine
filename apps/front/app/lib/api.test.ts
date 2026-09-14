@@ -57,6 +57,45 @@ describe('apiFetch', () => {
     });
   });
 
+  it('forwards the visitor IP as x-real-ip through the binding', async () => {
+    const bindingFetch = vi.fn().mockResolvedValue(new Response('{}'));
+    const context = createEnvironmentContext(
+      {API: {fetch: bindingFetch}},
+      new Request('https://shine-film.com/movies/1', {
+        headers: {'cf-connecting-ip': '203.0.113.9'},
+      }),
+    );
+
+    await apiFetch(context, '/movies/1/article-links', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+    });
+
+    const [, init] = bindingFetch.mock.calls[0] as [string, RequestInit];
+    const headers = new Headers(init.headers);
+    expect(headers.get('x-real-ip')).toBe('203.0.113.9');
+    expect(headers.get('content-type')).toBe('application/json');
+    expect(init.method).toBe('POST');
+  });
+
+  it('does not forward the visitor IP to PUBLIC_API_URL', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response('{}'));
+    vi.stubGlobal('fetch', fetchMock);
+    const context = createEnvironmentContext(
+      {PUBLIC_API_URL: 'https://api.example'},
+      new Request('https://shine-film.com/movies/1', {
+        headers: {'cf-connecting-ip': '203.0.113.9'},
+      }),
+    );
+
+    await apiFetch(context, '/movies/1');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.example/movies/1',
+      undefined,
+    );
+  });
+
   it('logs path without query, status, via and durationMs', async () => {
     const bindingFetch = vi
       .fn()

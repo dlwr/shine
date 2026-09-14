@@ -15,12 +15,33 @@ export type LoadContext = Readonly<RouterContextProvider>;
 
 export const environmentContext = createContext<FrontEnvironment>({});
 
+const visitorIpContext = createContext<string | undefined>(undefined);
+
 export function createEnvironmentContext(
   environment: FrontEnvironment,
+  request?: Request,
 ): RouterContextProvider {
   const context = new RouterContextProvider();
   context.set(environmentContext, environment);
+  context.set(
+    visitorIpContext,
+    request?.headers.get('cf-connecting-ip') ?? undefined,
+  );
   return context;
+}
+
+function withVisitorIp(
+  context: LoadContext,
+  init: RequestInit | undefined,
+): RequestInit | undefined {
+  const visitorIp = context.get(visitorIpContext);
+  if (!visitorIp) {
+    return init;
+  }
+
+  const headers = new Headers(init?.headers);
+  headers.set('x-real-ip', visitorIp);
+  return {...init, headers};
 }
 
 export function resolveEnvironment(context: LoadContext): FrontEnvironment {
@@ -52,7 +73,7 @@ export async function apiFetch(
 
   const start = Date.now();
   const response = await (binding
-    ? binding.fetch(url, init)
+    ? binding.fetch(url, withVisitorIp(context, init))
     : fetch(url, init));
 
   console.log(

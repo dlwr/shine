@@ -8,6 +8,9 @@ const requestHandler = createRequestHandler(
 
 export default {
   async fetch(request, environment) {
-    return requestHandler(request, createEnvironmentContext(environment));
+    return requestHandler(
+      request,
+      createEnvironmentContext(environment, request),
+    );
   },
 } satisfies ExportedHandler<Env>;
