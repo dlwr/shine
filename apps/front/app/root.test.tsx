@@ -1,3 +1,5 @@
+/// <reference types="node" />
+import {readFileSync} from 'node:fs';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {
   afterAll,
@@ -359,6 +361,9 @@ const fontHrefs = () =>
     .filter(link => link.as === 'font')
     .map(link => link.href);
 
+const readStyle = (path: string) =>
+  readFileSync(new URL(path, import.meta.url), 'utf8');
+
 describe('root links のフォント', () => {
   it('Google Fonts を読まない', () => {
     const external = linkHrefs().filter(link => link.href.includes('fonts.g'));
@@ -366,8 +371,22 @@ describe('root links のフォント', () => {
     expect(external).toEqual([]);
   });
 
-  it('Inter を self-host で preload する', () => {
-    expect(fontHrefs()).toContain('/fonts/inter.woff2');
+  it('preload するフォントは Tailwind のテーマから参照される書体だけにする', () => {
+    const appCss = readStyle('app.css');
+    const tokensCss = readStyle('styles/tokens.css');
+    const themeTokens = new Set(
+      appCss.matchAll(/--(font-[\w-]+):\s*var\(--\1\)/g).map(match => match[1]),
+    );
+    const isReferencedByTheme = (href: string) => {
+      const family = new RegExp(
+        String.raw`font-family:\s*'([^']+)';\s*src:\s*url\('${href}'\)`,
+      ).exec(tokensCss)?.[1];
+      return tokensCss
+        .matchAll(/--(font-[\w-]+):\s*'([^']+)'/g)
+        .some(match => match[2] === family && themeTokens.has(match[1]));
+    };
+
+    expect(fontHrefs().filter(href => !isReferencedByTheme(href))).toEqual([]);
   });
 
   it('preload するフォントが全部 public 配下に実在する', () => {

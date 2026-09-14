@@ -50,13 +50,6 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: 'preload',
-    href: '/fonts/inter.woff2',
-    as: 'font',
-    type: 'font/woff2',
-    crossOrigin: 'anonymous',
-  },
-  {
-    rel: 'preload',
     href: '/fonts/space-grotesk.woff2',
     as: 'font',
     type: 'font/woff2',
@@ -99,7 +92,7 @@ export function Layout({children}: {children: React.ReactNode}) {
         <Meta />
         <Links />
       </head>
-      <body className="m-0 w-full h-full bg-paper text-ink font-body">
+      <body className="m-0 w-full h-full bg-paper text-ink">
         {children}
         <ScrollRestoration />
         <Scripts />
