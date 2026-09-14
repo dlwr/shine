@@ -1,16 +1,7 @@
-import {
-  and,
-  eq,
-  getDatabase,
-  inArray,
-  isNull,
-  sql,
-  type Environment,
-} from '@shine/database';
-import {movies} from '@shine/database/schema/movies';
-import {nominations} from '@shine/database/schema/nominations';
+import {getDatabase, type Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {MoviesService} from '../../services';
+import {findRelatedMovies} from '../../services/related-movies';
 import {
   createCachedResponse,
   createETag,
@@ -110,7 +101,6 @@ movieDetailRoutes.get('/:id', async c => {
 // Related movies sharing an award category
 movieDetailRoutes.get('/:id/related', async c => {
   try {
-    const database = getDatabase(c.env);
     const movieId = c.req.param('id');
     const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
     const limitParameter = Number(c.req.query('limit') ?? '6');
@@ -128,82 +118,16 @@ movieDetailRoutes.get('/:id/related', async c => {
       });
     }
 
-    const target = await database
-      .select({uid: movies.uid, year: movies.year})
-      .from(movies)
-      .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
-      .limit(1);
+    const relatedMovies = await findRelatedMovies(
+      getDatabase(c.env),
+      movieId,
+      locale,
+      limit,
+    );
 
-    if (target.length === 0) {
+    if (!relatedMovies) {
       return c.json({error: 'Movie not found'}, 404);
     }
-
-    const targetYear = target[0].year ?? 0;
-
-    const candidates = await database
-      .select({
-        uid: movies.uid,
-        year: movies.year,
-      })
-      .from(nominations)
-      .innerJoin(movies, eq(nominations.movieUid, movies.uid))
-      .where(
-        and(
-          sql`${nominations.categoryUid} IN (
-            SELECT category_uid FROM nominations WHERE movie_uid = ${movieId}
-          )`,
-          sql`${movies.uid} != ${movieId}`,
-          isNull(movies.deletedAt),
-        ),
-      )
-      .groupBy(movies.uid)
-      .orderBy(
-        sql`MAX(${nominations.isWinner}) DESC`,
-        sql`ABS(COALESCE(${movies.year}, 0) - ${targetYear}) ASC`,
-      )
-      .limit(limit);
-
-    const candidateUids = candidates.map(row => row.uid);
-    const rows =
-      candidateUids.length > 0
-        ? await database
-            .select({
-              uid: movies.uid,
-              localeTitle: sql<string | undefined>`(
-                SELECT content FROM translations
-                WHERE resource_type = 'movie_title'
-                  AND resource_uid = movies.uid
-                  AND language_code = ${locale}
-                LIMIT 1
-              )`,
-              defaultTitle: sql<string | undefined>`(
-                SELECT content FROM translations
-                WHERE resource_type = 'movie_title'
-                  AND resource_uid = movies.uid
-                  AND is_default = 1
-                LIMIT 1
-              )`,
-              posterUrl: sql<string | undefined>`(
-                SELECT url FROM poster_urls
-                WHERE movie_uid = movies.uid
-                ORDER BY is_primary DESC
-                LIMIT 1
-              )`,
-            })
-            .from(movies)
-            .where(inArray(movies.uid, candidateUids))
-        : [];
-
-    const rowsByUid = new Map(rows.map(row => [row.uid, row]));
-    const relatedMovies = candidates.map(candidate => {
-      const row = rowsByUid.get(candidate.uid);
-      return {
-        uid: candidate.uid,
-        title: row?.localeTitle ?? row?.defaultTitle ?? 'Unknown Title',
-        year: candidate.year ?? undefined,
-        posterUrl: row?.posterUrl ?? undefined,
-      };
-    });
 
     const result = {movies: relatedMovies};
     await writeCacheAfterResponse(
