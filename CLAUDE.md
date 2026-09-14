@@ -42,6 +42,7 @@ pnpm run test:api / test:front / test:scrapers / test:database
 # Deploy (production only — dev environment is not used)
 pnpm run api:deploy:prod
 pnpm run front:deploy:prod
+pnpm run og:deploy:prod       # OG images worker (shine-og)
 ```
 
 ## Database Schema
@@ -78,6 +79,7 @@ Cloudflare Workers: non-secret vars go in `wrangler.jsonc`/`wrangler.toml` `vars
 - Admin pages authenticate with a JWT held in localStorage
 - API URL resolution: always `resolveApiUrl(context)` from `@/lib/api` — never hand-cast `context.cloudflare`
 - Tests: Vitest + React Testing Library, co-located `*.test.tsx`
+- **OG 画像**は別 worker `shine-og`（入口 `workers/og.ts`、設定 `wrangler.og.jsonc`、描画は `app/og/`）。front の `workers/app.ts` が `/og/*.png` と `/quiz/poster.png` を service binding `OG` へ転送するので URL は front と同じ。front の起動を軽くするための分離なので、front 側から `app/og/` の描画コードや `workers-og` を import しない（`front-imports.test.ts`）。パスを足すときは `app/og/paths.ts` と `router.ts` の両方に足す。ローカルは `pnpm og:dev`（`pnpm front:dev` では OG 画像は出ない）。`QUIZ_ANSWER_KEY` は API と `shine-og` の secret
 - **Masthead のナビ**: 項目は `NAV_LINKS` に足す。ボタンの行は `flex-wrap` 前提で、横並び固定にすると狭い画面で必ずはみ出す（過去2回のデグレ原因）
 - **横幅のはみ出し確認**: 共通レイアウトやヘッダを触ったら `agent-browser set viewport 375 812` の後、各ページで `document.documentElement.scrollWidth <= clientWidth` を確認する（jsdomはレイアウトを持たないのでvitestでは検出できない）
 

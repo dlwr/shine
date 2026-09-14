@@ -2,10 +2,20 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
     ".": {
-      "entry": ["scripts/*.ts"]
+      "entry": [
+        "scripts/*.ts"
+      ]
     },
     "apps/scrapers": {
-      "entry": ["database-query.mts", "src/assign-tmdb-ids.ts"]
+      "entry": [
+        "database-query.mts",
+        "src/assign-tmdb-ids.ts"
+      ]
+    },
+    "apps/front": {
+      "entry": [
+        "workers/og.ts"
+      ]
     }
   }
 }

@@ -57,6 +57,12 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: pnpm run api:deploy:prod
 
+      - name: Deploy OG images (production)
+        if: steps.token.outputs.available == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm run og:deploy:prod
+
       - name: Deploy Frontend (production)
         if: steps.token.outputs.available == 'true'
         env:

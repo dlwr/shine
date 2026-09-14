@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "shine-og",
+  "compatibility_date": "2025-06-27",
+  "main": "./workers/og.ts",
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": {
+    "logs": {
+      "enabled": true,
+    },
+  },
+  "vars": {
+    "PUBLIC_API_URL": "https://shine-api.yuta25.workers.dev",
+  },
+  "services": [
+    {
+      "binding": "API",
+      "service": "shine-api",
+    },
+  ],
+}
