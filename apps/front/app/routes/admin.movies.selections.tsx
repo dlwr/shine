@@ -238,11 +238,7 @@ export default function AdminMovieSelections({
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            type: overrideType,
-            date: getSelectionDate(),
-            locale,
-          }),
+          body: JSON.stringify({locale}),
         },
       );
 

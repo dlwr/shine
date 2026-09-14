@@ -6,19 +6,14 @@ import {
   sql,
   type Environment,
 } from '@shine/database';
-import {articleLinks} from '@shine/database/schema/article-links';
-import {awardCategories} from '@shine/database/schema/award-categories';
-import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
-import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
-import {nominations} from '@shine/database/schema/nominations';
-import {posterUrls} from '@shine/database/schema/poster-urls';
-import {translations} from '@shine/database/schema/translations';
 import {Hono} from 'hono';
 import {authMiddleware} from '../auth';
 import {SelectionsService} from '../services';
-import {getDateSeed, getSelectionDate} from '../services/selection-dates';
+import {getSelectionDate} from '../services/selection-dates';
+import {loadSelectionMovie} from '../services/selection-movie';
+import {pickNominatedMovieUid} from '../services/selection-pick';
 import {
   createCachedResponse,
   createETag,
@@ -30,66 +25,6 @@ import {
 } from '../utils/cache';
 
 export const selectionsRoutes = new Hono<{Bindings: Environment}>();
-
-async function getMovieNominations(
-  database: ReturnType<typeof getDatabase>,
-  movieId: string,
-) {
-  const nominationsData = await database
-    .select({
-      nominationUid: nominations.uid,
-      isWinner: nominations.isWinner,
-      specialMention: nominations.specialMention,
-      categoryUid: awardCategories.uid,
-      categoryName: awardCategories.name,
-      categoryNameEn: awardCategories.nameEn,
-      ceremonyUid: awardCeremonies.uid,
-      ceremonyNumber: awardCeremonies.ceremonyNumber,
-      ceremonyYear: awardCeremonies.year,
-      organizationUid: awardOrganizations.uid,
-      organizationName: awardOrganizations.name,
-      organizationShortName: awardOrganizations.shortName,
-    })
-    .from(nominations)
-    .innerJoin(
-      awardCategories,
-      eq(nominations.categoryUid, awardCategories.uid),
-    )
-    .innerJoin(
-      awardCeremonies,
-      eq(nominations.ceremonyUid, awardCeremonies.uid),
-    )
-    .innerJoin(
-      awardOrganizations,
-      eq(awardCeremonies.organizationUid, awardOrganizations.uid),
-    )
-    .where(eq(nominations.movieUid, movieId))
-    .orderBy(
-      awardCeremonies.year,
-      awardOrganizations.name,
-      awardCategories.name,
-    );
-
-  return nominationsData.map((nom: (typeof nominationsData)[0]) => ({
-    uid: nom.nominationUid,
-    isWinner: nom.isWinner === 1,
-    specialMention: nom.specialMention,
-    category: {
-      uid: nom.categoryUid,
-      name: nom.categoryNameEn || nom.categoryName,
-    },
-    ceremony: {
-      uid: nom.ceremonyUid,
-      number: nom.ceremonyNumber,
-      year: nom.ceremonyYear,
-    },
-    organization: {
-      uid: nom.organizationUid,
-      name: nom.organizationName,
-      shortName: nom.organizationShortName,
-    },
-  }));
-}
 
 function sortLanguagesByQuality(
   languages: Array<{code: string; quality: number}>,
@@ -375,180 +310,20 @@ selectionsRoutes.delete(
   },
 );
 
-// Admin: Generate random movie preview for a specific date/type (no DB write)
 selectionsRoutes.post(
   '/admin/random-movie-preview',
   authMiddleware,
   async c => {
     try {
       const database = getDatabase(c.env);
-      const {type, date, locale = 'en'} = await c.req.json();
+      const {locale = 'en'} = await c.req.json<{locale?: string}>();
 
-      // Validate inputs
-      if (!type || !['daily', 'weekly', 'monthly'].includes(type)) {
-        return c.json({error: 'Invalid selection type'}, 400);
-      }
-
-      if (!date) {
-        return c.json({error: 'Date is required'}, 400);
-      }
-
-      // Validate date format
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(date)) {
-        return c.json({error: 'Date must be in YYYY-MM-DD format'}, 400);
-      }
-
-      // Parse the date and generate a preview (no DB write)
-      const targetDate = new Date(String(date) + 'T00:00:00.000Z');
-
-      // Generate a random seed based on date + current timestamp for randomness
-      const baseSeed = getDateSeed(targetDate, type);
-      const randomSeed = baseSeed + Date.now();
-
-      // Get a random nomination using the random seed so highly nominated movies appear more often
-      const totalNominations = await database
-        .select({count: sql<number>`COUNT(*)`})
-        .from(nominations)
-        .innerJoin(movies, eq(movies.uid, nominations.movieUid))
-        .where(isNull(movies.deletedAt));
-
-      const {count} = totalNominations[0];
-      if (count === 0) {
+      const movieUid = await pickNominatedMovieUid(database, 'random');
+      if (!movieUid) {
         return c.json({error: 'No nominations found'}, 404);
       }
 
-      const offset = Math.abs(randomSeed) % count;
-      const randomNominationResult = await database
-        .select({movieUid: nominations.movieUid})
-        .from(nominations)
-        .innerJoin(movies, eq(movies.uid, nominations.movieUid))
-        .where(isNull(movies.deletedAt))
-        .orderBy(nominations.createdAt)
-        .limit(1)
-        .offset(offset);
-
-      if (randomNominationResult.length === 0) {
-        return c.json({error: 'No nominations found'}, 404);
-      }
-
-      const movieId = randomNominationResult[0].movieUid;
-
-      const movieSelectionFields = {
-        movie: {
-          uid: movies.uid,
-          year: movies.year,
-          originalLanguage: movies.originalLanguage,
-          imdbId: movies.imdbId,
-        },
-        translation: {
-          content: translations.content,
-        },
-        poster: {
-          url: posterUrls.url,
-        },
-      } as const;
-
-      // Fetch the full movie details (reuse existing logic)
-      const results = await database
-        .select(movieSelectionFields)
-        .from(movies)
-        .leftJoin(
-          translations,
-          and(
-            eq(movies.uid, translations.resourceUid),
-            eq(translations.resourceType, 'movie_title'),
-            eq(translations.languageCode, locale),
-          ),
-        )
-        .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
-        .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
-        .limit(1);
-
-      if (results.length === 0 || !results[0].translation?.content) {
-        // Try with default language
-        const fallbackResults = await database
-          .select(movieSelectionFields)
-          .from(movies)
-          .leftJoin(
-            translations,
-            and(
-              eq(movies.uid, translations.resourceUid),
-              eq(translations.resourceType, 'movie_title'),
-              eq(translations.isDefault, 1),
-            ),
-          )
-          .leftJoin(posterUrls, eq(movies.uid, posterUrls.movieUid))
-          .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
-          .limit(1);
-
-        if (fallbackResults.length > 0) {
-          const {movie, translation, poster} = fallbackResults[0];
-
-          const imdbUrl = movie.imdbId
-            ? `https://www.imdb.com/title/${movie.imdbId}/`
-            : undefined;
-
-          // Get nominations for this movie
-          const movieNominations = await getMovieNominations(
-            database,
-            movie.uid,
-          );
-
-          return c.json({
-            uid: movie.uid,
-            year: movie.year,
-            originalLanguage: movie.originalLanguage,
-            title: translation?.content,
-            posterUrl: poster?.url,
-            imdbUrl,
-            nominations: movieNominations,
-          });
-        }
-      }
-
-      if (results.length === 0) {
-        return c.json({error: 'Movie not found'}, 404);
-      }
-
-      const {movie, translation, poster} = results[0];
-
-      const imdbUrl = movie.imdbId
-        ? `https://www.imdb.com/title/${movie.imdbId}/`
-        : undefined;
-
-      // Get nominations for this movie
-      const movieNominations = await getMovieNominations(database, movie.uid);
-
-      // Get article links for this movie
-      const topArticles = await database
-        .select({
-          uid: articleLinks.uid,
-          url: articleLinks.url,
-          title: articleLinks.title,
-          description: articleLinks.description,
-        })
-        .from(articleLinks)
-        .where(
-          and(
-            eq(articleLinks.movieUid, movie.uid),
-            eq(articleLinks.isSpam, false),
-            eq(articleLinks.isFlagged, false),
-          ),
-        )
-        .orderBy(sql`${articleLinks.submittedAt} DESC`)
-        .limit(3);
-
-      return c.json({
-        uid: movie.uid,
-        year: movie.year,
-        originalLanguage: movie.originalLanguage,
-        title: translation?.content,
-        posterUrl: poster?.url,
-        imdbUrl,
-        nominations: movieNominations,
-        articleLinks: topArticles,
-      });
+      return c.json(await loadSelectionMovie(database, movieUid, locale));
     } catch (error) {
       console.error('Error generating random movie preview:', error);
       return c.json({error: 'Internal server error'}, 500);
