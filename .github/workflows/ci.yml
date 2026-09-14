@@ -47,11 +47,11 @@ jobs:
       - name: Format check
         run: pnpm run format
 
-      - name: Unused code check
-        run: pnpm run knip
-
       - name: Type check
         run: pnpm run type-check
+
+      - name: Unused code check
+        run: pnpm run knip
 
       - name: Test
         run: pnpm run test
