@@ -142,7 +142,6 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
 
         <NominationSection
           apiUrl={apiUrl}
-          isNew={isNew}
           ceremonyDetail={ceremonyDetail}
           detailLoading={detailLoading}
           detailError={detailError}

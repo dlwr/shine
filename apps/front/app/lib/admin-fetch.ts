@@ -45,14 +45,3 @@ export async function readErrorMessage(
     return fallback;
   }
 }
-
-export async function readJsonOrDefault<T>(
-  response: Response,
-  fallback: T,
-): Promise<T> {
-  try {
-    return (await response.json()) as T;
-  } catch {
-    return fallback;
-  }
-}
