@@ -9,7 +9,7 @@ import {
   useRouteLoaderData,
 } from 'react-router';
 import type {Route} from './+types/root';
-import './app.css';
+import appCss from './app.css?inline';
 import {NO_FLASH_SCRIPT} from '@/lib/theme';
 import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
 import {resolveEnvironment} from '@/lib/api';
@@ -88,6 +88,9 @@ export function Layout({children}: {children: React.ReactNode}) {
           sizes="180x180"
           href="/apple-touch-icon.png"
         />
+        <style href="app.css" precedence="default">
+          {import.meta.env.SSR ? appCss : ''}
+        </style>
         <script dangerouslySetInnerHTML={{__html: NO_FLASH_SCRIPT}} />
         <Meta />
         <Links />
