@@ -37,7 +37,7 @@ function pad(value: number): string {
 }
 
 /** 週はAPIのselections-serviceと同じく金曜始まり、月は1日をキーにする */
-export function selectionDateKeys(date: string): {
+function selectionDateKeys(date: string): {
   daily: string;
   weekly: string;
   monthly: string;

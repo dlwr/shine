@@ -13,7 +13,7 @@ export type FrontEnvironment = {
 
 export type LoadContext = Readonly<RouterContextProvider>;
 
-export const environmentContext = createContext<FrontEnvironment>({});
+const environmentContext = createContext<FrontEnvironment>({});
 
 const visitorIpContext = createContext<string | undefined>(undefined);
 

@@ -16,15 +16,11 @@ import {
 
 export {extractAwardEditions} from './imdb-event-award/editions';
 export type {
-  AwardEdition,
-  AwardFilm,
-  AwardPerson,
   ImdbEventAwardConfig,
   ImdbEventCollectedData,
   ImdbEventEdition,
   ImdbEventImportStats,
   ImdbEventNomination,
-  ImdbEventNominationPerson,
   ImdbEventNominationTitle,
 } from './imdb-event-award/types';
 

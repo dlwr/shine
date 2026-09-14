@@ -19,8 +19,7 @@
     "commander": "^15.0.0",
     "csv-parse": "^7.0.2",
     "domhandler": "^6.0.1",
-    "dotenv": "^17.4.2",
-    "iconv-lite": "^0.7.3"
+    "dotenv": "^17.4.2"
   },
   "devDependencies": {
     "tsx": "^4.23.13"

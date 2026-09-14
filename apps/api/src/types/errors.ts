@@ -1,4 +1,4 @@
-export type ApiError = {
+type ApiError = {
   error: string;
   code: string;
   details?: Record<string, unknown>;
@@ -43,5 +43,3 @@ export const ErrorCodes = {
   AUTHENTICATION_ERROR: 'AUTHENTICATION_ERROR',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const;
-
-export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];

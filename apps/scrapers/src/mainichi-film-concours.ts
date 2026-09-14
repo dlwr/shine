@@ -38,7 +38,7 @@ const AWARD_LINE = /^:\*\*\s*(\S+)\s*(.*)$/;
 const BRACKETED_TITLE = /『([^』]*)』/g;
 const WIKI_LINK = /^\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]*))?]]/;
 
-export type MainichiFilm = {
+type MainichiFilm = {
   page?: string;
   title: string;
 };
@@ -132,7 +132,7 @@ export function parseMainichiWikitext(wikitext: string): MainichiEdition[] {
 }
 
 /** 記事が無い作品はWikipediaの表示名で引けるようにする */
-export function filmKey(film: MainichiFilm): string {
+function filmKey(film: MainichiFilm): string {
   return film.page ?? `title:${film.title}`;
 }
 
@@ -294,19 +294,19 @@ export const mainichiGrandPrixConfig: ImdbEventAwardConfig = {
   isCompetitionCategory: category => category === GRAND_PRIX_CATEGORY,
 };
 
-export const mainichiExcellenceConfig: ImdbEventAwardConfig = {
+const mainichiExcellenceConfig: ImdbEventAwardConfig = {
   ...baseConfig,
   categoryName: EXCELLENCE_CATEGORY,
   isCompetitionCategory: category => category === EXCELLENCE_CATEGORY,
 };
 
-export const mainichiForeignConfig: ImdbEventAwardConfig = {
+const mainichiForeignConfig: ImdbEventAwardConfig = {
   ...baseConfig,
   categoryName: FOREIGN_CATEGORY,
   isCompetitionCategory: category => category === FOREIGN_CATEGORY,
 };
 
-export async function fetchMainichiWikitext(): Promise<string> {
+async function fetchMainichiWikitext(): Promise<string> {
   const url = buildUrl(WIKIPEDIA_API, {
     action: 'parse',
     page: WIKIPEDIA_ARTICLE,

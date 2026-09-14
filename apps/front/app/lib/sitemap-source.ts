@@ -11,8 +11,6 @@ type PagedResponse<Key extends string> = {
   pagination?: {totalCount?: number};
 };
 
-export {resolveApiUrl} from './api';
-
 async function fetchSource<Key extends string>(
   context: LoadContext,
   path: string,

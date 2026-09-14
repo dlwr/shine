@@ -23,7 +23,7 @@ type FetchLike = (
   init?: RequestInit,
 ) => Promise<{ok: boolean; status?: number}>;
 
-export function buildArticleLinkMessage(
+function buildArticleLinkMessage(
   submission: ArticleLinkSubmission,
   origin: 'owner' | 'other',
 ): string {

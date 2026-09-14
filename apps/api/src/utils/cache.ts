@@ -1,9 +1,4 @@
 import {type Context} from 'hono';
-export type CacheConfig = {
-  key: string;
-  ttl: number;
-  headers?: Record<string, string>;
-};
 
 export type CacheMetrics = {
   hits: number;
@@ -233,18 +228,6 @@ export const getCacheKeyForSearch = (
     .join('|');
 
   return `search:${query || 'all'}:${page}:${limit}:${filterString}:v1`;
-};
-
-export const getCacheKeyForUrlTitle = (url: string): string => {
-  let hash = 0;
-  for (let index = 0; index < url.length; index++) {
-    const char = url.codePointAt(index) || 0;
-    hash = (hash << 5) - hash + char;
-    hash &= hash;
-  }
-
-  const urlHash = Math.abs(hash).toString(16).slice(0, 16);
-  return `url:title:${urlHash}:v1`;
 };
 
 export const getCacheTTL = {

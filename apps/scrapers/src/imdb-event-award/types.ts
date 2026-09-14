@@ -26,7 +26,7 @@ export type ImdbEventNominationTitle = {
   originalTitle: string | null;
 };
 
-export type ImdbEventNominationPerson = {
+type ImdbEventNominationPerson = {
   name: string;
 };
 

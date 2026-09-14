@@ -123,7 +123,7 @@ export async function fetchQuizPuzzle(): Promise<{
   return (await response.json()) as {date: string; poolSize: number};
 }
 
-export async function fetchAwardPages(): Promise<AwardSummary[]> {
+async function fetchAwardPages(): Promise<AwardSummary[]> {
   const response = await fetch(`${apiUrl()}/awards`, {
     headers: {Origin: SITE_URL},
   });

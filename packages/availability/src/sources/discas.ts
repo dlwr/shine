@@ -20,7 +20,7 @@ function encodeShiftJisQuery(text: string): string {
   return encoded;
 }
 
-export type DiscasSearchResult = {
+type DiscasSearchResult = {
   title: string;
   detailUrl: string;
 };

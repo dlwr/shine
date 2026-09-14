@@ -22,7 +22,7 @@ import {
   type JapanAcademyEdition,
 } from './japan-academy-wikitext';
 
-export const JAPAN_ACADEMY_CATEGORY = '優秀作品賞';
+const JAPAN_ACADEMY_CATEGORY = '優秀作品賞';
 
 /** 対象期間は前年12月16日〜当年12月15日。映画祭プレミアで前年公開になることはある */
 const PUBLICATION_WINDOW: YearWindow = {min: -1, max: 1};
@@ -102,7 +102,7 @@ export function toImdbEventData(
   };
 }
 
-export const japanAcademyConfig: ImdbEventAwardConfig = {
+const japanAcademyConfig: ImdbEventAwardConfig = {
   organizationName: 'Japan Academy Awards',
   organizationCountry: 'Japan',
   establishedYear: 1978,

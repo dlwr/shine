@@ -254,7 +254,7 @@ const WATCHED_GRID_MIN_COLUMNS = 6;
 const WATCHED_GRID_MAX_COLUMNS = 12;
 const WATCHED_NAME_MAX_FONT_SIZE = 48;
 
-export function watchedGridLayout(total: number): {
+function watchedGridLayout(total: number): {
   columns: number;
   cellSize: number;
 } {

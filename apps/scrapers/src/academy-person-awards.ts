@@ -3,8 +3,6 @@ import {type AcademyPersonEdition} from './academy-person-wikitext';
 import {
   awardConfig,
   awardFilmReferences,
-  ceremonyYearOf,
-  importEnWikipediaAward,
   importEnWikipediaAwards,
   toImdbEventData as buildImdbEventData,
   type EnWikipediaAward,
@@ -21,7 +19,7 @@ import {
   type ImdbEventImportStats,
 } from './imdb-event-award';
 
-export const ACADEMY_SOURCE: EnWikipediaAwardSource = {
+const ACADEMY_SOURCE: EnWikipediaAwardSource = {
   organizationName: 'Academy Awards',
   organizationCountry: 'United States',
   firstCeremonyYear: 1929,
@@ -32,10 +30,6 @@ export const ACADEMY_SOURCE: EnWikipediaAwardSource = {
   resolutionOverrides: new Map<string, string>(),
   personNameAliases: {},
 };
-
-export function academyCeremonyYear(ceremonyNumber: number): number {
-  return ceremonyYearOf(ACADEMY_SOURCE, ceremonyNumber);
-}
 
 export type AcademyPersonAward = EnWikipediaAward & {role: PersonRole};
 
@@ -92,30 +86,6 @@ export function academyPersonConfig(
   award: AcademyPersonAward,
 ): ImdbEventAwardConfig {
   return awardConfig(ACADEMY_SOURCE, award);
-}
-
-export async function importAcademyPersonAward({
-  environment,
-  award,
-  dryRun = false,
-  year,
-  throttleMs = 300,
-}: {
-  environment: Environment;
-  award: AcademyPersonAward;
-  dryRun?: boolean;
-  /** 授賞式の年。1929年が第1回 */
-  year?: number;
-  throttleMs?: number;
-}): Promise<ImdbEventImportStats> {
-  return importEnWikipediaAward({
-    environment,
-    source: ACADEMY_SOURCE,
-    award,
-    dryRun,
-    year,
-    throttleMs,
-  });
 }
 
 export async function importAcademyPersonAwards({

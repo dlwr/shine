@@ -36,6 +36,7 @@ Key design patterns:
 # Quality gates — run before every commit
 pnpm lint:fix && pnpm check   # eslint --fix + prettier --write, then lint + tsc build
 pnpm run test                 # vitest (node + jsdom projects)
+pnpm knip                     # unused files, exports and dependencies (CI runs it; add one-off scripts to knip.json entry)
 pnpm run test:api / test:front / test:scrapers / test:database
 
 # Deploy (production only — dev environment is not used)

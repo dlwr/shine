@@ -228,7 +228,7 @@ export function japanAcademyPersonConfig(
   };
 }
 
-export async function importJapanAcademyPersonAward({
+async function importJapanAcademyPersonAward({
   environment,
   award,
   dryRun = false,

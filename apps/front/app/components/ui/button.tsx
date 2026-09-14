@@ -33,7 +33,7 @@ const buttonVariants = cva(
   },
 );
 
-export type ButtonProperties = React.ButtonHTMLAttributes<HTMLButtonElement> &
+type ButtonProperties = React.ButtonHTMLAttributes<HTMLButtonElement> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
   };
@@ -52,4 +52,4 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProperties>(
 );
 Button.displayName = 'Button';
 
-export {Button, buttonVariants};
+export {Button};

@@ -1,4 +1,4 @@
-export type ProminentMovie = {
+type ProminentMovie = {
   uid: string;
   title?: string;
   year?: number;

@@ -2,7 +2,7 @@ import type {MetaDescriptor} from 'react-router';
 import type {Locale} from './locale';
 
 export const SITE_URL = 'https://shine-film.com';
-export const SITE_NAME = 'SHINE';
+const SITE_NAME = 'SHINE';
 
 const OPEN_GRAPH_LOCALES: Record<Locale, string> = {
   ja: 'ja_JP',
@@ -16,8 +16,8 @@ export function upgradePosterForSharing(url?: string): string | undefined {
   return url?.replace(TMDB_SIZED_POSTER_PATTERN, '$1w780$2');
 }
 
-export const OG_IMAGE_WIDTH = 1200;
-export const OG_IMAGE_HEIGHT = 630;
+const OG_IMAGE_WIDTH = 1200;
+const OG_IMAGE_HEIGHT = 630;
 
 type SocialMetaInput = {
   title: string;
