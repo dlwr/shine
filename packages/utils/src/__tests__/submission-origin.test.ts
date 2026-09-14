@@ -59,6 +59,24 @@ describe('classifySubmission', () => {
     ).toBe('other');
   });
 
+  it('本人の印が付いた投稿は URL が無くても owner になる', () => {
+    expect(
+      classifySubmission(
+        {url: undefined, submitterIp: '203.0.113.9', isOwnerSubmission: true},
+        defaultRules,
+      ),
+    ).toBe('owner');
+  });
+
+  it('本人の印はループバックからの投稿でも owner を優先する', () => {
+    expect(
+      classifySubmission(
+        {url: undefined, submitterIp: '127.0.0.1', isOwnerSubmission: true},
+        defaultRules,
+      ),
+    ).toBe('owner');
+  });
+
   it('URL が空の投稿は URL では本人と判定しない', () => {
     expect(
       classifySubmission({url: '', submitterIp: '203.0.113.9'}, defaultRules),

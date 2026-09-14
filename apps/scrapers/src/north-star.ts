@@ -100,6 +100,7 @@ export async function collectMonthlyLinkCounts(
         movieUid: articleLinks.movieUid,
         url: articleLinks.url,
         submitterIp: articleLinks.submitterIp,
+        isOwnerSubmission: articleLinks.isOwnerSubmission,
         submittedAt: articleLinks.submittedAt,
       })
       .from(articleLinks)
@@ -204,6 +205,7 @@ export async function findUnannouncedMonthlyLinks(
       uid: articleLinks.uid,
       url: articleLinks.url,
       submitterIp: articleLinks.submitterIp,
+      isOwnerSubmission: articleLinks.isOwnerSubmission,
     })
     .from(articleLinks)
     .where(

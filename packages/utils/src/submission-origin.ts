@@ -33,9 +33,14 @@ export function classifySubmission(
   link: {
     url?: string | undefined | null;
     submitterIp?: string | undefined | null;
+    isOwnerSubmission?: boolean | undefined | null;
   },
   rules: OriginRules,
 ): SubmissionOrigin {
+  if (link.isOwnerSubmission) {
+    return 'owner';
+  }
+
   const ip = link.submitterIp ?? '';
 
   if (rules.ownerIps.includes(ip)) {

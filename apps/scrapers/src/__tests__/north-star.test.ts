@@ -106,6 +106,27 @@ describe('collectMonthlyLinkCounts', () => {
     ]);
   });
 
+  it('本人の印が付いたリンクは URL が本人のものでなくても本人に数える', async () => {
+    const database = await createTestDatabase();
+    await seedMonthlySelection(database, {
+      movieUid: 'movie-1',
+      month: '2026-09',
+      title: 'ある映画',
+    });
+    await database.insert(articleLinks).values({
+      movieUid: 'movie-1',
+      url: 'https://open.spotify.com/episode/abc',
+      title: 'ポッドキャスト',
+      submitterIp: '203.0.113.9',
+      isOwnerSubmission: true,
+      submittedAt: new Date('2026-09-14T09:24:00+09:00'),
+    });
+
+    const counts = await collectMonthlyLinkCounts(database, defaultRules);
+
+    expect(counts[0]?.owner).toBe(1);
+  });
+
   it('選出月より前に投稿されたリンクは数えない', async () => {
     const database = await createTestDatabase();
     await seedMonthlySelection(database, {
@@ -255,6 +276,27 @@ describe('findUnannouncedMonthlyLinks', () => {
       year: 2020,
       linkUids: ['link-other'],
     });
+  });
+
+  it('本人の印が付いたリンクは紹介しない', async () => {
+    const database = await createTestDatabase();
+    await seedMonthlySelection(database, {
+      movieUid: 'movie-1',
+      month: '2026-09',
+      title: 'ある映画',
+    });
+    await database.insert(articleLinks).values({
+      uid: 'link-owner-flagged',
+      movieUid: 'movie-1',
+      url: 'https://open.spotify.com/episode/abc',
+      submitterIp: '203.0.113.9',
+      isOwnerSubmission: true,
+      submittedAt: new Date('2026-09-14T09:24:00+09:00'),
+    });
+
+    expect(
+      await findUnannouncedMonthlyLinks(database, defaultRules, {now}),
+    ).toBeUndefined();
   });
 
   it('紹介済みのリンクは返さない', async () => {
