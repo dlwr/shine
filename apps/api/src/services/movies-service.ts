@@ -304,7 +304,7 @@ export class MoviesService extends BaseService {
     const movieExists = await this.database
       .select({uid: movies.uid})
       .from(movies)
-      .where(eq(movies.uid, movieId))
+      .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
       .limit(1);
 
     if (movieExists.length === 0) {

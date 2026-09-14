@@ -1,4 +1,4 @@
-import {and, eq, not} from '@shine/database';
+import {and, eq, isNull, not} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {BaseService} from './base-service';
 import {NotFoundError, ValidationError} from './errors';
@@ -34,13 +34,13 @@ export class MovieMergeService extends BaseService {
     const [sourceMovie] = await this.database
       .select()
       .from(movies)
-      .where(eq(movies.uid, sourceMovieId))
+      .where(and(eq(movies.uid, sourceMovieId), isNull(movies.deletedAt)))
       .limit(1);
 
     const [targetMovie] = await this.database
       .select()
       .from(movies)
-      .where(eq(movies.uid, targetMovieId))
+      .where(and(eq(movies.uid, targetMovieId), isNull(movies.deletedAt)))
       .limit(1);
 
     if (!sourceMovie) {

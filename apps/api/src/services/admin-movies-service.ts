@@ -1,4 +1,4 @@
-import {and, eq, sql} from '@shine/database';
+import {and, eq, isNull, sql} from '@shine/database';
 import {articleLinks} from '@shine/database/schema/article-links';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
@@ -66,8 +66,10 @@ export class AdminMoviesService extends BaseService {
 			)
 		`.as('nominationCount');
 
-    const searchCondition = search
-      ? sql`
+    const searchCondition = and(
+      isNull(movies.deletedAt),
+      search
+        ? sql`
 				EXISTS (
 					SELECT 1 FROM translations
 					WHERE translations.resource_uid = movies.uid
@@ -75,7 +77,8 @@ export class AdminMoviesService extends BaseService {
 					AND translations.content LIKE ${`%${search}%`}
 				)
 			`
-      : undefined;
+        : undefined,
+    );
 
     const allMovies = await this.database
       .select({
@@ -126,7 +129,7 @@ export class AdminMoviesService extends BaseService {
         mediaType: movies.mediaType,
       })
       .from(movies)
-      .where(eq(movies.uid, movieId))
+      .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
       .limit(1);
 
     if (movieResult.length === 0) {
@@ -248,7 +251,7 @@ export class AdminMoviesService extends BaseService {
     const movieExists = await this.database
       .select({uid: movies.uid})
       .from(movies)
-      .where(eq(movies.uid, movieId))
+      .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
       .limit(1);
 
     if (movieExists.length === 0) {

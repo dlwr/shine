@@ -1,4 +1,4 @@
-import {and, eq, inArray, not, sql} from '@shine/database';
+import {and, eq, inArray, isNull, not, sql} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
@@ -237,6 +237,8 @@ export class AdminCeremoniesService extends BaseService {
         movieCount: sql<number>`COUNT(DISTINCT ${nominations.movieUid})`,
       })
       .from(nominations)
+      .innerJoin(movies, eq(nominations.movieUid, movies.uid))
+      .where(isNull(movies.deletedAt))
       .groupBy(nominations.ceremonyUid);
 
     const countsMap = new Map<string, number>();
@@ -296,7 +298,9 @@ export class AdminCeremoniesService extends BaseService {
         eq(nominations.categoryUid, awardCategories.uid),
       )
       .innerJoin(movies, eq(nominations.movieUid, movies.uid))
-      .where(eq(nominations.ceremonyUid, ceremonyUid))
+      .where(
+        and(eq(nominations.ceremonyUid, ceremonyUid), isNull(movies.deletedAt)),
+      )
       .orderBy(awardCategories.name, movies.year);
 
     const titlesMap = await this.loadTitles(nominationsResult);

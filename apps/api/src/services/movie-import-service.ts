@@ -1,4 +1,4 @@
-import {and, eq, not} from '@shine/database';
+import {and, eq, isNull, not} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
@@ -215,7 +215,7 @@ export class MovieImportService extends BaseService {
     const movieExists = await this.database
       .select({uid: movies.uid})
       .from(movies)
-      .where(eq(movies.uid, movieId))
+      .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
       .limit(1);
 
     if (movieExists.length === 0) {
