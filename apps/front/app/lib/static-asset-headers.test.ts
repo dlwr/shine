@@ -1,15 +1,9 @@
-// @vitest-environment node
-import {readFileSync} from 'node:fs';
-import {fileURLToPath} from 'node:url';
 import {describe, expect, it} from 'vitest';
-
-const headersPath = fileURLToPath(
-  new URL('../../public/_headers', import.meta.url),
-);
+import headers from '../../public/_headers?raw';
 
 function cacheControlFor(pattern: string): string | undefined {
   let current: string | undefined;
-  for (const line of readFileSync(headersPath, 'utf8').split('\n')) {
+  for (const line of headers.split('\n')) {
     if (line.trim() === '' || line.trimStart().startsWith('#')) {
       continue;
     }
