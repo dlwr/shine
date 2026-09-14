@@ -326,18 +326,22 @@ function isUnderCorrelatedSubquery(rows: PlanRow[], row: PlanRow): boolean {
   return false;
 }
 
+function isFullScan(row: PlanRow): boolean {
+  return (
+    row.detail.startsWith('SCAN ') ||
+    /^SEARCH movies USING (?:COVERING )?INDEX \S+ \(deleted_at=\?\)$/.test(
+      row.detail,
+    )
+  );
+}
+
 function fullScans(rows: PlanRow[]): string[] {
-  return rows
-    .filter(row => row.detail.startsWith('SCAN '))
-    .map(row => row.detail);
+  return rows.filter(row => isFullScan(row)).map(row => row.detail);
 }
 
 function fullScansPerRow(rows: PlanRow[]): string[] {
   return rows
-    .filter(
-      row =>
-        row.detail.startsWith('SCAN ') && isUnderCorrelatedSubquery(rows, row),
-    )
+    .filter(row => isFullScan(row) && isUnderCorrelatedSubquery(rows, row))
     .map(row => row.detail);
 }
 
