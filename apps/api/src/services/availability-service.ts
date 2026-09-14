@@ -1,14 +1,8 @@
-import {
-  checkDiscas,
-  checkMovieAvailability,
-  checkTmdbProviders,
-  checkUnext,
-  fetchJapaneseAlternativeTitles,
-  loadLatestResults,
-  type AvailabilitySource,
-  type FetchLike,
-  type MovieToCheck,
-  type SourceRunners,
+import type {
+  AvailabilitySource,
+  FetchLike,
+  MovieToCheck,
+  SourceRunners,
 } from '@shine/availability';
 import {and, eq, isNull, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
@@ -16,6 +10,8 @@ import {translations} from '@shine/database/schema/translations';
 import {BaseService} from './base-service';
 
 const RETRY_DELAY_MS = 250;
+
+const loadAvailability = async () => import('@shine/availability');
 
 export type AvailabilityCheckResult = {
   available: boolean;
@@ -41,6 +37,7 @@ export function buildOnDemandRunners(
 
     let pending = alternativeTitlesCache.get(movie.uid);
     if (!pending) {
+      const {fetchJapaneseAlternativeTitles} = await loadAvailability();
       pending = fetchJapaneseAlternativeTitles(
         movie.tmdbId,
         tmdbApiKey,
@@ -63,12 +60,15 @@ export function buildOnDemandRunners(
         };
       }
 
+      const {checkTmdbProviders} = await loadAvailability();
       return checkTmdbProviders(movie.tmdbId, tmdbApiKey, fetchImpl);
     },
     async unext(movie) {
+      const {checkUnext} = await loadAvailability();
       return checkUnext(await titlesForSearch(movie), fetchImpl);
     },
     async discas(movie) {
+      const {checkDiscas} = await loadAvailability();
       return checkDiscas(await titlesForSearch(movie), fetchImpl, {
         year: movie.year,
       });
@@ -95,6 +95,8 @@ export class AvailabilityService extends BaseService {
       return undefined;
     }
 
+    const {checkMovieAvailability, loadLatestResults} =
+      await loadAvailability();
     const nowEpoch = Math.floor(Date.now() / 1000);
     const check = () =>
       checkMovieAvailability(this.database, movie, {

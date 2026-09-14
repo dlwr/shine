@@ -3,7 +3,7 @@ import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
-import puppeteer from '@cloudflare/puppeteer';
+import type {Browser} from '@cloudflare/puppeteer';
 import {BaseService} from './base-service';
 import {
   ConflictError,
@@ -197,7 +197,8 @@ export class CeremonyNominationSyncService extends BaseService {
 
     const normalizedUrl = ensureTrailingSlash(imdbEventUrl);
 
-    let browser: Awaited<ReturnType<typeof puppeteer.launch>> | undefined;
+    const {default: puppeteer} = await import('@cloudflare/puppeteer');
+    let browser: Browser | undefined;
     let isReusedExistingSession = false;
     try {
       const sessions = await puppeteer.sessions(this.env.BROWSER);
