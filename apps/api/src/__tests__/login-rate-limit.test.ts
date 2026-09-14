@@ -21,6 +21,17 @@ const login = async (password: string, ip = '203.0.113.1') =>
     environment,
   );
 
+const loginViaBinding = async (password: string, ip: string) =>
+  app.request(
+    '/auth/login',
+    {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-real-ip': ip},
+      body: JSON.stringify({password}),
+    },
+    environment,
+  );
+
 describe('createLoginRateLimiter', () => {
   it('blocks after the configured number of failures within the window', () => {
     const limiter = createLoginRateLimiter({limit: 3, windowMs: 60_000});
@@ -94,6 +105,15 @@ describe('POST /auth/login rate limiting', () => {
     }
 
     const other = await login('correct-password', '203.0.113.2');
+    expect(other.status).toBe(200);
+  });
+
+  it('counts failures per x-real-ip forwarded through the service binding', async () => {
+    for (let index = 0; index < 5; index++) {
+      await loginViaBinding('wrong-password', '203.0.113.1');
+    }
+
+    const other = await loginViaBinding('correct-password', '203.0.113.2');
     expect(other.status).toBe(200);
   });
 

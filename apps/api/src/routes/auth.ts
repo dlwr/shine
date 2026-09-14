@@ -2,6 +2,7 @@ import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {createJWT, isPasswordCorrect} from '../auth';
 import {loginRateLimiter} from '../login-rate-limiter';
+import {resolveClientIp} from '../utils/client-ip';
 import {
   createAuthenticationError,
   createInternalServerError,
@@ -13,7 +14,7 @@ export const authRoutes = new Hono<{Bindings: Environment}>();
 
 authRoutes.post('/login', async c => {
   try {
-    const clientIp = c.req.header('CF-Connecting-IP') ?? 'unknown';
+    const clientIp = resolveClientIp(c);
     if (loginRateLimiter.isBlocked(clientIp)) {
       return createRateLimitError(
         c,
