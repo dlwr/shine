@@ -1,4 +1,4 @@
-import {and, eq} from '@shine/database';
+import {and, eq, isNull} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {BaseService} from './base-service';
@@ -43,7 +43,7 @@ export class ExternalIdSearchService extends BaseService {
         year: movies.year,
       })
       .from(movies)
-      .where(eq(movies.uid, movieId))
+      .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
       .limit(1);
 
     if (!movie) {

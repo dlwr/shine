@@ -1,4 +1,4 @@
-import {and, eq, not} from '@shine/database';
+import {and, eq, isNull, not} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {BaseService} from './base-service';
 import {
@@ -49,7 +49,7 @@ export class MovieTmdbService extends BaseService {
         mediaType: movies.mediaType,
       })
       .from(movies)
-      .where(eq(movies.uid, movieId))
+      .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
       .limit(1);
 
     if (movieExists.length === 0) {
@@ -112,7 +112,7 @@ export class MovieTmdbService extends BaseService {
         mediaType: movies.mediaType,
       })
       .from(movies)
-      .where(eq(movies.uid, movieId))
+      .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
       .limit(1);
 
     if (movie.length === 0) {
@@ -215,7 +215,7 @@ export class MovieTmdbService extends BaseService {
         mediaType: movies.mediaType,
       })
       .from(movies)
-      .where(eq(movies.uid, movieId))
+      .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
       .limit(1);
 
     if (movie.length === 0) {
