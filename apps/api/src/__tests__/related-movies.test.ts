@@ -11,7 +11,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {moviesRoutes} from '../routes/movies';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -241,5 +241,24 @@ describe('GET /movies/:id/related', () => {
     );
 
     expect(response.status).toBe(404);
+  });
+});
+
+describe('GET /movies/:id/related の KV 読み取り', () => {
+  it('関連映画は colo に 10 分置く', async () => {
+    const environment = await createTestEnvironment();
+    const get = vi.fn().mockResolvedValue(undefined);
+    environment.CACHE_KV = {
+      get,
+      put: vi.fn(),
+      delete: vi.fn(),
+    } as unknown as KVNamespace;
+
+    await moviesRoutes.request('/movie-target/related', {}, environment);
+
+    expect(get).toHaveBeenCalledWith(
+      'movie:movie-target:related:ja:6:v2',
+      expect.objectContaining({type: 'json', cacheTtl: 600}),
+    );
   });
 });

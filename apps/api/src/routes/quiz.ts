@@ -34,13 +34,13 @@ quizRoutes.get('/daily', async c => {
     return c.json({error: 'Invalid date'}, 400);
   }
 
-  const pool = await new QuizService(c.env).getPool();
-  if (pool.length === 0) {
+  const poolSize = await new QuizService(c.env).getPoolSize();
+  if (poolSize === 0) {
     return c.json({error: 'Quiz unavailable'}, 503);
   }
 
   return createCachedResponse(
-    {date, maxAttempts: QUIZ_MAX_ATTEMPTS, poolSize: pool.length},
+    {date, maxAttempts: QUIZ_MAX_ATTEMPTS, poolSize},
     DAILY_TTL,
   );
 });

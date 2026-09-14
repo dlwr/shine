@@ -11,7 +11,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {quizRoutes} from '../routes/quiz';
 import {QuizService} from '../services/quiz-service';
 
@@ -237,6 +237,91 @@ describe('GET /quiz/daily', () => {
     );
 
     expect(response.status).toBe(400);
+  });
+
+  it('returns the pool size', async () => {
+    const response = await quizRoutes.request(
+      `/daily?date=${DATE}`,
+      {},
+      environment,
+    );
+
+    const body = (await response.json()) as {poolSize: number};
+    expect(body.poolSize).toBe(3);
+  });
+});
+
+function createRecordingKv() {
+  const store = new Map<string, string>();
+  const readKeys: string[] = [];
+  const kv = {
+    async get(key: string) {
+      readKeys.push(key);
+      const value = store.get(key);
+      return value === undefined ? undefined : JSON.parse(value);
+    },
+    async put(key: string, value: string) {
+      store.set(key, value);
+    },
+    async delete(key: string) {
+      store.delete(key);
+    },
+  } as unknown as KVNamespace;
+  return {kv, readKeys, store};
+}
+
+describe('GET /quiz/daily の KV 読み取り', () => {
+  let environment: Environment;
+  let recording: ReturnType<typeof createRecordingKv>;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+    recording = createRecordingKv();
+    environment.CACHE_KV = recording.kv;
+  });
+
+  async function fetchPoolSize() {
+    const response = await quizRoutes.request(
+      `/daily?date=${DATE}`,
+      {},
+      environment,
+    );
+    const body = (await response.json()) as {poolSize: number};
+    return body.poolSize;
+  }
+
+  it('プールを作った後は出題数だけを読む', async () => {
+    await quizRoutes.request('/candidates', {}, environment);
+    recording.readKeys.length = 0;
+
+    expect(await fetchPoolSize()).toBe(3);
+    expect(recording.readKeys).toEqual(['quiz:pool:v3:size']);
+  });
+
+  it('出題数は colo に 10 分置く', async () => {
+    const get = vi.fn().mockResolvedValue(undefined);
+    environment.CACHE_KV = {
+      get,
+      put: vi.fn(),
+      delete: vi.fn(),
+    } as unknown as KVNamespace;
+
+    await fetchPoolSize();
+
+    expect(get).toHaveBeenCalledWith(
+      'quiz:pool:v3:size',
+      expect.objectContaining({type: 'json', cacheTtl: 600}),
+    );
+  });
+
+  it('出題数が無ければプールから数えて残す', async () => {
+    await quizRoutes.request('/candidates', {}, environment);
+    recording.store.delete('quiz:pool:v3:size');
+    await fetchPoolSize();
+    recording.readKeys.length = 0;
+
+    expect(await fetchPoolSize()).toBe(3);
+    expect(recording.readKeys).toEqual(['quiz:pool:v3:size']);
   });
 });
 
