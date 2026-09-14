@@ -18,6 +18,8 @@
     "front:build": "pnpm --filter @shine/front run build",
     "front:deploy:dev": "pnpm run front:build && cd apps/front && pnpm wrangler deploy --config build/server/wrangler.json --name shine-front-dev",
     "front:deploy:prod": "pnpm run front:build && cd apps/front && pnpm wrangler deploy --config build/server/wrangler.json --name shine-front --minify",
+    "og:dev": "cd apps/front && pnpm wrangler dev --config wrangler.og.jsonc",
+    "og:deploy:prod": "cd apps/front && pnpm wrangler deploy --config wrangler.og.jsonc --minify",
     "scrapers": "pnpm --filter @shine/scrapers run cli",
     "scripts:soft-delete-orphan-movies": "tsx scripts/soft-delete-orphan-movies.ts",
     "scripts:cf-analytics": "tsx scripts/cf-analytics.ts",

@@ -1,6 +1,5 @@
 import {createImageResponse} from '@/lib/og/image-response';
-import type {Route} from './+types/quiz-poster';
-import {apiFetch, resolveQuizKey} from '@/lib/api';
+import {apiFetch, resolveQuizKey, type LoadContext} from '@/lib/api';
 import {fetchPosterAsDataUri} from '@/lib/og/assets';
 import {
   buildQuizPosterHtml,
@@ -18,7 +17,10 @@ type QuizAnswer = {
   focalY: number;
 };
 
-export async function loader({context, request}: Route.LoaderArgs) {
+export async function renderQuizPoster(
+  request: Request,
+  context: LoadContext,
+): Promise<Response> {
   const url = new URL(request.url);
   const date = url.searchParams.get('date') ?? '';
   const stage = Number(url.searchParams.get('stage') ?? '0');

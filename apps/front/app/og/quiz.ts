@@ -1,5 +1,4 @@
 import {createImageResponse} from '@/lib/og/image-response';
-import type {Route} from './+types/og-quiz';
 import {apiFetch, resolveQuizKey, type LoadContext} from '@/lib/api';
 import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
 import {OG_HEIGHT, OG_WIDTH, buildQuizCardHtml} from '@/lib/og/template';
@@ -43,7 +42,10 @@ async function fetchTodaysPoster(
 }
 
 // クエリの date はキャッシュ回避用で、描画は必ずAPIが返す当日分を使う
-export async function loader({context, request}: Route.LoaderArgs) {
+export async function renderQuizCard(
+  request: Request,
+  context: LoadContext,
+): Promise<Response> {
   const dailyResponse = await apiFetch(context, `/quiz/daily`, {
     signal: request.signal,
   });

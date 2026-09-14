@@ -6,6 +6,9 @@
     },
     "apps/scrapers": {
       "entry": ["database-query.mts", "src/assign-tmdb-ids.ts"]
+    },
+    "apps/front": {
+      "entry": ["workers/og.ts"]
     }
   }
 }

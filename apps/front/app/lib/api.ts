@@ -9,6 +9,9 @@ export type FrontEnvironment = {
   API?: {
     fetch: (url: string, init?: RequestInit) => Promise<Response>;
   };
+  OG?: {
+    fetch: (request: Request) => Promise<Response>;
+  };
 };
 
 export type LoadContext = Readonly<RouterContextProvider>;
