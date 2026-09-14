@@ -19,6 +19,7 @@ export const QUIZ_MAX_ATTEMPTS = 6;
 
 const MINIMUM_ORGANIZATIONS = 2;
 const POOL_CACHE_KEY = 'quiz:pool:v3';
+const POOL_SIZE_CACHE_KEY = `${POOL_CACHE_KEY}:size`;
 const POOL_CACHE_TTL = 604_800;
 
 export type QuizPoolEntry = {
@@ -148,8 +149,25 @@ export class QuizService extends BaseService {
     }
 
     const pool = await this.buildPool();
-    await cache.set(POOL_CACHE_KEY, pool, POOL_CACHE_TTL);
+    await Promise.all([
+      cache.set(POOL_CACHE_KEY, pool, POOL_CACHE_TTL),
+      cache.set(POOL_SIZE_CACHE_KEY, pool.length, POOL_CACHE_TTL),
+    ]);
     return pool;
+  }
+
+  async getPoolSize(): Promise<number> {
+    const cache = new EdgeCache(undefined, this.env.CACHE_KV);
+    const cached = await cache.get(POOL_SIZE_CACHE_KEY, {
+      edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    });
+    if (typeof cached?.data === 'number') {
+      return cached.data;
+    }
+
+    const {length} = await this.getPool();
+    await cache.set(POOL_SIZE_CACHE_KEY, length, POOL_CACHE_TTL);
+    return length;
   }
 
   async getCandidates(): Promise<QuizCandidate[]> {
