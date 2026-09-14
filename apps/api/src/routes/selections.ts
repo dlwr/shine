@@ -18,6 +18,7 @@ import {translations} from '@shine/database/schema/translations';
 import {Hono} from 'hono';
 import {authMiddleware} from '../auth';
 import {SelectionsService} from '../services';
+import {getDateSeed, getSelectionDate} from '../services/selection-dates';
 import {
   createCachedResponse,
   createETag,
@@ -27,71 +28,8 @@ import {
   shouldCheckETag,
   writeCacheAfterResponse,
 } from '../utils/cache';
-import {simpleHash} from '../utils/hash';
 
 export const selectionsRoutes = new Hono<{Bindings: Environment}>();
-
-function getSelectionDate(
-  date: Date,
-  type: 'daily' | 'weekly' | 'monthly',
-): string {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-
-  switch (type) {
-    case 'daily': {
-      return `${year}-${month.toString().padStart(2, '0')}-${day
-        .toString()
-        .padStart(2, '0')}`;
-    }
-
-    case 'weekly': {
-      const daysSinceFriday = (date.getDay() - 5 + 7) % 7;
-      const fridayDate = new Date(date);
-      fridayDate.setDate(day - daysSinceFriday);
-      return `${fridayDate.getFullYear()}-${(fridayDate.getMonth() + 1)
-        .toString()
-        .padStart(2, '0')}-${fridayDate.getDate().toString().padStart(2, '0')}`;
-    }
-
-    case 'monthly': {
-      return `${year}-${month.toString().padStart(2, '0')}-01`;
-    }
-  }
-}
-
-function getDateSeed(date: Date, type: 'daily' | 'weekly' | 'monthly'): number {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-
-  switch (type) {
-    case 'daily': {
-      const dateString = `${year}-${month.toString().padStart(2, '0')}-${day
-        .toString()
-        .padStart(2, '0')}`;
-      return simpleHash(`daily-${dateString}`);
-    }
-
-    case 'weekly': {
-      const daysSinceFriday = (date.getDay() - 5 + 7) % 7;
-      const fridayDate = new Date(date);
-      fridayDate.setDate(day - daysSinceFriday);
-      const weekString = `${fridayDate.getFullYear()}-${(
-        fridayDate.getMonth() + 1
-      )
-        .toString()
-        .padStart(2, '0')}-${fridayDate.getDate().toString().padStart(2, '0')}`;
-      return simpleHash(`weekly-${weekString}`);
-    }
-
-    case 'monthly': {
-      const monthString = `${year}-${month.toString().padStart(2, '0')}`;
-      return simpleHash(`monthly-${monthString}`);
-    }
-  }
-}
 
 async function getMovieNominations(
   database: ReturnType<typeof getDatabase>,
