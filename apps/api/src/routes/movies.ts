@@ -2,6 +2,7 @@ import {
   and,
   eq,
   getDatabase,
+  gt,
   inArray,
   isNull,
   sql,
@@ -563,7 +564,7 @@ moviesRoutes.post('/:id/article-links', async c => {
       .where(
         and(
           eq(articleLinks.submitterIp, ip),
-          sql`${articleLinks.submittedAt} > ${oneHourAgo}`,
+          gt(articleLinks.submittedAt, oneHourAgo),
         ),
       );
 

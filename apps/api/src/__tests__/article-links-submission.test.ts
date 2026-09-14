@@ -4,6 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
 import {migrate} from 'drizzle-orm/libsql/migrator';
+import {articleLinks} from '@shine/database/schema/article-links';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
@@ -55,12 +56,15 @@ async function createTestEnvironment(): Promise<Environment> {
   return created;
 }
 
-async function submit(body: SubmissionBody): Promise<Response> {
+async function submit(
+  body: SubmissionBody,
+  headers: Record<string, string> = {},
+): Promise<Response> {
   return moviesRoutes.request(
     '/movie-1/article-links',
     {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', ...headers},
       body: JSON.stringify({...body, captchaToken: 'test-token'}),
     },
     environment,
@@ -77,6 +81,13 @@ async function fetchArticleLinks(): Promise<
   );
   const body = (await response.json()) as MovieDetailResponse;
   return body.articleLinks;
+}
+
+async function storedSubmitterIp(): Promise<string | undefined> {
+  const [row] = await getDatabase(environment)
+    .select({submitterIp: articleLinks.submitterIp})
+    .from(articleLinks);
+  return row?.submitterIp ?? undefined;
 }
 
 beforeEach(async () => {
@@ -130,6 +141,49 @@ describe('POST /movies/:id/article-links', () => {
     const response = await submit({description: 'あ'.repeat(501)});
 
     expect(response.status).toBe(400);
+  });
+});
+
+describe('投稿者の IP', () => {
+  it('front が service binding 越しに渡した x-real-ip を記録する', async () => {
+    await submit({description: 'よかった'}, {'x-real-ip': '203.0.113.9'});
+
+    expect(await storedSubmitterIp()).toBe('203.0.113.9');
+  });
+
+  it('cf-connecting-ip があれば x-real-ip より優先する', async () => {
+    await submit(
+      {description: 'よかった'},
+      {'cf-connecting-ip': '198.51.100.1', 'x-real-ip': '203.0.113.9'},
+    );
+
+    expect(await storedSubmitterIp()).toBe('198.51.100.1');
+  });
+
+  it('同じ IP からは 1 時間に 10 件までしか投稿できない', async () => {
+    for (let index = 0; index < 10; index++) {
+      await submit({description: `${index}`}, {'x-real-ip': '203.0.113.9'});
+    }
+
+    const response = await submit(
+      {description: '11件目'},
+      {'x-real-ip': '203.0.113.9'},
+    );
+
+    expect(response.status).toBe(429);
+  });
+
+  it('別の IP の投稿は他人の上限に巻き込まれない', async () => {
+    for (let index = 0; index < 10; index++) {
+      await submit({description: `${index}`}, {'x-real-ip': '203.0.113.9'});
+    }
+
+    const response = await submit(
+      {description: '別の人'},
+      {'x-real-ip': '203.0.113.10'},
+    );
+
+    expect(response.status).toBe(201);
   });
 });
 

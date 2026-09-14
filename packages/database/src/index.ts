@@ -7,6 +7,7 @@ export {
   and,
   desc,
   eq,
+  gt,
   inArray,
   isNotNull,
   isNull,
