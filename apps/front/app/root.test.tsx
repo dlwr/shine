@@ -335,6 +335,23 @@ function iconHrefs(): string[] {
     .toArray();
 }
 
+describe('root Layout の CSS', () => {
+  beforeEach(() => {
+    mockRootLoaderData = {locale: 'ja'};
+  });
+
+  it('app.css を読み込み待ちの無い style 要素で head に埋め込む', () => {
+    const markup = renderToStaticMarkup(
+      <Layout>
+        <div />
+      </Layout>,
+    );
+    const head = markup.slice(0, markup.indexOf('</head>'));
+
+    expect(head).toMatch(/<style[^>]*data-precedence="default"/);
+  });
+});
+
 describe('root Layout のアイコン', () => {
   beforeEach(() => {
     mockRootLoaderData = {locale: 'ja'};
