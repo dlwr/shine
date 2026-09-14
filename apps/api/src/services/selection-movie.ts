@@ -9,7 +9,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
-import {awardPageLinkForOrganizationName} from './awards-service';
+import {awardPageLinkForOrganizationName} from './award-definition-lookup';
 import type {MovieSelection} from '@shine/types';
 
 type Database = ReturnType<typeof getDatabase>;

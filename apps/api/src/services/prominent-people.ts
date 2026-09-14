@@ -13,7 +13,7 @@ import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import type {ProminentPerson, ProminentPersonMovie} from '@shine/types';
-import {personAwardNominations} from './awards-service';
+import {personAwardNominations} from './award-definition-lookup';
 import {joinAwardContext, localizedMovieTitle} from './people-query';
 import {personLocalizedName} from './person-name';
 

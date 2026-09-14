@@ -7,7 +7,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {
   awardPageNominations,
   findTopAwardPageDefinition,
-} from './awards-service';
+} from './award-definition-lookup';
 import {awardPageDefinitions} from './award-definitions';
 import {BaseService} from './base-service';
 import type {YearDetail, YearMovie, YearSummary} from '@shine/types';

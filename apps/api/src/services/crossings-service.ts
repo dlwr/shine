@@ -4,7 +4,7 @@ import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
-import {findTopAwardPageDefinition} from './awards-service';
+import {findTopAwardPageDefinition} from './award-definition-lookup';
 import {awardPageDefinitions} from './award-definitions';
 import {BaseService} from './base-service';
 import type {AwardCrossings, CrossingMovie} from '@shine/types';
