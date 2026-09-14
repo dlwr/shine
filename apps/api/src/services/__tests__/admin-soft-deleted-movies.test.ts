@@ -9,11 +9,12 @@ import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {createJWT} from '../../auth';
 import {adminNominationsRoutes} from '../../routes/admin/nominations';
 import {AdminCeremoniesService} from '../admin-ceremonies-service';
 import {AdminMoviesService} from '../admin-movies-service';
+import {ensureNominationMovies} from '../ceremony-nomination-sync-service';
 import {NotFoundError} from '../errors';
 import {ExternalIdSearchService} from '../external-id-search-service';
 import {MovieImportService} from '../movie-import-service';
@@ -30,6 +31,7 @@ const migrationsFolder = path.resolve(
 const JWT_SECRET = 'test-jwt-secret';
 
 let environment: Environment;
+let database: ReturnType<typeof getDatabase>;
 
 beforeEach(async () => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
@@ -39,7 +41,7 @@ beforeEach(async () => {
     TMDB_API_KEY: 'test-key',
     JWT_SECRET,
   };
-  const database = getDatabase(environment);
+  database = getDatabase(environment);
   await migrate(database, {migrationsFolder});
 
   await database.insert(movies).values([
@@ -210,5 +212,47 @@ describe('POST /movies/:movieId/nominations', () => {
     );
 
     expect(response.status).toBe(404);
+  });
+});
+
+describe('ensureNominationMovies', () => {
+  it('IMDb ID が論理削除した映画のものならノミネートの対象にしない', async () => {
+    const movieImport = {createMovieFromImdbId: vi.fn()};
+
+    const result = await ensureNominationMovies(database, movieImport, [
+      {imdbId: 'tt0000002'},
+    ]);
+
+    expect(result.ensuredMovies.has('tt0000002')).toBe(false);
+  });
+
+  it('論理削除した映画を作り直さない', async () => {
+    const movieImport = {createMovieFromImdbId: vi.fn()};
+
+    await ensureNominationMovies(database, movieImport, [
+      {imdbId: 'tt0000002'},
+    ]);
+
+    expect(movieImport.createMovieFromImdbId).not.toHaveBeenCalled();
+  });
+
+  it('論理削除した映画はスキップ数に数える', async () => {
+    const movieImport = {createMovieFromImdbId: vi.fn()};
+
+    const result = await ensureNominationMovies(database, movieImport, [
+      {imdbId: 'tt0000002'},
+    ]);
+
+    expect(result.skipped).toBe(1);
+  });
+
+  it('既存の映画はそのまま対象にする', async () => {
+    const movieImport = {createMovieFromImdbId: vi.fn()};
+
+    const result = await ensureNominationMovies(database, movieImport, [
+      {imdbId: 'tt0000001'},
+    ]);
+
+    expect(result.ensuredMovies.get('tt0000001')).toBe('kept');
   });
 });

@@ -1,4 +1,4 @@
-import {and, eq} from '@shine/database';
+import {and, eq, type getDatabase} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {movies} from '@shine/database/schema/movies';
@@ -35,6 +35,99 @@ const AWARD_SYNONYM_GROUPS: string[][] = [
 
 const ensureTrailingSlash = (value: string): string =>
   value.endsWith('/') ? value : `${value}/`;
+
+type Database = ReturnType<typeof getDatabase>;
+
+async function findMovieByImdbId(database: Database, imdbId: string) {
+  const [movie] = await database
+    .select({uid: movies.uid, deletedAt: movies.deletedAt})
+    .from(movies)
+    .where(eq(movies.imdbId, imdbId))
+    .limit(1);
+  return movie;
+}
+
+export async function ensureNominationMovies(
+  database: Database,
+  movieImport: Pick<MovieImportService, 'createMovieFromImdbId'>,
+  imdbNominations: Array<{imdbId?: string}>,
+): Promise<{
+  ensuredMovies: Map<string, string>;
+  moviesCreated: number;
+  skipped: number;
+}> {
+  let moviesCreated = 0;
+  let skipped = 0;
+  const ensuredMovies = new Map<string, string>();
+  const deletedImdbIds = new Set<string>();
+
+  for (const nomination of imdbNominations) {
+    if (!nomination.imdbId) {
+      skipped++;
+      continue;
+    }
+
+    if (
+      ensuredMovies.has(nomination.imdbId) ||
+      deletedImdbIds.has(nomination.imdbId)
+    ) {
+      continue;
+    }
+
+    const existing = await findMovieByImdbId(database, nomination.imdbId);
+
+    if (existing?.deletedAt) {
+      deletedImdbIds.add(nomination.imdbId);
+      skipped++;
+      continue;
+    }
+
+    if (existing) {
+      ensuredMovies.set(nomination.imdbId, existing.uid);
+      continue;
+    }
+
+    try {
+      const created = await movieImport.createMovieFromImdbId(
+        nomination.imdbId,
+      );
+      ensuredMovies.set(nomination.imdbId, created.movie.uid);
+      moviesCreated++;
+    } catch (error) {
+      console.error(
+        `[imdb-sync] createMovie error for ${nomination.imdbId}:`,
+        error instanceof Error ? error.message : error,
+      );
+      if (
+        error instanceof TmdbConfigError ||
+        error instanceof TmdbDataNotFoundError
+      ) {
+        const fallback = await movieImport.createMovieFromImdbId(
+          nomination.imdbId,
+          {
+            fetchTMDBData: false,
+          },
+        );
+        ensuredMovies.set(nomination.imdbId, fallback.movie.uid);
+        moviesCreated++;
+        continue;
+      }
+
+      if (error instanceof ConflictError) {
+        const recheck = await findMovieByImdbId(database, nomination.imdbId);
+
+        if (recheck && !recheck.deletedAt) {
+          ensuredMovies.set(nomination.imdbId, recheck.uid);
+          continue;
+        }
+      }
+
+      throw error;
+    }
+  }
+
+  return {ensuredMovies, moviesCreated, skipped};
+}
 
 export class CeremonyNominationSyncService extends BaseService {
   async syncCeremonyNominationsFromImdb(
@@ -299,75 +392,12 @@ export class CeremonyNominationSyncService extends BaseService {
       );
     }
 
-    const movieImport = new MovieImportService(this.env);
-    let moviesCreated = 0;
-    let skipped = 0;
-    const ensuredMovies = new Map<string, string>();
-
-    for (const nomination of imdbNominations) {
-      if (!nomination.imdbId) {
-        skipped++;
-        continue;
-      }
-
-      if (ensuredMovies.has(nomination.imdbId)) {
-        continue;
-      }
-
-      const existing = await this.database
-        .select({uid: movies.uid})
-        .from(movies)
-        .where(eq(movies.imdbId, nomination.imdbId))
-        .limit(1);
-
-      if (existing.length > 0) {
-        ensuredMovies.set(nomination.imdbId, existing[0].uid);
-        continue;
-      }
-
-      try {
-        const created = await movieImport.createMovieFromImdbId(
-          nomination.imdbId,
-        );
-        ensuredMovies.set(nomination.imdbId, created.movie.uid);
-        moviesCreated++;
-      } catch (error) {
-        console.error(
-          `[imdb-sync] createMovie error for ${nomination.imdbId}:`,
-          error instanceof Error ? error.message : error,
-        );
-        if (
-          error instanceof TmdbConfigError ||
-          error instanceof TmdbDataNotFoundError
-        ) {
-          const fallback = await movieImport.createMovieFromImdbId(
-            nomination.imdbId,
-            {
-              fetchTMDBData: false,
-            },
-          );
-          ensuredMovies.set(nomination.imdbId, fallback.movie.uid);
-          moviesCreated++;
-          continue;
-        }
-
-        if (error instanceof ConflictError) {
-          const recheck = await this.database
-            .select({uid: movies.uid})
-            .from(movies)
-            .where(eq(movies.imdbId, nomination.imdbId))
-            .limit(1);
-
-          if (recheck.length > 0) {
-            ensuredMovies.set(nomination.imdbId, recheck[0].uid);
-            continue;
-          }
-        }
-
-        throw error;
-      }
-    }
-
+    const {ensuredMovies, moviesCreated, skipped} =
+      await ensureNominationMovies(
+        this.database,
+        new MovieImportService(this.env),
+        imdbNominations,
+      );
     const now = Math.floor(Date.now() / 1000);
     const insertedMovieKeys = new Set<string>();
     const nominationRecords: Array<typeof nominations.$inferInsert> = [];
