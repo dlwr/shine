@@ -33,20 +33,6 @@ export class TmdbDataNotFoundError extends NotFoundError {
   }
 }
 
-export class ExternalFetchError extends Error {
-  constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = 'ExternalFetchError';
-  }
-}
-
-export class UnprocessableContentError extends Error {
-  constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = 'UnprocessableContentError';
-  }
-}
-
 export class TmdbSyncError extends Error {
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);

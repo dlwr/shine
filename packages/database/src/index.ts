@@ -32,7 +32,6 @@ export type Environment = {
   DISCORD_WEBHOOK_URL?: string;
   NORTH_STAR_OWNER_URL_PREFIXES?: string;
   NORTH_STAR_OWNER_IPS?: string;
-  BROWSER?: Fetcher;
   CACHE_KV?: KVNamespace;
   SUGGEST_RATE_LIMITER?: RateLimit;
 };
