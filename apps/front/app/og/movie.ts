@@ -1,5 +1,4 @@
 import {createImageResponse} from '@/lib/og/image-response';
-import type {Route} from './+types/og-movie';
 import {
   buildBadges,
   type AvailabilityInfo,
@@ -8,7 +7,7 @@ import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
 import {OG_HEIGHT, OG_WIDTH, buildMovieCardHtml} from '@/lib/og/template';
 import {TAGLINE} from '@/lib/tagline';
 import {upgradePosterForSharing} from '@/lib/meta';
-import {apiFetch} from '@/lib/api';
+import {apiFetch, type LoadContext} from '@/lib/api';
 
 type MovieDetail = {
   title?: string;
@@ -26,7 +25,10 @@ const CACHE_CONTROL = 'public, max-age=86400';
 /** Satoriへ渡すフォントに最低限含める文字 */
 const BASE_TEXT = `SHINE0123456789${TAGLINE}見放題宅配レンタル配信あり `;
 
-export async function loader({context, request}: Route.LoaderArgs) {
+export async function renderMovieCard(
+  request: Request,
+  context: LoadContext,
+): Promise<Response> {
   const url = new URL(request.url);
   const id = url.searchParams.get('id');
 

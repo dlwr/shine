@@ -1,11 +1,11 @@
 import {createImageResponse} from '@/lib/og/image-response';
 import {loadGoogleFont} from '@/lib/og/assets';
-import {OG_HEIGHT, OG_WIDTH, buildHomeCardHtml} from '@/lib/og/template';
+import {BANNER_HEIGHT, BANNER_WIDTH, buildBannerHtml} from '@/lib/og/template';
 
 const CACHE_CONTROL = 'public, max-age=604800';
 
-export async function loader() {
-  const html = buildHomeCardHtml();
+export async function renderBannerCard(): Promise<Response> {
+  const html = buildBannerHtml();
   const notoSans = await loadGoogleFont('Noto Sans JP', 700, html);
 
   if (!notoSans) {
@@ -13,8 +13,8 @@ export async function loader() {
   }
 
   const image = await createImageResponse(html, {
-    width: OG_WIDTH,
-    height: OG_HEIGHT,
+    width: BANNER_WIDTH,
+    height: BANNER_HEIGHT,
     fonts: [
       {name: 'Noto Sans JP', data: notoSans, weight: 700, style: 'normal'},
     ],

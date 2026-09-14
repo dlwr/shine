@@ -1,11 +1,10 @@
 import {createImageResponse} from '@/lib/og/image-response';
-import type {Route} from './+types/og-person';
 import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
 import {pickRepresentativeTitles} from '@/lib/og/person-card';
 import {OG_HEIGHT, OG_WIDTH, buildPersonCardHtml} from '@/lib/og/template';
 import {TAGLINE} from '@/lib/tagline';
 import {profileImageUrl} from '@/lib/profile-image';
-import {apiFetch} from '@/lib/api';
+import {apiFetch, type LoadContext} from '@/lib/api';
 
 type PersonDetail = {
   name: string;
@@ -23,7 +22,10 @@ const CACHE_CONTROL = 'public, max-age=86400';
 /** Satoriへ渡すフォントに最低限含める文字 */
 const BASE_TEXT = `SHINEFILMS0123456789${TAGLINE} `;
 
-export async function loader({context, request}: Route.LoaderArgs) {
+export async function renderPersonCard(
+  request: Request,
+  context: LoadContext,
+): Promise<Response> {
   const url = new URL(request.url);
   const id = url.searchParams.get('id');
 

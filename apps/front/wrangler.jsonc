@@ -28,6 +28,10 @@
           "binding": "API",
           "service": "shine-api",
         },
+        {
+          "binding": "OG",
+          "service": "shine-og",
+        },
       ],
     },
   },

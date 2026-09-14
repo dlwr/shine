@@ -1,6 +1,5 @@
 import {createImageResponse} from '@/lib/og/image-response';
-import type {Route} from './+types/og-watched';
-import {apiFetch} from '@/lib/api';
+import {apiFetch, type LoadContext} from '@/lib/api';
 import {loadGoogleFont} from '@/lib/og/assets';
 import {OG_HEIGHT, OG_WIDTH, buildWatchedCardHtml} from '@/lib/og/template';
 import {
@@ -24,7 +23,10 @@ type AwardResponse = {
   }>;
 };
 
-export async function loader({context, request}: Route.LoaderArgs) {
+export async function renderWatchedCard(
+  request: Request,
+  context: LoadContext,
+): Promise<Response> {
   const url = new URL(request.url);
   const slug = url.searchParams.get('slug') ?? '';
   if (!SLUG_PATTERN.test(slug)) {
