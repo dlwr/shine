@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import {render, screen} from '@testing-library/react';
-import {describe, expect, it, vi} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {ArticleLinksSection, buildShareUrls} from './article-links-section';
 
 describe('buildShareUrls', () => {
@@ -74,6 +74,28 @@ describe('ArticleLinksSection', () => {
     );
 
     expect(screen.getByText('投稿に失敗しました。')).toBeInTheDocument();
+  });
+
+  describe('本人の投稿の印', () => {
+    afterEach(() => {
+      localStorage.clear();
+    });
+
+    it('admin でログインしていればトークンをフォームで送る', () => {
+      localStorage.setItem('adminToken', 'admin-jwt');
+
+      const {container} = render(<ArticleLinksSection {...baseProperties} />);
+
+      expect(container.querySelector('input[name="adminToken"]')).toHaveValue(
+        'admin-jwt',
+      );
+    });
+
+    it('ログインしていなければトークンの項目を出さない', () => {
+      const {container} = render(<ArticleLinksSection {...baseProperties} />);
+
+      expect(container.querySelector('input[name="adminToken"]')).toBeNull();
+    });
   });
 
   it('認証キーが無ければ投稿できない旨を出す', () => {

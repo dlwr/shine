@@ -9,6 +9,7 @@ export type ArticleLinkSubmission = {
   title?: string;
   description?: string;
   submitterIp?: string;
+  isOwnerSubmission?: boolean;
 };
 
 type NotificationEnvironment = {

@@ -1,0 +1,1 @@
+ALTER TABLE `article_links` ADD `is_owner_submission` integer DEFAULT false NOT NULL;

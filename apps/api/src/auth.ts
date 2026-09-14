@@ -57,6 +57,18 @@ export async function isValidJWT(
   }
 }
 
+export async function hasValidAdminToken(
+  c: Context<{Bindings: Environment}>,
+): Promise<boolean> {
+  const authHeader = c.req.header('Authorization');
+
+  if (!authHeader?.startsWith('Bearer ') || !c.env.JWT_SECRET) {
+    return false;
+  }
+
+  return isValidJWT(authHeader.slice(7), c.env.JWT_SECRET);
+}
+
 export async function authMiddleware(
   c: Context<{Bindings: Environment}>,
   next: () => Promise<void>,

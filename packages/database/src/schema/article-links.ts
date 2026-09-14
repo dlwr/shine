@@ -24,6 +24,9 @@ export const articleLinks = sqliteTable(
     isFlagged: integer('is_flagged', {mode: 'boolean'})
       .notNull()
       .default(false),
+    isOwnerSubmission: integer('is_owner_submission', {mode: 'boolean'})
+      .notNull()
+      .default(false),
   },
   table => [index('article_links_movie_idx').on(table.movieUid)],
 );

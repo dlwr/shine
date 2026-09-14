@@ -209,6 +209,7 @@ export class AdminMoviesService extends BaseService {
         title: articleLinks.title,
         description: articleLinks.description,
         isSpam: articleLinks.isSpam,
+        isOwnerSubmission: articleLinks.isOwnerSubmission,
       })
       .from(articleLinks)
       .where(eq(articleLinks.movieUid, movieId))
@@ -364,6 +365,18 @@ export class AdminMoviesService extends BaseService {
     const updated = await this.database
       .update(articleLinks)
       .set({isSpam: true})
+      .where(eq(articleLinks.uid, articleId))
+      .returning({movieUid: articleLinks.movieUid});
+    return updated[0]?.movieUid;
+  }
+
+  async setArticleLinkOwner(
+    articleId: string,
+    isOwnerSubmission: boolean,
+  ): Promise<string | undefined> {
+    const updated = await this.database
+      .update(articleLinks)
+      .set({isOwnerSubmission})
       .where(eq(articleLinks.uid, articleId))
       .returning({movieUid: articleLinks.movieUid});
     return updated[0]?.movieUid;

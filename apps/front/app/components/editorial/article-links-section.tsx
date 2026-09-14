@@ -2,6 +2,7 @@ import {Turnstile} from '@marsidev/react-turnstile';
 import {useState, type ChangeEvent, type ElementType} from 'react';
 import {Form} from 'react-router';
 import {Button} from '@/components/ui/button';
+import {useAdminToken} from '@/hooks/use-admin-token';
 import type {
   ArticleLinkFormState,
   SubmissionResult,
@@ -67,6 +68,7 @@ export function ArticleLinksSection({
     (!isTestMode && !hasSiteKey) ||
     (isCaptchaRequired && formData.captchaToken === '');
   const shareUrls = buildShareUrls(movieUid, movieTitle);
+  const adminToken = useAdminToken();
 
   return (
     <section id="article-links">
@@ -147,6 +149,14 @@ export function ArticleLinksSection({
             value={formData.captchaToken}
             readOnly
           />
+          {adminToken && (
+            <input
+              type="hidden"
+              name="adminToken"
+              value={adminToken}
+              readOnly
+            />
+          )}
 
           <div>
             <label

@@ -8,6 +8,7 @@ type ArticleLink = {
   title?: string;
   description?: string;
   isSpam: boolean;
+  isOwnerSubmission: boolean;
 };
 
 type ArticleLinksContainer = {
@@ -110,6 +111,39 @@ export default function ArticleLinkManager<
     }
   };
 
+  const handleOwnerToggle = async (
+    articleId: string,
+    isOwnerSubmission: boolean,
+  ) => {
+    if (!getAdminToken()) {
+      return;
+    }
+
+    try {
+      const response = await adminFetch(
+        `${apiUrl}/admin/article-links/${articleId}/owner`,
+        {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({isOwnerSubmission}),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to update owner flag');
+      }
+
+      updateArticleLinks(links =>
+        links.map(link =>
+          link.uid === articleId ? {...link, isOwnerSubmission} : link,
+        ),
+      );
+    } catch (error) {
+      console.error('Error updating owner flag:', error);
+      alert('本人の印の更新に失敗しました');
+    }
+  };
+
   return (
     <div className="bg-white shadow rounded-lg p-6">
       <h2 className="text-lg font-semibold mb-4">記事リンク管理</h2>
@@ -143,6 +177,11 @@ export default function ArticleLinkManager<
                         スパム
                       </span>
                     )}
+                    {article.isOwnerSubmission && (
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                        本人
+                      </span>
+                    )}
                   </h3>
                   {article.description && (
                     <p className="text-gray-600 text-sm mb-2">
@@ -154,6 +193,19 @@ export default function ArticleLinkManager<
                   )}
                 </div>
                 <div className="flex items-center space-x-2 ml-4">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await handleOwnerToggle(
+                        article.uid,
+                        !article.isOwnerSubmission,
+                      );
+                    }}
+                    className="text-gray-600 hover:text-gray-800 text-sm font-medium">
+                    {article.isOwnerSubmission
+                      ? '本人の印を外す'
+                      : '本人の投稿にする'}
+                  </button>
                   {!article.isSpam && (
                     <button
                       type="button"
