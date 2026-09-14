@@ -42,7 +42,7 @@ export async function findRelatedMovies(
           SELECT category_uid FROM nominations WHERE movie_uid = ${movieId}
         )`,
         sql`${movies.uid} != ${movieId}`,
-        isNull(movies.deletedAt),
+        sql`+${movies.deletedAt} IS NULL`,
       ),
     )
     .groupBy(movies.uid)
