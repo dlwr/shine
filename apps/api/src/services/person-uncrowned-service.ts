@@ -8,7 +8,7 @@ import {people} from '@shine/database/schema/people';
 import {
   findPersonAwardDefinition,
   findPersonAwardOrganization,
-} from './awards-service';
+} from './award-definition-lookup';
 import {personAwardDefinitions} from './award-definitions';
 import {BaseService} from './base-service';
 import type {

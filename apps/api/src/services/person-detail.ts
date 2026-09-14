@@ -11,7 +11,7 @@ import {
   findAwardPageDefinition,
   findPersonAwardDefinition,
   japaneseAwardNames,
-} from './awards-service';
+} from './award-definition-lookup';
 import {awardPageDefinitions} from './award-definitions';
 import {joinAwardContext, localizedMovieTitle} from './people-query';
 import {personLocalizedName} from './person-name';

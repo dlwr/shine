@@ -12,7 +12,7 @@ import {
   findAwardPageDefinition,
   japaneseAwardNames,
   japaneseOrganizationName,
-} from './awards-service';
+} from './award-definition-lookup';
 import {BaseService} from './base-service';
 
 export const QUIZ_MAX_ATTEMPTS = 6;

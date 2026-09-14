@@ -13,7 +13,7 @@ import {EdgeCache, getMovieCacheKeysForAllLocales} from '../utils/cache';
 import {
   awardPageLinkForOrganizationName,
   japaneseAwardNames,
-} from './awards-service';
+} from './award-definition-lookup';
 import {BaseService} from './base-service';
 import {buildMovieSearchQueries} from './movie-search-query';
 import type {MovieSelection, SearchOptions} from '@shine/types';

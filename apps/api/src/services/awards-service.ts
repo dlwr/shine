@@ -1,11 +1,10 @@
-import {and, eq, inArray, isNull, or, sql} from '@shine/database';
+import {and, eq, inArray, isNull, sql} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
-import {BaseService} from './base-service';
 import type {
   AwardDetail,
   AwardMovieEntry,
@@ -13,250 +12,74 @@ import type {
   AwardYearDetail,
   AwardYearGroup,
   PersonAwardDetail,
-  PersonAwardNominee,
   PersonAwardYearGroup,
 } from '@shine/types';
+import {BaseService} from './base-service';
 import {personLocalizedName} from './person-name';
 import {
   awardPageDefinitions,
   personAwardDefinitions,
-  personAwardOrganizations,
   type AwardPageDefinition,
   type PersonAwardDefinition,
-  type PersonAwardOrganization,
 } from './award-definitions';
-
-export function findAwardPageDefinition(
-  organizationName: string,
-  categoryName?: string,
-): AwardPageDefinition | undefined {
-  const candidates = awardPageDefinitions.filter(
-    entry => entry.organizationName === organizationName,
-  );
-
-  return categoryName === undefined
-    ? candidates.length === 1
-      ? candidates[0]
-      : undefined
-    : candidates.find(entry => entry.categoryNames.includes(categoryName));
-}
-
-/** 作品を横断して数える集計（/years・crossings・uncrowned）に使う最高賞の賞ページ */
-export function findTopAwardPageDefinition(
-  organizationName: string,
-  categoryName: string,
-): AwardPageDefinition | undefined {
-  const definition = findAwardPageDefinition(organizationName, categoryName);
-  return definition?.subAward ? undefined : definition;
-}
-
-export function awardPageLinkForOrganizationName(
-  organizationName: string,
-  categoryName?: string,
-): {
-  slug: string | undefined;
-  hasYearPages: boolean;
-} {
-  const definition = findAwardPageDefinition(organizationName, categoryName);
-
-  return {
-    slug: definition?.slug,
-    hasYearPages: definition?.grouping === 'year',
-  };
-}
-
-/** 最高賞の賞ページを持つ (組織, 部門) だけに絞る条件。個人賞や映画祭のサブ賞は含まない */
-export function awardPageNominations() {
-  return or(
-    ...awardPageDefinitions
-      .filter(definition => !definition.subAward)
-      .map(definition =>
-        and(
-          eq(awardOrganizations.name, definition.organizationName),
-          inArray(awardCategories.name, definition.categoryNames),
-        ),
-      ),
-  );
-}
-
-export function japaneseOrganizationName(
-  organizationName: string,
-): string | undefined {
-  return awardPageDefinitions.find(
-    entry => entry.organizationName === organizationName,
-  )?.organization;
-}
-
-export function japaneseAwardNames(
-  organizationName: string,
-  categoryName: string,
-): {organization?: string; category?: string} {
-  const definition = findAwardPageDefinition(organizationName, categoryName);
-  if (!definition) {
-    const personDefinition = findPersonAwardDefinition(
-      organizationName,
-      categoryName,
-    );
-    if (personDefinition) {
-      return {
-        organization: personDefinition.organization,
-        ...(personDefinition.categoryLabel && {
-          category: personDefinition.categoryLabel,
-        }),
-      };
-    }
-
-    // 賞ページを持たない部門でも組織名だけは日本語にできる
-    const organization = japaneseOrganizationName(organizationName);
-    return organization ? {organization} : {};
-  }
-
-  // 複数カテゴリを束ねるページの name はページ名なので、カテゴリ名には使えない
-  return definition.categoryNames.length === 1
-    ? {organization: definition.organization, category: definition.name}
-    : {organization: definition.organization};
-}
-
-export function findPersonAwardDefinition(
-  organizationName: string,
-  categoryName: string,
-): PersonAwardDefinition | undefined {
-  return personAwardDefinitions.find(
-    entry =>
-      entry.organizationName === organizationName &&
-      entry.categoryNames.includes(categoryName),
-  );
-}
-
-/** 個人賞の (組織, 部門) を役割で絞る条件 */
-export function personAwardNominations(role?: PersonAwardDefinition['role']) {
-  return or(
-    ...personAwardDefinitions
-      .filter(definition => role === undefined || definition.role === role)
-      .map(definition =>
-        and(
-          eq(awardOrganizations.name, definition.organizationName),
-          inArray(awardCategories.name, definition.categoryNames),
-        ),
-      ),
-  );
-}
-
-export function findPersonAwardOrganization(
-  organizationName: string,
-): PersonAwardOrganization | undefined {
-  return personAwardOrganizations.find(
-    entry => entry.organizationName === organizationName,
-  );
-}
-
-const RANK_PATTERN = /^(\d+)位$/;
-
-function rankOf(entry: AwardMovieEntry): number {
-  const matched = RANK_PATTERN.exec(entry.specialMention ?? '');
-  return matched ? Number(matched[1]) : Infinity;
-}
-
-function compareAwardMovies(a: AwardMovieEntry, b: AwardMovieEntry): number {
-  const rankA = rankOf(a);
-  const rankB = rankOf(b);
-
-  return rankA === rankB
-    ? Number(b.isWinner) - Number(a.isWinner)
-    : rankA - rankB;
-}
-
-function compareCodePoints(a: string, b: string): number {
-  return a < b ? -1 : Number(a > b);
-}
-
-function compareNominees(a: PersonAwardNominee, b: PersonAwardNominee): number {
-  return (
-    Number(b.isWinner) - Number(a.isWinner) || compareCodePoints(a.name, b.name)
-  );
-}
+import {
+  compareAwardMovies,
+  compareCodePoints,
+  compareNominees,
+  flattenListAward,
+} from './award-page-ordering';
 
 type CategorySelector = {
   organizationName: string;
   categoryNames: string[];
 };
 
-const AWARD_LIST_PAGE_SIZE = 100;
-
-function mergeMoviesByUid(
-  movies: AwardMovieEntry[],
-  byUid: Map<string, AwardMovieEntry>,
-): void {
-  for (const movie of movies) {
-    const existing = byUid.get(movie.uid);
-    if (existing) {
-      existing.isWinner ||= movie.isWinner;
-      continue;
-    }
-
-    byUid.set(movie.uid, movie);
-  }
-}
-
-function flattenListAward(years: AwardYearGroup[]): AwardYearGroup[] {
-  const byUid = new Map<string, AwardMovieEntry>();
-  for (const group of years) {
-    mergeMoviesByUid(group.movies, byUid);
-  }
-
-  const movies = byUid
-    .values()
-    .toArray()
-    .toSorted(
-      (a, b) =>
-        (b.movieYear ?? 0) - (a.movieYear ?? 0) || (a.uid < b.uid ? -1 : 1),
-    );
-
-  return [
-    {
-      year: years[0].year,
-      ceremonyNumber: years[0].ceremonyNumber,
-      filmCount: movies.length,
-      movies,
-    },
-  ];
-}
-
-/**
- * リスト型の賞をページに切り出す。範囲外のページはundefined(=404)。
- * キャッシュ済みの全件データに対して適用する前提の純粋関数
- */
-export function paginateAwardDetail(
-  award: AwardDetail,
-  page: number,
-): AwardDetail | undefined {
-  if (award.grouping !== 'list') {
-    return award;
-  }
-
-  const [group] = award.years;
-  const totalCount = group?.filmCount ?? 0;
-  const totalPages = Math.max(1, Math.ceil(totalCount / AWARD_LIST_PAGE_SIZE));
-  if (page > totalPages) {
-    return undefined;
-  }
-
-  const start = (page - 1) * AWARD_LIST_PAGE_SIZE;
-
+function movieTitleColumns() {
   return {
-    ...award,
-    years: [
-      {
-        ...group,
-        movies: group.movies.slice(start, start + AWARD_LIST_PAGE_SIZE),
-      },
-    ],
-    pagination: {
-      page,
-      perPage: AWARD_LIST_PAGE_SIZE,
-      totalCount,
-      totalPages,
-    },
+    jaTitle: sql<string | null>`(
+      SELECT content FROM translations
+      WHERE translations.resource_uid = movies.uid
+        AND translations.resource_type = 'movie_title'
+        AND translations.language_code = 'ja'
+      LIMIT 1
+    )`.as('jaTitle'),
+    defaultTitle: sql<string | null>`(
+      SELECT content FROM translations
+      WHERE translations.resource_uid = movies.uid
+        AND translations.resource_type = 'movie_title'
+      ORDER BY translations.is_default DESC
+      LIMIT 1
+    )`.as('defaultTitle'),
+  };
+}
+
+function posterUrlColumn() {
+  return sql<string | null>`(
+      SELECT url FROM poster_urls
+      WHERE poster_urls.movie_uid = movies.uid
+      ORDER BY poster_urls.is_primary DESC
+      LIMIT 1
+    )`.as('posterUrl');
+}
+
+type AwardMovieRow = {
+  movieUid: string;
+  movieYear: number | null;
+  isWinner: number;
+  specialMention: string | null;
+  jaTitle: string | null;
+  defaultTitle: string | null;
+  posterUrl: string | null;
+};
+
+function toAwardMovieEntry(row: AwardMovieRow): AwardMovieEntry {
+  return {
+    uid: row.movieUid,
+    title: row.jaTitle ?? row.defaultTitle ?? undefined,
+    movieYear: row.movieYear ?? undefined,
+    posterUrl: row.posterUrl ?? undefined,
+    isWinner: row.isWinner === 1,
+    specialMention: row.specialMention ?? undefined,
   };
 }
 
@@ -280,26 +103,8 @@ export class AwardsService extends BaseService {
         specialMention: nominations.specialMention,
         ceremonyYear: awardCeremonies.year,
         ceremonyNumber: awardCeremonies.ceremonyNumber,
-        jaTitle: sql<string | null>`(
-          SELECT content FROM translations
-          WHERE translations.resource_uid = movies.uid
-            AND translations.resource_type = 'movie_title'
-            AND translations.language_code = 'ja'
-          LIMIT 1
-        )`.as('jaTitle'),
-        defaultTitle: sql<string | null>`(
-          SELECT content FROM translations
-          WHERE translations.resource_uid = movies.uid
-            AND translations.resource_type = 'movie_title'
-          ORDER BY translations.is_default DESC
-          LIMIT 1
-        )`.as('defaultTitle'),
-        posterUrl: sql<string | null>`(
-          SELECT url FROM poster_urls
-          WHERE poster_urls.movie_uid = movies.uid
-          ORDER BY poster_urls.is_primary DESC
-          LIMIT 1
-        )`.as('posterUrl'),
+        ...movieTitleColumns(),
+        posterUrl: posterUrlColumn(),
       })
       .from(nominations)
       .innerJoin(
@@ -337,14 +142,7 @@ export class AwardsService extends BaseService {
         continue;
       }
 
-      group.movies.push({
-        uid: row.movieUid,
-        title: row.jaTitle ?? row.defaultTitle ?? undefined,
-        movieYear: row.movieYear ?? undefined,
-        posterUrl: row.posterUrl ?? undefined,
-        isWinner: row.isWinner === 1,
-        specialMention: row.specialMention ?? undefined,
-      });
+      group.movies.push(toAwardMovieEntry(row));
     }
 
     const years = groups
@@ -399,26 +197,8 @@ export class AwardsService extends BaseService {
         isWinner: nominations.isWinner,
         specialMention: nominations.specialMention,
         ceremonyNumber: awardCeremonies.ceremonyNumber,
-        jaTitle: sql<string | null>`(
-          SELECT content FROM translations
-          WHERE translations.resource_uid = movies.uid
-            AND translations.resource_type = 'movie_title'
-            AND translations.language_code = 'ja'
-          LIMIT 1
-        )`.as('jaTitle'),
-        defaultTitle: sql<string | null>`(
-          SELECT content FROM translations
-          WHERE translations.resource_uid = movies.uid
-            AND translations.resource_type = 'movie_title'
-          ORDER BY translations.is_default DESC
-          LIMIT 1
-        )`.as('defaultTitle'),
-        posterUrl: sql<string | null>`(
-          SELECT url FROM poster_urls
-          WHERE poster_urls.movie_uid = movies.uid
-          ORDER BY poster_urls.is_primary DESC
-          LIMIT 1
-        )`.as('posterUrl'),
+        ...movieTitleColumns(),
+        posterUrl: posterUrlColumn(),
       })
       .from(nominations)
       .innerJoin(
@@ -446,14 +226,7 @@ export class AwardsService extends BaseService {
         continue;
       }
 
-      movieEntries.push({
-        uid: row.movieUid,
-        title: row.jaTitle ?? row.defaultTitle ?? undefined,
-        movieYear: row.movieYear ?? undefined,
-        posterUrl: row.posterUrl ?? undefined,
-        isWinner: row.isWinner === 1,
-        specialMention: row.specialMention ?? undefined,
-      });
+      movieEntries.push(toAwardMovieEntry(row));
     }
 
     movieEntries.sort(compareAwardMovies);
@@ -539,20 +312,7 @@ export class AwardsService extends BaseService {
         ceremonyNumber: awardCeremonies.ceremonyNumber,
         movieUid: movies.uid,
         movieYear: movies.year,
-        jaTitle: sql<string | null>`(
-          SELECT content FROM translations
-          WHERE translations.resource_uid = movies.uid
-            AND translations.resource_type = 'movie_title'
-            AND translations.language_code = 'ja'
-          LIMIT 1
-        )`.as('jaTitle'),
-        defaultTitle: sql<string | null>`(
-          SELECT content FROM translations
-          WHERE translations.resource_uid = movies.uid
-            AND translations.resource_type = 'movie_title'
-          ORDER BY translations.is_default DESC
-          LIMIT 1
-        )`.as('defaultTitle'),
+        ...movieTitleColumns(),
       })
       .from(nominations)
       .innerJoin(
