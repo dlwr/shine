@@ -17,7 +17,6 @@
     "jose": "^6.2.12"
   },
   "devDependencies": {
-    "@cloudflare/puppeteer": "^1.4.0",
     "esbuild": "^0.28.2"
   }
 }

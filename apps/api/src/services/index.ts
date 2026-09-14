@@ -5,7 +5,6 @@ export {
   buildOnDemandRunners,
 } from './availability-service';
 export {AwardsService} from './awards-service';
-export {CeremonyNominationSyncService} from './ceremony-nomination-sync-service';
 export {ExternalIdSearchService} from './external-id-search-service';
 export {MovieImportService} from './movie-import-service';
 export {MovieMergeService} from './movie-merge-service';

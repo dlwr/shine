@@ -3,7 +3,7 @@ import {fileURLToPath} from 'node:url';
 import {build, type Metafile} from 'esbuild';
 import {describe, expect, it} from 'vitest';
 
-const HEAVY_PACKAGES = ['@cloudflare/puppeteer', 'iconv-lite', 'cheerio'];
+const HEAVY_PACKAGES = ['iconv-lite', 'cheerio'];
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const apiDirectory = path.resolve(currentDirectory, '../..');
@@ -49,7 +49,7 @@ function staticallyReachable(
 }
 
 describe('API worker の起動時に評価するモジュール', () => {
-  it('Browser Rendering・DISCAS の解析に使う重い依存は動的 import の先に置く', async () => {
+  it('DISCAS の解析に使う重い依存は動的 import の先に置く', async () => {
     const inputs = await bundleInputs();
     const reachable = staticallyReachable(inputs, 'src/index.ts');
 
