@@ -36,6 +36,7 @@ import {
   getCacheKeyForSearch,
   getCacheTTL,
 } from '../utils/cache';
+import {resolveClientIp} from '../utils/client-ip';
 import {parsePagination} from '../utils/pagination';
 
 export const moviesRoutes = new Hono<{Bindings: Environment}>();
@@ -517,11 +518,7 @@ moviesRoutes.post('/:id/article-links', async c => {
     }
 
     // Get IP address for rate limiting and Turnstile verification
-    const ip =
-      c.req.header('cf-connecting-ip') ||
-      c.req.header('x-forwarded-for') ||
-      c.req.header('x-real-ip') ||
-      'unknown';
+    const ip = resolveClientIp(c);
 
     const nodeEnvironment =
       typeof process === 'undefined' ? undefined : process.env?.NODE_ENV;
@@ -671,11 +668,7 @@ function isAvailabilityRateLimited(ip: string, now = Date.now()): boolean {
 }
 
 moviesRoutes.post('/:id/availability/check', async c => {
-  const ip =
-    c.req.header('cf-connecting-ip') ||
-    c.req.header('x-forwarded-for') ||
-    c.req.header('x-real-ip') ||
-    'unknown';
+  const ip = resolveClientIp(c);
 
   if (isAvailabilityRateLimited(ip)) {
     return c.json({error: 'Rate limit exceeded. Please try again later.'}, 429);
