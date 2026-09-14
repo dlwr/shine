@@ -1,4 +1,4 @@
-import {ImageResponse} from 'workers-og';
+import {createImageResponse} from '@/lib/og/image-response';
 import type {Route} from './+types/quiz-poster';
 import {apiFetch, resolveQuizKey} from '@/lib/api';
 import {fetchPosterAsDataUri} from '@/lib/og/assets';
@@ -48,7 +48,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
     return new Response('Poster unavailable', {status: 503});
   }
 
-  const image = new ImageResponse(
+  const image = await createImageResponse(
     buildQuizPosterHtml({
       posterDataUri,
       stage,

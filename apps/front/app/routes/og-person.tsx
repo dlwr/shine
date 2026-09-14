@@ -1,4 +1,4 @@
-import {ImageResponse} from 'workers-og';
+import {createImageResponse} from '@/lib/og/image-response';
 import type {Route} from './+types/og-person';
 import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
 import {pickRepresentativeTitles} from '@/lib/og/person-card';
@@ -61,7 +61,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
     portraitDataUri,
   });
 
-  const image = new ImageResponse(html, {
+  const image = await createImageResponse(html, {
     width: OG_WIDTH,
     height: OG_HEIGHT,
     fonts: [

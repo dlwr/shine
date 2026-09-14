@@ -1,4 +1,4 @@
-import {ImageResponse} from 'workers-og';
+import {createImageResponse} from '@/lib/og/image-response';
 import type {Route} from './+types/og-quiz';
 import {apiFetch, resolveQuizKey, type LoadContext} from '@/lib/api';
 import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
@@ -64,7 +64,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
     return new Response('Font unavailable', {status: 503});
   }
 
-  const image = new ImageResponse(html, {
+  const image = await createImageResponse(html, {
     width: OG_WIDTH,
     height: OG_HEIGHT,
     fonts: [
