@@ -8,6 +8,7 @@ import {articleLinks} from '@shine/database/schema/article-links';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {createJWT} from '../auth';
 import {moviesRoutes} from '../routes/movies';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -88,6 +89,13 @@ async function storedSubmitterIp(): Promise<string | undefined> {
     .select({submitterIp: articleLinks.submitterIp})
     .from(articleLinks);
   return row?.submitterIp ?? undefined;
+}
+
+async function storedIsOwnerSubmission(): Promise<boolean | undefined> {
+  const [row] = await getDatabase(environment)
+    .select({isOwnerSubmission: articleLinks.isOwnerSubmission})
+    .from(articleLinks);
+  return row?.isOwnerSubmission;
 }
 
 beforeEach(async () => {
@@ -187,6 +195,45 @@ describe('投稿者の IP', () => {
   });
 });
 
+describe('本人の投稿の印', () => {
+  beforeEach(() => {
+    environment.JWT_SECRET = 'test-secret';
+  });
+
+  it('有効な admin トークン付きの投稿は本人の投稿として保存する', async () => {
+    const token = await createJWT('test-secret');
+
+    await submit({description: 'よかった'}, {Authorization: `Bearer ${token}`});
+
+    expect(await storedIsOwnerSubmission()).toBe(true);
+  });
+
+  it('トークンが無い投稿は本人の投稿にしない', async () => {
+    await submit({description: 'よかった'});
+
+    expect(await storedIsOwnerSubmission()).toBe(false);
+  });
+
+  it('署名が合わないトークンは本人の投稿にしない', async () => {
+    const token = await createJWT('other-secret');
+
+    await submit({description: 'よかった'}, {Authorization: `Bearer ${token}`});
+
+    expect(await storedIsOwnerSubmission()).toBe(false);
+  });
+
+  it('署名が合わないトークンでも投稿自体は受け付ける', async () => {
+    const token = await createJWT('other-secret');
+
+    const response = await submit(
+      {description: 'よかった'},
+      {Authorization: `Bearer ${token}`},
+    );
+
+    expect(response.status).toBe(201);
+  });
+});
+
 describe('投稿の Discord 通知', () => {
   beforeEach(async () => {
     environment = await createTestEnvironment();
@@ -209,6 +256,23 @@ describe('投稿の Discord 通知', () => {
     const body = JSON.parse(init.body as string) as {content: string};
     expect(body.content).toContain('映画1');
     expect(body.content).toContain('よかった');
+  });
+
+  it('admin トークン付きの投稿は本人の投稿として通知する', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ok: true} as Response);
+    vi.stubGlobal('fetch', fetchMock);
+    environment.DISCORD_WEBHOOK_URL = 'https://discord.test/hook';
+    environment.JWT_SECRET = 'test-secret';
+    const token = await createJWT('test-secret');
+
+    await submit(
+      {url: 'https://open.spotify.com/episode/abc', title: 'ポッドキャスト'},
+      {Authorization: `Bearer ${token}`},
+    );
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(init.body as string) as {content: string};
+    expect(body.content).toContain('本人の投稿');
   });
 
   it('Webhook が無ければ通知しない', async () => {

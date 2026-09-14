@@ -11,6 +11,7 @@ import {articleLinks} from '@shine/database/schema/article-links';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {Hono} from 'hono';
+import {hasValidAdminToken} from '../../auth';
 import {sanitizeText, sanitizeUrl} from '../../middleware/sanitizer';
 import {invalidateMovieCaches} from '../../services/movie-cache-invalidation';
 import {
@@ -163,6 +164,8 @@ movieArticleLinksRoutes.post('/:id/article-links', async c => {
       );
     }
 
+    const isOwnerSubmission = await hasValidAdminToken(c);
+
     // Insert article link
     const newArticle = await database
       .insert(articleLinks)
@@ -172,6 +175,7 @@ movieArticleLinksRoutes.post('/:id/article-links', async c => {
         title: title?.slice(0, 200),
         description: description ? description.slice(0, 500) : undefined,
         submitterIp: ip,
+        isOwnerSubmission,
       })
       .returning();
 
@@ -184,6 +188,7 @@ movieArticleLinksRoutes.post('/:id/article-links', async c => {
         title,
         description,
         submitterIp: ip,
+        isOwnerSubmission,
       });
 
       try {

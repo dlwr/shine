@@ -925,11 +925,13 @@ paths:
 
     post:
       summary: Submit movie article link
-      description: Submit a new article link for a movie (rate limited to 10 per hour per IP)
+      description: Submit a new article link for a movie (rate limited to 10 per hour per IP). A valid admin token marks the submission as the owner's
       operationId: submitMovieArticleLink
       tags:
         - Articles
-      security: []
+      security:
+        - {}
+        - BearerAuth: []
       parameters:
         - name: id
           in: path
@@ -1441,6 +1443,50 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/article-links/{id}/owner:
+    put:
+      summary: Mark article link as the owner's submission (admin)
+      description: Set whether an article link was submitted by the site owner. Owner submissions are excluded from the north star count and SNS introductions
+      operationId: adminSetArticleLinkOwner
+      tags:
+        - Admin - Articles
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Article link unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isOwnerSubmission:
+                  type: boolean
+              required:
+                - isOwnerSubmission
+      responses:
+        '200':
+          description: Article link owner flag updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '404':
@@ -3574,6 +3620,9 @@ components:
             submitterIp:
               type: string
               description: Submitter IP address (admin only)
+            isOwnerSubmission:
+              type: boolean
+              description: Whether the site owner submitted this link
 
     TranslationRequest:
       type: object
