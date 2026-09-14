@@ -1,4 +1,4 @@
-import {ImageResponse} from 'workers-og';
+import {createImageResponse} from '@/lib/og/image-response';
 import {loadGoogleFont} from '@/lib/og/assets';
 import {OG_HEIGHT, OG_WIDTH, buildHomeCardHtml} from '@/lib/og/template';
 
@@ -12,7 +12,7 @@ export async function loader() {
     return new Response('Font unavailable', {status: 503});
   }
 
-  const image = new ImageResponse(html, {
+  const image = await createImageResponse(html, {
     width: OG_WIDTH,
     height: OG_HEIGHT,
     fonts: [
