@@ -1,18 +1,24 @@
 import {getDatabase, type Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {MoviesService} from '../../services';
-import {findRelatedMovies} from '../../services/related-movies';
+import {
+  findRelatedMovies,
+  type RelatedMovie,
+} from '../../services/related-movies';
 import {
   createCachedResponse,
   createETag,
   EdgeCache,
   getCacheKeyForMovie,
+  getCacheKeyForRelatedMovies,
   getCacheTTL,
   IMPORTED_DATA_EDGE_TTL,
   normalizeCacheLocale,
   shouldCheckETag,
   writeCacheAfterResponse,
 } from '../../utils/cache';
+
+const MAX_RELATED_MOVIES = 12;
 
 export const movieDetailRoutes = new Hono<{Bindings: Environment}>();
 
@@ -107,16 +113,17 @@ movieDetailRoutes.get('/:id/related', async c => {
     const limitParameter = Number(c.req.query('limit') ?? '6');
     const limit =
       Number.isSafeInteger(limitParameter) && limitParameter > 0
-        ? Math.min(limitParameter, 12)
+        ? Math.min(limitParameter, MAX_RELATED_MOVIES)
         : 6;
 
     const relatedCache = new EdgeCache(undefined, c.env.CACHE_KV);
-    const cacheKey = `movie:${movieId}:related:${locale}:${limit}:v2`;
+    const cacheKey = getCacheKeyForRelatedMovies(movieId, locale);
     const cached = await relatedCache.get(cacheKey, {
       edgeTtl: IMPORTED_DATA_EDGE_TTL,
     });
     if (cached) {
-      return c.json(cached.data as Record<string, unknown>, 200, {
+      const {movies} = cached.data as {movies: RelatedMovie[]};
+      return c.json({movies: movies.slice(0, limit)}, 200, {
         'X-Cache-Status': 'HIT',
       });
     }
@@ -125,22 +132,27 @@ movieDetailRoutes.get('/:id/related', async c => {
       getDatabase(c.env),
       movieId,
       locale,
-      limit,
+      MAX_RELATED_MOVIES,
     );
 
     if (!relatedMovies) {
       return c.json({error: 'Movie not found'}, 404);
     }
 
-    const result = {movies: relatedMovies};
     await writeCacheAfterResponse(
       c,
-      relatedCache.set(cacheKey, result, getCacheTTL.movie.related),
+      relatedCache.set(
+        cacheKey,
+        {movies: relatedMovies},
+        getCacheTTL.movie.related,
+      ),
     );
 
-    return createCachedResponse(result, getCacheTTL.movie.related, {
-      'X-Cache-Status': 'MISS',
-    });
+    return createCachedResponse(
+      {movies: relatedMovies.slice(0, limit)},
+      getCacheTTL.movie.related,
+      {'X-Cache-Status': 'MISS'},
+    );
   } catch (error) {
     console.error('Error fetching related movies:', error);
     return c.json({error: 'Internal server error'}, 500);
