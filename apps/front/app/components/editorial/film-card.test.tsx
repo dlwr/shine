@@ -34,6 +34,35 @@ describe('FilmCard', () => {
     expect(screen.getByAltText(/PARASITE/)).toHaveAttribute('loading', 'eager');
   });
 
+  it('transformImages のときは compact のポスターを /posters 経路の Image Transformations に通す', () => {
+    render(
+      <FilmCard
+        movie={{...movie, posterUrl: 'https://image.tmdb.org/t/p/w500/abc.jpg'}}
+        variant="compact"
+        locale="en"
+        transformImages
+      />,
+    );
+    expect(screen.getByAltText(/PARASITE/)).toHaveAttribute(
+      'src',
+      '/cdn-cgi/image/format=auto,quality=70/posters/w185/abc.jpg',
+    );
+  });
+
+  it('既定では TMDb の URL のまま', () => {
+    render(
+      <FilmCard
+        movie={{...movie, posterUrl: 'https://image.tmdb.org/t/p/w500/abc.jpg'}}
+        variant="compact"
+        locale="en"
+      />,
+    );
+    expect(screen.getByAltText(/PARASITE/)).toHaveAttribute(
+      'src',
+      'https://image.tmdb.org/t/p/w185/abc.jpg',
+    );
+  });
+
   it('hero variant で視聴可否バッジを描画する', () => {
     render(
       <FilmCard
