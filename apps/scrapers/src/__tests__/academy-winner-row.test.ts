@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import {describe, expect, it} from 'vitest';
-import {isWinnerRow} from '../academy-awards';
+import {isWinnerRow} from '../academy-awards/wikipedia-table';
 
 function rowOf(html: string) {
   const $ = cheerio.load(`<table><tbody>${html}</tbody></table>`);
