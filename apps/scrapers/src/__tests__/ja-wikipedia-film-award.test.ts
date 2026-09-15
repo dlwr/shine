@@ -60,8 +60,8 @@ describe('splitEditions', () => {
 
   it('回の見出しごとに年度と本文に分ける', () => {
     expect(splitEditions(wikitext, heading)).toEqual([
-      {year: 2000, body: '\n*作品賞 『[[映画A]]』\n'},
-      {year: 2001, body: '\n*作品賞 『[[映画B]]』\n'},
+      {ceremonyNumber: 1, year: 2000, body: '\n*作品賞 『[[映画A]]』\n'},
+      {ceremonyNumber: 2, year: 2001, body: '\n*作品賞 『[[映画B]]』\n'},
     ]);
   });
 });

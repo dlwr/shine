@@ -66,18 +66,26 @@ const JAPANESE_PUBLICATION_WINDOW: YearWindow = {min: -1, max: 1};
 /** 外国映画は本国公開の後に日本公開されるので選考年度より前になる */
 const FOREIGN_PUBLICATION_WINDOW: YearWindow = {min: -Infinity, max: 1};
 
+export type EditionSection = {
+  ceremonyNumber: number;
+  year: number;
+  body: string;
+};
+
 /** 見出しは (回次, 年) の2つのグループを持つこと */
 export function splitEditions(
   wikitext: string,
   editionHeading: RegExp,
-): Array<{year: number; body: string}> {
+): EditionSection[] {
   const parts = wikitext.split(new RegExp(editionHeading.source, 'gm'));
-  const editions: Array<{year: number; body: string}> = [];
+  const editions: EditionSection[] = [];
 
   for (let index = 1; index < parts.length; index += 3) {
-    const year = Number(parts[index + 1]);
-    const body = parts[index + 2].split(HIGHER_HEADING)[0];
-    editions.push({year, body});
+    editions.push({
+      ceremonyNumber: Number(parts[index]),
+      year: Number(parts[index + 1]),
+      body: parts[index + 2].split(HIGHER_HEADING)[0],
+    });
   }
 
   return editions;
