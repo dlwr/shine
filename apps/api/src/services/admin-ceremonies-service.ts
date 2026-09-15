@@ -1,229 +1,41 @@
-import {and, eq, inArray, isNull, not, sql} from '@shine/database';
+import {and, eq, isNull, not, sql} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
-import {translations} from '@shine/database/schema/translations';
-import {sanitizeText, sanitizeUrl} from '../middleware/sanitizer';
 import {BaseService} from './base-service';
-import {ConflictError, NotFoundError, ValidationError} from './errors';
+import {
+  parseCeremonyBody,
+  type CeremonyBody,
+  type CeremonyInput,
+} from './ceremony-input';
+import {ceremonyNavigation} from './ceremony-navigation';
+import {ConflictError, NotFoundError} from './errors';
+import {loadNominationMovieTitles} from './nomination-movie-titles';
 
-export type CeremonyBody = {
-  organizationUid?: unknown;
-  year?: unknown;
-  ceremonyNumber?: unknown;
-  startDate?: unknown;
-  endDate?: unknown;
-  location?: unknown;
-  description?: unknown;
-  imdbEventUrl?: unknown;
-};
+export {type CeremonyBody} from './ceremony-input';
 
-type CeremonyInput = {
-  organizationUid: string;
-  year: number;
-  ceremonyNumber?: number;
-  startDate?: number;
-  endDate?: number;
-  location?: string;
-  description?: string;
-  imdbEventUrl?: string;
-};
-
-const parseInteger = (value: unknown): number | undefined => {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return Math.trunc(value);
-  }
-
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    if (trimmed === '') {
-      return;
-    }
-
-    const parsed = Number(trimmed);
-    if (!Number.isNaN(parsed)) {
-      return parsed;
-    }
-  }
-
-  return;
-};
-
-const parseYear = (value: unknown): number | undefined => {
-  const parsed = parseInteger(value);
-  if (parsed === undefined || parsed < 1880 || parsed > 9999) {
-    return;
-  }
-  return parsed;
-};
-
-const parseCeremonyNumber = (value: unknown): number | undefined => {
-  const parsed = parseInteger(value);
-  if (parsed === undefined) {
-    return;
-  }
-  return parsed > 0 ? parsed : undefined;
-};
-
-const parseUnixTimestamp = (value: unknown): number | undefined => {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return Math.floor(value);
-  }
-
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    if (trimmed === '') {
-      return;
-    }
-
-    const parsed = new Date(trimmed);
-    if (!Number.isNaN(parsed.getTime())) {
-      return Math.floor(parsed.getTime() / 1000);
-    }
-  }
-
-  return;
-};
-
-const sanitizeOptionalText = (value: unknown): string | undefined => {
-  if (typeof value !== 'string') {
-    return;
-  }
-
-  const sanitized = sanitizeText(value).trim();
-  return sanitized.length > 0 ? sanitized : undefined;
-};
-
-const parseOptionalUrl = (value: unknown): string | undefined => {
-  if (value === undefined) {
-    return;
-  }
-
-  if (typeof value !== 'string') {
-    throw new TypeError('Invalid URL');
-  }
-
-  const trimmed = value.trim();
-  if (trimmed === '') {
-    return;
-  }
-
-  return sanitizeUrl(trimmed);
-};
-
-function parseCeremonyBody(body: CeremonyBody): CeremonyInput {
-  const rawOrganizationUid = body.organizationUid;
-  if (
-    typeof rawOrganizationUid !== 'string' ||
-    rawOrganizationUid.trim() === ''
-  ) {
-    throw new ValidationError('organizationUid is required');
-  }
-
-  const organizationUid = sanitizeText(rawOrganizationUid).trim();
-  if (organizationUid === '') {
-    throw new ValidationError('organizationUid is required');
-  }
-
-  const year = parseYear(body.year);
-  if (year === undefined) {
-    throw new ValidationError('year must be a valid number (1880-9999)');
-  }
-
-  const ceremonyNumber = parseCeremonyNumber(body.ceremonyNumber);
-  const startDate = parseUnixTimestamp(body.startDate);
-  const endDate = parseUnixTimestamp(body.endDate);
-
-  if (startDate !== undefined && endDate !== undefined && endDate < startDate) {
-    throw new ValidationError('endDate must be the same as or after startDate');
-  }
-
-  const location = sanitizeOptionalText(body.location);
-  const description = sanitizeOptionalText(body.description);
-
-  let imdbEventUrl: string | undefined;
-  try {
-    imdbEventUrl = parseOptionalUrl(body.imdbEventUrl);
-  } catch {
-    throw new ValidationError('imdbEventUrl must be a valid http(s) URL');
-  }
-
-  return {
-    organizationUid,
-    year,
-    ceremonyNumber,
-    startDate,
-    endDate,
-    location,
-    description,
-    imdbEventUrl,
-  };
-}
-
-type TitleEntry = {
-  languageCode: string;
-  title: string;
-  isDefault: number | null;
-};
-
-const pickTitle = (
-  entries: TitleEntry[],
-  originalLanguage: string | undefined,
-): string | undefined => {
-  const defaultEntry = entries.find(entry => entry.isDefault === 1);
-  const jaEntry = entries.find(entry => entry.languageCode === 'ja');
-  const originalEntry = originalLanguage
-    ? entries.find(entry => entry.languageCode === originalLanguage)
-    : undefined;
-  const enEntry = entries.find(entry => entry.languageCode === 'en');
-  const fallbackEntry = entries[0];
-
-  return (defaultEntry ?? jaEntry ?? originalEntry ?? enEntry ?? fallbackEntry)
-    ?.title;
-};
-
-const compareSiblings = (
-  a: {year: number; ceremonyNumber: number | null},
-  b: {year: number; ceremonyNumber: number | null},
-): number => {
-  if (a.year !== b.year) {
-    return a.year - b.year;
-  }
-
-  const aNumber = a.ceremonyNumber ?? Number.MAX_SAFE_INTEGER;
-  const bNumber = b.ceremonyNumber ?? Number.MAX_SAFE_INTEGER;
-
-  if (aNumber < bNumber) {
-    return -1;
-  }
-
-  if (aNumber > bNumber) {
-    return 1;
-  }
-
-  return 0;
+const ceremonyColumns = {
+  uid: awardCeremonies.uid,
+  organizationUid: awardCeremonies.organizationUid,
+  organizationName: awardOrganizations.name,
+  organizationCountry: awardOrganizations.country,
+  year: awardCeremonies.year,
+  ceremonyNumber: awardCeremonies.ceremonyNumber,
+  startDate: awardCeremonies.startDate,
+  endDate: awardCeremonies.endDate,
+  location: awardCeremonies.location,
+  description: awardCeremonies.description,
+  imdbEventUrl: awardCeremonies.imdbEventUrl,
+  createdAt: awardCeremonies.createdAt,
+  updatedAt: awardCeremonies.updatedAt,
 };
 
 export class AdminCeremoniesService extends BaseService {
   async listCeremonies() {
     const rawCeremonies = await this.database
-      .select({
-        uid: awardCeremonies.uid,
-        organizationUid: awardCeremonies.organizationUid,
-        organizationName: awardOrganizations.name,
-        organizationCountry: awardOrganizations.country,
-        year: awardCeremonies.year,
-        ceremonyNumber: awardCeremonies.ceremonyNumber,
-        startDate: awardCeremonies.startDate,
-        endDate: awardCeremonies.endDate,
-        location: awardCeremonies.location,
-        description: awardCeremonies.description,
-        imdbEventUrl: awardCeremonies.imdbEventUrl,
-        createdAt: awardCeremonies.createdAt,
-        updatedAt: awardCeremonies.updatedAt,
-      })
+      .select(ceremonyColumns)
       .from(awardCeremonies)
       .innerJoin(
         awardOrganizations,
@@ -254,21 +66,7 @@ export class AdminCeremoniesService extends BaseService {
 
   async getCeremonyDetail(ceremonyUid: string) {
     const ceremonyResult = await this.database
-      .select({
-        uid: awardCeremonies.uid,
-        organizationUid: awardCeremonies.organizationUid,
-        organizationName: awardOrganizations.name,
-        organizationCountry: awardOrganizations.country,
-        year: awardCeremonies.year,
-        ceremonyNumber: awardCeremonies.ceremonyNumber,
-        startDate: awardCeremonies.startDate,
-        endDate: awardCeremonies.endDate,
-        location: awardCeremonies.location,
-        description: awardCeremonies.description,
-        imdbEventUrl: awardCeremonies.imdbEventUrl,
-        createdAt: awardCeremonies.createdAt,
-        updatedAt: awardCeremonies.updatedAt,
-      })
+      .select(ceremonyColumns)
       .from(awardCeremonies)
       .innerJoin(
         awardOrganizations,
@@ -303,7 +101,10 @@ export class AdminCeremoniesService extends BaseService {
       )
       .orderBy(awardCategories.name, movies.year);
 
-    const titlesMap = await this.loadTitles(nominationsResult);
+    const titlesMap = await loadNominationMovieTitles(
+      this.database,
+      nominationsResult,
+    );
 
     const siblingRows = await this.database
       .select({
@@ -316,21 +117,6 @@ export class AdminCeremoniesService extends BaseService {
         eq(awardCeremonies.organizationUid, ceremonyResult[0].organizationUid),
       )
       .orderBy(awardCeremonies.year, awardCeremonies.ceremonyNumber);
-
-    // eslint-disable-next-line unicorn/no-array-sort
-    const sortedSiblings = [...siblingRows].sort(compareSiblings);
-
-    const currentIndex = sortedSiblings.findIndex(
-      sibling => sibling.uid === ceremonyUid,
-    );
-
-    const previousCeremony =
-      // eslint-disable-next-line unicorn/no-useless-undefined -- 三項の分岐として省略できない
-      currentIndex > 0 ? sortedSiblings[currentIndex - 1] : undefined;
-    const nextCeremony =
-      currentIndex !== -1 && currentIndex < sortedSiblings.length - 1
-        ? sortedSiblings[currentIndex + 1]
-        : undefined;
 
     return {
       ceremony: ceremonyResult[0],
@@ -348,22 +134,7 @@ export class AdminCeremoniesService extends BaseService {
         isWinner: Boolean(nomination.isWinner),
         specialMention: nomination.specialMention,
       })),
-      navigation: {
-        previous: previousCeremony
-          ? {
-              uid: previousCeremony.uid,
-              year: previousCeremony.year,
-              ceremonyNumber: previousCeremony.ceremonyNumber ?? undefined,
-            }
-          : undefined,
-        next: nextCeremony
-          ? {
-              uid: nextCeremony.uid,
-              year: nextCeremony.year,
-              ceremonyNumber: nextCeremony.ceremonyNumber ?? undefined,
-            }
-          : undefined,
-      },
+      navigation: ceremonyNavigation(siblingRows, ceremonyUid),
     };
   }
 
@@ -450,74 +221,6 @@ export class AdminCeremoniesService extends BaseService {
       .orderBy(awardOrganizations.name, awardCategories.name);
 
     return {organizations, ceremonies, categories};
-  }
-
-  private async loadTitles(
-    nominationRows: Array<{
-      movieUid: string;
-      movieOriginalLanguage: string | null;
-    }>,
-  ): Promise<Map<string, string>> {
-    const titlesMap = new Map<string, string>();
-    const movieUids = [...new Set(nominationRows.map(row => row.movieUid))];
-    if (movieUids.length === 0) {
-      return titlesMap;
-    }
-
-    const titleRows = await this.database
-      .select({
-        movieUid: translations.resourceUid,
-        languageCode: translations.languageCode,
-        title: translations.content,
-        isDefault: translations.isDefault,
-      })
-      .from(translations)
-      .where(
-        and(
-          eq(translations.resourceType, 'movie_title'),
-          inArray(translations.resourceUid, movieUids),
-        ),
-      );
-
-    const translationsByMovie = new Map<string, TitleEntry[]>();
-    for (const row of titleRows) {
-      const trimmedTitle = row.title?.trim();
-      if (!trimmedTitle) {
-        continue;
-      }
-
-      const entries = translationsByMovie.get(row.movieUid) ?? [];
-      entries.push({
-        languageCode: row.languageCode,
-        title: trimmedTitle,
-        isDefault: row.isDefault ?? 0,
-      });
-      translationsByMovie.set(row.movieUid, entries);
-    }
-
-    const originalLanguageMap = new Map<string, string>();
-    for (const row of nominationRows) {
-      if (originalLanguageMap.has(row.movieUid)) {
-        continue;
-      }
-
-      const originalLanguage = row.movieOriginalLanguage?.trim();
-      if (originalLanguage) {
-        originalLanguageMap.set(row.movieUid, originalLanguage);
-      }
-    }
-
-    for (const movieUid of movieUids) {
-      const title = pickTitle(
-        translationsByMovie.get(movieUid) ?? [],
-        originalLanguageMap.get(movieUid),
-      );
-      if (title) {
-        titlesMap.set(movieUid, title);
-      }
-    }
-
-    return titlesMap;
   }
 
   private async assertCeremonyExists(ceremonyUid: string): Promise<void> {
