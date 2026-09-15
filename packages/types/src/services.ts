@@ -101,7 +101,7 @@ export type AwardYearGroup = {
   movies: AwardMovieEntry[];
 };
 
-export type AwardPagination = {
+type AwardPagination = {
   page: number;
   perPage: number;
   totalCount: number;
@@ -313,12 +313,6 @@ export type QuizCandidate = {
   year: number | undefined;
 };
 
-export type QuizPuzzle = {
-  date: string;
-  maxAttempts: number;
-  poolSize: number;
-};
-
 export type QuizAnswer = {
   uid: string;
   title: string;
@@ -369,7 +363,7 @@ export type MergeMoviesOptions = {
   preservePosters?: boolean;
 };
 
-export type PersonAwardTag = {
+type PersonAwardTag = {
   slug: string;
   isWinner: boolean;
 };
@@ -383,7 +377,7 @@ export type PersonalAward = {
   isWinner: boolean;
 };
 
-export type PersonAwardLegend = {
+type PersonAwardLegend = {
   slug: string;
   shortLabel: string;
   name: string;
@@ -409,7 +403,7 @@ export type PersonDetail = {
   awards: PersonAwardLegend[];
 };
 
-export type PersonSummary = {
+type PersonSummary = {
   uid: string;
   name: string;
   movieCount: number;
