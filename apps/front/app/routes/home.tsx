@@ -9,7 +9,7 @@ import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {FilmCard} from '@/components/editorial/film-card';
 import {MonthlyPick} from '@/components/editorial/monthly-pick';
-import {apiFetch, resolveApiUrl} from '@/lib/api';
+import {apiFetch, canTransformImages, resolveApiUrl} from '@/lib/api';
 import {
   buildSelectionPath,
   fetchHighlightedMovies,
@@ -51,6 +51,7 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
   const apiUrl = resolveApiUrl(context);
+  const transformImages = canTransformImages(context);
 
   try {
     const response = await apiFetch(context, buildSelectionPath(locale), {
@@ -68,6 +69,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
       error: undefined,
       locale,
       apiUrl,
+      transformImages,
     };
   } catch (error) {
     console.error('SSR fetch error:', error);
@@ -78,6 +80,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
       error: error instanceof Error ? error.message : 'Unknown error occurred',
       locale,
       apiUrl,
+      transformImages,
       shouldFetchOnClient: true,
     };
   }
@@ -89,12 +92,14 @@ export default function Home({loaderData}: Route.ComponentProps) {
     error: initialError,
     locale,
     apiUrl,
+    transformImages,
     shouldFetchOnClient,
   } = loaderData as {
     movies: HighlightedMovies | undefined;
     error: string | undefined;
     locale: string;
     apiUrl: string;
+    transformImages?: boolean;
     shouldFetchOnClient?: boolean;
   };
 
@@ -139,6 +144,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
           error={error}
           locale={locale}
           apiUrl={apiUrl}
+          transformImages={transformImages}
           adminToken={adminToken}
           loading={loading}
           onMoviesChange={setMovies}
@@ -155,6 +161,7 @@ function Movies({
   error,
   locale,
   apiUrl,
+  transformImages,
   adminToken,
   loading: isDataLoading,
   onMoviesChange,
@@ -164,6 +171,7 @@ function Movies({
   error: string | undefined;
   locale: string;
   apiUrl: string;
+  transformImages?: boolean;
   adminToken: string | undefined;
   loading?: boolean;
   onMoviesChange: Dispatch<SetStateAction<HighlightedMovies | undefined>>;
@@ -219,7 +227,11 @@ function Movies({
 
       <div className="flex flex-col gap-2 anim-rise anim-rise-1">
         {movies?.monthly ? (
-          <MonthlyPick movie={movies.monthly} locale={locale} />
+          <MonthlyPick
+            movie={movies.monthly}
+            locale={locale}
+            transformImages={transformImages}
+          />
         ) : (
           <p className="text-sm text-ink/50 font-mono">{noMovieLabel}</p>
         )}

@@ -1,3 +1,4 @@
+import {deliveredPosterUrl} from '@/lib/poster-delivery';
 import {posterUrlForDisplay, type PosterDisplaySize} from '@/lib/poster-size';
 
 type PosterFrameProperties = {
@@ -7,6 +8,7 @@ type PosterFrameProperties = {
   className?: string;
   priority?: boolean;
   displaySize?: PosterDisplaySize;
+  transformImages?: boolean;
 };
 
 export function PosterFrame({
@@ -16,8 +18,12 @@ export function PosterFrame({
   className = '',
   priority = false,
   displaySize = 'w500',
+  transformImages = false,
 }: PosterFrameProperties) {
-  const source = posterUrlForDisplay(posterUrl, displaySize);
+  const source = deliveredPosterUrl(
+    posterUrlForDisplay(posterUrl, displaySize),
+    transformImages,
+  );
 
   return (
     <div className={`relative ${className}`}>
