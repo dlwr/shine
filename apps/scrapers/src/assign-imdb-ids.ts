@@ -1,10 +1,7 @@
 import {and, eq, isNull} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {movies, translations} from '@shine/database/schema/index';
-import {
-  searchTMDBMovie,
-  fetchTMDBMovieDetails,
-} from './common/tmdb-utilities.js';
+import {searchTMDBMovie, fetchTMDBMovieDetails} from './common/tmdb-client';
 
 export type AssignImdbIdsOptions = {
   environment: Environment;

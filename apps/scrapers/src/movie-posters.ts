@@ -2,12 +2,8 @@ import {eq, sql} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {posterUrls} from '@shine/database/schema/poster-urls';
-import {
-  fetchTMDBImages,
-  fetchTMDBMovieImages,
-  savePosterUrls,
-  saveTMDBId,
-} from './common/tmdb-utilities';
+import {savePosterUrls, saveTMDBId} from './common/tmdb-utilities';
+import {fetchTMDBImages, fetchTMDBMovieImages} from './common/tmdb-client';
 
 type MovieWithImdbId = {
   uid: string;

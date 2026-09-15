@@ -3,7 +3,7 @@ import {eq, inArray, sql} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {posterUrls} from '@shine/database/schema/poster-urls';
-import {fetchTMDBImages, findTMDBByImdbId} from './common/tmdb-utilities';
+import {fetchTMDBImages, findTMDBByImdbId} from './common/tmdb-client';
 
 const TMDB_IMAGE_HOST = 'https://image.tmdb.org/';
 

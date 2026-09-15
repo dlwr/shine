@@ -6,7 +6,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
 import {hasOnlyLatinOrJapaneseScript} from '@shine/utils';
-import {fetchTMDBCredits, type TMDBCredits} from './common/tmdb-utilities';
+import {fetchTMDBCredits, type TMDBCredits} from './common/tmdb-client';
 
 type DatabaseClient = ReturnType<typeof getDatabase>;
 

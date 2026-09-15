@@ -13,7 +13,7 @@ import {
   fetchTMDBMovieDetails,
   findTMDBByImdbId,
   type TMDBMovieData,
-} from '../common/tmdb-utilities';
+} from '../common/tmdb-client';
 import {type AwardFilm, type DatabaseClient, type ImportContext} from './types';
 
 export async function createMovie(

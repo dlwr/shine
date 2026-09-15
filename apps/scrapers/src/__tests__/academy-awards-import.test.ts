@@ -32,10 +32,13 @@ vi.mock('../common/fetch-utilities', () => ({
   fetchWithRetry: vi.fn(),
 }));
 
-vi.mock('../common/tmdb-utilities', () => ({
+vi.mock('../common/tmdb-client', () => ({
   fetchTMDBMovieSummary: vi.fn(),
-  fetchJapaneseTitleFromTMDB: vi.fn(),
   fetchTMDBMovieImages: vi.fn(),
+}));
+
+vi.mock('../common/tmdb-utilities', () => ({
+  fetchJapaneseTitleFromTMDB: vi.fn(),
   saveJapaneseTranslation: vi.fn(),
   savePosterUrls: vi.fn(),
   saveTMDBId: vi.fn(),
@@ -112,7 +115,7 @@ async function loadScraper(
   vi.resetModules();
   const {fetchWithRetry} = await import('../common/fetch-utilities');
   vi.mocked(fetchWithRetry).mockResolvedValue(wikipediaHtml);
-  const {fetchTMDBMovieSummary} = await import('../common/tmdb-utilities');
+  const {fetchTMDBMovieSummary} = await import('../common/tmdb-client');
   vi.mocked(fetchTMDBMovieSummary).mockImplementation(
     async (title: string) => summaryByTitle[title] ?? {},
   );

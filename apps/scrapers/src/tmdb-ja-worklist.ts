@@ -7,7 +7,7 @@ import {hasKana} from './common/japanese-text';
 import {
   fetchTMDBMovieDetails,
   fetchTMDBMovieTranslations,
-} from './common/tmdb-utilities';
+} from './common/tmdb-client';
 
 export type TmdbJaWorklistItem = {
   uid: string;

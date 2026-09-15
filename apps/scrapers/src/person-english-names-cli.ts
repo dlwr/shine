@@ -8,7 +8,7 @@ import {
   loadEnvironmentFiles,
 } from './common/environment';
 import {getScrapeDatabase} from './common/dry-run';
-import {fetchTMDBPerson} from './common/tmdb-utilities';
+import {fetchTMDBPerson} from './common/tmdb-client';
 import {backfillPersonEnglishNames} from './person-english-names';
 
 function parsePositiveInteger(value: string): number {

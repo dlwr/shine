@@ -1,7 +1,7 @@
 import {and, eq} from 'drizzle-orm';
 import {getDatabase} from '@shine/database';
 import {nominations} from '@shine/database/schema/nominations';
-import {fetchTMDBConfig} from './common/tmdb-utilities';
+import {fetchTMDBConfig} from './common/tmdb-client';
 import {getAwardContext} from './import-imdb-list/award-context';
 import {readUniqueCsvRecords} from './import-imdb-list/csv';
 import {loadExistingMovies} from './import-imdb-list/existing-movies';

@@ -10,7 +10,7 @@ import {
   fetchTMDBDetails,
   fetchTMDBMovieDetails,
   findTMDBByImdbId,
-} from './common/tmdb-utilities';
+} from './common/tmdb-client';
 
 export type TmdbTitleDetails = {
   title?: string | undefined;
