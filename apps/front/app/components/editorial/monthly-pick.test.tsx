@@ -124,7 +124,7 @@ describe('MonthlyPick のポスター配信', () => {
   it('transformImages のときは自前の /posters 経路を Image Transformations に通す', () => {
     const {container} = render(<MonthlyPick movie={movie} transformImages />);
     expect(container.querySelector('img')?.getAttribute('src')).toBe(
-      '/cdn-cgi/image/format=auto,quality=80/posters/w500/abc.jpg',
+      '/cdn-cgi/image/format=auto,quality=70/posters/w500/abc.jpg',
     );
   });
 

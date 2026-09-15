@@ -6,7 +6,7 @@ const tmdb = 'https://image.tmdb.org/t/p/w500/AlibMyoMlu0bk0ksJfD95ox8XN9.jpg';
 describe('deliveredPosterUrl', () => {
   it('有効なら自前の /posters 経路を Image Transformations に通す', () => {
     expect(deliveredPosterUrl(tmdb, true)).toBe(
-      '/cdn-cgi/image/format=auto,quality=80/posters/w500/AlibMyoMlu0bk0ksJfD95ox8XN9.jpg',
+      '/cdn-cgi/image/format=auto,quality=70/posters/w500/AlibMyoMlu0bk0ksJfD95ox8XN9.jpg',
     );
   });
 

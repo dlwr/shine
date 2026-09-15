@@ -2,7 +2,7 @@ const TMDB_POSTER =
   /^https:\/\/image\.tmdb\.org\/t\/p\/(original|w\d+)\/([\w-]+\.(?:jpg|jpeg|png|webp))$/;
 const POSTER_PATH =
   /^\/posters\/(original|w\d+)\/([\w-]+\.(?:jpg|jpeg|png|webp))$/;
-const TRANSFORMATION_PREFIX = '/cdn-cgi/image/format=auto,quality=80';
+const TRANSFORMATION_PREFIX = '/cdn-cgi/image/format=auto,quality=70';
 
 /**
  * Image Transformations はリモートの変換元を許可していないので、
