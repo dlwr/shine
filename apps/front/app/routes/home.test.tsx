@@ -81,6 +81,7 @@ const createLoaderData = (
   error: undefined,
   locale: 'ja',
   apiUrl: 'http://localhost:8787',
+  transformImages: false,
   shouldFetchOnClient: undefined,
   ...overrides,
 });
@@ -92,6 +93,7 @@ const createErrorLoaderData = (
   error: 'API request failed',
   locale: 'ja',
   apiUrl: 'http://localhost:8787',
+  transformImages: false,
   shouldFetchOnClient: true,
   ...overrides,
 });
@@ -160,6 +162,7 @@ describe('Home Component', () => {
         error: undefined,
         locale: 'ja',
         apiUrl: 'http://localhost:8787',
+        transformImages: false,
       });
     });
 
@@ -176,6 +179,7 @@ describe('Home Component', () => {
         error: 'Network error',
         locale: 'ja',
         apiUrl: 'http://localhost:8787',
+        transformImages: false,
         shouldFetchOnClient: true,
       });
     });
@@ -196,6 +200,7 @@ describe('Home Component', () => {
         error: 'API request failed: 500',
         locale: 'ja',
         apiUrl: 'http://localhost:8787',
+        transformImages: false,
         shouldFetchOnClient: true,
       });
     });

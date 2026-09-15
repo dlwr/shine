@@ -36,9 +36,11 @@ const COPY = {
 export function MonthlyPick({
   movie,
   locale = 'ja',
+  transformImages = false,
 }: {
   movie: MonthlyPickMovie;
   locale?: string;
+  transformImages?: boolean;
 }) {
   const copy = COPY[locale as keyof typeof COPY] ?? COPY.ja;
   const title = resolveMovieTitle(movie, {locale});
@@ -73,6 +75,7 @@ export function MonthlyPick({
             alt={`${title} poster`}
             className="w-full"
             priority
+            transformImages={transformImages}
           />
         </a>
         <div className="min-w-0 flex flex-col gap-3">

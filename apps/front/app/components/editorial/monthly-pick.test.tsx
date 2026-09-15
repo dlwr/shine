@@ -112,3 +112,26 @@ describe('MonthlyPick', () => {
     ).toHaveAttribute('href', '/movies/movie-3#article-links');
   });
 });
+
+describe('MonthlyPick のポスター配信', () => {
+  const movie = {
+    uid: 'm1',
+    year: 2025,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/abc.jpg',
+    translations: [{languageCode: 'ja', content: '国宝', isDefault: 1}],
+  } as unknown as Parameters<typeof MonthlyPick>[0]['movie'];
+
+  it('transformImages のときは自前の /posters 経路を Image Transformations に通す', () => {
+    const {container} = render(<MonthlyPick movie={movie} transformImages />);
+    expect(container.querySelector('img')?.getAttribute('src')).toBe(
+      '/cdn-cgi/image/format=auto,quality=80/posters/w500/abc.jpg',
+    );
+  });
+
+  it('既定では TMDb の URL のまま', () => {
+    const {container} = render(<MonthlyPick movie={movie} />);
+    expect(container.querySelector('img')?.getAttribute('src')).toBe(
+      'https://image.tmdb.org/t/p/w500/abc.jpg',
+    );
+  });
+});
