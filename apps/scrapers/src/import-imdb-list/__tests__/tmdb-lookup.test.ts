@@ -83,7 +83,7 @@ describe('fetchMovieDetails', () => {
         status: 200,
         body: {id: 278, title: 'Film', original_title: 'Film'},
       },
-      '/3/movie/278?language=ja': {status: 500},
+      '/3/movie/278?language=ja': {status: 401},
     });
 
     const details = await fetchMovieDetails('key', 278);
@@ -103,10 +103,10 @@ describe('fetchMovieDetails', () => {
   });
 
   it('404 以外の失敗は例外にする', async () => {
-    stubTmdb({'/3/movie/1?language=en-US': {status: 500}});
+    stubTmdb({'/3/movie/1?language=en-US': {status: 401}});
 
     await expect(fetchMovieDetails('key', 1)).rejects.toThrow(
-      'TMDb movie details error',
+      'HTTP error! Status: 401',
     );
   });
 });

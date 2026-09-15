@@ -7,7 +7,8 @@ import {
   getMoviesWithoutJapaneseTranslation,
   saveJapaneseTranslation,
 } from './japanese-translations/repo';
-import {fetchJapaneseTitleFromTMDB} from './japanese-translations/scrapers/tmdb-scraper';
+import {fetchJapaneseTitleFromTMDB} from './common/tmdb-utilities';
+import {isValidImdbId} from './japanese-translations/scrapers/imdb-id';
 import {scrapeJapaneseTitleFromWikipedia} from './japanese-translations/scrapers/wikipedia-scraper';
 import {
   assertDatabaseEnvironment,
@@ -99,11 +100,13 @@ async function main(
       );
 
       // TMDBから日本語タイトルを取得
-      let japaneseTitle = await fetchJapaneseTitleFromTMDB(
-        movie.imdbId,
-        movie.tmdbId,
-        environment,
-      );
+      let japaneseTitle = isValidImdbId(movie.imdbId)
+        ? await fetchJapaneseTitleFromTMDB(
+            movie.imdbId,
+            movie.tmdbId,
+            environment,
+          )
+        : undefined;
 
       // TMDBで見つからなかった場合はWikipediaで検索（フォールバック）
       if (!japaneseTitle) {
