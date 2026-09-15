@@ -1,77 +1,18 @@
 /**
  * 日刊スポーツ映画大賞取り込みのCLIエントリーポイント
  */
-import {Command, InvalidArgumentError} from 'commander';
-import {
-  assertDatabaseEnvironment,
-  buildEnvironment,
-  loadEnvironmentFiles,
-} from './common/environment';
+import {type Command} from 'commander';
+import {createFilmAwardCommand} from './common/ja-wikipedia-film-award-cli';
 import {importNikkanSportsFilmAwards} from './nikkan-sports-film-awards';
 
-function parseYear(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed < 1988) {
-    throw new InvalidArgumentError('yearは1988以上の整数で指定してください。');
-  }
-
-  return parsed;
-}
-
-function parseThrottle(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    throw new InvalidArgumentError('throttleは0以上の整数で指定してください。');
-  }
-
-  return parsed;
-}
-
 export function createCommand(): Command {
-  return new Command()
-    .name('nikkan-sports-film-awards')
-    .description(
-      [
-        '日本語版Wikipediaの「日刊スポーツ映画大賞・石原裕次郎賞」から',
-        '作品賞・外国作品賞・石原裕次郎賞を取り込みます。',
-        '記事名からWikidataのIMDb ID (P345) を引いて映画を同定するため、',
-        'IMDb IDを持たない作品は取り込みません。',
-      ].join('\n'),
-    )
-    .option('--year <year>', '取り込む年度を1つに絞る', parseYear)
-    .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
-    .option('--throttle <ms>', 'TMDb呼び出し間の待機ミリ秒', parseThrottle, 300)
-    .addHelpText(
-      'after',
-      `
-例:
-  pnpm scrapers nikkan-sports-film-awards --dry-run
-  pnpm scrapers nikkan-sports-film-awards --year 2025
-`,
-    )
-    .action(
-      async (options: {year?: number; dryRun: boolean; throttle: number}) => {
-        loadEnvironmentFiles();
-        const environment = buildEnvironment(process.env);
-
-        if (!options.dryRun) {
-          assertDatabaseEnvironment(environment);
-        }
-
-        const stats = await importNikkanSportsFilmAwards({
-          environment,
-          dryRun: options.dryRun,
-          year: options.year,
-          throttleMs: options.throttle,
-        });
-
-        const failed =
-          stats.bestFilm.failed + stats.foreign.failed + stats.yujiro.failed;
-        if (failed > 0) {
-          process.exitCode = 1;
-        }
-      },
-    );
+  return createFilmAwardCommand({
+    name: 'nikkan-sports-film-awards',
+    description: [
+      '日本語版Wikipediaの「日刊スポーツ映画大賞・石原裕次郎賞」から',
+      '作品賞・外国作品賞・石原裕次郎賞を取り込みます。',
+    ],
+    firstYear: 1988,
+    importAwards: importNikkanSportsFilmAwards,
+  });
 }
