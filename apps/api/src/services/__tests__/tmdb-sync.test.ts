@@ -26,6 +26,13 @@ afterAll(() => {
 });
 
 vi.mock('@shine/scrapers/common/tmdb-utilities', () => ({
+  savePosterUrls: vi.fn(async () => 2),
+}));
+
+vi.mock('@shine/scrapers/common/tmdb-client', async importOriginal => ({
+  ...(await importOriginal<
+    typeof import('@shine/scrapers/common/tmdb-client')
+  >()),
   fetchTMDBMovieTranslations: vi.fn(async () => ({
     id: 42,
     translations: [
@@ -35,7 +42,6 @@ vi.mock('@shine/scrapers/common/tmdb-utilities', () => ({
       {iso_639_1: 'xx', data: {}},
     ],
   })),
-  savePosterUrls: vi.fn(async () => 2),
 }));
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -76,8 +82,8 @@ describe('syncTmdbData', () => {
         if (url.includes('/images')) {
           return {
             ok: true,
-            async json() {
-              return {
+            async text() {
+              return JSON.stringify({
                 id: 42,
                 posters: [
                   {
@@ -87,15 +93,18 @@ describe('syncTmdbData', () => {
                     iso_639_1: 'en',
                   },
                 ],
-              };
+              });
             },
           };
         }
 
         return {
           ok: true,
-          async json() {
-            return {original_language: 'ja', original_title: '原題'};
+          async text() {
+            return JSON.stringify({
+              original_language: 'ja',
+              original_title: '原題',
+            });
           },
         };
       }),
@@ -197,8 +206,8 @@ describe('syncTmdbData', () => {
         if (url.includes('/images')) {
           return {
             ok: true,
-            async json() {
-              return {id: 42, posters: []};
+            async text() {
+              return JSON.stringify({id: 42, posters: []});
             },
           };
         }
@@ -206,8 +215,9 @@ describe('syncTmdbData', () => {
         return {
           ok: false,
           status: 401,
-          async json() {
-            return {status_message: 'Invalid API key'};
+          headers: new Headers(),
+          async text() {
+            return JSON.stringify({status_message: 'Invalid API key'});
           },
         };
       }),
@@ -215,7 +225,7 @@ describe('syncTmdbData', () => {
 
     await expect(
       syncTmdbData(database, 'movie-a', 42, 'movie', environment),
-    ).rejects.toThrow('TMDb movie details request failed: 401');
+    ).rejects.toThrow('HTTP error! Status: 401');
   });
 
   it('throws when the TMDb API key is not configured', async () => {

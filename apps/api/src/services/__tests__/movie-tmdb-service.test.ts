@@ -206,7 +206,7 @@ describe('MovieTmdbService.updateTmdbId', () => {
   });
 
   it('keeps the update when the refresh fails', async () => {
-    stubTmdb({detailsStatus: 500});
+    stubTmdb({detailsStatus: 401});
 
     const result = await new MovieTmdbService(environment).updateTmdbId(
       'movie-a',
@@ -316,7 +316,7 @@ describe('MovieTmdbService.autoFetchTmdb', () => {
   });
 
   it('wraps sync failures in TmdbSyncError with the cause', async () => {
-    stubTmdb({detailsStatus: 500});
+    stubTmdb({detailsStatus: 401});
 
     const promise = new MovieTmdbService(environment).autoFetchTmdb('movie-a');
 
@@ -324,7 +324,7 @@ describe('MovieTmdbService.autoFetchTmdb', () => {
     await expect(promise).rejects.toMatchObject({
       message: 'TMDbデータの自動取得に失敗しました',
       cause: expect.objectContaining({
-        message: 'TMDb movie details request failed: 500',
+        message: 'HTTP error! Status: 401',
       }),
     });
   });
@@ -381,7 +381,7 @@ describe('MovieTmdbService.refreshTmdb', () => {
   });
 
   it('wraps sync failures in TmdbSyncError', async () => {
-    stubTmdb({detailsStatus: 500});
+    stubTmdb({detailsStatus: 401});
 
     await expect(
       new MovieTmdbService(environment).refreshTmdb('movie-a'),

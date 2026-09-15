@@ -1,5 +1,6 @@
 import {and, eq, isNull, not} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
+import {findTMDBByImdbId} from '@shine/scrapers/common/tmdb-client';
 import {BaseService} from './base-service';
 import {
   ConflictError,
@@ -136,9 +137,6 @@ export class MovieTmdbService extends BaseService {
     };
 
     try {
-      const {findTMDBByImdbId} =
-        await import('@shine/scrapers/common/tmdb-utilities');
-
       let movieTmdbId: number | undefined = tmdbId ?? undefined;
       let detectedMediaType: MediaType =
         (movie[0].mediaType as MediaType) || 'movie';

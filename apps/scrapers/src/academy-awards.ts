@@ -11,13 +11,15 @@ import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import {seedAcademyAwards} from '@shine/database/seeds/academy-awards';
 import {
-  fetchTMDBMovieSummary,
   fetchJapaneseTitleFromTMDB,
-  fetchTMDBMovieImages,
   saveJapaneseTranslation,
   savePosterUrls,
   saveTMDBId,
 } from './common/tmdb-utilities';
+import {
+  fetchTMDBMovieSummary,
+  fetchTMDBMovieImages,
+} from './common/tmdb-client';
 import {fetchWithRetry} from './common/fetch-utilities';
 import {getScrapeDatabase} from './common/dry-run';
 

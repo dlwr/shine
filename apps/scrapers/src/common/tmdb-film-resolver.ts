@@ -1,18 +1,13 @@
 import {setTimeout as sleep} from 'node:timers/promises';
-import {buildUrl, fetchJsonWithRetry} from './fetch-utilities';
-import {fetchTMDBMovieDetails} from './tmdb-utilities';
+import {
+  fetchTMDBMovieDetails,
+  searchTMDBMovies,
+  type TMDBSearchMovieResult,
+} from './tmdb-client';
 import {type FilmReference, type ResolvedFilm} from './wikidata-film-resolver';
-
-const TMDB_API = 'https://api.themoviedb.org/3';
 const IMDB_ID_PATTERN = /^tt\d+$/;
 
-export type TmdbSearchResult = {
-  id: number;
-  title?: string;
-  original_title?: string;
-  release_date?: string;
-  original_language?: string;
-};
+export type TmdbSearchResult = TMDBSearchMovieResult;
 
 function normalizeTitle(value: string | undefined): string {
   return (value ?? '').replaceAll(/[\s\u{3000}]/gu, '').toLowerCase();
@@ -63,18 +58,11 @@ async function searchTmdbByJapaneseTitle(
   title: string,
   tmdbApiKey: string,
 ): Promise<TmdbSearchResult[]> {
-  const url = buildUrl(`${TMDB_API}/search/movie`, {
-    api_key: tmdbApiKey,
+  return searchTMDBMovies(tmdbApiKey, {
     query: title,
     language: 'ja-JP',
     include_adult: 'false',
   });
-
-  const response = await fetchJsonWithRetry<{results?: TmdbSearchResult[]}>(
-    url,
-  );
-
-  return response.results ?? [];
 }
 
 export async function resolveFilmsByTmdb(

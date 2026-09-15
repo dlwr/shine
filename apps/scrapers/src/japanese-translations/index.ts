@@ -6,7 +6,8 @@ import {
   getMoviesWithoutJapaneseTranslation,
   saveJapaneseTranslationsBatch,
 } from './repo';
-import {fetchJapaneseTitleFromTMDB} from './scrapers/tmdb-scraper';
+import {fetchJapaneseTitleFromTMDB} from '../common/tmdb-utilities';
+import {isValidImdbId} from './scrapers/imdb-id';
 
 // 処理するバッチサイズ
 const BATCH_SIZE = 20;
@@ -55,11 +56,13 @@ async function handleBatchScraping(
         );
 
         // TMDBから日本語タイトルを取得
-        const japaneseTitle = await fetchJapaneseTitleFromTMDB(
-          movie.imdbId,
-          movie.tmdbId,
-          environment,
-        );
+        const japaneseTitle = isValidImdbId(movie.imdbId)
+          ? await fetchJapaneseTitleFromTMDB(
+              movie.imdbId,
+              movie.tmdbId,
+              environment,
+            )
+          : undefined;
 
         // TMDBで見つからなかった場合はWikipediaで検索
         // if (!japaneseTitle) {

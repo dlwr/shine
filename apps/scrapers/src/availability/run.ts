@@ -3,10 +3,10 @@ import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {
   fetchJapaneseTitleFromTMDB,
-  findTMDBByImdbId,
   saveJapaneseTranslation,
   saveTMDBId,
 } from '../common/tmdb-utilities';
+import {findTMDBByImdbId} from '../common/tmdb-client';
 import {fetchJapaneseAlternativeTitles} from '@shine/availability';
 import {hasJapaneseText} from '@shine/availability';
 import {

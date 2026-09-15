@@ -4,7 +4,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {normalizeTitle} from './backfill-posters';
-import {fetchJsonWithRetry} from './common/fetch-utilities';
+import {findTMDBRecordsByImdbId} from './common/tmdb-client';
 
 export type OrphanDeletionStats = {
   candidates: number;
@@ -162,15 +162,8 @@ async function fetchTitleByImdbId(
   imdbId: string,
   tmdbApiKey: string,
 ): Promise<string | undefined> {
-  const url = new URL(`https://api.themoviedb.org/3/find/${imdbId}`);
-  url.searchParams.set('api_key', tmdbApiKey);
-  url.searchParams.set('external_source', 'imdb_id');
-
   try {
-    const data = await fetchJsonWithRetry<{
-      movie_results?: Array<{title?: string}>;
-      tv_results?: Array<{name?: string}>;
-    }>(url.href);
+    const data = await findTMDBRecordsByImdbId(imdbId, tmdbApiKey);
 
     return data.movie_results?.[0]?.title ?? data.tv_results?.[0]?.name;
   } catch (error) {

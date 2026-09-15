@@ -7,7 +7,7 @@ import {
   insertTmdbPosterUrl,
 } from '../common/movie-reference-records';
 import {pickJapaneseTitle} from '../common/tmdb-japanese-title';
-import {type TMDBConfig} from '../common/tmdb-utilities';
+import {type TMDBConfig} from '../common/tmdb-client';
 import {
   type CsvMovieRow,
   type DatabaseClient,

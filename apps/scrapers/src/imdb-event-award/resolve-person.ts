@@ -9,7 +9,7 @@ import {
   fetchTMDBPerson,
   type TMDBCastCredit,
   type TMDBCredits,
-} from '../common/tmdb-utilities';
+} from '../common/tmdb-client';
 import {
   type SelectedCredit,
   selectCredits,

@@ -1,7 +1,6 @@
 import {setTimeout as sleep} from 'node:timers/promises';
 import {buildUrl, fetchJsonWithRetry} from './fetch-utilities';
-
-const TMDB_API = 'https://api.themoviedb.org/3';
+import {findTMDBRecordsByImdbId} from './tmdb-client';
 const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
 const USER_AGENT = 'shine-film.com movie database (https://shine-film.com)';
 const BATCH_SIZE = 50;
@@ -69,8 +68,6 @@ type WikidataEntitiesResponse = {
     }
   >;
 };
-
-type TmdbFindResponse = {movie_results?: Array<{release_date?: string}>};
 
 export type WikipediaLanguage = 'ja' | 'en';
 
@@ -306,13 +303,8 @@ async function fetchTmdbReleaseYear(
   imdbId: string,
   tmdbApiKey: string,
 ): Promise<number | undefined> {
-  const url = buildUrl(`${TMDB_API}/find/${imdbId}`, {
-    api_key: tmdbApiKey,
-    external_source: 'imdb_id',
-  });
-
   try {
-    const response = await fetchJsonWithRetry<TmdbFindResponse>(url);
+    const response = await findTMDBRecordsByImdbId(imdbId, tmdbApiKey);
     const year = response.movie_results?.[0]?.release_date?.slice(0, 4);
     return year ? Number(year) : undefined;
   } catch (error) {

@@ -10,11 +10,12 @@ import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {generateUUID} from '@shine/utils';
 import {withDefaultTranslationFlags} from './common/default-translations';
-import {fetchJsonWithRetry} from './common/fetch-utilities';
-import {fetchTMDBConfig, type TMDBConfig} from './common/tmdb-utilities';
+import {
+  fetchTMDBConfig,
+  searchTMDBMovies,
+  type TMDBConfig,
+} from './common/tmdb-client';
 import {pickJapaneseTitle} from './common/tmdb-japanese-title';
-
-const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 
 type TMDBMovieData = {
   id: number;
@@ -25,22 +26,6 @@ type TMDBMovieData = {
   poster_path: string | undefined;
   imdb_id: string | undefined;
   overview: string;
-};
-
-type TMDBMovieSearchResult = {
-  id: number;
-  title: string;
-  original_title?: string;
-  original_language?: string;
-  release_date?: string;
-  poster_path?: string;
-  imdb_id?: string;
-  overview?: string;
-};
-
-type TMDBSearchResponse = {
-  results: TMDBMovieSearchResult[];
-  total_results: number;
 };
 
 type ImportContext = {
@@ -401,19 +386,17 @@ async function searchMovieOnTMDB(
   title: string,
 ): Promise<TMDBMovieData | undefined> {
   try {
-    const searchUrl = new URL(`${TMDB_API_BASE_URL}/search/movie`);
-    searchUrl.searchParams.append('api_key', context.tmdbApiKey);
-    searchUrl.searchParams.append('query', title);
-    searchUrl.searchParams.append('language', 'ja');
+    const results = await searchTMDBMovies(context.tmdbApiKey, {
+      query: title,
+      language: 'ja',
+    });
 
-    const data = await fetchJsonWithRetry<TMDBSearchResponse>(searchUrl.href);
-
-    if (data.results.length === 0) {
+    if (results.length === 0) {
       return undefined;
     }
 
     // 最初の結果を返す（最も関連性が高いとされる）
-    const movie = data.results[0];
+    const movie = results[0];
     const sanitizedMovie: TMDBMovieData = {
       id: movie.id,
       title: movie.title,
@@ -421,7 +404,7 @@ async function searchMovieOnTMDB(
       original_language: movie.original_language ?? undefined,
       release_date: movie.release_date ?? '',
       poster_path: movie.poster_path ?? undefined,
-      imdb_id: movie.imdb_id ?? undefined,
+      imdb_id: undefined,
       overview: movie.overview ?? '',
     };
     console.log(

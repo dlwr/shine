@@ -7,10 +7,9 @@ import {
   fetchTMDBConfig,
   fetchTMDBMovieDetails,
   findTMDBByImdbId,
-} from './common/tmdb-utilities';
-import {fetchJsonWithRetry} from './common/fetch-utilities';
-
-const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
+  searchTMDBMovies,
+  type TMDBSearchMovieResult,
+} from './common/tmdb-client';
 const POSTER_SIZE = 'w500';
 const MAX_YEAR_DISTANCE = 3;
 
@@ -21,13 +20,6 @@ export type BackfillStats = {
   unresolved: number;
   tmdbIdTaken: number;
   failed: number;
-};
-
-type SearchResult = {
-  id: number;
-  title: string;
-  original_title?: string;
-  release_date: string;
 };
 
 export function normalizeTitle(title: string): string {
@@ -43,7 +35,7 @@ export function normalizeTitle(title: string): string {
  * DBのyearは映画祭の開催年で、TMDbの公開年と数年ずれることがある
  */
 export function pickStrictMatch(
-  results: SearchResult[],
+  results: TMDBSearchMovieResult[],
   title: string,
   year: number,
 ): number | undefined {
@@ -275,16 +267,12 @@ async function resolveTmdbId(
     return undefined;
   }
 
-  const searchUrl = new URL(`${TMDB_API_BASE_URL}/search/movie`);
-  searchUrl.searchParams.set('api_key', tmdbApiKey);
-  searchUrl.searchParams.set('query', candidate.title);
-  searchUrl.searchParams.set('include_adult', 'false');
-
   try {
-    const data = await fetchJsonWithRetry<{results: SearchResult[]}>(
-      searchUrl.href,
-    );
-    return pickStrictMatch(data.results ?? [], candidate.title, candidate.year);
+    const results = await searchTMDBMovies(tmdbApiKey, {
+      query: candidate.title,
+      include_adult: 'false',
+    });
+    return pickStrictMatch(results, candidate.title, candidate.year);
   } catch (error) {
     console.error(`  Search failed for ${candidate.title}:`, error);
     return undefined;
