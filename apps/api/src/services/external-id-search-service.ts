@@ -1,6 +1,10 @@
 import {and, eq, isNull} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
+import {
+  fetchTMDBExternalIds,
+  searchTMDBMovies,
+} from '@shine/scrapers/common/tmdb-client';
 import {BaseService} from './base-service';
 import {NotFoundError, TmdbConfigError, ValidationError} from './errors';
 
@@ -108,59 +112,27 @@ export class ExternalIdSearchService extends BaseService {
 
     const limit = Math.min(Math.max(options.limit ?? 5, 1), 10);
 
-    const searchUrl = new URL('https://api.themoviedb.org/3/search/movie');
-    searchUrl.searchParams.append('api_key', tmdbApiKey);
-    searchUrl.searchParams.append('query', query);
-    searchUrl.searchParams.append('include_adult', 'false');
-    searchUrl.searchParams.append('language', searchLanguage);
-
-    if (yearToUse) {
-      searchUrl.searchParams.append('year', String(yearToUse));
-    }
-
-    const searchResponse = await fetch(searchUrl.href);
-
-    if (!searchResponse.ok) {
+    let searchResults;
+    try {
+      searchResults = await searchTMDBMovies(tmdbApiKey, {
+        query,
+        include_adult: 'false',
+        language: searchLanguage,
+        ...(yearToUse && {year: String(yearToUse)}),
+      });
+    } catch {
       throw new Error('Failed to search TMDb');
     }
 
-    type TMDBSearchResult = {
-      id: number;
-      title: string;
-      original_title?: string;
-      overview?: string;
-      release_date?: string;
-      original_language?: string;
-      popularity?: number;
-      vote_average?: number;
-      vote_count?: number;
-      poster_path?: string;
-    };
-
-    const searchData = (await searchResponse.json()) as {
-      results: TMDBSearchResult[];
-    };
-
-    const limitedResults = searchData.results.slice(0, limit);
+    const limitedResults = searchResults.slice(0, limit);
 
     const results = await Promise.all(
       limitedResults.map(async item => {
         let imdbId: string | undefined;
 
         try {
-          const externalUrl = new URL(
-            `https://api.themoviedb.org/3/movie/${item.id}/external_ids`,
-          );
-          externalUrl.searchParams.append('api_key', tmdbApiKey);
-
-          const externalResponse = await fetch(externalUrl.href);
-          if (externalResponse.ok) {
-            const externalData = (await externalResponse.json()) as {
-              imdb_id?: string;
-            };
-
-            imdbId = externalData.imdb_id ?? undefined;
-          }
+          const externalData = await fetchTMDBExternalIds(item.id, tmdbApiKey);
+          imdbId = externalData.imdb_id ?? undefined;
         } catch (error) {
           console.warn(
             `Failed to fetch external IDs for TMDb movie ${item.id}:`,

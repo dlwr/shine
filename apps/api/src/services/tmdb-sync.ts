@@ -1,7 +1,11 @@
 import {and, eq, getDatabase, sql, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
-import type {TMDBMovieImages} from '@shine/scrapers/common/tmdb-utilities';
+import {
+  fetchTMDBImages,
+  fetchTMDBMovieTranslations,
+  tmdbGet,
+} from '@shine/scrapers/common/tmdb-client';
 
 type Database = ReturnType<typeof getDatabase>;
 
@@ -22,7 +26,7 @@ export async function syncTmdbData(
     throw new Error('TMDb API key not configured');
   }
 
-  const {fetchTMDBMovieTranslations, savePosterUrls} =
+  const {savePosterUrls} =
     await import('@shine/scrapers/common/tmdb-utilities');
 
   const result: TmdbSyncResult = {
@@ -30,21 +34,13 @@ export async function syncTmdbData(
     translationsAdded: 0,
   };
 
-  const imagesUrl = new URL(
-    `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/images`,
-  );
-  imagesUrl.searchParams.append('api_key', tmdbApiKey);
-
-  const imagesResponse = await fetch(imagesUrl.href);
-  if (imagesResponse.ok) {
-    const images: TMDBMovieImages = await imagesResponse.json();
-    if (images.posters && images.posters.length > 0) {
-      result.postersAdded = await savePosterUrls(
-        movieUid,
-        images.posters,
-        environment,
-      );
-    }
+  const images = await fetchTMDBImages(tmdbId, mediaType, tmdbApiKey);
+  if (images?.posters && images.posters.length > 0) {
+    result.postersAdded = await savePosterUrls(
+      movieUid,
+      images.posters,
+      environment,
+    );
   }
 
   const translationsData = await fetchTMDBMovieTranslations(
@@ -53,20 +49,11 @@ export async function syncTmdbData(
     mediaType,
   );
 
-  const movieResponse = await fetch(
-    `https://api.themoviedb.org/3/${mediaType}/${tmdbId}?api_key=${tmdbApiKey}`,
-  );
-  if (!movieResponse.ok) {
-    throw new Error(
-      `TMDb movie details request failed: ${movieResponse.status}`,
-    );
-  }
-
-  const movieData: {
+  const movieData = await tmdbGet<{
     original_language?: string;
     original_title?: string;
     original_name?: string;
-  } = await movieResponse.json();
+  }>(`${mediaType}/${tmdbId}`, tmdbApiKey);
   const originalTitle =
     mediaType === 'tv' ? movieData.original_name : movieData.original_title;
 

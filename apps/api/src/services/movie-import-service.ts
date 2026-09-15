@@ -2,10 +2,14 @@ import {and, eq, isNull, not} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
-import type {
-  TMDBMovieData,
-  TMDBTvData,
-} from '@shine/scrapers/common/tmdb-utilities';
+import {
+  fetchTMDBMovieImages,
+  findTMDBByImdbId,
+  normalizeTvData,
+  tmdbGet,
+  type TMDBMovieData,
+  type TMDBTvData,
+} from '@shine/scrapers/common/tmdb-client';
 import {BaseService} from './base-service';
 import {
   ConflictError,
@@ -123,7 +127,7 @@ export class MovieImportService extends BaseService {
 
     if (fetchTMDBData && this.env.TMDB_API_KEY) {
       try {
-        const {fetchTMDBMovieImages, savePosterUrls} =
+        const {savePosterUrls} =
           await import('@shine/scrapers/common/tmdb-utilities');
 
         const imagesResult = await fetchTMDBMovieImages(
@@ -292,8 +296,6 @@ export class MovieImportService extends BaseService {
       throw new TmdbConfigError();
     }
 
-    const {findTMDBByImdbId} =
-      await import('@shine/scrapers/common/tmdb-utilities');
     const findResult = await findTMDBByImdbId(imdbId, apiKey);
     if (!findResult) {
       return undefined;
@@ -301,41 +303,18 @@ export class MovieImportService extends BaseService {
 
     const {tmdbId, mediaType} = findResult;
 
-    // Get detailed data with translations (append_to_response not available via fetchTMDBDetails)
-    const movieResponse = await fetch(
-      `https://api.themoviedb.org/3/${mediaType}/${tmdbId}?api_key=${apiKey}&append_to_response=translations`,
-    );
-
-    if (!movieResponse.ok) {
-      throw new Error(`TMDB API error: ${movieResponse.statusText}`);
-    }
-
     if (mediaType === 'tv') {
-      const tvData: TMDBTvData & {
-        translations?: TMDBMovieData['translations'];
-      } = await movieResponse.json();
-      return {
-        tmdbId,
-        mediaType,
-        movie: {
-          id: tvData.id,
-          title: tvData.name,
-          original_title: tvData.original_name,
-          original_language: tvData.original_language,
-          release_date: tvData.first_air_date,
-          poster_path: tvData.poster_path,
-          translations: tvData.translations,
-        },
-      };
+      const tvData = await tmdbGet<
+        TMDBTvData & {translations?: TMDBMovieData['translations']}
+      >(`tv/${tmdbId}`, apiKey, {append_to_response: 'translations'});
+      return {tmdbId, mediaType, movie: normalizeTvData(tvData)};
     }
 
-    const movieData: TMDBMovieData = await movieResponse.json();
+    const movieData = await tmdbGet<TMDBMovieData>(`movie/${tmdbId}`, apiKey, {
+      append_to_response: 'translations',
+    });
 
-    return {
-      tmdbId,
-      mediaType,
-      movie: movieData,
-    };
+    return {tmdbId, mediaType, movie: movieData};
   }
 
   private async addPostersFromTMDB(
