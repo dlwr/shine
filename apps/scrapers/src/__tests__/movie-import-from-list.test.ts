@@ -9,7 +9,7 @@ import {afterEach, describe, expect, it} from 'vitest';
 import {
   createNewMovieForBatch,
   findExistingMovieForTmdbMovie,
-} from '../movie-import-from-list';
+} from '../movie-import-from-list/tmdb-movie';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
