@@ -1,6 +1,7 @@
 import {createRequestHandler} from 'react-router';
 import {createEnvironmentContext} from '@/lib/api';
 import {isOgPath} from '@/og/paths';
+import {servePoster} from './posters';
 
 const requestHandler = createRequestHandler(
   async () => import('virtual:react-router/server-build'),
@@ -9,8 +10,13 @@ const requestHandler = createRequestHandler(
 
 export default {
   async fetch(request, environment) {
-    if (environment.OG && isOgPath(new URL(request.url).pathname)) {
+    const {pathname} = new URL(request.url);
+    if (environment.OG && isOgPath(pathname)) {
       return environment.OG.fetch(request);
+    }
+
+    if (pathname.startsWith('/posters/')) {
+      return servePoster(pathname);
     }
 
     return requestHandler(
