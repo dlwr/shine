@@ -252,6 +252,7 @@ function Movies({
                   variant="compact"
                   locale={locale}
                   label={periodLabels[period]}
+                  transformImages={transformImages}
                 />
               ) : (
                 <p className="text-sm text-ink/50 font-mono">{noMovieLabel}</p>

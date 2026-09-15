@@ -398,6 +398,43 @@ describe('Home Component', () => {
       expect(screen.getByText('テスト映画')).toBeInTheDocument();
     });
 
+    it('transformImages のときは日替わり・週替わりのポスターも Image Transformations に通す', () => {
+      const loaderData = cast<ComponentProperties['loaderData']>(
+        createLoaderData({
+          transformImages: true,
+          movies: {
+            ...mockMovies,
+            daily: {
+              ...mockMovies.daily,
+              posterUrl: 'https://image.tmdb.org/t/p/w500/daily.jpg',
+            },
+            weekly: {
+              ...mockMovies.weekly,
+              posterUrl: 'https://image.tmdb.org/t/p/w500/weekly.jpg',
+            },
+          },
+        }),
+      );
+
+      render(
+        <Home
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={createParameters()}
+          matches={createMatches(loaderData)}
+        />,
+      );
+
+      expect(screen.getByAltText('テスト映画 poster')).toHaveAttribute(
+        'src',
+        '/cdn-cgi/image/format=auto,quality=70/posters/w185/daily.jpg',
+      );
+      expect(screen.getByAltText('週間映画 poster')).toHaveAttribute(
+        'src',
+        '/cdn-cgi/image/format=auto,quality=70/posters/w185/weekly.jpg',
+      );
+    });
+
     it('週次映画タイトルが表示される', () => {
       const loaderData =
         cast<ComponentProperties['loaderData']>(createLoaderData());
