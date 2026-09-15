@@ -9,7 +9,8 @@ import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {describe, expect, it} from 'vitest';
 import {type ResolvedFilm} from '../common/wikidata-film-resolver';
-import {backfillJapaneseTitles, type KinemaJunpoEdition} from '../kinema-junpo';
+import {backfillFilmAwardJapaneseTitles} from '../common/ja-wikipedia-film-award';
+import {kinemaJunpoSource, type KinemaJunpoEdition} from '../kinema-junpo';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -73,7 +74,12 @@ describe('backfillJapaneseTitles', () => {
       .insert(movies)
       .values({uid: 'movie-1', imdbId: 'tt0049464', year: 1956});
 
-    await backfillJapaneseTitles({environment, editions: [edition], resolved});
+    await backfillFilmAwardJapaneseTitles({
+      source: kinemaJunpoSource,
+      environment,
+      editions: [edition],
+      resolved,
+    });
 
     expect(await japaneseTitleOf(database, 'movie-1')).toBe('真昼の暗黒');
   });
@@ -91,7 +97,12 @@ describe('backfillJapaneseTitles', () => {
       isDefault: 0,
     });
 
-    await backfillJapaneseTitles({environment, editions: [edition], resolved});
+    await backfillFilmAwardJapaneseTitles({
+      source: kinemaJunpoSource,
+      environment,
+      editions: [edition],
+      resolved,
+    });
 
     expect(await japaneseTitleOf(database, 'movie-2')).toBe('夜の河');
   });
@@ -109,7 +120,12 @@ describe('backfillJapaneseTitles', () => {
       isDefault: 0,
     });
 
-    await backfillJapaneseTitles({environment, editions: [edition], resolved});
+    await backfillFilmAwardJapaneseTitles({
+      source: kinemaJunpoSource,
+      environment,
+      editions: [edition],
+      resolved,
+    });
 
     expect(await japaneseTitleOf(database, 'movie-3')).toBe(
       'ビルマの竪琴 (1956年の映画)',
@@ -122,7 +138,12 @@ describe('backfillJapaneseTitles', () => {
       .insert(movies)
       .values({uid: 'movie-4', imdbId: 'tt0359542', year: 1956});
 
-    await backfillJapaneseTitles({environment, editions: [edition], resolved});
+    await backfillFilmAwardJapaneseTitles({
+      source: kinemaJunpoSource,
+      environment,
+      editions: [edition],
+      resolved,
+    });
 
     expect(await japaneseTitleOf(database, 'movie-4')).toBeUndefined();
   });
@@ -136,7 +157,12 @@ describe('backfillJapaneseTitles', () => {
       deletedAt: 1_700_000_000,
     });
 
-    await backfillJapaneseTitles({environment, editions: [edition], resolved});
+    await backfillFilmAwardJapaneseTitles({
+      source: kinemaJunpoSource,
+      environment,
+      editions: [edition],
+      resolved,
+    });
 
     expect(await japaneseTitleOf(database, 'movie-5')).toBeUndefined();
   });
@@ -147,7 +173,8 @@ describe('backfillJapaneseTitles', () => {
       .insert(movies)
       .values({uid: 'movie-6', imdbId: 'tt0049464', year: 1956});
 
-    const stats = await backfillJapaneseTitles({
+    const stats = await backfillFilmAwardJapaneseTitles({
+      source: kinemaJunpoSource,
       environment,
       editions: [edition],
       resolved,
