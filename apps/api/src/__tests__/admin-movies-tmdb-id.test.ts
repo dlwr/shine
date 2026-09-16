@@ -8,7 +8,8 @@ import {quizSelections} from '@shine/database/schema/quiz-selections';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {createJWT} from '../auth';
-import {adminMoviesRoutes} from '../routes/admin/movies';
+import {adminMovieExternalIdsRoutes} from '../routes/admin/movie-external-ids';
+import {adminMovieMergeRoutes} from '../routes/admin/movie-merge';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -111,7 +112,7 @@ describe('admin movies の TMDb ID と media_type', () => {
   }
 
   it('PUT tmdb-id は tv の作品と同じ TMDb ID を映画に設定できる', async () => {
-    const response = await adminMoviesRoutes.request(
+    const response = await adminMovieExternalIdsRoutes.request(
       '/movies/movie-1/tmdb-id',
       {
         method: 'PUT',
@@ -126,7 +127,7 @@ describe('admin movies の TMDb ID と media_type', () => {
   });
 
   it('auto-fetch-tmdb は tv の作品と同じ TMDb ID を映画に設定できる', async () => {
-    const response = await adminMoviesRoutes.request(
+    const response = await adminMovieExternalIdsRoutes.request(
       '/movies/movie-1/auto-fetch-tmdb',
       {method: 'POST', headers: authHeaders},
       environment,
@@ -141,7 +142,7 @@ describe('admin movies の TMDb ID と media_type', () => {
       .insert(movies)
       .values({uid: 'source', tmdbId: 42_699, mediaType: 'movie', year: 1967});
 
-    const response = await adminMoviesRoutes.request(
+    const response = await adminMovieMergeRoutes.request(
       '/movies/source/merge/movie-1',
       {method: 'POST', headers: authHeaders},
       environment,
@@ -158,7 +159,7 @@ describe('admin movies の TMDb ID と media_type', () => {
       .insert(quizSelections)
       .values({quizDate: '2026-09-12', movieUid: 'source'});
 
-    const response = await adminMoviesRoutes.request(
+    const response = await adminMovieMergeRoutes.request(
       '/movies/source/merge/target',
       {method: 'POST', headers: authHeaders},
       environment,
@@ -175,7 +176,7 @@ describe('admin movies の TMDb ID と media_type', () => {
       .insert(movies)
       .values({uid: 'source', imdbId: 'tt0000002', year: 1967});
 
-    const response = await adminMoviesRoutes.request(
+    const response = await adminMovieMergeRoutes.request(
       '/movies/source/merge/target',
       {method: 'POST', headers: authHeaders},
       environment,
