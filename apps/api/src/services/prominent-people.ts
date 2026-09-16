@@ -4,7 +4,6 @@ import {
   eq,
   inArray,
   isNull,
-  or,
   sql,
   type getDatabase,
 } from '@shine/database';
@@ -131,16 +130,14 @@ export async function searchPeopleByName(
     })
     .from(people)
     .where(
-      or(
-        sql`${people.name} LIKE ${pattern} ESCAPE '\\'`,
-        sql`EXISTS (
-					  SELECT 1
-					  FROM translations AS person_names
-					  WHERE person_names.resource_uid = ${people.uid}
-					    AND person_names.resource_type = 'person_name'
-					    AND person_names.content LIKE ${pattern} ESCAPE '\\'
-					)`,
-      ),
+      sql`${people.uid} IN (
+				  SELECT uid FROM people
+				  WHERE name LIKE ${pattern} ESCAPE '\\'
+				  UNION
+				  SELECT resource_uid FROM translations
+				  WHERE resource_type = 'person_name'
+				    AND content LIKE ${pattern} ESCAPE '\\'
+				)`,
     )
     .orderBy(
       sql`won_count DESC`,

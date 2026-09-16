@@ -536,6 +536,18 @@ describe('公開エンドポイントの実行計画', () => {
         fullScans(plan).filter(detail => detail !== 'SCAN people'),
         statement,
       ).toEqual([]);
+      if (!statement.includes('from "people"')) {
+        continue;
+      }
+
+      expect(
+        plan
+          .filter(row => isUnderCorrelatedSubquery(plan, row))
+          .filter(row =>
+            row.detail.endsWith('(resource_type=? AND resource_uid=?)'),
+          ),
+        `${statement} 人物名の一致を人物ごとに探している`,
+      ).toEqual([]);
     }
   });
 
