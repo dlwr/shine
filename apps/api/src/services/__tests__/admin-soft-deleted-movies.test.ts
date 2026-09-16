@@ -19,7 +19,7 @@ import {ExternalIdSearchService} from '../external-id-search-service';
 import {MovieImportService} from '../movie-import-service';
 import {MovieMergeService} from '../movie-merge-service';
 import {MovieTmdbService} from '../movie-tmdb-service';
-import {MoviesService} from '../movies-service';
+import {MovieTranslationsService} from '../movie-translations-service';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -160,10 +160,10 @@ describe('MovieMergeService', () => {
   });
 });
 
-describe('MoviesService', () => {
+describe('MovieTranslationsService', () => {
   it('論理削除した映画に翻訳を足さない', async () => {
     await expect(
-      new MoviesService(environment).addMovieTranslation(
+      new MovieTranslationsService(environment).addMovieTranslation(
         'deleted',
         'ja',
         '題名',

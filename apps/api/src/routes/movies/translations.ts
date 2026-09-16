@@ -2,7 +2,8 @@ import {type Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {authMiddleware} from '../../auth';
 import {sanitizeText} from '../../middleware/sanitizer';
-import {MoviesService} from '../../services';
+import {MovieTranslationsService} from '../../services';
+import {NotFoundError} from '../../services/errors';
 import {invalidateMovieCaches} from '../../services/movie-cache-invalidation';
 
 export const movieTranslationsRoutes = new Hono<{Bindings: Environment}>();
@@ -10,7 +11,7 @@ export const movieTranslationsRoutes = new Hono<{Bindings: Environment}>();
 // Add or update movie translation
 movieTranslationsRoutes.post('/:id/translations', authMiddleware, async c => {
   try {
-    const moviesService = new MoviesService(c.env);
+    const service = new MovieTranslationsService(c.env);
     const movieId = c.req.param('id');
     if (!movieId) {
       return c.json({error: 'Missing id parameter'}, 400);
@@ -35,7 +36,7 @@ movieTranslationsRoutes.post('/:id/translations', authMiddleware, async c => {
       rawIsDefault as boolean | number | string,
     );
 
-    await moviesService.addMovieTranslation(
+    await service.addMovieTranslation(
       movieId,
       languageCode,
       content,
@@ -52,8 +53,8 @@ movieTranslationsRoutes.post('/:id/translations', authMiddleware, async c => {
   } catch (error) {
     console.error('Error adding/updating translation:', error);
 
-    if (error instanceof Error && error.message === 'Movie not found') {
-      return c.json({error: 'Movie not found'}, 404);
+    if (error instanceof NotFoundError) {
+      return c.json({error: error.message}, 404);
     }
 
     return c.json({error: 'Internal server error'}, 500);
@@ -66,14 +67,14 @@ movieTranslationsRoutes.delete(
   authMiddleware,
   async c => {
     try {
-      const moviesService = new MoviesService(c.env);
+      const service = new MovieTranslationsService(c.env);
       const movieId = c.req.param('id');
       const languageCode = c.req.param('lang');
       if (!movieId || !languageCode) {
         return c.json({error: 'Missing required parameters'}, 400);
       }
 
-      await moviesService.deleteMovieTranslation(movieId, languageCode);
+      await service.deleteMovieTranslation(movieId, languageCode);
 
       await invalidateMovieCaches(c.env, movieId);
 
