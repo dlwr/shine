@@ -7,8 +7,16 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {type PosterInfo, selectBestPoster} from '@/lib/poster';
+import {selectBestPoster} from '@/lib/poster';
 import {resolveMovieTitle} from '@/lib/movie-title';
+import {MovieCardArticleLinks} from './movie-card/article-links';
+import {movieCardLabels} from './movie-card/labels';
+import {groupNominationsByOrganization} from './movie-card/nominations-by-organization';
+import {MovieCardNominations} from './movie-card/nominations-list';
+import {MovieSearchMenu} from './movie-card/search-menu';
+import type {MovieCardMovie} from './movie-card/types';
+
+export type {MovieCardMovie} from './movie-card/types';
 
 type MovieCardProperties = {
   movie: MovieCardMovie;
@@ -16,63 +24,10 @@ type MovieCardProperties = {
   adminToken?: string;
 };
 
-type TranslationInfo = {
-  languageCode: string;
-  content: string;
-  isDefault: number;
-};
-
-type MovieCardOrganization = {
-  uid: string;
-  name: string;
-  shortName?: string;
-};
-
-type MovieCardCeremony = {
-  uid: string;
-  year: number;
-  number?: number;
-};
-
-export type MovieCardNomination = {
-  uid: string;
-  isWinner: boolean;
-  category: {name: string};
-  ceremony: MovieCardCeremony;
-  organization: MovieCardOrganization;
-};
-
-export type MovieCardArticleLink = {
-  uid: string;
-  url?: string;
-  title?: string;
-  description?: string;
-  isSpam?: boolean;
-};
-
-export type MovieCardMovie = {
-  uid: string;
-  title?: string;
-  year?: number;
-  tmdbId?: string | number;
-  imdbUrl?: string;
-  posterUrl?: string;
-  posterUrls?: PosterInfo[];
-  translations?: TranslationInfo[];
-  nominations?: MovieCardNomination[];
-  articleLinks?: MovieCardArticleLink[];
-};
-
 function selectJapaneseTitle(movie: MovieCardMovie): string | undefined {
-  const translations = movie.translations ?? [];
-  const jaTranslation = translations.find(
+  return movie.translations?.find(
     translation => translation.languageCode === 'ja',
-  );
-  if (jaTranslation) {
-    return jaTranslation.content;
-  }
-
-  return undefined;
+  )?.content;
 }
 
 function selectBestTitle(movie: MovieCardMovie, locale: string): string {
@@ -82,6 +37,15 @@ function selectBestTitle(movie: MovieCardMovie, locale: string): string {
     preferredLanguages: ['ja', 'en'],
     noTranslationsFallback: `Unknown Title${yearLabel}`,
   });
+}
+
+function selectPosterUrl(
+  movie: MovieCardMovie,
+  locale: string,
+): string | undefined {
+  return movie.posterUrls && movie.posterUrls.length > 0
+    ? selectBestPoster(movie.posterUrls, locale)
+    : movie.posterUrl;
 }
 
 export function MovieCard({
@@ -112,105 +76,14 @@ export function MovieCard({
     };
   }, [showStreamingMenu]);
 
-  const labels = {
-    en: {
-      noPoster: 'No Poster',
-      winner: 'Winner',
-      nominee: 'Nominee',
-      edit: 'Edit',
-      relatedArticles: 'Submitted Links',
-      addArticle: 'Add Link',
-      showMore: 'Show details',
-      showLess: 'Hide details',
-      searchOn: 'Search on',
-      adminEdit: 'Edit Movie',
-    },
-    ja: {
-      noPoster: 'ポスターなし',
-      winner: '受賞',
-      nominee: 'ノミネート',
-      edit: '編集',
-      relatedArticles: '投稿されたリンク',
-      addArticle: 'リンクを追加',
-      showMore: '詳細を表示',
-      showLess: '詳細を隠す',
-      searchOn: '検索する',
-      adminEdit: '映画を編集',
-    },
-  };
-
-  const t = labels[locale as keyof typeof labels] || labels.en;
-
+  const t = movieCardLabels(locale);
   const movieTitle = selectBestTitle(movie, locale);
   const discasTitle = selectJapaneseTitle(movie) ?? movieTitle;
-
-  const streamingServices = [
-    {
-      name: 'U-NEXT',
-      color: 'bg-black text-white',
-      url: (title: string) =>
-        `https://video.unext.jp/freeword?query=${encodeURIComponent(title)}`,
-    },
-    {
-      name: 'Amazon Prime',
-      color: 'bg-blue-600 text-white',
-      url: (title: string) =>
-        `https://www.amazon.co.jp/s/ref=nb_sb_noss_1?url=search-alias%3Dinstant-video&field-keywords=${encodeURIComponent(title)}`,
-    },
-    {
-      name: 'TMDb',
-      color: 'bg-green-600 text-white',
-      url: (title: string) =>
-        movie.tmdbId
-          ? `https://www.themoviedb.org/movie/${movie.tmdbId}`
-          : `https://www.themoviedb.org/search?query=${encodeURIComponent(title)}`,
-    },
-    {
-      name: 'Filmarks',
-      color: 'bg-purple-600 text-white',
-      url: (title: string) =>
-        `https://filmarks.com/search/movies?q=${encodeURIComponent(title)}`,
-    },
-    {
-      name: 'JustWatch',
-      color: 'bg-yellow-400 text-gray-900',
-      url: (title: string) =>
-        `https://www.justwatch.com/jp/%E6%A4%9C%E7%B4%A2?q=${encodeURIComponent(title)}`,
-    },
-  ];
-
-  type CeremonyGroup = {
-    ceremony: MovieCardCeremony;
-    nominations: MovieCardNomination[];
-  };
-
-  type OrganizationGroup = {
-    organization: MovieCardOrganization;
-    ceremonies: Record<string, CeremonyGroup>;
-  };
-
-  const nominationsByOrg: Record<string, OrganizationGroup> = {};
-  const nominations = movie.nominations ?? [];
-  for (const nomination of nominations) {
-    const orgKey = nomination.organization.uid;
-    nominationsByOrg[orgKey] ??= {
-      organization: nomination.organization,
-      ceremonies: {},
-    };
-
-    const organizationGroup = nominationsByOrg[orgKey];
-    const ceremonyKey = nomination.ceremony.uid;
-    organizationGroup.ceremonies[ceremonyKey] ??= {
-      ceremony: nomination.ceremony,
-      nominations: [],
-    };
-
-    organizationGroup.ceremonies[ceremonyKey].nominations.push(nomination);
-  }
-
+  const posterUrl = selectPosterUrl(movie, locale);
+  const organizationGroups = groupNominationsByOrganization(
+    movie.nominations ?? [],
+  );
   const isMobile = globalThis.window !== undefined && window.innerWidth <= 768;
-  const organizationGroups = Object.values(nominationsByOrg);
-  const articleLinks = movie.articleLinks ?? [];
 
   return (
     <Card ref={cardReference} className="relative h-full w-80 overflow-hidden">
@@ -219,114 +92,30 @@ export function MovieCard({
         onMouseEnter={() => !isMobile && setShowStreamingMenu(true)}
         onMouseLeave={() => !isMobile && setShowStreamingMenu(false)}
         onClick={() => isMobile && setShowStreamingMenu(!showStreamingMenu)}>
-        {(() => {
-          const posterUrl =
-            movie.posterUrls && movie.posterUrls.length > 0
-              ? selectBestPoster(movie.posterUrls, locale)
-              : movie.posterUrl;
-          return posterUrl ? (
-            <img
-              src={posterUrl}
-              alt={`${movieTitle} poster`}
-              className="w-full h-full object-contain"
-            />
-          ) : (
-            <div className="text-gray-500 text-xl">{t.noPoster}</div>
-          );
-        })()}
-
-        {/* Streaming services hover menu */}
+        {posterUrl ? (
+          <img
+            src={posterUrl}
+            alt={`${movieTitle} poster`}
+            className="w-full h-full object-contain"
+          />
+        ) : (
+          <div className="text-gray-500 text-xl">{t.noPoster}</div>
+        )}
         {showStreamingMenu && (
-          <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20 overflow-y-auto">
-            <div className="bg-white rounded-lg p-4 max-w-xs w-full mx-4 my-2">
-              <h4 className="text-base font-semibold text-gray-900 mb-3 text-center">
-                {t.searchOn}
-              </h4>
-              <div className="grid grid-cols-1 gap-2">
-                {streamingServices.map(service => (
-                  <a
-                    key={service.name}
-                    href={service.url(movieTitle)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`block px-4 py-2.5 rounded-md text-center text-sm font-medium ${service.color}`}
-                    onClick={event => {
-                      event.stopPropagation();
-                    }}>
-                    {service.name}
-                  </a>
-                ))}
-              </div>
-              <a
-                href={
-                  movie.imdbUrl ||
-                  `https://www.imdb.com/find?q=${encodeURIComponent(movieTitle + ' ' + String(movie.year))}`
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block px-4 py-2.5 mt-2 bg-yellow-500 text-gray-900 rounded-md text-center text-sm font-medium"
-                onClick={event => {
-                  event.stopPropagation();
-                }}>
-                IMDb
-              </a>
-              <a
-                href={`https://www.google.com/search?q=${encodeURIComponent(
-                  movieTitle +
-                    ' ' +
-                    String(movie.year) +
-                    ' ' +
-                    (locale === 'ja' ? '映画' : 'movie'),
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block px-4 py-2.5 mt-2 bg-gray-600 text-white rounded-md text-center text-sm font-medium"
-                onClick={event => {
-                  event.stopPropagation();
-                }}>
-                Google
-              </a>
-              <form
-                action="https://movie-tsutaya.tsite.jp/netdvd/dvd/searchDvdBd.do"
-                method="GET"
-                acceptCharset="Shift_JIS"
-                target="_blank"
-                className="mt-2"
-                onClick={event => {
-                  event.stopPropagation();
-                }}>
-                <input type="hidden" name="k" value={discasTitle} />
-                <button
-                  type="submit"
-                  className="w-full px-4 py-2.5 bg-sky-500 text-white rounded-md text-center text-sm font-medium">
-                  TSUTAYA DISCAS
-                </button>
-              </form>
-              <form
-                action="https://rental.geo-online.co.jp/search2/"
-                method="GET"
-                acceptCharset="euc-jp"
-                target="_blank"
-                className="mt-2"
-                onClick={event => {
-                  event.stopPropagation();
-                }}>
-                <input type="hidden" name="q" value={discasTitle} />
-                <button
-                  type="submit"
-                  className="w-full px-4 py-2.5 bg-blue-700 text-white rounded-md text-center text-sm font-medium">
-                  GEO
-                </button>
-              </form>
-            </div>
-          </div>
+          <MovieSearchMenu
+            title={movieTitle}
+            discasTitle={discasTitle}
+            year={movie.year}
+            tmdbId={movie.tmdbId}
+            imdbUrl={movie.imdbUrl}
+            locale={locale}
+            heading={t.searchOn}
+          />
         )}
       </div>
 
       <CardHeader>
-        <CardTitle className="text-xl md:text-2xl">
-          {selectBestTitle(movie, locale)}
-        </CardTitle>
+        <CardTitle className="text-xl md:text-2xl">{movieTitle}</CardTitle>
         <CardDescription className="text-lg">{movie.year}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow flex flex-col">
@@ -334,80 +123,15 @@ export function MovieCard({
           className={`${
             isMobile && !showDetails ? 'max-h-0 overflow-hidden' : 'max-h-none'
           } transition-all duration-300`}>
-          {organizationGroups.length > 0 && (
-            <div className="mt-auto pt-4 border-t border-gray-200">
-              {organizationGroups.map(orgData => (
-                <div key={orgData.organization.uid} className="mb-4 last:mb-0">
-                  <h4 className="text-sm font-semibold text-gray-700 mb-2">
-                    {orgData.organization.shortName ||
-                      orgData.organization.name}
-                  </h4>
-                  {Object.values(orgData.ceremonies).map(ceremonyData => (
-                    <div key={ceremonyData.ceremony.uid} className="mb-2">
-                      {adminToken ? (
-                        <a
-                          href={`/admin/ceremonies/${ceremonyData.ceremony.uid}`}
-                          className="text-xs text-blue-600 font-medium hover:underline">
-                          {ceremonyData.ceremony.year}
-                        </a>
-                      ) : (
-                        <span className="text-xs text-gray-600 font-medium">
-                          {ceremonyData.ceremony.year}
-                        </span>
-                      )}
-                      <ul className="list-none p-0 mt-1">
-                        {ceremonyData.nominations.map(nomination => (
-                          <li
-                            key={nomination.uid}
-                            className="text-xs py-1 flex items-center justify-between">
-                            <span className="text-gray-700">
-                              {nomination.category.name}
-                            </span>
-                            <span
-                              className={`text-xs px-2 py-1 rounded font-medium ml-2 ${
-                                nomination.isWinner
-                                  ? 'bg-yellow-400 text-gray-900'
-                                  : 'bg-gray-200 text-gray-700'
-                              }`}>
-                              {nomination.isWinner ? t.winner : t.nominee}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-          {articleLinks.length > 0 && (
-            <div className="px-6 pb-2 border-t border-gray-200">
-              <h4 className="text-sm font-semibold text-gray-700 mt-4 mb-3">
-                {t.relatedArticles}
-              </h4>
-              <ul className="list-none p-0 m-0">
-                {articleLinks.map((article: MovieCardArticleLink) => (
-                  <li key={article.uid} className="mb-1.5 last:mb-0">
-                    {article.url ? (
-                      <a
-                        href={article.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-md no-underline text-inherit transition-all duration-200 hover:bg-gray-100 hover:border-gray-300 hover:translate-x-0.5">
-                        <span className="text-xs text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap block leading-snug">
-                          {article.title ?? article.url}
-                        </span>
-                      </a>
-                    ) : (
-                      <p className="px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 leading-snug">
-                        {article.description}
-                      </p>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <MovieCardNominations
+            groups={organizationGroups}
+            labels={t}
+            adminToken={adminToken}
+          />
+          <MovieCardArticleLinks
+            articleLinks={movie.articleLinks ?? []}
+            labels={t}
+          />
           <a
             href={`/movies/${movie.uid}`}
             className="inline-block mx-6 my-3 px-2 py-1 text-gray-500 no-underline rounded text-xs font-normal transition-all duration-200 border border-transparent hover:text-gray-700 hover:bg-gray-100 hover:border-gray-200">
