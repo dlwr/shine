@@ -9,6 +9,7 @@ import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {selectionsRoutes} from '../routes/selections';
+import {getSelectionDate} from '../services/selection-dates';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -316,6 +317,85 @@ describe('GET /selections/monthly/history', () => {
     expect(
       body.items.every(item => item.selectionDate <= toMonthlyDateString(0)),
     ).toBe(true);
+  });
+});
+
+describe('GET /selections/:type/history のキャッシュ', () => {
+  type Put = {key: string; ttl: number | undefined};
+
+  function createKv(store: Map<string, string>, puts: Put[]): KVNamespace {
+    return {
+      async get(key: string) {
+        const raw = store.get(key);
+        // eslint-disable-next-line unicorn/no-null -- KVNamespace.get returns null for missing keys
+        return raw === undefined ? null : JSON.parse(raw);
+      },
+      async put(
+        key: string,
+        value: string,
+        options?: {expirationTtl?: number},
+      ) {
+        store.set(key, value);
+        puts.push({key, ttl: options?.expirationTtl});
+      },
+      async delete(key: string) {
+        store.delete(key);
+      },
+    } as unknown as KVNamespace;
+  }
+
+  let environment: Environment;
+  let puts: Put[];
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+    puts = [];
+    environment.CACHE_KV = createKv(new Map(), puts);
+  });
+
+  it('鍵は type・locale・期間の日付だけで決まり、limit を含めない', async () => {
+    await selectionsRoutes.request(
+      '/selections/daily/history?locale=ja&limit=30',
+      {},
+      environment,
+    );
+
+    expect(puts.map(put => put.key)).toEqual([
+      `selections:history:daily:${getSelectionDate(new Date(), 'daily')}:ja:v3`,
+    ]);
+  });
+
+  it('limit が違っても同じキャッシュを読み、件数だけ絞る', async () => {
+    await selectionsRoutes.request(
+      '/selections/daily/history?locale=ja&limit=30',
+      {},
+      environment,
+    );
+    const response = await selectionsRoutes.request(
+      '/selections/daily/history?locale=ja&limit=2',
+      {},
+      environment,
+    );
+
+    expect(response.headers.get('X-Cache-Status')).toBe('HIT');
+    const body = (await response.json()) as HistoryResponse;
+    expect(body.items).toHaveLength(2);
+    expect(puts).toHaveLength(1);
+  });
+
+  it('期間の日付が鍵に入るので値は 7 日残す', async () => {
+    await selectionsRoutes.request(
+      '/selections/weekly/history?locale=en',
+      {},
+      environment,
+    );
+
+    expect(puts).toEqual([
+      {
+        key: `selections:history:weekly:${getSelectionDate(new Date(), 'weekly')}:en:v3`,
+        ttl: 604_800,
+      },
+    ]);
   });
 });
 
