@@ -9,6 +9,7 @@ export {ExternalIdSearchService} from './external-id-search-service';
 export {MovieImportService} from './movie-import-service';
 export {MovieMergeService} from './movie-merge-service';
 export {MovieTmdbService} from './movie-tmdb-service';
+export {MovieTranslationsService} from './movie-translations-service';
 export {MoviesService} from './movies-service';
 export {SelectionsService} from './selections-service';
 export type * from '@shine/types';
