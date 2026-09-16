@@ -14,6 +14,7 @@ import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {EdgeCache} from '../../utils/cache';
+import {getSelectionDate} from '../selection-dates';
 import {SelectionsService} from '../selections-service';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -380,6 +381,32 @@ describe('SelectionsService selection cache reads', () => {
     expect(get).toHaveBeenCalledWith(
       expect.stringMatching(/^selections:daily:/),
       expect.objectContaining({type: 'json', cacheTtl: 600}),
+    );
+  });
+});
+
+describe('SelectionsService selection cache purge', () => {
+  it('上書きしたら今日の履歴の鍵も両 locale で消す', async () => {
+    const {environment, database} = await createTestEnvironment();
+    await seedNominatedMovie(database, 'movie-1', 'Movie One');
+    const kv = {
+      get: vi.fn().mockResolvedValue(undefined),
+      put: vi.fn(),
+      delete: vi.fn(),
+    } as unknown as KVNamespace;
+    const service = new SelectionsService(
+      environment,
+      new EdgeCache(undefined, kv),
+    );
+
+    await service.overrideSelection('daily', 'movie-1', new Date());
+
+    const today = getSelectionDate(new Date(), 'daily');
+    expect(kv.delete).toHaveBeenCalledWith(
+      `selections:history:daily:${today}:ja:v3`,
+    );
+    expect(kv.delete).toHaveBeenCalledWith(
+      `selections:history:daily:${today}:en:v3`,
     );
   });
 });

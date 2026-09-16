@@ -5,6 +5,7 @@ import {
   CACHEABLE_LOCALES,
   EdgeCache,
   getCacheKeyForSelection,
+  getCacheKeyForSelectionHistory,
   getCacheTTL,
   IMPORTED_DATA_EDGE_TTL,
   normalizeCacheLocale,
@@ -424,10 +425,14 @@ export class SelectionsService extends BaseService {
     type: SelectionType,
     selectionDate: string,
   ): Promise<void> {
+    const historyDate = getSelectionDate(new Date(), type);
     await Promise.all(
-      CACHEABLE_LOCALES.map(async locale =>
+      CACHEABLE_LOCALES.flatMap(locale => [
         this.cache.delete(getCacheKeyForSelection(type, selectionDate, locale)),
-      ),
+        this.cache.delete(
+          getCacheKeyForSelectionHistory(type, historyDate, locale),
+        ),
+      ]),
     );
   }
 }
