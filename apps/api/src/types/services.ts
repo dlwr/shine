@@ -15,6 +15,7 @@ export type SearchOptions = {
   year?: number;
   language?: string;
   hasAwards?: boolean;
+  matchPeople?: boolean;
 } & PaginationOptions;
 
 export type MovieSelection = {
