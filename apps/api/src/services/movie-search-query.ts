@@ -5,19 +5,33 @@ import type {SearchOptions} from '../types/services';
 
 type Database = ReturnType<typeof getDatabase>;
 
-function buildConditions({query, year, language, hasAwards}: SearchOptions) {
+function titleMatches(query: string) {
+  return sql`
+				EXISTS (
+				  SELECT 1
+				  FROM translations
+				  WHERE translations.resource_uid = movies.uid
+				    AND translations.resource_type = 'movie_title'
+				    AND translations.content LIKE ${`%${query}%`}
+				)
+			`;
+}
+
+function buildConditions({
+  query,
+  year,
+  language,
+  hasAwards,
+  matchPeople = true,
+}: SearchOptions) {
   const conditions = [isNull(movies.deletedAt)];
 
-  if (query) {
+  if (query && !matchPeople) {
+    conditions.push(titleMatches(query));
+  } else if (query) {
     conditions.push(sql`
 				(
-				  EXISTS (
-				    SELECT 1
-				    FROM translations
-				    WHERE translations.resource_uid = movies.uid
-				      AND translations.resource_type = 'movie_title'
-				      AND translations.content LIKE ${`%${query}%`}
-				  )
+				  ${titleMatches(query)}
 				  OR movies.uid IN (
 				    SELECT movie_credits.movie_uid
 				    FROM movie_credits

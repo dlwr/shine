@@ -87,6 +87,12 @@ describe('GET /search/suggest', () => {
     expect(body.people.map(person => person.name)).toEqual(['黒澤明']);
   });
 
+  it('人名にしか一致しない映画は映画の候補に出さない', async () => {
+    const body = await suggest(environment, '黒澤');
+
+    expect(body.movies).toEqual([]);
+  });
+
   it('一致しなければ空の配列を返す', async () => {
     const body = await suggest(environment, 'nobody');
 

@@ -33,11 +33,7 @@ async function suggest(
   locale: string,
 ): Promise<SearchSuggestions> {
   const [movies, people] = await Promise.all([
-    new MoviesService(environment).searchMovies({
-      page: 1,
-      limit: SUGGEST_LIMIT,
-      query,
-    }),
+    new MoviesService(environment).suggestMovies(query, SUGGEST_LIMIT),
     new PeopleService(environment).searchPeople({
       query,
       locale,
@@ -45,14 +41,7 @@ async function suggest(
     }),
   ]);
 
-  return {
-    movies: movies.movies.map(movie => ({
-      uid: movie.uid,
-      title: movie.title,
-      year: movie.year,
-    })),
-    people,
-  };
+  return {movies, people};
 }
 
 searchRoutes.get('/suggest', async c => {

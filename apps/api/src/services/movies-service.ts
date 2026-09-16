@@ -18,6 +18,25 @@ import type {MovieSelection, SearchOptions} from '../types/services';
 import {personLocalizedName} from './person-name';
 
 export class MoviesService extends BaseService {
+  async suggestMovies(
+    query: string,
+    limit: number,
+  ): Promise<Array<{uid: string; title: string; year: number | undefined}>> {
+    const {results} = buildMovieSearchQueries(this.database, {
+      query,
+      page: 1,
+      limit,
+      matchPeople: false,
+    });
+    const rows = await results;
+
+    return rows.map(movie => ({
+      uid: movie.uid,
+      title: movie.title ?? 'Unknown Title',
+      year: movie.year ?? undefined,
+    }));
+  }
+
   async searchMovies(options: SearchOptions) {
     const {page, limit} = options;
     const {results, count} = buildMovieSearchQueries(this.database, options);
