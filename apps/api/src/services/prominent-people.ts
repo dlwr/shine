@@ -3,7 +3,6 @@ import {
   desc,
   eq,
   inArray,
-  isNotNull,
   isNull,
   or,
   sql,
@@ -14,6 +13,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import type {ProminentPerson, ProminentPersonMovie} from '../types/services';
 import {personAwardNominations} from './award-definition-lookup';
+import {personAwardDefinitions} from './award-definitions';
 import {joinAwardContext, localizedMovieTitle} from './people-query';
 import {personLocalizedName} from './person-name';
 
@@ -75,6 +75,30 @@ export async function rankProminentPeople(
   }));
 }
 
+/** 部門の条件を OR で連ねると Turso の式の深さ上限 100 を超えるので、平らな IN にする */
+function awardedCountOf(aggregate: ReturnType<typeof sql>) {
+  const definitions = sql.join(
+    personAwardDefinitions.flatMap(definition =>
+      definition.categoryNames.map(
+        name => sql`${`${definition.organizationName}\u{1F}${name}`}`,
+      ),
+    ),
+    sql`, `,
+  );
+
+  return sql<number>`(
+			SELECT ${aggregate}
+			FROM nominations
+			JOIN movies ON movies.uid = nominations.movie_uid
+			  AND movies.deleted_at IS NULL
+			JOIN award_ceremonies ON award_ceremonies.uid = nominations.ceremony_uid
+			JOIN award_organizations ON award_organizations.uid = award_ceremonies.organization_uid
+			JOIN award_categories ON award_categories.uid = nominations.category_uid
+			WHERE nominations.person_uid = people.uid
+			  AND award_organizations.name || char(31) || award_categories.name IN (${definitions})
+		)`;
+}
+
 export async function searchPeopleByName(
   database: Database,
   query: string,
@@ -82,39 +106,18 @@ export async function searchPeopleByName(
   limit: number,
 ): Promise<ProminentPerson[]> {
   const pattern = likePattern(query);
-  const awarded = joinAwardContext(
-    database
-      .select({
-        personUid: sql<string>`${nominations.personUid}`.as(
-          'awarded_person_uid',
-        ),
-        wonCount:
-          sql<number>`COUNT(DISTINCT CASE WHEN ${nominations.isWinner} = 1 THEN ${awardOccasion} END)`.as(
-            'awarded_won_count',
-          ),
-        nominatedCount: sql<number>`COUNT(DISTINCT ${awardOccasion})`.as(
-          'awarded_nominated_count',
-        ),
-      })
-      .from(nominations)
-      .innerJoin(
-        movies,
-        and(eq(movies.uid, nominations.movieUid), isNull(movies.deletedAt)),
-      )
-      .$dynamic(),
-  )
-    .where(and(isNotNull(nominations.personUid), personAwardNominations()))
-    .groupBy(nominations.personUid)
-    .as('awarded');
-
-  const wonCount = sql<number>`COALESCE(${awarded.wonCount}, 0)`;
-  const nominatedCount = sql<number>`COALESCE(${awarded.nominatedCount}, 0)`;
+  const wonCount = awardedCountOf(
+    sql`COUNT(DISTINCT CASE WHEN nominations.is_winner = 1 THEN nominations.ceremony_uid || ':' || nominations.category_uid END)`,
+  );
+  const nominatedCount = awardedCountOf(
+    sql`COUNT(DISTINCT nominations.ceremony_uid || ':' || nominations.category_uid)`,
+  );
   const creditCount = sql<number>`(
 			SELECT COUNT(*)
 			FROM movie_credits
 			JOIN movies ON movies.uid = movie_credits.movie_uid
 			  AND movies.deleted_at IS NULL
-			WHERE movie_credits.person_uid = ${people.uid}
+			WHERE movie_credits.person_uid = people.uid
 		)`;
 
   const rows = await database
@@ -127,7 +130,6 @@ export async function searchPeopleByName(
       nominatedCount: nominatedCount.as('nominated_count'),
     })
     .from(people)
-    .leftJoin(awarded, eq(awarded.personUid, people.uid))
     .where(
       or(
         sql`${people.name} LIKE ${pattern} ESCAPE '\\'`,
@@ -141,8 +143,8 @@ export async function searchPeopleByName(
       ),
     )
     .orderBy(
-      desc(wonCount),
-      desc(nominatedCount),
+      sql`won_count DESC`,
+      sql`nominated_count DESC`,
       desc(creditCount),
       people.uid,
     )

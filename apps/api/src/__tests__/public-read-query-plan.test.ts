@@ -524,6 +524,21 @@ describe('公開エンドポイントの実行計画', () => {
     },
   );
 
+  it('人物検索は一致した人物の分だけ受賞を集計する', async () => {
+    const exercise = exercises.find(current => current.name === '人物検索');
+    const plans = await plansOf(exercise!);
+    for (const [statement, plan] of plans) {
+      expect(
+        plan.filter(row => row.detail.startsWith('MATERIALIZE')),
+        statement,
+      ).toEqual([]);
+      expect(
+        fullScans(plan).filter(detail => detail !== 'SCAN people'),
+        statement,
+      ).toEqual([]);
+    }
+  });
+
   it.each(exercises.filter(exercise => exercise.indexOnly))(
     '$name は索引だけで引く',
     async exercise => {
