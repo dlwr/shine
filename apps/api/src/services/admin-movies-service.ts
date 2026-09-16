@@ -10,7 +10,7 @@ import {translations} from '@shine/database/schema/translations';
 import {BaseService} from './base-service';
 import {NotFoundError, ValidationError} from './errors';
 import {invalidateMovieCaches} from './movie-cache-invalidation';
-import type {PaginationOptions} from '@shine/types';
+import type {PaginationOptions} from '../types/services';
 
 export type UpdateMovieInput = {
   year?: unknown;

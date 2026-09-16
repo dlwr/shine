@@ -16,7 +16,7 @@ import {
   addTranslationsFromTmdb,
   fetchTmdbMovieDataByImdbId,
 } from './movie-import/tmdb-movie-data';
-import type {UpdateIMDBIdOptions} from '@shine/types';
+import type {UpdateIMDBIdOptions} from '../types/services';
 
 export class MovieImportService extends BaseService {
   async createMovieFromImdbId(

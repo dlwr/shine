@@ -13,7 +13,7 @@ import type {
   AwardYearGroup,
   PersonAwardDetail,
   PersonAwardYearGroup,
-} from '@shine/types';
+} from '../types/services';
 import {BaseService} from './base-service';
 import {personLocalizedName} from './person-name';
 import {

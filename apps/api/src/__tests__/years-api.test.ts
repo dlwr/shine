@@ -13,7 +13,7 @@ import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {yearsRoutes} from '../routes/years';
-import type {YearDetail, YearSummary} from '@shine/types';
+import type {YearDetail, YearSummary} from '../types/services';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(

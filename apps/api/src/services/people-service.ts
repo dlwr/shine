@@ -5,7 +5,7 @@ import type {
   PersonDetail,
   ProminentPeople,
   ProminentPerson,
-} from '@shine/types';
+} from '../types/services';
 import {BaseService} from './base-service';
 import {eligibleRankingSlice} from './people-ranking';
 import {loadPersonDetail} from './person-detail';

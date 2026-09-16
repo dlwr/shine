@@ -18,10 +18,6 @@ export default defineConfig({
         replacement: path.resolve(dirname, './packages/utils/src/index.ts'),
       },
       {
-        find: /^@shine\/types$/,
-        replacement: path.resolve(dirname, './packages/types/src/index.ts'),
-      },
-      {
         find: /^@shine\/availability$/,
         replacement: path.resolve(
           dirname,

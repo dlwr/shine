@@ -6,7 +6,7 @@ import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
-import type {PersonDetail} from '@shine/types';
+import type {PersonDetail} from '../types/services';
 import {
   findAwardPageDefinition,
   findPersonAwardDefinition,

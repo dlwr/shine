@@ -7,7 +7,6 @@
     {"path": "./packages/database"},
     {"path": "./packages/availability"},
     {"path": "./packages/utils"},
-    {"path": "./packages/types"},
     {"path": "./scripts"}
   ],
   "compilerOptions": {
@@ -40,8 +39,6 @@
       "@shine/database/*": ["packages/database/src/*"],
       "@shine/utils": ["packages/utils/src"],
       "@shine/utils/*": ["packages/utils/src/*"],
-      "@shine/types": ["packages/types/src"],
-      "@shine/types/*": ["packages/types/src/*"],
       "@shine/scrapers": ["apps/scrapers/src"],
       "@shine/scrapers/*": ["apps/scrapers/src/*"],
       "@shine/api": ["apps/api/src"],

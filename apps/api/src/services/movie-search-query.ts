@@ -1,7 +1,7 @@
 import {and, eq, isNull, sql} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import type {getDatabase} from '@shine/database';
-import type {SearchOptions} from '@shine/types';
+import type {SearchOptions} from '../types/services';
 
 type Database = ReturnType<typeof getDatabase>;
 
