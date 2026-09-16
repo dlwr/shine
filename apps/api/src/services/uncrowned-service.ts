@@ -7,7 +7,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {findTopAwardPageDefinition} from './award-definition-lookup';
 import {awardPageDefinitions} from './award-definitions';
 import {BaseService} from './base-service';
-import type {Uncrowned, UncrownedLoss, UncrownedMovie} from '@shine/types';
+import type {Uncrowned, UncrownedLoss, UncrownedMovie} from '../types/services';
 
 const DEFAULT_MOVIE_LIMIT = 24;
 

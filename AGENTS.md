@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-- The repo is a pnpm workspace: `apps/api`, `apps/front`, `apps/scrapers`, plus shared packages `packages/database` (Drizzle schema, migrations, seeds), `packages/utils`, and `packages/types`. One-off DB scripts live in `scripts/`.
+- The repo is a pnpm workspace: `apps/api`, `apps/front`, `apps/scrapers`, plus shared packages `packages/database` (Drizzle schema, migrations, seeds) and `packages/utils`. One-off DB scripts live in `scripts/`.
 - Cloudflare Worker code sits in `apps/api/src` with route files under `routes/` and middleware/services folders; tests reside in `apps/api/src/__tests__`.
 - The React Router v7 front end lives in `apps/front/app` (routes named with dot-segments), static assets in `apps/front/public`, and worker builds in `apps/front/build`.
 - Scraper CLIs are in `apps/scrapers/src` with per-festival directories and matching `__tests__`; run outputs to `data/` and `tmp/`.
@@ -20,7 +20,7 @@
 - TypeScript modules use ESLint (flat config) + Prettier; format before pushing with `pnpm lint:fix` (runs eslint --fix and prettier --write).
 - Indentation is 2 spaces (Prettier default) with single quotes; keep files ESM (`type: module`).
 - Follow domain-driven naming: PascalCase for React components/services, camelCase for helpers, dot-separated route filenames (e.g. `admin.movies.$id.tsx`).
-- Shared types live in `packages/types`; co-locate tests as `.test.ts`/`.test.tsx`.
+- API の応答型は `apps/api/src/types/services.ts`; co-locate tests as `.test.ts`/`.test.tsx`.
 
 ## Testing Guidelines
 

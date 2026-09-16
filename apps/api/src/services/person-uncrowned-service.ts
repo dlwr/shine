@@ -15,7 +15,7 @@ import type {
   PersonUncrowned,
   UncrownedPerson,
   UncrownedPersonLoss,
-} from '@shine/types';
+} from '../types/services';
 import {personLocalizedName} from './person-name';
 
 const DEFAULT_PERSON_LIMIT = 24;

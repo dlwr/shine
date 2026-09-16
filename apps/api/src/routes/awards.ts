@@ -1,6 +1,6 @@
 import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
-import type {AwardDetail, PersonAwardDetail} from '@shine/types';
+import type {AwardDetail, PersonAwardDetail} from '../types/services';
 import {AwardsService} from '../services';
 import {paginateAwardDetail} from '../services/award-page-ordering';
 import {

@@ -1,4 +1,4 @@
-import type {WatchedList} from '@shine/types';
+import type {WatchedList} from '../types/services';
 import {AwardsService} from './awards-service';
 import {BaseService} from './base-service';
 

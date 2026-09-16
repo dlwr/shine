@@ -2,7 +2,7 @@ import {eq, type getDatabase} from '@shine/database';
 import {movieCredits} from '@shine/database/schema/movie-credits';
 import {people} from '@shine/database/schema/people';
 import {personLocalizedName} from './person-name';
-import type {MovieSelection} from '@shine/types';
+import type {MovieSelection} from '../types/services';
 
 const CREW_JOB_ORDER = [
   'Director',

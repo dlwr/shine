@@ -7,7 +7,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {findTopAwardPageDefinition} from './award-definition-lookup';
 import {awardPageDefinitions} from './award-definitions';
 import {BaseService} from './base-service';
-import type {AwardCrossings, CrossingMovie} from '@shine/types';
+import type {AwardCrossings, CrossingMovie} from '../types/services';
 
 const DEFAULT_TOP_MOVIE_LIMIT = 24;
 

@@ -15,7 +15,10 @@ import {
   type PersonAwardDefinition,
 } from './award-definitions';
 import {BaseService} from './base-service';
-import type {PersonCrossingPerformance, PersonCrossings} from '@shine/types';
+import type {
+  PersonCrossingPerformance,
+  PersonCrossings,
+} from '../types/services';
 import {personLocalizedName} from './person-name';
 
 const DEFAULT_TOP_PERFORMANCE_LIMIT = 48;

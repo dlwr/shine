@@ -334,23 +334,6 @@ export type DateSeedOptions = {
   date?: Date;
 };
 
-export type TMDBMovieData = {
-  title?: string;
-  original_title?: string;
-  original_language?: string;
-  overview?: string;
-  poster_path?: string;
-  translations?: {
-    translations: Array<{
-      iso_639_1: string;
-      data?: {
-        title?: string;
-        overview?: string;
-      };
-    }>;
-  };
-};
-
 export type UpdateIMDBIdOptions = {
   imdbId: string;
   fetchTMDBData?: boolean;
@@ -368,7 +351,7 @@ type PersonAwardTag = {
   isWinner: boolean;
 };
 
-export type PersonalAward = {
+type PersonalAward = {
   slug: string | undefined;
   organization: string;
   category: string;
@@ -439,7 +422,7 @@ export type PeopleSearchResult = {
   people: ProminentPerson[];
 };
 
-export type SuggestedMovie = {
+type SuggestedMovie = {
   uid: string;
   title: string;
   year: number | undefined;

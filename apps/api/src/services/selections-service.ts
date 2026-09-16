@@ -18,7 +18,7 @@ import {
 } from './selection-dates';
 import {loadSelectionMovie} from './selection-movie';
 import {pickNominatedMovieUid} from './selection-pick';
-import type {DateSeedOptions, MovieSelection} from '@shine/types';
+import type {DateSeedOptions, MovieSelection} from '../types/services';
 
 export class SelectionsService extends BaseService {
   private readonly cache: EdgeCache;

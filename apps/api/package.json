@@ -10,7 +10,6 @@
     "@shine/availability": "workspace:*",
     "@shine/database": "workspace:*",
     "@shine/scrapers": "workspace:*",
-    "@shine/types": "workspace:*",
     "@shine/utils": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.7",
