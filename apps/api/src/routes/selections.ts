@@ -18,6 +18,7 @@ import {
   createCachedResponse,
   createETag,
   EdgeCache,
+  getCacheKeyForSelectionHistory,
   getCacheTTL,
   IMPORTED_DATA_EDGE_TTL,
   shouldCheckETag,
@@ -25,6 +26,14 @@ import {
 } from '../utils/cache';
 
 export const selectionsRoutes = new Hono<{Bindings: Environment}>();
+
+const HISTORY_MAX_LIMIT = 30;
+type HistoryItem = {
+  uid: string;
+  title: string;
+  year: number | undefined;
+  selectionDate: string;
+};
 
 function sortLanguagesByQuality(
   languages: Array<{code: string; quality: number}>,
@@ -124,17 +133,18 @@ selectionsRoutes.get('/selections/:type/history', async c => {
     const limitParameter = Number(c.req.query('limit') ?? '14');
     const limit =
       Number.isSafeInteger(limitParameter) && limitParameter > 0
-        ? Math.min(limitParameter, 30)
+        ? Math.min(limitParameter, HISTORY_MAX_LIMIT)
         : 14;
     const today = getSelectionDate(new Date(), type);
 
     const historyCache = new EdgeCache(undefined, c.env.CACHE_KV);
-    const cacheKey = `selections:history:${type}:${locale}:${limit}:${today}:v2`;
+    const cacheKey = getCacheKeyForSelectionHistory(type, today, locale);
     const cached = await historyCache.get(cacheKey, {
       edgeTtl: IMPORTED_DATA_EDGE_TTL,
     });
     if (cached) {
-      return c.json(cached.data as Record<string, unknown>, 200, {
+      const {items} = cached.data as {items: HistoryItem[]};
+      return c.json({items: items.slice(0, limit)}, 200, {
         'X-Cache-Status': 'HIT',
       });
     }
@@ -169,9 +179,9 @@ selectionsRoutes.get('/selections/:type/history', async c => {
         ),
       )
       .orderBy(sql`${movieSelections.selectionDate} DESC`)
-      .limit(limit);
+      .limit(HISTORY_MAX_LIMIT);
 
-    const items = rows.map(row => ({
+    const items: HistoryItem[] = rows.map(row => ({
       uid: row.uid,
       title: row.localeTitle ?? row.defaultTitle ?? 'Unknown Title',
       year: row.year ?? undefined,
@@ -180,12 +190,14 @@ selectionsRoutes.get('/selections/:type/history', async c => {
 
     await writeCacheAfterResponse(
       c,
-      historyCache.set(cacheKey, {items}, getCacheTTL.selections[type]),
+      historyCache.set(cacheKey, {items}, getCacheTTL.selections.history),
     );
 
-    return createCachedResponse({items}, getCacheTTL.selections[type], {
-      'X-Cache-Status': 'MISS',
-    });
+    return createCachedResponse(
+      {items: items.slice(0, limit)},
+      getCacheTTL.selections[type],
+      {'X-Cache-Status': 'MISS'},
+    );
   } catch (error) {
     console.error('Error fetching selection history:', error);
     return c.json({error: 'Internal server error'}, 500);
