@@ -9,7 +9,7 @@ import {
   fetchTMDBPerson,
   type TMDBCastCredit,
   type TMDBCredits,
-} from '../common/tmdb-client';
+} from '@shine/tmdb';
 import {
   type SelectedCredit,
   selectCredits,

@@ -25,14 +25,12 @@ afterAll(() => {
   vi.resetModules();
 });
 
-vi.mock('@shine/scrapers/common/tmdb-utilities', () => ({
+vi.mock('@shine/tmdb/persistence', () => ({
   savePosterUrls: vi.fn(async () => 2),
 }));
 
-vi.mock('@shine/scrapers/common/tmdb-client', async importOriginal => ({
-  ...(await importOriginal<
-    typeof import('@shine/scrapers/common/tmdb-client')
-  >()),
+vi.mock('@shine/tmdb', async importOriginal => ({
+  ...(await importOriginal<typeof import('@shine/tmdb')>()),
   fetchTMDBMovieTranslations: vi.fn(async () => ({
     id: 42,
     translations: [

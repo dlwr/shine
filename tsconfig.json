@@ -6,6 +6,7 @@
     {"path": "./apps/scrapers"},
     {"path": "./packages/database"},
     {"path": "./packages/availability"},
+    {"path": "./packages/tmdb"},
     {"path": "./packages/utils"},
     {"path": "./scripts"}
   ],
@@ -37,10 +38,10 @@
     "paths": {
       "@shine/database": ["packages/database/src"],
       "@shine/database/*": ["packages/database/src/*"],
+      "@shine/tmdb": ["packages/tmdb/src/client.ts"],
+      "@shine/tmdb/*": ["packages/tmdb/src/*"],
       "@shine/utils": ["packages/utils/src"],
       "@shine/utils/*": ["packages/utils/src/*"],
-      "@shine/scrapers": ["apps/scrapers/src"],
-      "@shine/scrapers/*": ["apps/scrapers/src/*"],
       "@shine/api": ["apps/api/src"],
       "@shine/api/*": ["apps/api/src/*"],
       "@shine/front": ["apps/front/app"],

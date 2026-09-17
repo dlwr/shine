@@ -5,8 +5,8 @@ import {
   fetchJapaneseTitleFromTMDB,
   saveJapaneseTranslation,
   saveTMDBId,
-} from '../common/tmdb-utilities';
-import {findTMDBByImdbId} from '../common/tmdb-client';
+} from '@shine/tmdb/persistence';
+import {findTMDBByImdbId} from '@shine/tmdb';
 import {fetchJapaneseAlternativeTitles} from '@shine/availability';
 import {hasJapaneseText} from '@shine/availability';
 import {

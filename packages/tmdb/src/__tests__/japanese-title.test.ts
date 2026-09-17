@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {pickJapaneseTitle} from '../common/tmdb-japanese-title';
+import {pickJapaneseTitle} from '../japanese-title';
 
 describe('pickJapaneseTitle', () => {
   it('日本語訳があればそのタイトルを返す', () => {

@@ -5,12 +5,12 @@ import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {hasKana} from './common/japanese-text';
-import {pickJapaneseTitle} from './common/tmdb-japanese-title';
+import {pickJapaneseTitle} from '@shine/tmdb/japanese-title';
 import {
   fetchTMDBDetails,
   fetchTMDBMovieDetails,
   findTMDBByImdbId,
-} from './common/tmdb-client';
+} from '@shine/tmdb';
 
 export type TmdbTitleDetails = {
   title?: string | undefined;

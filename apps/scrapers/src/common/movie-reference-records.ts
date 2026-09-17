@@ -1,7 +1,7 @@
 import {type getDatabase} from '@shine/database';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
-import {type TMDBConfig} from './tmdb-client';
+import {type TMDBConfig} from '@shine/tmdb';
 
 type DatabaseClient = ReturnType<typeof getDatabase>;
 

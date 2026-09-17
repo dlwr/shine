@@ -9,7 +9,7 @@ import {
   findTMDBByImdbId,
   searchTMDBMovies,
   type TMDBSearchMovieResult,
-} from './common/tmdb-client';
+} from '@shine/tmdb';
 const POSTER_SIZE = 'w500';
 const MAX_YEAR_DISTANCE = 3;
 

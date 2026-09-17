@@ -8,13 +8,13 @@ import {nominations} from '@shine/database/schema/nominations';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import {withDefaultTranslationFlags} from './common/default-translations';
-import {savePosterUrls} from './common/tmdb-utilities';
+import {savePosterUrls} from '@shine/tmdb/persistence';
 import {
   fetchTMDBImages,
   fetchTMDBMovieDetails,
   findTMDBByImdbId,
   type TMDBMovieData,
-} from './common/tmdb-client';
+} from '@shine/tmdb';
 
 export type MisattributedNomination = {
   organization: string;

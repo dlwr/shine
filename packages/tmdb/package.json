@@ -1,0 +1,18 @@
+{
+  "name": "@shine/tmdb",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/client.ts",
+  "exports": {
+    ".": "./src/client.ts",
+    "./japanese-title": "./src/japanese-title.ts",
+    "./persistence": "./src/persistence.ts"
+  },
+  "dependencies": {
+    "@shine/availability": "workspace:*",
+    "@shine/database": "workspace:*",
+    "@shine/utils": "workspace:*",
+    "drizzle-orm": "^0.45.2"
+  }
+}

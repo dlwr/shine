@@ -9,7 +9,7 @@ import {
   isTmdbNotFound,
   searchTMDBMovie,
   tmdbGet,
-} from '../common/tmdb-client';
+} from '../client';
 
 vi.stubGlobal('fetch', vi.fn());
 

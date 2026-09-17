@@ -3,7 +3,7 @@ import {
   fetchTMDBMovieDetails,
   searchTMDBMovies,
   type TMDBSearchMovieResult,
-} from './tmdb-client';
+} from '@shine/tmdb';
 import {type FilmReference, type ResolvedFilm} from './wikidata-film-resolver';
 const IMDB_ID_PATTERN = /^tt\d+$/;
 

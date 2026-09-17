@@ -1,10 +1,7 @@
 import {and, eq, isNull} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
-import {
-  fetchTMDBExternalIds,
-  searchTMDBMovies,
-} from '@shine/scrapers/common/tmdb-client';
+import {fetchTMDBExternalIds, searchTMDBMovies} from '@shine/tmdb';
 import {BaseService} from './base-service';
 import {NotFoundError, TmdbConfigError, ValidationError} from './errors';
 

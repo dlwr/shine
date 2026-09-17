@@ -5,7 +5,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {eq} from 'drizzle-orm';
 import {beforeEach, describe, expect, it} from 'vitest';
-import {saveTMDBId} from '../tmdb-utilities';
+import {saveTMDBId} from '../persistence';
 
 const MOVIES_DDL = `CREATE TABLE movies (
   uid text PRIMARY KEY,

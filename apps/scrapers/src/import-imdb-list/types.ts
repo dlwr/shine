@@ -1,5 +1,5 @@
 import {type getDatabase, type Environment} from '@shine/database';
-import {type TMDBConfig} from '../common/tmdb-client';
+import {type TMDBConfig} from '@shine/tmdb';
 
 export type DatabaseClient = ReturnType<typeof getDatabase>;
 

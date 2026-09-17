@@ -13,15 +13,15 @@ import {
   saveJapaneseTranslation,
   savePosterUrls,
   saveTMDBId,
-} from '../common/tmdb-utilities';
+} from '../persistence';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
   currentDirectory,
-  '../../../../packages/database/migrations',
+  '../../../database/migrations',
 );
 
-describe('tmdb-utilities save functions (libsql integration)', () => {
+describe('persistence save functions (libsql integration)', () => {
   let environment: Environment;
 
   beforeEach(async () => {

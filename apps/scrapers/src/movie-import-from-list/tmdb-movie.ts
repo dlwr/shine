@@ -5,8 +5,8 @@ import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {generateUUID} from '@shine/utils';
 import {withDefaultTranslationFlags} from '../common/default-translations';
-import {searchTMDBMovies, type TMDBConfig} from '../common/tmdb-client';
-import {pickJapaneseTitle} from '../common/tmdb-japanese-title';
+import {searchTMDBMovies, type TMDBConfig} from '@shine/tmdb';
+import {pickJapaneseTitle} from '@shine/tmdb/japanese-title';
 
 export type TMDBMovieData = {
   id: number;

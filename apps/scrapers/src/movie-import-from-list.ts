@@ -4,7 +4,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {nominations} from '@shine/database/schema/nominations';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
-import {fetchTMDBConfig} from './common/tmdb-client';
+import {fetchTMDBConfig} from '@shine/tmdb';
 import {createAwardStructure} from './movie-import-from-list/award-structure';
 import {
   createNewMovieForBatch,

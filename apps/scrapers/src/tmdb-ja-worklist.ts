@@ -4,10 +4,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {hasKana} from './common/japanese-text';
-import {
-  fetchTMDBMovieDetails,
-  fetchTMDBMovieTranslations,
-} from './common/tmdb-client';
+import {fetchTMDBMovieDetails, fetchTMDBMovieTranslations} from '@shine/tmdb';
 
 export type TmdbJaWorklistItem = {
   uid: string;

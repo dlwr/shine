@@ -6,7 +6,7 @@ import {
   getMoviesWithoutJapaneseTranslation,
   saveJapaneseTranslationsBatch,
 } from './repo';
-import {fetchJapaneseTitleFromTMDB} from '../common/tmdb-utilities';
+import {fetchJapaneseTitleFromTMDB} from '@shine/tmdb/persistence';
 import {isValidImdbId} from './scrapers/imdb-id';
 
 // 処理するバッチサイズ

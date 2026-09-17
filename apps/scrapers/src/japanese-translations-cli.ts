@@ -7,7 +7,7 @@ import {
   getMoviesWithoutJapaneseTranslation,
   saveJapaneseTranslation,
 } from './japanese-translations/repo';
-import {fetchJapaneseTitleFromTMDB} from './common/tmdb-utilities';
+import {fetchJapaneseTitleFromTMDB} from '@shine/tmdb/persistence';
 import {isValidImdbId} from './japanese-translations/scrapers/imdb-id';
 import {scrapeJapaneseTitleFromWikipedia} from './japanese-translations/scrapers/wikipedia-scraper';
 import {

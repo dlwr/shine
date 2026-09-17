@@ -18,6 +18,10 @@ export default defineConfig({
         replacement: path.resolve(dirname, './packages/utils/src/index.ts'),
       },
       {
+        find: /^@shine\/tmdb$/,
+        replacement: path.resolve(dirname, './packages/tmdb/src/client.ts'),
+      },
+      {
         find: /^@shine\/availability$/,
         replacement: path.resolve(
           dirname,
@@ -45,6 +49,7 @@ export default defineConfig({
             'packages/database/**/*.test.ts',
             'packages/utils/**/*.test.ts',
             'packages/availability/**/*.test.ts',
+            'packages/tmdb/**/*.test.ts',
           ],
           environment: 'node',
           globals: true,
