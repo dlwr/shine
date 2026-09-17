@@ -268,6 +268,47 @@ describe('fixMisattributedNominations', () => {
     expect(stats.moviesCreated).toBe(1);
   });
 
+  it('ポスターの取得に失敗しても作成した映画へ付け替える', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string | URL) => {
+        const url = String(input);
+        if (url.includes('/find/tt0053121')) {
+          return Response.json({
+            movie_results: [{id: 42, media_type: 'movie'}],
+          });
+        }
+
+        if (url.includes('/movie/42/images')) {
+          return new Response('unauthorized', {status: 401});
+        }
+
+        if (url.includes('/movie/42')) {
+          return Response.json({
+            id: 42,
+            title: 'Fires on the Plain',
+            original_language: 'ja',
+            release_date: '1959-11-03',
+          });
+        }
+
+        return new Response('{}', {status: 404});
+      }),
+    );
+
+    await fixMisattributedNominations({environment, entries: [entry]});
+
+    const [created] = await database
+      .select({uid: movies.uid})
+      .from(movies)
+      .where(eq(movies.imdbId, 'tt0053121'));
+    const [row] = await database
+      .select({movieUid: nominations.movieUid})
+      .from(nominations)
+      .where(eq(nominations.uid, 'nomination'));
+    expect(row.movieUid).toBe(created.uid);
+  });
+
   it('作成した日本語映画は日本語タイトルがデフォルトになる', async () => {
     vi.stubGlobal(
       'fetch',

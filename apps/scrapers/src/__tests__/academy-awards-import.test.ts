@@ -231,6 +231,26 @@ describe('scrapeAcademyAwards', () => {
     expect(savedMovies[0].originalLanguage).toBe('ru');
   });
 
+  it('ポスターの取得に失敗しても新規映画のノミネーションは作る', async () => {
+    const {environment, database} = await createTestEnvironment();
+
+    const {scrapeAcademyAwards} = await loadScraper({
+      Anora: {imdbId: 'tt1', originalLanguage: 'en'},
+    });
+    const {fetchTMDBMovieImages} = await import('@shine/tmdb');
+    vi.mocked(fetchTMDBMovieImages).mockRejectedValue(
+      new Error('TMDb unavailable'),
+    );
+    await scrapeAcademyAwards({
+      environment,
+      tmdbApiKey: 'test-key',
+      isDryRun: false,
+    });
+
+    const savedNominations = await database.select().from(nominations);
+    expect(savedNominations).toHaveLength(1);
+  });
+
   it('TMDbが原語を返さなければ en のままにする', async () => {
     const {environment, database} = await createTestEnvironment();
 
