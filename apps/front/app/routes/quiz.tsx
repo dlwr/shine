@@ -1,31 +1,16 @@
-import {useEffect, useMemo, useState} from 'react';
+import {useState} from 'react';
 import type {Route} from './+types/quiz';
 import {Masthead} from '@/components/editorial/masthead';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
+import {useQuizGame, type QuizPuzzle} from '@/components/quiz/use-quiz-game';
 import {apiFetch, resolveApiUrl, canTransformImages} from '@/lib/api';
 import {transformedImageUrl} from '@/lib/image-transformations';
 import {fetchMonthlyPick, type MonthlyPick} from '@/lib/monthly-pick';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {TAGLINE} from '@/lib/tagline';
-import {
-  applyGuess,
-  createGame,
-  filterCandidates,
-  QUIZ_HISTORY_KEY,
-  QUIZ_STATE_KEY,
-  recordResult,
-  shareText,
-  streakOf,
-  type QuizAnswer,
-  type QuizCandidate,
-  type QuizGameState,
-  type QuizHint,
-  type QuizHistory,
-} from '@/lib/quiz-state';
-
-const SUGGESTION_LIMIT = 8;
+import {shareText, streakOf} from '@/lib/quiz-state';
 
 function buildShareUrls(text: string): {x: string; bluesky: string} {
   const encoded = encodeURIComponent(text);
@@ -72,143 +57,34 @@ export async function loader({context, request}: Route.LoaderArgs) {
     throw new Response('Failed to load quiz', {status: 502});
   }
 
-  const puzzle = (await dailyResponse.json()) as {
-    date: string;
-    maxAttempts: number;
-    poolSize: number;
-  };
+  const puzzle = (await dailyResponse.json()) as QuizPuzzle;
 
   return {puzzle, apiUrl, locale, monthly, transformImages};
-}
-
-function readStorage<T>(key: string): T | undefined {
-  try {
-    const raw = globalThis.localStorage?.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-function writeStorage(key: string, value: unknown): void {
-  try {
-    globalThis.localStorage?.setItem(key, JSON.stringify(value));
-  } catch {
-    // プライベートモードなどでは保存できないが、その日のプレイは続けられる
-  }
 }
 
 export default function QuizPage({loaderData}: Route.ComponentProps) {
   const {puzzle, apiUrl, monthly, transformImages} = loaderData as {
     monthly?: MonthlyPick;
-    puzzle: {date: string; maxAttempts: number; poolSize: number};
+    puzzle: QuizPuzzle;
     apiUrl: string;
     transformImages?: boolean;
   };
   const locale = 'ja';
 
-  const [candidates, setCandidates] = useState<QuizCandidate[]>([]);
-  const [game, setGame] = useState<QuizGameState>(() =>
-    createGame(puzzle.date),
-  );
-  const [history, setHistory] = useState<QuizHistory>({});
-  const [restored, setRestored] = useState(false);
-  const [query, setQuery] = useState('');
-  const [pending, setPending] = useState(false);
+  const {
+    game,
+    history,
+    isFinished,
+    query,
+    setQuery,
+    pending,
+    suggestions,
+    submit,
+  } = useQuizGame(puzzle, apiUrl);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    const controller = new AbortController();
-
-    void (async () => {
-      try {
-        const response = await fetch(`${apiUrl}/quiz/candidates`, {
-          signal: controller.signal,
-        });
-        if (!response.ok) {
-          return;
-        }
-
-        const body = (await response.json()) as {candidates?: QuizCandidate[]};
-        setCandidates(body.candidates ?? []);
-      } catch {
-        // 候補が取れなくてもパスでヒントは進められる
-      }
-    })();
-
-    return () => {
-      controller.abort();
-    };
-  }, [apiUrl]);
-
-  useEffect(() => {
-    const saved = readStorage<QuizGameState>(QUIZ_STATE_KEY);
-    if (saved?.date === puzzle.date) {
-      setGame(saved);
-    }
-
-    setHistory(readStorage<QuizHistory>(QUIZ_HISTORY_KEY) ?? {});
-    setRestored(true);
-  }, [puzzle.date]);
-
-  useEffect(() => {
-    if (restored) {
-      writeStorage(QUIZ_STATE_KEY, game);
-    }
-  }, [game, restored]);
-
-  const suggestions = useMemo(
-    () => filterCandidates(candidates, query, SUGGESTION_LIMIT),
-    [candidates, query],
-  );
-
-  const isFinished = game.status !== 'playing';
   const stage = isFinished ? puzzle.maxAttempts : game.guesses.length;
   const remaining = puzzle.maxAttempts - game.guesses.length;
-
-  async function submit(candidate?: QuizCandidate) {
-    if (pending || isFinished) {
-      return;
-    }
-
-    setPending(true);
-    try {
-      const response = await fetch(`${apiUrl}/quiz/guess`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          date: puzzle.date,
-          movieUid: candidate?.uid,
-          attempt: game.guesses.length + 1,
-        }),
-      });
-      if (!response.ok) {
-        return;
-      }
-
-      const result = (await response.json()) as {
-        correct: boolean;
-        hint?: QuizHint;
-        answer?: QuizAnswer;
-      };
-      const next = applyGuess(
-        game,
-        {title: candidate?.title, correct: result.correct},
-        result,
-        puzzle.maxAttempts,
-      );
-
-      setGame(next);
-      setQuery('');
-      if (next.status !== 'playing') {
-        const updated = recordResult(history, next);
-        setHistory(updated);
-        writeStorage(QUIZ_HISTORY_KEY, updated);
-      }
-    } finally {
-      setPending(false);
-    }
-  }
 
   async function copyShareText() {
     try {
