@@ -1,5 +1,5 @@
 import type {FormEvent} from 'react';
-import type {EditValues} from './use-nomination-editor';
+import type {EditValues} from './nomination-editor-state';
 
 type EditNominationFormProperties = {
   values: EditValues;

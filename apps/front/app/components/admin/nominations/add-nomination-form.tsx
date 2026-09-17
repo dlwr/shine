@@ -7,7 +7,7 @@ import {
   sortCeremoniesByYearDesc,
 } from './format';
 import type {AwardsCategory, AwardsCeremony, AwardsData} from './types';
-import type {NewNominationValues} from './use-nomination-editor';
+import type {NewNominationValues} from './nomination-editor-state';
 
 type AddNominationFormProperties = {
   awardsData: AwardsData | undefined;

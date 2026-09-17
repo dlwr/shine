@@ -3,183 +3,30 @@ import type {FormEvent} from 'react';
 import type {MovieDetails} from '../../../routes/admin.movies.$id';
 import {adminFetch, readErrorMessage} from '@/lib/admin-fetch';
 import {ensureToken} from '../ceremonies/ensure-token';
+import {
+  initialNominationEditorState,
+  nominationEditorReducer,
+  type EditValues,
+  type NewNominationValues,
+  type NominationEditorAction,
+} from './nomination-editor-state';
+import {
+  createNominationRequest,
+  deleteNominationRequest,
+  isNewNominationComplete,
+  updateNominationRequest,
+} from './nomination-requests';
 import type {Nomination} from './types';
 
-export type NewNominationValues = {
-  organizationUid: string;
-  ceremonyUid: string;
-  categoryUid: string;
-  isWinner: boolean;
-  specialMention: string;
+type Mutation = {
+  request: {url: string; init: RequestInit};
+  started: NominationEditorAction;
+  finished: NominationEditorAction;
+  succeeded?: NominationEditorAction;
+  successMessage: string;
+  failureMessage: string;
+  logLabel: string;
 };
-
-export type EditValues = {
-  isWinner: boolean;
-  specialMention: string;
-};
-
-export type NominationEditorState = {
-  showAddForm: boolean;
-  newNomination: NewNominationValues;
-  isAdding: boolean;
-  editingNominationId: string | undefined;
-  editValues: EditValues;
-  isUpdating: boolean;
-  deletingNominationId: string | undefined;
-  error: string | undefined;
-};
-
-export type NominationEditorAction =
-  | {type: 'toggleAddForm'}
-  | {type: 'closeAddForm'}
-  | {type: 'changeOrganization'; organizationUid: string}
-  | {type: 'changeNewNomination'; values: Partial<NewNominationValues>}
-  | {type: 'addStarted'}
-  | {type: 'addFinished'}
-  | {type: 'startEdit'; nomination: Nomination}
-  | {type: 'changeEditValues'; values: Partial<EditValues>}
-  | {type: 'cancelEdit'}
-  | {type: 'stopEditing'}
-  | {type: 'updateStarted'}
-  | {type: 'updateFinished'}
-  | {type: 'deleteStarted'; nominationId: string}
-  | {type: 'deleteFinished'}
-  | {type: 'failed'; message: string}
-  | {type: 'clearError'};
-
-const initialNewNomination: NewNominationValues = {
-  organizationUid: '',
-  ceremonyUid: '',
-  categoryUid: '',
-  isWinner: false,
-  specialMention: '',
-};
-
-const initialEditValues: EditValues = {
-  isWinner: false,
-  specialMention: '',
-};
-
-export const initialNominationEditorState: NominationEditorState = {
-  showAddForm: false,
-  newNomination: initialNewNomination,
-  isAdding: false,
-  editingNominationId: undefined,
-  editValues: initialEditValues,
-  isUpdating: false,
-  deletingNominationId: undefined,
-  error: undefined,
-};
-
-const closeAddForm = (state: NominationEditorState): NominationEditorState => ({
-  ...state,
-  showAddForm: false,
-  newNomination: initialNewNomination,
-  error: undefined,
-});
-
-export function nominationEditorReducer(
-  state: NominationEditorState,
-  action: NominationEditorAction,
-): NominationEditorState {
-  switch (action.type) {
-    case 'toggleAddForm': {
-      return state.showAddForm
-        ? closeAddForm(state)
-        : {...state, showAddForm: true};
-    }
-
-    case 'closeAddForm': {
-      return closeAddForm(state);
-    }
-
-    case 'changeOrganization': {
-      return {
-        ...state,
-        newNomination: {
-          ...state.newNomination,
-          organizationUid: action.organizationUid,
-          ceremonyUid: '',
-          categoryUid: '',
-        },
-      };
-    }
-
-    case 'changeNewNomination': {
-      return {
-        ...state,
-        newNomination: {...state.newNomination, ...action.values},
-      };
-    }
-
-    case 'addStarted': {
-      return {...state, isAdding: true};
-    }
-
-    case 'addFinished': {
-      return {...state, isAdding: false};
-    }
-
-    case 'startEdit': {
-      return {
-        ...state,
-        editingNominationId: action.nomination.uid,
-        editValues: {
-          isWinner: action.nomination.isWinner,
-          specialMention: action.nomination.specialMention ?? '',
-        },
-        error: undefined,
-      };
-    }
-
-    case 'changeEditValues': {
-      return {...state, editValues: {...state.editValues, ...action.values}};
-    }
-
-    case 'cancelEdit': {
-      return {
-        ...state,
-        editingNominationId: undefined,
-        editValues: initialEditValues,
-      };
-    }
-
-    case 'stopEditing': {
-      return {...state, editingNominationId: undefined};
-    }
-
-    case 'updateStarted': {
-      return {...state, isUpdating: true, error: undefined};
-    }
-
-    case 'updateFinished': {
-      return {...state, isUpdating: false};
-    }
-
-    case 'deleteStarted': {
-      return {
-        ...state,
-        deletingNominationId: action.nominationId,
-        error: undefined,
-      };
-    }
-
-    case 'deleteFinished': {
-      return {...state, deletingNominationId: undefined};
-    }
-
-    case 'failed': {
-      return {...state, error: action.message};
-    }
-
-    case 'clearError': {
-      return {...state, error: undefined};
-    }
-  }
-}
-
-const trimmedOrUndefined = (value: string) =>
-  value.trim() === '' ? undefined : value.trim();
 
 const errorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
@@ -221,6 +68,49 @@ export function useNominationEditor({
     }
   }, [apiUrl, movieId, onNominationsUpdate]);
 
+  const mutate = useCallback(
+    async (mutation: Mutation) => {
+      if (!ensureToken()) {
+        return;
+      }
+
+      dispatch(mutation.started);
+
+      try {
+        const response = await adminFetch(
+          mutation.request.url,
+          mutation.request.init,
+        );
+
+        if (response.status === 401) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            await readErrorMessage(response, mutation.failureMessage),
+          );
+        }
+
+        await refreshMovieData();
+        if (mutation.succeeded) {
+          dispatch(mutation.succeeded);
+        }
+
+        globalThis.alert?.(mutation.successMessage);
+      } catch (error) {
+        dispatch({
+          type: 'failed',
+          message: errorMessage(error, mutation.failureMessage),
+        });
+        console.error(mutation.logLabel, error);
+      } finally {
+        dispatch(mutation.finished);
+      }
+    },
+    [refreshMovieData],
+  );
+
   const toggleAddForm = useCallback(() => {
     dispatch({type: 'toggleAddForm'});
   }, []);
@@ -245,11 +135,7 @@ export function useNominationEditor({
       event.preventDefault();
       dispatch({type: 'clearError'});
 
-      if (
-        !newNomination.organizationUid ||
-        !newNomination.ceremonyUid ||
-        !newNomination.categoryUid
-      ) {
+      if (!isNewNominationComplete(newNomination)) {
         dispatch({
           type: 'failed',
           message: '組織・授賞式・部門をすべて選択してください',
@@ -257,53 +143,17 @@ export function useNominationEditor({
         return;
       }
 
-      if (!ensureToken()) {
-        return;
-      }
-
-      dispatch({type: 'addStarted'});
-
-      try {
-        const response = await adminFetch(
-          `${apiUrl}/admin/movies/${movieId}/nominations`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              ceremonyUid: newNomination.ceremonyUid,
-              categoryUid: newNomination.categoryUid,
-              isWinner: newNomination.isWinner,
-              specialMention: trimmedOrUndefined(newNomination.specialMention),
-            }),
-          },
-        );
-
-        if (response.status === 401) {
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error(
-            await readErrorMessage(response, 'ノミネートの追加に失敗しました'),
-          );
-        }
-
-        await refreshMovieData();
-        dispatch({type: 'closeAddForm'});
-        globalThis.alert?.('ノミネートを追加しました');
-      } catch (error) {
-        dispatch({
-          type: 'failed',
-          message: errorMessage(error, 'ノミネートの追加に失敗しました'),
-        });
-        console.error('Add nomination error:', error);
-      } finally {
-        dispatch({type: 'addFinished'});
-      }
+      await mutate({
+        request: createNominationRequest(apiUrl, movieId, newNomination),
+        started: {type: 'addStarted'},
+        finished: {type: 'addFinished'},
+        succeeded: {type: 'closeAddForm'},
+        successMessage: 'ノミネートを追加しました',
+        failureMessage: 'ノミネートの追加に失敗しました',
+        logLabel: 'Add nomination error:',
+      });
     },
-    [apiUrl, movieId, newNomination, refreshMovieData],
+    [apiUrl, movieId, newNomination, mutate],
   );
 
   const handleStartEdit = useCallback((nomination: Nomination) => {
@@ -325,51 +175,21 @@ export function useNominationEditor({
         return;
       }
 
-      if (!ensureToken()) {
-        return;
-      }
-
-      dispatch({type: 'updateStarted'});
-
-      try {
-        const response = await adminFetch(
-          `${apiUrl}/admin/nominations/${editingNominationId}`,
-          {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              isWinner: editValues.isWinner,
-              specialMention: trimmedOrUndefined(editValues.specialMention),
-            }),
-          },
-        );
-
-        if (response.status === 401) {
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error(
-            await readErrorMessage(response, 'ノミネートの更新に失敗しました'),
-          );
-        }
-
-        await refreshMovieData();
-        dispatch({type: 'stopEditing'});
-        globalThis.alert?.('ノミネートを更新しました');
-      } catch (error) {
-        dispatch({
-          type: 'failed',
-          message: errorMessage(error, 'ノミネートの更新に失敗しました'),
-        });
-        console.error('Update nomination error:', error);
-      } finally {
-        dispatch({type: 'updateFinished'});
-      }
+      await mutate({
+        request: updateNominationRequest(
+          apiUrl,
+          editingNominationId,
+          editValues,
+        ),
+        started: {type: 'updateStarted'},
+        finished: {type: 'updateFinished'},
+        succeeded: {type: 'stopEditing'},
+        successMessage: 'ノミネートを更新しました',
+        failureMessage: 'ノミネートの更新に失敗しました',
+        logLabel: 'Update nomination error:',
+      });
     },
-    [apiUrl, editingNominationId, editValues, refreshMovieData],
+    [apiUrl, editingNominationId, editValues, mutate],
   );
 
   const handleDeleteNomination = useCallback(
@@ -382,43 +202,16 @@ export function useNominationEditor({
         return;
       }
 
-      if (!ensureToken()) {
-        return;
-      }
-
-      dispatch({type: 'deleteStarted', nominationId: nomination.uid});
-
-      try {
-        const response = await adminFetch(
-          `${apiUrl}/admin/nominations/${nomination.uid}`,
-          {
-            method: 'DELETE',
-          },
-        );
-
-        if (response.status === 401) {
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error(
-            await readErrorMessage(response, 'ノミネートの削除に失敗しました'),
-          );
-        }
-
-        await refreshMovieData();
-        globalThis.alert?.('ノミネートを削除しました');
-      } catch (error) {
-        dispatch({
-          type: 'failed',
-          message: errorMessage(error, 'ノミネートの削除に失敗しました'),
-        });
-        console.error('Delete nomination error:', error);
-      } finally {
-        dispatch({type: 'deleteFinished'});
-      }
+      await mutate({
+        request: deleteNominationRequest(apiUrl, nomination.uid),
+        started: {type: 'deleteStarted', nominationId: nomination.uid},
+        finished: {type: 'deleteFinished'},
+        successMessage: 'ノミネートを削除しました',
+        failureMessage: 'ノミネートの削除に失敗しました',
+        logLabel: 'Delete nomination error:',
+      });
     },
-    [apiUrl, refreshMovieData],
+    [apiUrl, mutate],
   );
 
   return {
