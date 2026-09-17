@@ -14,7 +14,7 @@ import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {createJWT} from '../auth';
-import {selectionsRoutes} from '../routes/selections';
+import {selectionsAdminRoutes} from '../routes/selections-admin';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -104,7 +104,7 @@ beforeEach(async () => {
 
 async function requestPreview(): Promise<PreviewResponse> {
   const token = await createJWT(JWT_SECRET);
-  const response = await selectionsRoutes.request(
+  const response = await selectionsAdminRoutes.request(
     '/admin/random-movie-preview',
     {
       method: 'POST',

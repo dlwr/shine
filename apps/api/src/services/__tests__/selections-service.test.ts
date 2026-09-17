@@ -14,7 +14,9 @@ import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {EdgeCache} from '../../utils/cache';
+import {AdminSelectionsService} from '../admin-selections-service';
 import {getSelectionDate} from '../selection-dates';
+import {pickSelectionMovieUid} from '../selection-store';
 import {SelectionsService} from '../selections-service';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -98,7 +100,7 @@ function createMemoryCache(): EdgeCache {
   return new EdgeCache(undefined, kv);
 }
 
-describe('SelectionsService.reselectMovie with excludeMovieUids', () => {
+describe('AdminSelectionsService.reselectMovie with excludeMovieUids', () => {
   let environment: Environment;
   let database: TestDatabase;
 
@@ -108,7 +110,7 @@ describe('SelectionsService.reselectMovie with excludeMovieUids', () => {
 
   it('throws when every nominated movie is excluded', async () => {
     await seedNominatedMovie(database, 'movie-a', 'Movie A');
-    const service = new SelectionsService(environment);
+    const service = new AdminSelectionsService(environment);
 
     await expect(
       service.reselectMovie('daily', 'en', new Date('2026-07-15'), ['movie-a']),
@@ -118,7 +120,7 @@ describe('SelectionsService.reselectMovie with excludeMovieUids', () => {
   it('never selects an excluded movie', async () => {
     await seedNominatedMovie(database, 'movie-a', 'Movie A');
     await seedNominatedMovie(database, 'movie-b', 'Movie B');
-    const service = new SelectionsService(environment);
+    const service = new AdminSelectionsService(environment);
 
     for (let index = 0; index < 10; index++) {
       const movie = await service.reselectMovie(
@@ -165,7 +167,7 @@ describe('SelectionsService.reselectMovie with excludeMovieUids', () => {
         checkedAt: 2000,
       },
     ]);
-    const service = new SelectionsService(environment);
+    const service = new AdminSelectionsService(environment);
 
     const movie = await service.reselectMovie(
       'daily',
@@ -181,7 +183,7 @@ describe('SelectionsService.reselectMovie with excludeMovieUids', () => {
 
   it('returns an empty availability array when no checks exist', async () => {
     await seedNominatedMovie(database, 'movie-a', 'Movie A');
-    const service = new SelectionsService(environment);
+    const service = new AdminSelectionsService(environment);
 
     const movie = await service.reselectMovie(
       'daily',
@@ -194,7 +196,7 @@ describe('SelectionsService.reselectMovie with excludeMovieUids', () => {
 
   it('reselects normally when excludeMovieUids is omitted', async () => {
     await seedNominatedMovie(database, 'movie-a', 'Movie A');
-    const service = new SelectionsService(environment);
+    const service = new AdminSelectionsService(environment);
 
     const movie = await service.reselectMovie(
       'daily',
@@ -205,21 +207,19 @@ describe('SelectionsService.reselectMovie with excludeMovieUids', () => {
   });
 });
 
-describe('SelectionsService selection persistence', () => {
-  let environment: Environment;
+describe('pickSelectionMovieUid', () => {
   let database: TestDatabase;
 
   beforeEach(async () => {
-    ({environment, database} = await createTestEnvironment());
+    ({database} = await createTestEnvironment());
   });
 
   it('does not create duplicate rows when the same period is persisted twice', async () => {
     await seedNominatedMovie(database, 'movie-a', 'Movie A');
-    const service = new SelectionsService(environment);
     const date = new Date('2026-07-15');
 
-    await service['selectMovieFromNominations'](date, 'daily', true, 42);
-    await service['selectMovieFromNominations'](date, 'daily', true, 42);
+    await pickSelectionMovieUid(database, date, 'daily', 42, {persist: true});
+    await pickSelectionMovieUid(database, date, 'daily', 42, {persist: true});
 
     const rows = await database
       .select({uid: movieSelections.uid})
@@ -228,7 +228,7 @@ describe('SelectionsService selection persistence', () => {
   });
 });
 
-describe('SelectionsService nomination payload', () => {
+describe('AdminSelectionsService nomination payload', () => {
   let environment: Environment;
   let database: TestDatabase;
 
@@ -263,7 +263,7 @@ describe('SelectionsService nomination payload', () => {
       ceremonyUid: 'ceremony-cannes',
       categoryUid: 'category-palme',
     });
-    const service = new SelectionsService(environment);
+    const service = new AdminSelectionsService(environment);
 
     const movie = await service.reselectMovie(
       'daily',
@@ -277,7 +277,7 @@ describe('SelectionsService nomination payload', () => {
 
   it('leaves the slug undefined for organizations without an award page', async () => {
     await seedNominatedMovie(database, 'movie-a', 'Movie A');
-    const service = new SelectionsService(environment);
+    const service = new AdminSelectionsService(environment);
 
     const movie = await service.reselectMovie(
       'daily',
@@ -300,11 +300,13 @@ describe('SelectionsService.getNextPeriodPreviews', () => {
   it('returns the reselected movie immediately after a reselect', async () => {
     await seedNominatedMovie(database, 'movie-a', 'Movie A');
     await seedNominatedMovie(database, 'movie-b', 'Movie B');
-    const service = new SelectionsService(environment, createMemoryCache());
+    const cache = createMemoryCache();
+    const service = new SelectionsService(environment, cache);
+    const admin = new AdminSelectionsService(environment, cache);
 
     const before = await service.getNextPeriodPreviews('ja');
     const initialUid = before.nextDaily.movie?.uid;
-    await service.reselectMovie(
+    await admin.reselectMovie(
       'daily',
       'ja',
       new Date(`${before.nextDaily.date}T12:00:00`),
@@ -318,11 +320,10 @@ describe('SelectionsService.getNextPeriodPreviews', () => {
 });
 
 describe('SelectionsService 個人賞の扱い', () => {
-  let environment: Environment;
   let database: TestDatabase;
 
   beforeEach(async () => {
-    ({environment, database} = await createTestEnvironment());
+    ({database} = await createTestEnvironment());
   });
 
   it('個人賞しか無い映画は日替わりの候補にしない', async () => {
@@ -345,15 +346,11 @@ describe('SelectionsService 個人賞の扱い', () => {
       personUid: 'person-1',
     });
 
-    const service = new SelectionsService(environment);
     const picks = await Promise.all(
       Array.from({length: 10}, async (_, seed) =>
-        service['selectMovieFromNominations'](
-          new Date('2026-08-24'),
-          'daily',
-          false,
-          seed,
-        ),
+        pickSelectionMovieUid(database, new Date('2026-08-24'), 'daily', seed, {
+          persist: false,
+        }),
       ),
     );
 
@@ -385,7 +382,7 @@ describe('SelectionsService selection cache reads', () => {
   });
 });
 
-describe('SelectionsService selection cache purge', () => {
+describe('AdminSelectionsService selection cache purge', () => {
   it('上書きしたら今日の履歴の鍵も両 locale で消す', async () => {
     const {environment, database} = await createTestEnvironment();
     await seedNominatedMovie(database, 'movie-1', 'Movie One');
@@ -394,7 +391,7 @@ describe('SelectionsService selection cache purge', () => {
       put: vi.fn(),
       delete: vi.fn(),
     } as unknown as KVNamespace;
-    const service = new SelectionsService(
+    const service = new AdminSelectionsService(
       environment,
       new EdgeCache(undefined, kv),
     );
@@ -408,5 +405,70 @@ describe('SelectionsService selection cache purge', () => {
     expect(kv.delete).toHaveBeenCalledWith(
       `selections:history:daily:${today}:en:v3`,
     );
+  });
+});
+
+async function seedSelectionsAroundToday(
+  database: TestDatabase,
+): Promise<void> {
+  await seedNominatedMovie(database, 'movie-1', 'Movie One');
+  await database.insert(movieSelections).values([
+    {movieId: 'movie-1', selectionType: 'daily', selectionDate: '2026-09-16'},
+    {movieId: 'movie-1', selectionType: 'daily', selectionDate: '2026-09-17'},
+    {movieId: 'movie-1', selectionType: 'daily', selectionDate: '2026-09-18'},
+    {movieId: 'movie-1', selectionType: 'daily', selectionDate: '2026-09-19'},
+    {
+      movieId: 'movie-1',
+      selectionType: 'weekly',
+      selectionDate: '2026-09-11',
+    },
+    {
+      movieId: 'movie-1',
+      selectionType: 'weekly',
+      selectionDate: '2026-09-18',
+    },
+    {
+      movieId: 'movie-1',
+      selectionType: 'monthly',
+      selectionDate: '2026-09-01',
+    },
+  ]);
+}
+
+describe('AdminSelectionsService.deleteFutureSelections', () => {
+  const now = new Date(2026, 8, 17, 12);
+
+  it('今日の期間より後の選出だけを消す', async () => {
+    const {environment, database} = await createTestEnvironment();
+    await seedSelectionsAroundToday(database);
+
+    await new AdminSelectionsService(environment).deleteFutureSelections(now);
+
+    const rows = await database
+      .select({
+        type: movieSelections.selectionType,
+        date: movieSelections.selectionDate,
+      })
+      .from(movieSelections);
+    expect(rows).toEqual(
+      expect.arrayContaining([
+        {type: 'daily', date: '2026-09-16'},
+        {type: 'daily', date: '2026-09-17'},
+        {type: 'weekly', date: '2026-09-11'},
+        {type: 'monthly', date: '2026-09-01'},
+      ]),
+    );
+    expect(rows).toHaveLength(4);
+  });
+
+  it('消した件数を種類ごとに返す', async () => {
+    const {environment, database} = await createTestEnvironment();
+    await seedSelectionsAroundToday(database);
+
+    const result = await new AdminSelectionsService(
+      environment,
+    ).deleteFutureSelections(now);
+
+    expect(result.deletedCount).toEqual({daily: 2, weekly: 1, monthly: 0});
   });
 });

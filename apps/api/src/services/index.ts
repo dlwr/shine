@@ -1,5 +1,6 @@
 export {AdminCeremoniesService} from './admin-ceremonies-service';
 export {AdminMoviesService} from './admin-movies-service';
+export {AdminSelectionsService} from './admin-selections-service';
 export {
   AvailabilityService,
   buildOnDemandRunners,
