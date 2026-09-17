@@ -30,7 +30,7 @@ SELECT uid, resource_uid FROM translations WHERE resource_type = 'movie_title';
 INSERT INTO person_search (rowid, terms)
 SELECT person_search_entries.id, (
 	WITH RECURSIVE positions(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM positions WHERE i < length(people.name) - 1)
-	SELECT group_concat(substr(people.name, i, 2), ' ' ORDER BY i) FROM positions
+	SELECT group_concat(bigram, ' ') FROM (SELECT substr(people.name, i, 2) AS bigram FROM positions ORDER BY i)
 )
 FROM person_search_entries
 JOIN people ON people.uid = person_search_entries.source_uid;
@@ -38,7 +38,7 @@ JOIN people ON people.uid = person_search_entries.source_uid;
 INSERT INTO person_search (rowid, terms)
 SELECT person_search_entries.id, (
 	WITH RECURSIVE positions(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM positions WHERE i < length(translations.content) - 1)
-	SELECT group_concat(substr(translations.content, i, 2), ' ' ORDER BY i) FROM positions
+	SELECT group_concat(bigram, ' ') FROM (SELECT substr(translations.content, i, 2) AS bigram FROM positions ORDER BY i)
 )
 FROM person_search_entries
 JOIN translations ON translations.uid = person_search_entries.source_uid;
@@ -46,7 +46,7 @@ JOIN translations ON translations.uid = person_search_entries.source_uid;
 INSERT INTO movie_search (rowid, terms)
 SELECT movie_search_entries.id, (
 	WITH RECURSIVE positions(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM positions WHERE i < length(translations.content) - 1)
-	SELECT group_concat(substr(translations.content, i, 2), ' ' ORDER BY i) FROM positions
+	SELECT group_concat(bigram, ' ') FROM (SELECT substr(translations.content, i, 2) AS bigram FROM positions ORDER BY i)
 )
 FROM movie_search_entries
 JOIN translations ON translations.uid = movie_search_entries.source_uid;
@@ -61,7 +61,7 @@ BEGIN
 	INSERT INTO person_search (rowid, terms)
 	SELECT id, (
 		WITH RECURSIVE positions(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM positions WHERE i < length(new.name) - 1)
-		SELECT group_concat(substr(new.name, i, 2), ' ' ORDER BY i) FROM positions
+		SELECT group_concat(bigram, ' ') FROM (SELECT substr(new.name, i, 2) AS bigram FROM positions ORDER BY i)
 	)
 	FROM person_search_entries WHERE source_uid = new.uid;
 END;
@@ -73,7 +73,7 @@ BEGIN
 	INSERT INTO person_search (rowid, terms)
 	SELECT id, (
 		WITH RECURSIVE positions(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM positions WHERE i < length(new.name) - 1)
-		SELECT group_concat(substr(new.name, i, 2), ' ' ORDER BY i) FROM positions
+		SELECT group_concat(bigram, ' ') FROM (SELECT substr(new.name, i, 2) AS bigram FROM positions ORDER BY i)
 	)
 	FROM person_search_entries WHERE source_uid = old.uid;
 END;
@@ -91,7 +91,7 @@ BEGIN
 	INSERT INTO person_search (rowid, terms)
 	SELECT id, (
 		WITH RECURSIVE positions(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM positions WHERE i < length(new.content) - 1)
-		SELECT group_concat(substr(new.content, i, 2), ' ' ORDER BY i) FROM positions
+		SELECT group_concat(bigram, ' ') FROM (SELECT substr(new.content, i, 2) AS bigram FROM positions ORDER BY i)
 	)
 	FROM person_search_entries WHERE source_uid = new.uid;
 END;
@@ -107,7 +107,7 @@ BEGIN
 	INSERT INTO person_search (rowid, terms)
 	SELECT id, (
 		WITH RECURSIVE positions(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM positions WHERE i < length(new.content) - 1)
-		SELECT group_concat(substr(new.content, i, 2), ' ' ORDER BY i) FROM positions
+		SELECT group_concat(bigram, ' ') FROM (SELECT substr(new.content, i, 2) AS bigram FROM positions ORDER BY i)
 	)
 	FROM person_search_entries WHERE source_uid = new.uid;
 END;
@@ -126,7 +126,7 @@ BEGIN
 	INSERT INTO movie_search (rowid, terms)
 	SELECT id, (
 		WITH RECURSIVE positions(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM positions WHERE i < length(new.content) - 1)
-		SELECT group_concat(substr(new.content, i, 2), ' ' ORDER BY i) FROM positions
+		SELECT group_concat(bigram, ' ') FROM (SELECT substr(new.content, i, 2) AS bigram FROM positions ORDER BY i)
 	)
 	FROM movie_search_entries WHERE source_uid = new.uid;
 END;
@@ -142,7 +142,7 @@ BEGIN
 	INSERT INTO movie_search (rowid, terms)
 	SELECT id, (
 		WITH RECURSIVE positions(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM positions WHERE i < length(new.content) - 1)
-		SELECT group_concat(substr(new.content, i, 2), ' ' ORDER BY i) FROM positions
+		SELECT group_concat(bigram, ' ') FROM (SELECT substr(new.content, i, 2) AS bigram FROM positions ORDER BY i)
 	)
 	FROM movie_search_entries WHERE source_uid = new.uid;
 END;
