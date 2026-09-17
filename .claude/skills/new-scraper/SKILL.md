@@ -12,7 +12,7 @@ description: apps/scrapersに新しいスクレイパーCLIを追加するとき
 1. **環境変数**: コマンドの `.action()` の中で `loadEnvironmentFiles()` → `buildEnvironment(process.env)`（`common/environment.ts`）。モジュールのトップレベルでは呼ばない。`config({path: '../.dev.vars'})` のようなcwd相対パスは禁止
 2. **CLI**: `<name>-cli.ts` は `export function createCommand(): Command` を持つだけのモジュールにする（トップレベルで `parse()` や `await` をしない）。`.name()` はサブコマンド名、`--year YYYY` / `--dry-run` 等のオプションは既存CLIの命名に合わせる。`src/cli.ts` の `commandFactories` に `createCommand` を追加すると `pnpm scrapers <name>` で呼べる。package.json に scripts は足さない。ヘルプの例は `pnpm scrapers <name> ...` と書く。`__tests__/cli.test.ts` が全 `*-cli.ts` の登録と副作用の無さを検査する。英語版Wikipediaの受賞者一覧から読むものは `createEnWikipediaAwardCommand`、IMDbイベントの収集データを読むものは `createImdbEventAwardCommand`（`common/`）を `createCommand` から返す
 3. **Soft delete**: moviesを参照するクエリには `isNull(movies.deletedAt)` を付ける。soft-deleted映画にはデータを付与せずスキップする（復活させない）。ただしimdbId/tmdbIdの重複チェックはdeleted行を含めて行い、重複時は再作成せずスキップする
-4. **TMDb**: 検索・保存は `common/tmdb-utilities.ts` を使う。スクレイパーごとに再実装しない
+4. **TMDb**: 検索・保存は `@shine/tmdb`（HTTP）と `@shine/tmdb/persistence`（DB への保存） を使う。スクレイパーごとに再実装しない
 5. **重複防止**: Wikipediaスクレイピングでは重複防止の `Set` を使い、年検出は複数パターン用意する。テキスト形式の特殊ケース（2024年日本アカデミー賞など）に注意
 6. **外部URL**: fetchする外部URLは `validateExternalUrl()` を通す。`Response.ok` を必ずチェックする
 7. **タイトル保存**: 映画タイトルは `translations` テーブルのみ（resourceType: 'movie_title'）。contentに `title:` プレフィックスを付けない
