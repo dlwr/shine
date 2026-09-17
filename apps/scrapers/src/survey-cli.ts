@@ -21,6 +21,7 @@ import {
   formatSurveyReport,
   largestSourceFiles,
   measurePages,
+  settleSection,
   SURVEY_PAGES,
   type SurveySection,
 } from './survey';
@@ -159,20 +160,28 @@ async function main(options: SurveyOptions): Promise<void> {
   const sections: SurveySection[] = [];
 
   if (options.network) {
-    sections.push(await pageTimingsSection(options.rounds));
+    sections.push(
+      await settleSection('本番 TTFB', async () =>
+        pageTimingsSection(options.rounds),
+      ),
+    );
   }
 
   if (options.turso) {
-    sections.push(await tursoSection());
+    sections.push(await settleSection('Turso 読み取り', tursoSection));
   }
 
   if (options.northStar) {
-    sections.push(await northStarSection());
+    sections.push(
+      await settleSection('北極星（直近 3 か月）', northStarSection),
+    );
   }
 
   sections.push(
-    await sourceFilesSection(options.top),
-    await recentCommitsSection(),
+    await settleSection('大きいソースファイル', async () =>
+      sourceFilesSection(options.top),
+    ),
+    await settleSection('main の直近 15 コミット', recentCommitsSection),
   );
 
   console.log(formatSurveyReport(sections));

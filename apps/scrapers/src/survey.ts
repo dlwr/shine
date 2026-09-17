@@ -133,3 +133,24 @@ export function formatSurveyReport(sections: SurveySection[]): string {
     .map(section => `## ${section.title}\n${section.body}`)
     .join('\n\n');
 }
+
+function failureReason(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return String(error);
+  }
+
+  return error.cause instanceof Error
+    ? `${error.message}（${error.cause.message}）`
+    : error.message;
+}
+
+export async function settleSection(
+  title: string,
+  build: () => Promise<SurveySection>,
+): Promise<SurveySection> {
+  try {
+    return await build();
+  } catch (error) {
+    return {title, body: `取得に失敗: ${failureReason(error)}`};
+  }
+}

@@ -3,6 +3,7 @@ const DAILY_ROWS_READ_THRESHOLD = 1_000_000_000;
 const MONTHLY_WARNING_RATIO = 0.8;
 
 const USAGE_API_BASE = 'https://api.turso.tech/v1/organizations';
+const USAGE_API_TIMEOUT_MS = 30_000;
 const DAY_MS = 86_400_000;
 
 export type UsageSnapshot = {
@@ -83,22 +84,36 @@ export async function fetchRowsRead(
   from: Date,
   to: Date,
   fetchImpl: typeof fetch = fetch,
+  timeoutMs = USAGE_API_TIMEOUT_MS,
 ): Promise<number> {
   const url = new URL(`${USAGE_API_BASE}/${credentials.organization}/usage`);
   url.searchParams.set('from', from.toISOString());
   url.searchParams.set('to', to.toISOString());
 
-  const response = await fetchImpl(url.href, {
-    headers: {Authorization: `Bearer ${credentials.token}`},
-  });
+  const signal = AbortSignal.timeout(timeoutMs);
+  let body: {organization?: {usage?: {rows_read?: number}}};
 
-  if (!response.ok) {
-    throw new Error(`Turso usage API failed: ${response.status}`);
+  try {
+    const response = await fetchImpl(url.href, {
+      headers: {Authorization: `Bearer ${credentials.token}`},
+      signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Turso usage API failed: ${response.status}`);
+    }
+
+    body = (await response.json()) as typeof body;
+  } catch (error) {
+    if (signal.aborted) {
+      throw new Error(`Turso usage API timed out after ${timeoutMs}ms`, {
+        cause: error,
+      });
+    }
+
+    throw error;
   }
 
-  const body = (await response.json()) as {
-    organization?: {usage?: {rows_read?: number}};
-  };
   const rowsRead = body.organization?.usage?.rows_read;
 
   if (typeof rowsRead !== 'number') {

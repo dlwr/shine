@@ -142,4 +142,23 @@ describe('fetchRowsRead', () => {
       ),
     ).rejects.toThrow('401');
   });
+
+  it('API が応答しないと待ち時間を過ぎた時点で例外にする', async () => {
+    const fetchImpl = (async (_url: string, init?: RequestInit) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          reject(init.signal?.reason);
+        });
+      })) as unknown as typeof fetch;
+
+    await expect(
+      fetchRowsRead(
+        {token: 'tok', organization: 'dlwr'},
+        new Date('2026-08-01T00:00:00Z'),
+        new Date('2026-09-02T00:00:00Z'),
+        fetchImpl,
+        10,
+      ),
+    ).rejects.toThrow('Turso usage API timed out after 10ms');
+  });
 });
