@@ -12,7 +12,7 @@ import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {createJWT} from '../auth';
-import {selectionsRoutes} from '../routes/selections';
+import {selectionsAdminRoutes} from '../routes/selections-admin';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -63,7 +63,7 @@ describe('POST /reselect with excludeMovieUids', () => {
 
   async function postReselect(body: Record<string, unknown>) {
     const token = await createJWT(JWT_SECRET);
-    return selectionsRoutes.request(
+    return selectionsAdminRoutes.request(
       '/reselect',
       {
         method: 'POST',

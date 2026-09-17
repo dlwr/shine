@@ -4,9 +4,9 @@ import {authMiddleware} from '../../auth';
 import {sanitizeText} from '../../middleware/sanitizer';
 import {
   AdminMoviesService,
+  AdminSelectionsService,
   MovieImportService,
   MovieMergeService,
-  SelectionsService,
 } from '../../services';
 import {invalidateMovieDetailsCache} from '../../services/movie-cache-invalidation';
 import {parsePagination} from '../../utils/pagination';
@@ -128,7 +128,9 @@ adminMoviesRoutes.delete('/movies/:id', authMiddleware, async c => {
       return c.json({error: 'Missing id parameter'}, 400);
     }
 
-    await new SelectionsService(c.env).purgeSelectionCachesForMovie(movieId);
+    await new AdminSelectionsService(c.env).purgeSelectionCachesForMovie(
+      movieId,
+    );
     await new MovieMergeService(c.env).deleteMovie(movieId);
     await invalidateMovieDetailsCache(c.env, movieId);
 

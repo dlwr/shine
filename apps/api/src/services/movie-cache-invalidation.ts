@@ -5,7 +5,7 @@ import {
   getCacheKeyForRelatedMovies,
   getMovieCacheKeysForAllLocales,
 } from '../utils/cache';
-import {SelectionsService} from './selections-service';
+import {AdminSelectionsService} from './admin-selections-service';
 
 export async function invalidateMovieDetailsCache(
   environment: Environment,
@@ -30,7 +30,7 @@ export async function invalidateMovieCaches(
       cache.delete(getCacheKeyForRelatedMovies(movieUid, locale)),
     ),
   );
-  await new SelectionsService(environment).purgeSelectionCachesForMovie(
+  await new AdminSelectionsService(environment).purgeSelectionCachesForMovie(
     movieUid,
   );
 }

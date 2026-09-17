@@ -13,6 +13,7 @@ import {crossingsRoutes} from './routes/crossings';
 import {moviesRoutes} from './routes/movies';
 import {quizRoutes} from './routes/quiz';
 import {selectionsRoutes} from './routes/selections';
+import {selectionsAdminRoutes} from './routes/selections-admin';
 import {uncrownedRoutes} from './routes/uncrowned';
 import {utilitiesRoutes} from './routes/utilities';
 import {watchedRoutes} from './routes/watched';
@@ -50,6 +51,7 @@ app.use('*', globalErrorHandler);
 // Mount route modules
 app.route('/auth', authRoutes);
 app.route('/', selectionsRoutes); // Main endpoint for movie selections
+app.route('/', selectionsAdminRoutes);
 app.route('/movies', moviesRoutes);
 app.route('/awards', awardsRoutes);
 app.route('/people', peopleRoutes);
