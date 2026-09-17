@@ -51,6 +51,7 @@ export default defineConfig({
             'packages/availability/**/*.test.ts',
             'packages/tmdb/**/*.test.ts',
           ],
+          exclude: ['**/node_modules/**'],
           environment: 'node',
           globals: true,
           setupFiles: ['./vitest.setup.node.ts'],
