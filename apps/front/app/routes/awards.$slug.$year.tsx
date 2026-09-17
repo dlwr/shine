@@ -5,7 +5,8 @@ import {YearNavLink} from '@/components/editorial/year-nav-link';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {awardHeading} from '@/lib/awards';
-import {MovieRow, type AwardMovieEntryData} from './awards.$slug';
+import type {AwardMovieEntryData} from '@/lib/award-page';
+import {MovieRow} from './awards.$slug';
 import {apiFetch} from '@/lib/api';
 
 export type AwardYearDetailData = {
