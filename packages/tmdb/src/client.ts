@@ -169,6 +169,22 @@ export function isTmdbNotFound(error: unknown): boolean {
   return error instanceof FetchHttpError && error.status === 404;
 }
 
+async function tmdbGetUnlessNotFound<T>(
+  path: string,
+  tmdbApiKey: string,
+  parameters: Record<string, string> = {},
+): Promise<T | undefined> {
+  try {
+    return await tmdbGet<T>(path, tmdbApiKey, parameters);
+  } catch (error) {
+    if (isTmdbNotFound(error)) {
+      return undefined;
+    }
+
+    throw error;
+  }
+}
+
 /**
  * TMDb APIの画像設定を取得(プロセス内でキャッシュ)
  */
@@ -186,18 +202,10 @@ export async function fetchTMDBMovieTranslations(
   tmdbApiKey: string,
   mediaType: TMDBMediaType = 'movie',
 ): Promise<TMDBTranslationsResponse | undefined> {
-  try {
-    return await tmdbGet<TMDBTranslationsResponse>(
-      `${mediaType}/${movieId}/translations`,
-      tmdbApiKey,
-    );
-  } catch (error) {
-    console.error(
-      `Error fetching TMDb translations for movie ID ${movieId}:`,
-      error,
-    );
-    return undefined;
-  }
+  return tmdbGetUnlessNotFound<TMDBTranslationsResponse>(
+    `${mediaType}/${movieId}/translations`,
+    tmdbApiKey,
+  );
 }
 
 export async function searchTMDBMovies(
@@ -236,34 +244,29 @@ export async function searchTMDBMovie(
   year: number,
   tmdbApiKey: string,
 ): Promise<number | undefined> {
-  try {
-    const withYear = await searchTMDBMovies(tmdbApiKey, {
-      query: title,
-      year: year.toString(),
-      language: 'en-US',
-    });
-    const matchesWithYear = withYear.filter(
-      movie => Math.abs(releaseYear(movie) - year) <= 1,
-    );
-    if (matchesWithYear.length > 0) {
-      return matchesWithYear[0].id;
-    }
-
-    const withoutYear = await searchTMDBMovies(tmdbApiKey, {
-      query: title,
-      language: 'en-US',
-    });
-    const matches = withoutYear
-      .filter(movie => Math.abs(releaseYear(movie) - year) <= 2)
-      .toSorted(
-        (a, b) =>
-          Math.abs(releaseYear(a) - year) - Math.abs(releaseYear(b) - year),
-      );
-    return matches[0]?.id;
-  } catch (error) {
-    console.error(`Error searching TMDb for ${title} (${year}):`, error);
-    return undefined;
+  const withYear = await searchTMDBMovies(tmdbApiKey, {
+    query: title,
+    year: year.toString(),
+    language: 'en-US',
+  });
+  const matchesWithYear = withYear.filter(
+    movie => Math.abs(releaseYear(movie) - year) <= 1,
+  );
+  if (matchesWithYear.length > 0) {
+    return matchesWithYear[0].id;
   }
+
+  const withoutYear = await searchTMDBMovies(tmdbApiKey, {
+    query: title,
+    language: 'en-US',
+  });
+  const matches = withoutYear
+    .filter(movie => Math.abs(releaseYear(movie) - year) <= 2)
+    .toSorted(
+      (a, b) =>
+        Math.abs(releaseYear(a) - year) - Math.abs(releaseYear(b) - year),
+    );
+  return matches[0]?.id;
 }
 
 export async function fetchTMDBMovieDetails(
@@ -271,17 +274,9 @@ export async function fetchTMDBMovieDetails(
   tmdbApiKey: string,
   language = 'en-US',
 ): Promise<TMDBMovieData | undefined> {
-  try {
-    return await tmdbGet<TMDBMovieData>(`movie/${movieId}`, tmdbApiKey, {
-      language,
-    });
-  } catch (error) {
-    console.error(
-      `Error fetching TMDb movie details for ID ${movieId}:`,
-      error,
-    );
-    return undefined;
-  }
+  return tmdbGetUnlessNotFound<TMDBMovieData>(`movie/${movieId}`, tmdbApiKey, {
+    language,
+  });
 }
 
 export function normalizeTvData(
@@ -307,15 +302,10 @@ export async function fetchTMDBTvDetails(
   tmdbApiKey: string,
   language = 'en-US',
 ): Promise<TMDBMovieData | undefined> {
-  try {
-    const data = await tmdbGet<
-      TMDBTvData & {translations?: TMDBMovieData['translations']}
-    >(`tv/${tvId}`, tmdbApiKey, {language});
-    return normalizeTvData(data);
-  } catch (error) {
-    console.error(`Error fetching TMDb TV details for ID ${tvId}:`, error);
-    return undefined;
-  }
+  const data = await tmdbGetUnlessNotFound<
+    TMDBTvData & {translations?: TMDBMovieData['translations']}
+  >(`tv/${tvId}`, tmdbApiKey, {language});
+  return data && normalizeTvData(data);
 }
 
 export async function fetchTMDBDetails(
@@ -337,16 +327,11 @@ export async function fetchTMDBCredits(
   tmdbApiKey: string,
   language = 'ja-JP',
 ): Promise<TMDBCredits | undefined> {
-  try {
-    return await tmdbGet<TMDBCredits>(
-      `${mediaType}/${tmdbId}/credits`,
-      tmdbApiKey,
-      {language},
-    );
-  } catch (error) {
-    console.error(`Error fetching TMDb credits for ID ${tmdbId}:`, error);
-    return undefined;
-  }
+  return tmdbGetUnlessNotFound<TMDBCredits>(
+    `${mediaType}/${tmdbId}/credits`,
+    tmdbApiKey,
+    {language},
+  );
 }
 
 /**
@@ -357,14 +342,11 @@ export async function fetchTMDBPerson(
   tmdbApiKey: string,
   language = 'en-US',
 ): Promise<TMDBPersonData | undefined> {
-  try {
-    return await tmdbGet<TMDBPersonData>(`person/${personId}`, tmdbApiKey, {
-      language,
-    });
-  } catch (error) {
-    console.error(`Error fetching TMDb person for ID ${personId}:`, error);
-    return undefined;
-  }
+  return tmdbGetUnlessNotFound<TMDBPersonData>(
+    `person/${personId}`,
+    tmdbApiKey,
+    {language},
+  );
 }
 
 export async function fetchTMDBExternalIds(
@@ -391,23 +373,22 @@ export async function findTMDBByImdbId(
   imdbId: string,
   tmdbApiKey: string,
 ): Promise<TMDBFindResult | undefined> {
-  try {
-    const data = await findTMDBRecordsByImdbId(imdbId, tmdbApiKey);
+  const data = await tmdbGetUnlessNotFound<TMDBFindResponse>(
+    `find/${imdbId}`,
+    tmdbApiKey,
+    {external_source: 'imdb_id'},
+  );
 
-    if (data.movie_results && data.movie_results.length > 0) {
-      return {tmdbId: data.movie_results[0].id, mediaType: 'movie'};
-    }
-
-    if (data.tv_results && data.tv_results.length > 0) {
-      return {tmdbId: data.tv_results[0].id, mediaType: 'tv'};
-    }
-
-    console.log(`No TMDb match found for IMDb ID: ${imdbId}`);
-    return undefined;
-  } catch (error) {
-    console.error(`Error finding TMDb ID for IMDb ID ${imdbId}:`, error);
-    return undefined;
+  if (data?.movie_results && data.movie_results.length > 0) {
+    return {tmdbId: data.movie_results[0].id, mediaType: 'movie'};
   }
+
+  if (data?.tv_results && data.tv_results.length > 0) {
+    return {tmdbId: data.tv_results[0].id, mediaType: 'tv'};
+  }
+
+  console.log(`No TMDb match found for IMDb ID: ${imdbId}`);
+  return undefined;
 }
 
 export async function fetchTMDBImages(
@@ -415,15 +396,10 @@ export async function fetchTMDBImages(
   mediaType: TMDBMediaType,
   tmdbApiKey: string,
 ): Promise<TMDBMovieImages | undefined> {
-  try {
-    return await tmdbGet<TMDBMovieImages>(
-      `${mediaType}/${tmdbId}/images`,
-      tmdbApiKey,
-    );
-  } catch (error) {
-    console.error(`Error fetching TMDb images for TMDb ID ${tmdbId}:`, error);
-    return undefined;
-  }
+  return tmdbGetUnlessNotFound<TMDBMovieImages>(
+    `${mediaType}/${tmdbId}/images`,
+    tmdbApiKey,
+  );
 }
 
 export async function fetchTMDBMovieImages(
@@ -455,26 +431,21 @@ export async function fetchTMDBMovieSummary(
   year: number,
   tmdbApiKey: string,
 ): Promise<TMDBMovieSummary> {
-  try {
-    const movieId = await searchTMDBMovie(title, year, tmdbApiKey);
-    if (!movieId) {
-      console.log(`No TMDb match found for ${title} (${year})`);
-      return {};
-    }
-
-    const movieData = await fetchTMDBMovieDetails(movieId, tmdbApiKey);
-    if (movieData?.imdb_id) {
-      console.log(`Found IMDb ID for ${title} (${year}): ${movieData.imdb_id}`);
-    } else {
-      console.log(`No IMDb ID found for ${title} (${year})`);
-    }
-
-    return {
-      imdbId: movieData?.imdb_id || undefined,
-      originalLanguage: movieData?.original_language || undefined,
-    };
-  } catch (error) {
-    console.error(`Error fetching IMDb ID for ${title} (${year}):`, error);
+  const movieId = await searchTMDBMovie(title, year, tmdbApiKey);
+  if (!movieId) {
+    console.log(`No TMDb match found for ${title} (${year})`);
     return {};
   }
+
+  const movieData = await fetchTMDBMovieDetails(movieId, tmdbApiKey);
+  if (movieData?.imdb_id) {
+    console.log(`Found IMDb ID for ${title} (${year}): ${movieData.imdb_id}`);
+  } else {
+    console.log(`No IMDb ID found for ${title} (${year})`);
+  }
+
+  return {
+    imdbId: movieData?.imdb_id || undefined,
+    originalLanguage: movieData?.original_language || undefined,
+  };
 }
