@@ -1,0 +1,203 @@
+import {
+  academyAwards,
+  bafta,
+  goldenGlobe,
+  japanAcademy,
+  kinemaJunpo,
+  mainichi,
+  blueRibbon,
+  hochi,
+  nikkanSports,
+  yokohama,
+} from './organizations';
+import type {AwardPageDefinition} from './types';
+
+export const annualAwardPageDefinitions: AwardPageDefinition[] = [
+  {
+    slug: 'academy-best-picture',
+    shortLabel: 'アカデミー',
+    ...academyAwards,
+    categoryNames: ['Academy Award for Best Picture'],
+    name: '作品賞',
+    description:
+      'アカデミー賞（オスカー）作品賞の歴代受賞作とノミネート作品の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'bafta-best-film',
+    shortLabel: 'BAFTA',
+    ...bafta,
+    categoryNames: ['BAFTA Award for Best Film'],
+    name: '作品賞',
+    description:
+      '英国アカデミー賞（BAFTA）作品賞の歴代受賞作とノミネート作品の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'golden-globe-drama',
+    shortLabel: 'GGドラマ',
+    ...goldenGlobe,
+    categoryNames: ['Golden Globe Award for Best Motion Picture – Drama'],
+    name: '作品賞（ドラマ部門）',
+    description:
+      'ゴールデングローブ賞 作品賞（ドラマ部門）の歴代受賞作とノミネート作品の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'golden-globe-musical-comedy',
+    shortLabel: 'GGコメディ',
+    ...goldenGlobe,
+    categoryNames: [
+      'Golden Globe Award for Best Motion Picture – Musical or Comedy',
+    ],
+    name: '作品賞（ミュージカル・コメディ部門）',
+    description:
+      'ゴールデングローブ賞 作品賞（ミュージカル・コメディ部門）の歴代受賞作とノミネート作品の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'golden-globe-non-english',
+    shortLabel: 'GG非英語',
+    ...goldenGlobe,
+    categoryNames: [
+      'Golden Globe Award for Best Motion Picture – Non-English Language',
+    ],
+    name: '非英語映画賞',
+    description:
+      'ゴールデングローブ賞 非英語映画賞（旧・外国語映画賞）の歴代受賞作とノミネート作品の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'golden-globe-animated',
+    shortLabel: 'GGアニメ',
+    ...goldenGlobe,
+    categoryNames: ['Golden Globe Award for Best Animated Feature Film'],
+    name: 'アニメーション映画賞',
+    description:
+      'ゴールデングローブ賞 アニメーション映画賞の歴代受賞作とノミネート作品の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'japan-academy-best-picture',
+    shortLabel: '日本アカデミー',
+    ...japanAcademy,
+    categoryNames: ['最優秀作品賞', '優秀作品賞'],
+    name: '最優秀作品賞',
+    description:
+      '日本アカデミー賞 最優秀作品賞の歴代受賞作と優秀作品賞ノミネートの一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'kinema-junpo-japanese',
+    shortLabel: 'キネ旬日本',
+    ...kinemaJunpo,
+    categoryNames: ['Best Japanese Film'],
+    name: '日本映画ベスト・テン',
+    description:
+      'キネマ旬報ベスト・テン日本映画部門の歴代ベストワンと年別ランキングの一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'kinema-junpo-foreign',
+    shortLabel: 'キネ旬外国',
+    ...kinemaJunpo,
+    categoryNames: ['Best Foreign Film'],
+    name: '外国映画ベスト・テン',
+    description:
+      'キネマ旬報ベスト・テン外国映画部門の歴代ベストワンと年別ランキングの一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'mainichi-japanese',
+    shortLabel: '毎日日本',
+    ...mainichi,
+    categoryNames: ['日本映画大賞', '日本映画優秀賞'],
+    name: '日本映画大賞',
+    description:
+      '毎日映画コンクール 日本映画大賞の歴代受賞作と日本映画優秀賞の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'mainichi-foreign',
+    shortLabel: '毎日外国',
+    ...mainichi,
+    categoryNames: ['外国映画ベストワン賞'],
+    name: '外国映画ベストワン賞',
+    description: '毎日映画コンクール 外国映画ベストワン賞の歴代受賞作の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'blue-ribbon-japanese',
+    shortLabel: 'BR日本',
+    ...blueRibbon,
+    categoryNames: ['作品賞'],
+    name: '作品賞',
+    description: 'ブルーリボン賞 作品賞の歴代受賞作の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'blue-ribbon-foreign',
+    shortLabel: 'BR外国',
+    ...blueRibbon,
+    categoryNames: ['外国作品賞'],
+    name: '外国作品賞',
+    description: 'ブルーリボン賞 外国作品賞の歴代受賞作の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'hochi-japanese',
+    shortLabel: '報知日本',
+    ...hochi,
+    categoryNames: ['作品賞'],
+    name: '作品賞',
+    description: '報知映画賞 作品賞の歴代受賞作の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'hochi-foreign',
+    shortLabel: '報知海外',
+    ...hochi,
+    categoryNames: ['作品賞・海外部門'],
+    name: '作品賞・海外部門',
+    description: '報知映画賞 作品賞・海外部門の歴代受賞作の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'nikkan-sports-japanese',
+    shortLabel: '日刊日本',
+    ...nikkanSports,
+    categoryNames: ['作品賞'],
+    name: '作品賞',
+    description: '日刊スポーツ映画大賞 作品賞の歴代受賞作の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'nikkan-sports-foreign',
+    shortLabel: '日刊外国',
+    ...nikkanSports,
+    categoryNames: ['外国作品賞'],
+    name: '外国作品賞',
+    description: '日刊スポーツ映画大賞 外国作品賞の歴代受賞作の一覧。',
+    grouping: 'year',
+  },
+  {
+    slug: 'nikkan-sports-yujiro',
+    shortLabel: '裕次郎賞',
+    ...nikkanSports,
+    categoryNames: ['石原裕次郎賞'],
+    name: '石原裕次郎賞',
+    description:
+      '日刊スポーツ映画大賞 石原裕次郎賞の歴代受賞作の一覧。故・石原裕次郎の名を冠し、その年最もエンタテインメント性に富んだ作品に贈られる。',
+    grouping: 'year',
+  },
+  {
+    slug: 'yokohama-best-ten',
+    shortLabel: 'ヨコハマ',
+    ...yokohama,
+    categoryNames: ['日本映画ベストテン'],
+    name: '日本映画ベストテン',
+    description:
+      'ヨコハマ映画祭 日本映画ベストテンの歴代1位（作品賞）と年別ランキングの一覧。映画ファンが市民レベルで1980年から横浜で続けている映画祭。',
+    grouping: 'year',
+  },
+];
