@@ -1,11 +1,12 @@
 import type {Route} from './+types/awards.$slug.$year';
+import {AwardMovieRow} from '@/components/editorial/award-movie-row';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {YearNavLink} from '@/components/editorial/year-nav-link';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {awardHeading} from '@/lib/awards';
-import {MovieRow, type AwardMovieEntryData} from './awards.$slug';
+import type {AwardMovieEntryData} from '@/lib/award-page';
 import {apiFetch} from '@/lib/api';
 
 export type AwardYearDetailData = {
@@ -122,7 +123,7 @@ export default function AwardYearPage({loaderData}: Route.ComponentProps) {
 
         <div className="border-t-[3px] border-ink">
           {award.movies.map(movie => (
-            <MovieRow key={movie.uid} movie={movie} />
+            <AwardMovieRow key={movie.uid} movie={movie} />
           ))}
         </div>
 
