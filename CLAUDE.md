@@ -57,6 +57,7 @@ Important schema rules:
 - Schema fields are camelCase (`createdAt`) but map to snake_case columns; always reference schema fields in queries, never hardcoded column names
 - **索引**: 外部キー列にはその列を先頭にした部分条件なしの索引を必ず置く（`foreign-key-indexes.test.ts` が検査する）。一意索引を `.where(...)` の部分索引に変えるときも先頭列の単独索引を残すこと。部分索引は WHERE の条件を含むクエリにしか使われず、#358 で `nominations.movie_uid` の索引が消えて `searchMovies` が映画ごとに全件走査になり、Turso の読み取りが 600 倍になった
 - 映画ごとに評価される相関サブクエリを持つクエリは、`movie-search-query-plan.test.ts` のように `EXPLAIN QUERY PLAN` で CORRELATED の下に SCAN が無いことをテストで固定する。公開の読み取り経路を足したら `public-read-query-plan.test.ts` の `exercises` にも足す（発行された SQL を全部拾って実行計画を検査する。詳細ページは `indexOnly`）。本番は `ANALYZE` を流していないので実行計画はスキーマだけで決まり、ローカルの空 DB と一致する。本番で `ANALYZE` を流すとこの前提が崩れる
+- **検索索引**: 人物名（`people.name` と `person_name`）と映画題名（`movie_title`）は FTS5 の `person_search` / `movie_search` に文字 bigram で入り、`people`・`translations` のトリガーが `*_search_entries`（元の行の uid → FTS の rowid）を介して同期する（マイグレーション 0028。スキーマ TS には無い）。名前・題名の一致は `search-terms.ts` を通す（2 文字以上は MATCH、1 文字は LIKE）。FTS5 の UNINDEXED 列での削除は全件走査になるので、トリガーは対応表の索引で rowid を引く形を崩さない。drizzle-kit が `people` / `translations` を作り直すマイグレーション（`__new_*` への複製と DROP TABLE）を出すとトリガーが消えるので、同じマイグレーションで張り直す。`db:push` は使わない
 
 ## Environment Configuration
 
