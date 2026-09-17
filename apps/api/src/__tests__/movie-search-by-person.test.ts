@@ -179,3 +179,41 @@ describe('GET /movies/search 人名検索', () => {
     expect(second.movies.map(movie => movie.uid)).toEqual(['movie-ran']);
   });
 });
+
+describe('GET /movies/search 検索語の文字数と記号', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+  });
+
+  it('1文字の検索語でも題名で引ける', async () => {
+    const body = await search(environment, '乱');
+
+    expect(body.movies.map(movie => movie.uid)).toEqual(['movie-ran']);
+  });
+
+  it('1文字の検索語でも人名で引ける', async () => {
+    const body = await search(environment, '明');
+
+    expect(body.movies.map(movie => movie.uid)).toEqual(['movie-ran']);
+  });
+
+  it('中黒をまたぐ検索語でも人名で引ける', async () => {
+    const body = await search(environment, 'ン・ス');
+
+    expect(body.movies.map(movie => movie.uid)).toEqual(['movie-taxi']);
+  });
+
+  it('英字の大文字小文字を区別しない', async () => {
+    const body = await search(environment, 'SCORSESE');
+
+    expect(body.movies.map(movie => movie.uid)).toEqual(['movie-taxi']);
+  });
+
+  it('1文字の LIKE のワイルドカードは文字として扱う', async () => {
+    const body = await search(environment, '_');
+
+    expect(body.movies).toEqual([]);
+  });
+});
