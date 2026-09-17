@@ -20,7 +20,7 @@
 - TypeScript modules use ESLint (flat config) + Prettier; format before pushing with `pnpm lint:fix` (runs eslint --fix and prettier --write).
 - Indentation is 2 spaces (Prettier default) with single quotes; keep files ESM (`type: module`).
 - Follow domain-driven naming: PascalCase for React components/services, camelCase for helpers, dot-separated route filenames (e.g. `admin.movies.$id.tsx`).
-- API の応答型は `apps/api/src/types/services.ts`; co-locate tests as `.test.ts`/`.test.tsx`.
+- API の応答型は `apps/api/src/types/` の領域ごとのファイル（`awards.ts`・`people.ts` など）; co-locate tests as `.test.ts`/`.test.tsx`.
 
 ## Testing Guidelines
 
