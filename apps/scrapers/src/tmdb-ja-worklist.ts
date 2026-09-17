@@ -188,7 +188,13 @@ export async function buildTmdbJaWorklist({
   }
 
   for (const [index, candidate] of candidates.entries()) {
-    await processCandidate(candidate);
+    try {
+      await processCandidate(candidate);
+    } catch (error) {
+      console.error(`TMDb の取得に失敗しました: ${candidate.uid}`, error);
+      stats.failed++;
+    }
+
     onProgress?.(index + 1, candidates.length);
 
     if (throttleMs > 0 && index + 1 < candidates.length) {

@@ -281,7 +281,17 @@ export function buildSourceRunners(options: {
     async tmdb(movie) {
       let tmdbId = movie.tmdbId;
       if (tmdbApiKey && !tmdbId && movie.imdbId) {
-        const found = await findTMDBByImdbId(movie.imdbId, tmdbApiKey);
+        let found: Awaited<ReturnType<typeof findTMDBByImdbId>>;
+        try {
+          found = await findTMDBByImdbId(movie.imdbId, tmdbApiKey);
+        } catch (error) {
+          return {
+            source: 'tmdb' as const,
+            status: 'error' as const,
+            detail: `TMDb lookup failed: ${String(error)}`,
+          };
+        }
+
         if (found?.tmdbId) {
           tmdbId = found.tmdbId;
           await saveTMDBId(

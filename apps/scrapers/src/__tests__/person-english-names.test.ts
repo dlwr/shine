@@ -132,6 +132,20 @@ describe('backfillPersonEnglishNames', () => {
     expect(stats).toMatchObject({candidates: 1, saved: 0, failed: 1});
   });
 
+  it('英語名の取得で例外が出ても失敗に数えて次へ進む', async () => {
+    const database = await createTestDatabase();
+
+    const stats = await backfillPersonEnglishNames({
+      database,
+      isDryRun: false,
+      async fetchEnglishName() {
+        throw new Error('TMDb unavailable');
+      },
+    });
+
+    expect(stats).toMatchObject({candidates: 1, failed: 1});
+  });
+
   it('dry-run では保存しない', async () => {
     const database = await createTestDatabase();
     const source = englishNames({4_487_240: 'Rachel Szor'});

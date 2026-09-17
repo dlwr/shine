@@ -338,6 +338,31 @@ describe('fixJapaneseTitleContamination', () => {
     expect(result.unverified).toEqual([{movieUid: 'm4', content: 'בית אבי'}]);
   });
 
+  it('TMDbの取得で例外が出た行は判断せず未確認に回して次へ進む', async () => {
+    const result = await fixJapaneseTitleContamination(
+      {database, environment, isDryRun: false},
+      {
+        async fetchDetails(movie) {
+          if (movie.uid === 'm1') {
+            throw new Error('TMDb unavailable');
+          }
+
+          return detailsByMovie[movie.uid];
+        },
+        throttleMs: 0,
+      },
+    );
+
+    expect([await jaTitleOf('m1'), await jaTitleOf('m2')]).toEqual([
+      'کمی نور',
+      '羅生門',
+    ]);
+    expect(result.unverified.map(entry => entry.movieUid)).toEqual([
+      'm1',
+      'm4',
+    ]);
+  });
+
   it('原語の行が既にあれば ja の行は削除する', async () => {
     await fixJapaneseTitleContamination(
       {database, environment, isDryRun: false},

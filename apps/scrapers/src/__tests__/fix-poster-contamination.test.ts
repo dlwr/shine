@@ -243,6 +243,26 @@ describe('fixPosterContamination', () => {
     expect(result.unverified).toBe(1);
   });
 
+  it('TMDbの取得で例外が出た映画は消さずに未確認に数える', async () => {
+    await insertMovie('m5', 500);
+    await insertPoster('m5', 'a.jpg', {languageCode: 'ja', isPrimary: 1});
+    await insertPoster('m5', 'b.jpg', {languageCode: 'ru'});
+
+    const result = await fixPosterContamination(
+      {database, environment, isDryRun: false},
+      {
+        async fetchValidPaths() {
+          throw new Error('TMDb unavailable');
+        },
+      },
+    );
+
+    expect([await postersOf('m5'), result.unverified]).toEqual([
+      expect.arrayContaining([expect.anything(), expect.anything()]),
+      1,
+    ]);
+  });
+
   it('乱れの無い映画には書き込まない(dry-runで例外にならない)', async () => {
     await insertMovie('m4', 400);
     await insertPoster('m4', 'own.jpg', {languageCode: 'ja', isPrimary: 1});

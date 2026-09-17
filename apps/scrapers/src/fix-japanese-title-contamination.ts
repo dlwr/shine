@@ -192,11 +192,16 @@ export async function fixJapaneseTitleContamination(
 
   for (const [index, row] of targets.entries()) {
     result.scanned++;
-    const details = await fetchDetails({
-      uid: row.movieUid,
-      imdbId: row.imdbId ?? undefined,
-      tmdbId: row.tmdbId ?? undefined,
-    });
+    let details: TmdbTitleDetails | undefined;
+    try {
+      details = await fetchDetails({
+        uid: row.movieUid,
+        imdbId: row.imdbId ?? undefined,
+        tmdbId: row.tmdbId ?? undefined,
+      });
+    } catch (error) {
+      console.error(`TMDb の取得に失敗しました: ${row.movieUid}`, error);
+    }
     await applyDecision(
       context,
       options.onMovie,
