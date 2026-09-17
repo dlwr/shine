@@ -1,5 +1,5 @@
 import {getDatabase, type Environment} from '@shine/database';
-import type {ServiceContext} from '../types/services';
+import type {ServiceContext} from '../types/common';
 
 export abstract class BaseService {
   protected context: ServiceContext;

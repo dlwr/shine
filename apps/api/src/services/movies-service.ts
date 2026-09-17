@@ -14,7 +14,8 @@ import {
 import {BaseService} from './base-service';
 import {loadMovieCredits} from './movie-credits';
 import {buildMovieSearchQueries} from './movie-search-query';
-import type {MovieSelection, SearchOptions} from '../types/services';
+import type {MovieSelection} from '../types/movies';
+import type {SearchOptions} from '../types/search';
 import {personLocalizedName} from './person-name';
 
 export class MoviesService extends BaseService {

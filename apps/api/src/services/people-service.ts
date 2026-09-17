@@ -5,7 +5,7 @@ import type {
   PersonDetail,
   ProminentPeople,
   ProminentPerson,
-} from '../types/services';
+} from '../types/people';
 import {BaseService} from './base-service';
 import {eligibleRankingSlice} from './people-ranking';
 import {loadPersonDetail} from './person-detail';

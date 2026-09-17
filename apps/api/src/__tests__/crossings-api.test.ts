@@ -12,7 +12,7 @@ import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
 import app from '../index';
-import type {AwardCrossings} from '../types/services';
+import type {AwardCrossings} from '../types/crossings';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(

@@ -10,7 +10,7 @@ import {
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
-import type {ProminentPerson, ProminentPersonMovie} from '../types/services';
+import type {ProminentPerson, ProminentPersonMovie} from '../types/people';
 import {personAwardNominations} from './award-definition-lookup';
 import {personAwardDefinitions} from './award-definitions';
 import {joinAwardContext, localizedMovieTitle} from './people-query';

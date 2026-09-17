@@ -5,7 +5,7 @@ import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {quizSelections} from '@shine/database/schema/quiz-selections';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
-import type {QuizAnswer, QuizCandidate, QuizHint} from '../types/services';
+import type {QuizAnswer, QuizCandidate, QuizHint} from '../types/quiz';
 import {EdgeCache, IMPORTED_DATA_EDGE_TTL} from '../utils/cache';
 import {simpleHash} from '../utils/hash';
 import {

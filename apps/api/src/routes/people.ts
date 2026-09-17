@@ -1,5 +1,5 @@
 import type {Environment} from '@shine/database';
-import type {PeopleSearchResult} from '../types/services';
+import type {PeopleSearchResult} from '../types/people';
 import {Hono} from 'hono';
 import {sanitizeText} from '../middleware/sanitizer';
 import {PeopleService} from '../services/people-service';

@@ -15,7 +15,7 @@ import type {
   PersonUncrowned,
   UncrownedPerson,
   UncrownedPersonLoss,
-} from '../types/services';
+} from '../types/uncrowned';
 import {personLocalizedName} from './person-name';
 
 const DEFAULT_PERSON_LIMIT = 24;

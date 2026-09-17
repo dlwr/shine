@@ -1,5 +1,5 @@
 import type {Environment} from '@shine/database';
-import type {QuizGuessResult} from '../types/services';
+import type {QuizGuessResult} from '../types/quiz';
 import {Hono} from 'hono';
 import {
   buildQuizHints,
