@@ -2,20 +2,9 @@ import {and, eq, isNull, sql} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import type {getDatabase} from '@shine/database';
 import type {SearchOptions} from '../types/services';
+import {movieUidsMatchingTitle, personUidsMatchingName} from './search-terms';
 
 type Database = ReturnType<typeof getDatabase>;
-
-function titleMatches(query: string) {
-  return sql`
-				EXISTS (
-				  SELECT 1
-				  FROM translations
-				  WHERE translations.resource_uid = movies.uid
-				    AND translations.resource_type = 'movie_title'
-				    AND translations.content LIKE ${`%${query}%`}
-				)
-			`;
-}
 
 function buildConditions({
   query,
@@ -27,25 +16,15 @@ function buildConditions({
   const conditions = [isNull(movies.deletedAt)];
 
   if (query && !matchPeople) {
-    conditions.push(titleMatches(query));
+    conditions.push(sql`movies.uid IN (${movieUidsMatchingTitle(query)})`);
   } else if (query) {
     conditions.push(sql`
-				(
-				  ${titleMatches(query)}
-				  OR movies.uid IN (
-				    SELECT movie_credits.movie_uid
-				    FROM movie_credits
-				    WHERE movie_credits.person_uid IN (
-				      SELECT people.uid
-				      FROM people
-				      WHERE people.name LIKE ${`%${query}%`}
-				      UNION
-				      SELECT translations.resource_uid
-				      FROM translations
-				      WHERE translations.resource_type = 'person_name'
-				        AND translations.content LIKE ${`%${query}%`}
-				    )
-				  )
+				movies.uid IN (
+				  ${movieUidsMatchingTitle(query)}
+				  UNION
+				  SELECT movie_credits.movie_uid
+				  FROM movie_credits
+				  WHERE movie_credits.person_uid IN (${personUidsMatchingName(query)})
 				)
 			`);
   }

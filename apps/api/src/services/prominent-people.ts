@@ -15,6 +15,7 @@ import {personAwardNominations} from './award-definition-lookup';
 import {personAwardDefinitions} from './award-definitions';
 import {joinAwardContext, localizedMovieTitle} from './people-query';
 import {personLocalizedName} from './person-name';
+import {personUidsMatchingName} from './search-terms';
 
 type Database = ReturnType<typeof getDatabase>;
 
@@ -104,7 +105,6 @@ export async function searchPeopleByName(
   locale: string,
   limit: number,
 ): Promise<ProminentPerson[]> {
-  const pattern = likePattern(query);
   const wonCount = awardedCountOf(
     sql`COUNT(DISTINCT CASE WHEN nominations.is_winner = 1 THEN nominations.ceremony_uid || ':' || nominations.category_uid END)`,
   );
@@ -129,16 +129,7 @@ export async function searchPeopleByName(
       nominatedCount: nominatedCount.as('nominated_count'),
     })
     .from(people)
-    .where(
-      sql`${people.uid} IN (
-				  SELECT uid FROM people
-				  WHERE name LIKE ${pattern} ESCAPE '\\'
-				  UNION
-				  SELECT resource_uid FROM translations
-				  WHERE resource_type = 'person_name'
-				    AND content LIKE ${pattern} ESCAPE '\\'
-				)`,
-    )
+    .where(sql`${people.uid} IN (${personUidsMatchingName(query)})`)
     .orderBy(
       sql`won_count DESC`,
       sql`nominated_count DESC`,
@@ -218,8 +209,4 @@ async function loadTopMovies(
   }
 
   return byPerson;
-}
-
-function likePattern(query: string): string {
-  return `%${query.replaceAll(/[\\%_]/g, String.raw`\$&`)}%`;
 }
