@@ -4,12 +4,14 @@ import {
   buildWatchedShareText,
   decodeWatched,
   encodeWatched,
+  groupWatchedByYear,
   isWatchedEncoding,
   mergeWatched,
   orderWinners,
   readWatched,
   toggleWatched,
   WATCHED_STORAGE_KEY,
+  watchedListPath,
   watchedStats,
   writeWatched,
 } from './watched';
@@ -62,6 +64,34 @@ describe('orderWinners', () => {
     };
 
     expect(orderWinners(award).map(film => film.uid)).toEqual(['uid-w']);
+  });
+});
+
+describe('groupWatchedByYear', () => {
+  it('授賞式年ごとにまとめ、年の降順に並べる', () => {
+    const groups = groupWatchedByYear([
+      {uid: 'a', title: 'A', year: 2021},
+      {uid: 'b', title: 'B', year: 2023},
+      {uid: 'c', title: 'C', year: 2022},
+    ]);
+
+    expect(groups.map(group => group.year)).toEqual([2023, 2022, 2021]);
+  });
+
+  it('同じ年の作品は元の並びのまま同じ組に入れる', () => {
+    const groups = groupWatchedByYear([
+      {uid: 'a', title: 'A', year: 2021},
+      {uid: 'b', title: 'B', year: 2022},
+      {uid: 'c', title: 'C', year: 2021},
+    ]);
+
+    expect(groups[1].films.map(film => film.uid)).toEqual(['a', 'c']);
+  });
+});
+
+describe('watchedListPath', () => {
+  it('賞の slug からリストのパスを作る', () => {
+    expect(watchedListPath('palme-dor')).toBe('/watched/palme-dor');
   });
 });
 

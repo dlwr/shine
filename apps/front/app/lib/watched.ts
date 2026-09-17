@@ -40,6 +40,28 @@ export function orderWinners(award: WinnerSource): WatchedFilm[] {
     .toSorted((a, b) => a.year - b.year || a.uid.localeCompare(b.uid));
 }
 
+export function watchedListPath(slug: string): string {
+  return `/watched/${slug}`;
+}
+
+export function groupWatchedByYear(
+  films: WatchedFilm[],
+): Array<{year: number; films: WatchedFilm[]}> {
+  const groups = new Map<number, WatchedFilm[]>();
+  for (const film of films) {
+    const group = groups.get(film.year);
+    if (group) {
+      group.push(film);
+    } else {
+      groups.set(film.year, [film]);
+    }
+  }
+
+  return [...groups]
+    .map(([year, group]) => ({year, films: group}))
+    .toSorted((a, b) => b.year - a.year);
+}
+
 function toBase64Url(bytes: Uint8Array): string {
   const binary = String.fromCodePoint(...bytes);
   return btoa(binary)
