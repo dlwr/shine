@@ -962,6 +962,36 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /movies/{id}/availability/check:
+    post:
+      summary: Check where a movie can be watched
+      description: Return the latest known availability (streaming, rental, purchase) for a movie. When cached results exist they are returned immediately and stale sources are refreshed in the background; otherwise every source is checked before responding. Rate limited to 30 per hour per IP
+      operationId: checkMovieAvailability
+      tags:
+        - Movies
+      security: []
+      parameters:
+        - name: id
+          in: path
+          description: Movie unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Availability of the movie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityCheckResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /movies/{id}/translations:
     post:
       summary: Add or update movie translation
@@ -3553,6 +3583,34 @@ components:
             isOwnerSubmission:
               type: boolean
               description: Whether the site owner submitted this link
+
+    AvailabilityCheckResult:
+      type: object
+      required:
+        - available
+        - availability
+      properties:
+        available:
+          type: boolean
+          description: Whether at least one source reports the movie as watchable
+        availability:
+          type: array
+          description: Sources where the movie was found
+          items:
+            type: object
+            required:
+              - source
+              - checkedAt
+            properties:
+              source:
+                type: string
+                enum: [tmdb, unext, discas, geo]
+              detail:
+                type: string
+                description: Source-specific note such as the matched title
+              checkedAt:
+                type: integer
+                description: Unix time in seconds when the source was checked
 
     TranslationRequest:
       type: object

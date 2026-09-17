@@ -72,7 +72,7 @@ Cloudflare Workers: non-secret vars go in `wrangler.jsonc`/`wrangler.toml` `vars
 
 ## API Design
 
-- `apps/api/openapi.yml` documents the full endpoint list — keep it in sync with implementations (`pnpm run docs:validate` must stay green)
+- `apps/api/openapi.yml` documents the full endpoint list — `openapi-routes.test.ts` fails when a route is added or removed without updating it, and `pnpm run docs:validate` must stay green
 - Edge caching via `EdgeCache` (`apps/api/src/utils/cache.ts`): cache keys include locale; writes use `set()`, reads use `get()`. When invalidating movie caches use `getMovieCacheKeysForAllLocales()`
 
 ## Frontend (React Router v7)
