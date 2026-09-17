@@ -28,7 +28,7 @@ afterAll(() => {
   vi.resetModules();
 });
 
-vi.mock('../common/fetch-utilities', () => ({
+vi.mock('@shine/utils/fetch', () => ({
   fetchWithRetry: vi.fn(),
 }));
 
@@ -113,7 +113,7 @@ async function loadScraper(
   summaryByTitle: Record<string, {imdbId?: string; originalLanguage?: string}>,
 ) {
   vi.resetModules();
-  const {fetchWithRetry} = await import('../common/fetch-utilities');
+  const {fetchWithRetry} = await import('@shine/utils/fetch');
   vi.mocked(fetchWithRetry).mockResolvedValue(wikipediaHtml);
   const {fetchTMDBMovieSummary} = await import('../common/tmdb-client');
   vi.mocked(fetchTMDBMovieSummary).mockImplementation(

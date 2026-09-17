@@ -1,7 +1,7 @@
 /**
  * TMDb API v3 の HTTP クライアント。DB には触らない
  */
-import {buildUrl, FetchHttpError, fetchJsonWithRetry} from './fetch-utilities';
+import {buildUrl, FetchHttpError, fetchJsonWithRetry} from '@shine/utils/fetch';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 

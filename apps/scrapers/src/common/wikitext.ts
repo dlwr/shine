@@ -1,4 +1,4 @@
-import {buildUrl, fetchJsonWithRetry} from './fetch-utilities';
+import {buildUrl, fetchJsonWithRetry} from '@shine/utils/fetch';
 import {type WikipediaLanguage} from './wikidata-film-resolver';
 
 const USER_AGENT = 'shine-film.com movie database (https://shine-film.com)';

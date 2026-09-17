@@ -1,4 +1,4 @@
-import {buildUrl, fetchJsonWithRetry} from './common/fetch-utilities';
+import {buildUrl, fetchJsonWithRetry} from '@shine/utils/fetch';
 
 const WIKIPEDIA_API = 'https://ja.wikipedia.org/w/api.php';
 const WIKIPEDIA_ARTICLE = '日本アカデミー賞作品賞';
