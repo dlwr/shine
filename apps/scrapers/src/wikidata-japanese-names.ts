@@ -5,7 +5,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
 import {getScrapeDatabase} from './common/dry-run';
-import {fetchJsonWithRetry} from './common/fetch-utilities';
+import {fetchJsonWithRetry} from '@shine/utils/fetch';
 
 const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
 const USER_AGENT = 'shine-film.com movie database (https://shine-film.com)';

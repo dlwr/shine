@@ -2,7 +2,7 @@
  * Wikipedia日本語版から映画タイトルをスクレイピングするモジュール
  */
 import type * as cheerio from 'cheerio';
-import {fetchWithRetry} from '../../common/fetch-utilities';
+import {fetchWithRetry} from '@shine/utils/fetch';
 import {
   extractMainTitle,
   extractWikipediaJsonLD,

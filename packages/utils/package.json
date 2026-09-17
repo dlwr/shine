@@ -6,6 +6,7 @@
   "main": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./generate-uuid": "./src/uuid.ts"
+    "./generate-uuid": "./src/uuid.ts",
+    "./fetch": "./src/fetch.ts"
   }
 }

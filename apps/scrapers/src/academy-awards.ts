@@ -14,7 +14,7 @@ import {
   WIKIPEDIA_BASE_URL,
 } from './academy-awards/wikipedia-table';
 import {getScrapeDatabase} from './common/dry-run';
-import {fetchWithRetry} from './common/fetch-utilities';
+import {fetchWithRetry} from '@shine/utils/fetch';
 
 const ACADEMY_AWARDS_URL = `${WIKIPEDIA_BASE_URL}/wiki/Academy_Award_for_Best_Picture`;
 

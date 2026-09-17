@@ -1,5 +1,5 @@
 import {setTimeout as sleep} from 'node:timers/promises';
-import {buildUrl, fetchJsonWithRetry} from './fetch-utilities';
+import {buildUrl, fetchJsonWithRetry} from '@shine/utils/fetch';
 import {findTMDBRecordsByImdbId} from './tmdb-client';
 const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
 const USER_AGENT = 'shine-film.com movie database (https://shine-film.com)';

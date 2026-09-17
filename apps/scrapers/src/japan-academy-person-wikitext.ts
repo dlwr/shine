@@ -1,4 +1,4 @@
-import {buildUrl, fetchJsonWithRetry} from './common/fetch-utilities';
+import {buildUrl, fetchJsonWithRetry} from '@shine/utils/fetch';
 import {
   cellsOf,
   fillRow,

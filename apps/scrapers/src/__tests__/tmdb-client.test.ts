@@ -1,5 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {FetchHttpError} from '../common/fetch-utilities';
+import {FetchHttpError} from '@shine/utils/fetch';
 import {
   fetchTMDBCredits,
   fetchTMDBMovieDetails,

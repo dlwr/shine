@@ -10,7 +10,6 @@
     "../../packages/availability/src/**/*",
     "../../packages/database/src/**/*",
     "../../packages/utils/src/**/*",
-    "../scrapers/src/common/fetch-utilities.ts",
     "../scrapers/src/common/tmdb-client.ts",
     "../scrapers/src/common/tmdb-japanese-title.ts",
     "../scrapers/src/common/tmdb-utilities.ts"

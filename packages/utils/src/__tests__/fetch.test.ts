@@ -4,7 +4,7 @@ import {
   FetchHttpError,
   fetchJsonWithRetry,
   fetchWithRetry,
-} from '../common/fetch-utilities';
+} from '../fetch';
 
 // Mock fetch globally
 vi.stubGlobal('fetch', vi.fn());

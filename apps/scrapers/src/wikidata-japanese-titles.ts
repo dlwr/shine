@@ -4,7 +4,7 @@ import {and, eq, isNotNull, isNull, sql} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
-import {fetchJsonWithRetry} from './common/fetch-utilities';
+import {fetchJsonWithRetry} from '@shine/utils/fetch';
 import {hasKana} from './common/japanese-text';
 
 const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
