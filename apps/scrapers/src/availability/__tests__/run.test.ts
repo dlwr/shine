@@ -468,6 +468,30 @@ describe('buildSourceRunners', () => {
     expect(Object.keys(runners)).toEqual(['tmdb', 'unext', 'discas']);
   });
 
+  it('returns an error result when the IMDb lookup on TMDb fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('unauthorized', {status: 401})),
+    );
+    const runners = buildSourceRunners({
+      environment: {
+        TURSO_DATABASE_URL: '',
+        TURSO_AUTH_TOKEN: '',
+        TMDB_API_KEY: 'api-key',
+      },
+      waitMs: 0,
+    });
+
+    const result = await runners.tmdb!({
+      uid: 'movie-a',
+      titles: ['エレクション'],
+      imdbId: 'tt0000001',
+    });
+    vi.unstubAllGlobals();
+
+    expect(result).toMatchObject({source: 'tmdb', status: 'error'});
+  });
+
   describe('with TMDb Japanese alternative titles', () => {
     it('matches a U-NEXT title that only appears as an alternative title', async () => {
       const runners = buildSourceRunners({

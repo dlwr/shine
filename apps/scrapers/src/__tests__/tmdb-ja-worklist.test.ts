@@ -420,6 +420,39 @@ describe('buildTmdbJaWorklist', () => {
     expect(stats.candidates).toBe(0);
   });
 
+  it('TMDbの取得に失敗した映画はfailedに数えて次の映画へ進む', async () => {
+    await seedMovie(database, {
+      uid: 'movie-1',
+      tmdbId: 1,
+      jaTitle: '弾丸と共に去りぬ -暗黒街の逃亡者-',
+    });
+    await seedMovie(database, {
+      uid: 'movie-2',
+      tmdbId: 312_408,
+      jaTitle: 'ぼくのエリ 200歳の少女',
+    });
+    vi.stubGlobal('fetch', async (input: unknown) =>
+      String(input).includes('/movie/1/')
+        ? new Response('unauthorized', {status: 401})
+        : Response.json({
+            id: 312_408,
+            title: 'Let the Right One In',
+            overview: 'overview',
+            translations: [],
+          }),
+    );
+
+    const {items, stats} = await buildTmdbJaWorklist({
+      environment,
+      throttleMs: 0,
+    });
+
+    expect([stats.failed, items.map(item => item.uid)]).toEqual([
+      1,
+      ['movie-2'],
+    ]);
+  });
+
   it('en詳細が取れない映画はfailedに数える', async () => {
     await seedMovie(database, {
       uid: 'movie-1',

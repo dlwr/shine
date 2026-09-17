@@ -210,7 +210,12 @@ export async function fixPosterContamination(
       continue;
     }
 
-    const validPaths = await fetchValidPaths(movie);
+    let validPaths: Set<string> | undefined;
+    try {
+      validPaths = await fetchValidPaths(movie);
+    } catch (error) {
+      console.error(`TMDb の取得に失敗しました: ${movie.uid}`, error);
+    }
 
     if (throttleMs > 0 && !options.fetchValidPaths) {
       await sleep(throttleMs);

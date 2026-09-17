@@ -2,9 +2,13 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {FetchHttpError} from '@shine/utils/fetch';
 import {
   fetchTMDBCredits,
+  fetchTMDBImages,
   fetchTMDBMovieDetails,
+  fetchTMDBMovieImages,
   fetchTMDBMovieSummary,
   fetchTMDBMovieTranslations,
+  fetchTMDBPerson,
+  fetchTMDBTvDetails,
   findTMDBByImdbId,
   isTmdbNotFound,
   searchTMDBMovie,
@@ -308,5 +312,66 @@ describe('tmdbGet', () => {
     expect(error).toBeInstanceOf(FetchHttpError);
     expect(isTmdbNotFound(error)).toBe(true);
     expect(isTmdbNotFound(new Error('other'))).toBe(false);
+  });
+});
+
+function errorResponse(status: number): Response {
+  return {ok: false, status, headers: new Headers()} as unknown as Response;
+}
+
+describe('見つからないときと失敗したときの区別', () => {
+  beforeEach(() => {
+    vi.mocked(fetch).mockReset();
+  });
+
+  const fetchById = [
+    ['fetchTMDBMovieDetails', async () => fetchTMDBMovieDetails(1, 'api-key')],
+    ['fetchTMDBTvDetails', async () => fetchTMDBTvDetails(1, 'api-key')],
+    [
+      'fetchTMDBMovieTranslations',
+      async () => fetchTMDBMovieTranslations(1, 'api-key'),
+    ],
+    ['fetchTMDBCredits', async () => fetchTMDBCredits(1, 'movie', 'api-key')],
+    ['fetchTMDBPerson', async () => fetchTMDBPerson(1, 'api-key')],
+    ['fetchTMDBImages', async () => fetchTMDBImages(1, 'movie', 'api-key')],
+  ] as const;
+
+  it.each(fetchById)('%s は 404 なら undefined を返す', async (_name, call) => {
+    vi.mocked(fetch).mockResolvedValue(errorResponse(404));
+
+    await expect(call()).resolves.toBeUndefined();
+  });
+
+  it.each(fetchById)('%s は 404 以外の失敗を投げる', async (_name, call) => {
+    vi.mocked(fetch).mockResolvedValue(errorResponse(401));
+
+    await expect(call()).rejects.toBeInstanceOf(FetchHttpError);
+  });
+
+  it('findTMDBByImdbId は 404 なら undefined を返す', async () => {
+    vi.mocked(fetch).mockResolvedValue(errorResponse(404));
+
+    await expect(
+      findTMDBByImdbId('tt0000001', 'api-key'),
+    ).resolves.toBeUndefined();
+  });
+
+  const lookups = [
+    ['findTMDBByImdbId', async () => findTMDBByImdbId('tt0000001', 'api-key')],
+    [
+      'fetchTMDBMovieImages',
+      async () => fetchTMDBMovieImages('tt0000001', 'api-key'),
+    ],
+    ['searchTMDBMovie', async () => searchTMDBMovie('Title', 2000, 'api-key')],
+    [
+      'fetchTMDBMovieSummary',
+      async () => fetchTMDBMovieSummary('Title', 2000, 'api-key'),
+    ],
+  ] as const;
+
+  it.each(lookups)('%s は失敗を投げる', async (_name, call) => {
+    vi.mocked(fetch).mockResolvedValue(errorResponse(401));
+
+    await expect(call()).rejects.toBeInstanceOf(FetchHttpError);
   });
 });

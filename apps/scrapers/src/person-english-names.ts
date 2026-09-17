@@ -57,7 +57,12 @@ export async function backfillPersonEnglishNames(
   };
 
   for (const [index, target] of targets.entries()) {
-    const englishName = await context.fetchEnglishName(target.tmdbId);
+    let englishName: string | undefined;
+    try {
+      englishName = await context.fetchEnglishName(target.tmdbId);
+    } catch (error) {
+      console.error(`英語名の取得に失敗しました: TMDb ${target.tmdbId}`, error);
+    }
 
     if (englishName === undefined) {
       stats.failed++;

@@ -198,14 +198,18 @@ async function createMovie(
   }
 
   if (details?.id && environment.TMDB_API_KEY) {
-    const images = await fetchTMDBImages(
-      details.id,
-      'movie',
-      environment.TMDB_API_KEY,
-    );
+    try {
+      const images = await fetchTMDBImages(
+        details.id,
+        'movie',
+        environment.TMDB_API_KEY,
+      );
 
-    if (images) {
-      await savePosterUrls(movie.uid, images.posters, environment);
+      if (images) {
+        await savePosterUrls(movie.uid, images.posters, environment);
+      }
+    } catch (error) {
+      console.error(`ポスターの取得に失敗しました: TMDb ${details.id}`, error);
     }
   }
 

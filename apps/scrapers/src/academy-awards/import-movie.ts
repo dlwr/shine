@@ -290,35 +290,39 @@ export async function processMovieForBatch(
       }
 
       // ポスターの取得・保存
-      const movieImages = await fetchTMDBMovieImages(
-        imdbId,
-        context.tmdbApiKey,
-      );
-      if (movieImages) {
-        // TMDB IDを保存（まだ保存されていない場合）
-        const currentMovie = await database
-          .select({tmdbId: movies.tmdbId})
-          .from(movies)
-          .where(eq(movies.uid, movieUid))
-          .limit(1);
-        if (currentMovie.length > 0 && !currentMovie[0].tmdbId) {
-          await saveTMDBId(
-            imdbId,
-            movieImages.tmdbId,
-            context.environment,
-            movieImages.mediaType,
-          );
-        }
-
-        // ポスターを保存
-        const posterCount = await savePosterUrls(
-          movieUid,
-          movieImages.images.posters,
-          context.environment,
+      try {
+        const movieImages = await fetchTMDBMovieImages(
+          imdbId,
+          context.tmdbApiKey,
         );
-        if (posterCount > 0) {
-          console.log(`  Saved ${posterCount} posters for ${title}`);
+        if (movieImages) {
+          // TMDB IDを保存（まだ保存されていない場合）
+          const currentMovie = await database
+            .select({tmdbId: movies.tmdbId})
+            .from(movies)
+            .where(eq(movies.uid, movieUid))
+            .limit(1);
+          if (currentMovie.length > 0 && !currentMovie[0].tmdbId) {
+            await saveTMDBId(
+              imdbId,
+              movieImages.tmdbId,
+              context.environment,
+              movieImages.mediaType,
+            );
+          }
+
+          // ポスターを保存
+          const posterCount = await savePosterUrls(
+            movieUid,
+            movieImages.images.posters,
+            context.environment,
+          );
+          if (posterCount > 0) {
+            console.log(`  Saved ${posterCount} posters for ${title}`);
+          }
         }
+      } catch (error) {
+        console.error(`ポスターの取得に失敗しました: ${title}`, error);
       }
     }
 
