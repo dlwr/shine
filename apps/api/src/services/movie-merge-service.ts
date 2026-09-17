@@ -7,7 +7,7 @@ import {
   type MovieDependentsExecutor,
   reassignMovieDependents,
 } from './movie-dependents';
-import type {MergeMoviesOptions} from '../types/services';
+import type {MergeMoviesOptions} from '../types/movies';
 
 type MovieRow = typeof movies.$inferSelect;
 

@@ -12,4 +12,3 @@ export {MovieTmdbService} from './movie-tmdb-service';
 export {MovieTranslationsService} from './movie-translations-service';
 export {MoviesService} from './movies-service';
 export {SelectionsService} from './selections-service';
-export type * from '../types/services';

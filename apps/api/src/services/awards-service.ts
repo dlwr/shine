@@ -13,7 +13,7 @@ import type {
   AwardYearGroup,
   PersonAwardDetail,
   PersonAwardYearGroup,
-} from '../types/services';
+} from '../types/awards';
 import {BaseService} from './base-service';
 import {personLocalizedName} from './person-name';
 import {

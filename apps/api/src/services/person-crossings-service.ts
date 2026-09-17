@@ -18,7 +18,7 @@ import {BaseService} from './base-service';
 import type {
   PersonCrossingPerformance,
   PersonCrossings,
-} from '../types/services';
+} from '../types/crossings';
 import {personLocalizedName} from './person-name';
 
 const DEFAULT_TOP_PERFORMANCE_LIMIT = 48;

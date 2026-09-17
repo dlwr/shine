@@ -1,4 +1,4 @@
-import type {WatchedList} from '../types/services';
+import type {WatchedList} from '../types/awards';
 import {AwardsService} from './awards-service';
 import {BaseService} from './base-service';
 

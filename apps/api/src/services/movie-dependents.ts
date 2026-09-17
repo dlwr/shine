@@ -8,7 +8,7 @@ import {posterUrls} from '@shine/database/schema/poster-urls';
 import {quizSelections} from '@shine/database/schema/quiz-selections';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
-import type {MergeMoviesOptions} from '../types/services';
+import type {MergeMoviesOptions} from '../types/movies';
 
 type Database = ReturnType<typeof getDatabase>;
 export type MovieDependentsExecutor = Parameters<

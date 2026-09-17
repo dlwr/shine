@@ -10,7 +10,7 @@ import {
 } from './award-definition-lookup';
 import {awardPageDefinitions} from './award-definitions';
 import {BaseService} from './base-service';
-import type {YearDetail, YearMovie, YearSummary} from '../types/services';
+import type {YearDetail, YearMovie, YearSummary} from '../types/years';
 
 function compareYearMovies(a: YearMovie, b: YearMovie): number {
   return (

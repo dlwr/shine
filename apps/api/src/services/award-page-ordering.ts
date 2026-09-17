@@ -3,7 +3,7 @@ import type {
   AwardMovieEntry,
   AwardYearGroup,
   PersonAwardNominee,
-} from '../types/services';
+} from '../types/awards';
 
 const RANK_PATTERN = /^(\d+)位$/;
 
