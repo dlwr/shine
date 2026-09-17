@@ -32,3 +32,28 @@ export function getSelectionDate(date: Date, type: SelectionType): string {
 export function getDateSeed(date: Date, type: SelectionType): number {
   return simpleHash(`${type}-${getSelectionDate(date, type)}`);
 }
+
+export const SELECTION_TYPES: readonly SelectionType[] = [
+  'daily',
+  'weekly',
+  'monthly',
+];
+
+export function isSelectionType(value: unknown): value is SelectionType {
+  return SELECTION_TYPES.includes(value as SelectionType);
+}
+
+export function nextSelectionDates(now: Date): Record<SelectionType, Date> {
+  const daily = new Date(now);
+  daily.setDate(now.getDate() + 1);
+
+  const daysSinceFriday = (now.getDay() - 5 + 7) % 7;
+  const weekly = new Date(now);
+  weekly.setDate(now.getDate() - daysSinceFriday + 7);
+
+  const monthly = new Date(now);
+  monthly.setDate(1);
+  monthly.setMonth(now.getMonth() + 1);
+
+  return {daily, weekly, monthly};
+}
