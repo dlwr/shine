@@ -1,40 +1,16 @@
-import {useEffect, useMemo, useState} from 'react';
 import type {Route} from './+types/quiz';
 import {Masthead} from '@/components/editorial/masthead';
-import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
+import {QuizClues} from '@/components/quiz/quiz-clues';
+import {QuizGuessForm} from '@/components/quiz/quiz-guess-form';
+import {QuizResult} from '@/components/quiz/quiz-result';
+import {useQuizGame, type QuizPuzzle} from '@/components/quiz/use-quiz-game';
 import {apiFetch, resolveApiUrl, canTransformImages} from '@/lib/api';
 import {transformedImageUrl} from '@/lib/image-transformations';
 import {fetchMonthlyPick, type MonthlyPick} from '@/lib/monthly-pick';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {TAGLINE} from '@/lib/tagline';
-import {
-  applyGuess,
-  createGame,
-  filterCandidates,
-  QUIZ_HISTORY_KEY,
-  QUIZ_STATE_KEY,
-  recordResult,
-  shareText,
-  streakOf,
-  type QuizAnswer,
-  type QuizCandidate,
-  type QuizGameState,
-  type QuizHint,
-  type QuizHistory,
-} from '@/lib/quiz-state';
-
-const SUGGESTION_LIMIT = 8;
-
-function buildShareUrls(text: string): {x: string; bluesky: string} {
-  const encoded = encodeURIComponent(text);
-
-  return {
-    x: `https://x.com/intent/post?text=${encoded}`,
-    bluesky: `https://bsky.app/intent/compose?text=${encoded}`,
-  };
-}
+import {streakOf} from '@/lib/quiz-state';
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {locale, puzzle} = loaderData as {
@@ -72,155 +48,34 @@ export async function loader({context, request}: Route.LoaderArgs) {
     throw new Response('Failed to load quiz', {status: 502});
   }
 
-  const puzzle = (await dailyResponse.json()) as {
-    date: string;
-    maxAttempts: number;
-    poolSize: number;
-  };
+  const puzzle = (await dailyResponse.json()) as QuizPuzzle;
 
   return {puzzle, apiUrl, locale, monthly, transformImages};
-}
-
-function readStorage<T>(key: string): T | undefined {
-  try {
-    const raw = globalThis.localStorage?.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-function writeStorage(key: string, value: unknown): void {
-  try {
-    globalThis.localStorage?.setItem(key, JSON.stringify(value));
-  } catch {
-    // プライベートモードなどでは保存できないが、その日のプレイは続けられる
-  }
 }
 
 export default function QuizPage({loaderData}: Route.ComponentProps) {
   const {puzzle, apiUrl, monthly, transformImages} = loaderData as {
     monthly?: MonthlyPick;
-    puzzle: {date: string; maxAttempts: number; poolSize: number};
+    puzzle: QuizPuzzle;
     apiUrl: string;
     transformImages?: boolean;
   };
   const locale = 'ja';
 
-  const [candidates, setCandidates] = useState<QuizCandidate[]>([]);
-  const [game, setGame] = useState<QuizGameState>(() =>
-    createGame(puzzle.date),
-  );
-  const [history, setHistory] = useState<QuizHistory>({});
-  const [restored, setRestored] = useState(false);
-  const [query, setQuery] = useState('');
-  const [pending, setPending] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const {
+    game,
+    history,
+    isFinished,
+    query,
+    setQuery,
+    pending,
+    suggestions,
+    submit,
+  } = useQuizGame(puzzle, apiUrl);
 
-  useEffect(() => {
-    const controller = new AbortController();
-
-    void (async () => {
-      try {
-        const response = await fetch(`${apiUrl}/quiz/candidates`, {
-          signal: controller.signal,
-        });
-        if (!response.ok) {
-          return;
-        }
-
-        const body = (await response.json()) as {candidates?: QuizCandidate[]};
-        setCandidates(body.candidates ?? []);
-      } catch {
-        // 候補が取れなくてもパスでヒントは進められる
-      }
-    })();
-
-    return () => {
-      controller.abort();
-    };
-  }, [apiUrl]);
-
-  useEffect(() => {
-    const saved = readStorage<QuizGameState>(QUIZ_STATE_KEY);
-    if (saved?.date === puzzle.date) {
-      setGame(saved);
-    }
-
-    setHistory(readStorage<QuizHistory>(QUIZ_HISTORY_KEY) ?? {});
-    setRestored(true);
-  }, [puzzle.date]);
-
-  useEffect(() => {
-    if (restored) {
-      writeStorage(QUIZ_STATE_KEY, game);
-    }
-  }, [game, restored]);
-
-  const suggestions = useMemo(
-    () => filterCandidates(candidates, query, SUGGESTION_LIMIT),
-    [candidates, query],
-  );
-
-  const isFinished = game.status !== 'playing';
   const stage = isFinished ? puzzle.maxAttempts : game.guesses.length;
   const remaining = puzzle.maxAttempts - game.guesses.length;
-
-  async function submit(candidate?: QuizCandidate) {
-    if (pending || isFinished) {
-      return;
-    }
-
-    setPending(true);
-    try {
-      const response = await fetch(`${apiUrl}/quiz/guess`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          date: puzzle.date,
-          movieUid: candidate?.uid,
-          attempt: game.guesses.length + 1,
-        }),
-      });
-      if (!response.ok) {
-        return;
-      }
-
-      const result = (await response.json()) as {
-        correct: boolean;
-        hint?: QuizHint;
-        answer?: QuizAnswer;
-      };
-      const next = applyGuess(
-        game,
-        {title: candidate?.title, correct: result.correct},
-        result,
-        puzzle.maxAttempts,
-      );
-
-      setGame(next);
-      setQuery('');
-      if (next.status !== 'playing') {
-        const updated = recordResult(history, next);
-        setHistory(updated);
-        writeStorage(QUIZ_HISTORY_KEY, updated);
-      }
-    } finally {
-      setPending(false);
-    }
-  }
-
-  async function copyShareText() {
-    try {
-      await navigator.clipboard.writeText(shareText(game, puzzle.maxAttempts));
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
-  }
-
   const streak = streakOf(history, puzzle.date);
-  const shareUrls = buildShareUrls(shareText(game, puzzle.maxAttempts));
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -243,79 +98,11 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
 
         <div className="grid gap-6 md:grid-cols-[minmax(0,320px)_1fr] md:items-start">
           {isFinished && (
-            <div className="border-2 border-ink p-4 md:col-start-2 md:row-start-1">
-              <p className="font-display font-black text-lg mb-1">
-                {game.status === 'won' ? '正解！' : '残念！'}
-              </p>
-              <p className="font-display font-bold text-base leading-snug">
-                {game.answer ? (
-                  <a
-                    href={`/movies/${game.answer.uid}`}
-                    className="text-ink underline">
-                    {game.answer.title}
-                  </a>
-                ) : (
-                  '—'
-                )}
-                {game.answer?.year ? (
-                  <span className="font-mono text-xs text-ink-muted ml-2">
-                    {game.answer.year}
-                  </span>
-                ) : undefined}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={copyShareText}
-                  className="font-mono text-xs font-bold bg-brand text-brand-on px-3 py-1.5 border-2 border-ink shadow-[3px_3px_0_var(--ink)]">
-                  {copied ? 'コピーしました' : '結果をコピー'}
-                </button>
-                <a
-                  href={shareUrls.x}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-mono text-xs font-bold px-3 py-1.5 border-2 border-ink text-ink hover:bg-ink hover:text-surface transition-colors">
-                  X に投稿
-                </a>
-                <a
-                  href={shareUrls.bluesky}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-mono text-xs font-bold px-3 py-1.5 border-2 border-ink text-ink hover:bg-ink hover:text-surface transition-colors">
-                  Bluesky に投稿
-                </a>
-              </div>
-              {monthly && (
-                <a
-                  href={`/movies/${monthly.uid}`}
-                  className="mt-4 flex gap-3 border-2 border-ink bg-paper p-3 text-ink shadow-[3px_3px_0_var(--ink)] hover:bg-ink hover:text-paper transition-colors">
-                  <PosterFrame
-                    posterUrl={monthly.posterUrl}
-                    alt={monthly.title}
-                    displaySize="w185"
-                    className="w-16 shrink-0"
-                  />
-                  <span className="min-w-0 flex flex-col gap-1">
-                    <span className="font-mono text-[10px] font-bold tracking-widest">
-                      MONTHLY / 今月の1本
-                    </span>
-                    <span className="font-display font-black text-base leading-snug">
-                      {monthly.title}
-                      <span className="font-mono text-xs font-normal ml-2">
-                        {monthly.year}
-                      </span>
-                    </span>
-                    <span className="font-mono text-[10px]">{TAGLINE}</span>
-                    <span className="mt-1 self-start font-mono text-xs font-bold bg-brand text-brand-on px-3 py-1 border-2 border-ink">
-                      映画ページへ →
-                    </span>
-                  </span>
-                </a>
-              )}
-              <p className="font-mono text-[10px] text-ink-muted mt-3">
-                次の問題は明日9時に出ます
-              </p>
-            </div>
+            <QuizResult
+              game={game}
+              maxAttempts={puzzle.maxAttempts}
+              monthly={monthly}
+            />
           )}
 
           <div className="border-2 border-ink bg-surface md:col-start-1 md:row-start-1 md:row-span-2">
@@ -337,88 +124,17 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
                 ? 'md:col-start-2 md:row-start-2'
                 : 'md:col-start-2 md:row-start-1'
             }>
-            <div className="flex gap-1.5 mb-4" aria-label="残りの手数">
-              {Array.from({length: puzzle.maxAttempts}, (_, index) => {
-                const guess = game.guesses[index];
-                const filled = guess
-                  ? guess.correct
-                    ? 'bg-brand'
-                    : 'bg-ink'
-                  : 'bg-transparent';
-                return (
-                  <span
-                    key={index}
-                    className={`w-4 h-4 border-2 border-ink ${filled}`}
-                  />
-                );
-              })}
-            </div>
-
-            {game.hints.length > 0 && (
-              <dl className="mb-5">
-                {game.hints.map(hint => (
-                  <div
-                    key={hint.label}
-                    className="flex gap-3 py-2 border-t-2 border-ink">
-                    <dt className="font-mono text-[10px] text-ink-muted w-24 shrink-0 pt-0.5">
-                      {hint.label}
-                    </dt>
-                    <dd className="font-display font-bold text-sm leading-snug">
-                      {hint.value}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            )}
+            <QuizClues game={game} maxAttempts={puzzle.maxAttempts} />
 
             {!isFinished && (
-              <div>
-                <label
-                  htmlFor="quiz-guess"
-                  className="block font-mono text-[10px] text-ink-muted mb-1">
-                  邦題で回答（残り{remaining}回）
-                </label>
-                <input
-                  id="quiz-guess"
-                  type="text"
-                  value={query}
-                  autoComplete="off"
-                  placeholder="タイトルを入力"
-                  onChange={event => {
-                    setQuery(event.target.value);
-                  }}
-                  className="w-full border-2 border-ink bg-surface px-3 py-2 font-display text-base"
-                />
-
-                {suggestions.length > 0 && (
-                  <ul className="mt-2 border-2 border-ink divide-y-2 divide-ink">
-                    {suggestions.map(candidate => (
-                      <li key={candidate.uid}>
-                        <button
-                          type="button"
-                          disabled={pending}
-                          onClick={async () => submit(candidate)}
-                          className="w-full text-left px-3 py-2 font-display font-bold text-sm bg-surface">
-                          {candidate.title}
-                          {candidate.year ? (
-                            <span className="font-mono text-[10px] text-ink-muted ml-2">
-                              {candidate.year}
-                            </span>
-                          ) : undefined}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={async () => submit()}
-                  className="mt-3 font-mono text-xs font-bold px-3 py-1.5 border-2 border-ink text-ink">
-                  パスしてヒントを見る
-                </button>
-              </div>
+              <QuizGuessForm
+                query={query}
+                remaining={remaining}
+                suggestions={suggestions}
+                pending={pending}
+                onQueryChange={setQuery}
+                onSubmit={submit}
+              />
             )}
           </div>
         </div>
