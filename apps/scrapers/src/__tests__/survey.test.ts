@@ -5,6 +5,7 @@ import {
   isSurveySourceFile,
   largestSourceFiles,
   measurePages,
+  settleSection,
 } from '../survey';
 
 describe('isSurveySourceFile', () => {
@@ -163,5 +164,39 @@ describe('formatSurveyReport', () => {
     ]);
 
     expect(text).toBe('## 本番 TTFB\n/  200  10ms\n\n## Turso\n直近24h 26M');
+  });
+});
+
+describe('settleSection', () => {
+  it('節を作れたらそのまま返す', async () => {
+    const section = await settleSection('Turso', async () => ({
+      title: 'Turso 読み取り',
+      body: '直近24h 26M',
+    }));
+
+    expect(section).toEqual({title: 'Turso 読み取り', body: '直近24h 26M'});
+  });
+
+  it('節を作れなかったら本文に失敗の理由を出す', async () => {
+    const section = await settleSection('Turso 読み取り', async () => {
+      throw new Error('Turso usage API timed out after 30000ms');
+    });
+
+    expect(section).toEqual({
+      title: 'Turso 読み取り',
+      body: '取得に失敗: Turso usage API timed out after 30000ms',
+    });
+  });
+
+  it('例外に原因が付いていれば理由に添える', async () => {
+    const section = await settleSection('本番 TTFB', async () => {
+      throw new TypeError('fetch failed', {
+        cause: new Error('getaddrinfo ENOTFOUND shine-film.com'),
+      });
+    });
+
+    expect(section.body).toBe(
+      '取得に失敗: fetch failed（getaddrinfo ENOTFOUND shine-film.com）',
+    );
   });
 });
