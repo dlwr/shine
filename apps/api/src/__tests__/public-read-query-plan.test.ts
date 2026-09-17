@@ -328,7 +328,8 @@ function isUnderCorrelatedSubquery(rows: PlanRow[], row: PlanRow): boolean {
 
 function isFullScan(row: PlanRow): boolean {
   return (
-    row.detail.startsWith('SCAN ') ||
+    (row.detail.startsWith('SCAN ') &&
+      !/ VIRTUAL TABLE INDEX \d+:M/.test(row.detail)) ||
     /^SEARCH movies USING (?:COVERING )?INDEX \S+ \(deleted_at=\?\)$/.test(
       row.detail,
     )
@@ -377,6 +378,11 @@ const exercises: Exercise[] = [
         limit: 20,
         query: 'Mendes',
       }),
+  },
+  {
+    name: '映画の候補',
+    run: environment =>
+      new MoviesService(environment).suggestMovies('Beauty', 5),
   },
   {
     name: '受賞ありの映画検索',
@@ -488,11 +494,9 @@ const exercises: Exercise[] = [
 describe('公開エンドポイントの実行計画', () => {
   let seededEnvironment: Environment;
   let environment: Environment;
-  let client: Client;
 
   beforeAll(async () => {
     seededEnvironment = await createTestEnvironment();
-    client = getDatabase(seededEnvironment).$client;
   });
 
   beforeEach(() => {
@@ -506,9 +510,15 @@ describe('公開エンドポイントの実行計画', () => {
     captured.length = 0;
     expect(statements.length).toBeGreaterThan(0);
 
+    // FTS5 の文を EXPLAIN した接続は後の書き込みを SQLITE_BUSY にするので、毎回閉じる
+    const client = getDatabase(seededEnvironment).$client;
     const plans = new Map<string, PlanRow[]>();
-    for (const statement of statements) {
-      plans.set(statement.sql, await explain(client, statement));
+    try {
+      for (const statement of statements) {
+        plans.set(statement.sql, await explain(client, statement));
+      }
+    } finally {
+      client.close();
     }
 
     return plans;
@@ -532,10 +542,7 @@ describe('公開エンドポイントの実行計画', () => {
         plan.filter(row => row.detail.startsWith('MATERIALIZE')),
         statement,
       ).toEqual([]);
-      expect(
-        fullScans(plan).filter(detail => detail !== 'SCAN people'),
-        statement,
-      ).toEqual([]);
+      expect(fullScans(plan), statement).toEqual([]);
       if (!statement.includes('from "people"')) {
         continue;
       }
@@ -550,6 +557,17 @@ describe('公開エンドポイントの実行計画', () => {
       ).toEqual([]);
     }
   });
+
+  it.each(['検索語つきの映画検索', '映画の候補'])(
+    '%s は検索語の一致を索引で引く',
+    async name => {
+      const exercise = exercises.find(current => current.name === name);
+      const plans = await plansOf(exercise!);
+      for (const [statement, plan] of plans) {
+        expect(fullScans(plan), statement).toEqual([]);
+      }
+    },
+  );
 
   it.each(exercises.filter(exercise => exercise.indexOnly))(
     '$name は索引だけで引く',
