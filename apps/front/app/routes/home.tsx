@@ -1,7 +1,6 @@
-import {useEffect, useState} from 'react';
+import {lazy, Suspense, useEffect, useState} from 'react';
 import type {Dispatch, SetStateAction} from 'react';
 import type {Route} from './+types/home';
-import {AdminLogin} from '@/components/molecules/admin-login';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {useAdminToken} from '@/hooks/use-admin-token';
@@ -17,7 +16,16 @@ import {
   type HighlightedMovies,
   type PeriodType,
 } from '@/lib/home';
-import {SelectionAdminControls} from '@/components/admin/selection-admin-controls';
+
+const AdminSessionBar = lazy(async () => {
+  const module_ = await import('@/components/admin/admin-session-bar');
+  return {default: module_.AdminSessionBar};
+});
+
+const SelectionAdminControls = lazy(async () => {
+  const module_ = await import('@/components/admin/selection-admin-controls');
+  return {default: module_.SelectionAdminControls};
+});
 
 const SECONDARY_PERIODS: PeriodType[] = ['daily', 'weekly'];
 
@@ -136,7 +144,11 @@ export default function Home({loaderData}: Route.ComponentProps) {
 
   return (
     <div className="m-0 w-full h-full">
-      <AdminLogin locale={locale} apiUrl={apiUrl} />
+      {adminToken && (
+        <Suspense>
+          <AdminSessionBar locale={locale} />
+        </Suspense>
+      )}
       <main className="max-w-5xl mx-auto px-4 py-6">
         <Masthead locale={locale} />
         <Movies
@@ -194,15 +206,17 @@ function Movies({
     }
 
     return (
-      <SelectionAdminControls
-        period={period}
-        movieUid={movies?.[period]?.uid}
-        locale={locale}
-        apiUrl={apiUrl}
-        adminToken={adminToken}
-        onMoviesChange={onMoviesChange}
-        onError={onError}
-      />
+      <Suspense>
+        <SelectionAdminControls
+          period={period}
+          movieUid={movies?.[period]?.uid}
+          locale={locale}
+          apiUrl={apiUrl}
+          adminToken={adminToken}
+          onMoviesChange={onMoviesChange}
+          onError={onError}
+        />
+      </Suspense>
     );
   };
 

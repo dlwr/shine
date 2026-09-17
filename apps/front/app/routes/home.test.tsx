@@ -1,6 +1,7 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {render, screen, waitFor} from '@testing-library/react';
+import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import '@testing-library/jest-dom';
+import homeSource from './home.tsx?raw';
 import Home, {loader, meta} from './home';
 import type {Route} from './+types/home';
 import {createMockContext} from '@/lib/test-context';
@@ -491,6 +492,38 @@ describe('Home Component', () => {
       }
     });
 
+    it('管理者ログイン時、管理画面へのリンクを出し、ログアウトすると消える', async () => {
+      localStorage.setItem('adminToken', 'test-token');
+
+      try {
+        const loaderData =
+          cast<ComponentProperties['loaderData']>(createLoaderData());
+
+        render(
+          <Home
+            loaderData={loaderData}
+            actionData={createActionData()}
+            params={createParameters()}
+            matches={createMatches(loaderData)}
+          />,
+        );
+
+        const adminLink = await screen.findByRole('link', {name: '管理者'});
+        expect(adminLink).toHaveAttribute('href', '/admin/movies');
+
+        fireEvent.click(screen.getByRole('button', {name: 'ログアウト'}));
+
+        await waitFor(() => {
+          expect(
+            screen.queryByRole('link', {name: '管理者'}),
+          ).not.toBeInTheDocument();
+        });
+        expect(localStorage.getItem('adminToken')).toBeNull();
+      } finally {
+        localStorage.removeItem('adminToken');
+      }
+    });
+
     it('未ログイン時、編集リンクは表示されない', () => {
       const loaderData =
         cast<ComponentProperties['loaderData']>(createLoaderData());
@@ -559,5 +592,13 @@ describe('Home Component', () => {
         screen.queryByText(/The Shawshank Redemption/),
       ).not.toBeInTheDocument();
     });
+  });
+});
+
+describe('Home の読み込み', () => {
+  it('管理用の部品は静的に import せず、ログインした人だけが読み込む', () => {
+    expect(homeSource).not.toMatch(
+      /^import[^;]*from '@\/components\/(?:admin|molecules\/admin-login)[^']*';/m,
+    );
   });
 });
