@@ -7,13 +7,13 @@ import {
   insertImdbAndTmdbReferenceUrls,
   insertTmdbPosterUrl,
 } from '../common/movie-reference-records';
-import {pickJapaneseTitle} from '../common/tmdb-japanese-title';
+import {pickJapaneseTitle} from '@shine/tmdb/japanese-title';
 import {
   fetchTMDBConfig,
   fetchTMDBMovieDetails,
   findTMDBByImdbId,
   type TMDBMovieData,
-} from '../common/tmdb-client';
+} from '@shine/tmdb';
 import {type AwardFilm, type DatabaseClient, type ImportContext} from './types';
 
 export async function createMovie(

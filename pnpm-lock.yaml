@@ -102,9 +102,9 @@ importers:
       '@shine/database':
         specifier: workspace:*
         version: link:../../packages/database
-      '@shine/scrapers':
+      '@shine/tmdb':
         specifier: workspace:*
-        version: link:../scrapers
+        version: link:../../packages/tmdb
       '@shine/utils':
         specifier: workspace:*
         version: link:../../packages/utils
@@ -209,6 +209,9 @@ importers:
       '@shine/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@shine/tmdb':
+        specifier: workspace:*
+        version: link:../../packages/tmdb
       '@shine/utils':
         specifier: workspace:*
         version: link:../../packages/utils
@@ -257,6 +260,21 @@ importers:
         version: 0.45.2(@cloudflare/workers-types@5.20260731.1)(@libsql/client@0.18.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.6.2)(gel@2.1.0)
 
   packages/node-domexception: {}
+
+  packages/tmdb:
+    dependencies:
+      '@shine/availability':
+        specifier: workspace:*
+        version: link:../availability
+      '@shine/database':
+        specifier: workspace:*
+        version: link:../database
+      '@shine/utils':
+        specifier: workspace:*
+        version: link:../utils
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@cloudflare/workers-types@5.20260731.1)(@libsql/client@0.18.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.6.2)(gel@2.1.0)
 
   packages/utils: {}
 

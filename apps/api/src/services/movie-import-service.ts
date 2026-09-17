@@ -1,9 +1,6 @@
 import {and, eq, isNull, not} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
-import {
-  fetchTMDBMovieImages,
-  type TMDBMovieData,
-} from '@shine/scrapers/common/tmdb-client';
+import {fetchTMDBMovieImages, type TMDBMovieData} from '@shine/tmdb';
 import {BaseService} from './base-service';
 import {
   ConflictError,
@@ -128,8 +125,7 @@ export class MovieImportService extends BaseService {
 
     if (fetchTMDBData && this.env.TMDB_API_KEY) {
       try {
-        const {savePosterUrls} =
-          await import('@shine/scrapers/common/tmdb-utilities');
+        const {savePosterUrls} = await import('@shine/tmdb/persistence');
 
         const imagesResult = await fetchTMDBMovieImages(
           normalizedImdbId,

@@ -4,7 +4,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {normalizeTitle} from './backfill-posters';
-import {findTMDBRecordsByImdbId} from './common/tmdb-client';
+import {findTMDBRecordsByImdbId} from '@shine/tmdb';
 
 export type OrphanDeletionStats = {
   candidates: number;

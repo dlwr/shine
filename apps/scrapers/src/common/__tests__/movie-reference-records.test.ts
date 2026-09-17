@@ -12,7 +12,7 @@ import {
   insertImdbAndTmdbReferenceUrls,
   insertTmdbPosterUrl,
 } from '../movie-reference-records';
-import {type TMDBConfig} from '../tmdb-client';
+import {type TMDBConfig} from '@shine/tmdb';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(

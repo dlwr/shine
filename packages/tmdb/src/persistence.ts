@@ -1,5 +1,5 @@
 /**
- * TMDb から取ったものを DB に書く側。HTTP は tmdb-client
+ * TMDb から取ったものを DB に書く側。HTTP は client.ts
  */
 import {and, eq} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
@@ -11,8 +11,8 @@ import {
   findTMDBByImdbId,
   type TMDBMediaType,
   type TMDBMovieImages,
-} from './tmdb-client';
-import {pickJapaneseTitle} from './tmdb-japanese-title';
+} from './client';
+import {pickJapaneseTitle} from './japanese-title';
 
 /**
  * TMDb APIから日本語タイトルを取得。TMDb ID が無ければ IMDb ID から引いて保存する

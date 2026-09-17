@@ -1,7 +1,7 @@
 import {eq, isNull} from 'drizzle-orm';
 import {type Environment, type getDatabase} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
-import {fetchTMDBDetails} from './common/tmdb-client';
+import {fetchTMDBDetails} from '@shine/tmdb';
 
 type DatabaseClient = ReturnType<typeof getDatabase>;
 

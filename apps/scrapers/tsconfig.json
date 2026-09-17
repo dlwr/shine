@@ -12,6 +12,7 @@
     "src/**/*",
     "../../packages/availability/src/**/*",
     "../../packages/database/src/**/*",
+    "../../packages/tmdb/src/**/*",
     "../../packages/utils/src/**/*"
   ],
   "exclude": ["node_modules", "dist"]

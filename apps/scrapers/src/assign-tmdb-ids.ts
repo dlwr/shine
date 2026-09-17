@@ -1,7 +1,7 @@
 import {and, isNotNull, isNull, eq, not} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
-import {findTMDBByImdbId} from './common/tmdb-client';
+import {findTMDBByImdbId} from '@shine/tmdb';
 import {loadEnvironmentFiles} from './common/environment';
 
 loadEnvironmentFiles();

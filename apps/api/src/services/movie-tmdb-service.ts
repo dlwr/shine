@@ -1,6 +1,6 @@
 import {and, eq, isNull, not} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
-import {findTMDBByImdbId} from '@shine/scrapers/common/tmdb-client';
+import {findTMDBByImdbId} from '@shine/tmdb';
 import {BaseService} from './base-service';
 import {
   ConflictError,

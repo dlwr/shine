@@ -7,7 +7,7 @@ import {
   tmdbGet,
   type TMDBMovieData,
   type TMDBTvData,
-} from '@shine/scrapers/common/tmdb-client';
+} from '@shine/tmdb';
 import {TmdbConfigError} from '../errors';
 
 type Database = ReturnType<typeof getDatabase>;

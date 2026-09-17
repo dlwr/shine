@@ -5,7 +5,7 @@ import {
   fetchTMDBImages,
   fetchTMDBMovieTranslations,
   tmdbGet,
-} from '@shine/scrapers/common/tmdb-client';
+} from '@shine/tmdb';
 
 type Database = ReturnType<typeof getDatabase>;
 
@@ -26,8 +26,7 @@ export async function syncTmdbData(
     throw new Error('TMDb API key not configured');
   }
 
-  const {savePosterUrls} =
-    await import('@shine/scrapers/common/tmdb-utilities');
+  const {savePosterUrls} = await import('@shine/tmdb/persistence');
 
   const result: TmdbSyncResult = {
     postersAdded: 0,

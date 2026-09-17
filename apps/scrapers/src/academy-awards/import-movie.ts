@@ -8,16 +8,13 @@ import {nominations} from '@shine/database/schema/nominations';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import {getScrapeDatabase} from '../common/dry-run';
-import {
-  fetchTMDBMovieImages,
-  fetchTMDBMovieSummary,
-} from '../common/tmdb-client';
+import {fetchTMDBMovieImages, fetchTMDBMovieSummary} from '@shine/tmdb';
 import {
   fetchJapaneseTitleFromTMDB,
   saveJapaneseTranslation,
   savePosterUrls,
   saveTMDBId,
-} from '../common/tmdb-utilities';
+} from '@shine/tmdb/persistence';
 
 type MainData = {
   organizationUid: string;

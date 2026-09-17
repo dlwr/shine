@@ -5,7 +5,7 @@ import {
   searchTMDBMulti,
   tmdbGet,
   type TMDBMediaType,
-} from '../common/tmdb-client';
+} from '@shine/tmdb';
 import {type CsvMovieRow, type TmdbMovieDetails} from './types';
 
 export async function fetchMovieByImdbId(
