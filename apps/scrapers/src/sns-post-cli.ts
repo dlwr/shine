@@ -8,6 +8,8 @@
  *   pnpm scrapers sns-post --watched   今週の観た映画チェック(週替わりで1リスト)を告知する
  *   pnpm scrapers sns-post --person    今週の映画人(個人賞の受賞者から週替わりで1人)を紹介する
  *   pnpm scrapers sns-post --monthly   今月の1本を告知する(1日)
+ *   pnpm scrapers sns-post --monthly-preview
+ *                                      来月の1本を予告する(20日)
  *   pnpm scrapers sns-post --monthly-reminder
  *                                      今月の1本の再告知と集まった記事・ポストの件数(15日)
  *   pnpm scrapers sns-post --monthly-links
@@ -32,6 +34,7 @@ import {buildDailyPlan} from './sns/plans/daily';
 import {
   buildMonthlyLinksPlan,
   buildMonthlyPlan,
+  buildMonthlyPreviewPlan,
   buildMonthlyReminderPlan,
   buildMonthlyRoundupPlan,
 } from './sns/plans/monthly';
@@ -47,6 +50,7 @@ type SnsPostOptions = {
   watched: boolean;
   person: boolean;
   monthly: boolean;
+  monthlyPreview: boolean;
   monthlyReminder: boolean;
   monthlyLinks: boolean;
   monthlyRoundup: boolean;
@@ -78,6 +82,10 @@ async function buildPlan(
 
   if (options.monthly) {
     return buildMonthlyPlan();
+  }
+
+  if (options.monthlyPreview) {
+    return buildMonthlyPreviewPlan();
   }
 
   if (options.monthlyReminder) {
@@ -146,6 +154,11 @@ export function createCommand(): Command {
       false,
     )
     .option('--monthly', '今月の1本を告知する(1日)', false)
+    .option(
+      '--monthly-preview',
+      '来月の1本を予告する(20日)。ADMIN_PASSWORD が要る',
+      false,
+    )
     .option(
       '--monthly-reminder',
       '今月の1本の再告知と集まった記事・ポストの件数(15日)',

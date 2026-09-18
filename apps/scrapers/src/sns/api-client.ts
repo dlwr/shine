@@ -73,35 +73,58 @@ export async function fetchArticleLinkCount(movieUid: string): Promise<number> {
   return links.length;
 }
 
-export async function fetchNextMonthlyTitle(): Promise<string | undefined> {
+export type NextMonthly = {date: string; movie: SelectionMovie};
+
+async function requestNextMonthly(): Promise<{
+  date?: string;
+  movie?: SelectionMovie;
+}> {
   const password = process.env.ADMIN_PASSWORD;
   if (!password) {
+    throw new Error('ADMIN_PASSWORD が設定されていません');
+  }
+
+  const loginResponse = await fetch(`${apiUrl()}/auth/login`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', Origin: SITE_URL},
+    body: JSON.stringify({password}),
+  });
+  if (!loginResponse.ok) {
+    throw new Error(`Admin login failed: HTTP ${loginResponse.status}`);
+  }
+
+  const {token} = (await loginResponse.json()) as {token: string};
+  const response = await fetch(
+    `${apiUrl()}/admin/preview-selections?locale=ja`,
+    {headers: {Authorization: `Bearer ${token}`, Origin: SITE_URL}},
+  );
+  if (!response.ok) {
+    throw new Error(`Preview selections API failed: HTTP ${response.status}`);
+  }
+
+  const {nextMonthly} = (await response.json()) as {
+    nextMonthly?: {date?: string; movie?: SelectionMovie};
+  };
+  return nextMonthly ?? {};
+}
+
+export async function fetchNextMonthly(): Promise<NextMonthly> {
+  const {date, movie} = await requestNextMonthly();
+  if (!date || !movie?.uid || !movie.title) {
+    throw new Error('来月の1本が取れませんでした');
+  }
+
+  return {date, movie};
+}
+
+export async function fetchNextMonthlyTitle(): Promise<string | undefined> {
+  if (!process.env.ADMIN_PASSWORD) {
     return undefined;
   }
 
   try {
-    const loginResponse = await fetch(`${apiUrl()}/auth/login`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', Origin: SITE_URL},
-      body: JSON.stringify({password}),
-    });
-    if (!loginResponse.ok) {
-      throw new Error(`Admin login failed: HTTP ${loginResponse.status}`);
-    }
-
-    const {token} = (await loginResponse.json()) as {token: string};
-    const response = await fetch(
-      `${apiUrl()}/admin/preview-selections?locale=ja`,
-      {headers: {Authorization: `Bearer ${token}`, Origin: SITE_URL}},
-    );
-    if (!response.ok) {
-      throw new Error(`Preview selections API failed: HTTP ${response.status}`);
-    }
-
-    const {nextMonthly} = (await response.json()) as {
-      nextMonthly?: {movie?: {title?: string}};
-    };
-    return nextMonthly?.movie?.title;
+    const {movie} = await requestNextMonthly();
+    return movie?.title;
   } catch (error) {
     console.log('来月の1本が取れないため予告を省きます:', error);
     return undefined;

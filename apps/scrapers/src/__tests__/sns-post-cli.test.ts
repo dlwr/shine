@@ -326,6 +326,48 @@ describe('sns-post --dry-run', () => {
     `);
   });
 
+  it('--monthly-preview は来月の1本と始まる日を出す', async () => {
+    vi.stubEnv('ADMIN_PASSWORD', 'secret');
+    stubFetch(
+      buildRoutes({
+        '/admin/preview-selections?locale=ja': {
+          nextMonthly: {
+            date: '2026-10-01',
+            movie: {
+              uid: 'next-monthly-uid',
+              title: 'さざなみ',
+              year: 2015,
+              nominations: [
+                {
+                  organization: {
+                    name: 'Academy Awards',
+                    slug: 'academy-best-picture',
+                  },
+                },
+              ],
+              availability: [{source: 'tmdb', detail: 'MUBI(見放題)'}],
+            },
+          },
+        },
+      }),
+    );
+
+    const output = await runCli('--monthly-preview', '--dry-run');
+
+    expect(output).toContain('来月の1本 —『さざなみ』(2015)');
+    expect(output).toContain('10月1日から、みんなでこれを観ます。');
+    expect(output).toContain(
+      'uri:   https://shine-film.com/movies/next-monthly-uid',
+    );
+  });
+
+  it('--monthly-preview は ADMIN_PASSWORD が無ければ失敗する', async () => {
+    await runCli('--monthly-preview', '--dry-run');
+
+    expect(errorOutput()).toContain('ADMIN_PASSWORD が設定されていません');
+    expect(process.exitCode).toBe(1);
+  });
+
   it('--monthly-roundup は ADMIN_PASSWORD が無ければ予告を省く', async () => {
     const output = await runCli('--monthly-roundup', '--dry-run');
 
