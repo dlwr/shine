@@ -6,11 +6,11 @@ overrides:
   node-domexception: link:./packages/node-domexception
 ignoredBuiltDependencies:
   - esbuild
-  - msw
   - sharp
   - workerd
 onlyBuiltDependencies:
   - '@tailwindcss/oxide'
+  - msw
   - better-sqlite3
   - core-js
   - protobufjs
