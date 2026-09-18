@@ -4,6 +4,9 @@ on:
   schedule:
     # 毎日 12:00 JST。今月の1本に他人の記事・ポストが付いていたら紹介する
     - cron: '0 3 * * *'
+  # API が今月の1本に他人のリンクが付いた時に送る（GITHUB_DISPATCH_TOKEN）
+  repository_dispatch:
+    types: [monthly-link-posted]
   workflow_dispatch:
     inputs:
       dry_run:
