@@ -94,7 +94,7 @@ Cloudflare Workers: non-secret vars go in `wrangler.jsonc`/`wrangler.toml` `vars
 
 - TSエラーとLintエラーを絶対に無視するな
 - **Foreign keys / cascading deletes**: most tables lack `onDelete: 'cascade'`. Movie deletion order: article_links → movie_credits → movie_availability_checks → movie_selections → nominations → reference_urls → translations → poster_urls → movies. When adding delete operations, grep the whole schema for FK references first
-- **Scrapers**: `apps/scrapers/` 配下を編集する前に `new-scraper` スキルを読む（env読み込み・soft-deleteスキップ・TMDbユーティリティ・Wikipedia重複防止・dry-run・冪等性の必須パターン）。CLI は `pnpm scrapers <command> [options]` の単一エントリ（`apps/scrapers/src/cli.ts`）で、各 `*-cli.ts` は `createCommand()` を export するだけでトップレベルの副作用を持たない（`cli.test.ts` が検査する）。一覧は `pnpm scrapers --help`
+- **Scrapers**: `apps/scrapers/` 配下を編集する前に `new-scraper` スキルを読む（env読み込み・soft-deleteスキップ・TMDbユーティリティ・Wikipedia重複防止・dry-run・冪等性の必須パターン）。CLI は `pnpm scrapers <command> [options]` の単一エントリ（`apps/scrapers/src/cli.ts`）で、各 `*-cli.ts` は `createCommand()` を export するだけでトップレベルの副作用を持たない（`cli.test.ts` が検査する）。一覧は `pnpm scrapers --help`（用途ごとに分類して出る）。既存データを書き換える・消す修復系（`fix-*`・`delete-orphan-movies`）は既定が dry-run で、書き込むときだけ `--apply` を付ける
 - **Rate limiting / security**: public submission endpoints need rate limiting; external URL fetches must go through `validateExternalUrl()`
 - **Turso の読み取り量**: 課金はスキャン行数。`turso db inspect shine --queries` で重いクエリを、`pnpm scrapers turso-usage-alert --dry-run` で直近 24 時間と月累計を確認できる。GitHub Actions が 6 時間ごとに同じ確認をして Discord に警告する。overage は無効なので月の上限に達すると読み取りが止まる
 - **Favicon**: `apps/front/public/favicon.svg` is the master; `favicon.ico` and `apple-touch-icon.png` are rasterized from it
