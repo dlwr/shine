@@ -5,11 +5,13 @@ import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {articleLinks} from '@shine/database/schema/article-links';
+import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {createJWT} from '../auth';
 import {moviesRoutes} from '../routes/movies';
+import {getSelectionDate} from '../services/selection-dates';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -283,5 +285,55 @@ describe('投稿の Discord 通知', () => {
 
     expect(response.status).toBe(201);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+async function selectAsMonthly(movieUid: string): Promise<void> {
+  const database = getDatabase(environment);
+  await database.insert(movieSelections).values({
+    selectionType: 'monthly',
+    selectionDate: getSelectionDate(new Date(), 'monthly'),
+    movieId: movieUid,
+  });
+}
+
+describe('今月の1本への他人の投稿', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('今月の1本なら GitHub の repository_dispatch を送る', async () => {
+    await selectAsMonthly('movie-1');
+    environment.GITHUB_DISPATCH_TOKEN = 'ghp_test';
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(undefined, {status: 204}));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await submit({description: 'よかった'}, {'x-real-ip': '203.0.113.9'});
+
+    const dispatchCall = fetchMock.mock.calls.find(([url]) =>
+      String(url).includes('/dispatches'),
+    );
+    expect(dispatchCall).toBeDefined();
+    const [, init] = dispatchCall as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      event_type: 'monthly-link-posted',
+      client_payload: {movieUid: 'movie-1'},
+    });
+  });
+
+  it('今月の1本でなければ送らない', async () => {
+    environment.GITHUB_DISPATCH_TOKEN = 'ghp_test';
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(undefined, {status: 204}));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await submit({description: 'よかった'}, {'x-real-ip': '203.0.113.9'});
+
+    expect(
+      fetchMock.mock.calls.some(([url]) => String(url).includes('/dispatches')),
+    ).toBe(false);
   });
 });

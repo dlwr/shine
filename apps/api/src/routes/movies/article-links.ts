@@ -14,11 +14,14 @@ import {Hono} from 'hono';
 import {hasValidAdminToken} from '../../auth';
 import {sanitizeText, sanitizeUrl} from '../../middleware/sanitizer';
 import {invalidateMovieCaches} from '../../services/movie-cache-invalidation';
+import {getSelectionDate} from '../../services/selection-dates';
+import {findSelectedMovieUid} from '../../services/selection-store';
 import {
   notifyArticleLinkSubmission,
   type ArticleLinkSubmission,
 } from '../../utils/article-link-notification';
 import {resolveClientIp} from '../../utils/client-ip';
+import {dispatchMonthlyLinkPosted} from '../../utils/monthly-link-dispatch';
 import {verifyTurnstileToken} from '../../utils/turnstile';
 
 export const movieArticleLinksRoutes = new Hono<{Bindings: Environment}>();
@@ -44,6 +47,23 @@ async function notifyWithMovieTitle(
     ...submission,
     movieTitle: title?.content,
   });
+}
+
+async function dispatchIfMonthlyPick(
+  environment: Environment,
+  database: ReturnType<typeof getDatabase>,
+  submission: ArticleLinkSubmission,
+): Promise<void> {
+  const monthlyUid = await findSelectedMovieUid(
+    database,
+    'monthly',
+    getSelectionDate(new Date(), 'monthly'),
+  );
+  if (monthlyUid !== submission.movieUid) {
+    return;
+  }
+
+  await dispatchMonthlyLinkPosted(environment, submission);
 }
 
 movieArticleLinksRoutes.post('/:id/article-links', async c => {
@@ -181,16 +201,25 @@ movieArticleLinksRoutes.post('/:id/article-links', async c => {
 
     await invalidateMovieCaches(c.env, movieId);
 
-    if (c.env.DISCORD_WEBHOOK_URL) {
-      const task = notifyWithMovieTitle(c.env, database, {
-        movieUid: movieId,
-        url,
-        title,
-        description,
-        submitterIp: ip,
-        isOwnerSubmission,
-      });
+    const submission: ArticleLinkSubmission = {
+      movieUid: movieId,
+      url,
+      title,
+      description,
+      submitterIp: ip,
+      isOwnerSubmission,
+    };
+    const followUps: Array<Promise<void>> = [];
 
+    if (c.env.DISCORD_WEBHOOK_URL) {
+      followUps.push(notifyWithMovieTitle(c.env, database, submission));
+    }
+
+    if (c.env.GITHUB_DISPATCH_TOKEN) {
+      followUps.push(dispatchIfMonthlyPick(c.env, database, submission));
+    }
+
+    for (const task of followUps) {
       try {
         c.executionCtx.waitUntil(task);
       } catch {
