@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-empty-object-type, @typescript-eslint/no-unused-vars -- vitest の Assertion を拡張するだけの宣言 */
 import type {TestingLibraryMatchers} from '@testing-library/jest-dom/matchers';
 import type {expect} from 'vitest';
 

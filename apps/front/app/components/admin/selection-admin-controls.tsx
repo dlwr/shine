@@ -62,7 +62,7 @@ export function SelectionAdminControls({
       }
 
       await refreshHighlightedMovies();
-      onError(() => undefined); // eslint-disable-line unicorn/no-useless-undefined
+      onError('');
     } catch (error_) {
       console.error('Error re-selecting movie:', error_);
       alert(
@@ -83,7 +83,7 @@ export function SelectionAdminControls({
   const handleOverrideSuccess = useCallback(async () => {
     try {
       await refreshHighlightedMovies();
-      onError(() => '');
+      onError('');
       setIsSearchVisible(false);
     } catch (error_) {
       console.error('Error refreshing movies after override:', error_);
