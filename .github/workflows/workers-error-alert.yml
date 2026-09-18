@@ -2,8 +2,9 @@ name: Workers Error Alert
 
 on:
   schedule:
-    # 6時間ごと。00:00 UTC の回だけ失敗が無くても件数を投稿する
-    - cron: '40 */6 * * *'
+    # 00:00 UTC (09:00 JST) の回は失敗が無くても件数を投稿する
+    - cron: '40 0 * * *'
+    - cron: '40 6,12,18 * * *'
   workflow_dispatch:
     inputs:
       dry_run:
