@@ -67,6 +67,11 @@ const exercises: Exercise[] = [
     routes: searchRoutes,
     path: '/suggest?q=Beauty&locale=ja',
   },
+  {
+    name: '人物の候補',
+    routes: searchRoutes,
+    path: '/suggest?q=Mendes&locale=ja',
+  },
   {name: '人物一覧', routes: peopleRoutes, path: '/?page=1&limit=10'},
   {
     name: '人物ランキング',
@@ -74,12 +79,22 @@ const exercises: Exercise[] = [
     path: '/prominent?locale=ja&limit=5',
   },
   {name: '人物検索', routes: peopleRoutes, path: '/search?q=Hanks&locale=ja'},
+  {
+    name: '人物検索（受賞者）',
+    routes: peopleRoutes,
+    path: '/search?q=Mendes&locale=ja',
+  },
   {name: '人物の交差', routes: peopleRoutes, path: '/crossings?locale=ja'},
   {name: '無冠の人物', routes: peopleRoutes, path: '/uncrowned?locale=ja'},
   {
     name: '人物詳細',
     routes: peopleRoutes,
     path: `/${seededPeopleUids.hanks}?locale=ja`,
+  },
+  {
+    name: '人物詳細（監督）',
+    routes: peopleRoutes,
+    path: `/${seededPeopleUids.mendes}?locale=ja`,
   },
   {name: '映画検索', routes: moviesRoutes, path: '/search?q=Beauty'},
   {name: '映画詳細', routes: moviesRoutes, path: '/movie-beauty?locale=ja'},

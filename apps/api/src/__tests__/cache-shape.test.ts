@@ -1,5 +1,11 @@
 import {describe, expect, it} from 'vitest';
-import {checkCacheShape, describeShape, normalizeCacheKey} from './cache-shape';
+import {
+  checkCacheShape,
+  describeShape,
+  normalizeCacheKey,
+  unmonitoredEmptyPaths,
+} from './cache-shape';
+import recordedShapes from './cache-payload-shapes.json';
 
 describe('describeShape', () => {
   it('入れ子の鍵を path で並べる', () => {
@@ -100,5 +106,47 @@ describe('checkCacheShape', () => {
         shape: recorded.shape,
       }),
     ).toMatchObject({ok: false, reason: 'stale-record'});
+  });
+});
+
+describe('unmonitoredEmptyPaths', () => {
+  it('同じ経路の別の入力で中身が記録されていれば見張れているとみなす', () => {
+    expect(
+      unmonitoredEmptyPaths({
+        'people:search:ja:Hanks:v1': ['data.people[].topMovies[] 空'],
+        'people:search:ja:Mendes:v1': ['data.people[].topMovies[].title'],
+      }),
+    ).toStrictEqual([]);
+  });
+
+  it('どの入力でも空のままなら見張れていないと言う', () => {
+    expect(
+      unmonitoredEmptyPaths({
+        'people:search:ja:Hanks:v1': ['data.people[].topMovies[] 空'],
+        'people:search:ja:Mendes:v1': ['data.people[].topMovies[] 空'],
+      }),
+    ).toStrictEqual([
+      'people:search:ja:Hanks:v1 の data.people[].topMovies[] 空',
+      'people:search:ja:Mendes:v1 の data.people[].topMovies[] 空',
+    ]);
+  });
+
+  it('別の経路に同じ名前の項目があっても見張れているとはみなさない', () => {
+    expect(
+      unmonitoredEmptyPaths({
+        'search:suggest:ja:Beauty:v1': ['data.people[] 空'],
+        'people:list:1:10:v1': ['data.people[].name'],
+      }),
+    ).toStrictEqual(['search:suggest:ja:Beauty:v1 の data.people[] 空']);
+  });
+
+  it('空のオブジェクトも対象にする', () => {
+    expect(
+      unmonitoredEmptyPaths({'awards:list:v20': ['data.filters {}']}),
+    ).toStrictEqual(['awards:list:v20 の data.filters {}']);
+  });
+
+  it('記録した公開経路に見張れていない項目が無い', () => {
+    expect(unmonitoredEmptyPaths(recordedShapes)).toStrictEqual([]);
   });
 });
