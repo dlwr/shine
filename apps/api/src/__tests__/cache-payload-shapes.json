@@ -187,6 +187,17 @@
     "data.people[].uid",
     "data.people[].wonCount"
   ],
+  "people:search:ja:Mendes:v1": [
+    "cachedAt",
+    "data.people[].name",
+    "data.people[].nominatedCount",
+    "data.people[].originalName",
+    "data.people[].topMovies[].title",
+    "data.people[].topMovies[].uid",
+    "data.people[].topMovies[].year",
+    "data.people[].uid",
+    "data.people[].wonCount"
+  ],
   "people:uncrowned:ja:v3": [
     "cachedAt",
     "data.awards[].name",
@@ -199,6 +210,29 @@
     "data.topPeople[].name",
     "data.topPeople[].uid",
     "data.uncrownedPersonCount"
+  ],
+  "person:11111111-1111-4111-8111-111111111111:ja:v6": [
+    "cachedAt",
+    "data.awards[].grouping",
+    "data.awards[].name",
+    "data.awards[].organization",
+    "data.awards[].shortLabel",
+    "data.awards[].slug",
+    "data.credits[].awards[].isWinner",
+    "data.credits[].awards[].slug",
+    "data.credits[].jobs[]",
+    "data.credits[].movieUid",
+    "data.credits[].personAwards[].category",
+    "data.credits[].personAwards[].isWinner",
+    "data.credits[].personAwards[].organization",
+    "data.credits[].personAwards[].slug",
+    "data.credits[].personAwards[].year",
+    "data.credits[].posterUrl",
+    "data.credits[].title",
+    "data.credits[].year",
+    "data.name",
+    "data.originalName",
+    "data.uid"
   ],
   "person:33333333-3333-4333-8333-333333333333:ja:v6": [
     "cachedAt",
@@ -260,6 +294,18 @@
     "data.movies[].uid",
     "data.movies[].year",
     "data.people[] 空"
+  ],
+  "search:suggest:ja:Mendes:v1": [
+    "cachedAt",
+    "data.movies[] 空",
+    "data.people[].name",
+    "data.people[].nominatedCount",
+    "data.people[].originalName",
+    "data.people[].topMovies[].title",
+    "data.people[].topMovies[].uid",
+    "data.people[].topMovies[].year",
+    "data.people[].uid",
+    "data.people[].wonCount"
   ],
   "selections:daily:{date}:ja:v3": [
     "cachedAt",
