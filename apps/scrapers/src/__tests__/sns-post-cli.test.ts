@@ -39,11 +39,17 @@ const dailyMovie = {
       organization: {
         name: 'Golden Globe Awards',
         shortName: 'GG',
-        slug: 'golden-globe-best-picture',
+        displayName: 'ゴールデングローブ賞',
+      },
+    },
+    {
+      organization: {
+        name: 'Academy Awards',
+        shortName: 'Oscars',
+        displayName: 'アカデミー賞',
       },
     },
     {organization: {name: '1001 Movies You Must See Before You Die'}},
-    {organization: {name: 'Academy Awards', slug: 'academy-best-picture'}},
   ],
   availability: [
     {source: 'tmdb', detail: 'Amazon Video(レンタル)'},
@@ -233,7 +239,7 @@ describe('sns-post --dry-run', () => {
     expect(output).toMatchInlineSnapshot(`
       "--- Bluesky投稿内容 ---
       今日の1本 —『フライングハイ』(1980)
-      ゴールデングローブ賞・1001 Movies You Must See Before You Die 選出
+      ゴールデングローブ賞・アカデミー賞 選出
       ▶ レンタル配信あり / U-NEXT
       今月の1本は『ぬいぐるみとしゃべる人はやさしい』
       #青空映画部
@@ -243,7 +249,7 @@ describe('sns-post --dry-run', () => {
       thumb: https://shine-film.com/og/movie.png?id=daily-uid
       --- X投稿内容 ---
       今日の1本 —『フライングハイ』(1980)
-      ゴールデングローブ賞・1001 Movies You Must See Before You Die 選出
+      ゴールデングローブ賞・アカデミー賞 選出
       ▶ レンタル配信あり / U-NEXT
       今月の1本は『ぬいぐるみとしゃべる人はやさしい』
       shine-film.com/movies/daily-uid
@@ -560,34 +566,6 @@ describe('sns-post --dry-run', () => {
 
     expect(errorOutput()).toContain('告知名が不正です: ../secret');
     expect(process.exitCode).toBe(1);
-  });
-
-  it('賞ページ一覧が取れなくても団体名を原語のまま出す', async () => {
-    stubFetch(buildRoutes({'/awards': undefined}));
-
-    const output = await runCli('--dry-run');
-
-    expect(output).toMatchInlineSnapshot(`
-      "賞ページ一覧が取れないため団体名は原語のまま: Error: Awards API failed: HTTP 404
-      --- Bluesky投稿内容 ---
-      今日の1本 —『フライングハイ』(1980)
-      GG・1001 Movies You Must See Before You Die 選出
-      ▶ レンタル配信あり / U-NEXT
-      今月の1本は『ぬいぐるみとしゃべる人はやさしい』
-      #青空映画部
-      --- リンクカード ---
-      uri:   https://shine-film.com/movies/daily-uid
-      title: フライングハイ (1980) | SHINE
-      thumb: https://shine-film.com/og/movie.png?id=daily-uid
-      --- X投稿内容 ---
-      今日の1本 —『フライングハイ』(1980)
-      GG・1001 Movies You Must See Before You Die 選出
-      ▶ レンタル配信あり / U-NEXT
-      今月の1本は『ぬいぐるみとしゃべる人はやさしい』
-      shine-film.com/movies/daily-uid
-
-      (dry-run: 投稿していません)"
-    `);
   });
 
   it('選出が無ければ失敗する', async () => {

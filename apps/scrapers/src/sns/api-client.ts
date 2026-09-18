@@ -9,7 +9,7 @@ export type SelectionMovie = {
   title?: string;
   year?: number;
   nominations?: Array<{
-    organization: {name: string; shortName?: string; slug?: string};
+    organization: {name: string; shortName?: string; displayName?: string};
   }>;
   availability?: AvailabilityEntry[];
 };
@@ -157,15 +157,6 @@ async function fetchAwardPages(): Promise<AwardSummary[]> {
 
   const {awards} = (await response.json()) as {awards: AwardSummary[]};
   return awards;
-}
-
-export async function fetchAwardPagesQuietly(): Promise<AwardSummary[]> {
-  try {
-    return await fetchAwardPages();
-  } catch (error) {
-    console.log('賞ページ一覧が取れないため団体名は原語のまま:', error);
-    return [];
-  }
 }
 
 export async function fetchWatchedLists(): Promise<AwardSummary[]> {
