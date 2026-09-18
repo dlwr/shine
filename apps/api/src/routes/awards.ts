@@ -1,7 +1,7 @@
 import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
 import type {AwardDetail, PersonAwardDetail} from '../types/awards';
-import {AwardsService} from '../services';
+import {AwardsService, PersonAwardsService} from '../services';
 import {paginateAwardDetail} from '../services/award-page-ordering';
 import {
   createCachedResponse,
@@ -59,7 +59,7 @@ awardsRoutes.get('/:slug', async c => {
   const full =
     (cached?.data as AwardDetail | PersonAwardDetail | undefined) ??
     (await service.getAwardBySlug(slug)) ??
-    (await service.getPersonAwardBySlug(slug));
+    (await new PersonAwardsService(c.env).getPersonAwardBySlug(slug));
 
   if (!full) {
     return c.json({error: 'Award not found'}, 404);
