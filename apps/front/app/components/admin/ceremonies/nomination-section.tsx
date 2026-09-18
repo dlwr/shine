@@ -45,8 +45,7 @@ export function NominationSection({
       category => category.organizationUid === formOrganizationUid,
     );
 
-    // eslint-disable-next-line unicorn/no-array-sort
-    return filtered.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+    return filtered.toSorted((a, b) => a.name.localeCompare(b.name, 'ja'));
   }, [awardsData, formOrganizationUid]);
 
   const handleRemoveNomination = async (nominationUid: string) => {
