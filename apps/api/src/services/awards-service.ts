@@ -13,7 +13,7 @@ import {
   movieTitleColumns,
   resolveCategoryUids,
   summarizeAward,
-} from './award-shared';
+} from './award-category-queries';
 import {BaseService} from './base-service';
 import {
   awardPageDefinitions,
