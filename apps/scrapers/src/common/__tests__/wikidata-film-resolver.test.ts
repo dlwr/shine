@@ -6,6 +6,7 @@ import {
   dropMisattributedResolutions,
   isPlausiblePublicationYear,
   publicationYearFromClaims,
+  reportDuplicateResolutions,
   type FilmReference,
   type ResolvedFilm,
   type YearWindow,
@@ -36,6 +37,29 @@ describe('publicationYearFromClaims', () => {
 
   it('P577が無ければundefinedを返す', () => {
     expect(publicationYearFromClaims({P345: []})).toBeUndefined();
+  });
+
+  it('claims自体が無ければundefinedを返す', () => {
+    expect(publicationYearFromClaims(undefined)).toBeUndefined();
+  });
+
+  it('紀元前のように先頭が+でない日付は読まない', () => {
+    const claims = {
+      P577: [{mainsnak: {datavalue: {value: {time: '-0044-03-15T00:00:00Z'}}}}],
+    };
+
+    expect(publicationYearFromClaims(claims)).toBeUndefined();
+  });
+
+  it('timeが文字列でない主張は飛ばして残りから採る', () => {
+    const claims = {
+      P577: [
+        {mainsnak: {datavalue: {value: {time: 1959}}}},
+        {mainsnak: {datavalue: {value: {time: '+1960-03-01T00:00:00Z'}}}},
+      ],
+    };
+
+    expect(publicationYearFromClaims(claims)).toBe(1960);
   });
 });
 
@@ -170,6 +194,46 @@ describe('年の合わない解決結果の扱い', () => {
     expect(dropped).toBe(0);
     expect(resolved.has('野火')).toBe(true);
   });
+
+  it('APIキーも取得関数も無ければ確かめずに残す', async () => {
+    const resolved = createResolved();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const dropped = await dropMisattributedResolutions({
+      references,
+      resolved,
+      throttleMs: 0,
+    });
+
+    expect(dropped).toBe(0);
+    expect(resolved.has('野火')).toBe(true);
+  });
+
+  it('年の合う解決結果しか無ければTMDbに問い合わせない', async () => {
+    const fetchReleaseYear =
+      vi.fn<(imdbId: string) => Promise<number | undefined>>();
+    const plausible = references.filter(
+      reference => reference.key === 'キクとイサム',
+    );
+
+    await dropMisattributedResolutions({
+      references: plausible,
+      resolved: createResolved(),
+      throttleMs: 0,
+      fetchReleaseYear,
+    });
+
+    expect(fetchReleaseYear).not.toHaveBeenCalled();
+  });
+
+  it('解決できていない参照は候補に挙げない', () => {
+    const resolved = createResolved();
+    resolved.delete('野火');
+
+    const candidates = collectImplausibleResolutions(references, resolved);
+
+    expect(candidates.map(candidate => candidate.key)).toEqual(['怒り (小説)']);
+  });
 });
 
 describe('collectDuplicateResolutions', () => {
@@ -207,6 +271,50 @@ describe('collectDuplicateResolutions', () => {
     expect(collectDuplicateResolutions(references, createResolved())).toEqual(
       [],
     );
+  });
+
+  it('解決できていない参照どうしを同じ映画として束ねない', () => {
+    const unresolvedReferences: FilmReference[] = [
+      {key: '学校II', title: '学校II', targetYear: 1996, yearWindow: SAME_YEAR},
+      {
+        key: '学校III',
+        title: '学校III',
+        targetYear: 1998,
+        yearWindow: SAME_YEAR,
+      },
+    ];
+
+    expect(
+      collectDuplicateResolutions(unresolvedReferences, new Map()),
+    ).toEqual([]);
+  });
+});
+
+describe('reportDuplicateResolutions', () => {
+  it('警告するだけで解決結果は捨てない', () => {
+    const serialReferences: FilmReference[] = [
+      {
+        key: '浪人街',
+        title: '浪人街 第一話',
+        targetYear: 1928,
+        yearWindow: SAME_YEAR,
+      },
+      {
+        key: '浪人街',
+        title: '浪人街 第三話',
+        targetYear: 1929,
+        yearWindow: SAME_YEAR,
+      },
+    ];
+    const resolved = new Map<string, ResolvedFilm>([
+      ['浪人街', {imdbId: 'tt0020342'}],
+    ]);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    reportDuplicateResolutions(serialReferences, resolved);
+
+    expect(resolved.has('浪人街')).toBe(true);
+    expect(warn.mock.calls[0][0]).toContain('tt0020342');
   });
 });
 
