@@ -1,39 +1,10 @@
-import {useEffect, useMemo, useState} from 'react';
 import AdminNav from '@/components/admin-nav';
+import {CeremonyListFilters} from '@/components/admin/ceremonies/ceremony-list-filters';
+import {CeremonyListTable} from '@/components/admin/ceremonies/ceremony-list-table';
+import {useCeremonyList} from '@/components/admin/ceremonies/use-ceremony-list';
 import {Button} from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {Input} from '@/components/ui/input';
-import {Label} from '@/components/ui/label';
 import type {Route} from './+types/admin.ceremonies';
 import {resolveApiUrl} from '@/lib/api';
-import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
-
-type CeremonyListItem = {
-  uid: string;
-  organizationUid: string;
-  organizationName: string;
-  organizationCountry: string | null;
-  year: number;
-  ceremonyNumber: number | null;
-  startDate: number | null;
-  endDate: number | null;
-  location: string | null;
-  description: string | null;
-  createdAt: number;
-  updatedAt: number;
-  movieCount: number;
-  imdbEventUrl: string | null;
-};
-
-type LoaderData = {
-  apiUrl: string;
-};
 
 export function meta() {
   return [
@@ -48,155 +19,17 @@ export async function loader({context}: Route.LoaderArgs) {
   };
 }
 
-const formatYearAndNumber = (
-  year: number,
-  ceremonyNumber: number | null,
-): string => {
-  if (ceremonyNumber && ceremonyNumber > 0) {
-    return `${year}年（第${ceremonyNumber}回）`;
-  }
-
-  return `${year}年`;
-};
-
-const formatDate = (value: number | null | undefined): string | undefined => {
-  if (typeof value !== 'number') {
-    return undefined;
-  }
-
-  const date = new Date(value * 1000);
-  if (Number.isNaN(date.getTime())) {
-    return undefined;
-  }
-
-  return date.toLocaleDateString('ja-JP');
-};
-
-const formatDateRange = (
-  startDate: number | null,
-  endDate: number | null,
-): string => {
-  const startText = formatDate(startDate);
-  const endText = formatDate(endDate);
-
-  if (startText && endText) {
-    return `${startText} 〜 ${endText}`;
-  }
-
-  if (startText) {
-    return startText;
-  }
-
-  if (endText) {
-    return endText;
-  }
-
-  return '-';
-};
-
-const formatTimestamp = (value: number): string => {
-  const date = new Date(value * 1000);
-  if (Number.isNaN(date.getTime())) {
-    return '-';
-  }
-
-  return date.toLocaleString('ja-JP', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
-
-const filterCeremonies = (
-  ceremonies: CeremonyListItem[],
-  query: string,
-  organization: string,
-) => {
-  return ceremonies.filter(ceremony => {
-    const isMatchesOrganization =
-      !organization || ceremony.organizationUid === organization;
-
-    const matchesQuery =
-      !query ||
-      ceremony.organizationName.toLowerCase().includes(query.toLowerCase()) ||
-      (ceremony.location ?? '').toLowerCase().includes(query.toLowerCase()) ||
-      ceremony.year.toString().includes(query);
-
-    return isMatchesOrganization && matchesQuery;
-  });
-};
-
 export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
-  const {apiUrl} = loaderData as LoaderData;
-  const [ceremonies, setCeremonies] = useState<CeremonyListItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | undefined>();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [organizationFilter, setOrganizationFilter] = useState('');
-
-  useEffect(() => {
-    const loadCeremonies = async () => {
-      if (typeof globalThis === 'undefined') {
-        return;
-      }
-
-      if (!getAdminToken()) {
-        location.assign('/admin/login');
-        return;
-      }
-
-      setIsLoading(true);
-      setError(undefined);
-
-      try {
-        const response = await adminFetch(`${apiUrl}/admin/ceremonies`);
-
-        if (response.status === 401) {
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error(`Failed with status ${response.status}`);
-        }
-
-        const data = (await response.json()) as {
-          ceremonies: CeremonyListItem[];
-        };
-        setCeremonies(data.ceremonies ?? []);
-      } catch (fetchError) {
-        console.error('Failed to load ceremonies:', fetchError);
-        setError('セレモニー一覧の取得に失敗しました。');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void loadCeremonies();
-  }, [apiUrl]);
-
-  const organizations = useMemo(() => {
-    const unique = new Map<string, string>();
-    for (const ceremony of ceremonies) {
-      if (!unique.has(ceremony.organizationUid)) {
-        unique.set(ceremony.organizationUid, ceremony.organizationName);
-      }
-    }
-
-    const options = [...unique].map(([value, label]) => ({
-      value,
-      label,
-    }));
-
-    // eslint-disable-next-line unicorn/no-array-sort
-    return options.sort((a, b) => a.label.localeCompare(b.label, 'ja'));
-  }, [ceremonies]);
-
-  const filteredCeremonies = useMemo(
-    () => filterCeremonies(ceremonies, searchQuery, organizationFilter),
-    [ceremonies, searchQuery, organizationFilter],
-  );
+  const {
+    isLoading,
+    error,
+    organizations,
+    filteredCeremonies,
+    searchQuery,
+    setSearchQuery,
+    organizationFilter,
+    setOrganizationFilter,
+  } = useCeremonyList(loaderData.apiUrl);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -218,53 +51,13 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <Card className="mb-6">
-          <CardHeader className="pb-4">
-            <CardTitle>検索・フィルター</CardTitle>
-            <CardDescription>
-              団体名や開催年で素早く絞り込み、目的のセレモニーを探せます。
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="flex flex-1 flex-col gap-2 lg:flex-row lg:items-center">
-              <div className="flex flex-1 flex-col lg:mr-4">
-                <Label
-                  htmlFor="ceremony-search"
-                  className="text-sm font-medium text-gray-700">
-                  キーワード検索
-                </Label>
-                <Input
-                  id="ceremony-search"
-                  type="search"
-                  value={searchQuery}
-                  onChange={event => setSearchQuery(event.target.value)}
-                  placeholder="団体名・場所・年で検索"
-                  className="mt-1"
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <Label
-                  htmlFor="organization-filter"
-                  className="text-sm font-medium text-gray-700">
-                  主催団体
-                </Label>
-                <select
-                  id="organization-filter"
-                  value={organizationFilter}
-                  onChange={event => setOrganizationFilter(event.target.value)}
-                  className="mt-1 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                  <option value="">すべて</option>
-                  {organizations.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <CeremonyListFilters
+          organizations={organizations}
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          organizationFilter={organizationFilter}
+          onOrganizationFilterChange={setOrganizationFilter}
+        />
 
         <section className="rounded-lg bg-white shadow">
           {isLoading ? (
@@ -276,99 +69,7 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
               条件に一致するセレモニーが見つかりませんでした。
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      セレモニー
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      主催団体
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      開催期間
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      場所
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      IMDb
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      映画数
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      更新日時
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      操作
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {filteredCeremonies.map(ceremony => (
-                    <tr key={ceremony.uid}>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        <div className="font-medium text-gray-900">
-                          {formatYearAndNumber(
-                            ceremony.year,
-                            ceremony.ceremonyNumber,
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          UID: {ceremony.uid}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        <div className="font-medium">
-                          {ceremony.organizationName}
-                        </div>
-                        {ceremony.organizationCountry && (
-                          <div className="text-xs text-gray-500">
-                            {ceremony.organizationCountry}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {formatDateRange(ceremony.startDate, ceremony.endDate)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {ceremony.location ?? '-'}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {ceremony.imdbEventUrl ? (
-                          <a
-                            href={ceremony.imdbEventUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-blue-600 underline hover:text-blue-800">
-                            IMDb
-                          </a>
-                        ) : (
-                          '-'
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {ceremony.movieCount}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {formatTimestamp(ceremony.updatedAt)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-blue-600">
-                        <Button
-                          asChild
-                          size="sm"
-                          variant="outline"
-                          className="border-blue-600 text-blue-600 hover:bg-blue-50">
-                          <a href={`/admin/ceremonies/${ceremony.uid}`}>編集</a>
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <CeremonyListTable ceremonies={filteredCeremonies} />
           )}
         </section>
       </main>

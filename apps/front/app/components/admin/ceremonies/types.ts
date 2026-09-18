@@ -64,3 +64,25 @@ export type MovieSearchResult = {
   year: number | null;
   imdbUrl?: string | null;
 };
+
+export type CeremonyListItem = {
+  uid: string;
+  organizationUid: string;
+  organizationName: string;
+  organizationCountry: string | null;
+  year: number;
+  ceremonyNumber: number | null;
+  startDate: number | null;
+  endDate: number | null;
+  location: string | null;
+  description: string | null;
+  createdAt: number;
+  updatedAt: number;
+  movieCount: number;
+  imdbEventUrl: string | null;
+};
+
+export type OrganizationOption = {
+  value: string;
+  label: string;
+};
