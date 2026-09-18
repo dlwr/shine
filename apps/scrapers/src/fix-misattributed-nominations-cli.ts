@@ -58,7 +58,7 @@ export function createCommand(): Command {
   pnpm scrapers fix-misattributed-nominations --apply
 `,
     )
-    .action(async (options: {apply?: boolean}) => {
+    .action(async (options: {apply?: boolean; dryRun?: boolean}) => {
       try {
         loadEnvironmentFiles();
         const environment = buildEnvironment(process.env);

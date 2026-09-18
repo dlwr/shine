@@ -23,6 +23,10 @@ describe('isDryRun', () => {
   it('--dry-run を明示しても dry-run', () => {
     expect(isDryRun(parse(['--dry-run']))).toBe(true);
   });
+
+  it('--apply と --dry-run を両方付けたら dry-run', () => {
+    expect(isDryRun(parse(['--apply', '--dry-run']))).toBe(true);
+  });
 });
 
 describe('dryRunOption', () => {

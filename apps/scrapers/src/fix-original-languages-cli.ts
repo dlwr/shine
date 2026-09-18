@@ -55,6 +55,7 @@ export function createCommand(): Command {
         throttle: number;
         concurrency: number;
         apply?: boolean;
+        dryRun?: boolean;
       }) => {
         try {
           loadEnvironmentFiles();

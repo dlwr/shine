@@ -53,7 +53,12 @@ export function createCommand(): Command {
 `,
     )
     .action(
-      async (options: {limit?: number; apply?: boolean; throttle: number}) => {
+      async (options: {
+        limit?: number;
+        apply?: boolean;
+        dryRun?: boolean;
+        throttle: number;
+      }) => {
         try {
           loadEnvironmentFiles();
           const environment = buildEnvironment(process.env);
