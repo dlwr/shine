@@ -229,7 +229,6 @@ async function resolveCorrectMovie(
       if (existing.deletedAt !== null) {
         await database
           .update(movies)
-          // eslint-disable-next-line unicorn/no-null -- 論理削除の解除はnullで表す
           .set({deletedAt: null})
           .where(eq(movies.uid, existing.uid));
         stats.moviesRevived++;

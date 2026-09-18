@@ -226,7 +226,7 @@ describe('toFilmAwardEventData', () => {
     expect(data.editions[0].targetAward[0].categories[0].nominations).toEqual([
       {
         isWinner: true,
-        notes: null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationの型に合わせる
+        notes: null,
         titles: [
           {imdbId: 'tt10574236', title: '怪物', originalTitle: 'Monster'},
         ],

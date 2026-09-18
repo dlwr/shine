@@ -30,7 +30,6 @@ describe('berlinCeremonyNumber', () => {
 
 describe('berlinConfig.isCompetitionCategory', () => {
   it('未分類（null）と長編部門を取り込む', () => {
-    // eslint-disable-next-line unicorn/no-null -- IMDbは未分類カテゴリをnullで返す
     expect(berlinConfig.isCompetitionCategory(null)).toBe(true);
     expect(berlinConfig.isCompetitionCategory('Best Film')).toBe(true);
     expect(berlinConfig.isCompetitionCategory('Competition')).toBe(true);

@@ -14,7 +14,6 @@ const dataPath = path.resolve(
 
 describe('veniceConfig.isCompetitionCategory', () => {
   it('未分類（null）とBest Filmを取り込む', () => {
-    // eslint-disable-next-line unicorn/no-null -- IMDbは未分類カテゴリをnullで返す
     expect(veniceConfig.isCompetitionCategory(null)).toBe(true);
     expect(veniceConfig.isCompetitionCategory('Best Film')).toBe(true);
   });

@@ -33,6 +33,5 @@ export const organizationOptions = (
 
   const options = [...unique].map(([value, label]) => ({value, label}));
 
-  // eslint-disable-next-line unicorn/no-array-sort
-  return options.sort((a, b) => a.label.localeCompare(b.label, 'ja'));
+  return options.toSorted((a, b) => a.label.localeCompare(b.label, 'ja'));
 };

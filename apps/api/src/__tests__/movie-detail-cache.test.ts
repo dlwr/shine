@@ -22,7 +22,6 @@ function createKv(puts: Put[], onPut: () => Promise<void>): KVNamespace {
   return {
     async get(key: string) {
       const value = store.get(key);
-      // eslint-disable-next-line unicorn/no-null -- KVNamespace.get returns null for missing keys
       return value === undefined ? null : JSON.parse(value);
     },
     async put(key: string, value: string, options?: {expirationTtl?: number}) {

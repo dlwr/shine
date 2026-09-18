@@ -102,7 +102,6 @@ describe('formatOrganizationLabel', () => {
         uid: 'org-1',
         name: '日本アカデミー賞',
         shortName: 'JAA',
-        // eslint-disable-next-line unicorn/no-null
         country: null,
       }),
     ).toBe('日本アカデミー賞 (JAA)');
@@ -117,7 +116,6 @@ describe('formatCeremonyLabel', () => {
   });
 
   it('回が無ければ年だけにする', () => {
-    // eslint-disable-next-line unicorn/no-null
     expect(formatCeremonyLabel(ceremony('c-2024', 2024, null))).toBe('2024年');
   });
 });

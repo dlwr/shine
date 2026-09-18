@@ -75,7 +75,6 @@ function createKvStub() {
     store,
     async get(key: string) {
       const entry = store.get(key);
-      // eslint-disable-next-line unicorn/no-null -- KVの実APIはミス時にnullを返す
       return entry ? (JSON.parse(entry.value) as unknown) : null;
     },
     async put(key: string, value: string, options?: {expirationTtl?: number}) {

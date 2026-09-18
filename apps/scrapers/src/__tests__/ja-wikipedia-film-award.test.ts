@@ -149,11 +149,11 @@ describe('toFilmAwardEventData', () => {
           categories: [
             {
               category: '作品賞',
-              total: null, // eslint-disable-line unicorn/no-null -- ImdbEventCollectedDataの型に合わせる
+              total: null,
               nominations: [
                 {
                   isWinner: true,
-                  notes: null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationの型に合わせる
+                  notes: null,
                   titles: [
                     {
                       imdbId: 'tt0000001',
@@ -166,11 +166,11 @@ describe('toFilmAwardEventData', () => {
             },
             {
               category: '外国作品賞',
-              total: null, // eslint-disable-line unicorn/no-null -- ImdbEventCollectedDataの型に合わせる
+              total: null,
               nominations: [
                 {
                   isWinner: true,
-                  notes: null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationの型に合わせる
+                  notes: null,
                   titles: [
                     {
                       imdbId: 'tt0000002',
@@ -193,8 +193,8 @@ describe('toFilmAwardEventData', () => {
         nomination => nomination.titles[0],
       );
     expect(titles).toEqual([
-      {imdbId: 'tt0000099', title: '直指定', originalTitle: null}, // eslint-disable-line unicorn/no-null -- ImdbEventNominationTitleの型に合わせる
-      {imdbId: 'tt0000003', title: '映画C', originalTitle: null}, // eslint-disable-line unicorn/no-null -- ImdbEventNominationTitleの型に合わせる
+      {imdbId: 'tt0000099', title: '直指定', originalTitle: null},
+      {imdbId: 'tt0000003', title: '映画C', originalTitle: null},
     ]);
   });
 

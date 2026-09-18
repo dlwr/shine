@@ -205,7 +205,7 @@ function buildNominations<
     seen.add(match.imdbId);
     const {isWinner, notes} = category.nomination?.(film) ?? {
       isWinner: true,
-      notes: null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationの型に合わせる
+      notes: null,
     };
     nominations.push({
       isWinner,
@@ -214,7 +214,7 @@ function buildNominations<
         {
           imdbId: match.imdbId,
           title: film.title,
-          originalTitle: match.englishTitle ?? null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationTitleの型に合わせる
+          originalTitle: match.englishTitle ?? null,
         },
       ],
     });
@@ -243,7 +243,7 @@ export function toFilmAwardEventData<
           {
             categories: source.categories.map(category => ({
               category: category.category,
-              total: null, // eslint-disable-line unicorn/no-null -- ImdbEventCollectedDataの型に合わせる
+              total: null,
               nominations: buildNominations(
                 source,
                 edition,
