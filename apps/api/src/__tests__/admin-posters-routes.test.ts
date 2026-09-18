@@ -25,7 +25,6 @@ let authHeaders: Record<string, string>;
 function createKvStub(): KVNamespace {
   return {
     async get() {
-      // eslint-disable-next-line unicorn/no-null -- KVNamespace.get returns null for missing keys
       return null;
     },
     async put() {},

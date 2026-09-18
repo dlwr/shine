@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/no-null -- IMDbから収集したJSONはnullを含む */
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';

@@ -102,7 +102,6 @@ type Puts = Array<{key: string; value: string}>;
 function createRecordingKv(puts: Puts): KVNamespace {
   return {
     async get() {
-      // eslint-disable-next-line unicorn/no-null -- KVNamespace.get returns null for missing keys
       return null;
     },
     async put(key: string, value: string) {

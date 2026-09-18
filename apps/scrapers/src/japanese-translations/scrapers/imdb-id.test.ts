@@ -15,7 +15,6 @@ describe('isValidImdbId', () => {
   });
 
   it('nullを無効とする', () => {
-    // eslint-disable-next-line unicorn/no-null
     expect(isValidImdbId(null)).toBe(false);
   });
 

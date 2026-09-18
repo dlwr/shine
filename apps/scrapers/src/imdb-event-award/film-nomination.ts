@@ -60,7 +60,7 @@ export async function ensureFilmNomination(
       .onConflictDoNothing();
     nominationsByMovieUid.set(movieUid, {
       isWinner: winnerFlag,
-      specialMention: film.specialMention ?? null, // eslint-disable-line unicorn/no-null -- DBのnullable列に合わせる
+      specialMention: film.specialMention ?? null,
     });
     stats.nominationsCreated++;
     return;
@@ -93,7 +93,7 @@ export async function ensureFilmNomination(
   nominationsByMovieUid.set(movieUid, {
     isWinner: promoteWinner ? 1 : existing.isWinner,
     specialMention: isUpdateMention
-      ? (film.specialMention ?? null) // eslint-disable-line unicorn/no-null -- DBのnullable列に合わせる
+      ? (film.specialMention ?? null)
       : existing.specialMention,
   });
 

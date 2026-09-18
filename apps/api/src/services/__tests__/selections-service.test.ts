@@ -80,7 +80,6 @@ function createMemoryCache(): EdgeCache {
     async get(key: string, type?: string | {type?: string}) {
       const raw = store.get(key);
       if (raw === undefined) {
-        // eslint-disable-next-line unicorn/no-null -- KVNamespace.get returns null for missing keys
         return null;
       }
 

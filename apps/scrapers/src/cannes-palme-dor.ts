@@ -197,7 +197,7 @@ export function toCompetitionData(
 
     nominations.push({
       isWinner: entry.isWinner,
-      notes: entry.notes ?? null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationの型に合わせる
+      notes: entry.notes ?? null,
       titles: [
         {
           imdbId,
@@ -220,7 +220,7 @@ export function toCompetitionData(
             categories: [
               {
                 category: CATEGORY,
-                total: null, // eslint-disable-line unicorn/no-null -- ImdbEventEditionの型に合わせる
+                total: null,
                 nominations,
               },
             ],

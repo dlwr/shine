@@ -86,6 +86,19 @@ export default tseslint.config(
     },
   },
   {
+    // KV・SQLite の nullable 列・IMDb の JSON が null を返すので、これらの層では null が値そのもの
+    files: [
+      'apps/api/**',
+      'apps/scrapers/**',
+      'packages/**',
+      '**/*.test.ts',
+      '**/*.test.tsx',
+    ],
+    rules: {
+      'unicorn/no-null': 'off',
+    },
+  },
+  {
     files: ['**/*.tsx'],
     plugins: {'react-hooks': reactHooks},
     rules: {

@@ -632,7 +632,6 @@ function createKvStub(puts: string[], gets: string[] = []): KVNamespace {
     async get(key: string) {
       gets.push(key);
       const value = store.get(key);
-      // eslint-disable-next-line unicorn/no-null -- KVNamespace.get returns null for missing keys
       return value === undefined ? null : JSON.parse(value);
     },
     async put(key: string, value: string) {

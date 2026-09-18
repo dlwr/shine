@@ -167,7 +167,7 @@ export function toImdbEventData(
           categories: [
             {
               category: award.category,
-              total: null, // eslint-disable-line unicorn/no-null -- ImdbEventEditionの型に合わせる
+              total: null,
               nominations: buildNominations(edition, resolved),
             },
           ],
@@ -196,12 +196,12 @@ function buildNominations(
 
     nominations.push({
       isWinner: entry.isWinner,
-      notes: null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationの型に合わせる
+      notes: null,
       titles: [
         {
           imdbId: match.imdbId,
           title: entry.filmTitle,
-          originalTitle: match.englishTitle ?? null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationTitleの型に合わせる
+          originalTitle: match.englishTitle ?? null,
         },
       ],
       people: [

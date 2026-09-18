@@ -31,10 +31,7 @@ describe('describeShape', () => {
   });
 
   it('値の型と件数では形が変わらない', () => {
-    expect(
-      // eslint-disable-next-line unicorn/no-null -- JSON の null を型として区別しないことの確認
-      describeShape({items: [{uid: 'a', poster: null}]}),
-    ).toEqual(
+    expect(describeShape({items: [{uid: 'a', poster: null}]})).toEqual(
       describeShape({
         items: [
           {uid: 'b', poster: 'https://example.com/b.jpg'},

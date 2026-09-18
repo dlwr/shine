@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/no-null */
 import {describe, expect, it} from 'vitest';
 import {filterCeremonies, organizationOptions} from './ceremony-list';
 import type {CeremonyListItem} from './types';

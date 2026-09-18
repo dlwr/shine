@@ -138,7 +138,7 @@ function resolveTitles(
     titles.push({
       imdbId: match.imdbId,
       title: film.title,
-      originalTitle: match.englishTitle ?? null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationTitleの型に合わせる
+      originalTitle: match.englishTitle ?? null,
     });
   }
 
@@ -165,7 +165,7 @@ function buildNominations(
 
     nominations.push({
       isWinner: entry.isWinner ?? true,
-      notes: null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationの型に合わせる
+      notes: null,
       titles,
       people: entry.people.map(person => ({
         name: source.personNameAliases?.[person.name] ?? person.name,
@@ -195,7 +195,7 @@ export function toImdbEventData(
             categories: [
               {
                 category: category.category,
-                total: null, // eslint-disable-line unicorn/no-null -- ImdbEventEditionの型に合わせる
+                total: null,
                 nominations: buildNominations(
                   source,
                   category,

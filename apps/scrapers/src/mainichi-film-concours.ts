@@ -97,7 +97,7 @@ const source: FilmAwardSource<MainichiEdition> = {
     {
       category: EXCELLENCE_CATEGORY,
       films: edition => edition.excellence,
-      nomination: () => ({isWinner: false, notes: null}), // eslint-disable-line unicorn/no-null -- ImdbEventNominationの型に合わせる
+      nomination: () => ({isWinner: false, notes: null}),
     },
     {
       category: FOREIGN_CATEGORY,

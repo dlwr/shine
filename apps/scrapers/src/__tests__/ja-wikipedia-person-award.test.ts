@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/no-null -- ImdbEventCollectedDataの型に合わせる */
 import {describe, expect, it} from 'vitest';
 import {
   listPersonAwardConfig,

@@ -327,7 +327,6 @@ describe('GET /selections/:type/history のキャッシュ', () => {
     return {
       async get(key: string) {
         const raw = store.get(key);
-        // eslint-disable-next-line unicorn/no-null -- KVNamespace.get returns null for missing keys
         return raw === undefined ? null : JSON.parse(raw);
       },
       async put(

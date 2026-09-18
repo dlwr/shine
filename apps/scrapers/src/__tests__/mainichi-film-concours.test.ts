@@ -276,7 +276,7 @@ describe('resolution overrides', () => {
     expect(nominations?.[0].titles[0]).toEqual({
       imdbId: 'tt0116386',
       title: '学校II',
-      originalTitle: null, // eslint-disable-line unicorn/no-null -- ImdbEventNominationTitleの型に合わせる
+      originalTitle: null,
     });
   });
 
