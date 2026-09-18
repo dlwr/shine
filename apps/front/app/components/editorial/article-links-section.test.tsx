@@ -39,14 +39,50 @@ describe('ArticleLinksSection', () => {
     turnstileSiteKey: 'site-key',
   };
 
-  it('投稿が無ければ空の案内を出す', () => {
+  it('投稿が無ければ最初の一人になるよう誘う', () => {
+    render(<ArticleLinksSection {...baseProperties} />);
+
+    expect(screen.getByText('まだ誰も書いていません。')).toBeInTheDocument();
+  });
+
+  it('投稿が無ければ一行でもポストの URL でもよいと添える', () => {
     render(<ArticleLinksSection {...baseProperties} />);
 
     expect(
       screen.getByText(
-        'まだ投稿がありません。観たら感想や記事のリンクを貼ってください。',
+        /一行の感想でも、X や Bluesky に書いたポストの URL でも/,
       ),
     ).toBeInTheDocument();
+  });
+
+  it('今月の1本なら同じ月に観ている人がいることを添える', () => {
+    render(<ArticleLinksSection {...baseProperties} isMonthlyPick />);
+
+    expect(
+      screen.getByText('今月はみんなでこの1本を観ています。'),
+    ).toBeInTheDocument();
+  });
+
+  it('今月の1本でなければ月の話は出さない', () => {
+    render(<ArticleLinksSection {...baseProperties} />);
+
+    expect(
+      screen.queryByText('今月はみんなでこの1本を観ています。'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('投稿があれば空の案内を出さない', () => {
+    render(
+      <ArticleLinksSection
+        {...baseProperties}
+        isMonthlyPick
+        articleLinks={[{uid: 'a1', description: '観た'}]}
+      />,
+    );
+
+    expect(
+      screen.queryByText('まだ誰も書いていません。'),
+    ).not.toBeInTheDocument();
   });
 
   it('投稿フォームの見出しを映画題名の次の階層に置く', () => {
