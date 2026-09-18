@@ -1,4 +1,4 @@
-import type {MonthlyPick} from '@/lib/monthly-pick';
+import type {MonthlyPick, MonthlyPickAward} from '@/lib/monthly-pick';
 import {posterUrlForDisplay} from '@/lib/poster-size';
 
 const COPY = {
@@ -7,14 +7,30 @@ const COPY = {
     cta: 'みんなで観る →',
     ownLabel: 'この映画が今月の1本',
     ownCta: '観たら記事・ポストを貼る →',
+    award: (award: MonthlyPickAward) =>
+      `${award.organization} ${award.category} ${award.isWinner ? '受賞' : '選出'}（${award.year}）`,
   },
   en: {
     label: 'THIS MONTH',
     cta: 'Watch together →',
     ownLabel: "THIS MONTH'S FILM",
     ownCta: 'Add your post →',
+    award: (award: MonthlyPickAward) =>
+      `${award.isWinner ? 'Won' : 'Selected'} ${award.organization} ${award.category} (${award.year})`,
   },
 } as const;
+
+function pickBandAward(
+  awards: MonthlyPickAward[],
+  currentPath: string,
+): MonthlyPickAward | undefined {
+  const pageSlug = /^\/awards\/([^/]+)/.exec(currentPath)?.[1];
+  return (
+    (pageSlug && awards.find(award => award.slug === pageSlug)) ||
+    awards.find(award => award.isWinner) ||
+    awards[0]
+  );
+}
 
 export function MonthlyBand({
   monthly,
@@ -34,6 +50,7 @@ export function MonthlyBand({
   const isOwnPage = currentPath === movieHref;
   const href = isOwnPage ? '#article-links' : movieHref;
   const posterSource = posterUrlForDisplay(monthly.posterUrl, 'w185');
+  const award = pickBandAward(monthly.awards, currentPath);
 
   return (
     <aside className="border-b-2 border-ink bg-surface">
@@ -61,6 +78,11 @@ export function MonthlyBand({
               </span>
             )}
           </span>
+          {award && (
+            <span className="block truncate font-mono text-[10px] text-ink-muted">
+              {copy.award(award)}
+            </span>
+          )}
         </span>
         <span className="shrink-0 font-mono text-[10px] font-bold text-ink-muted">
           {isOwnPage ? copy.ownCta : copy.cta}

@@ -18,7 +18,7 @@ const CANDIDATES = [
   {uid: 'movie-b', title: '東京物語', year: 1953},
 ];
 
-const MONTHLY = {uid: 'movie-m', title: '浮雲', year: 1955};
+const MONTHLY = {uid: 'movie-m', title: '浮雲', year: 1955, awards: []};
 
 function stubApi(guess?: unknown) {
   vi.mocked(fetch).mockImplementation(async (input: RequestInfo | URL) => {
