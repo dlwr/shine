@@ -1,6 +1,7 @@
 import {classifySubmission, parseOriginRules} from '@shine/utils';
+import {postDiscordMessage, type FetchLike} from './discord';
 
-const SITE_URL = 'https://shine-film.com';
+export const SITE_URL = 'https://shine-film.com';
 
 export type ArticleLinkSubmission = {
   movieUid: string;
@@ -17,11 +18,6 @@ type NotificationEnvironment = {
   NORTH_STAR_OWNER_URL_PREFIXES?: string;
   NORTH_STAR_OWNER_IPS?: string;
 };
-
-type FetchLike = (
-  input: string,
-  init?: RequestInit,
-) => Promise<{ok: boolean; status?: number}>;
 
 function buildArticleLinkMessage(
   submission: ArticleLinkSubmission,
@@ -49,29 +45,14 @@ export async function notifyArticleLinkSubmission(
   submission: ArticleLinkSubmission,
   fetchImpl: FetchLike = fetch,
 ): Promise<void> {
-  const webhookUrl = environment.DISCORD_WEBHOOK_URL;
-  if (!webhookUrl) {
-    return;
-  }
-
   const origin = classifySubmission(submission, parseOriginRules(environment));
   if (origin === 'test') {
     return;
   }
 
-  try {
-    const response = await fetchImpl(webhookUrl, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        content: buildArticleLinkMessage(submission, origin),
-      }),
-    });
-
-    if (!response.ok) {
-      console.error('Discord notification failed', response.status);
-    }
-  } catch (error) {
-    console.error('Error notifying article link submission:', error);
-  }
+  await postDiscordMessage(
+    environment.DISCORD_WEBHOOK_URL,
+    buildArticleLinkMessage(submission, origin),
+    fetchImpl,
+  );
 }
