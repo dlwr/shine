@@ -1,6 +1,16 @@
 import {SITE_URL} from './meta';
 import type {MovieDetailData} from './movie-detail';
 
+export function isMonthlyPick(
+  matches: readonly ({id?: string; loaderData?: unknown} | undefined)[],
+  movieUid: string | undefined,
+): boolean {
+  const root = matches.find(match => match?.id === 'root');
+  const {monthly} = (root?.loaderData ?? {}) as {monthly?: {uid?: string}};
+
+  return Boolean(movieUid) && monthly?.uid === movieUid;
+}
+
 const MAX_DESCRIPTION_ORGANIZATIONS = 3;
 
 export function summarizeOrganizations(
