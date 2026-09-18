@@ -4,6 +4,8 @@ import {
   buildAnnouncementXPostText,
   buildDailyPostText,
   buildMonthlyPostText,
+  buildMonthlyPreviewPostText,
+  buildMonthlyPreviewXPostText,
   buildMonthlyReminderPostText,
   buildMonthlyReminderXPostText,
   buildMonthlyLinksPostText,
@@ -579,6 +581,50 @@ describe('buildMonthlyLinksPostText', () => {
     });
 
     expect(text).toContain('shine-film.com/movies/movie-1');
+    expect(text).not.toContain('#青空映画部');
+  });
+});
+
+describe('buildMonthlyPreviewPostText', () => {
+  const preview = {...base, startDate: '2026-10-01'};
+
+  it('来月の1本として見出しを付ける', () => {
+    expect(buildMonthlyPreviewPostText(preview)).toContain(
+      '来月の1本 —『ハウスメイド』(2010)',
+    );
+  });
+
+  it('選出元と視聴可否を含む', () => {
+    const text = buildMonthlyPreviewPostText(preview);
+
+    expect(text).toContain('Cannes Film Festival 選出');
+    expect(text).toContain('▶ U-NEXT 見放題');
+  });
+
+  it('始まる月日と、観る手段を用意する誘いを書く', () => {
+    const text = buildMonthlyPreviewPostText(preview);
+
+    expect(text).toContain('10月1日から、みんなでこれを観ます。');
+    expect(text).toContain('観る手段を今のうちに。');
+  });
+
+  it('月をまたいでも始まる月を取り違えない', () => {
+    expect(
+      buildMonthlyPreviewPostText({...preview, startDate: '2027-01-01'}),
+    ).toContain('1月1日から');
+  });
+
+  it('ハッシュタグで終わる', () => {
+    expect(buildMonthlyPreviewPostText(preview)).toMatch(/#青空映画部$/);
+  });
+
+  it('X の本文は裸の URL で終わる', () => {
+    const text = buildMonthlyPreviewXPostText({
+      ...preview,
+      url: 'https://shine-film.com/movies/abc',
+    });
+
+    expect(text).toMatch(/shine-film\.com\/movies\/abc$/);
     expect(text).not.toContain('#青空映画部');
   });
 });

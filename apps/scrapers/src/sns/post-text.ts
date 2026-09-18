@@ -63,6 +63,32 @@ export function buildMonthlyXPostText(
   return withBareUrl(buildMonthlyBody(input), input.url);
 }
 
+type MonthlyPreviewInput = SelectionPostInput & {startDate: string};
+
+function buildMonthlyPreviewBody({
+  startDate,
+  ...input
+}: MonthlyPreviewInput): string {
+  const [, month, day] = startDate.split('-', 3);
+
+  return [
+    ...buildSelectionLines('来月の1本', input),
+    `${Number(month)}月${Number(day)}日から、みんなでこれを観ます。観る手段を今のうちに。`,
+  ].join('\n');
+}
+
+export function buildMonthlyPreviewPostText(
+  input: MonthlyPreviewInput,
+): string {
+  return withHashtag(buildMonthlyPreviewBody(input));
+}
+
+export function buildMonthlyPreviewXPostText(
+  input: MonthlyPreviewInput & {url: string},
+): string {
+  return withBareUrl(buildMonthlyPreviewBody(input), input.url);
+}
+
 type MonthlyReminderInput = {
   title: string;
   year?: number;
