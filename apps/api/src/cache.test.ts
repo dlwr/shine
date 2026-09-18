@@ -26,7 +26,7 @@ describe('Cache Utilities', () => {
 
       expect(key1).toBe(key2);
       expect(key1).not.toBe(key3);
-      expect(key1).toMatch(/^selections:daily:2024-06-24:en:v2$/);
+      expect(key1).toMatch(/^selections:daily:2024-06-24:en:v3$/);
     });
 
     it('人物のキャッシュキーにロケールを含める', () => {

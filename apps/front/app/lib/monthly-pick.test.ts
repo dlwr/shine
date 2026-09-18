@@ -30,7 +30,25 @@ describe('fetchMonthlyPick', () => {
             {url: 'https://img/en.jpg', languageCode: 'en', isPrimary: 1},
             {url: 'https://img/ja.jpg', languageCode: 'ja', isPrimary: 0},
           ],
-          nominations: [],
+          nominations: [
+            {
+              isWinner: false,
+              category: {name: 'Golden Lion', displayName: '金獅子賞'},
+              ceremony: {year: 2026},
+              organization: {
+                name: 'Venice Film Festival',
+                shortName: 'Venice',
+                displayName: 'ヴェネツィア国際映画祭',
+                slug: 'venice-golden-lion',
+              },
+            },
+            {
+              isWinner: true,
+              category: {name: 'Best Picture'},
+              ceremony: {year: 2024},
+              organization: {name: 'Some Circle', shortName: 'Circle'},
+            },
+          ],
         },
       }),
     );
@@ -47,6 +65,21 @@ describe('fetchMonthlyPick', () => {
       title: '邦題',
       year: 2023,
       posterUrl: 'https://img/ja.jpg',
+      awards: [
+        {
+          organization: 'ヴェネツィア国際映画祭',
+          category: '金獅子賞',
+          year: 2026,
+          isWinner: false,
+          slug: 'venice-golden-lion',
+        },
+        {
+          organization: 'Circle',
+          category: 'Best Picture',
+          year: 2024,
+          isWinner: true,
+        },
+      ],
     });
   });
 
@@ -62,7 +95,7 @@ describe('fetchMonthlyPick', () => {
 
     const pick = await fetchMonthlyPick(context, 'en');
 
-    expect(pick).toEqual({uid: 'm1', title: 'Bare', year: 2023});
+    expect(pick).toEqual({uid: 'm1', title: 'Bare', year: 2023, awards: []});
   });
 
   it('API が失敗したら undefined を返す', async () => {

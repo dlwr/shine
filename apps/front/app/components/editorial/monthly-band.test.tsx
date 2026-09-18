@@ -8,6 +8,22 @@ const monthly = {
   title: 'ぬいぐるみとしゃべる人はやさしい',
   year: 2023,
   posterUrl: 'https://image.tmdb.org/t/p/original/x.jpg',
+  awards: [
+    {
+      organization: 'ヴェネツィア国際映画祭',
+      category: '金獅子賞',
+      year: 2026,
+      isWinner: false,
+      slug: 'venice-golden-lion',
+    },
+    {
+      organization: 'POPEYE',
+      category: '21st Century Movie Greatest Hits',
+      year: 2025,
+      isWinner: true,
+      slug: 'popeye-21st-century',
+    },
+  ],
 };
 
 describe('MonthlyBand', () => {
@@ -36,7 +52,7 @@ describe('MonthlyBand', () => {
   it('ポスターが無ければ画像を出さない', () => {
     const {container} = render(
       <MonthlyBand
-        monthly={{uid: 'm1', title: 'Bare', year: 2023}}
+        monthly={{uid: 'm1', title: 'Bare', year: 2023, awards: []}}
         locale="ja"
         currentPath="/awards"
       />,
@@ -70,5 +86,64 @@ describe('MonthlyBand', () => {
     );
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('受賞があればその賞を一行添える', () => {
+    render(<MonthlyBand monthly={monthly} locale="ja" currentPath="/years" />);
+
+    expect(screen.getByRole('link')).toHaveTextContent(
+      'POPEYE 21st Century Movie Greatest Hits 受賞（2025）',
+    );
+  });
+
+  it('賞ページではその賞のノミネートを優先して添える', () => {
+    render(
+      <MonthlyBand
+        monthly={monthly}
+        locale="ja"
+        currentPath="/awards/venice-golden-lion/2026"
+      />,
+    );
+
+    const link = screen.getByRole('link');
+    expect(link).toHaveTextContent(
+      'ヴェネツィア国際映画祭 金獅子賞 選出（2026）',
+    );
+    expect(link).not.toHaveTextContent('POPEYE');
+  });
+
+  it('受賞が無ければ先頭のノミネートを添える', () => {
+    render(
+      <MonthlyBand
+        monthly={{...monthly, awards: [monthly.awards[0]]}}
+        locale="ja"
+        currentPath="/years"
+      />,
+    );
+
+    expect(screen.getByRole('link')).toHaveTextContent(
+      'ヴェネツィア国際映画祭 金獅子賞 選出（2026）',
+    );
+  });
+
+  it('英語では英語の賞の行にする', () => {
+    render(<MonthlyBand monthly={monthly} locale="en" currentPath="/years" />);
+
+    expect(screen.getByRole('link')).toHaveTextContent(
+      'Won POPEYE 21st Century Movie Greatest Hits (2025)',
+    );
+  });
+
+  it('ノミネートが無ければ賞の行を出さない', () => {
+    render(
+      <MonthlyBand
+        monthly={{...monthly, awards: []}}
+        locale="ja"
+        currentPath="/years"
+      />,
+    );
+
+    expect(screen.getByRole('link')).not.toHaveTextContent('受賞');
+    expect(screen.getByRole('link')).not.toHaveTextContent('選出');
   });
 });

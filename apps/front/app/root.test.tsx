@@ -17,7 +17,7 @@ let mockRootLoaderData:
       locale: string;
       canonicalUrl?: string;
       webAnalyticsToken?: string;
-      monthly?: {uid: string; title: string; year?: number};
+      monthly?: {uid: string; title: string; year?: number; awards: unknown[]};
     }
   | undefined = {
   locale: 'ja',
@@ -147,7 +147,12 @@ describe('root loader の今月の1本', () => {
       'https://api.example/?locale=ja',
       expect.anything(),
     );
-    expect(monthly).toEqual({uid: 'm1', title: '邦題', year: 2023});
+    expect(monthly).toEqual({
+      uid: 'm1',
+      title: '邦題',
+      year: 2023,
+      awards: [],
+    });
   });
 
   it('ホームでは取らない', async () => {
@@ -181,7 +186,7 @@ describe('root App', () => {
   it('今月の1本があれば帯を出す', () => {
     mockRootLoaderData = {
       locale: 'ja',
-      monthly: {uid: 'm1', title: '邦題', year: 2023},
+      monthly: {uid: 'm1', title: '邦題', year: 2023, awards: []},
     };
     mockPathname = '/awards';
 

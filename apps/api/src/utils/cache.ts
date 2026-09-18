@@ -190,7 +190,7 @@ export const getCacheKeyForSelection = (
   type: string,
   date: string,
   locale: string,
-): string => `selections:${type}:${date}:${locale}:v2`;
+): string => `selections:${type}:${date}:${locale}:v3`;
 
 export const getCacheKeyForSelectionHistory = (
   type: string,

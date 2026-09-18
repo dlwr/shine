@@ -9,7 +9,10 @@ import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
-import {awardPageLinkForOrganizationName} from './award-definition-lookup';
+import {
+  awardPageLinkForOrganizationName,
+  japaneseAwardNames,
+} from './award-definition-lookup';
 import type {MovieSelection} from '../types/movies';
 
 type Database = ReturnType<typeof getDatabase>;
@@ -157,33 +160,42 @@ export async function loadSelectionMovie(
       isPrimary: p.isPrimary ?? 0,
     })),
     imdbUrl,
-    nominations: nominationsData.map(nom => ({
-      uid: nom.nominationUid,
-      isWinner: Boolean(nom.isWinner),
-      specialMention: nom.specialMention ?? undefined,
-      person:
-        nom.personUid && nom.personName
-          ? {uid: nom.personUid, name: nom.personName}
-          : undefined,
-      category: {
-        uid: nom.categoryUid,
-        name: nom.categoryName,
-      },
-      ceremony: {
-        uid: nom.ceremonyUid,
-        number: nom.ceremonyNumber ?? undefined,
-        year: nom.ceremonyYear,
-      },
-      organization: {
-        uid: nom.organizationUid,
-        name: nom.organizationName,
-        shortName: nom.organizationShortName ?? undefined,
-        ...awardPageLinkForOrganizationName(
-          nom.organizationName,
-          nom.categoryName,
-        ),
-      },
-    })),
+    nominations: nominationsData.map(nom => {
+      const japaneseNames =
+        locale === 'ja'
+          ? japaneseAwardNames(nom.organizationName, nom.categoryName)
+          : {};
+
+      return {
+        uid: nom.nominationUid,
+        isWinner: Boolean(nom.isWinner),
+        specialMention: nom.specialMention ?? undefined,
+        person:
+          nom.personUid && nom.personName
+            ? {uid: nom.personUid, name: nom.personName}
+            : undefined,
+        category: {
+          uid: nom.categoryUid,
+          name: nom.categoryName,
+          displayName: japaneseNames.category,
+        },
+        ceremony: {
+          uid: nom.ceremonyUid,
+          number: nom.ceremonyNumber ?? undefined,
+          year: nom.ceremonyYear,
+        },
+        organization: {
+          uid: nom.organizationUid,
+          name: nom.organizationName,
+          shortName: nom.organizationShortName ?? undefined,
+          displayName: japaneseNames.organization,
+          ...awardPageLinkForOrganizationName(
+            nom.organizationName,
+            nom.categoryName,
+          ),
+        },
+      };
+    }),
     articleLinks: topArticles.map(article => ({
       uid: article.uid,
       url: article.url ?? undefined,
