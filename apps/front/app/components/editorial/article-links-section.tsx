@@ -43,6 +43,7 @@ type ArticleLinksSectionProperties = {
   isLoadingTitle: boolean;
   submissionResult: SubmissionResult;
   turnstileSiteKey?: string;
+  isMonthlyPick?: boolean;
 };
 
 export function ArticleLinksSection({
@@ -56,6 +57,7 @@ export function ArticleLinksSection({
   isLoadingTitle,
   submissionResult,
   turnstileSiteKey,
+  isMonthlyPick = false,
 }: ArticleLinksSectionProperties) {
   const FormRoot: ElementType = isTestMode ? 'form' : Form;
   const links = articleLinks ?? [];
@@ -104,9 +106,20 @@ export function ArticleLinksSection({
             </div>
           ))
         ) : (
-          <p className="text-ink-muted text-sm">
-            まだ投稿がありません。観たら感想や記事のリンクを貼ってください。
-          </p>
+          <div className="border-2 border-dashed border-ink/30 px-4 py-3">
+            <p className="text-ink text-sm font-medium">
+              まだ誰も書いていません。
+            </p>
+            {isMonthlyPick && (
+              <p className="text-ink text-sm">
+                今月はみんなでこの1本を観ています。
+              </p>
+            )}
+            <p className="text-ink-muted text-xs mt-1">
+              最初の一人になってください。一行の感想でも、X や Bluesky
+              に書いたポストの URL でもかまいません。
+            </p>
+          </div>
         )}
       </div>
 

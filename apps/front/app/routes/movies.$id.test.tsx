@@ -186,6 +186,7 @@ const monthlyMeta = () =>
 const createMatches = (
   loaderData: LoaderResult,
   parameters: ComponentProperties['params'],
+  monthlyUid?: string,
 ): Matches =>
   cast<Matches>([
     {
@@ -194,6 +195,7 @@ const createMatches = (
       pathname: '/',
       data: undefined,
       handle: undefined,
+      ...(monthlyUid && {loaderData: {monthly: {uid: monthlyUid}}}),
     },
     {
       id: 'routes/movies.$id',
@@ -1052,10 +1054,30 @@ describe('MovieDetail Component', () => {
       );
 
       expect(screen.getByText('観た人の記事・ポスト')).toBeInTheDocument();
+      expect(screen.getByText('まだ誰も書いていません。')).toBeInTheDocument();
+    });
+
+    it('今月の1本で記事リンクがない場合は同じ月に観ている人がいることを添える', () => {
+      const loaderData = {
+        movieDetail: {...mockMovieDetail, articleLinks: []},
+      };
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={cast<LoaderResult>(loaderData)}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(
+            cast<LoaderResult>(loaderData),
+            parameters,
+            'movie-123',
+          )}
+        />,
+      );
+
       expect(
-        screen.getByText(
-          'まだ投稿がありません。観たら感想や記事のリンクを貼ってください。',
-        ),
+        screen.getByText('今月はみんなでこの1本を観ています。'),
       ).toBeInTheDocument();
     });
 

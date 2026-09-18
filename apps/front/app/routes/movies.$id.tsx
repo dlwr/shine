@@ -193,6 +193,7 @@ export async function action({context, params, request}: Route.ActionArgs) {
 export default function MovieDetail({
   loaderData,
   actionData,
+  matches,
 }: Route.ComponentProps) {
   const isTestMode = useIsTestMode();
   const data = loaderData as LoaderData;
@@ -334,6 +335,7 @@ export default function MovieDetail({
           isLoadingTitle={isLoadingTitle}
           submissionResult={submissionResult}
           turnstileSiteKey={turnstileSiteKey}
+          isMonthlyPick={isMonthlyPick(matches, movieDetail.uid)}
         />
 
         {/* Related Movies */}
