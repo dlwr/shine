@@ -122,7 +122,9 @@ export default function App() {
         locale={rootData?.locale ?? DEFAULT_LOCALE}
         currentPath={pathname}
       />
-      <Outlet />
+      <main>
+        <Outlet />
+      </main>
     </>
   );
 }

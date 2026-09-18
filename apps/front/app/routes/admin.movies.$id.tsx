@@ -144,7 +144,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="space-y-6">
           <MovieInfoEditor
             movieData={movieData}
@@ -181,7 +181,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
             onArticleLinksUpdate={setMovieData}
           />
         </div>
-      </main>
+      </div>
     </div>
   );
 }

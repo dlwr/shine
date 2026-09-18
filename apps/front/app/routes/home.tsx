@@ -149,7 +149,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
           <AdminSessionBar locale={locale} />
         </Suspense>
       )}
-      <main className="max-w-5xl mx-auto px-4 py-6">
+      <div className="max-w-5xl mx-auto px-4 py-6">
         <Masthead locale={locale} />
         <Movies
           movies={movies}
@@ -163,7 +163,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
           onError={setError}
         />
         <SiteFooter locale={locale} />
-      </main>
+      </div>
     </div>
   );
 }
