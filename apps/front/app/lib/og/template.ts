@@ -12,7 +12,7 @@ const COLORS = {
   surface: '#ffffff',
   ink: '#15140f',
   inkMuted: '#595650',
-  brand: '#e01e10',
+  brand: '#c41a0d',
   brandOn: '#ffffff',
 };
 
