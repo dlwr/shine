@@ -1,10 +1,12 @@
 packages:
   - apps/*
   - packages/*
+minimumReleaseAge: 4320
 overrides:
   node-domexception: link:./packages/node-domexception
 ignoredBuiltDependencies:
   - esbuild
+  - msw
   - sharp
   - workerd
 onlyBuiltDependencies:

@@ -8,6 +8,12 @@ updates:
       day: 'monday'
       time: '09:00'
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
+    ignore:
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@cloudflare/workers-types'
 
   # GitHub Actions (if you add any workflows)
   - package-ecosystem: 'github-actions'
