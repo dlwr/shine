@@ -49,6 +49,14 @@ describe('ArticleLinksSection', () => {
     ).toBeInTheDocument();
   });
 
+  it('投稿フォームの見出しを映画題名の次の階層に置く', () => {
+    render(<ArticleLinksSection {...baseProperties} />);
+
+    expect(
+      screen.getByRole('heading', {name: '観たら、ひとこと残す', level: 2}),
+    ).toBeInTheDocument();
+  });
+
   it('URL 付きの投稿はタイトルをリンクにする', () => {
     render(
       <ArticleLinksSection
