@@ -18,6 +18,7 @@ import {AwardsService} from '../services/awards-service';
 import {CrossingsService} from '../services/crossings-service';
 import {MoviesService} from '../services/movies-service';
 import {PeopleService} from '../services/people-service';
+import {PersonAwardsService} from '../services/person-awards-service';
 import {PersonCrossingsService} from '../services/person-crossings-service';
 import {PersonUncrownedService} from '../services/person-uncrowned-service';
 import {QuizService} from '../services/quiz-service';
@@ -241,7 +242,9 @@ const exercises: Exercise[] = [
   {
     name: '個人賞ページ',
     run: environment =>
-      new AwardsService(environment).getPersonAwardBySlug('academy-director'),
+      new PersonAwardsService(environment).getPersonAwardBySlug(
+        'academy-director',
+      ),
   },
   {
     name: '年一覧',

@@ -14,6 +14,7 @@ import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {AwardsService} from '../awards-service';
+import {PersonAwardsService} from '../person-awards-service';
 import {
   awardPageLinkForOrganizationName,
   findPersonAwardDefinition,
@@ -892,14 +893,14 @@ async function seedJapanAcademyDirector(database: TestDatabase): Promise<void> {
   ]);
 }
 
-describe('AwardsService.getPersonAwardBySlug', () => {
+describe('PersonAwardsService.getPersonAwardBySlug', () => {
   let environment: Environment;
   let database: TestDatabase;
-  let service: AwardsService;
+  let service: PersonAwardsService;
 
   beforeEach(async () => {
     ({environment, database} = await createTestEnvironment());
-    service = new AwardsService(environment);
+    service = new PersonAwardsService(environment);
     await seedJapanAcademyDirector(database);
   });
 
@@ -998,7 +999,10 @@ describe('AwardsService.getPersonAwardBySlug', () => {
   });
 
   it('年ページは持たない', async () => {
-    const result = await service.getAwardYear('japan-academy-director', 1994);
+    const result = await new AwardsService(environment).getAwardYear(
+      'japan-academy-director',
+      1994,
+    );
 
     expect(result).toBeUndefined();
   });
