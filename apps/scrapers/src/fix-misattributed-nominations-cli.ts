@@ -5,6 +5,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {Command} from 'commander';
+import {applyOption, dryRunOption, isDryRun} from './common/write-mode';
 import {
   assertDatabaseEnvironment,
   buildEnvironment,
@@ -47,16 +48,17 @@ export function createCommand(): Command {
         '正しい映画がDBに無ければTMDbから作成し、ソフト削除されていれば復活させます。',
       ].join('\n'),
     )
-    .option('--dry-run', '書き込みは行わず、対象のみ表示', false)
+    .addOption(applyOption())
+    .addOption(dryRunOption())
     .addHelpText(
       'after',
       `
 例:
-  pnpm scrapers fix-misattributed-nominations --dry-run
   pnpm scrapers fix-misattributed-nominations
+  pnpm scrapers fix-misattributed-nominations --apply
 `,
     )
-    .action(async (options: {dryRun: boolean}) => {
+    .action(async (options: {apply?: boolean; dryRun?: boolean}) => {
       try {
         loadEnvironmentFiles();
         const environment = buildEnvironment(process.env);
@@ -69,7 +71,7 @@ export function createCommand(): Command {
         const stats = await fixMisattributedNominations({
           environment,
           entries,
-          dryRun: options.dryRun,
+          dryRun: isDryRun(options),
           throttleMs: 250,
         });
 

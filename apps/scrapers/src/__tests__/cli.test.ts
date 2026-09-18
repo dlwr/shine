@@ -5,7 +5,7 @@ import {type Command} from 'commander';
 import {config} from 'dotenv';
 import {getDatabase} from '@shine/database';
 import {afterAll, describe, expect, it, vi} from 'vitest';
-import {createProgram} from '../cli';
+import {createProgram, REPAIR_HEADING} from '../cli';
 
 vi.hoisted(() => {
   vi.resetModules();
@@ -85,6 +85,27 @@ describe('createProgram', () => {
     const names = createProgram().commands.map(command => command.name());
 
     expect(new Set(names).size).toBe(names.length);
+  });
+
+  it('全サブコマンドが help の分類に属する', () => {
+    const ungrouped = createProgram()
+      .commands.filter(command => command.helpGroup() === '')
+      .map(command => command.name());
+
+    expect(ungrouped).toEqual([]);
+  });
+
+  it('データ修復のコマンドは --apply を付けないと書き込まない', () => {
+    const repairCommands = createProgram().commands.filter(
+      command => command.helpGroup() === REPAIR_HEADING,
+    );
+
+    expect(repairCommands.length).toBeGreaterThan(0);
+    for (const command of repairCommands) {
+      const flags = new Set(command.options.map(option => option.long));
+      expect(flags).toContain('--apply');
+      expect(command.opts().apply).toBeUndefined();
+    }
   });
 
   it('root の --help に全サブコマンドが載る', async () => {

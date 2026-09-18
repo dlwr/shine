@@ -2,6 +2,7 @@
  * デフォルト翻訳を原語の行に付け替えるCLI
  */
 import {Command} from 'commander';
+import {applyOption, dryRunOption, isDryRun} from './common/write-mode';
 import {
   assertDatabaseEnvironment,
   buildEnvironment,
@@ -19,16 +20,17 @@ export function createCommand(): Command {
         '原語の行が無い映画は変更しません。',
       ].join('\n'),
     )
-    .option('--dry-run', '書き込みは行わず、対象のみ表示', false)
+    .addOption(applyOption())
+    .addOption(dryRunOption())
     .addHelpText(
       'after',
       `
 例:
-  pnpm scrapers fix-default-translations --dry-run
   pnpm scrapers fix-default-translations
+  pnpm scrapers fix-default-translations --apply
 `,
     )
-    .action(async (options: {dryRun: boolean}) => {
+    .action(async (options: {apply?: boolean; dryRun?: boolean}) => {
       try {
         loadEnvironmentFiles();
         const environment = buildEnvironment(process.env);
@@ -37,11 +39,11 @@ export function createCommand(): Command {
 
         const database = getScrapeDatabase({
           environment,
-          isDryRun: options.dryRun,
+          isDryRun: isDryRun(options),
         });
 
         const result = await fixDefaultTranslations(
-          {database, isDryRun: options.dryRun},
+          {database, isDryRun: isDryRun(options)},
           {
             onFix(movieUid, resourceType, language) {
               console.log(`  ${movieUid} ${resourceType} -> ${language}`);

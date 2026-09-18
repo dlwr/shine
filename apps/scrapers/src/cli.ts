@@ -56,65 +56,93 @@ import {createCommand as wikidataJapaneseNames} from './wikidata-japanese-names-
 import {createCommand as wikidataJapaneseTitles} from './wikidata-japanese-titles-cli';
 import {createCommand as yokohamaFilmFestival} from './yokohama-film-festival-cli';
 
-const commandFactories: Array<() => Command> = [
-  movieImport,
-  academyAwards,
-  japanAcademyAwards,
-  japanAcademyPersonAwards,
-  academyPersonAwards,
-  baftaAwards,
-  goldenGlobeAwards,
-  cannesPersonAwards,
-  venicePersonAwards,
-  berlinPersonAwards,
-  cannesPalmeDor,
-  cannesFillImdbIds,
-  cannesJuryAwards,
-  veniceJuryAwards,
-  berlinJuryAwards,
-  japanPersonAwards,
-  mainichiPersonNominations,
-  assignImdbIds,
-  backfillPosters,
-  deleteOrphanMovies,
-  fixMisattributedNominations,
-  importImdbList,
-  availabilityCheck,
-  japaneseTranslations,
-  wikidataJapaneseTitles,
-  wikidataJapaneseNames,
-  veniceFilmFestival,
-  berlinFilmFestival,
-  kinemaJunpo,
-  mainichiFilmConcours,
-  blueRibbonAwards,
-  hochiFilmAwards,
-  nikkanSportsFilmAwards,
-  yokohamaFilmFestival,
-  movieCredits,
-  personEnglishNames,
-  movieDescriptions,
-  tmdbJaWorklist,
-  fixDefaultTranslations,
-  fixOriginalLanguages,
-  fixPosterContamination,
-  fixJapaneseTitleContamination,
-  snsPost,
-  tursoUsageAlert,
-  northStarReport,
-  survey,
-];
+export const REPAIR_HEADING =
+  'データ修復 (既定は dry-run、書き込みは --apply):';
+
+const commandGroups: Array<{heading: string; factories: Array<() => Command>}> =
+  [
+    {
+      heading: '賞の取り込み:',
+      factories: [
+        academyAwards,
+        academyPersonAwards,
+        japanAcademyAwards,
+        japanAcademyPersonAwards,
+        baftaAwards,
+        goldenGlobeAwards,
+        cannesPalmeDor,
+        cannesPersonAwards,
+        cannesJuryAwards,
+        veniceFilmFestival,
+        venicePersonAwards,
+        veniceJuryAwards,
+        berlinFilmFestival,
+        berlinPersonAwards,
+        berlinJuryAwards,
+        japanPersonAwards,
+        kinemaJunpo,
+        mainichiFilmConcours,
+        mainichiPersonNominations,
+        blueRibbonAwards,
+        hochiFilmAwards,
+        nikkanSportsFilmAwards,
+        yokohamaFilmFestival,
+      ],
+    },
+    {
+      heading: '映画・人物データの取り込み:',
+      factories: [
+        movieImport,
+        importImdbList,
+        movieCredits,
+        movieDescriptions,
+        backfillPosters,
+        japaneseTranslations,
+        wikidataJapaneseTitles,
+        wikidataJapaneseNames,
+        personEnglishNames,
+        assignImdbIds,
+        cannesFillImdbIds,
+        tmdbJaWorklist,
+      ],
+    },
+    {
+      heading: REPAIR_HEADING,
+      factories: [
+        fixMisattributedNominations,
+        fixDefaultTranslations,
+        fixOriginalLanguages,
+        fixPosterContamination,
+        fixJapaneseTitleContamination,
+        deleteOrphanMovies,
+      ],
+    },
+    {
+      heading: '運用・監視:',
+      factories: [
+        availabilityCheck,
+        snsPost,
+        tursoUsageAlert,
+        northStarReport,
+        survey,
+      ],
+    },
+  ];
 
 export function createProgram(): Command {
   const program = new Command()
     .name('scrapers')
     .description('SHINE のスクレイパー・保守ツール');
 
-  for (const createCommand of commandFactories) {
-    const command = createCommand();
-    program.addCommand(
-      command.summary(command.description().split('\n', 1)[0] ?? ''),
-    );
+  for (const group of commandGroups) {
+    for (const createCommand of group.factories) {
+      const command = createCommand();
+      program.addCommand(
+        command
+          .summary(command.description().split('\n', 1)[0] ?? '')
+          .helpGroup(group.heading),
+      );
+    }
   }
 
   return program;

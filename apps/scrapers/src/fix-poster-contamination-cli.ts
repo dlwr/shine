@@ -2,6 +2,7 @@
  * 他作品のポスター混入を掃除するCLI
  */
 import {Command, InvalidArgumentError} from 'commander';
+import {applyOption, dryRunOption, isDryRun} from './common/write-mode';
 import {getScrapeDatabase} from './common/dry-run';
 import {
   assertDatabaseEnvironment,
@@ -39,14 +40,15 @@ export function createCommand(): Command {
       parsePositiveInteger,
       100,
     )
-    .option('--dry-run', '書き込みは行わず、対象のみ表示', false)
+    .addOption(applyOption())
+    .addOption(dryRunOption())
     .addHelpText(
       'after',
       `
 例:
-  pnpm scrapers fix-poster-contamination --movie <uid> --dry-run
-  pnpm scrapers fix-poster-contamination --limit 100 --dry-run
-  pnpm scrapers fix-poster-contamination
+  pnpm scrapers fix-poster-contamination --movie <uid>
+  pnpm scrapers fix-poster-contamination --limit 100
+  pnpm scrapers fix-poster-contamination --limit 100 --apply
 `,
     )
     .action(
@@ -54,7 +56,8 @@ export function createCommand(): Command {
         movie?: string;
         limit?: number;
         throttle: number;
-        dryRun: boolean;
+        apply?: boolean;
+        dryRun?: boolean;
       }) => {
         try {
           loadEnvironmentFiles();
@@ -68,11 +71,11 @@ export function createCommand(): Command {
 
           const database = getScrapeDatabase({
             environment,
-            isDryRun: options.dryRun,
+            isDryRun: isDryRun(options),
           });
 
           const result = await fixPosterContamination(
-            {database, environment, isDryRun: options.dryRun},
+            {database, environment, isDryRun: isDryRun(options)},
             {
               movieUid: options.movie,
               limit: options.limit,
