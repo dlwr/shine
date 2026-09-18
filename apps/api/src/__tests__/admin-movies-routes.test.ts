@@ -6,7 +6,7 @@ import {eq, getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {createJWT} from '../auth';
 import {adminMoviesRoutes} from '../routes/admin/movies';
 
@@ -309,5 +309,162 @@ describe('DELETE /movies/:id', () => {
         .from(translations)
         .where(eq(translations.resourceUid, 'movie-1')),
     ).toHaveLength(0);
+  });
+});
+
+async function postMovie(body: string) {
+  return adminMoviesRoutes.request(
+    '/movies',
+    {method: 'POST', headers: authHeaders, body},
+    environment,
+  );
+}
+
+describe('POST /movies', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  it('トークンが無ければ 401 を返す', async () => {
+    const response = await adminMoviesRoutes.request(
+      '/movies',
+      {method: 'POST', body: JSON.stringify({imdbId: 'tt0000001'})},
+      environment,
+    );
+
+    expect(response.status).toBe(401);
+  });
+
+  it('JSON として読めない本文は 400 を返す', async () => {
+    const response = await postMovie('{');
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: 'Invalid request body',
+    });
+  });
+
+  it('IMDb ID が無ければ 400 を返す', async () => {
+    const response = await postMovie(JSON.stringify({}));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({error: 'IMDb ID is required'});
+  });
+
+  it('IMDb ID が文字列でなければ 400 を返す', async () => {
+    const response = await postMovie(JSON.stringify({imdbId: 1_234_567}));
+
+    expect(response.status).toBe(400);
+  });
+
+  it('tt で始まらない ID は 400 を返す', async () => {
+    const response = await postMovie(
+      JSON.stringify({imdbId: '0000001', refreshData: false}),
+    );
+
+    expect(response.status).toBe(400);
+  });
+
+  it('TMDb を引かずに映画を作る', async () => {
+    const response = await postMovie(
+      JSON.stringify({imdbId: 'tt0000001', refreshData: false}),
+    );
+
+    expect(response.status).toBe(201);
+    const {movie} = (await response.json()) as {movie: {imdbId?: string}};
+    expect(movie.imdbId).toBe('tt0000001');
+  });
+
+  it('既に使われている IMDb ID は 409 を返す', async () => {
+    const response = await postMovie(
+      JSON.stringify({imdbId: 'tt0061549', refreshData: false}),
+    );
+
+    expect(response.status).toBe(409);
+  });
+
+  it('論理削除された映画の IMDb ID も重複として拒む', async () => {
+    await database
+      .update(movies)
+      .set({imdbId: 'tt0000002'})
+      .where(eq(movies.uid, 'movie-deleted'));
+
+    const response = await postMovie(
+      JSON.stringify({imdbId: 'tt0000002', refreshData: false}),
+    );
+
+    expect(response.status).toBe(409);
+  });
+
+  it('TMDb に該当が無ければ 404 を返す', async () => {
+    environment = {...environment, TMDB_API_KEY: 'test-key'} as Environment;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('not found', {status: 404})),
+    );
+
+    const response = await postMovie(JSON.stringify({imdbId: 'tt0000003'}));
+
+    expect(response.status).toBe(404);
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('PUT /movies/:id', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  it('トークンが無ければ 401 を返す', async () => {
+    const response = await adminMoviesRoutes.request(
+      '/movies/movie-1',
+      {method: 'PUT', body: JSON.stringify({year: 1970})},
+      environment,
+    );
+
+    expect(response.status).toBe(401);
+  });
+
+  it('製作年と原語を更新する', async () => {
+    const response = await adminMoviesRoutes.request(
+      '/movies/movie-1',
+      {
+        method: 'PUT',
+        headers: authHeaders,
+        body: JSON.stringify({year: 1970, originalLanguage: 'ko'}),
+      },
+      environment,
+    );
+
+    expect(response.status).toBe(200);
+    const [movie] = await database
+      .select({year: movies.year, originalLanguage: movies.originalLanguage})
+      .from(movies)
+      .where(eq(movies.uid, 'movie-1'));
+    expect(movie).toMatchObject({year: 1970, originalLanguage: 'ko'});
+  });
+
+  it('映画が無ければ 404 を返す', async () => {
+    const response = await adminMoviesRoutes.request(
+      '/movies/movie-missing',
+      {
+        method: 'PUT',
+        headers: authHeaders,
+        body: JSON.stringify({year: 1970}),
+      },
+      environment,
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('JSON として読めない本文は 500 を返す', async () => {
+    const response = await adminMoviesRoutes.request(
+      '/movies/movie-1',
+      {method: 'PUT', headers: authHeaders, body: '{'},
+      environment,
+    );
+
+    expect(response.status).toBe(500);
   });
 });

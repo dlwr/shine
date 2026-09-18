@@ -6,7 +6,7 @@ import {eq, getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {migrate} from 'drizzle-orm/libsql/migrator';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {createJWT} from '../auth';
 import {adminPostersRoutes} from '../routes/admin/posters';
 
@@ -172,5 +172,55 @@ describe('DELETE /movies/:movieId/posters/:posterId', () => {
 
     expect(response.status).toBe(200);
     expect(await postersOf('movie-1')).toHaveLength(1);
+  });
+});
+
+describe('DELETE の認証と失敗', () => {
+  it('トークンが無ければ 401 を返す', async () => {
+    const response = await adminPostersRoutes.request(
+      '/movies/movie-1/posters/poster-1',
+      {method: 'DELETE'},
+      environment,
+    );
+
+    expect(response.status).toBe(401);
+  });
+
+  it('DB が読めなければ 500 を返す', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const empty = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
+    const broken = {
+      ...environment,
+      TURSO_DATABASE_URL: `file:${path.join(empty, 'unmigrated.db')}`,
+    } as Environment;
+
+    const response = await adminPostersRoutes.request(
+      '/movies/movie-1/posters/poster-1',
+      {method: 'DELETE', headers: authHeaders},
+      broken,
+    );
+
+    expect(response.status).toBe(500);
+  });
+
+  it('追加で DB が読めなければ 500 を返す', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const empty = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
+    const broken = {
+      ...environment,
+      TURSO_DATABASE_URL: `file:${path.join(empty, 'unmigrated.db')}`,
+    } as Environment;
+
+    const response = await adminPostersRoutes.request(
+      '/movies/movie-1/posters',
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({url: 'https://example.com/p.jpg'}),
+      },
+      broken,
+    );
+
+    expect(response.status).toBe(500);
   });
 });
