@@ -1,189 +1,25 @@
 /**
  * TMDb API v3 の HTTP クライアント。DB には触らない
  */
-import {buildUrl, FetchHttpError, fetchJsonWithRetry} from '@shine/utils/fetch';
+import {tmdbGet, tmdbGetUnlessNotFound} from './request';
+import type {
+  TMDBConfig,
+  TMDBCredits,
+  TMDBExternalIds,
+  TMDBFindResponse,
+  TMDBFindResult,
+  TMDBMediaType,
+  TMDBMovieData,
+  TMDBMovieImages,
+  TMDBMovieSummary,
+  TMDBMultiSearchResult,
+  TMDBPersonData,
+  TMDBSearchMovieResult,
+  TMDBTranslationsResponse,
+  TMDBTvData,
+} from './types';
 
-const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
-
-export type TMDBMediaType = 'movie' | 'tv';
-
-export type TMDBMovieData = {
-  id: number;
-  title: string;
-  original_title: string;
-  original_language?: string;
-  overview?: string;
-  release_date: string;
-  imdb_id?: string;
-  poster_path?: string;
-  translations?: {
-    translations: Array<{
-      iso_3166_1: string;
-      iso_639_1: string;
-      name: string;
-      english_name: string;
-      data: {
-        title?: string;
-        name?: string;
-        overview?: string;
-      };
-    }>;
-  };
-};
-
-export type TMDBTvData = {
-  id: number;
-  name: string;
-  original_name: string;
-  original_language?: string;
-  overview?: string;
-  first_air_date: string;
-  imdb_id?: string;
-  poster_path?: string;
-};
-
-export type TMDBCastCredit = {
-  credit_id: string;
-  id: number;
-  name: string;
-  original_name: string;
-  character?: string;
-  order: number;
-  profile_path?: string | undefined;
-};
-
-export type TMDBCrewCredit = {
-  credit_id: string;
-  id: number;
-  name: string;
-  original_name: string;
-  job: string;
-  department: string;
-  profile_path?: string | undefined;
-};
-
-export type TMDBCredits = {
-  cast: TMDBCastCredit[];
-  crew: TMDBCrewCredit[];
-};
-
-export type TMDBFindResponse = {
-  movie_results: TMDBMovieData[];
-  tv_results: TMDBTvData[];
-};
-
-export type TMDBFindResult = {
-  tmdbId: number;
-  mediaType: TMDBMediaType;
-};
-
-export type TMDBMovieImages = {
-  id: number;
-  posters: Array<{
-    file_path: string;
-    width: number;
-    height: number;
-    iso_639_1: string | undefined;
-  }>;
-};
-
-export type TMDBSearchMovieResult = {
-  id: number;
-  title: string;
-  original_title?: string;
-  original_language?: string;
-  release_date?: string;
-  poster_path?: string;
-  overview?: string;
-  popularity?: number;
-  vote_average?: number;
-  vote_count?: number;
-};
-
-export type TMDBSearchResponse = {
-  results: TMDBSearchMovieResult[];
-};
-
-export type TMDBMultiSearchResult = {
-  id: number;
-  media_type: string;
-  name?: string;
-  title?: string;
-  original_name?: string;
-  original_title?: string;
-};
-
-export type TMDBConfig = {
-  images: {
-    secure_base_url: string;
-    poster_sizes: string[];
-  };
-};
-
-export type TMDBTranslationsResponse = {
-  id: number;
-  translations: Array<{
-    iso_3166_1: string;
-    iso_639_1: string;
-    name: string;
-    english_name: string;
-    data: {
-      homepage: string;
-      overview: string;
-      runtime: number;
-      tagline: string;
-      title: string;
-      name?: string;
-    };
-  }>;
-};
-
-export type TMDBPersonData = {
-  id: number;
-  name: string;
-  profile_path?: string | null;
-};
-
-export type TMDBExternalIds = {
-  imdb_id?: string | null;
-};
-
-export type TMDBMovieSummary = {
-  imdbId?: string;
-  originalLanguage?: string;
-};
-
-export async function tmdbGet<T>(
-  path: string,
-  tmdbApiKey: string,
-  parameters: Record<string, string> = {},
-): Promise<T> {
-  const url = buildUrl(`${TMDB_API_BASE_URL}/${path}`, {
-    api_key: tmdbApiKey,
-    ...parameters,
-  });
-  return fetchJsonWithRetry<T>(url);
-}
-
-export function isTmdbNotFound(error: unknown): boolean {
-  return error instanceof FetchHttpError && error.status === 404;
-}
-
-async function tmdbGetUnlessNotFound<T>(
-  path: string,
-  tmdbApiKey: string,
-  parameters: Record<string, string> = {},
-): Promise<T | undefined> {
-  try {
-    return await tmdbGet<T>(path, tmdbApiKey, parameters);
-  } catch (error) {
-    if (isTmdbNotFound(error)) {
-      return undefined;
-    }
-
-    throw error;
-  }
-}
+export type * from './types';
 
 /**
  * TMDb APIの画像設定を取得(プロセス内でキャッシュ)
@@ -449,3 +285,5 @@ export async function fetchTMDBMovieSummary(
     originalLanguage: movieData?.original_language || undefined,
   };
 }
+
+export {isTmdbNotFound, tmdbGet} from './request';
