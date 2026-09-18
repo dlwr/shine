@@ -1,5 +1,3 @@
-import {compareCodePoints} from '../services/award-page-ordering';
-
 export type CacheShapeRecord = {
   key: string;
   shape: string[];
@@ -51,6 +49,10 @@ function walk(value: unknown, path: string, paths: Set<string>): void {
   }
 
   paths.add(path);
+}
+
+function compareCodePoints(a: string, b: string): number {
+  return a < b ? -1 : Number(a > b);
 }
 
 export function describeShape(value: unknown): string[] {

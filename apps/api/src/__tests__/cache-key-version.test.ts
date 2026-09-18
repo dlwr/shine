@@ -137,6 +137,7 @@ async function readRecord(): Promise<Record<string, string[]>> {
 
 const observed = new Map<string, string[]>();
 const failures: CacheShapeCheck[] = [];
+let ranExercises = 0;
 
 describe('キャッシュ鍵の版', () => {
   let seededEnvironment: Environment;
@@ -150,6 +151,12 @@ describe('キャッシュ鍵の版', () => {
   afterAll(async () => {
     if (!isUpdating) {
       return;
+    }
+
+    if (observed.size === 0 || ranExercises < exercises.length) {
+      throw new Error(
+        `記録は全部の経路を通してから書く（走ったのは ${ranExercises}/${exercises.length}）。-t で絞らずに流すこと。`,
+      );
     }
 
     const blocked = failures.filter(
@@ -198,6 +205,7 @@ describe('キャッシュ鍵の版', () => {
       `${exercise.name} がキャッシュを書いていない`,
     ).toBeGreaterThan(0);
 
+    ranExercises++;
     const checks: CacheShapeCheck[] = [];
     for (const put of puts) {
       const key = normalizeCacheKey(put.key);

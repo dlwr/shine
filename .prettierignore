@@ -17,3 +17,4 @@ node_modules/
 apps/scrapers/src/availability/__tests__/fixtures/
 .react-router/
 worker-configuration.d.ts
+apps/api/src/__tests__/cache-payload-shapes.json

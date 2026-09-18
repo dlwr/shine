@@ -138,8 +138,15 @@
     "data.topPerformances[].person.name",
     "data.topPerformances[].person.uid"
   ],
-  "people:eligible:v2:chunk:0": ["cachedAt", "data[].movieCount", "data[].uid"],
-  "people:eligible:v2:count": ["cachedAt", "data"],
+  "people:eligible:v2:chunk:0": [
+    "cachedAt",
+    "data[].movieCount",
+    "data[].uid"
+  ],
+  "people:eligible:v2:count": [
+    "cachedAt",
+    "data"
+  ],
   "people:list:1:10:v1": [
     "cachedAt",
     "data.pagination.page",
@@ -227,7 +234,10 @@
     "data[].uid",
     "data[].year"
   ],
-  "quiz:pool:v3:size": ["cachedAt", "data"],
+  "quiz:pool:v3:size": [
+    "cachedAt",
+    "data"
+  ],
   "search:Beauty:1:20:query:Beauty:v1": [
     "cachedAt",
     "data.filters.query",
