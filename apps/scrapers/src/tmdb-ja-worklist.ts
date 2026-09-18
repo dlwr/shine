@@ -4,6 +4,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {hasKana} from './common/japanese-text';
+import {selectionDateKeys} from './common/selection-dates';
 import {fetchTMDBMovieDetails, fetchTMDBMovieTranslations} from '@shine/tmdb';
 
 export type TmdbJaWorklistItem = {
@@ -27,29 +28,6 @@ export type TmdbJaWorklistStats = {
 
 function normalize(value: string | undefined): string | undefined {
   return value?.trim() || undefined;
-}
-
-function pad(value: number): string {
-  return String(value).padStart(2, '0');
-}
-
-/** 週はAPIのselections-serviceと同じく金曜始まり、月は1日をキーにする */
-function selectionDateKeys(date: string): {
-  daily: string;
-  weekly: string;
-  monthly: string;
-} {
-  const [year, month, day] = date.split('-').map(Number);
-  const daily = new Date(Date.UTC(year, month - 1, day));
-  const daysSinceFriday = (daily.getUTCDay() - 5 + 7) % 7;
-  const friday = new Date(Date.UTC(year, month - 1, day - daysSinceFriday));
-  const format = (value: Date) =>
-    `${value.getUTCFullYear()}-${pad(value.getUTCMonth() + 1)}-${pad(value.getUTCDate())}`;
-  return {
-    daily: format(daily),
-    weekly: format(friday),
-    monthly: `${year}-${pad(month)}-01`,
-  };
 }
 
 export async function buildTmdbJaWorklist({
