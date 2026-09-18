@@ -54,6 +54,7 @@ import {createCommand as veniceFilmFestival} from './venice-film-festival-cli';
 import {createCommand as veniceJuryAwards} from './venice-jury-awards-cli';
 import {createCommand as venicePersonAwards} from './venice-person-awards-cli';
 import {createCommand as wikidataJapaneseNames} from './wikidata-japanese-names-cli';
+import {createCommand as workersErrorAlert} from './workers-error-alert-cli';
 import {createCommand as wikidataJapaneseTitles} from './wikidata-japanese-titles-cli';
 import {createCommand as yokohamaFilmFestival} from './yokohama-film-festival-cli';
 
@@ -125,6 +126,7 @@ const commandGroups: Array<{heading: string; factories: Array<() => Command>}> =
         snsPost,
         indexNow,
         tursoUsageAlert,
+        workersErrorAlert,
         northStarReport,
         survey,
       ],

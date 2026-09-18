@@ -1,0 +1,52 @@
+name: Workers Error Alert
+
+on:
+  schedule:
+    # 6時間ごと。00:00 UTC の回だけ失敗が無くても件数を投稿する
+    - cron: '40 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '取得と判定のみ(Discordに投稿しない)'
+        type: boolean
+        default: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check Workers errors
+        working-directory: apps/scrapers
+        run: pnpm run cli workers-error-alert ${{ github.event.schedule == '40 0 * * *' && '--summary' || '' }} ${{ inputs.dry_run && '--dry-run' || '' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
