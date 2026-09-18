@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import MovieDetail, {action, loader, meta} from './movies.$id';
 import type {Route} from './+types/movies.$id';
 import {createMockContext as createTestContext} from '@/lib/test-context';
@@ -131,6 +131,7 @@ const createLoaderArguments = (
 const createMetaArguments = (
   loaderData: MetaArguments['loaderData'],
   parameters: MetaArguments['params'],
+  monthlyUid?: string,
 ): MetaArguments =>
   cast<MetaArguments>({
     loaderData,
@@ -142,7 +143,9 @@ const createMetaArguments = (
       state: undefined,
       key: 'movies-id-test',
     },
-    matches: [],
+    matches: monthlyUid
+      ? [{id: 'root', loaderData: {monthly: {uid: monthlyUid}}}]
+      : [],
   });
 
 const createLoaderData = (
@@ -164,6 +167,19 @@ const successMeta = () =>
         apiUrl: 'http://localhost:8787',
       },
       {id: 'movie-123'},
+    ),
+  );
+
+const monthlyMeta = () =>
+  meta(
+    createMetaArguments(
+      {
+        movieDetail: mockMovieDetail,
+        locale: 'ja',
+        apiUrl: 'http://localhost:8787',
+      },
+      {id: 'movie-123'},
+      'movie-123',
     ),
   );
 
@@ -404,6 +420,53 @@ describe('MovieDetail Component', () => {
       expect(successMeta()).toContainEqual({
         property: 'og:image',
         content: 'https://shine-film.com/og/movie.png?id=movie-123',
+      });
+    });
+
+    describe('今月の1本', () => {
+      beforeEach(() => {
+        vi.useFakeTimers({now: new Date('2026-12-05T05:00:00Z')});
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it('タイトルで今月の1本だと名乗る', () => {
+        expect(monthlyMeta()).toContainEqual({
+          title: 'パルム・ドール受賞作品 (2023) — 2026年12月の1本 | SHINE',
+        });
+      });
+
+      it('共有カードの題にも同じ文字列を使う', () => {
+        expect(monthlyMeta()).toContainEqual({
+          property: 'og:title',
+          content: 'パルム・ドール受賞作品 (2023) — 2026年12月の1本 | SHINE',
+        });
+      });
+
+      it('説明文の先頭で今月の1本だと伝える', () => {
+        const descriptor = monthlyMeta().find(
+          item => 'name' in item && item.name === 'description',
+        ) as {content: string};
+
+        expect(descriptor.content).toContain(
+          '『パルム・ドール受賞作品』(2023年)。2026年12月の1本。',
+        );
+      });
+
+      it('今月の1本でない映画は名乗らない', () => {
+        const result = meta(
+          createMetaArguments(
+            {movieDetail: mockMovieDetail, locale: 'ja'},
+            {id: 'movie-123'},
+            'other-movie',
+          ),
+        );
+
+        expect(result).toContainEqual({
+          title: 'パルム・ドール受賞作品 (2023) | SHINE',
+        });
       });
     });
 

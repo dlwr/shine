@@ -28,11 +28,14 @@ import {
 import {
   buildMetaDescription,
   buildMovieJsonLd,
+  isMonthlyPick,
   summarizeOrganizations,
 } from '@/lib/movie-detail-meta';
+import {monthlyPickLabel} from '@/lib/monthly-pick';
 
 export function meta({
   loaderData,
+  matches,
   params,
 }: Route.MetaArgs): Route.MetaDescriptors {
   const payload = loaderData as LoaderData | undefined;
@@ -56,12 +59,18 @@ export function meta({
     ? summarizeOrganizations(movieDetail.nominations)
     : '';
   const selection = organizations ? `${organizations}に選出。` : '';
+  const monthlyLabel = isMonthlyPick(matches, params.id)
+    ? monthlyPickLabel(new Date(), locale)
+    : undefined;
+  const pageTitle = monthlyLabel
+    ? `${title} (${year}) — ${monthlyLabel} | SHINE`
+    : `${title} (${year}) | SHINE`;
 
   return [
     ...buildSocialMeta({
-      title: `${title} (${year}) | SHINE`,
+      title: pageTitle,
       description: buildMetaDescription(
-        `『${title}』(${year}年)。${selection}`,
+        `『${title}』(${year}年)。${monthlyLabel ? `${monthlyLabel}。` : ''}${selection}`,
         movieDetail?.description,
       ),
       path,
