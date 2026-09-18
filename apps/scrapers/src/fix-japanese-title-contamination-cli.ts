@@ -2,6 +2,7 @@
  * 邦題の枠に入ったTMDbの原題フォールバックを掃除するCLI
  */
 import {Command, InvalidArgumentError} from 'commander';
+import {applyOption, dryRunOption, isDryRun} from './common/write-mode';
 import {getScrapeDatabase} from './common/dry-run';
 import {
   assertDatabaseEnvironment,
@@ -39,14 +40,15 @@ export function createCommand(): Command {
       parsePositiveInteger,
       100,
     )
-    .option('--dry-run', '書き込みは行わず、対象のみ表示', false)
+    .addOption(applyOption())
+    .addOption(dryRunOption())
     .addHelpText(
       'after',
       `
 例:
-  pnpm scrapers fix-japanese-title-contamination --movie <uid> --dry-run
-  pnpm scrapers fix-japanese-title-contamination --limit 100 --dry-run
-  pnpm scrapers fix-japanese-title-contamination
+  pnpm scrapers fix-japanese-title-contamination --movie <uid>
+  pnpm scrapers fix-japanese-title-contamination --limit 100
+  pnpm scrapers fix-japanese-title-contamination --limit 100 --apply
 `,
     )
     .action(
@@ -54,7 +56,7 @@ export function createCommand(): Command {
         movie?: string;
         limit?: number;
         throttle: number;
-        dryRun: boolean;
+        apply?: boolean;
       }) => {
         try {
           loadEnvironmentFiles();
@@ -68,11 +70,11 @@ export function createCommand(): Command {
 
           const database = getScrapeDatabase({
             environment,
-            isDryRun: options.dryRun,
+            isDryRun: isDryRun(options),
           });
 
           const result = await fixJapaneseTitleContamination(
-            {database, environment, isDryRun: options.dryRun},
+            {database, environment, isDryRun: isDryRun(options)},
             {
               movieUid: options.movie,
               limit: options.limit,
@@ -83,7 +85,7 @@ export function createCommand(): Command {
             },
           );
 
-          console.log(`\n結果${options.dryRun ? ' (dry-run)' : ''}:`);
+          console.log(`\n結果${isDryRun(options) ? ' (dry-run)' : ''}:`);
           console.log(`  走査した行: ${result.scanned}`);
           console.log(`  原語の行へ移動: ${result.relocated}`);
           console.log(`  削除: ${result.deleted}`);

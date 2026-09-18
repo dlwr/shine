@@ -2,6 +2,7 @@
  * ノミネーションに紐づかない映画をソフト削除するCLI
  */
 import {Command, InvalidArgumentError} from 'commander';
+import {applyOption, dryRunOption, isDryRun} from './common/write-mode';
 import {
   assertDatabaseEnvironment,
   buildEnvironment,
@@ -34,7 +35,8 @@ export function createCommand(): Command {
       ].join('\n'),
     )
     .option('--limit <count>', '処理件数の上限', parsePositiveInteger('limit'))
-    .option('--dry-run', '実際の削除は行わず、対象と判定のみ表示', false)
+    .addOption(applyOption())
+    .addOption(dryRunOption())
     .option(
       '--throttle <ms>',
       'IMDb照合リクエスト間の待機ミリ秒 (デフォルト: 300)',
@@ -45,13 +47,13 @@ export function createCommand(): Command {
       'after',
       `
 例:
-  pnpm scrapers delete-orphan-movies --dry-run
-  pnpm scrapers delete-orphan-movies --limit 20
   pnpm scrapers delete-orphan-movies
+  pnpm scrapers delete-orphan-movies --limit 20
+  pnpm scrapers delete-orphan-movies --limit 20 --apply
 `,
     )
     .action(
-      async (options: {limit?: number; dryRun: boolean; throttle: number}) => {
+      async (options: {limit?: number; apply?: boolean; throttle: number}) => {
         try {
           loadEnvironmentFiles();
           const environment = buildEnvironment(process.env);
@@ -66,7 +68,7 @@ export function createCommand(): Command {
 
           const stats = await deleteOrphanMovies({
             environment,
-            dryRun: options.dryRun,
+            dryRun: isDryRun(options),
             limit: options.limit,
             throttleMs: options.throttle,
           });

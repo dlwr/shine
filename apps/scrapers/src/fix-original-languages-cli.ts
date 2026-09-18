@@ -2,6 +2,7 @@
  * TMDbと食い違っている映画の原語を直すCLI
  */
 import {Command, InvalidArgumentError} from 'commander';
+import {applyOption, dryRunOption, isDryRun} from './common/write-mode';
 import {
   assertDatabaseEnvironment,
   buildEnvironment,
@@ -38,13 +39,14 @@ export function createCommand(): Command {
       parsePositiveInteger,
       5,
     )
-    .option('--dry-run', '書き込みは行わず、対象のみ表示', false)
+    .addOption(applyOption())
+    .addOption(dryRunOption())
     .addHelpText(
       'after',
       `
 例:
-  pnpm scrapers fix-original-languages --limit 100 --dry-run
-  pnpm scrapers fix-original-languages
+  pnpm scrapers fix-original-languages --limit 100
+  pnpm scrapers fix-original-languages --limit 100 --apply
 `,
     )
     .action(
@@ -52,7 +54,7 @@ export function createCommand(): Command {
         limit?: number;
         throttle: number;
         concurrency: number;
-        dryRun: boolean;
+        apply?: boolean;
       }) => {
         try {
           loadEnvironmentFiles();
@@ -66,11 +68,11 @@ export function createCommand(): Command {
 
           const database = getScrapeDatabase({
             environment,
-            isDryRun: options.dryRun,
+            isDryRun: isDryRun(options),
           });
 
           const result = await fixOriginalLanguages(
-            {database, environment, isDryRun: options.dryRun},
+            {database, environment, isDryRun: isDryRun(options)},
             {
               limit: options.limit,
               throttleMs: options.throttle,
