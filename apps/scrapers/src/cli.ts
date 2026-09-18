@@ -32,6 +32,7 @@ import {createCommand as fixPosterContamination} from './fix-poster-contaminatio
 import {createCommand as goldenGlobeAwards} from './golden-globe-awards-cli';
 import {createCommand as hochiFilmAwards} from './hochi-film-awards-cli';
 import {createCommand as importImdbList} from './import-imdb-list-cli';
+import {createCommand as indexNow} from './indexnow-cli';
 import {createCommand as japanAcademyAwards} from './japan-academy-awards-cli';
 import {createCommand as japanAcademyPersonAwards} from './japan-academy-person-awards-cli';
 import {createCommand as japanPersonAwards} from './japan-person-awards-cli';
@@ -122,6 +123,7 @@ const commandGroups: Array<{heading: string; factories: Array<() => Command>}> =
       factories: [
         availabilityCheck,
         snsPost,
+        indexNow,
         tursoUsageAlert,
         northStarReport,
         survey,
