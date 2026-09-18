@@ -127,7 +127,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
         ceremonyDetail={ceremonyDetail}
       />
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <CeremonyForm
           apiUrl={apiUrl}
           ceremonyUid={ceremonyUid}
@@ -149,7 +149,7 @@ export default function AdminCeremonyEdit({loaderData}: Route.ComponentProps) {
           formOrganizationUid={formOrganizationUid}
           refetchCeremony={fetchCeremony}
         />
-      </main>
+      </div>
     </div>
   );
 }

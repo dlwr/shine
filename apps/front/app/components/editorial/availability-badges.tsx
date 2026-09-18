@@ -206,7 +206,7 @@ export function AvailabilityBadges({
           </span>
         ),
       )}
-      <span className="font-mono text-[10px] text-ink-muted/70">
+      <span className="font-mono text-[10px] text-ink-muted">
         {formatCheckedDate(latestCheckedAt)} 時点
       </span>
     </div>

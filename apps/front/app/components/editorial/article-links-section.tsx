@@ -112,9 +112,9 @@ export function ArticleLinksSection({
 
       {/* 記事投稿フォーム */}
       <div className="border-t border-ink/20 pt-6">
-        <h3 className="text-lg font-medium text-ink mb-1">
+        <h2 className="text-lg font-medium text-ink mb-1">
           観たら、ひとこと残す
-        </h3>
+        </h2>
         <p className="text-sm text-ink-muted mb-4">
           短くていい。よそに書いたなら、その URL も貼れる。
         </p>

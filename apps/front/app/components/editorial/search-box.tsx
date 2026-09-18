@@ -167,6 +167,7 @@ export function SearchBox({
           aria-label={label}
           placeholder={placeholder}
           autoComplete="off"
+          role="combobox"
           aria-autocomplete="list"
           aria-controls={listId}
           aria-expanded={expanded}

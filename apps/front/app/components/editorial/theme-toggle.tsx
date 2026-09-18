@@ -16,14 +16,16 @@ export function ThemeToggle() {
     setTheme(next);
   };
 
+  const label = theme === 'dark' ? '☾ DARK' : '☀ LIGHT';
+
   return (
     <button
       type="button"
-      aria-label="Toggle theme"
+      aria-label={`${label} — テーマを切り替える`}
       aria-pressed={theme === 'dark'}
       onClick={toggle}
       className="font-mono text-xs border-2 border-ink px-2 py-1 text-ink">
-      {theme === 'dark' ? '☾ DARK' : '☀ LIGHT'}
+      {label}
     </button>
   );
 }

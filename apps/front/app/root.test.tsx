@@ -203,6 +203,14 @@ describe('root App', () => {
 
     expect(markup).not.toContain('<aside');
   });
+
+  it('ページの中身を main で包む', () => {
+    mockRootLoaderData = {locale: 'ja'};
+
+    const markup = renderToStaticMarkup(<App />);
+
+    expect(markup).toContain('<main');
+  });
 });
 
 describe('root headers', () => {

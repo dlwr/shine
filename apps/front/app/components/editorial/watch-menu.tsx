@@ -20,7 +20,7 @@ export function WatchMenu({title, year, tmdbId, imdbUrl}: WatchMenuProperties) {
     },
     {
       name: 'TMDb',
-      color: 'bg-green-600 text-white',
+      color: 'bg-green-700 text-white',
       url: tmdbId
         ? `https://www.themoviedb.org/movie/${tmdbId}`
         : `https://www.themoviedb.org/search?query=${encodeURIComponent(title)}`,
@@ -86,7 +86,7 @@ export function WatchMenu({title, year, tmdbId, imdbUrl}: WatchMenuProperties) {
         <input type="hidden" name="k" value={title} />
         <button
           type="submit"
-          className={`${buttonClass} bg-sky-500 text-white`}>
+          className={`${buttonClass} bg-sky-700 text-white`}>
           TSUTAYA DISCAS
         </button>
       </form>

@@ -50,7 +50,7 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <CeremonyListFilters
           organizations={organizations}
           searchQuery={searchQuery}
@@ -72,7 +72,7 @@ export default function AdminCeremonies({loaderData}: Route.ComponentProps) {
             <CeremonyListTable ceremonies={filteredCeremonies} />
           )}
         </section>
-      </main>
+      </div>
     </div>
   );
 }
