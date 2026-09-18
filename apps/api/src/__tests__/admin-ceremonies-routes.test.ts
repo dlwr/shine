@@ -217,3 +217,44 @@ describe('GET /awards', () => {
     expect(body.categories.map(c => c.uid)).toEqual(['category']);
   });
 });
+
+describe('GET /awards', () => {
+  it('トークンが無ければ 401 を返す', async () => {
+    const response = await request('/awards', {}, {});
+
+    expect(response.status).toBe(401);
+  });
+
+  it('団体と部門の一覧を返す', async () => {
+    const response = await request('/awards');
+
+    expect(response.status).toBe(200);
+    const reference = (await response.json()) as {
+      organizations: Array<{uid: string}>;
+    };
+    expect(reference.organizations.map(entry => entry.uid)).toContain('org');
+  });
+});
+
+describe('DB が読めないとき', () => {
+  beforeEach(async () => {
+    const empty = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
+    environment = {
+      ...environment,
+      TURSO_DATABASE_URL: `file:${path.join(empty, 'unmigrated.db')}`,
+    };
+  });
+
+  const routes = [
+    ['GET /ceremonies', '/ceremonies', {}],
+    ['GET /ceremonies/:uid', '/ceremonies/c-2020', {}],
+    ['GET /awards', '/awards', {}],
+    ['DELETE /ceremonies/:uid', '/ceremonies/c-2020', {method: 'DELETE'}],
+  ] as const;
+
+  it.each(routes)('%s は 500 を返す', async (_name, route, init) => {
+    const response = await request(route, init);
+
+    expect(response.status).toBe(500);
+  });
+});
