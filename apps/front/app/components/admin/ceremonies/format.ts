@@ -35,3 +35,41 @@ export const formatNavigationLabel = (item: CeremonyNavigationItem) => {
 
   return `${item.year}年`;
 };
+
+export const formatYearAndNumber = (
+  year: number,
+  ceremonyNumber: number | null,
+) => {
+  if (ceremonyNumber && ceremonyNumber > 0) {
+    return `${year}年（第${ceremonyNumber}回）`;
+  }
+
+  return `${year}年`;
+};
+
+const formatDate = (value: number | null) => {
+  if (typeof value !== 'number') {
+    return;
+  }
+
+  const date = new Date(value * 1000);
+  if (Number.isNaN(date.getTime())) {
+    return;
+  }
+
+  return date.toLocaleDateString('ja-JP');
+};
+
+export const formatDateRange = (
+  startDate: number | null,
+  endDate: number | null,
+) => {
+  const startText = formatDate(startDate);
+  const endText = formatDate(endDate);
+
+  if (startText && endText) {
+    return `${startText} 〜 ${endText}`;
+  }
+
+  return startText ?? endText ?? '-';
+};
