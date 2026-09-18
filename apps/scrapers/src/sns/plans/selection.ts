@@ -1,4 +1,4 @@
-import {fetchAwardPagesQuietly, type SelectionMovie} from '../api-client';
+import {type SelectionMovie} from '../api-client';
 import {buildAvailabilityLabels} from '../availability-labels';
 import {buildOrganizationLabels} from '../organization-names';
 import {SITE_URL} from '../site';
@@ -7,10 +7,7 @@ const MAX_TEXT_ORGANIZATIONS = 2;
 const MAX_TEXT_AVAILABILITY = 2;
 
 export async function buildSelectionPostInput(movie: SelectionMovie) {
-  const organizations = buildOrganizationLabels(
-    movie.nominations ?? [],
-    await fetchAwardPagesQuietly(),
-  );
+  const organizations = buildOrganizationLabels(movie.nominations ?? []);
   const availabilityLabels = buildAvailabilityLabels(movie.availability ?? []);
 
   return {
