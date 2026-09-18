@@ -114,3 +114,56 @@ export function checkCacheShape(
     ].join('\n'),
   };
 }
+
+const EMPTY_MARKER = /\s(空|\{\})$/;
+
+/** 鍵が 1 か所だけ違うものを、同じ経路の別の入力とみなす */
+function isSameEndpoint(a: string, b: string): boolean {
+  const left = a.split(':');
+  const right = b.split(':');
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.filter((segment, index) => segment !== right[index]).length <= 1;
+}
+
+/**
+ * どの記録でも空のままで、中身の形を見張れていない配列・オブジェクトを返す。
+ * 空でない記録が同じ経路に 1 つでもあれば見張れている。
+ */
+function isMonitoredSomewhere(
+  record: Record<string, string[]>,
+  key: string,
+  emptyPath: string,
+): boolean {
+  const prefix = emptyPath.replace(EMPTY_MARKER, '');
+
+  return Object.entries(record).some(
+    ([otherKey, otherShape]) =>
+      isSameEndpoint(key, otherKey) &&
+      otherShape.some(
+        entry =>
+          entry === prefix ||
+          entry.startsWith(`${prefix}.`) ||
+          entry.startsWith(`${prefix}[`),
+      ),
+  );
+}
+
+export function unmonitoredEmptyPaths(
+  record: Record<string, string[]>,
+): string[] {
+  const unmonitored: string[] = [];
+
+  for (const [key, shape] of Object.entries(record)) {
+    const emptyPaths = shape.filter(entry => EMPTY_MARKER.test(entry));
+    unmonitored.push(
+      ...emptyPaths
+        .filter(path => !isMonitoredSomewhere(record, key, path))
+        .map(path => `${key} の ${path}`),
+    );
+  }
+
+  return unmonitored;
+}
