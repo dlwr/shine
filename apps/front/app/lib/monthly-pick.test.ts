@@ -1,6 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {createEnvironmentContext} from './api';
-import {fetchMonthlyPick} from './monthly-pick';
+import {fetchMonthlyPick, monthlyPickLabel} from './monthly-pick';
 
 const context = createEnvironmentContext({
   PUBLIC_API_URL: 'https://api.example',
@@ -120,5 +120,28 @@ describe('fetchMonthlyPick', () => {
     );
 
     expect(await fetchMonthlyPick(context, 'ja')).toBeUndefined();
+  });
+});
+
+describe('monthlyPickLabel', () => {
+  it('日本語では年と月で今月の1本を表す', () => {
+    expect(monthlyPickLabel(new Date('2026-09-18T05:00:00Z'), 'ja')).toBe(
+      '2026年9月の1本',
+    );
+  });
+
+  it('英語では月名と年で表す', () => {
+    expect(monthlyPickLabel(new Date('2026-09-18T05:00:00Z'), 'en')).toBe(
+      'September 2026 pick',
+    );
+  });
+
+  it('月の変わり目は選出と同じ UTC で判定する', () => {
+    expect(monthlyPickLabel(new Date('2026-09-30T23:59:59Z'), 'ja')).toBe(
+      '2026年9月の1本',
+    );
+    expect(monthlyPickLabel(new Date('2026-10-01T00:00:00Z'), 'ja')).toBe(
+      '2026年10月の1本',
+    );
   });
 });

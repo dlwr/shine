@@ -10,6 +10,30 @@ export type MonthlyPickAward = {
   slug?: string;
 };
 
+const ENGLISH_MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+] as const;
+
+export function monthlyPickLabel(now: Date, locale: string): string {
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth();
+
+  return locale === 'en'
+    ? `${ENGLISH_MONTHS[month]} ${year} pick`
+    : `${year}年${month + 1}月の1本`;
+}
+
 export type MonthlyPick = {
   uid: string;
   title: string;
