@@ -36,7 +36,7 @@ function renderBox(onNavigate = vi.fn()) {
     />,
   );
   return {
-    input: screen.getByRole('searchbox', {name: '映画を探す'}),
+    input: screen.getByRole('combobox', {name: '映画を探す'}),
     onNavigate,
   };
 }
@@ -58,6 +58,12 @@ describe('SearchBox', () => {
     expect(input.closest('form')).toHaveAttribute('action', '/search');
   });
 
+  it('候補を開く入力欄を combobox として宣言する', () => {
+    const {input} = renderBox();
+
+    expect(input).toHaveAttribute('role', 'combobox');
+  });
+
   it('初期値を入力欄に出す', () => {
     render(
       <SearchBox
@@ -67,7 +73,7 @@ describe('SearchBox', () => {
       />,
     );
 
-    expect(screen.getByRole('searchbox')).toHaveValue('役所');
+    expect(screen.getByRole('combobox')).toHaveValue('役所');
   });
 
   it('2文字未満では候補を取得しない', async () => {

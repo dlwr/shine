@@ -8,7 +8,7 @@ type QuizCluesProperties = {
 export function QuizClues({game, maxAttempts}: QuizCluesProperties) {
   return (
     <>
-      <div className="flex gap-1.5 mb-4" aria-label="残りの手数">
+      <div className="flex gap-1.5 mb-4" role="group" aria-label="残りの手数">
         {Array.from({length: maxAttempts}, (_, index) => {
           const guess = game.guesses[index];
           const filled = guess

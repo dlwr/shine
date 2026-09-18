@@ -134,7 +134,7 @@ describe('People page', () => {
     it('映画人を検索するフォームを出す', () => {
       renderPage();
 
-      const input = screen.getByRole('searchbox', {name: '映画人を探す'});
+      const input = screen.getByRole('combobox', {name: '映画人を探す'});
       expect(input).toHaveAttribute('name', 'q');
       expect(input.closest('form')).toHaveAttribute('action', '/search');
     });
