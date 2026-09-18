@@ -1,6 +1,10 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {createEnvironmentContext} from './api';
-import {fetchMonthlyPick, monthlyPickLabel} from './monthly-pick';
+import {
+  fetchMonthlyPick,
+  monthlyPickCacheSeconds,
+  monthlyPickLabel,
+} from './monthly-pick';
 
 const context = createEnvironmentContext({
   PUBLIC_API_URL: 'https://api.example',
@@ -142,6 +146,31 @@ describe('monthlyPickLabel', () => {
     );
     expect(monthlyPickLabel(new Date('2026-10-01T00:00:00Z'), 'ja')).toBe(
       '2026年10月の1本',
+    );
+  });
+});
+
+describe('monthlyPickCacheSeconds', () => {
+  it('月の残りが1時間より長ければ1時間で頭打ちにする', () => {
+    expect(monthlyPickCacheSeconds(new Date('2026-09-18T05:00:00Z'))).toBe(
+      3600,
+    );
+  });
+
+  it('月末が近ければ次の月の1日までにする', () => {
+    expect(monthlyPickCacheSeconds(new Date('2026-09-30T23:50:00Z'))).toBe(600);
+  });
+
+  it('月が切り替わる瞬間は0にする', () => {
+    expect(monthlyPickCacheSeconds(new Date('2026-09-30T23:59:59Z'))).toBe(1);
+    expect(monthlyPickCacheSeconds(new Date('2026-10-01T00:00:00Z'))).toBe(
+      3600,
+    );
+  });
+
+  it('年をまたぐ月末でも次の月の1日を求める', () => {
+    expect(monthlyPickCacheSeconds(new Date('2026-12-31T23:30:00Z'))).toBe(
+      1800,
     );
   });
 });

@@ -25,6 +25,16 @@ const ENGLISH_MONTHS = [
   'December',
 ] as const;
 
+const MAX_PICK_CACHE_SECONDS = 3600;
+
+/** 今月の1本を指す応答を、次の月の1本に切り替わる瞬間より先まで持たせない */
+export function monthlyPickCacheSeconds(now: Date): number {
+  const nextMonth = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1);
+  const untilNextMonth = Math.floor((nextMonth - now.getTime()) / 1000);
+
+  return Math.max(0, Math.min(MAX_PICK_CACHE_SECONDS, untilNextMonth));
+}
+
 export function monthlyPickLabel(now: Date, locale: string): string {
   const year = now.getUTCFullYear();
   const month = now.getUTCMonth();

@@ -7,6 +7,7 @@ export default [
   route('daily', 'routes/daily.tsx'),
   route('weekly', 'routes/weekly.tsx'),
   route('monthly', 'routes/monthly.tsx'),
+  route('now', 'routes/now.tsx'),
   route('people', 'routes/people.tsx'),
   route('people/crossings', 'routes/people.crossings.tsx'),
   route('people/uncrowned', 'routes/people.uncrowned.tsx'),
