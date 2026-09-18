@@ -1,19 +1,30 @@
 import {classifySubmission, parseOriginRules} from '@shine/utils';
-import type {ArticleLinkSubmission} from './article-link-notification';
+import {
+  SITE_URL,
+  type ArticleLinkSubmission,
+} from './article-link-notification';
+import {postDiscordMessage, type FetchLike} from './discord';
 
 const DISPATCH_URL = 'https://api.github.com/repos/dlwr/shine/dispatches';
 const MONTHLY_LINK_EVENT_TYPE = 'monthly-link-posted';
 
 type DispatchEnvironment = {
   GITHUB_DISPATCH_TOKEN?: string;
+  DISCORD_WEBHOOK_URL?: string;
   NORTH_STAR_OWNER_URL_PREFIXES?: string;
   NORTH_STAR_OWNER_IPS?: string;
 };
 
-type FetchLike = (
-  input: string,
-  init?: RequestInit,
-) => Promise<{ok: boolean; status?: number}>;
+function buildFailureMessage(
+  submission: ArticleLinkSubmission,
+  reason: string,
+): string {
+  return [
+    `⚠️ 『${submission.movieTitle ?? submission.movieUid}』に付いたリンクを bot に伝えられませんでした（${reason}）`,
+    'トークンが切れていると即時の紹介が止まります。翌日 12:00 JST の定期実行では拾われます。',
+    `${SITE_URL}/movies/${submission.movieUid}#article-links`,
+  ].join('\n');
+}
 
 export async function dispatchMonthlyLinkPosted(
   environment: DispatchEnvironment,
@@ -30,6 +41,8 @@ export async function dispatchMonthlyLinkPosted(
   ) {
     return;
   }
+
+  let failure: string | undefined;
 
   try {
     const response = await fetchImpl(DISPATCH_URL, {
@@ -48,8 +61,18 @@ export async function dispatchMonthlyLinkPosted(
 
     if (!response.ok) {
       console.error('GitHub dispatch failed', response.status);
+      failure = `GitHub dispatch ${response.status}`;
     }
   } catch (error) {
     console.error('Error dispatching monthly link event:', error);
+    failure = error instanceof Error ? error.message : String(error);
+  }
+
+  if (failure) {
+    await postDiscordMessage(
+      environment.DISCORD_WEBHOOK_URL,
+      buildFailureMessage(submission, failure),
+      fetchImpl,
+    );
   }
 }

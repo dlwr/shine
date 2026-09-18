@@ -80,4 +80,74 @@ describe('dispatchMonthlyLinkPosted', () => {
     expect(consoleError).toHaveBeenCalled();
     consoleError.mockRestore();
   });
+
+  it('GitHub が状態コードを返して失敗したら Discord に知らせる', async () => {
+    const fetchImpl = vi.fn(async (url: string) =>
+      url.includes('discord')
+        ? {ok: true, status: 204}
+        : {ok: false, status: 401},
+    );
+
+    await dispatchMonthlyLinkPosted(
+      {
+        GITHUB_DISPATCH_TOKEN: 'ghp_test',
+        DISCORD_WEBHOOK_URL: 'https://discord.test/webhook',
+      },
+      {...submission, movieTitle: 'リアリティー'},
+      fetchImpl,
+    );
+
+    const discordCall = fetchImpl.mock.calls.find(([url]) =>
+      url.includes('discord'),
+    );
+    expect(discordCall).toBeDefined();
+    const [, init] = discordCall as unknown as [string, RequestInit];
+    const {content} = JSON.parse(init.body as string) as {content: string};
+    expect(content).toContain('401');
+    expect(content).toContain('リアリティー');
+  });
+
+  it('GitHub が例外で失敗しても Discord に知らせる', async () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+    const fetchImpl = vi.fn(async (url: string) => {
+      if (url.includes('discord')) {
+        return {ok: true, status: 204};
+      }
+
+      throw new Error('down');
+    });
+
+    await dispatchMonthlyLinkPosted(
+      {
+        GITHUB_DISPATCH_TOKEN: 'ghp_test',
+        DISCORD_WEBHOOK_URL: 'https://discord.test/webhook',
+      },
+      submission,
+      fetchImpl,
+    );
+
+    expect(fetchImpl.mock.calls.some(([url]) => url.includes('discord'))).toBe(
+      true,
+    );
+    consoleError.mockRestore();
+  });
+
+  it('GitHub が成功したら Discord に知らせない', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ok: true, status: 204});
+
+    await dispatchMonthlyLinkPosted(
+      {
+        GITHUB_DISPATCH_TOKEN: 'ghp_test',
+        DISCORD_WEBHOOK_URL: 'https://discord.test/webhook',
+      },
+      submission,
+      fetchImpl,
+    );
+
+    expect(
+      fetchImpl.mock.calls.some(([url]) => String(url).includes('discord')),
+    ).toBe(false);
+  });
 });
