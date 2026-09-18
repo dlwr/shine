@@ -8,6 +8,7 @@ import {
 } from '../../north-star';
 import {
   fetchArticleLinkCount,
+  fetchNextMonthly,
   fetchNextMonthlyTitle,
   fetchSelections,
   requireSelection,
@@ -17,6 +18,8 @@ import {
   buildMonthlyLinksPostText,
   buildMonthlyLinksXPostText,
   buildMonthlyPostText,
+  buildMonthlyPreviewPostText,
+  buildMonthlyPreviewXPostText,
   buildMonthlyReminderPostText,
   buildMonthlyReminderXPostText,
   buildMonthlyRoundupPostText,
@@ -39,6 +42,26 @@ export async function buildMonthlyPlan(): Promise<PostPlan> {
     ...buildMovieLink(
       movie,
       `今月の1本『${movie.title}』。観られる場所と、観た人の記事・ポストをまとめています。`,
+    ),
+  };
+}
+
+export async function buildMonthlyPreviewPlan(): Promise<PostPlan> {
+  const {date, movie} = await fetchNextMonthly();
+  const postInput = {
+    ...(await buildSelectionPostInput(movie)),
+    startDate: date,
+  };
+
+  return {
+    text: buildMonthlyPreviewPostText(postInput),
+    xText: buildMonthlyPreviewXPostText({
+      ...postInput,
+      url: `${SITE_URL}/movies/${movie.uid}`,
+    }),
+    ...buildMovieLink(
+      movie,
+      `来月の1本『${movie.title}』。1日から、みんなでこれを観ます。`,
     ),
   };
 }
