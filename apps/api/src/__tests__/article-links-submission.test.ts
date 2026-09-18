@@ -337,3 +337,73 @@ describe('今月の1本への他人の投稿', () => {
     ).toBe(false);
   });
 });
+
+async function insertLink(
+  values: Partial<typeof articleLinks.$inferInsert> & {uid: string},
+): Promise<void> {
+  await getDatabase(environment)
+    .insert(articleLinks)
+    .values({movieUid: 'movie-1', description: values.uid, ...values});
+}
+
+async function listedUids(): Promise<string[]> {
+  const response = await moviesRoutes.request(
+    '/movie-1/article-links',
+    {},
+    environment,
+  );
+  expect(response.status).toBe(200);
+  const links = (await response.json()) as Array<{uid: string}>;
+  return links.map(link => link.uid);
+}
+
+describe('GET /movies/:id/article-links', () => {
+  it('新しい投稿を先に返す', async () => {
+    await insertLink({uid: 'old', submittedAt: new Date(1000 * 1000)});
+    await insertLink({uid: 'newest', submittedAt: new Date(3000 * 1000)});
+    await insertLink({uid: 'middle', submittedAt: new Date(2000 * 1000)});
+
+    expect(await listedUids()).toEqual(['newest', 'middle', 'old']);
+  });
+
+  it('スパムと通報済みの投稿は返さない', async () => {
+    await insertLink({uid: 'ok', submittedAt: new Date(3000 * 1000)});
+    await insertLink({
+      uid: 'spam',
+      submittedAt: new Date(2000 * 1000),
+      isSpam: true,
+    });
+    await insertLink({
+      uid: 'flagged',
+      submittedAt: new Date(1000 * 1000),
+      isFlagged: true,
+    });
+
+    expect(await listedUids()).toEqual(['ok']);
+  });
+
+  it('他の映画の投稿は返さない', async () => {
+    await getDatabase(environment)
+      .insert(movies)
+      .values({uid: 'movie-2', year: 2021});
+    await insertLink({uid: 'mine', submittedAt: new Date(2000 * 1000)});
+    await insertLink({
+      uid: 'other',
+      submittedAt: new Date(3000 * 1000),
+      movieUid: 'movie-2',
+    });
+
+    expect(await listedUids()).toEqual(['mine']);
+  });
+
+  it('20 件までしか返さない', async () => {
+    for (let index = 0; index < 21; index += 1) {
+      await insertLink({
+        uid: `link-${index}`,
+        submittedAt: new Date(index * 1000),
+      });
+    }
+
+    expect(await listedUids()).toHaveLength(20);
+  });
+});
