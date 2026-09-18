@@ -13,7 +13,9 @@ describe('Masthead', () => {
       'href',
       '/search',
     );
-    expect(screen.getByRole('button', {name: /theme/i})).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {name: /テーマを切り替える/}),
+    ).toBeInTheDocument();
   });
 
   it('SHINE ロゴはトップページへのリンクにする', () => {

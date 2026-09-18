@@ -11,7 +11,7 @@ describe('ThemeToggle', () => {
 
   it('クリックで dark/light をトグルし html クラスへ反映する', () => {
     render(<ThemeToggle />);
-    const button = screen.getByRole('button', {name: /theme/i});
+    const button = screen.getByRole('button');
     fireEvent.click(button);
     expect(document.documentElement.classList.contains('dark')).toBe(true);
     fireEvent.click(button);
@@ -20,7 +20,13 @@ describe('ThemeToggle', () => {
 
   it('aria-pressed で状態を伝える', () => {
     render(<ThemeToggle />);
-    const button = screen.getByRole('button', {name: /theme/i});
-    expect(button).toHaveAttribute('aria-pressed');
+    expect(screen.getByRole('button')).toHaveAttribute('aria-pressed');
+  });
+
+  it('見えている文字を読み上げ名に含める', () => {
+    render(<ThemeToggle />);
+    const button = screen.getByRole('button');
+
+    expect(button.getAttribute('aria-label')).toContain(button.textContent);
   });
 });
