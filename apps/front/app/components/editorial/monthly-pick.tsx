@@ -23,6 +23,7 @@ const COPY = {
     posts: '観た人の記事・ポスト',
     empty: 'まだ投稿がありません。',
     cta: '感想や記事のリンクを貼る',
+    archive: 'これまでの今月の1本 →',
   },
   en: {
     label: 'MONTHLY',
@@ -30,6 +31,7 @@ const COPY = {
     posts: 'POSTS FROM VIEWERS',
     empty: 'No posts yet.',
     cta: 'Add your post or article',
+    archive: 'Past monthly picks →',
   },
 } as const;
 
@@ -130,6 +132,11 @@ export function MonthlyPick({
               href={`${movieHref}#article-links`}
               className="mt-3 inline-block font-mono text-xs font-bold border-2 border-ink px-3 py-1.5 shadow-[3px_3px_0_var(--ink)] no-underline text-ink">
               {copy.cta}
+            </a>
+            <a
+              href="/monthly"
+              className="mt-3 block font-mono text-xs text-ink-muted">
+              {copy.archive}
             </a>
           </div>
         </div>

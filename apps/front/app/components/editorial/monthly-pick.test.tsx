@@ -52,7 +52,7 @@ describe('MonthlyPick', () => {
   it('「今月の1本」のラベルと、みんなで観ることを書く', () => {
     render(<MonthlyPick movie={movie} locale="ja" />);
 
-    expect(screen.getByText(/今月の1本/)).toBeInTheDocument();
+    expect(screen.getByText('MONTHLY / 今月の1本')).toBeInTheDocument();
     expect(
       screen.getByText('毎月1本、みんなで同じ映画を観る'),
     ).toBeInTheDocument();
@@ -133,5 +133,13 @@ describe('MonthlyPick のポスター配信', () => {
     expect(container.querySelector('img')?.getAttribute('src')).toBe(
       'https://image.tmdb.org/t/p/w500/abc.jpg',
     );
+  });
+
+  it('これまでの今月の1本の一覧へのリンクを出す', () => {
+    render(<MonthlyPick movie={movie} locale="ja" />);
+
+    expect(
+      screen.getByRole('link', {name: 'これまでの今月の1本 →'}),
+    ).toHaveAttribute('href', '/monthly');
   });
 });
