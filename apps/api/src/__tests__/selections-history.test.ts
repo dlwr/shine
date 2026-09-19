@@ -264,7 +264,12 @@ describe('GET /selections/:type/history のポスターと関連リンク数', (
     await database.insert(articleLinks).values([
       {movieUid: 'movie-3', url: 'https://a.test/1', title: 'a'},
       {movieUid: 'movie-3', description: 'ひとこと'},
-      {movieUid: 'movie-3', url: 'https://a.test/spam', title: 's', isSpam: true},
+      {
+        movieUid: 'movie-3',
+        url: 'https://a.test/spam',
+        title: 's',
+        isSpam: true,
+      },
       {
         movieUid: 'movie-3',
         url: 'https://a.test/flagged',
