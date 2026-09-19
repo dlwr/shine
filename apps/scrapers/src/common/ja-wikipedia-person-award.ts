@@ -11,11 +11,8 @@ import {
   filmReferenceKey,
   resolveFilmReferences,
 } from './film-reference-resolver';
-import {
-  type FilmReference,
-  type ResolvedFilm,
-  type YearWindow,
-} from './wikidata-film-resolver';
+import {type FilmReference, type YearWindow} from './film-resolution-checks';
+import {type ResolvedFilm} from './wikidata-film-resolver';
 import {
   parseListPersonAwardWikitext,
   type ListPersonAwardCategory,

@@ -1,10 +1,7 @@
 import {describe, expect, it, vi} from 'vitest';
 import {resolveRemainingByTmdb} from '../tmdb-film-resolver';
-import {
-  type FilmReference,
-  type ResolvedFilm,
-  type YearWindow,
-} from '../wikidata-film-resolver';
+import {type FilmReference, type YearWindow} from '../film-resolution-checks';
+import {type ResolvedFilm} from '../wikidata-film-resolver';
 
 const WINDOW: YearWindow = {min: -1, max: 1};
 

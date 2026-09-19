@@ -3,10 +3,8 @@ import {
   filmReferenceKey,
   resolveFilmReferences,
 } from '../common/film-reference-resolver';
-import type {
-  FilmReference,
-  ResolvedFilm,
-} from '../common/wikidata-film-resolver';
+import type {FilmReference} from '../common/film-resolution-checks';
+import type {ResolvedFilm} from '../common/wikidata-film-resolver';
 
 const WINDOW = {min: -1, max: 1};
 

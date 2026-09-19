@@ -13,10 +13,12 @@ import {
   dropDuplicateResolutions,
   dropMisattributedResolutions,
   reportDuplicateResolutions,
-  resolveFilmsByWikipediaPage,
   type FilmReference,
-  type ResolvedFilm,
   type YearWindow,
+} from './film-resolution-checks';
+import {
+  resolveFilmsByWikipediaPage,
+  type ResolvedFilm,
 } from './wikidata-film-resolver';
 import {fetchWikitext} from './wikitext';
 

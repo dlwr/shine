@@ -7,10 +7,12 @@ import {
 import {filmOf, type FilmAwardEntry} from './common/award-table-wikitext';
 import {
   dropMisattributedResolutions,
-  resolveFilmsByWikipediaPage,
   type FilmReference,
-  type ResolvedFilm,
   type YearWindow,
+} from './common/film-resolution-checks';
+import {
+  resolveFilmsByWikipediaPage,
+  type ResolvedFilm,
 } from './common/wikidata-film-resolver';
 import {fetchWikitext} from './common/wikitext';
 import {cellsOf, fillRow, type CarriedCell} from './common/wikitext-table';

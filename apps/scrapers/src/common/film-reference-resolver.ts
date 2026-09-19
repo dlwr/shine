@@ -2,8 +2,10 @@ import {resolveRemainingByTmdb} from './tmdb-film-resolver';
 import {
   dropDuplicateResolutions,
   dropMisattributedResolutions,
-  resolveFilmsByWikipediaPage,
   type FilmReference,
+} from './film-resolution-checks';
+import {
+  resolveFilmsByWikipediaPage,
   type ResolvedFilm,
 } from './wikidata-film-resolver';
 
