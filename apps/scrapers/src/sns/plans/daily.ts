@@ -1,6 +1,6 @@
 import {fetchSelections, requireSelection} from '../api-client';
 import {type PostPlan} from '../post-plan';
-import {buildDailyPostText, buildXPostText} from '../post-text';
+import {buildDailyPostText, buildXPostText} from '../post-text/daily';
 import {SITE_URL} from '../site';
 import {buildMovieLink, buildSelectionPostInput} from './selection';
 

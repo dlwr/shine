@@ -1,6 +1,9 @@
 import {fetchWatchedLists, fetchWinnerCount} from '../api-client';
 import {type PostPlan} from '../post-plan';
-import {buildWatchedPostText, buildWatchedXPostText} from '../post-text';
+import {
+  buildWatchedPostText,
+  buildWatchedXPostText,
+} from '../post-text/watched';
 import {SITE_URL} from '../site';
 import {pickWeeklyItem} from '../weekly-rotation';
 
