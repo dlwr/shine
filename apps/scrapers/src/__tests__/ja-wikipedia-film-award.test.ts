@@ -1,15 +1,17 @@
 import {describe, expect, it} from 'vitest';
 import {
-  collectAwardLineFilms,
   collectJapaneseTitles,
   filmAwardConfig,
   filmAwardReferences,
-  parseBracketedFilms,
-  splitEditions,
   toFilmAwardEventData,
   type FilmAwardSource,
+} from '../common/ja-wikipedia-film-award-source';
+import {
+  collectAwardLineFilms,
+  parseBracketedFilms,
+  splitEditions,
   type WikiFilm,
-} from '../common/ja-wikipedia-film-award';
+} from '../common/ja-wikipedia-film-award-wikitext';
 
 type Edition = {year: number; best: WikiFilm[]; foreign: WikiFilm[]};
 
