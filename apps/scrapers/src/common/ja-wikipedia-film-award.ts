@@ -25,7 +25,7 @@ export type WikiFilm = {
   title: string;
 };
 
-export type FilmAwardCategory<Edition, Film extends WikiFilm> = {
+type FilmAwardCategory<Edition, Film extends WikiFilm> = {
   category: string;
   films: (edition: Edition) => Film[];
   /** 外国映画が対象の部門。日本公開が本国より遅れるので同定の年の窓を広げる */
@@ -333,7 +333,7 @@ export async function backfillFilmAwardJapaneseTitles<
   );
 }
 
-export async function resolveFilmAwardEditions<
+async function resolveFilmAwardEditions<
   Edition extends {year: number},
   Film extends WikiFilm,
 >({
