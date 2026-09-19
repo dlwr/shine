@@ -62,7 +62,7 @@ export type EnWikipediaAwardSource = {
   personNameAliases: Readonly<Record<string, string>>;
 };
 
-export type EnWikipediaAwardEntry = FilmAwardEntry & {personName?: string};
+type EnWikipediaAwardEntry = FilmAwardEntry & {personName?: string};
 
 /** 賞をまたいで現れる、記事の表記とTMDbのクレジット名が別名の人物 */
 const COMMON_PERSON_NAME_ALIASES: Readonly<Record<string, string>> = {
@@ -236,7 +236,7 @@ export function parseAwardEditions(
     : parsePersonAwardWikitext(wikitext, options);
 }
 
-export async function importEnWikipediaAward({
+async function importEnWikipediaAward({
   environment,
   source,
   award,
