@@ -16,6 +16,7 @@ const CONFIG: SelectionArchiveConfig = {
   metaDescription:
     '映画賞や名作リストに選ばれた映画から毎月1本を紹介する「今月の1本」の過去のセレクション一覧。',
   formatDate: selectionDate => selectionDate.slice(0, 7),
+  showPosters: true,
 };
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
@@ -28,6 +29,10 @@ export async function loader({context, request}: Route.LoaderArgs) {
 }
 
 export default function MonthlyArchive({loaderData}: Route.ComponentProps) {
-  const {items, locale} = loaderData as SelectionArchiveData;
-  return <SelectionArchivePage config={CONFIG} items={items} locale={locale} />;
+  return (
+    <SelectionArchivePage
+      config={CONFIG}
+      {...(loaderData as SelectionArchiveData)}
+    />
+  );
 }

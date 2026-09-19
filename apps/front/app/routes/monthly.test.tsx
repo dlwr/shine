@@ -14,18 +14,22 @@ const mockHistory = {
       title: '脱出',
       year: 1972,
       selectionDate: '2026-08-01',
+      posterUrl: 'https://image.tmdb.org/t/p/original/deliverance.jpg',
+      articleLinkCount: 2,
     },
     {
       uid: 'movie-2',
       title: 'エンター・ザ・ボイド',
       year: 2009,
       selectionDate: '2026-07-01',
+      articleLinkCount: 0,
     },
     {
       uid: 'movie-3',
       title: '東への道',
       year: 1920,
       selectionDate: '2026-06-01',
+      articleLinkCount: 0,
     },
   ],
 };
@@ -48,7 +52,12 @@ const createLoaderArguments = (
 
 const createComponentProperties = (): ComponentProperties =>
   cast<ComponentProperties>({
-    loaderData: {items: mockHistory.items, locale: 'ja'},
+    loaderData: {
+      items: mockHistory.items,
+      locale: 'ja',
+      currentMonth: '2026-08',
+      transformImages: false,
+    },
     params: {},
     matches: [],
   });
@@ -76,7 +85,24 @@ describe('Monthly archive page', () => {
         'http://localhost:8787/selections/monthly/history?locale=ja&limit=30',
         {signal: request.signal},
       );
-      expect(result).toEqual({items: mockHistory.items, locale: 'ja'});
+      expect(result).toMatchObject({items: mockHistory.items, locale: 'ja'});
+    });
+
+    it('今の月を UTC の YYYY-MM で返す', async () => {
+      vi.useFakeTimers({now: new Date('2026-09-30T23:30:00Z')});
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockHistory,
+      } as Response);
+
+      const request = new Request('http://localhost:3000/monthly');
+      const result = await loader(
+        createLoaderArguments(createMockContext(), request),
+      );
+      vi.useRealTimers();
+
+      expect(result.currentMonth).toBe('2026-09');
     });
 
     it('APIが失敗したら502を投げる', async () => {
@@ -128,6 +154,40 @@ describe('Monthly archive page', () => {
 
       expect(screen.getByText('2026-08')).toBeInTheDocument();
       expect(screen.queryByText('2026-08-01')).not.toBeInTheDocument();
+    });
+
+    it('ポスターを表示する', () => {
+      render(<MonthlyArchivePage {...createComponentProperties()} />);
+
+      expect(screen.getByRole('img', {name: '脱出'})).toHaveAttribute(
+        'src',
+        'https://image.tmdb.org/t/p/w185/deliverance.jpg',
+      );
+    });
+
+    it('関連リンクの数を表示する', () => {
+      render(<MonthlyArchivePage {...createComponentProperties()} />);
+
+      expect(screen.getByText('みんなの投稿 2 件')).toBeInTheDocument();
+    });
+
+    it('関連リンクが無い月には数を出さない', () => {
+      render(<MonthlyArchivePage {...createComponentProperties()} />);
+
+      expect(screen.getAllByText(/みんなの投稿/)).toHaveLength(1);
+    });
+
+    it('今月の行に「今月みんなで観ている1本」と出す', () => {
+      render(<MonthlyArchivePage {...createComponentProperties()} />);
+
+      const link = screen.getByRole('link', {name: /脱出/});
+      expect(link).toHaveTextContent('今月みんなで観ている1本');
+    });
+
+    it('過去の月には「今月みんなで観ている1本」を出さない', () => {
+      render(<MonthlyArchivePage {...createComponentProperties()} />);
+
+      expect(screen.getAllByText('今月みんなで観ている1本')).toHaveLength(1);
     });
 
     it('他のアーカイブへのリンクを表示する', () => {

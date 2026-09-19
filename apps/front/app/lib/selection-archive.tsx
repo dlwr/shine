@@ -1,19 +1,24 @@
-import {apiFetch, type LoadContext} from '@/lib/api';
+import {apiFetch, canTransformImages, type LoadContext} from '@/lib/api';
 import {Masthead} from '@/components/editorial/masthead';
+import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 
-export type SelectionHistoryItem = {
+type SelectionHistoryItem = {
   uid: string;
   title: string;
   year?: number;
   selectionDate: string;
+  posterUrl?: string;
+  articleLinkCount?: number;
 };
 
 export type SelectionArchiveData = {
   items: SelectionHistoryItem[];
   locale: Locale;
+  currentMonth: string;
+  transformImages: boolean;
 };
 
 export type SelectionArchiveConfig = {
@@ -24,6 +29,7 @@ export type SelectionArchiveConfig = {
   metaTitle: string;
   metaDescription: string;
   formatDate?: (selectionDate: string) => string;
+  showPosters?: boolean;
 };
 
 const ARCHIVE_LINKS = [
@@ -64,18 +70,23 @@ export async function loadSelectionArchive(
   }
 
   const body = (await response.json()) as {items: SelectionHistoryItem[]};
-  return {items: body.items, locale};
+  return {
+    items: body.items,
+    locale,
+    currentMonth: new Date().toISOString().slice(0, 7),
+    transformImages: canTransformImages(context),
+  };
 }
 
 export function SelectionArchivePage({
   config,
   items,
   locale,
+  currentMonth,
+  transformImages,
 }: {
   config: SelectionArchiveConfig;
-  items: SelectionHistoryItem[];
-  locale: Locale;
-}) {
+} & SelectionArchiveData) {
   const formatDate = config.formatDate ?? ((date: string) => date);
 
   return (
@@ -114,12 +125,36 @@ export function SelectionArchivePage({
             <a
               key={`${item.selectionDate}-${item.uid}`}
               href={`/movies/${item.uid}`}
-              className="flex items-baseline gap-3 py-3 border-t-2 border-ink no-underline text-ink">
+              className={`flex gap-3 py-3 border-t-2 border-ink no-underline text-ink ${
+                config.showPosters ? 'items-center' : 'items-baseline'
+              }`}>
+              {config.showPosters && (
+                <PosterFrame
+                  posterUrl={item.posterUrl}
+                  alt={item.title}
+                  displaySize="w185"
+                  transformImages={transformImages}
+                  className="w-14 shrink-0"
+                />
+              )}
               <span className="font-mono text-xs text-ink-muted shrink-0">
                 {formatDate(item.selectionDate)}
               </span>
-              <span className="flex-1 font-display font-extrabold text-base md:text-lg leading-tight">
-                『{item.title}』{item.year ? `(${item.year})` : ''}
+              <span className="flex-1 min-w-0">
+                {config.type === 'monthly' &&
+                  item.selectionDate.startsWith(currentMonth) && (
+                    <span className="block font-mono text-xs font-bold text-brand mb-1">
+                      今月みんなで観ている1本
+                    </span>
+                  )}
+                <span className="block font-display font-extrabold text-base md:text-lg leading-tight">
+                  『{item.title}』{item.year ? `(${item.year})` : ''}
+                </span>
+                {(item.articleLinkCount ?? 0) > 0 && (
+                  <span className="block font-mono text-xs text-ink-muted mt-1">
+                    みんなの投稿 {item.articleLinkCount} 件
+                  </span>
+                )}
               </span>
             </a>
           ))}

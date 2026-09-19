@@ -76,7 +76,7 @@ describe('Weekly archive page', () => {
         'http://localhost:8787/selections/weekly/history?locale=ja&limit=30',
         {signal: request.signal},
       );
-      expect(result).toEqual({items: mockHistory.items, locale: 'ja'});
+      expect(result).toMatchObject({items: mockHistory.items, locale: 'ja'});
     });
 
     it('APIが失敗したら502を投げる', async () => {
