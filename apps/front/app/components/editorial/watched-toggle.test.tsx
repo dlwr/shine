@@ -75,4 +75,32 @@ describe('WatchedToggle', () => {
       expect(screen.getByRole('button', {name: '✓ 観た'})).toBeInTheDocument();
     });
   });
+
+  it('今月の1本を観たら、ひとこと残す欄へ誘う', async () => {
+    const user = userEvent.setup();
+    render(<WatchedToggle uid="movie-1" isMonthlyPick />);
+
+    await user.click(screen.getByRole('button', {name: '観た'}));
+
+    expect(
+      screen.getByRole('link', {name: /今月の1本.*ひとこと/}),
+    ).toHaveAttribute('href', '#article-links');
+  });
+
+  it('今月の1本でも、観ていなければ誘わない', () => {
+    render(<WatchedToggle uid="movie-1" isMonthlyPick />);
+
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('今月の1本でなければ、観ても投稿には誘わない', async () => {
+    const user = userEvent.setup();
+    render(<WatchedToggle uid="movie-1" />);
+
+    await user.click(screen.getByRole('button', {name: '観た'}));
+
+    expect(
+      screen.queryByRole('link', {name: /ひとこと/}),
+    ).not.toBeInTheDocument();
+  });
 });

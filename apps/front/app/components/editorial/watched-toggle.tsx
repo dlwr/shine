@@ -1,7 +1,13 @@
 import {useEffect, useState} from 'react';
 import {readWatched, toggleWatched, writeWatched} from '@/lib/watched';
 
-export function WatchedToggle({uid}: {uid: string}) {
+export function WatchedToggle({
+  uid,
+  isMonthlyPick = false,
+}: {
+  uid: string;
+  isMonthlyPick?: boolean;
+}) {
   const [watched, setWatched] = useState(false);
 
   useEffect(() => {
@@ -27,7 +33,14 @@ export function WatchedToggle({uid}: {uid: string}) {
         }>
         {watched ? '✓ 観た' : '観た'}
       </button>
-      {watched && (
+      {watched && isMonthlyPick && (
+        <a
+          href="#article-links"
+          className="font-mono text-xs font-bold text-brand underline underline-offset-2">
+          今月の1本を観ましたね。ひとこと残す ↓
+        </a>
+      )}
+      {watched && !isMonthlyPick && (
         <a href="/watched" className="font-mono text-[10px] text-ink-muted">
           観た映画チェックで進捗を見る →
         </a>
