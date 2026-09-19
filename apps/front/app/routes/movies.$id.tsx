@@ -231,6 +231,7 @@ export default function MovieDetail({
   const {movieDetail, turnstileSiteKey, locale} = data;
   const relatedMovies = data.relatedMovies ?? [];
   const title = movieDetail.title || 'タイトル不明';
+  const isThisMonthsPick = isMonthlyPick(matches, movieDetail.uid);
 
   const metaItems: string[] = [];
   if (movieDetail.imdbId) {
@@ -270,7 +271,10 @@ export default function MovieDetail({
               {title}
             </h1>
             <MetaLine items={metaItems} />
-            <WatchedToggle uid={movieDetail.uid} />
+            <WatchedToggle
+              uid={movieDetail.uid}
+              isMonthlyPick={isThisMonthsPick}
+            />
           </div>
         </div>
 
@@ -335,7 +339,7 @@ export default function MovieDetail({
           isLoadingTitle={isLoadingTitle}
           submissionResult={submissionResult}
           turnstileSiteKey={turnstileSiteKey}
-          isMonthlyPick={isMonthlyPick(matches, movieDetail.uid)}
+          isMonthlyPick={isThisMonthsPick}
         />
 
         {/* Related Movies */}
