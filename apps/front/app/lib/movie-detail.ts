@@ -1,7 +1,12 @@
 import type {ArticleLink} from '@/components/editorial/article-links-section';
 import type {MovieCredits} from '@/components/editorial/credits-list';
-import {apiFetch, type LoadContext} from './api';
-import type {Locale} from './locale';
+import {
+  apiFetch,
+  resolveApiUrl,
+  resolveEnvironment,
+  type LoadContext,
+} from './api';
+import {getLocaleFromRequest, type Locale} from './locale';
 
 export type MovieDetailData = {
   uid: string;
@@ -98,5 +103,50 @@ export async function fetchRelatedMovies(
     return body.movies ?? [];
   } catch {
     return [];
+  }
+}
+
+export async function loadMovieDetail(
+  context: LoadContext,
+  movieId: string,
+  request: Request,
+): Promise<LoaderData> {
+  const locale = getLocaleFromRequest(request);
+
+  try {
+    const environment = resolveEnvironment(context);
+    const apiUrl = resolveApiUrl(context);
+    const [response, relatedMovies] = await Promise.all([
+      apiFetch(context, `/movies/${movieId}`, {
+        signal: request.signal,
+      }),
+      fetchRelatedMovies(context, movieId, locale, request.signal),
+    ]);
+
+    if (response.status === 404) {
+      return {
+        error: '映画が見つかりませんでした',
+        status: 404,
+        locale,
+      };
+    }
+
+    if (!response.ok) {
+      return {
+        error: 'データの取得に失敗しました',
+        status: response.status,
+        locale,
+      };
+    }
+
+    const movieDetail = (await response.json()) as MovieDetailData;
+    const turnstileSiteKey = environment.PUBLIC_TURNSTILE_SITE_KEY;
+    return {movieDetail, relatedMovies, turnstileSiteKey, locale, apiUrl};
+  } catch {
+    return {
+      error: 'APIへの接続に失敗しました',
+      status: 500,
+      locale,
+    };
   }
 }

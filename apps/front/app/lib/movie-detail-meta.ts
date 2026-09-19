@@ -1,8 +1,20 @@
-import {SITE_URL} from './meta';
-import type {MovieDetailData} from './movie-detail';
+import type {MetaDescriptor} from 'react-router';
+import {DEFAULT_LOCALE} from './locale';
+import {SITE_URL, buildSocialMeta} from './meta';
+import {monthlyPickLabel} from './monthly-pick';
+import {
+  isLoaderError,
+  isLoaderSuccess,
+  type LoaderData,
+  type MovieDetailData,
+} from './movie-detail';
+
+type RouteMatches = ReadonlyArray<
+  {id?: string; loaderData?: unknown} | undefined
+>;
 
 export function isMonthlyPick(
-  matches: readonly ({id?: string; loaderData?: unknown} | undefined)[],
+  matches: RouteMatches,
   movieUid: string | undefined,
 ): boolean {
   const root = matches.find(match => match?.id === 'root');
@@ -74,4 +86,57 @@ export function buildMovieJsonLd(
     ...(movieDetail.imdbUrl && {sameAs: movieDetail.imdbUrl}),
     ...(awards.length > 0 && {award: awards}),
   };
+}
+
+export function buildMovieDetailMeta({
+  payload,
+  matches,
+  movieId,
+}: {
+  payload: LoaderData | undefined;
+  matches: RouteMatches;
+  movieId: string;
+}): MetaDescriptor[] {
+  const locale = payload?.locale ?? DEFAULT_LOCALE;
+  const path = `/movies/${movieId}`;
+
+  if (payload && isLoaderError(payload) && payload.error) {
+    return buildSocialMeta({
+      title: '映画が見つかりません | SHINE',
+      description: '指定された映画は見つかりませんでした。',
+      path,
+      locale,
+    });
+  }
+
+  const movieDetail =
+    payload && isLoaderSuccess(payload) ? payload.movieDetail : undefined;
+  const title = movieDetail?.title || '映画詳細';
+  const year = movieDetail?.year || '';
+  const organizations = movieDetail
+    ? summarizeOrganizations(movieDetail.nominations)
+    : '';
+  const selection = organizations ? `${organizations}に選出。` : '';
+  const monthlyLabel = isMonthlyPick(matches, movieId)
+    ? monthlyPickLabel(new Date(), locale)
+    : undefined;
+  const pageTitle = monthlyLabel
+    ? `${title} (${year}) — ${monthlyLabel} | SHINE`
+    : `${title} (${year}) | SHINE`;
+
+  return [
+    ...buildSocialMeta({
+      title: pageTitle,
+      description: buildMetaDescription(
+        `『${title}』(${year}年)。${monthlyLabel ? `${monthlyLabel}。` : ''}${selection}`,
+        movieDetail?.description,
+      ),
+      path,
+      locale,
+      type: 'article',
+      imageUrl: `${SITE_URL}/og/movie.png?id=${movieId}`,
+      largeImage: true,
+    }),
+    ...(movieDetail ? [{'script:ld+json': buildMovieJsonLd(movieDetail)}] : []),
+  ];
 }
