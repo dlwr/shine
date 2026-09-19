@@ -6,7 +6,7 @@ import {type PostPlan} from '../post-plan';
 import {
   buildAnnouncementPostText,
   buildAnnouncementXPostText,
-} from '../post-text';
+} from '../post-text/announcement';
 
 const ANNOUNCEMENTS_DIRECTORY = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),

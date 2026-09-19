@@ -4,7 +4,7 @@ import {
   buildQuizPostText,
   buildQuizShareUrl,
   buildQuizXPostText,
-} from '../post-text';
+} from '../post-text/quiz';
 import {SITE_URL} from '../site';
 
 export async function buildQuizPlan(): Promise<PostPlan> {

@@ -1,7 +1,7 @@
 import {fetchProminentPeople} from '../api-client';
 import {pickPersonOfWeek} from '../person-rotation';
 import {type PostPlan} from '../post-plan';
-import {buildPersonPostText, buildPersonXPostText} from '../post-text';
+import {buildPersonPostText, buildPersonXPostText} from '../post-text/person';
 import {SITE_URL} from '../site';
 
 export async function buildPersonPlan(): Promise<PostPlan> {

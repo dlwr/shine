@@ -2,27 +2,24 @@ import {describe, expect, it} from 'vitest';
 import {
   buildAnnouncementPostText,
   buildAnnouncementXPostText,
-  buildDailyPostText,
+} from './announcement';
+import {buildDailyPostText, buildXPostText} from './daily';
+import {xWeightedLength} from './framing';
+import {
+  buildMonthlyLinksPostText,
+  buildMonthlyLinksXPostText,
   buildMonthlyPostText,
   buildMonthlyPreviewPostText,
   buildMonthlyPreviewXPostText,
   buildMonthlyReminderPostText,
   buildMonthlyReminderXPostText,
-  buildMonthlyLinksPostText,
-  buildMonthlyLinksXPostText,
   buildMonthlyRoundupPostText,
   buildMonthlyRoundupXPostText,
   buildMonthlyXPostText,
-  buildQuizPostText,
-  buildQuizShareUrl,
-  buildPersonPostText,
-  buildPersonXPostText,
-  buildQuizXPostText,
-  buildWatchedPostText,
-  buildWatchedXPostText,
-  buildXPostText,
-  xWeightedLength,
-} from './post-text';
+} from './monthly';
+import {buildPersonPostText, buildPersonXPostText} from './person';
+import {buildQuizPostText, buildQuizShareUrl, buildQuizXPostText} from './quiz';
+import {buildWatchedPostText, buildWatchedXPostText} from './watched';
 
 const base = {
   title: 'ハウスメイド',

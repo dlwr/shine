@@ -25,7 +25,7 @@ import {
   buildMonthlyRoundupPostText,
   buildMonthlyRoundupXPostText,
   buildMonthlyXPostText,
-} from '../post-text';
+} from '../post-text/monthly';
 import {SITE_URL} from '../site';
 import {buildMovieLink, buildSelectionPostInput} from './selection';
 
