@@ -5,6 +5,7 @@ import {articleLinks} from '@shine/database/schema/article-links';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
+import {SITE_URL} from './sns/site';
 
 type DatabaseClient = ReturnType<typeof getDatabase>;
 
@@ -12,6 +13,7 @@ export const DEFAULT_MONTHS = 12;
 
 export type MonthlyLinkCount = {
   month: string;
+  movieUid: string;
   title: string;
   other: number;
   owner: number;
@@ -118,6 +120,7 @@ export async function collectMonthlyLinkCounts(
     const since = monthStart(month);
     const count: MonthlyLinkCount = {
       month,
+      movieUid: selection.movieUid,
       title: titles.get(selection.movieUid) ?? '(タイトル未登録)',
       other: 0,
       owner: 0,
@@ -139,9 +142,22 @@ export async function collectMonthlyLinkCounts(
   });
 }
 
+export function moviePageUrl(movieUid: string): string {
+  return `${SITE_URL}/movies/${movieUid}`;
+}
+
+function formatBookmarkCount(
+  count: MonthlyLinkCount,
+  bookmarkCounts: Map<string, number> | undefined,
+): string {
+  const bookmarks = bookmarkCounts?.get(moviePageUrl(count.movieUid));
+  return bookmarks === undefined ? '' : ` / はてブ ${bookmarks}`;
+}
+
 export function formatNorthStarReport(
   counts: MonthlyLinkCount[],
   now: Date,
+  bookmarkCounts?: Map<string, number>,
 ): {content: string; hasOutsideLink: boolean} {
   const monthsWithOutsideLink = counts.filter(count => count.other > 0);
   const lines = [
@@ -149,7 +165,7 @@ export function formatNorthStarReport(
     `他人のリンクが付いた月: ${monthsWithOutsideLink.length} / ${counts.length}`,
     ...counts.map(
       count =>
-        `${count.month} ${count.title}: 他人 ${count.other} / 本人 ${count.owner} / テスト ${count.test}`,
+        `${count.month} ${count.title}: 他人 ${count.other} / 本人 ${count.owner} / テスト ${count.test}${formatBookmarkCount(count, bookmarkCounts)}`,
     ),
   ];
 

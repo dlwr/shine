@@ -98,6 +98,7 @@ describe('collectMonthlyLinkCounts', () => {
     expect(counts).toEqual([
       {
         month: '2026-09',
+        movieUid: 'movie-1',
         title: 'ある映画',
         other: 1,
         owner: 1,
@@ -389,8 +390,22 @@ describe('formatNorthStarReport', () => {
   it('他人のリンクが付いた月の数を出す', () => {
     const {content} = formatNorthStarReport(
       [
-        {month: '2026-09', title: '9月の映画', other: 0, owner: 1, test: 0},
-        {month: '2026-08', title: '8月の映画', other: 0, owner: 1, test: 0},
+        {
+          month: '2026-09',
+          movieUid: 'm9',
+          title: '9月の映画',
+          other: 0,
+          owner: 1,
+          test: 0,
+        },
+        {
+          month: '2026-08',
+          movieUid: 'm8',
+          title: '8月の映画',
+          other: 0,
+          owner: 1,
+          test: 0,
+        },
       ],
       now,
     );
@@ -402,8 +417,22 @@ describe('formatNorthStarReport', () => {
   it('月ごとの内訳を新しい順に並べる', () => {
     const {content} = formatNorthStarReport(
       [
-        {month: '2026-09', title: '9月の映画', other: 0, owner: 1, test: 0},
-        {month: '2026-08', title: '8月の映画', other: 2, owner: 1, test: 0},
+        {
+          month: '2026-09',
+          movieUid: 'm9',
+          title: '9月の映画',
+          other: 0,
+          owner: 1,
+          test: 0,
+        },
+        {
+          month: '2026-08',
+          movieUid: 'm8',
+          title: '8月の映画',
+          other: 2,
+          owner: 1,
+          test: 0,
+        },
       ],
       now,
     );
@@ -412,9 +441,74 @@ describe('formatNorthStarReport', () => {
     expect(content).toContain('2026-08 8月の映画: 他人 2 / 本人 1');
   });
 
+  it('はてなブックマーク数を渡すと月ごとに添える', () => {
+    const {content} = formatNorthStarReport(
+      [
+        {
+          month: '2026-09',
+          movieUid: 'm9',
+          title: '9月の映画',
+          other: 0,
+          owner: 1,
+          test: 0,
+        },
+        {
+          month: '2026-08',
+          movieUid: 'm8',
+          title: '8月の映画',
+          other: 0,
+          owner: 1,
+          test: 0,
+        },
+        {
+          month: '2026-07',
+          movieUid: 'm7',
+          title: '7月の映画',
+          other: 0,
+          owner: 1,
+          test: 0,
+        },
+      ],
+      now,
+      new Map([
+        ['https://shine-film.com/movies/m9', 4],
+        ['https://shine-film.com/movies/m8', 0],
+      ]),
+    );
+
+    expect(content).toContain('テスト 0 / はてブ 4');
+  });
+
+  it('はてなブックマーク数を渡さなければ添えない', () => {
+    const {content} = formatNorthStarReport(
+      [
+        {
+          month: '2026-09',
+          movieUid: 'm9',
+          title: '9月の映画',
+          other: 0,
+          owner: 1,
+          test: 0,
+        },
+      ],
+      now,
+    );
+
+    expect(content).not.toContain('はてブ');
+  });
+
   it('他人のリンクが付いた月があれば達成として報せる', () => {
     const {content, hasOutsideLink} = formatNorthStarReport(
-      [{month: '2026-08', title: '8月の映画', other: 1, owner: 1, test: 0}],
+      [
+        {
+          month: '2026-08',
+          movieUid: 'm8',
+          title: '8月の映画',
+          other: 1,
+          owner: 1,
+          test: 0,
+        },
+      ],
       now,
     );
 
@@ -424,7 +518,16 @@ describe('formatNorthStarReport', () => {
 
   it('他人のリンクが無ければ達成にしない', () => {
     const {hasOutsideLink} = formatNorthStarReport(
-      [{month: '2026-08', title: '8月の映画', other: 0, owner: 1, test: 3}],
+      [
+        {
+          month: '2026-08',
+          movieUid: 'm8',
+          title: '8月の映画',
+          other: 0,
+          owner: 1,
+          test: 3,
+        },
+      ],
       now,
     );
 

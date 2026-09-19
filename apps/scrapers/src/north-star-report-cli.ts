@@ -7,10 +7,12 @@ import {getDatabase} from '@shine/database';
 import {parseOriginRules} from '@shine/utils';
 import {sendDiscordNotification} from './availability/discord';
 import {loadScraperEnvironment} from './common/environment';
+import {fetchHatenaBookmarkCountsOrUndefined} from './hatena-bookmarks';
 import {
   collectMonthlyLinkCounts,
   DEFAULT_MONTHS,
   formatNorthStarReport,
+  moviePageUrl,
 } from './north-star';
 
 function parseMonths(value: string): number {
@@ -35,7 +37,10 @@ async function main(options: {months: number; dryRun: boolean}): Promise<void> {
       parseOriginRules(process.env),
       {months: options.months},
     );
-    const {content} = formatNorthStarReport(counts, new Date());
+    const bookmarkCounts = await fetchHatenaBookmarkCountsOrUndefined(
+      counts.map(count => moviePageUrl(count.movieUid)),
+    );
+    const {content} = formatNorthStarReport(counts, new Date(), bookmarkCounts);
 
     console.log(content);
 

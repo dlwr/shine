@@ -14,7 +14,12 @@ import {
   loadEnvironmentFiles,
   loadScraperEnvironment,
 } from './common/environment';
-import {collectMonthlyLinkCounts, formatNorthStarReport} from './north-star';
+import {fetchHatenaBookmarkCountsOrUndefined} from './hatena-bookmarks';
+import {
+  collectMonthlyLinkCounts,
+  formatNorthStarReport,
+  moviePageUrl,
+} from './north-star';
 import {
   collectSourceFileSizes,
   formatPageTimings,
@@ -126,9 +131,13 @@ async function northStarSection(): Promise<SurveySection> {
     {months: 3},
   );
 
+  const bookmarkCounts = await fetchHatenaBookmarkCountsOrUndefined(
+    counts.map(count => moviePageUrl(count.movieUid)),
+  );
+
   return {
     title: '北極星（直近 3 か月）',
-    body: formatNorthStarReport(counts, new Date()).content,
+    body: formatNorthStarReport(counts, new Date(), bookmarkCounts).content,
   };
 }
 
