@@ -3,10 +3,12 @@ import {resolveRemainingByTmdb} from './common/tmdb-film-resolver';
 import {
   dropDuplicateResolutions,
   dropMisattributedResolutions,
-  resolveFilmsByWikipediaPage,
   type FilmReference,
-  type ResolvedFilm,
   type YearWindow,
+} from './common/film-resolution-checks';
+import {
+  resolveFilmsByWikipediaPage,
+  type ResolvedFilm,
 } from './common/wikidata-film-resolver';
 import {
   importImdbEventAward,

@@ -9,10 +9,8 @@ import {
   type EnWikipediaAwardSource,
   type PersonRole,
 } from './common/en-wikipedia-award';
-import {
-  type FilmReference,
-  type ResolvedFilm,
-} from './common/wikidata-film-resolver';
+import {type FilmReference} from './common/film-resolution-checks';
+import {type ResolvedFilm} from './common/wikidata-film-resolver';
 import {
   type ImdbEventAwardConfig,
   type ImdbEventCollectedData,

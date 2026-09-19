@@ -8,10 +8,8 @@ import {
   type FilmAwardSource,
   type WikiFilm,
 } from './common/ja-wikipedia-film-award';
-import {
-  type FilmReference,
-  type ResolvedFilm,
-} from './common/wikidata-film-resolver';
+import {type FilmReference} from './common/film-resolution-checks';
+import {type ResolvedFilm} from './common/wikidata-film-resolver';
 import {
   type ImdbEventCollectedData,
   type ImdbEventImportStats,

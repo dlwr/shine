@@ -5,9 +5,9 @@ import {
 } from './common/film-reference-resolver';
 import {
   type FilmReference,
-  type ResolvedFilm,
   type YearWindow,
-} from './common/wikidata-film-resolver';
+} from './common/film-resolution-checks';
+import {type ResolvedFilm} from './common/wikidata-film-resolver';
 import {
   importImdbEventAward,
   type ImdbEventAwardConfig,

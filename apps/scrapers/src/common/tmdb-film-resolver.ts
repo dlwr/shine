@@ -4,7 +4,8 @@ import {
   searchTMDBMovies,
   type TMDBSearchMovieResult,
 } from '@shine/tmdb';
-import {type FilmReference, type ResolvedFilm} from './wikidata-film-resolver';
+import {type FilmReference} from './film-resolution-checks';
+import {type ResolvedFilm} from './wikidata-film-resolver';
 const IMDB_ID_PATTERN = /^tt\d+$/;
 
 export type TmdbSearchResult = TMDBSearchMovieResult;
