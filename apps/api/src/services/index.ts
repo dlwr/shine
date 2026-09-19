@@ -1,5 +1,7 @@
 export {AdminCeremoniesService} from './admin-ceremonies-service';
+export {AdminArticleLinksService} from './admin-article-links-service';
 export {AdminMoviesService} from './admin-movies-service';
+export {AdminPostersService} from './admin-posters-service';
 export {AdminSelectionsService} from './admin-selections-service';
 export {
   AvailabilityService,
