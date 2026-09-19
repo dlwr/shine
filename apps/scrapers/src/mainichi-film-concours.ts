@@ -1,14 +1,16 @@
 import {type Environment} from '@shine/database';
+import {importFilmAward} from './common/ja-wikipedia-film-award';
 import {
   filmAwardConfig,
   filmAwardReferences,
-  importFilmAward,
-  parseBracketedFilms,
-  splitEditions,
   toFilmAwardEventData,
   type FilmAwardSource,
+} from './common/ja-wikipedia-film-award-source';
+import {
+  parseBracketedFilms,
+  splitEditions,
   type WikiFilm,
-} from './common/ja-wikipedia-film-award';
+} from './common/ja-wikipedia-film-award-wikitext';
 import {type FilmReference} from './common/film-resolution-checks';
 import {type ResolvedFilm} from './common/wikidata-film-resolver';
 import {

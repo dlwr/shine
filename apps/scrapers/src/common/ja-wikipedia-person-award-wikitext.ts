@@ -1,4 +1,4 @@
-import {splitEditions} from './ja-wikipedia-film-award';
+import {splitEditions} from './ja-wikipedia-film-award-wikitext';
 
 export type ListPersonAwardCategory = {
   /** 記事での部門名。改称があれば全て並べる */

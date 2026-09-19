@@ -1,17 +1,19 @@
 import {describe, expect, it} from 'vitest';
 import type {ResolvedFilm} from '../wikidata-film-resolver';
 import {
-  collectAwardLineFilms,
   collectJapaneseTitles,
   filmAwardConfig,
   filmAwardReferences,
+  toFilmAwardEventData,
+  type FilmAwardSource,
+} from '../ja-wikipedia-film-award-source';
+import {
+  collectAwardLineFilms,
   filmKey,
   parseBracketedFilms,
   splitEditions,
-  toFilmAwardEventData,
-  type FilmAwardSource,
   type WikiFilm,
-} from '../ja-wikipedia-film-award';
+} from '../ja-wikipedia-film-award-wikitext';
 
 const EDITION_HEADING = /^====\s*第(\d+)回（(\d{4})年度）\s*====$/m;
 
