@@ -27,6 +27,10 @@ export async function loader({context, request}: Route.LoaderArgs) {
 }
 
 export default function WeeklyArchive({loaderData}: Route.ComponentProps) {
-  const {items, locale} = loaderData as SelectionArchiveData;
-  return <SelectionArchivePage config={CONFIG} items={items} locale={locale} />;
+  return (
+    <SelectionArchivePage
+      config={CONFIG}
+      {...(loaderData as SelectionArchiveData)}
+    />
+  );
 }

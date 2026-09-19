@@ -337,8 +337,10 @@
     "data.uid",
     "data.year"
   ],
-  "selections:history:daily:{date}:ja:v3": [
+  "selections:history:daily:{date}:ja:v4": [
     "cachedAt",
+    "data.items[].articleLinkCount",
+    "data.items[].posterUrl",
     "data.items[].selectionDate",
     "data.items[].title",
     "data.items[].uid",

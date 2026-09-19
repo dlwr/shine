@@ -399,10 +399,10 @@ describe('AdminSelectionsService selection cache purge', () => {
 
     const today = getSelectionDate(new Date(), 'daily');
     expect(kv.delete).toHaveBeenCalledWith(
-      `selections:history:daily:${today}:ja:v3`,
+      `selections:history:daily:${today}:ja:v4`,
     );
     expect(kv.delete).toHaveBeenCalledWith(
-      `selections:history:daily:${today}:en:v3`,
+      `selections:history:daily:${today}:en:v4`,
     );
   });
 });
