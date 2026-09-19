@@ -4,7 +4,9 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {eq, getDatabase, type Environment} from '@shine/database';
 import {movieSelections} from '@shine/database/schema/movie-selections';
+import {articleLinks} from '@shine/database/schema/article-links';
 import {movies} from '@shine/database/schema/movies';
+import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
@@ -22,6 +24,8 @@ type HistoryItem = {
   title: string;
   year: number | undefined;
   selectionDate: string;
+  posterUrl: string | undefined;
+  articleLinkCount: number;
 };
 
 type HistoryResponse = {items: HistoryItem[]};
@@ -232,6 +236,65 @@ describe('GET /selections/daily/history', () => {
   });
 });
 
+describe('GET /selections/:type/history のポスターと関連リンク数', () => {
+  let environment: Environment;
+
+  async function fetchItem(uid: string): Promise<HistoryItem | undefined> {
+    const response = await selectionsRoutes.request(
+      '/selections/monthly/history?locale=ja',
+      {},
+      environment,
+    );
+    const body = (await response.json()) as HistoryResponse;
+    return body.items.find(item => item.uid === uid);
+  }
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+    const database = getDatabase(environment);
+    await database.insert(posterUrls).values([
+      {movieUid: 'movie-3', url: 'https://img.test/old.jpg', createdAt: 1},
+      {
+        movieUid: 'movie-3',
+        url: 'https://img.test/primary.jpg',
+        isPrimary: 1,
+        createdAt: 2,
+      },
+    ]);
+    await database.insert(articleLinks).values([
+      {movieUid: 'movie-3', url: 'https://a.test/1', title: 'a'},
+      {movieUid: 'movie-3', description: 'ひとこと'},
+      {movieUid: 'movie-3', url: 'https://a.test/spam', title: 's', isSpam: true},
+      {
+        movieUid: 'movie-3',
+        url: 'https://a.test/flagged',
+        title: 'f',
+        isFlagged: true,
+      },
+    ]);
+  });
+
+  it('primary のポスターを返す', async () => {
+    const item = await fetchItem('movie-3');
+    expect(item?.posterUrl).toBe('https://img.test/primary.jpg');
+  });
+
+  it('ポスターが無い映画は posterUrl を持たない', async () => {
+    const item = await fetchItem('movie-2');
+    expect(item?.posterUrl).toBeUndefined();
+  });
+
+  it('スパムと報告済みを除いた関連リンクの数を返す', async () => {
+    const item = await fetchItem('movie-3');
+    expect(item?.articleLinkCount).toBe(2);
+  });
+
+  it('関連リンクが無い映画は 0 を返す', async () => {
+    const item = await fetchItem('movie-2');
+    expect(item?.articleLinkCount).toBe(0);
+  });
+});
+
 describe('GET /selections/weekly/history', () => {
   let environment: Environment;
 
@@ -360,7 +423,7 @@ describe('GET /selections/:type/history のキャッシュ', () => {
     );
 
     expect(puts.map(put => put.key)).toEqual([
-      `selections:history:daily:${getSelectionDate(new Date(), 'daily')}:ja:v3`,
+      `selections:history:daily:${getSelectionDate(new Date(), 'daily')}:ja:v4`,
     ]);
   });
 
@@ -391,7 +454,7 @@ describe('GET /selections/:type/history のキャッシュ', () => {
 
     expect(puts).toEqual([
       {
-        key: `selections:history:weekly:${getSelectionDate(new Date(), 'weekly')}:en:v3`,
+        key: `selections:history:weekly:${getSelectionDate(new Date(), 'weekly')}:en:v4`,
         ttl: 604_800,
       },
     ]);

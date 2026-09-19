@@ -106,7 +106,7 @@ paths:
                     type: array
                     items:
                       type: object
-                      required: [uid, title, selectionDate]
+                      required: [uid, title, selectionDate, articleLinkCount]
                       properties:
                         uid:
                           type: string
@@ -118,6 +118,12 @@ paths:
                         selectionDate:
                           type: string
                           format: date
+                        posterUrl:
+                          type: string
+                          format: uri
+                        articleLinkCount:
+                          type: integer
+                          description: スパム・報告済みを除いた関連リンクの数
         '400':
           $ref: '#/components/responses/ValidationError'
         '500':

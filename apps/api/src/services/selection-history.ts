@@ -12,6 +12,8 @@ export type SelectionHistoryItem = {
   title: string;
   year: number | undefined;
   selectionDate: string;
+  posterUrl: string | undefined;
+  articleLinkCount: number;
 };
 
 export async function loadSelectionHistory(
@@ -39,6 +41,18 @@ export async function loadSelectionHistory(
           AND is_default = 1
         LIMIT 1
       )`,
+      posterUrl: sql<string | undefined>`(
+        SELECT url FROM poster_urls
+        WHERE poster_urls.movie_uid = movies.uid
+        ORDER BY poster_urls.is_primary DESC, poster_urls.created_at ASC
+        LIMIT 1
+      )`,
+      articleLinkCount: sql<number>`(
+        SELECT COUNT(*) FROM article_links
+        WHERE article_links.movie_uid = movies.uid
+          AND article_links.is_spam = 0
+          AND article_links.is_flagged = 0
+      )`,
     })
     .from(movieSelections)
     .innerJoin(movies, eq(movieSelections.movieId, movies.uid))
@@ -57,5 +71,7 @@ export async function loadSelectionHistory(
     title: row.localeTitle ?? row.defaultTitle ?? 'Unknown Title',
     year: row.year ?? undefined,
     selectionDate: row.selectionDate,
+    posterUrl: row.posterUrl ?? undefined,
+    articleLinkCount: row.articleLinkCount,
   }));
 }

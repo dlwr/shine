@@ -196,7 +196,7 @@ export const getCacheKeyForSelectionHistory = (
   type: string,
   date: string,
   locale: string,
-): string => `selections:history:${type}:${date}:${locale}:v3`;
+): string => `selections:history:${type}:${date}:${locale}:v4`;
 
 export const getCacheKeyForMovie = (movieId: string, locale: string): string =>
   `movie:${movieId}:${locale}:v9`;
