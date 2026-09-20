@@ -15,11 +15,9 @@ import {eq} from 'drizzle-orm';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import {getScrapeDatabase} from '../common/dry-run';
-import {
-  importMovieCredits,
-  saveMovieCredits,
-  selectCredits,
-} from '../movie-credits';
+import {importMovieCredits} from '../movie-credits';
+import {saveMovieCredits} from '../movie-credits/save-credits';
+import {selectCredits} from '../movie-credits/select-credits';
 
 function creditsFor(creditId: string) {
   return selectCredits({

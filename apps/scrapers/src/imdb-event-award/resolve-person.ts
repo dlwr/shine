@@ -10,11 +10,11 @@ import {
   type TMDBCastCredit,
   type TMDBCredits,
 } from '@shine/tmdb';
+import {upsertMovieCredits} from '../movie-credits/save-credits';
 import {
   type SelectedCredit,
   selectCredits,
-  upsertMovieCredits,
-} from '../movie-credits';
+} from '../movie-credits/select-credits';
 import {
   type DatabaseClient,
   type ImportContext,
