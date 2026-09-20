@@ -117,6 +117,21 @@ describe('GET /people', () => {
   });
 
   it('人物の一覧と件数を返す', async () => {
+    const database = getDatabase(environment);
+    await database.insert(movies).values([
+      {uid: 'movie-kagemusha', year: 1980},
+      {uid: 'movie-dreams', year: 1990},
+    ]);
+    await database.insert(movieCredits).values(
+      ['movie-kagemusha', 'movie-dreams'].map(movieUid => ({
+        movieUid,
+        personUid: '2c5d7e1a-6f3b-4a8c-9d0e-1f2a3b4c5d6e',
+        creditId: `c-${movieUid}`,
+        department: 'Directing',
+        job: 'Director',
+      })),
+    );
+
     const response = await peopleRoutes.request('/?limit=10', {}, environment);
 
     const body = (await response.json()) as {
@@ -128,7 +143,7 @@ describe('GET /people', () => {
       {
         uid: '2c5d7e1a-6f3b-4a8c-9d0e-1f2a3b4c5d6e',
         name: '黒澤明',
-        movieCount: 1,
+        movieCount: 3,
       },
     ]);
     expect(body.pagination.totalCount).toBe(1);

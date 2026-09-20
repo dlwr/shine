@@ -54,7 +54,7 @@ async function createTestEnvironment(
 describe('people ルートのキャッシュ', () => {
   it.each([
     [`/${PERSON_UID}?locale=ja`, `person:${PERSON_UID}:ja:v6`, []],
-    ['/?page=1&limit=10', 'people:list:1:10:v1', ['people:eligible:v2:count']],
+    ['/?page=1&limit=10', 'people:list:1:10:v2', ['people:eligible:v3:count']],
     ['/prominent?locale=ja&limit=5', 'people:prominent:ja:5:v13', []],
     ['/search?q=%E9%BB%92%E6%BE%A4&locale=ja', 'people:search:ja:黒澤:v1', []],
     ['/crossings?locale=ja', 'people:crossings:ja:v5', []],
