@@ -313,9 +313,10 @@ paths:
     get:
       summary: List people who have a page worth indexing
       description: |
-        Returns people credited on at least two films, or credited as director
-        on any film, ordered by the number of films they worked on. Soft-deleted
-        films are not counted. Intended for the sitemap.
+        Returns people credited on at least three films, or nominated for a
+        personal award, ordered by the number of films they worked on.
+        Soft-deleted films are not counted. Intended for the sitemap; the front
+        marks every other person page as noindex.
       operationId: listPeople
       tags:
         - Movies

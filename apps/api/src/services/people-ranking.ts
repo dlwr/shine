@@ -1,6 +1,7 @@
 import {isNotNull, notInArray, sql, type getDatabase} from '@shine/database';
 import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
+import {nominations} from '@shine/database/schema/nominations';
 import {type EdgeCache} from '../utils/cache';
 
 type Database = ReturnType<typeof getDatabase>;
@@ -9,7 +10,7 @@ type RankedPerson = {uid: string; movieCount: number};
 
 type RankingSlice = {totalCount: number; rows: RankedPerson[]};
 
-const CACHE_PREFIX = 'people:eligible:v2';
+const CACHE_PREFIX = 'people:eligible:v3';
 const CACHE_TTL = 604_800;
 const CHUNK_SIZE = 500;
 
@@ -80,7 +81,7 @@ async function computeRanking(database: Database): Promise<RankedPerson[]> {
     .where(notInArray(movieCredits.movieUid, deletedMovies))
     .groupBy(movieCredits.personUid)
     .having(
-      sql`${movieCount} >= 2 OR SUM(${movieCredits.job} = 'Director') > 0`,
+      sql`${movieCount} >= 3 OR EXISTS (SELECT 1 FROM ${nominations} WHERE ${nominations.personUid} = ${movieCredits.personUid})`,
     )
     .as('eligible');
 

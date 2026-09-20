@@ -62,7 +62,7 @@ peopleRoutes.get('/', async c => {
 
   const limit = Math.min(requestedLimit, PEOPLE_LIST_MAX_LIMIT);
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = `people:list:${page}:${limit}:v1`;
+  const cacheKey = `people:list:${page}:${limit}:v2`;
   const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
   const result =
     cached?.data ?? (await new PeopleService(c.env).listPeople({page, limit}));

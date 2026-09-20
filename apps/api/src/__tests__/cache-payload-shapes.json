@@ -141,16 +141,16 @@
     "data.topPerformances[].person.name",
     "data.topPerformances[].person.uid"
   ],
-  "people:eligible:v2:chunk:0": [
+  "people:eligible:v3:chunk:0": [
     "cachedAt",
     "data[].movieCount",
     "data[].uid"
   ],
-  "people:eligible:v2:count": [
+  "people:eligible:v3:count": [
     "cachedAt",
     "data"
   ],
-  "people:list:1:10:v1": [
+  "people:list:1:10:v2": [
     "cachedAt",
     "data.pagination.page",
     "data.pagination.perPage",

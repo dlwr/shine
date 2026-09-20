@@ -135,7 +135,7 @@ describe('unmonitoredEmptyPaths', () => {
     expect(
       unmonitoredEmptyPaths({
         'search:suggest:ja:Beauty:v1': ['data.people[] 空'],
-        'people:list:1:10:v1': ['data.people[].name'],
+        'people:list:1:10:v2': ['data.people[].name'],
       }),
     ).toStrictEqual(['search:suggest:ja:Beauty:v1 の data.people[] 空']);
   });
