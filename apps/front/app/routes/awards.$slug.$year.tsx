@@ -91,6 +91,9 @@ export default function AwardYearPage({loaderData}: Route.ComponentProps) {
   const {award} = loaderData as {award: AwardYearDetailData};
   const locale = 'ja';
   const heading = awardHeading(award);
+  const watchableCount = award.movies.filter(
+    movie => (movie.availability?.length ?? 0) > 0,
+  ).length;
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -117,9 +120,15 @@ export default function AwardYearPage({loaderData}: Route.ComponentProps) {
             </span>
           )}
         </div>
-        <p className="font-mono text-xs text-ink-muted mb-8">
+        <p
+          className={`font-mono text-xs text-ink-muted ${watchableCount > 0 ? 'mb-2' : 'mb-8'}`}>
           {heading} / {award.movies.length} FILMS
         </p>
+        {watchableCount > 0 && (
+          <p className="text-sm mb-8">
+            {award.movies.length}本のうち{watchableCount}本がいま観られます
+          </p>
+        )}
 
         <div className="border-t-[3px] border-ink">
           {award.movies.map(movie => (
