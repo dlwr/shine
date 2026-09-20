@@ -22,7 +22,7 @@ const nowEpoch = Math.floor(now.getTime() / 1000);
 
 const movie = {
   uid: 'movie-a',
-  titles: ['ゴッドファーザー', 'The Godfather'],
+  japaneseTitles: ['ゴッドファーザー'],
 };
 
 function okResult(source: SourceCheckResult['source']): SourceCheckResult {

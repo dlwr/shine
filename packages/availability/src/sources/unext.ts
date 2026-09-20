@@ -35,7 +35,11 @@ export async function checkUnext(
 ): Promise<SourceCheckResult> {
   const query = targetTitles.find(title => title.trim() !== '');
   if (!query) {
-    return {source: 'unext', status: 'error', detail: 'No title to search'};
+    return {
+      source: 'unext',
+      status: 'ng',
+      detail: 'No Japanese title (not searched)',
+    };
   }
 
   const parameters = new URLSearchParams({

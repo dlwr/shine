@@ -8,7 +8,7 @@ const movieCatalog: Record<string, TestMovie> = {};
 for (let index = 1; index <= 12; index++) {
   movieCatalog[`movie-${index}`] = {
     uid: `movie-${index}`,
-    titles: [`Movie ${index}`],
+    japaneseTitles: [`Movie ${index}`],
     displayTitle: `Movie ${index}`,
   };
 }

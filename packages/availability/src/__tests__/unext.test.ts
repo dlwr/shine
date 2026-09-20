@@ -66,6 +66,19 @@ describe('checkUnext', () => {
     expect(url).toContain(encodeURIComponent('ゴッドファーザー'));
   });
 
+  it('邦題が無ければ検索せずに ng を返す', async () => {
+    const fetchSpy = vi.fn();
+
+    const result = await checkUnext([], fetchSpy);
+
+    expect(result).toEqual({
+      source: 'unext',
+      status: 'ng',
+      detail: 'No Japanese title (not searched)',
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it('returns ng when no result matches', async () => {
     const result = await checkUnext(['存在しない映画XYZ'], fetchFixture);
 

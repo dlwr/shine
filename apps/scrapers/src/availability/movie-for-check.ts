@@ -38,17 +38,20 @@ export async function loadMovieForCheck(
       ),
     );
 
-  const japaneseTitles = titleRows.filter(row => row.languageCode === 'ja');
-  const otherTitles = titleRows.filter(row => row.languageCode !== 'ja');
-  const titles = [...japaneseTitles, ...otherTitles]
-    .map(row => row.content)
-    .filter(title => title.trim() !== '');
+  const titlesIn = (rows: typeof titleRows) =>
+    rows.map(row => row.content).filter(title => title.trim() !== '');
+  const japaneseTitles = titlesIn(
+    titleRows.filter(row => row.languageCode === 'ja'),
+  );
+  const otherTitles = titlesIn(
+    titleRows.filter(row => row.languageCode !== 'ja'),
+  );
 
   return {
     uid: movie.uid,
-    titles,
-    displayTitle: titles[0] ?? movie.uid,
-    hasJapaneseTitle: japaneseTitles.some(row => hasJapaneseText(row.content)),
+    japaneseTitles,
+    displayTitle: japaneseTitles[0] ?? otherTitles[0] ?? movie.uid,
+    hasJapaneseTitle: japaneseTitles.some(title => hasJapaneseText(title)),
     tmdbId: movie.tmdbId ?? undefined,
     imdbId: movie.imdbId ?? undefined,
     year: movie.year ?? undefined,
@@ -106,5 +109,5 @@ export async function loadMovieEnsuringJapaneseTitle(
 
   // 検索の前提となるタイトルが変わったので、過去のng/error判定は破棄する
   await deleteNonOkChecks(database, movieUid);
-  return {...reloaded, fetchedJapaneseTitle: reloaded.titles[0]};
+  return {...reloaded, fetchedJapaneseTitle: reloaded.japaneseTitles[0]};
 }

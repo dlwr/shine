@@ -30,7 +30,7 @@ export function buildSourceRunners(options: {
   // 検索クエリは先頭のタイトルが使われるため、別題は必ず後ろに足す
   async function titlesForSearch(movie: MovieToCheck): Promise<string[]> {
     if (!movie.tmdbId) {
-      return movie.titles;
+      return movie.japaneseTitles;
     }
 
     let pending = alternativeTitlesCache.get(movie.uid);
@@ -44,7 +44,7 @@ export function buildSourceRunners(options: {
     }
 
     const alternativeTitles = await pending;
-    return [...new Set([...movie.titles, ...alternativeTitles])];
+    return [...new Set([...movie.japaneseTitles, ...alternativeTitles])];
   }
 
   return {

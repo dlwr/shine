@@ -117,6 +117,19 @@ function createSessionFetch(searchBytes: Buffer, detailBytes?: Buffer) {
 }
 
 describe('checkDiscas', () => {
+  it('邦題が無ければ検索せずに ng を返す', async () => {
+    const fetchSpy = vi.fn();
+
+    const result = await checkDiscas([], fetchSpy);
+
+    expect(result).toEqual({
+      source: 'discas',
+      status: 'ng',
+      detail: 'No Japanese title (not searched)',
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it('establishes a session then returns ok on a title match', async () => {
     const fetchSpy = createSessionFetch(fixtureBytes);
 

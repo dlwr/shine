@@ -12,7 +12,8 @@ const NG_TTL_SECONDS = 90 * DAY_SECONDS;
 
 export type MovieToCheck = {
   uid: string;
-  titles: string[];
+  // U-NEXT・DISCAS の検索と照合に使う。原題で探すと同名の別作品や楽曲に当たる
+  japaneseTitles: string[];
   tmdbId?: number;
   imdbId?: string;
   year?: number;
