@@ -2417,6 +2417,23 @@ components:
         specialMention:
           type: string
           description: ランキング形式の賞で「N位」が入る
+        availability:
+          type: array
+          description: 年別ページ（/awards/{slug}/{year}）だけが返す。最新の確認で観られると判定された視聴手段
+          items:
+            type: object
+            required:
+              - source
+              - checkedAt
+            properties:
+              source:
+                type: string
+                enum: [tmdb, unext, discas, geo]
+              detail:
+                type: string
+              checkedAt:
+                type: integer
+                description: Unix time in seconds when the source was checked
       required:
         - uid
         - isWinner

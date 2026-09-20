@@ -1,4 +1,4 @@
-import type {Pagination} from './common';
+import type {Pagination, WatchableAvailability} from './common';
 
 export type AwardMovieEntry = {
   uid: string;
@@ -8,6 +8,7 @@ export type AwardMovieEntry = {
   isWinner: boolean;
   /** ランキング形式の賞で「N位」が入る */
   specialMention?: string;
+  availability?: WatchableAvailability[];
 };
 
 export type AwardYearGroup = {
