@@ -20,6 +20,7 @@ import {
   personAwardDefinitions,
 } from './award-definitions';
 import {compareAwardMovies, flattenListAward} from './award-page-ordering';
+import {loadWatchableAvailabilityByMovie} from './watchable-availability';
 
 function posterUrlColumn() {
   return sql<string | null>`(
@@ -198,6 +199,14 @@ export class AwardsService extends BaseService {
     }
 
     movieEntries.sort(compareAwardMovies);
+
+    const availabilityByMovie = await loadWatchableAvailabilityByMovie(
+      this.database,
+      movieEntries.map(movie => movie.uid),
+    );
+    for (const movie of movieEntries) {
+      movie.availability = availabilityByMovie.get(movie.uid);
+    }
 
     const yearRows = await this.database
       .selectDistinct({year: awardCeremonies.year})

@@ -97,7 +97,7 @@ awardsRoutes.get('/:slug/:year', async c => {
   }
 
   const slug = c.req.param('slug');
-  const cacheKey = `awards:${slug}:${year}:v2`;
+  const cacheKey = `awards:${slug}:${year}:v3`;
   const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
   const award =
     cached?.data ?? (await new AwardsService(c.env).getAwardYear(slug, year));

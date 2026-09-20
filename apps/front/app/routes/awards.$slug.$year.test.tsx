@@ -62,6 +62,13 @@ const createComponentProperties = (
     matches: [],
   });
 
+const renderPage = (award: unknown) =>
+  render(
+    <AwardYearPage
+      {...createComponentProperties(cast<LoaderData>({award, locale: 'ja'}))}
+    />,
+  );
+
 describe('Award year page', () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -221,6 +228,71 @@ describe('Award year page', () => {
         '/awards/palme-dor/2022',
       );
       expect(screen.queryByText(/2024 →/)).not.toBeInTheDocument();
+    });
+
+    describe('視聴手段', () => {
+      const watchableAward = {
+        ...mockAwardYear,
+        movies: [
+          {
+            ...mockAwardYear.movies[0],
+            availability: [
+              {
+                source: 'tmdb',
+                detail: 'U-NEXT(見放題)',
+                checkedAt: 1_700_000_000,
+              },
+            ],
+          },
+          {
+            ...mockAwardYear.movies[1],
+            availability: [{source: 'discas', checkedAt: 1_700_000_000}],
+          },
+          {
+            uid: 'movie-unavailable',
+            title: '枯れ葉',
+            isWinner: false,
+          },
+        ],
+      };
+
+      it('受賞作の行に視聴手段を出す', () => {
+        renderPage(watchableAward);
+
+        expect(screen.getByText('U-NEXT 見放題')).toBeInTheDocument();
+      });
+
+      it('ノミネート作の行に視聴手段を出す', () => {
+        renderPage(watchableAward);
+
+        expect(screen.getByText('宅配レンタル')).toBeInTheDocument();
+      });
+
+      it('行全体が映画ページへのリンクなので視聴手段はリンクにしない', () => {
+        renderPage(watchableAward);
+
+        expect(screen.getByText('U-NEXT 見放題').tagName).toBe('SPAN');
+      });
+
+      it('行ごとの確認日は出さない', () => {
+        renderPage(watchableAward);
+
+        expect(screen.queryByText(/時点/)).not.toBeInTheDocument();
+      });
+
+      it('いま観られる本数を見出しの下に出す', () => {
+        renderPage(watchableAward);
+
+        expect(
+          screen.getByText('3本のうち2本がいま観られます'),
+        ).toBeInTheDocument();
+      });
+
+      it('観られる作品が無ければ本数を出さない', () => {
+        renderPage(mockAwardYear);
+
+        expect(screen.queryByText(/いま観られます/)).not.toBeInTheDocument();
+      });
     });
   });
 });

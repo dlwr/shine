@@ -6,6 +6,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
+import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
@@ -721,6 +722,68 @@ describe('AwardsService.getAwardYear', () => {
       'movie-b',
       'movie-a',
     ]);
+  });
+
+  it('観られると判定された視聴手段を映画ごとに返す', async () => {
+    await seedThreeCannesYears();
+    await database.insert(movieAvailabilityChecks).values([
+      {
+        movieUid: 'movie-b',
+        source: 'discas',
+        status: 'ok',
+        checkedAt: 1_700_000_000,
+      },
+      {
+        movieUid: 'movie-b',
+        source: 'tmdb',
+        status: 'ok',
+        detail: 'U-NEXT(見放題)',
+        checkedAt: 1_700_000_100,
+      },
+    ]);
+
+    const result = await service.getAwardYear('palme-dor', 2021);
+
+    expect(result?.movies[0].availability).toEqual([
+      {source: 'tmdb', detail: 'U-NEXT(見放題)', checkedAt: 1_700_000_100},
+      {source: 'discas', detail: undefined, checkedAt: 1_700_000_000},
+    ]);
+  });
+
+  it('最新の確認が ng の視聴手段は返さない', async () => {
+    await seedThreeCannesYears();
+    await database.insert(movieAvailabilityChecks).values([
+      {
+        movieUid: 'movie-b',
+        source: 'unext',
+        status: 'ok',
+        checkedAt: 1_700_000_000,
+      },
+      {
+        movieUid: 'movie-b',
+        source: 'unext',
+        status: 'ng',
+        checkedAt: 1_700_000_200,
+      },
+    ]);
+
+    const result = await service.getAwardYear('palme-dor', 2021);
+
+    expect(result?.movies[0].availability).toBeUndefined();
+  });
+
+  it('確認の記録が無い映画には視聴手段を付けない', async () => {
+    await seedThreeCannesYears();
+    await database.insert(movieAvailabilityChecks).values({
+      movieUid: 'movie-b',
+      source: 'discas',
+      status: 'ok',
+      checkedAt: 1_700_000_000,
+    });
+
+    const result = await service.getAwardYear('palme-dor', 2021);
+
+    expect(result?.movies[1].availability).toBeUndefined();
   });
 
   it('returns the neighboring ceremony years across gaps', async () => {

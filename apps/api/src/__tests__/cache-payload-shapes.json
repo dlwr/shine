@@ -1,8 +1,11 @@
 {
-  "awards:academy-best-picture:2000:v2": [
+  "awards:academy-best-picture:2000:v3": [
     "cachedAt",
     "data.ceremonyNumber",
     "data.description",
+    "data.movies[].availability[].checkedAt",
+    "data.movies[].availability[].detail",
+    "data.movies[].availability[].source",
     "data.movies[].isWinner",
     "data.movies[].movieYear",
     "data.movies[].posterUrl",

@@ -16,3 +16,9 @@ export type Pagination = {
   totalCount: number;
   totalPages: number;
 };
+
+export type WatchableAvailability = {
+  source: string;
+  detail: string | undefined;
+  checkedAt: number;
+};

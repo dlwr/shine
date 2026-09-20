@@ -3,7 +3,6 @@ import {articleLinks} from '@shine/database/schema/article-links';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
-import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
@@ -13,6 +12,7 @@ import {
   awardPageLinkForOrganizationName,
   japaneseAwardNames,
 } from './award-definition-lookup';
+import {loadWatchableAvailabilityByMovie} from './watchable-availability';
 import type {MovieSelection} from '../types/movies';
 
 type Database = ReturnType<typeof getDatabase>;
@@ -48,7 +48,7 @@ export async function loadSelectionMovie(
     nominationsData,
     posters,
     topArticles,
-    availability,
+    availabilityByMovie,
   ] = await Promise.all([
     database
       .select({
@@ -135,7 +135,7 @@ export async function loadSelectionMovie(
       )
       .orderBy(sql`${articleLinks.submittedAt} DESC`)
       .limit(3),
-    loadWatchableAvailability(database, movieId),
+    loadWatchableAvailabilityByMovie(database, [movieId]),
   ]);
 
   const selectedTitle = resolveTitle(allTranslations, locale);
@@ -202,46 +202,8 @@ export async function loadSelectionMovie(
       title: article.title ?? undefined,
       description: article.description || undefined,
     })),
-    availability,
+    availability: availabilityByMovie.get(movieId) ?? [],
   };
-}
-
-async function loadWatchableAvailability(
-  database: Database,
-  movieId: string,
-): Promise<
-  Array<{
-    source: string;
-    detail: string | undefined;
-    checkedAt: number;
-  }>
-> {
-  const sourceOrder = ['tmdb', 'unext', 'discas', 'geo'];
-  const rows = await database
-    .select({
-      source: movieAvailabilityChecks.source,
-      status: movieAvailabilityChecks.status,
-      detail: movieAvailabilityChecks.detail,
-      checkedAt: movieAvailabilityChecks.checkedAt,
-    })
-    .from(movieAvailabilityChecks)
-    .where(eq(movieAvailabilityChecks.movieUid, movieId))
-    .orderBy(movieAvailabilityChecks.checkedAt);
-
-  // Latest record per source; expose only sources currently judged watchable
-  const latestBySource = new Map<string, (typeof rows)[number]>();
-  for (const row of rows) {
-    latestBySource.set(row.source, row);
-  }
-
-  return sourceOrder
-    .map(source => latestBySource.get(source))
-    .filter((row): row is NonNullable<typeof row> => row?.status === 'ok')
-    .map(row => ({
-      source: row.source,
-      detail: row.detail ?? undefined,
-      checkedAt: row.checkedAt,
-    }));
 }
 
 function resolveTitle(

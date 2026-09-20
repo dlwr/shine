@@ -1,3 +1,4 @@
+import type {AvailabilityInfo} from '@/components/editorial/availability-badges';
 import type {PersonAwardYearGroupData} from '@/components/editorial/person-award-years';
 import {awardHeading} from '@/lib/awards';
 import {SITE_URL} from '@/lib/meta';
@@ -9,6 +10,7 @@ export type AwardMovieEntryData = {
   posterUrl?: string;
   isWinner: boolean;
   specialMention?: string;
+  availability?: AvailabilityInfo[];
 };
 
 export type AwardYearGroupData = {

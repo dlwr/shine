@@ -1,3 +1,4 @@
+import {AvailabilityBadges} from '@/components/editorial/availability-badges';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import type {AwardMovieEntryData} from '@/lib/award-page';
 
@@ -24,9 +25,16 @@ export function AwardMovieRow({movie}: {movie: AwardMovieEntryData}) {
           className="w-16 shrink-0"
           displaySize="w185"
         />
-        <span className="flex-1 font-display font-extrabold text-base md:text-lg leading-tight">
-          {title}
-        </span>
+        <div className="flex-1 min-w-0">
+          <span className="block font-display font-extrabold text-base md:text-lg leading-tight">
+            {title}
+          </span>
+          <AvailabilityBadges
+            availability={movie.availability}
+            className="mt-1.5"
+            showCheckedDate={false}
+          />
+        </div>
         {!movie.specialMention && (
           <span className="font-mono text-[9px] bg-brand text-brand-on px-1.5 py-0.5 shrink-0">
             WINNER
@@ -41,7 +49,14 @@ export function AwardMovieRow({movie}: {movie: AwardMovieEntryData}) {
       href={`/movies/${movie.uid}`}
       className="flex items-center gap-4 py-1.5 no-underline text-ink">
       {movie.specialMention && <RankLabel rank={movie.specialMention} />}
-      <span className="flex-1 font-mono text-sm leading-tight">{title}</span>
+      <div className="flex-1 min-w-0">
+        <span className="block font-mono text-sm leading-tight">{title}</span>
+        <AvailabilityBadges
+          availability={movie.availability}
+          className="mt-1"
+          showCheckedDate={false}
+        />
+      </div>
     </a>
   );
 }

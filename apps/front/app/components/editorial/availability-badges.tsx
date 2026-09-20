@@ -9,6 +9,7 @@ type AvailabilityBadgesProperties = {
   className?: string;
   movieTitle?: string;
   tmdbId?: number | string;
+  showCheckedDate?: boolean;
 };
 
 export type WatchTarget = {
@@ -151,6 +152,7 @@ export function AvailabilityBadges({
   className = '',
   movieTitle,
   tmdbId,
+  showCheckedDate = true,
 }: AvailabilityBadgesProperties) {
   if (!availability || availability.length === 0) {
     return;
@@ -206,9 +208,11 @@ export function AvailabilityBadges({
           </span>
         ),
       )}
-      <span className="font-mono text-[10px] text-ink-muted">
-        {formatCheckedDate(latestCheckedAt)} 時点
-      </span>
+      {showCheckedDate && (
+        <span className="font-mono text-[10px] text-ink-muted">
+          {formatCheckedDate(latestCheckedAt)} 時点
+        </span>
+      )}
     </div>
   );
 }
