@@ -2,7 +2,8 @@
  * アカデミー賞スクレイピングのCLIエントリーポイント
  */
 import {Command} from 'commander';
-import academyAwards from './academy-awards';
+import {seedAcademyAwards} from '@shine/database/seeds/academy-awards';
+import {scrapeAcademyAwards} from './academy-awards';
 import {
   assertDatabaseEnvironment,
   buildEnvironment,
@@ -38,27 +39,23 @@ async function main(options: {seed: boolean; dryRun: boolean}) {
       );
     }
 
-    // スクレイピング処理を実行
-    const url = new URL(
-      shouldSeed ? 'http://localhost/seed' : 'http://localhost/',
-    );
-    if (isDryRun) {
-      url.searchParams.set('dry-run', 'true');
+    if (shouldSeed) {
+      if (isDryRun) {
+        console.log('[DRY RUN] Would seed academy awards master data');
+      } else {
+        await seedAcademyAwards(environment);
+      }
+
+      console.log('アカデミー賞マスターデータのシードが正常に完了しました');
+      return;
     }
 
-    const request = new Request(url);
-    const response = await academyAwards.fetch(request, environment);
-
-    if (response.status === 200) {
-      const message = shouldSeed
-        ? 'アカデミー賞マスターデータのシードが正常に完了しました'
-        : 'アカデミー賞スクレイピングが正常に完了しました';
-      console.log(message);
-    } else {
-      const errorText = await response.text();
-      console.error('処理中にエラーが発生しました:', errorText);
-      throw new Error(errorText);
-    }
+    await scrapeAcademyAwards({
+      environment,
+      tmdbApiKey: environment.TMDB_API_KEY,
+      isDryRun,
+    });
+    console.log('アカデミー賞スクレイピングが正常に完了しました');
   } catch (error) {
     console.error('処理中にエラーが発生しました:', error);
     throw error;

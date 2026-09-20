@@ -1,9 +1,7 @@
 import * as cheerio from 'cheerio';
-import {type Environment} from '@shine/database';
 import {nominations} from '@shine/database/schema/nominations';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
-import {seedAcademyAwards} from '@shine/database/seeds/academy-awards';
 import {
   processMovieForBatch,
   type ScrapeContext,
@@ -17,42 +15,6 @@ import {getScrapeDatabase} from './common/dry-run';
 import {fetchWithRetry} from '@shine/utils/fetch';
 
 const ACADEMY_AWARDS_URL = `${WIKIPEDIA_BASE_URL}/wiki/Academy_Award_for_Best_Picture`;
-
-export default {
-  async fetch(request: Request, environment: Environment): Promise<Response> {
-    const url = new URL(request.url);
-    const context: ScrapeContext = {
-      environment,
-      tmdbApiKey: environment.TMDB_API_KEY,
-      isDryRun: url.searchParams.get('dry-run') === 'true',
-    };
-
-    if (context.isDryRun) {
-      console.log('[DRY RUN MODE] データベースへの書き込みは行いません');
-    }
-
-    if (url.pathname === '/seed') {
-      if (context.isDryRun) {
-        console.log('[DRY RUN] Would seed academy awards master data');
-        return new Response('Seed skipped (dry run)', {status: 200});
-      }
-
-      console.log('seeding academy awards');
-      await seedAcademyAwards(context.environment);
-      return new Response('Seed completed successfully', {status: 200});
-    }
-
-    try {
-      await scrapeAcademyAwards(context);
-      return new Response('Scraping completed successfully', {status: 200});
-    } catch (error) {
-      return new Response(
-        `Error: ${error instanceof Error ? error.message : String(error)}`,
-        {status: 500},
-      );
-    }
-  },
-};
 
 export async function scrapeAcademyAwards(context: ScrapeContext) {
   try {
