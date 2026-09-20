@@ -214,6 +214,35 @@ describe('Award year page', () => {
       expect(screen.queryByText('WINNER')).not.toBeInTheDocument();
     });
 
+    describe('順位ではない注記', () => {
+      const NOTE = 'Parasite became the first foreign language film to win.';
+      const notedAward = {
+        ...mockAwardYear,
+        movies: [
+          {...mockAwardYear.movies[0], specialMention: NOTE},
+          {...mockAwardYear.movies[1], specialMention: '次点'},
+        ],
+      };
+
+      it('注記は順位の欄に入れない', () => {
+        renderPage(notedAward);
+
+        expect(screen.getByText(NOTE)).not.toHaveClass('w-7');
+      });
+
+      it('注記つきの受賞作にも WINNER を出す', () => {
+        renderPage(notedAward);
+
+        expect(screen.getByText('WINNER')).toBeInTheDocument();
+      });
+
+      it('次点は順位の欄に出す', () => {
+        renderPage(notedAward);
+
+        expect(screen.getByText('次点')).toHaveClass('w-7');
+      });
+    });
+
     it('前年へのリンクを表示し、次年がなければ出さない', () => {
       render(
         <AwardYearPage
