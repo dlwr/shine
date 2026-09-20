@@ -74,6 +74,22 @@ const person: PersonData = {
 
 const loaderData = {person, locale: 'ja' as const};
 
+const plainCredit = (movieUid: string) => ({
+  movieUid,
+  title: movieUid,
+  year: 1985,
+  jobs: ['Director'],
+  awards: [],
+  personAwards: [],
+});
+
+const robotsOf = (credits: PersonData['credits']) =>
+  (
+    meta({
+      loaderData: {person: {...person, credits}, locale: 'ja'},
+    } as Route.MetaArgs) as Array<{name?: string; content?: string}>
+  ).find(descriptor => descriptor.name === 'robots')?.content;
+
 function renderPage(overrides: Partial<PersonData> = {}) {
   render(
     <PersonPage
@@ -114,6 +130,24 @@ describe('PersonPage', () => {
     } as Route.MetaArgs) as Array<{title?: string}>;
 
     expect(descriptors[0].title).toContain('黒澤明');
+  });
+
+  describe('robots', () => {
+    it('2本以下で個人賞の無い人物は noindex にする', () => {
+      expect(robotsOf([plainCredit('a'), plainCredit('b')])).toBe(
+        'noindex, follow',
+      );
+    });
+
+    it('3本以上の人物は index させる', () => {
+      expect(
+        robotsOf([plainCredit('a'), plainCredit('b'), plainCredit('c')]),
+      ).toBeUndefined();
+    });
+
+    it('個人賞のある人物は1本でも index させる', () => {
+      expect(robotsOf([person.credits[0]])).toBeUndefined();
+    });
   });
 
   it('複数の役割を並べて出す', () => {
