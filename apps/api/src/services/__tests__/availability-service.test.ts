@@ -68,12 +68,12 @@ describe('AvailabilityService.checkMovie', () => {
     expect(result).toBeUndefined();
   });
 
-  it('日本語タイトルを先頭にしてランナーへ渡す', async () => {
+  it('邦題だけをランナーへ渡す', async () => {
     await seedMovie(database);
     let receivedTitles: string[] = [];
     const runners: SourceRunners = {
       async unext(movie) {
-        receivedTitles = movie.titles;
+        receivedTitles = movie.japaneseTitles;
         return {source: 'unext', status: 'ok', detail: 'Matched'};
       },
     };
@@ -81,8 +81,7 @@ describe('AvailabilityService.checkMovie', () => {
     const service = new AvailabilityService(environment);
     await service.checkMovie('movie-a', runners);
 
-    expect(receivedTitles[0]).toBe('落下の解剖学');
-    expect(receivedTitles).toContain('Anatomy of a Fall');
+    expect(receivedTitles).toEqual(['落下の解剖学']);
   });
 
   it('チェック結果を保存しokのみをavailabilityとして返す', async () => {

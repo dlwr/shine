@@ -32,7 +32,7 @@ export function buildOnDemandRunners(
   // 検索クエリは先頭のタイトルが使われるため、別題は必ず後ろに足す
   async function titlesForSearch(movie: MovieToCheck): Promise<string[]> {
     if (!tmdbApiKey || !movie.tmdbId) {
-      return movie.titles;
+      return movie.japaneseTitles;
     }
 
     let pending = alternativeTitlesCache.get(movie.uid);
@@ -47,7 +47,7 @@ export function buildOnDemandRunners(
     }
 
     const alternativeTitles = await pending;
-    return [...new Set([...movie.titles, ...alternativeTitles])];
+    return [...new Set([...movie.japaneseTitles, ...alternativeTitles])];
   }
 
   return {
@@ -172,15 +172,14 @@ export class AvailabilityService extends BaseService {
         ),
       );
 
-    const japaneseTitles = titleRows.filter(row => row.languageCode === 'ja');
-    const otherTitles = titleRows.filter(row => row.languageCode !== 'ja');
-    const titles = [...japaneseTitles, ...otherTitles]
+    const japaneseTitles = titleRows
+      .filter(row => row.languageCode === 'ja')
       .map(row => row.content)
       .filter(title => title.trim() !== '');
 
     return {
       uid: movie.uid,
-      titles,
+      japaneseTitles,
       tmdbId: movie.tmdbId ?? undefined,
       imdbId: movie.imdbId ?? undefined,
       year: movie.year ?? undefined,

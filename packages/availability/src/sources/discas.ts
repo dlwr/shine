@@ -155,7 +155,11 @@ export async function checkDiscas(
 ): Promise<SourceCheckResult> {
   const query = targetTitles.find(title => title.trim() !== '');
   if (!query) {
-    return {source: 'discas', status: 'error', detail: 'No title to search'};
+    return {
+      source: 'discas',
+      status: 'ng',
+      detail: 'No Japanese title (not searched)',
+    };
   }
 
   try {

@@ -52,12 +52,11 @@ describe('loadMovieForCheck', () => {
     ]);
   });
 
-  it('loads titles with the Japanese title first', async () => {
+  it('loads only Japanese-language titles for the catalog search', async () => {
     const movie = await loadMovieForCheck(database, 'movie-a');
 
     expect(movie.uid).toBe('movie-a');
-    expect(movie.titles[0]).toBe('ゴッドファーザー');
-    expect(movie.titles).toContain('The Godfather');
+    expect(movie.japaneseTitles).toEqual(['ゴッドファーザー']);
     expect(movie.displayTitle).toBe('ゴッドファーザー');
     expect(movie.tmdbId).toBe(238);
     expect(movie.imdbId).toBe('tt0068646');
@@ -156,7 +155,7 @@ describe('loadMovieEnsuringJapaneseTitle', () => {
     });
 
     expect(refreshTmdbData).toHaveBeenCalledWith('movie-b', 'tt0245712');
-    expect(movie.titles[0]).toBe('アモーレス・ペロス');
+    expect(movie.japaneseTitles[0]).toBe('アモーレス・ペロス');
     expect(movie.fetchedJapaneseTitle).toBe('アモーレス・ペロス');
     expect(movie.japaneseTitleMissing).toBeUndefined();
     const cacheRows = await database.select().from(movieAvailabilityChecks);
@@ -175,7 +174,8 @@ describe('loadMovieEnsuringJapaneseTitle', () => {
 
     expect(movie.japaneseTitleMissing).toBe(true);
     expect(movie.fetchedJapaneseTitle).toBeUndefined();
-    expect(movie.titles[0]).toBe('Amores perros');
+    expect(movie.japaneseTitles).toEqual([]);
+    expect(movie.displayTitle).toBe('Amores perros');
   });
 
   it('marks japaneseTitleMissing without calling the API when imdbId is absent', async () => {
@@ -206,7 +206,8 @@ describe('loadMovieEnsuringJapaneseTitle', () => {
     });
 
     expect(movie.japaneseTitleMissing).toBe(true);
-    expect(movie.titles[0]).toBe('Amores perros');
+    expect(movie.japaneseTitles).toEqual([]);
+    expect(movie.displayTitle).toBe('Amores perros');
   });
 
   it('overwrites a non-Japanese ja translation using the fetched TMDb title', async () => {
@@ -243,7 +244,7 @@ describe('loadMovieEnsuringJapaneseTitle', () => {
       'movie-b',
       'アモーレス・ペロス',
     );
-    expect(movie.titles[0]).toBe('アモーレス・ペロス');
+    expect(movie.japaneseTitles[0]).toBe('アモーレス・ペロス');
     expect(movie.fetchedJapaneseTitle).toBe('アモーレス・ペロス');
     const cacheRows = await database.select().from(movieAvailabilityChecks);
     expect(cacheRows).toHaveLength(0);

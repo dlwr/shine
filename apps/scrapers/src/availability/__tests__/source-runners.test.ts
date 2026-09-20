@@ -3,7 +3,7 @@ import {buildSourceRunners} from '../source-runners';
 
 const alternativeTitleMovie = {
   uid: 'movie-a',
-  titles: ['エレクション'],
+  japaneseTitles: ['エレクション'],
   tmdbId: 18_747,
 };
 
@@ -51,12 +51,26 @@ describe('buildSourceRunners', () => {
 
     const result = await runners.tmdb!({
       uid: 'movie-a',
-      titles: ['エレクション'],
+      japaneseTitles: ['エレクション'],
       imdbId: 'tt0000001',
     });
     vi.unstubAllGlobals();
 
     expect(result).toMatchObject({source: 'tmdb', status: 'error'});
+  });
+
+  it('邦題の無い映画は U-NEXT を検索せず ng にする', async () => {
+    const fetchImpl = vi.fn();
+    const runners = buildSourceRunners({
+      environment: {TURSO_DATABASE_URL: '', TURSO_AUTH_TOKEN: ''},
+      fetchImpl,
+      waitMs: 0,
+    });
+
+    const result = await runners.unext!({uid: 'movie-b', japaneseTitles: []});
+
+    expect(result).toMatchObject({source: 'unext', status: 'ng'});
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   describe('with TMDb Japanese alternative titles', () => {
