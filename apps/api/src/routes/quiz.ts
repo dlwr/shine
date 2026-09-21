@@ -34,7 +34,7 @@ quizRoutes.get('/daily', async c => {
     return c.json({error: 'Invalid date'}, 400);
   }
 
-  const poolSize = await new QuizService(c.env).getPoolSize();
+  const poolSize = await new QuizService(c.env, c).getPoolSize();
   if (poolSize === 0) {
     return c.json({error: 'Quiz unavailable'}, 503);
   }
@@ -46,7 +46,7 @@ quizRoutes.get('/daily', async c => {
 });
 
 quizRoutes.get('/candidates', async c => {
-  const candidates = await new QuizService(c.env).getCandidates();
+  const candidates = await new QuizService(c.env, c).getCandidates();
 
   return createCachedResponse({candidates}, CANDIDATES_TTL);
 });
@@ -62,7 +62,7 @@ quizRoutes.get('/answer', async c => {
     return c.json({error: 'Invalid date'}, 400);
   }
 
-  const entry = await new QuizService(c.env).getEntry(date);
+  const entry = await new QuizService(c.env, c).getEntry(date);
   if (!entry) {
     return c.json({error: 'Quiz unavailable'}, 503);
   }
@@ -103,7 +103,7 @@ quizRoutes.post('/guess', async c => {
     return c.json({error: 'Invalid request'}, 400);
   }
 
-  const entry = await new QuizService(c.env).getEntry(date);
+  const entry = await new QuizService(c.env, c).getEntry(date);
   if (!entry) {
     return c.json({error: 'Quiz unavailable'}, 503);
   }

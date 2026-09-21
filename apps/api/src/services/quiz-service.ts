@@ -6,13 +6,19 @@ import {quizSelections} from '@shine/database/schema/quiz-selections';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import type {QuizAnswer, QuizCandidate, QuizHint} from '../types/quiz';
-import {EdgeCache, IMPORTED_DATA_EDGE_TTL} from '../utils/cache';
+import {
+  EdgeCache,
+  IMPORTED_DATA_EDGE_TTL,
+  type RequestContext,
+} from '../utils/cache';
 import {simpleHash} from '../utils/hash';
+import {readThroughCache, STALE_RETENTION} from '../utils/read-through-cache';
 import {
   findAwardPageDefinition,
   japaneseAwardNames,
   japaneseOrganizationName,
 } from './award-definition-lookup';
+import type {Environment} from '@shine/database';
 import {BaseService} from './base-service';
 
 export const QUIZ_MAX_ATTEMPTS = 6;
@@ -139,35 +145,44 @@ export function describeNomination(facts: NominationFacts): {
 }
 
 export class QuizService extends BaseService {
+  private readonly requestContext: RequestContext | undefined;
+
+  constructor(environment: Environment, requestContext?: RequestContext) {
+    super(environment);
+    this.requestContext = requestContext;
+  }
+
   async getPool(): Promise<QuizPoolEntry[]> {
     const cache = new EdgeCache(undefined, this.env.CACHE_KV);
-    const cached = await cache.get(POOL_CACHE_KEY, {
+    const {data} = await readThroughCache(this.requestContext, cache, {
+      key: POOL_CACHE_KEY,
+      ttl: POOL_CACHE_TTL,
       edgeTtl: IMPORTED_DATA_EDGE_TTL,
+      load: async () => {
+        const pool = await this.buildPool();
+        await cache.set(POOL_SIZE_CACHE_KEY, pool.length, POOL_CACHE_TTL, {
+          staleRetention: STALE_RETENTION,
+        });
+        return pool;
+      },
     });
-    if (cached) {
-      return cached.data as QuizPoolEntry[];
-    }
 
-    const pool = await this.buildPool();
-    await Promise.all([
-      cache.set(POOL_CACHE_KEY, pool, POOL_CACHE_TTL),
-      cache.set(POOL_SIZE_CACHE_KEY, pool.length, POOL_CACHE_TTL),
-    ]);
-    return pool;
+    return data ?? [];
   }
 
   async getPoolSize(): Promise<number> {
     const cache = new EdgeCache(undefined, this.env.CACHE_KV);
-    const cached = await cache.get(POOL_SIZE_CACHE_KEY, {
+    const {data} = await readThroughCache(this.requestContext, cache, {
+      key: POOL_SIZE_CACHE_KEY,
+      ttl: POOL_CACHE_TTL,
       edgeTtl: IMPORTED_DATA_EDGE_TTL,
+      load: async () => {
+        const {length} = await this.getPool();
+        return length;
+      },
     });
-    if (typeof cached?.data === 'number') {
-      return cached.data;
-    }
 
-    const {length} = await this.getPool();
-    await cache.set(POOL_SIZE_CACHE_KEY, length, POOL_CACHE_TTL);
-    return length;
+    return data ?? 0;
   }
 
   async getCandidates(): Promise<QuizCandidate[]> {
