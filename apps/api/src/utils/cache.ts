@@ -57,11 +57,16 @@ export class EdgeCache {
     }
   }
 
-  async set(key: string, data: unknown, ttl = 3600): Promise<void> {
+  async set(
+    key: string,
+    data: unknown,
+    ttl = 3600,
+    options?: {staleRetention?: number},
+  ): Promise<void> {
     try {
       if (this.kv) {
         await this.kv.put(key, JSON.stringify({data, cachedAt: Date.now()}), {
-          expirationTtl: ttl,
+          expirationTtl: ttl + (options?.staleRetention ?? 0),
         });
         return;
       }
