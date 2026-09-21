@@ -42,7 +42,6 @@ import {createCommand as mainichiFilmConcours} from './mainichi-film-concours-cl
 import {createCommand as mainichiPersonNominations} from './mainichi-person-nominations-cli';
 import {createCommand as movieCredits} from './movie-credits-cli';
 import {createCommand as movieDescriptions} from './movie-descriptions-cli';
-import {createCommand as movieImport} from './movie-import-from-list-cli';
 import {createCommand as nikkanSportsFilmAwards} from './nikkan-sports-film-awards-cli';
 import {createCommand as northStarReport} from './north-star-report-cli';
 import {createCommand as personEnglishNames} from './person-english-names-cli';
@@ -94,7 +93,6 @@ const commandGroups: Array<{heading: string; factories: Array<() => Command>}> =
     {
       heading: '映画・人物データの取り込み:',
       factories: [
-        movieImport,
         importImdbList,
         movieCredits,
         movieDescriptions,

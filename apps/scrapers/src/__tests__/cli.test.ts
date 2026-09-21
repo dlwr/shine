@@ -126,9 +126,7 @@ describe.each(cliStems)('%s-cli.ts', stem => {
 
     const command = module.createCommand!();
 
-    expect(command.name()).toBe(
-      stem.replace('movie-import-from-list', 'movie-import'),
-    );
+    expect(command.name()).toBe(stem);
     expect(config).not.toHaveBeenCalled();
     expect(getDatabase).not.toHaveBeenCalled();
   });
