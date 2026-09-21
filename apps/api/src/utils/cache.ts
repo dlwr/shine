@@ -334,10 +334,17 @@ export const shouldCheckETag = (
   return ifNoneMatch === etag;
 };
 
+export type RequestContext = Pick<Context, 'executionCtx'>;
+
 export const writeCacheAfterResponse = async (
-  context: Pick<Context, 'executionCtx'>,
+  context: RequestContext | undefined,
   write: Promise<void>,
 ): Promise<void> => {
+  if (!context) {
+    await write;
+    return;
+  }
+
   try {
     context.executionCtx.waitUntil(write);
   } catch {

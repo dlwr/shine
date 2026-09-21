@@ -1,5 +1,8 @@
-import {type Context} from 'hono';
-import {type EdgeCache, writeCacheAfterResponse} from './cache';
+import {
+  type EdgeCache,
+  type RequestContext,
+  writeCacheAfterResponse,
+} from './cache';
 
 export const STALE_RETENTION = 2_592_000;
 
@@ -27,7 +30,7 @@ async function revalidate<T>(
 }
 
 export async function readThroughCache<T>(
-  context: Pick<Context, 'executionCtx'>,
+  context: RequestContext | undefined,
   cache: EdgeCache,
   options: ReadThroughOptions<T>,
 ): Promise<{data: T | undefined; status: ReadThroughStatus}> {
