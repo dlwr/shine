@@ -64,6 +64,15 @@ export function createInternalServerError(
     `Internal server error${context ? ` in ${context}` : ''}:`,
     originalError,
   );
+  if (originalError instanceof Error && originalError.cause !== undefined) {
+    const {cause} = originalError;
+    console.error(
+      'Caused by:',
+      cause instanceof Error
+        ? `${cause.name}: ${cause.message}`
+        : String(cause),
+    );
+  }
 
   const errorResponse: ApiErrorResponse = {
     error: 'Internal server error',
