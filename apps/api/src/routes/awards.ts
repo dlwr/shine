@@ -9,8 +9,8 @@ import {
   EdgeCache,
   IMPORTED_DATA_EDGE_TTL,
   shouldCheckETag,
-  writeCacheAfterResponse,
 } from '../utils/cache';
+import {readThroughCache} from '../utils/read-through-cache';
 
 export const awardsRoutes = new Hono<{Bindings: Environment}>();
 
@@ -18,18 +18,12 @@ const AWARDS_CACHE_TTL = 604_800;
 
 awardsRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = 'awards:list:v20';
-  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
-  const result = (cached?.data as {awards: unknown[]} | undefined) ?? {
-    awards: await new AwardsService(c.env).listAwards(),
-  };
-
-  if (!cached) {
-    await writeCacheAfterResponse(
-      c,
-      cache.set(cacheKey, result, AWARDS_CACHE_TTL),
-    );
-  }
+  const {data: result, status} = await readThroughCache(c, cache, {
+    key: 'awards:list:v20',
+    ttl: AWARDS_CACHE_TTL,
+    edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    load: async () => ({awards: await new AwardsService(c.env).listAwards()}),
+  });
 
   const etag = createETag(result);
   if (shouldCheckETag(c.req, etag)) {
@@ -38,7 +32,7 @@ awardsRoutes.get('/', async c => {
 
   return createCachedResponse(result, AWARDS_CACHE_TTL, {
     ETag: etag,
-    'X-Cache-Status': cached ? 'HIT' : 'MISS',
+    'X-Cache-Status': status,
   });
 });
 
@@ -53,23 +47,19 @@ awardsRoutes.get('/:slug', async c => {
 
   // ページはキャッシュキーに含めない。利用者入力でキー空間が広がるのを避けるため、
   // 全件を1キーに載せて読み出し後に切り出す
-  const cacheKey = `awards:${slug}:v7`;
-  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
-  const service = new AwardsService(c.env);
-  const full =
-    (cached?.data as AwardDetail | PersonAwardDetail | undefined) ??
-    (await service.getAwardBySlug(slug)) ??
-    (await new PersonAwardsService(c.env).getPersonAwardBySlug(slug));
+  const {data: full, status} = await readThroughCache<
+    AwardDetail | PersonAwardDetail
+  >(c, cache, {
+    key: `awards:${slug}:v7`,
+    ttl: AWARDS_CACHE_TTL,
+    edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    load: async () =>
+      (await new AwardsService(c.env).getAwardBySlug(slug)) ??
+      (await new PersonAwardsService(c.env).getPersonAwardBySlug(slug)),
+  });
 
   if (!full) {
     return c.json({error: 'Award not found'}, 404);
-  }
-
-  if (!cached) {
-    await writeCacheAfterResponse(
-      c,
-      cache.set(cacheKey, full, AWARDS_CACHE_TTL),
-    );
   }
 
   const award =
@@ -85,7 +75,7 @@ awardsRoutes.get('/:slug', async c => {
 
   return createCachedResponse(award, AWARDS_CACHE_TTL, {
     ETag: etag,
-    'X-Cache-Status': cached ? 'HIT' : 'MISS',
+    'X-Cache-Status': status,
   });
 });
 
@@ -97,20 +87,15 @@ awardsRoutes.get('/:slug/:year', async c => {
   }
 
   const slug = c.req.param('slug');
-  const cacheKey = `awards:${slug}:${year}:v3`;
-  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
-  const award =
-    cached?.data ?? (await new AwardsService(c.env).getAwardYear(slug, year));
+  const {data: award, status} = await readThroughCache(c, cache, {
+    key: `awards:${slug}:${year}:v3`,
+    ttl: AWARDS_CACHE_TTL,
+    edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    load: async () => new AwardsService(c.env).getAwardYear(slug, year),
+  });
 
   if (!award) {
     return c.json({error: 'Award not found'}, 404);
-  }
-
-  if (!cached) {
-    await writeCacheAfterResponse(
-      c,
-      cache.set(cacheKey, award, AWARDS_CACHE_TTL),
-    );
   }
 
   const etag = createETag(award);
@@ -120,6 +105,6 @@ awardsRoutes.get('/:slug/:year', async c => {
 
   return createCachedResponse(award, AWARDS_CACHE_TTL, {
     ETag: etag,
-    'X-Cache-Status': cached ? 'HIT' : 'MISS',
+    'X-Cache-Status': status,
   });
 });

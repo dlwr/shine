@@ -7,8 +7,8 @@ import {
   EdgeCache,
   IMPORTED_DATA_EDGE_TTL,
   shouldCheckETag,
-  writeCacheAfterResponse,
 } from '../utils/cache';
+import {readThroughCache} from '../utils/read-through-cache';
 
 export const crossingsRoutes = new Hono<{Bindings: Environment}>();
 
@@ -17,18 +17,12 @@ const CROSSINGS_CACHE_KEY = 'crossings:v12';
 
 crossingsRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cached = await cache.get(CROSSINGS_CACHE_KEY, {
+  const {data: result, status} = await readThroughCache(c, cache, {
+    key: CROSSINGS_CACHE_KEY,
+    ttl: CROSSINGS_CACHE_TTL,
     edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    load: async () => new CrossingsService(c.env).getCrossings(),
   });
-  const result =
-    cached?.data ?? (await new CrossingsService(c.env).getCrossings());
-
-  if (!cached) {
-    await writeCacheAfterResponse(
-      c,
-      cache.set(CROSSINGS_CACHE_KEY, result, CROSSINGS_CACHE_TTL),
-    );
-  }
 
   const etag = createETag(result);
   if (shouldCheckETag(c.req, etag)) {
@@ -37,6 +31,6 @@ crossingsRoutes.get('/', async c => {
 
   return createCachedResponse(result, CROSSINGS_CACHE_TTL, {
     ETag: etag,
-    'X-Cache-Status': cached ? 'HIT' : 'MISS',
+    'X-Cache-Status': status,
   });
 });

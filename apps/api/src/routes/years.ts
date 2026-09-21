@@ -7,8 +7,8 @@ import {
   EdgeCache,
   IMPORTED_DATA_EDGE_TTL,
   shouldCheckETag,
-  writeCacheAfterResponse,
 } from '../utils/cache';
+import {readThroughCache} from '../utils/read-through-cache';
 
 export const yearsRoutes = new Hono<{Bindings: Environment}>();
 
@@ -16,18 +16,12 @@ const YEARS_CACHE_TTL = 604_800;
 
 yearsRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = 'years:list:v3';
-  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
-  const result = (cached?.data as {years: unknown[]} | undefined) ?? {
-    years: await new YearsService(c.env).listYears(),
-  };
-
-  if (!cached) {
-    await writeCacheAfterResponse(
-      c,
-      cache.set(cacheKey, result, YEARS_CACHE_TTL),
-    );
-  }
+  const {data: result, status} = await readThroughCache(c, cache, {
+    key: 'years:list:v3',
+    ttl: YEARS_CACHE_TTL,
+    edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    load: async () => ({years: await new YearsService(c.env).listYears()}),
+  });
 
   const etag = createETag(result);
   if (shouldCheckETag(c.req, etag)) {
@@ -36,7 +30,7 @@ yearsRoutes.get('/', async c => {
 
   return createCachedResponse(result, YEARS_CACHE_TTL, {
     ETag: etag,
-    'X-Cache-Status': cached ? 'HIT' : 'MISS',
+    'X-Cache-Status': status,
   });
 });
 
@@ -47,19 +41,15 @@ yearsRoutes.get('/:year', async c => {
   }
 
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = `years:${year}:v3`;
-  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
-  const detail = cached?.data ?? (await new YearsService(c.env).getYear(year));
+  const {data: detail, status} = await readThroughCache(c, cache, {
+    key: `years:${year}:v3`,
+    ttl: YEARS_CACHE_TTL,
+    edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    load: async () => new YearsService(c.env).getYear(year),
+  });
 
   if (!detail) {
     return c.json({error: 'Year not found'}, 404);
-  }
-
-  if (!cached) {
-    await writeCacheAfterResponse(
-      c,
-      cache.set(cacheKey, detail, YEARS_CACHE_TTL),
-    );
   }
 
   const etag = createETag(detail);
@@ -69,6 +59,6 @@ yearsRoutes.get('/:year', async c => {
 
   return createCachedResponse(detail, YEARS_CACHE_TTL, {
     ETag: etag,
-    'X-Cache-Status': cached ? 'HIT' : 'MISS',
+    'X-Cache-Status': status,
   });
 });
