@@ -202,5 +202,24 @@ describe('Monthly archive page', () => {
         '/weekly',
       );
     });
+
+    it('カレンダーアプリで購読するリンクを出す', () => {
+      render(<MonthlyArchivePage {...createComponentProperties()} />);
+
+      expect(
+        screen.getByRole('link', {name: 'カレンダーに登録'}),
+      ).toHaveAttribute('href', 'webcal://shine-film.com/monthly.ics');
+    });
+
+    it('Google カレンダーで購読するリンクを出す', () => {
+      render(<MonthlyArchivePage {...createComponentProperties()} />);
+
+      expect(
+        screen.getByRole('link', {name: 'Google カレンダー'}),
+      ).toHaveAttribute(
+        'href',
+        'https://calendar.google.com/calendar/r?cid=webcal%3A%2F%2Fshine-film.com%2Fmonthly.ics',
+      );
+    });
   });
 });

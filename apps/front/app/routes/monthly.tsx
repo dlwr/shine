@@ -17,6 +17,7 @@ const CONFIG: SelectionArchiveConfig = {
     '映画賞や名作リストに選ばれた映画から毎月1本を紹介する「今月の1本」の過去のセレクション一覧。',
   formatDate: selectionDate => selectionDate.slice(0, 7),
   showPosters: true,
+  calendarPath: '/monthly.ics',
 };
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
