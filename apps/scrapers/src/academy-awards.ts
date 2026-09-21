@@ -2,10 +2,8 @@ import * as cheerio from 'cheerio';
 import {nominations} from '@shine/database/schema/nominations';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
-import {
-  processMovieForBatch,
-  type ScrapeContext,
-} from './academy-awards/import-movie';
+import {processMovieForBatch} from './academy-awards/import-movie';
+import {type ScrapeContext} from './academy-awards/types';
 import {
   analyzeTableStructure,
   processTableRows,
