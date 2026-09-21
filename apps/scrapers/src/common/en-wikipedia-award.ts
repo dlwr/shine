@@ -6,11 +6,10 @@ import {
   type ImdbEventImportStats,
   type ImdbEventNomination,
 } from '../imdb-event-award';
+import {type AwardEdition, type FilmAwardEntry} from './award-table-types';
 import {
   parseFilmAwardWikitext,
   parsePersonAwardWikitext,
-  type AwardEdition,
-  type FilmAwardEntry,
 } from './award-table-wikitext';
 import {
   dropDuplicateResolutions,
