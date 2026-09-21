@@ -120,6 +120,59 @@ describe('readThroughCache: キャッシュに無いとき', () => {
     expect(store.get(KEY)?.expirationTtl).toBe(TTL + STALE_RETENTION);
   });
 
+  it('読み込みが 1 回失敗しても、やり直して値を返す', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const {kv} = createKvStub();
+    const {context} = createContext();
+    const load = vi
+      .fn<() => Promise<{years: number[]}>>()
+      .mockRejectedValueOnce(new Error('turso timed out'))
+      .mockResolvedValueOnce({years: [2024]});
+
+    const result = await readThroughCache(
+      context,
+      new EdgeCache(undefined, kv),
+      {key: KEY, ttl: TTL, load},
+    );
+
+    expect(result.data).toEqual({years: [2024]});
+  });
+
+  it('やり直しは 1 回だけにする', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const {kv} = createKvStub();
+    const {context} = createContext();
+    const load = vi
+      .fn<() => Promise<{years: number[]}>>()
+      .mockRejectedValue(new Error('turso timed out'));
+
+    await expect(
+      readThroughCache(context, new EdgeCache(undefined, kv), {
+        key: KEY,
+        ttl: TTL,
+        load,
+      }),
+    ).rejects.toThrow();
+
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it('2 回続けて失敗したら、最後のエラーを投げる', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const {kv} = createKvStub();
+    const {context} = createContext();
+
+    await expect(
+      readThroughCache(context, new EdgeCache(undefined, kv), {
+        key: KEY,
+        ttl: TTL,
+        async load() {
+          throw new Error('turso is down');
+        },
+      }),
+    ).rejects.toThrow('turso is down');
+  });
+
   it('見つからなかった結果は書き込まない', async () => {
     const {kv, store} = createKvStub();
     const {context, settle} = createContext();

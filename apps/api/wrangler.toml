@@ -19,6 +19,9 @@ simple = { limit = 30, period = 10 }
 [env.production]
 name = "shine-api"
 
+[env.production.vars]
+TURSO_REQUEST_TIMEOUT_MS = "10000"
+
 [[env.production.kv_namespaces]]
 binding = "CACHE_KV"
 id = "62b23e51b6614819adbc5454a0930687"
