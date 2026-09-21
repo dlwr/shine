@@ -5,7 +5,7 @@
       "entry": ["scripts/*.ts"]
     },
     "apps/scrapers": {
-      "entry": ["database-query.mts", "src/assign-tmdb-ids.ts"]
+      "entry": ["database-query.mts"]
     },
     "apps/front": {
       "entry": ["workers/og.ts"]
