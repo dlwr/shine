@@ -30,6 +30,7 @@ export type SelectionArchiveConfig = {
   metaDescription: string;
   formatDate?: (selectionDate: string) => string;
   showPosters?: boolean;
+  calendarPath?: string;
 };
 
 const ARCHIVE_LINKS = [
@@ -78,6 +79,22 @@ export async function loadSelectionArchive(
   };
 }
 
+function CalendarLinks({calendarPath}: {calendarPath: string}) {
+  const webcalUrl = `${SITE_URL.replace(/^https:/, 'webcal:')}${calendarPath}`;
+  const googleUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`;
+
+  return (
+    <p className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs mb-4">
+      <a href={webcalUrl} className="text-ink underline">
+        カレンダーに登録
+      </a>
+      <a href={googleUrl} className="text-ink underline">
+        Google カレンダー
+      </a>
+    </p>
+  );
+}
+
 export function SelectionArchivePage({
   config,
   items,
@@ -100,6 +117,9 @@ export function SelectionArchivePage({
         <p className="font-mono text-xs text-ink-muted mb-4">
           {config.subtitle}
         </p>
+        {config.calendarPath && (
+          <CalendarLinks calendarPath={config.calendarPath} />
+        )}
 
         <nav className="flex gap-2 mb-8">
           {ARCHIVE_LINKS.map(link =>
