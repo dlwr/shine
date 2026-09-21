@@ -7,8 +7,8 @@ import {
   EdgeCache,
   IMPORTED_DATA_EDGE_TTL,
   shouldCheckETag,
-  writeCacheAfterResponse,
 } from '../utils/cache';
+import {readThroughCache} from '../utils/read-through-cache';
 
 export const uncrownedRoutes = new Hono<{Bindings: Environment}>();
 
@@ -17,18 +17,12 @@ const UNCROWNED_CACHE_KEY = 'uncrowned:v12';
 
 uncrownedRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cached = await cache.get(UNCROWNED_CACHE_KEY, {
+  const {data: result, status} = await readThroughCache(c, cache, {
+    key: UNCROWNED_CACHE_KEY,
+    ttl: UNCROWNED_CACHE_TTL,
     edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    load: async () => new UncrownedService(c.env).getUncrowned(),
   });
-  const result =
-    cached?.data ?? (await new UncrownedService(c.env).getUncrowned());
-
-  if (!cached) {
-    await writeCacheAfterResponse(
-      c,
-      cache.set(UNCROWNED_CACHE_KEY, result, UNCROWNED_CACHE_TTL),
-    );
-  }
 
   const etag = createETag(result);
   if (shouldCheckETag(c.req, etag)) {
@@ -37,6 +31,6 @@ uncrownedRoutes.get('/', async c => {
 
   return createCachedResponse(result, UNCROWNED_CACHE_TTL, {
     ETag: etag,
-    'X-Cache-Status': cached ? 'HIT' : 'MISS',
+    'X-Cache-Status': status,
   });
 });
