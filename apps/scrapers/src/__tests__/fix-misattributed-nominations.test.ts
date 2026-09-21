@@ -12,10 +12,8 @@ import {nominations} from '@shine/database/schema/nominations';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {
-  fixMisattributedNominations,
-  type MisattributedNomination,
-} from '../fix-misattributed-nominations';
+import {fixMisattributedNominations} from '../fix-misattributed-nominations';
+import {type MisattributedNomination} from '../fix-misattributed-nominations/types';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(

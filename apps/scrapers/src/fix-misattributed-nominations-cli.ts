@@ -11,10 +11,8 @@ import {
   buildEnvironment,
   loadEnvironmentFiles,
 } from './common/environment';
-import {
-  fixMisattributedNominations,
-  type MisattributedNomination,
-} from './fix-misattributed-nominations';
+import {fixMisattributedNominations} from './fix-misattributed-nominations';
+import {type MisattributedNomination} from './fix-misattributed-nominations/types';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const dataFilePath = path.resolve(
