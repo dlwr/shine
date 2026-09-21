@@ -4,7 +4,8 @@ import {
   parseEarlyEditionEntries,
   type EarlyEditionEntry,
 } from './cannes-early-edition';
-import {filmOf, type FilmAwardEntry} from './common/award-table-wikitext';
+import {filmOf} from './common/award-table-cell-text';
+import {type FilmAwardEntry} from './common/award-table-types';
 import {
   dropMisattributedResolutions,
   type FilmReference,

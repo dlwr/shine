@@ -1,8 +1,4 @@
-import {and, eq, isNull} from 'drizzle-orm';
-import {getDatabase, type Environment} from '@shine/database';
-import {awardCategories} from '@shine/database/schema/award-categories';
-import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
-import {awardOrganizations} from '@shine/database/schema/award-organizations';
+import {eq} from 'drizzle-orm';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
@@ -15,156 +11,15 @@ import {
   savePosterUrls,
   saveTMDBId,
 } from '@shine/tmdb/persistence';
-
-type MainData = {
-  organizationUid: string;
-  categoryUid: string;
-  ceremonies: Map<number, string>;
-};
-
-export type ScrapeContext = {
-  environment: Environment;
-  tmdbApiKey: string | undefined;
-  isDryRun: boolean;
-};
+import {fetchMainData, getOrCreateCeremony} from './award-records';
+import {findExistingMovie} from './existing-movie';
+import {type ScrapeContext} from './types';
 
 export type MovieBatchData = {
   translations: Array<typeof translations.$inferInsert>;
   referenceUrl?: typeof referenceUrls.$inferInsert;
   nomination?: typeof nominations.$inferInsert;
 };
-
-const fetchMainData = (() => {
-  let mainData: MainData | undefined;
-
-  return async function fetchMainData(
-    context: ScrapeContext,
-  ): Promise<MainData> {
-    if (mainData) {
-      return mainData;
-    }
-
-    const [organization] = await getDatabase(context.environment)
-      .select()
-      .from(awardOrganizations)
-      .where(eq(awardOrganizations.name, 'Academy Awards'));
-
-    if (!organization) {
-      throw new Error('Academy Awards organization not found');
-    }
-
-    const [category] = await getDatabase(context.environment)
-      .select()
-      .from(awardCategories)
-      .where(
-        and(
-          eq(awardCategories.shortName, 'Best Picture'),
-          eq(awardCategories.organizationUid, organization.uid),
-        ),
-      );
-
-    if (!category) {
-      throw new Error('Best Picture category not found');
-    }
-
-    const ceremoniesData = await getDatabase(context.environment)
-      .select()
-      .from(awardCeremonies)
-      .where(eq(awardCeremonies.organizationUid, organization.uid));
-
-    const ceremonies = new Map<number, string>(
-      ceremoniesData.map(ceremony => [ceremony.year, ceremony.uid]),
-    );
-
-    mainData = {
-      organizationUid: organization.uid,
-      categoryUid: category.uid,
-      ceremonies,
-    };
-
-    return mainData;
-  };
-})();
-
-async function getOrCreateCeremony(
-  context: ScrapeContext,
-  year: number,
-  organizationUid: string,
-): Promise<string> {
-  const database = getScrapeDatabase(context);
-  const [ceremony] = await database
-    .insert(awardCeremonies)
-    .values({
-      organizationUid,
-      year,
-      ceremonyNumber: year - 1928 + 1,
-    })
-    .onConflictDoUpdate({
-      target: [awardCeremonies.organizationUid, awardCeremonies.year],
-      set: {
-        ceremonyNumber: year - 1928 + 1,
-      },
-    })
-    .returning();
-
-  const main = await fetchMainData(context);
-  main.ceremonies.set(year, ceremony.uid);
-
-  return ceremony.uid;
-}
-
-type DatabaseClient = ReturnType<typeof getDatabase>;
-
-type ExistingMovie =
-  | {status: 'active'; uid: string; imdbId: string | null}
-  | {status: 'soft-deleted'}
-  | {status: 'missing'};
-
-async function findExistingMovie(
-  database: DatabaseClient,
-  title: string,
-  imdbId: string | undefined,
-): Promise<ExistingMovie> {
-  if (imdbId) {
-    const [movieWithImdbId] = await database
-      .select({
-        uid: movies.uid,
-        imdbId: movies.imdbId,
-        deletedAt: movies.deletedAt,
-      })
-      .from(movies)
-      .where(eq(movies.imdbId, imdbId))
-      .limit(1);
-
-    if (movieWithImdbId) {
-      return movieWithImdbId.deletedAt === null
-        ? {
-            status: 'active',
-            uid: movieWithImdbId.uid,
-            imdbId: movieWithImdbId.imdbId,
-          }
-        : {status: 'soft-deleted'};
-    }
-  }
-
-  const [movieWithTitle] = await database
-    .select({uid: movies.uid, imdbId: movies.imdbId})
-    .from(movies)
-    .innerJoin(
-      translations,
-      and(
-        eq(translations.resourceUid, movies.uid),
-        eq(translations.resourceType, 'movie_title'),
-        eq(translations.languageCode, 'en'),
-      ),
-    )
-    .where(and(eq(translations.content, title), isNull(movies.deletedAt)))
-    .limit(1);
-
-  return movieWithTitle
-    ? {status: 'active', uid: movieWithTitle.uid, imdbId: movieWithTitle.imdbId}
-    : {status: 'missing'};
-}
 
 export async function processMovieForBatch(
   context: ScrapeContext,

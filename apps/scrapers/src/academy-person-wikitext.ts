@@ -1,8 +1,8 @@
 import {
-  parsePersonAwardWikitext,
   type AwardEdition,
   type PersonAwardEntry,
-} from './common/award-table-wikitext';
+} from './common/award-table-types';
+import {parsePersonAwardWikitext} from './common/award-table-wikitext';
 
 export type AcademyPersonEdition = AwardEdition<PersonAwardEntry>;
 

@@ -1,4 +1,5 @@
-import {filmOf, type FilmAwardEntry} from './common/award-table-wikitext';
+import {filmOf} from './common/award-table-cell-text';
+import {type FilmAwardEntry} from './common/award-table-types';
 
 /** 1946・1947・1949年の記事にしか無い見出し。以後の回は表になる */
 const COMPETITION_HEADING =
