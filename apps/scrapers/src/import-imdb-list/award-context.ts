@@ -34,48 +34,39 @@ async function findOrCreateCeremony(
   return row.uid;
 }
 
-export const getAwardContext = (() => {
-  let cachedAwardContext: AwardContext | undefined;
+export async function getAwardContext(
+  database: DatabaseClient,
+  options?: {
+    organizationName?: string;
+    categoryName?: string;
+    ceremonyName?: string;
+  },
+): Promise<AwardContext> {
+  const orgName =
+    options?.organizationName ??
+    process.env.AWARD_ORGANIZATION_NAME ??
+    '1001 Movies You Must See Before You Die';
+  const catName =
+    options?.categoryName ??
+    process.env.AWARD_CATEGORY_NAME ??
+    'Selected Films';
+  const ceremonyDescription = options?.ceremonyName ?? orgName;
 
-  return async function getAwardContext(
-    database: DatabaseClient,
-    options?: {
-      organizationName?: string;
-      categoryName?: string;
-      ceremonyName?: string;
-    },
-  ): Promise<AwardContext> {
-    if (cachedAwardContext) {
-      return cachedAwardContext;
-    }
+  const organizationUid = await ensureAwardOrganization(database, {
+    name: orgName,
+  });
+  const categoryUid = await ensureAwardCategory(database, organizationUid, {
+    name: catName,
+  });
+  const ceremonyUid = await findOrCreateCeremony(
+    database,
+    organizationUid,
+    ceremonyDescription,
+  );
 
-    const orgName =
-      options?.organizationName ??
-      process.env.AWARD_ORGANIZATION_NAME ??
-      '1001 Movies You Must See Before You Die';
-    const catName =
-      options?.categoryName ??
-      process.env.AWARD_CATEGORY_NAME ??
-      'Selected Films';
-    const ceremonyDescription = options?.ceremonyName ?? orgName;
+  console.log(
+    `Award context: org="${orgName}", category="${catName}", ceremony="${ceremonyDescription}"`,
+  );
 
-    const organizationUid = await ensureAwardOrganization(database, {
-      name: orgName,
-    });
-    const categoryUid = await ensureAwardCategory(database, organizationUid, {
-      name: catName,
-    });
-    const ceremonyUid = await findOrCreateCeremony(
-      database,
-      organizationUid,
-      ceremonyDescription,
-    );
-
-    console.log(
-      `Award context: org="${orgName}", category="${catName}", ceremony="${ceremonyDescription}"`,
-    );
-
-    cachedAwardContext = {organizationUid, categoryUid, ceremonyUid};
-    return cachedAwardContext;
-  };
-})();
+  return {organizationUid, categoryUid, ceremonyUid};
+}
