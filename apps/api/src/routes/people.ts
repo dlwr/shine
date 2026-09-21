@@ -16,6 +16,7 @@ import {
   shouldCheckETag,
   writeCacheAfterResponse,
 } from '../utils/cache';
+import {readThroughCache} from '../utils/read-through-cache';
 
 export const peopleRoutes = new Hono<{Bindings: Environment}>();
 
@@ -62,17 +63,12 @@ peopleRoutes.get('/', async c => {
 
   const limit = Math.min(requestedLimit, PEOPLE_LIST_MAX_LIMIT);
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = `people:list:${page}:${limit}:v2`;
-  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
-  const result =
-    cached?.data ?? (await new PeopleService(c.env).listPeople({page, limit}));
-
-  if (!cached) {
-    await writeCacheAfterResponse(
-      c,
-      cache.set(cacheKey, result, PEOPLE_LIST_CACHE_TTL),
-    );
-  }
+  const {data: result, status} = await readThroughCache(c, cache, {
+    key: `people:list:${page}:${limit}:v2`,
+    ttl: PEOPLE_LIST_CACHE_TTL,
+    edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    load: async () => new PeopleService(c.env).listPeople({page, limit}),
+  });
 
   const etag = createETag(result);
   if (shouldCheckETag(c.req, etag)) {
@@ -81,7 +77,7 @@ peopleRoutes.get('/', async c => {
 
   return createCachedResponse(result, PEOPLE_LIST_CACHE_TTL, {
     ETag: etag,
-    'X-Cache-Status': cached ? 'HIT' : 'MISS',
+    'X-Cache-Status': status,
   });
 });
 
@@ -98,18 +94,13 @@ peopleRoutes.get('/prominent', async c => {
 
   const limit = Math.min(requestedLimit, PROMINENT_MAX_LIMIT);
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = `people:prominent:${locale}:${limit}:v13`;
-  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
-  const result =
-    cached?.data ??
-    (await new PeopleService(c.env).getProminentPeople({locale, limit}));
-
-  if (!cached) {
-    await writeCacheAfterResponse(
-      c,
-      cache.set(cacheKey, result, PROMINENT_CACHE_TTL),
-    );
-  }
+  const {data: result, status} = await readThroughCache(c, cache, {
+    key: `people:prominent:${locale}:${limit}:v13`,
+    ttl: PROMINENT_CACHE_TTL,
+    edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    load: async () =>
+      new PeopleService(c.env).getProminentPeople({locale, limit}),
+  });
 
   const etag = createETag(result);
   if (shouldCheckETag(c.req, etag)) {
@@ -118,7 +109,7 @@ peopleRoutes.get('/prominent', async c => {
 
   return createCachedResponse(result, PROMINENT_CACHE_TTL, {
     ETag: etag,
-    'X-Cache-Status': cached ? 'HIT' : 'MISS',
+    'X-Cache-Status': status,
   });
 });
 
@@ -159,18 +150,13 @@ peopleRoutes.get('/search', async c => {
 peopleRoutes.get('/crossings', async c => {
   const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = `people:crossings:${locale}:v5`;
-  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
-  const result =
-    cached?.data ??
-    (await new PersonCrossingsService(c.env).getPersonCrossings({locale}));
-
-  if (!cached) {
-    await writeCacheAfterResponse(
-      c,
-      cache.set(cacheKey, result, PERSON_CROSSINGS_CACHE_TTL),
-    );
-  }
+  const {data: result, status} = await readThroughCache(c, cache, {
+    key: `people:crossings:${locale}:v5`,
+    ttl: PERSON_CROSSINGS_CACHE_TTL,
+    edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    load: async () =>
+      new PersonCrossingsService(c.env).getPersonCrossings({locale}),
+  });
 
   const etag = createETag(result);
   if (shouldCheckETag(c.req, etag)) {
@@ -179,25 +165,20 @@ peopleRoutes.get('/crossings', async c => {
 
   return createCachedResponse(result, PERSON_CROSSINGS_CACHE_TTL, {
     ETag: etag,
-    'X-Cache-Status': cached ? 'HIT' : 'MISS',
+    'X-Cache-Status': status,
   });
 });
 
 peopleRoutes.get('/uncrowned', async c => {
   const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cacheKey = `people:uncrowned:${locale}:v3`;
-  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
-  const result =
-    cached?.data ??
-    (await new PersonUncrownedService(c.env).getPersonUncrowned({locale}));
-
-  if (!cached) {
-    await writeCacheAfterResponse(
-      c,
-      cache.set(cacheKey, result, PERSON_UNCROWNED_CACHE_TTL),
-    );
-  }
+  const {data: result} = await readThroughCache(c, cache, {
+    key: `people:uncrowned:${locale}:v3`,
+    ttl: PERSON_UNCROWNED_CACHE_TTL,
+    edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    load: async () =>
+      new PersonUncrownedService(c.env).getPersonUncrowned({locale}),
+  });
 
   const etag = createETag(result);
   if (shouldCheckETag(c.req, etag)) {
@@ -220,24 +201,22 @@ peopleRoutes.get('/:id', async c => {
   const cacheKey = getCacheKeyForPerson(personUid, cacheLocale);
 
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
-
-  if (cached?.data) {
-    return c.json(cached.data as Record<string, unknown>, 200, {
-      'X-Cache-Status': 'HIT',
-    });
-  }
-
-  const person = await new PeopleService(c.env).getPerson(personUid, locale);
+  const {data: person, status} = await readThroughCache(c, cache, {
+    key: cacheKey,
+    ttl: PERSON_CACHE_TTL,
+    edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    load: async () => new PeopleService(c.env).getPerson(personUid, locale),
+  });
 
   if (!person) {
     return c.json({error: 'Person not found'}, 404);
   }
 
-  await writeCacheAfterResponse(
-    c,
-    cache.set(cacheKey, person, PERSON_CACHE_TTL),
-  );
+  if (status !== 'MISS') {
+    return c.json(person as Record<string, unknown>, 200, {
+      'X-Cache-Status': status,
+    });
+  }
 
   const etag = createETag(person);
   if (shouldCheckETag(c.req, etag)) {
@@ -246,6 +225,6 @@ peopleRoutes.get('/:id', async c => {
 
   return createCachedResponse(person, PERSON_CACHE_TTL, {
     ETag: etag,
-    'X-Cache-Status': cached ? 'HIT' : 'MISS',
+    'X-Cache-Status': status,
   });
 });
