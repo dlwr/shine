@@ -11,7 +11,6 @@ import {pathToFileURL} from 'node:url';
 import {Command} from 'commander';
 import {createCommand as academyAwards} from './academy-awards-cli';
 import {createCommand as academyPersonAwards} from './academy-person-awards-cli';
-import {createCommand as assignImdbIds} from './assign-imdb-ids-cli';
 import {createCommand as availabilityCheck} from './availability-check-cli';
 import {createCommand as backfillPosters} from './backfill-posters-cli';
 import {createCommand as baftaAwards} from './bafta-awards-cli';
@@ -101,7 +100,6 @@ const commandGroups: Array<{heading: string; factories: Array<() => Command>}> =
         wikidataJapaneseTitles,
         wikidataJapaneseNames,
         personEnglishNames,
-        assignImdbIds,
         cannesFillImdbIds,
         tmdbJaWorklist,
       ],
