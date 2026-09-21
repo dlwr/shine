@@ -15,12 +15,24 @@ type ReadThroughOptions<T> = {
   load: () => Promise<T | undefined>;
 };
 
+async function loadWithRetry<T>(
+  key: string,
+  load: () => Promise<T | undefined>,
+): Promise<T | undefined> {
+  try {
+    return await load();
+  } catch (error) {
+    console.error(`Cache load failed for ${key}, retrying once:`, error);
+    return load();
+  }
+}
+
 async function revalidate<T>(
   cache: EdgeCache,
   {key, ttl, load}: ReadThroughOptions<T>,
 ): Promise<void> {
   try {
-    const data = await load();
+    const data = await loadWithRetry(key, load);
     await (data === undefined
       ? cache.delete(key)
       : cache.set(key, data, ttl, {staleRetention: STALE_RETENTION}));
@@ -46,7 +58,7 @@ export async function readThroughCache<T>(
     return {data: cached.data as T, status: isExpired ? 'STALE' : 'HIT'};
   }
 
-  const data = await load();
+  const data = await loadWithRetry(key, load);
   if (data !== undefined) {
     await writeCacheAfterResponse(
       context,
