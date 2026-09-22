@@ -6,12 +6,8 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {apiFetch, resolveApiUrl} from '@/lib/api';
+import type {ProminentPeopleData} from '@/lib/api-types';
 import type {ProminentPerson} from '@/lib/people';
-
-type ProminentPeople = {
-  directors: ProminentPerson[];
-  actors: ProminentPerson[];
-};
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {locale} = loaderData as {locale?: Locale};
@@ -42,7 +38,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
     throw new Response('Failed to load people', {status: 502});
   }
 
-  const body = (await response.json()) as ProminentPeople;
+  const body = (await response.json()) as ProminentPeopleData;
   return {...body, apiUrl, locale};
 }
 
@@ -115,10 +111,11 @@ function Ranking({
 }
 
 export default function PeoplePage({loaderData}: Route.ComponentProps) {
-  const {directors, actors, apiUrl, locale} = loaderData as ProminentPeople & {
-    apiUrl: string;
-    locale: Locale;
-  };
+  const {directors, actors, apiUrl, locale} =
+    loaderData as ProminentPeopleData & {
+      apiUrl: string;
+      locale: Locale;
+    };
 
   return (
     <div className="min-h-screen bg-paper text-ink">

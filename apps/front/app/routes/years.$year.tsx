@@ -8,29 +8,10 @@ import {YearNavLink} from '@/components/editorial/year-nav-link';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {apiFetch} from '@/lib/api';
+import type {YearDetailData} from '@/lib/api-types';
 
-export type YearAwardData = {
-  slug: string;
-  shortLabel: string;
-  name: string;
-  organization: string;
-};
-
-export type YearMovieData = {
-  uid: string;
-  title?: string;
-  posterUrl?: string;
-  isWinner: boolean;
-  awards: Array<{slug: string; isWinner: boolean}>;
-};
-
-export type YearDetailData = {
-  year: number;
-  movies: YearMovieData[];
-  awards: YearAwardData[];
-  previousYear?: number;
-  nextYear?: number;
-};
+export type YearAwardData = YearDetailData['awards'][number];
+export type YearMovieData = YearDetailData['movies'][number];
 
 const STRUCTURED_DATA_ITEM_LIMIT = 100;
 const DESCRIPTION_WINNER_LIMIT = 3;

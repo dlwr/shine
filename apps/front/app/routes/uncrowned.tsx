@@ -5,33 +5,11 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {apiFetch} from '@/lib/api';
+import type {UncrownedData} from '@/lib/api-types';
 
-type UncrownedAward = {
-  slug: string;
-  name: string;
-  shortLabel: string;
-  organization: string;
-};
-
-type UncrownedLoss = {
-  slug: string;
-  year: number;
-};
-
-type UncrownedMovie = {
-  uid: string;
-  title?: string;
-  year?: number;
-  posterUrl?: string;
-  losses: UncrownedLoss[];
-};
-
-type UncrownedData = {
-  nominatedFilmCount: number;
-  uncrownedFilmCount: number;
-  awards: UncrownedAward[];
-  topMovies: UncrownedMovie[];
-};
+type UncrownedAward = UncrownedData['awards'][number];
+type UncrownedMovie = UncrownedData['topMovies'][number];
+type UncrownedLoss = UncrownedMovie['losses'][number];
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {locale} = loaderData as {locale?: Locale};

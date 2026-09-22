@@ -1,53 +1,19 @@
-import type {AvailabilityInfo} from '@/components/editorial/availability-badges';
-import type {PersonAwardYearGroupData} from '@/components/editorial/person-award-years';
 import {awardHeading} from '@/lib/awards';
 import {SITE_URL} from '@/lib/meta';
 
-export type AwardMovieEntryData = {
-  uid: string;
-  title?: string;
-  movieYear?: number;
-  posterUrl?: string;
-  isWinner: boolean;
-  specialMention?: string;
-  availability?: AvailabilityInfo[];
-};
-
-export type AwardYearGroupData = {
-  year: number;
-  ceremonyNumber?: number;
-  filmCount: number;
-  movies: AwardMovieEntryData[];
-};
-
-export type AwardPaginationData = {
-  page: number;
-  perPage: number;
-  totalCount: number;
-  totalPages: number;
-};
-
-export type AwardDetailData = {
-  slug: string;
-  name: string;
-  organization: string;
-  description: string;
-  grouping: 'year' | 'list';
-  subAward?: boolean;
-  years: AwardYearGroupData[];
-  pagination?: AwardPaginationData;
-};
-
-export type PersonAwardDetailData = {
-  slug: string;
-  name: string;
-  organization: string;
-  description: string;
-  grouping: 'person';
-  years: PersonAwardYearGroupData[];
-};
-
-export type AwardPageData = AwardDetailData | PersonAwardDetailData;
+export type {
+  AwardDetailData,
+  AwardMovieEntryData,
+  AwardPageData,
+  AwardPaginationData,
+  AwardYearGroupData,
+  PersonAwardDetailData,
+} from './api-types';
+import type {
+  AwardDetailData,
+  AwardPageData,
+  PersonAwardDetailData,
+} from './api-types';
 
 const STRUCTURED_DATA_ITEM_LIMIT = 100;
 

@@ -6,20 +6,8 @@ import {YearNavLink} from '@/components/editorial/year-nav-link';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {awardHeading} from '@/lib/awards';
-import type {AwardMovieEntryData} from '@/lib/award-page';
+import type {AwardYearDetailData} from '@/lib/api-types';
 import {apiFetch} from '@/lib/api';
-
-export type AwardYearDetailData = {
-  slug: string;
-  name: string;
-  organization: string;
-  description: string;
-  year: number;
-  ceremonyNumber?: number;
-  movies: AwardMovieEntryData[];
-  previousYear?: number;
-  nextYear?: number;
-};
 
 function buildItemList(award: AwardYearDetailData): Record<string, unknown> {
   return {

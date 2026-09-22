@@ -20,7 +20,12 @@ const nomination = (
   isWinner: overrides.isWinner ?? false,
   category: {uid: 'cat', name: 'Best Picture', ...overrides.category},
   ceremony: {uid: 'cer', year: overrides.year ?? 2023},
-  organization: {uid: 'org', name: 'Academy Awards', ...overrides.organization},
+  organization: {
+    uid: 'org',
+    name: 'Academy Awards',
+    hasYearPages: false,
+    ...overrides.organization,
+  },
 });
 
 const movieDetail = (

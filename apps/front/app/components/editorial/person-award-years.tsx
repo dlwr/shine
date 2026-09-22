@@ -1,25 +1,9 @@
 import {PersonPortrait} from './person-portrait';
+import type {PersonAwardYearGroupData} from '@/lib/api-types';
 
-type PersonAwardMovieData = {
-  uid: string;
-  title?: string;
-  movieYear?: number;
-};
-
-type PersonAwardNomineeData = {
-  uid: string;
-  name: string;
-  originalName: string;
-  profilePath?: string;
-  isWinner: boolean;
-  movies: PersonAwardMovieData[];
-};
-
-export type PersonAwardYearGroupData = {
-  year: number;
-  ceremonyNumber?: number;
-  nominees: PersonAwardNomineeData[];
-};
+export type {PersonAwardYearGroupData} from '@/lib/api-types';
+type PersonAwardNomineeData = PersonAwardYearGroupData['nominees'][number];
+type PersonAwardMovieData = PersonAwardNomineeData['movies'][number];
 
 function MovieLinks({movies}: {movies: PersonAwardMovieData[]}) {
   return (

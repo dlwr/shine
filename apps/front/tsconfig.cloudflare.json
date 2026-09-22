@@ -6,8 +6,10 @@
     "app/**/.server/**/*",
     "app/**/.client/**/*",
     "workers/**/*",
-    "worker-configuration.d.ts"
+    "worker-configuration.d.ts",
+    "../api/src/**/*"
   ],
+  "exclude": ["../api/src/**/__tests__/**", "../api/src/**/*.test.ts"],
   "compilerOptions": {
     "composite": true,
     "strict": true,
@@ -22,6 +24,7 @@
     "rootDirs": [".", "./.react-router/types"],
     "paths": {
       "~/*": ["./app/*"],
+      "@shine/api/*": ["../api/src/*"],
       "@routes/*": ["./app/routes/*"],
       "@/*": ["./app/*"],
       "@/components/*": ["./app/components/*"],

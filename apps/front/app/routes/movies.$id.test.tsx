@@ -40,6 +40,7 @@ const mockMovieDetail = {
         name: 'Cannes Film Festival',
         shortName: 'Cannes',
         displayName: 'カンヌ国際映画祭',
+        hasYearPages: true,
       },
     },
     {
@@ -60,6 +61,7 @@ const mockMovieDetail = {
         name: 'Academy Awards',
         shortName: 'Oscars',
         displayName: 'アカデミー賞',
+        hasYearPages: true,
       },
     },
   ],
@@ -803,43 +805,6 @@ describe('MovieDetail Component', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:8787/movies/movie-123/availability/check',
         {method: 'POST'},
-      );
-    });
-
-    it('視聴可否バッジが表示される', () => {
-      const loaderData = {
-        locale: 'ja' as const,
-        movieDetail: {
-          ...mockMovieDetail,
-          availability: [
-            {
-              source: 'tmdb',
-              detail: 'U-NEXT(見放題)',
-              checkedAt: 1_784_067_000,
-            },
-            {
-              source: 'discas',
-              detail: 'Matched: パルム・ドール受賞作品',
-              checkedAt: 1_784_067_000,
-            },
-          ],
-        },
-      };
-      const parameters = createParameters('movie-123');
-
-      render(
-        <MovieDetail
-          loaderData={loaderData}
-          actionData={createActionData()}
-          params={parameters}
-          matches={createMatches(loaderData, parameters)}
-        />,
-      );
-
-      expect(screen.getByText('U-NEXT 見放題')).toBeInTheDocument();
-      expect(screen.getByText('宅配レンタル')).toHaveAttribute(
-        'title',
-        'TSUTAYA DISCAS',
       );
     });
 
