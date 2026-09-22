@@ -314,7 +314,7 @@
     "data.people[].uid",
     "data.people[].wonCount"
   ],
-  "selections:daily:{date}:ja:v3": [
+  "selections:daily:{date}:ja:v4": [
     "cachedAt",
     "data.articleLinks[].title",
     "data.articleLinks[].uid",
@@ -342,6 +342,7 @@
     "data.posterUrls[].url",
     "data.title",
     "data.uid",
+    "data.watchedCount",
     "data.year"
   ],
   "selections:history:daily:{date}:ja:v4": [
@@ -353,7 +354,7 @@
     "data.items[].uid",
     "data.items[].year"
   ],
-  "selections:monthly:{date}:ja:v3": [
+  "selections:monthly:{date}:ja:v4": [
     "cachedAt",
     "data.articleLinks[].title",
     "data.articleLinks[].uid",
@@ -381,9 +382,10 @@
     "data.posterUrls[].url",
     "data.title",
     "data.uid",
+    "data.watchedCount",
     "data.year"
   ],
-  "selections:weekly:{date}:ja:v3": [
+  "selections:weekly:{date}:ja:v4": [
     "cachedAt",
     "data.articleLinks[].title",
     "data.articleLinks[].uid",
@@ -411,6 +413,7 @@
     "data.posterUrls[].url",
     "data.title",
     "data.uid",
+    "data.watchedCount",
     "data.year"
   ],
   "uncrowned:v12": [

@@ -6,6 +6,7 @@ import {getDatabase} from '@shine/database';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeAll, describe, expect, it} from 'vitest';
 import {seedPublicData} from '../../__tests__/public-data-seed';
+import {watchedMarks} from '@shine/database/schema/watched-marks';
 import {loadSelectionMovie} from '../selection-movie';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -45,6 +46,19 @@ describe('loadSelectionMovie', () => {
     );
     expect(bestPicture?.organization.displayName).toBe('アカデミー賞');
     expect(bestPicture?.category.displayName).toBe('作品賞');
+  });
+
+  it('本人以外の「観た」の数を添える', async () => {
+    await database.insert(watchedMarks).values([
+      {movieUid: 'movie-beauty', submitterIp: '203.0.113.1'},
+      {movieUid: 'movie-beauty', submitterIp: '203.0.113.2'},
+      {movieUid: 'movie-beauty', submitterIp: '203.0.113.3', isOwner: true},
+      {movieUid: 'movie-green', submitterIp: '203.0.113.1'},
+    ]);
+
+    const selection = await loadSelectionMovie(database, 'movie-beauty', 'ja');
+
+    expect(selection.watchedCount).toBe(2);
   });
 
   it('en では日本語名を添えない', async () => {

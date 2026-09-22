@@ -13,6 +13,7 @@ import {
   japaneseAwardNames,
 } from './award-definition-lookup';
 import {loadWatchableAvailabilityByMovie} from './watchable-availability';
+import {countWatchedMarks} from './watched-marks';
 import type {MovieSelection} from '../types/movies';
 
 type Database = ReturnType<typeof getDatabase>;
@@ -49,6 +50,7 @@ export async function loadSelectionMovie(
     posters,
     topArticles,
     availabilityByMovie,
+    watchedCount,
   ] = await Promise.all([
     database
       .select({
@@ -136,6 +138,7 @@ export async function loadSelectionMovie(
       .orderBy(sql`${articleLinks.submittedAt} DESC`)
       .limit(3),
     loadWatchableAvailabilityByMovie(database, [movieId]),
+    countWatchedMarks(database, movieId),
   ]);
 
   const selectedTitle = resolveTitle(allTranslations, locale);
@@ -203,6 +206,7 @@ export async function loadSelectionMovie(
       description: article.description || undefined,
     })),
     availability: availabilityByMovie.get(movieId) ?? [],
+    watchedCount,
   };
 }
 

@@ -48,6 +48,7 @@ export type MovieSelection = {
     detail: string | undefined;
     checkedAt: number;
   }>;
+  watchedCount?: number;
   credits?: {
     cast: Array<{
       uid: string;

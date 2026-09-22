@@ -70,3 +70,4 @@ export type AwardsListResponse = {awards: AwardSummary[]};
 export type YearsListResponse = {years: YearSummary[]};
 export type WatchedListsResponse = {lists: WatchedList[]};
 export type MovieUidsResponse = {uids: string[]};
+export type WatchedMarkResponse = {watchedCount: number};

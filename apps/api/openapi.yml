@@ -1033,6 +1033,44 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /movies/{id}/watched:
+    post:
+      summary: Mark a movie as watched anonymously
+      description: Records one anonymous "watched" mark per IP per movie (rate limited to 30 per hour per IP). A valid admin token marks it as the owner's, which is excluded from the count
+      operationId: markMovieWatched
+      tags:
+        - Movies
+      security:
+        - {}
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Movie unique identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Mark recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchedMarkResponse'
+        '200':
+          description: This IP had already marked the movie; nothing was recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchedMarkResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /movies/{id}/availability/check:
     post:
       summary: Check where a movie can be watched
@@ -3259,6 +3297,20 @@ components:
               description: Related article links (max 3)
             credits:
               $ref: '#/components/schemas/MovieCredits'
+            watchedCount:
+              type: integer
+              minimum: 0
+              description: 選出 API だけが返す。本人と管理者の印を除いた「観た」の数
+
+    WatchedMarkResponse:
+      type: object
+      required:
+        - watchedCount
+      properties:
+        watchedCount:
+          type: integer
+          minimum: 0
+          description: 本人と管理者の印を除いた「観た」の数
 
     PersonSummary:
       type: object
