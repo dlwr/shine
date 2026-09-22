@@ -401,7 +401,7 @@ describe('AdminCeremoniesService.getAwardsReference', () => {
     const reference = await service.getAwardsReference();
 
     expect(reference.organizations).toEqual([
-      {uid: 'org', name: 'Org', country: 'JP'},
+      {uid: 'org', name: 'Org', shortName: 'ORG', country: 'JP'},
     ]);
     expect(reference.ceremonies.map(row => row.uid)).toEqual([
       'c-2019',

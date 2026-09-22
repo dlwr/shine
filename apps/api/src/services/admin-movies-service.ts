@@ -29,7 +29,7 @@ export class AdminMoviesService extends BaseService {
     const {page, limit, search} = options;
     const offset = (page - 1) * limit;
 
-    const titleSql = sql`
+    const titleSql = sql<string>`
 			COALESCE(
 				${titleSubquery('ja')},
 				${titleSubquery('en')},
@@ -38,7 +38,7 @@ export class AdminMoviesService extends BaseService {
 			)
 		`.as('title');
 
-    const posterUrlSql = sql`
+    const posterUrlSql = sql<string | null>`
 			(
 				SELECT url
 				FROM poster_urls
@@ -47,7 +47,7 @@ export class AdminMoviesService extends BaseService {
 			)
 		`.as('posterUrl');
 
-    const nominationCountSql = sql`
+    const nominationCountSql = sql<number>`
 			(
 				SELECT COUNT(*)
 				FROM nominations

@@ -4,6 +4,7 @@ import {translations} from '@shine/database/schema/translations';
 import {fetchTMDBExternalIds, searchTMDBMovies} from '@shine/tmdb';
 import {BaseService} from './base-service';
 import {NotFoundError, TmdbConfigError, ValidationError} from './errors';
+import type {ExternalIdSearchResponse} from '../types/admin';
 
 export class ExternalIdSearchService extends BaseService {
   async searchExternalMovieIds(
@@ -14,24 +15,7 @@ export class ExternalIdSearchService extends BaseService {
       year?: number;
       limit?: number;
     } = {},
-  ): Promise<{
-    usedQuery: string;
-    usedYear?: number;
-    results: Array<{
-      tmdbId: number;
-      imdbId?: string;
-      title: string;
-      originalTitle?: string;
-      releaseDate?: string;
-      overview?: string;
-      originalLanguage?: string;
-      posterPath?: string;
-      popularity?: number;
-      voteAverage?: number;
-      voteCount?: number;
-      yearDifference?: number;
-    }>;
-  }> {
+  ): Promise<ExternalIdSearchResponse> {
     const tmdbApiKey = this.env.TMDB_API_KEY;
 
     if (!tmdbApiKey) {

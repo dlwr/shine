@@ -216,6 +216,15 @@ describe('GET /awards', () => {
     expect(body.ceremonies.map(c => c.uid)).toEqual(['c-2020', 'c-2021']);
     expect(body.categories.map(c => c.uid)).toEqual(['category']);
   });
+
+  it('団体の略称を返す', async () => {
+    const response = await request('/awards');
+
+    const body = (await response.json()) as {
+      organizations: Array<{uid: string; shortName: string | null}>;
+    };
+    expect(body.organizations[0]).toMatchObject({uid: 'org', shortName: 'ORG'});
+  });
 });
 
 describe('GET /awards', () => {

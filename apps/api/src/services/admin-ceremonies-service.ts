@@ -185,6 +185,7 @@ export class AdminCeremoniesService extends BaseService {
       .select({
         uid: awardOrganizations.uid,
         name: awardOrganizations.name,
+        shortName: awardOrganizations.shortName,
         country: awardOrganizations.country,
       })
       .from(awardOrganizations)

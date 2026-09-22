@@ -3552,13 +3552,49 @@ components:
         - pagination
         - filters
 
+    AdminMovieListItem:
+      type: object
+      properties:
+        uid:
+          type: string
+          format: uuid
+        year:
+          type: [integer, 'null']
+        originalLanguage:
+          type: [string, 'null']
+        imdbId:
+          type: [string, 'null']
+        mediaType:
+          type: string
+          enum: [movie, tv]
+        title:
+          type: string
+        posterUrl:
+          type: [string, 'null']
+          format: uri
+        imdbUrl:
+          type: string
+          format: uri
+        nominationCount:
+          type: integer
+          minimum: 0
+      required:
+        - uid
+        - year
+        - originalLanguage
+        - imdbId
+        - mediaType
+        - title
+        - posterUrl
+        - nominationCount
+
     AdminMoviesResponse:
       type: object
       properties:
         movies:
           type: array
           items:
-            $ref: '#/components/schemas/Movie'
+            $ref: '#/components/schemas/AdminMovieListItem'
           description: Movies list
         pagination:
           $ref: '#/components/schemas/AdminPaginationInfo'
@@ -4326,11 +4362,15 @@ components:
                 format: uuid
               name:
                 type: string
+              shortName:
+                type: [string, 'null']
               country:
                 type: [string, 'null']
             required:
               - uid
               - name
+              - shortName
+              - country
           description: Award organizations
         ceremonies:
           type: array
