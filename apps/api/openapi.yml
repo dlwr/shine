@@ -195,6 +195,34 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /movies/uids:
+    get:
+      summary: List every movie uid
+      description: |
+        Returns the uids of all movies that are not soft-deleted, ordered by
+        year then uid, in a single response. Intended for the sitemap, which
+        slices it into pages instead of paging through /movies/search.
+      operationId: listMovieUids
+      tags:
+        - Movies
+      security: []
+      responses:
+        '200':
+          description: Successfully retrieved movie uids
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [uids]
+                properties:
+                  uids:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /movies/{id}:
     get:
       summary: Get movie details

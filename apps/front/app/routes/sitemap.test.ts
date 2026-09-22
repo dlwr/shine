@@ -26,6 +26,9 @@ const createMoviesArguments = (page: string) =>
     params: {},
   });
 
+const movieUids = (count: number) =>
+  Array.from({length: count}, (_, index) => `movie-${index}`);
+
 const mockSearchResponse = (body: unknown, isOk = true) => {
   vi.mocked(fetch).mockResolvedValueOnce({
     ok: isOk,
@@ -38,8 +41,8 @@ describe('sitemap.xml', () => {
     vi.resetAllMocks();
   });
 
-  it('映画の総件数から必要な数の子sitemapを列挙する', async () => {
-    mockSearchResponse({pagination: {totalCount: 250}});
+  it('映画の uid の数から必要な数の子sitemapを列挙する', async () => {
+    mockSearchResponse({uids: movieUids(250)});
 
     const response = await sitemapIndexLoader(createIndexArguments());
     const xml = await response.text();
@@ -54,7 +57,7 @@ describe('sitemap.xml', () => {
   });
 
   it('XMLのContent-Typeを返す', async () => {
-    mockSearchResponse({pagination: {totalCount: 10}});
+    mockSearchResponse({uids: movieUids(10)});
 
     const response = await sitemapIndexLoader(createIndexArguments());
 
@@ -62,7 +65,7 @@ describe('sitemap.xml', () => {
   });
 
   it('賞のsitemapを列挙する', async () => {
-    mockSearchResponse({pagination: {totalCount: 10}});
+    mockSearchResponse({uids: movieUids(10)});
 
     const response = await sitemapIndexLoader(createIndexArguments());
 
@@ -72,7 +75,7 @@ describe('sitemap.xml', () => {
   });
 
   it('年別のsitemapを列挙する', async () => {
-    mockSearchResponse({pagination: {totalCount: 10}});
+    mockSearchResponse({uids: movieUids(10)});
 
     const response = await sitemapIndexLoader(createIndexArguments());
 
@@ -82,7 +85,7 @@ describe('sitemap.xml', () => {
   });
 
   it('人物の総件数から必要な数の人物sitemapを列挙する', async () => {
-    mockSearchResponse({pagination: {totalCount: 10}});
+    mockSearchResponse({uids: movieUids(10)});
     mockSearchResponse({people: [], pagination: {totalCount: 1200}});
 
     const response = await sitemapIndexLoader(createIndexArguments());
@@ -210,10 +213,7 @@ describe('sitemap/movies-:page.xml', () => {
   });
 
   it('指定ページの映画詳細URLを列挙する', async () => {
-    mockSearchResponse({
-      movies: [{uid: 'movie-1'}, {uid: 'movie-2'}],
-      pagination: {totalCount: 2},
-    });
+    mockSearchResponse({uids: ['movie-1', 'movie-2']});
 
     const response = await sitemapMoviesLoader(createMoviesArguments('1'));
     const xml = await response.text();
@@ -222,15 +222,21 @@ describe('sitemap/movies-:page.xml', () => {
     expect(xml).toContain('<loc>https://shine-film.com/movies/movie-2</loc>');
   });
 
-  it('指定されたページ番号でAPIを呼ぶ', async () => {
-    mockSearchResponse({movies: [], pagination: {totalCount: 0}});
+  it('uid の一覧を 1 回で取り、指定ページの 100 件だけを切り出す', async () => {
+    mockSearchResponse({uids: movieUids(250)});
 
-    await sitemapMoviesLoader(createMoviesArguments('3'));
+    const response = await sitemapMoviesLoader(createMoviesArguments('3'));
+    const xml = await response.text();
 
+    expect(fetch).toHaveBeenCalledTimes(1);
     expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining('page=3'),
+      expect.stringContaining('/movies/uids'),
       expect.anything(),
     );
+    expect(xml).not.toContain('/movies/movie-199</loc>');
+    expect(xml).toContain('<loc>https://shine-film.com/movies/movie-200</loc>');
+    expect(xml).toContain('<loc>https://shine-film.com/movies/movie-249</loc>');
+    expect(xml).not.toContain('/movies/movie-250</loc>');
   });
 
   it('ページ番号が数値でなければ404を返す', async () => {

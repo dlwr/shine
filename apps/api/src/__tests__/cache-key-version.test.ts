@@ -97,6 +97,7 @@ const exercises: Exercise[] = [
     path: `/${seededPeopleUids.mendes}?locale=ja`,
   },
   {name: '映画検索', routes: moviesRoutes, path: '/search?q=Beauty'},
+  {name: '映画の uid 一覧', routes: moviesRoutes, path: '/uids'},
   {name: '映画詳細', routes: moviesRoutes, path: '/movie-beauty?locale=ja'},
   {
     name: '関連映画',

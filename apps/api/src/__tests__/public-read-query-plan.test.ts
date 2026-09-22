@@ -172,6 +172,10 @@ const exercises: Exercise[] = [
     indexOnly: true,
   },
   {
+    name: '映画の uid 一覧',
+    run: environment => new MoviesService(environment).listMovieUids(),
+  },
+  {
     name: '検索語なしの映画検索',
     run: environment =>
       new MoviesService(environment).searchMovies({page: 1, limit: 100}),
