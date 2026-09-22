@@ -97,6 +97,16 @@ export class MoviesService extends BaseService {
     };
   }
 
+  async listMovieUids(): Promise<string[]> {
+    const rows = await this.database
+      .select({uid: movies.uid})
+      .from(movies)
+      .where(isNull(movies.deletedAt))
+      .orderBy(movies.year, movies.uid);
+
+    return rows.map(row => row.uid);
+  }
+
   async getMovieDetails(
     movieId: string,
     locale = 'ja',

@@ -119,6 +119,10 @@
     "data.movies[].uid",
     "data.movies[].year"
   ],
+  "movies:uids:v1": [
+    "cachedAt",
+    "data.uids[]"
+  ],
   "people:crossings:ja:v5": [
     "cachedAt",
     "data.distribution[].organizationCount",
