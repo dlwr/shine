@@ -7,6 +7,7 @@ import {getPrimaryTitle} from './primary-title';
 import {
   SELECTION_TYPE_LABELS,
   type SearchMovie,
+  type SelectionData,
   type SelectionType,
 } from './types';
 
@@ -16,7 +17,7 @@ type OverrideModalProperties = {
   adminToken: string | undefined;
   type: SelectionType;
   onClose: () => void;
-  onConfirm: (movie: SearchMovie) => void;
+  onConfirm: (movie: {uid: string}) => void;
 };
 
 export function OverrideModal({
@@ -31,9 +32,13 @@ export function OverrideModal({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchMovie[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [randomMovie, setRandomMovie] = useState<SearchMovie | undefined>();
+  const [randomMovie, setRandomMovie] = useState<
+    SelectionData['movie'] | undefined
+  >();
   const [randomLoading, setRandomLoading] = useState(false);
-  const [selectedMovie, setSelectedMovie] = useState<SearchMovie | undefined>();
+  const [selectedMovie, setSelectedMovie] = useState<
+    SearchMovie | SelectionData['movie'] | undefined
+  >();
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -87,7 +92,7 @@ export function OverrideModal({
       );
 
       if (response.ok) {
-        const data = (await response.json()) as SearchMovie;
+        const data = (await response.json()) as SelectionData['movie'];
         setRandomMovie(data);
       }
     } catch (error) {
@@ -159,8 +164,8 @@ export function OverrideModal({
                     <h4 className="font-medium">{getPrimaryTitle(movie)}</h4>
                     <p className="text-sm text-gray-600">
                       {movie.year && `${movie.year}年`}
-                      {movie.nominations?.length > 0 &&
-                        ` • ${movie.nominations.length}件のノミネート`}
+                      {movie.nominationCount > 0 &&
+                        ` • ${movie.nominationCount}件のノミネート`}
                     </p>
                   </button>
                 ))}

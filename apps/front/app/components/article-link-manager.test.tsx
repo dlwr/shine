@@ -3,20 +3,14 @@ import {fireEvent, render, screen} from '@testing-library/react';
 import {useState} from 'react';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import ArticleLinkManager from './article-link-manager';
+import type {MovieDetails} from '@/components/admin/movie-info/types';
 
-type ManagedLink = {
-  uid: string;
-  url?: string;
-  title?: string;
-  description?: string;
-  isSpam: boolean;
-  isOwnerSubmission: boolean;
-};
+type ManagedLink = MovieDetails['articleLinks'][number];
 
 function Harness({initialLinks}: {initialLinks: ManagedLink[]}) {
-  const [state, setState] = useState<
-    {articleLinks?: ManagedLink[]} | undefined
-  >({articleLinks: initialLinks});
+  const [state, setState] = useState<{articleLinks: ManagedLink[]} | undefined>(
+    {articleLinks: initialLinks},
+  );
 
   return (
     <ArticleLinkManager
@@ -32,6 +26,7 @@ const otherLink: ManagedLink = {
   uid: 'link-1',
   url: 'https://open.spotify.com/episode/abc',
   title: 'ポッドキャスト',
+  description: null,
   isSpam: false,
   isOwnerSubmission: false,
 };

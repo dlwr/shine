@@ -24,7 +24,7 @@ const ceremonyDetail: CeremonyResponse = {
     updatedAt: 1_700_000_000,
   },
   nominations: [],
-  navigation: {previous: null, next: null},
+  navigation: {},
 };
 
 const mockLocalStorage = {

@@ -1,41 +1,12 @@
-type NominationSummary = {
-  uid: string;
-  isWinner: boolean;
-  category: {name: string};
-  ceremony: {uid: string; year: number; number?: number};
-  organization: {uid: string; name: string; shortName?: string};
-};
+import type {
+  AdminMovieListItemData,
+  PreviewSelectionsData,
+  SelectionPreviewData,
+} from '@/lib/api-types';
 
-export type SelectionData = {
-  date: string;
-  movie:
-    | {
-        uid: string;
-        title: string;
-        year: number;
-        posterUrl?: string;
-        nominations?: NominationSummary[];
-      }
-    | undefined;
-};
-
-export type PreviewSelections = {
-  nextDaily: SelectionData;
-  nextWeekly: SelectionData;
-  nextMonthly: SelectionData;
-};
-
-export type SearchMovie = {
-  uid: string;
-  year: number | undefined;
-  title?: string;
-  translations?: Array<{
-    languageCode: string;
-    content: string;
-    isDefault: number;
-  }>;
-  nominations: NominationSummary[];
-};
+export type SelectionData = SelectionPreviewData;
+export type PreviewSelections = PreviewSelectionsData;
+export type SearchMovie = AdminMovieListItemData;
 
 export type SelectionType = 'daily' | 'weekly' | 'monthly';
 

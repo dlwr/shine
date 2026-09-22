@@ -1,31 +1,9 @@
-import type {MovieDetails} from '../../../routes/admin.movies.$id';
+import type {AdminAwardsReferenceData} from '@/lib/api-types';
+import type {MovieDetails} from '@/components/admin/movie-info/types';
 
 export type Nomination = MovieDetails['nominations'][number];
 
-export type AwardsOrganization = {
-  uid: string;
-  name: string;
-  country: string | null;
-  shortName?: string | null;
-};
-
-export type AwardsCeremony = {
-  uid: string;
-  organizationUid: string;
-  year: number;
-  ceremonyNumber: number | null;
-  organizationName: string;
-};
-
-export type AwardsCategory = {
-  uid: string;
-  organizationUid: string;
-  name: string;
-  organizationName: string;
-};
-
-export type AwardsData = {
-  organizations: AwardsOrganization[];
-  ceremonies: AwardsCeremony[];
-  categories: AwardsCategory[];
-};
+export type AwardsData = AdminAwardsReferenceData;
+export type AwardsOrganization = AwardsData['organizations'][number];
+export type AwardsCeremony = AwardsData['ceremonies'][number];
+export type AwardsCategory = AwardsData['categories'][number];

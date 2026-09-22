@@ -1,37 +1,11 @@
-export type Movie = {
-  uid: string;
-  title: string;
-  year: number | undefined;
-  originalLanguage: string | undefined;
-  posterUrl: string | undefined;
-  imdbUrl?: string;
-  mediaType?: 'movie' | 'tv';
-};
+import type {
+  AdminMovieListItemData,
+  AdminMoviesListData,
+  CreateMovieData,
+} from '@/lib/api-types';
 
-export type PaginationData = {
-  page: number;
-  limit: number;
-  totalCount: number;
-  totalPages: number;
-};
+export type Movie = AdminMovieListItemData;
+export type PaginationData = AdminMoviesListData['pagination'];
+export type MoviesResponse = AdminMoviesListData;
 
-export type MoviesResponse = {
-  movies: Movie[];
-  pagination: PaginationData;
-};
-
-export type CreateMovieResponse = {
-  success?: boolean;
-  movie?: {
-    uid: string;
-    imdbId?: string | null;
-    tmdbId?: number | null;
-    year?: number | null;
-    originalLanguage?: string | null;
-  };
-  imports?: {
-    translationsAdded: number;
-    postersAdded: number;
-  };
-  error?: string;
-};
+export type CreateMovieResponse = CreateMovieData | {error: string};

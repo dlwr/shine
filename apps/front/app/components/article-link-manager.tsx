@@ -1,18 +1,12 @@
 import {useState} from 'react';
 import type {Dispatch, SetStateAction} from 'react';
 import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+import type {MovieDetails} from '@/components/admin/movie-info/types';
 
-type ArticleLink = {
-  uid: string;
-  url?: string;
-  title?: string;
-  description?: string;
-  isSpam: boolean;
-  isOwnerSubmission: boolean;
-};
+type ArticleLink = MovieDetails['articleLinks'][number];
 
 type ArticleLinksContainer = {
-  articleLinks?: ArticleLink[];
+  articleLinks: ArticleLink[];
 };
 
 type ArticleLinkManagerProperties<TState extends ArticleLinksContainer> = {

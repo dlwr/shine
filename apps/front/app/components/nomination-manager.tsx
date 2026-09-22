@@ -1,4 +1,4 @@
-import type {MovieDetails} from '../routes/admin.movies.$id';
+import type {MovieDetails} from './admin/movie-info/types';
 import {AddNominationForm} from './admin/nominations/add-nomination-form';
 import {EditNominationForm} from './admin/nominations/edit-nomination-form';
 import {NominationTable} from './admin/nominations/nomination-table';

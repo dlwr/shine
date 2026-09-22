@@ -45,7 +45,7 @@ export default function MovieInfoEditor({
         <YearEditor
           apiUrl={apiUrl}
           movieId={movieId}
-          year={movieData.year}
+          year={movieData.year ?? undefined}
           onMovieDataUpdate={onMovieDataUpdate}
         />
 
@@ -62,7 +62,7 @@ export default function MovieInfoEditor({
         />
 
         <ImdbIdEditor
-          imdbId={movieData.imdbId}
+          imdbId={movieData.imdbId ?? undefined}
           imdbError={imdbError}
           onImdbErrorChange={error => setImdbError(error)}
           performImdbUpdate={performImdbUpdate}
@@ -71,7 +71,7 @@ export default function MovieInfoEditor({
         <TmdbIdEditor
           apiUrl={apiUrl}
           movieId={movieId}
-          tmdbId={movieData.tmdbId}
+          tmdbId={movieData.tmdbId ?? undefined}
           tmdbError={tmdbError}
           onTmdbErrorChange={error => setTmdbError(error)}
           onRefreshErrorChange={error => setTmdbRefreshError(error)}
@@ -92,7 +92,7 @@ export default function MovieInfoEditor({
         <TmdbAutoFetch
           apiUrl={apiUrl}
           movieId={movieId}
-          imdbId={movieData.imdbId}
+          imdbId={movieData.imdbId ?? undefined}
           onMovieDataUpdate={onMovieDataUpdate}
         />
 

@@ -1,7 +1,11 @@
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {AddNominationForm} from './add-nomination-form';
-import type {AwardsCategory, CeremonyResponse} from './types';
+import type {
+  AwardsCategory,
+  CeremonyResponse,
+  MovieSearchResult,
+} from './types';
 
 const ceremonyDetail: CeremonyResponse = {
   ceremony: {
@@ -20,14 +24,28 @@ const ceremonyDetail: CeremonyResponse = {
     updatedAt: 1_700_000_000,
   },
   nominations: [],
-  navigation: {previous: null, next: null},
+  navigation: {},
 };
 
 const categories: AwardsCategory[] = [
-  {uid: 'category-1', organizationUid: 'org-1', name: '最優秀作品賞'},
+  {
+    uid: 'category-1',
+    organizationUid: 'org-1',
+    name: '最優秀作品賞',
+    organizationName: '日本アカデミー賞',
+  },
 ];
 
-const selectedMovie = {uid: 'movie-1', title: '七人の侍', year: 1954};
+const selectedMovie: MovieSearchResult = {
+  uid: 'movie-1',
+  title: '七人の侍',
+  year: 1954,
+  originalLanguage: 'ja',
+  imdbId: null,
+  mediaType: 'movie',
+  posterUrl: null,
+  nominationCount: 0,
+};
 
 const mockLocalStorage = {
   getItem: vi.fn(),

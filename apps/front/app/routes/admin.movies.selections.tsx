@@ -6,7 +6,6 @@ import {
   SELECTION_TYPES,
   selectionKeyMap,
   type PreviewSelections,
-  type SearchMovie,
   type SelectionType,
 } from '@/components/admin/selections/types';
 import {
@@ -107,7 +106,7 @@ export default function AdminMovieSelections({
     );
   }
 
-  const handleOverride = async (type: SelectionType, movie: SearchMovie) => {
+  const handleOverride = async (type: SelectionType, movie: {uid: string}) => {
     const date =
       selections?.[selectionKeyMap[type]]?.date ||
       new Date().toISOString().split('T', 1)[0];

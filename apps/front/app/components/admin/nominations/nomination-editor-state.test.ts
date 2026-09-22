@@ -79,7 +79,7 @@ describe('nominationEditorReducer', () => {
   it('startEdit は特記事項が無ければ空文字にする', () => {
     const state = nominationEditorReducer(initialNominationEditorState, {
       type: 'startEdit',
-      nomination: {...sampleNomination, specialMention: undefined},
+      nomination: {...sampleNomination, specialMention: null},
     });
 
     expect(state.editValues.specialMention).toBe('');
