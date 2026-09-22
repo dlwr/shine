@@ -7,8 +7,7 @@
     {"path": "./packages/database"},
     {"path": "./packages/availability"},
     {"path": "./packages/tmdb"},
-    {"path": "./packages/utils"},
-    {"path": "./scripts"}
+    {"path": "./packages/utils"}
   ],
   "compilerOptions": {
     "composite": true,
