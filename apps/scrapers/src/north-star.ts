@@ -6,6 +6,7 @@ import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {SITE_URL} from './sns/site';
+import type {MonthlyPickPage} from './web-analytics';
 
 type DatabaseClient = ReturnType<typeof getDatabase>;
 
@@ -142,8 +143,22 @@ export async function collectMonthlyLinkCounts(
   });
 }
 
+function moviePagePath(movieUid: string): string {
+  return `/movies/${movieUid}`;
+}
+
 export function moviePageUrl(movieUid: string): string {
-  return `${SITE_URL}/movies/${movieUid}`;
+  return `${SITE_URL}${moviePagePath(movieUid)}`;
+}
+
+export function monthlyPickPages(
+  counts: MonthlyLinkCount[],
+): MonthlyPickPage[] {
+  return counts.map(count => ({
+    month: count.month,
+    title: count.title,
+    path: moviePagePath(count.movieUid),
+  }));
 }
 
 function formatBookmarkCount(

@@ -18,6 +18,8 @@ import {fetchHatenaBookmarkCountsOrUndefined} from './hatena-bookmarks';
 import {
   collectMonthlyLinkCounts,
   formatNorthStarReport,
+  monthlyPickPages,
+  type MonthlyLinkCount,
   moviePageUrl,
 } from './north-star';
 import {
@@ -31,6 +33,10 @@ import {
   type SurveySection,
 } from './survey';
 import {billingCycle, evaluateTursoUsage, fetchRowsRead} from './turso-usage';
+import {
+  leadingIndicatorReport,
+  resolveWebAnalyticsCredentials,
+} from './web-analytics';
 
 const DAY_MS = 86_400_000;
 const REPOSITORY_ROOT = path.resolve(
@@ -123,14 +129,17 @@ async function tursoSection(): Promise<SurveySection> {
   };
 }
 
-async function northStarSection(): Promise<SurveySection> {
+async function monthlyLinkCounts(): Promise<MonthlyLinkCount[]> {
   const environment = loadScraperEnvironment();
-  const counts = await collectMonthlyLinkCounts(
+  return collectMonthlyLinkCounts(
     getDatabase(environment),
     parseOriginRules(process.env),
     {months: 3},
   );
+}
 
+async function northStarSection(): Promise<SurveySection> {
+  const counts = await monthlyLinkCounts();
   const bookmarkCounts = await fetchHatenaBookmarkCountsOrUndefined(
     counts.map(count => moviePageUrl(count.movieUid)),
   );
@@ -138,6 +147,25 @@ async function northStarSection(): Promise<SurveySection> {
   return {
     title: '北極星（直近 3 か月）',
     body: formatNorthStarReport(counts, new Date(), bookmarkCounts).content,
+  };
+}
+
+async function leadingIndicatorSection(): Promise<SurveySection> {
+  const title = '先行指標（直近 7 日）';
+  const credentials = resolveWebAnalyticsCredentials(process.env);
+
+  if (!credentials) {
+    return {title, body: 'CLOUDFLARE_API_TOKEN 未設定のためスキップ'};
+  }
+
+  const counts = await monthlyLinkCounts();
+  return {
+    title,
+    body: await leadingIndicatorReport(
+      credentials,
+      monthlyPickPages(counts),
+      new Date(),
+    ),
   };
 }
 
@@ -183,6 +211,7 @@ async function main(options: SurveyOptions): Promise<void> {
   if (options.northStar) {
     sections.push(
       await settleSection('北極星（直近 3 か月）', northStarSection),
+      await settleSection('先行指標（直近 7 日）', leadingIndicatorSection),
     );
   }
 
@@ -202,7 +231,7 @@ export function createCommand(): Command {
     .description(
       [
         '「なんかやろう」の前の定点計測をまとめて流します。',
-        '本番の TTFB・Turso の読み取り量・北極星・大きいソースファイル・直近のコミットを出します。',
+        '本番の TTFB・Turso の読み取り量・北極星・先行指標・大きいソースファイル・直近のコミットを出します。',
       ].join('\n'),
     )
     .option(
@@ -219,7 +248,7 @@ export function createCommand(): Command {
     )
     .option('--no-network', '本番ページの計測を省く')
     .option('--no-turso', 'Turso の読み取り量を省く')
-    .option('--no-north-star', '北極星の集計を省く')
+    .option('--no-north-star', '北極星の集計と先行指標を省く')
     .addHelpText(
       'after',
       `
@@ -231,6 +260,9 @@ Environment variables:
   SHINE_SITE_URL                 計測するサイト (default: https://shine-film.com)
   SHINE_API_URL                  今月の1本を引く API (default: https://shine-api.yuta25.workers.dev)
   TURSO_PLATFORM_API_TOKEN       Turso Platform API トークン（無ければ Turso の節をスキップ）
+  CLOUDFLARE_API_TOKEN           Cloudflare API トークン（権限: Account Analytics:Read。無ければ先行指標をスキップ）
+  CLOUDFLARE_ACCOUNT_ID          アカウント ID (default: dlwr のアカウント)
+  CF_WEB_ANALYTICS_SITE_TAG      Web Analytics のサイト (default: shine-film.com)
   NORTH_STAR_OWNER_IPS           本人の投稿とみなす IP (カンマ区切り)
   NORTH_STAR_OWNER_URL_PREFIXES  本人の投稿とみなす URL の接頭辞 (カンマ区切り)
 `,
