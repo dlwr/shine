@@ -1,6 +1,7 @@
 import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
 import type {AwardDetail, PersonAwardDetail} from '../types/awards';
+import type {AwardsListResponse} from '../types/responses';
 import {AwardsService, PersonAwardsService} from '../services';
 import {paginateAwardDetail} from '../services/award-page-ordering';
 import {
@@ -18,12 +19,16 @@ const AWARDS_CACHE_TTL = 604_800;
 
 awardsRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const {data: result, status} = await readThroughCache(c, cache, {
-    key: 'awards:list:v20',
-    ttl: AWARDS_CACHE_TTL,
-    edgeTtl: IMPORTED_DATA_EDGE_TTL,
-    load: async () => ({awards: await new AwardsService(c.env).listAwards()}),
-  });
+  const {data: result, status} = await readThroughCache<AwardsListResponse>(
+    c,
+    cache,
+    {
+      key: 'awards:list:v20',
+      ttl: AWARDS_CACHE_TTL,
+      edgeTtl: IMPORTED_DATA_EDGE_TTL,
+      load: async () => ({awards: await new AwardsService(c.env).listAwards()}),
+    },
+  );
 
   const etag = createETag(result);
   if (shouldCheckETag(c.req, etag)) {

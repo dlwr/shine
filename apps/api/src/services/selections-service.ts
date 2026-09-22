@@ -20,6 +20,7 @@ import {
   pickSelectionMovieUid,
 } from './selection-store';
 import type {DateSeedOptions, MovieSelection} from '../types/movies';
+import type {SelectionsResponse} from '../types/responses';
 
 type PeriodPreview = {date: string; movie?: MovieSelection};
 
@@ -34,11 +35,9 @@ export class SelectionsService extends BaseService {
     this.cache = cache;
   }
 
-  async getDateSeededSelections(options: DateSeedOptions): Promise<{
-    daily: MovieSelection;
-    weekly: MovieSelection;
-    monthly: MovieSelection;
-  }> {
+  async getDateSeededSelections(
+    options: DateSeedOptions,
+  ): Promise<SelectionsResponse> {
     const {locale, date = new Date()} = options;
 
     const [daily, weekly, monthly] = await Promise.all([
