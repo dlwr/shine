@@ -2,6 +2,7 @@ import {and, desc, eq, gte, inArray, isNull, lt} from 'drizzle-orm';
 import {type getDatabase} from '@shine/database';
 import {classifySubmission, type OriginRules} from '@shine/utils';
 import {articleLinks} from '@shine/database/schema/article-links';
+import {watchedMarks} from '@shine/database/schema/watched-marks';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
@@ -19,6 +20,7 @@ export type MonthlyLinkCount = {
   other: number;
   owner: number;
   test: number;
+  watched: number;
 };
 
 function monthStart(month: string): Date {
@@ -96,8 +98,20 @@ export async function collectMonthlyLinkCounts(
   }
 
   const movieUids = selections.map(selection => selection.movieUid);
-  const [titles, links] = await Promise.all([
+  const [titles, marks, links] = await Promise.all([
     fetchTitles(database, movieUids),
+    database
+      .select({
+        movieUid: watchedMarks.movieUid,
+        markedAt: watchedMarks.markedAt,
+      })
+      .from(watchedMarks)
+      .where(
+        and(
+          inArray(watchedMarks.movieUid, movieUids),
+          eq(watchedMarks.isOwner, false),
+        ),
+      ),
     database
       .select({
         movieUid: articleLinks.movieUid,
@@ -126,6 +140,7 @@ export async function collectMonthlyLinkCounts(
       other: 0,
       owner: 0,
       test: 0,
+      watched: 0,
     };
 
     for (const link of links) {
@@ -138,6 +153,12 @@ export async function collectMonthlyLinkCounts(
 
       count[classifySubmission(link, rules)] += 1;
     }
+
+    count.watched = marks.filter(
+      mark =>
+        mark.movieUid === selection.movieUid &&
+        mark.markedAt.getTime() >= since.getTime(),
+    ).length;
 
     return count;
   });
@@ -180,7 +201,7 @@ export function formatNorthStarReport(
     `他人のリンクが付いた月: ${monthsWithOutsideLink.length} / ${counts.length}`,
     ...counts.map(
       count =>
-        `${count.month} ${count.title}: 他人 ${count.other} / 本人 ${count.owner} / テスト ${count.test}${formatBookmarkCount(count, bookmarkCounts)}`,
+        `${count.month} ${count.title}: 他人 ${count.other} / 本人 ${count.owner} / テスト ${count.test} / 観た人 ${count.watched}${formatBookmarkCount(count, bookmarkCounts)}`,
     ),
   ];
 

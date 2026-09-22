@@ -86,6 +86,7 @@ export default function MovieDetail({
           movieDetail={movieDetail}
           title={title}
           isMonthlyPick={isThisMonthsPick}
+          apiUrl={apiUrl}
         />
 
         {/* Synopsis */}

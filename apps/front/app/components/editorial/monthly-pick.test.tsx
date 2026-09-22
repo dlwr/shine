@@ -16,6 +16,24 @@ const movie = {
 };
 
 describe('MonthlyPick', () => {
+  it('観た人の数を出す', () => {
+    render(<MonthlyPick movie={{...movie, watchedCount: 3}} locale="ja" />);
+
+    expect(screen.getByText('観た人 3 人')).toBeInTheDocument();
+  });
+
+  it('観た人が 0 なら出さない', () => {
+    render(<MonthlyPick movie={{...movie, watchedCount: 0}} locale="ja" />);
+
+    expect(screen.queryByText(/観た人 /)).not.toBeInTheDocument();
+  });
+
+  it('英語では英語で観た人の数を出す', () => {
+    render(<MonthlyPick movie={{...movie, watchedCount: 3}} locale="en" />);
+
+    expect(screen.getByText('3 watched')).toBeInTheDocument();
+  });
+
   it('タイトルを映画ページへのリンクで出す', () => {
     render(<MonthlyPick movie={movie} locale="ja" />);
 

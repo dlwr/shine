@@ -8,10 +8,12 @@ export function MovieHero({
   movieDetail,
   title,
   isMonthlyPick,
+  apiUrl,
 }: {
   movieDetail: MovieDetailData;
   title: string;
   isMonthlyPick: boolean;
+  apiUrl?: string;
 }) {
   const metaItems: string[] = [];
   if (movieDetail.imdbId) {
@@ -43,7 +45,11 @@ export function MovieHero({
           {title}
         </h1>
         <MetaLine items={metaItems} />
-        <WatchedToggle uid={movieDetail.uid} isMonthlyPick={isMonthlyPick} />
+        <WatchedToggle
+          uid={movieDetail.uid}
+          isMonthlyPick={isMonthlyPick}
+          apiUrl={apiUrl}
+        />
       </div>
     </div>
   );

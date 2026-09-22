@@ -8,6 +8,7 @@ import {resolveMovieTitle} from '@/lib/movie-title';
 
 export type MonthlyPickMovie = FilmCardMovie & {
   tmdbId?: number | string;
+  watchedCount?: number;
   articleLinks?: Array<{
     uid: string;
     url?: string;
@@ -20,6 +21,7 @@ const COPY = {
   ja: {
     label: 'MONTHLY / 今月の1本',
     tagline: TAGLINE,
+    watched: (count: number) => `観た人 ${count} 人`,
     posts: '観た人の記事・ポスト',
     empty: 'まだ投稿がありません。',
     cta: '感想や記事のリンクを貼る',
@@ -28,6 +30,7 @@ const COPY = {
   en: {
     label: 'MONTHLY',
     tagline: 'One film a month, watched together',
+    watched: (count: number) => `${count} watched`,
     posts: 'POSTS FROM VIEWERS',
     empty: 'No posts yet.',
     cta: 'Add your post or article',
@@ -96,6 +99,11 @@ export function MonthlyPick({
               </span>
             ) : undefined}
           </div>
+          {(movie.watchedCount ?? 0) > 0 && (
+            <p className="font-mono text-xs font-bold text-brand">
+              {copy.watched(movie.watchedCount ?? 0)}
+            </p>
+          )}
           <AvailabilityBadges
             availability={movie.availability}
             movieTitle={title}

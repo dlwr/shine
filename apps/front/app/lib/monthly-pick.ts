@@ -50,6 +50,7 @@ export type MonthlyPick = {
   title: string;
   year?: number;
   posterUrl?: string;
+  watchedCount?: number;
   awards: MonthlyPickAward[];
 };
 
@@ -89,6 +90,7 @@ export async function fetchMonthlyPick(
       title: resolveMovieTitle(monthly, {locale}),
       year: monthly.year,
       ...(posterUrl && {posterUrl}),
+      ...(monthly.watchedCount && {watchedCount: monthly.watchedCount}),
       awards: (monthly.nominations ?? []).map(nomination =>
         toAward(nomination),
       ),

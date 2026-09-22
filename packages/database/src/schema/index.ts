@@ -12,3 +12,4 @@ export * from './poster-urls';
 export * from './quiz-selections';
 export * from './reference-urls';
 export * from './translations';
+export * from './watched-marks';

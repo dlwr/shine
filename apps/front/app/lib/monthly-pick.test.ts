@@ -53,6 +53,7 @@ describe('fetchMonthlyPick', () => {
               organization: {name: 'Some Circle', shortName: 'Circle'},
             },
           ],
+          watchedCount: 3,
         },
       }),
     );
@@ -69,6 +70,7 @@ describe('fetchMonthlyPick', () => {
       title: '邦題',
       year: 2023,
       posterUrl: 'https://img/ja.jpg',
+      watchedCount: 3,
       awards: [
         {
           organization: 'ヴェネツィア国際映画祭',

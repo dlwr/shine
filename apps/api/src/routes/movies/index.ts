@@ -6,6 +6,7 @@ import {movieDetailRoutes} from './detail';
 import {movieSearchRoutes} from './search';
 import {movieTranslationsRoutes} from './translations';
 import {movieUidsRoutes} from './uids';
+import {movieWatchedRoutes} from './watched';
 
 export const moviesRoutes = new Hono<{Bindings: Environment}>();
 
@@ -15,3 +16,4 @@ moviesRoutes.route('/', movieDetailRoutes);
 moviesRoutes.route('/', movieTranslationsRoutes);
 moviesRoutes.route('/', movieArticleLinksRoutes);
 moviesRoutes.route('/', movieAvailabilityRoutes);
+moviesRoutes.route('/', movieWatchedRoutes);

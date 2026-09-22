@@ -8,6 +8,7 @@ import {posterUrls} from '@shine/database/schema/poster-urls';
 import {quizSelections} from '@shine/database/schema/quiz-selections';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
+import {watchedMarks} from '@shine/database/schema/watched-marks';
 import type {MergeMoviesOptions} from '../types/movies';
 
 type Database = ReturnType<typeof getDatabase>;
@@ -25,6 +26,7 @@ export const movieDependentTables = [
   referenceUrls,
   translations,
   posterUrls,
+  watchedMarks,
 ] as const;
 
 export type ReassignMovieDependentsOptions = Pick<
@@ -49,6 +51,7 @@ export async function deleteMovieDependents(
   await trx.delete(referenceUrls).where(eq(referenceUrls.movieUid, movieUid));
   await trx.delete(translations).where(eq(translations.resourceUid, movieUid));
   await trx.delete(posterUrls).where(eq(posterUrls.movieUid, movieUid));
+  await trx.delete(watchedMarks).where(eq(watchedMarks.movieUid, movieUid));
 }
 
 export async function reassignMovieDependents(
@@ -103,6 +106,9 @@ export async function reassignMovieDependents(
   }
 
   await trx.delete(posterUrls).where(eq(posterUrls.movieUid, sourceMovieUid));
+  await trx
+    .delete(watchedMarks)
+    .where(eq(watchedMarks.movieUid, sourceMovieUid));
 }
 
 async function reassignCredits(

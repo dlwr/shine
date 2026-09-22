@@ -7,6 +7,7 @@ const COPY = {
     cta: 'みんなで観る →',
     ownLabel: 'この映画が今月の1本',
     ownCta: '観たら記事・ポストを貼る →',
+    watched: (count: number) => `観た人 ${count} 人`,
     award: (award: MonthlyPickAward) =>
       `${award.organization} ${award.category} ${award.isWinner ? '受賞' : '選出'}（${award.year}）`,
   },
@@ -15,6 +16,7 @@ const COPY = {
     cta: 'Watch together →',
     ownLabel: "THIS MONTH'S FILM",
     ownCta: 'Add your post →',
+    watched: (count: number) => `${count} watched`,
     award: (award: MonthlyPickAward) =>
       `${award.isWinner ? 'Won' : 'Selected'} ${award.organization} ${award.category} (${award.year})`,
   },
@@ -51,6 +53,12 @@ export function MonthlyBand({
   const href = isOwnPage ? '#article-links' : movieHref;
   const posterSource = posterUrlForDisplay(monthly.posterUrl, 'w185');
   const award = pickBandAward(monthly.awards, currentPath);
+  const subline = [
+    monthly.watchedCount ? copy.watched(monthly.watchedCount) : undefined,
+    award ? copy.award(award) : undefined,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <aside className="border-b-2 border-ink bg-surface">
@@ -78,9 +86,9 @@ export function MonthlyBand({
               </span>
             )}
           </span>
-          {award && (
+          {subline && (
             <span className="block truncate font-mono text-[10px] text-ink-muted">
-              {copy.award(award)}
+              {subline}
             </span>
           )}
         </span>

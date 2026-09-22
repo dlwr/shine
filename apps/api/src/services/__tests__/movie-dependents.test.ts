@@ -19,6 +19,7 @@ import {posterUrls} from '@shine/database/schema/poster-urls';
 import {quizSelections} from '@shine/database/schema/quiz-selections';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
+import {watchedMarks} from '@shine/database/schema/watched-marks';
 import {getTableConfig, SQLiteTable} from 'drizzle-orm/sqlite-core';
 import {migrate} from 'drizzle-orm/libsql/migrator';
 import {beforeEach, describe, expect, it} from 'vitest';
@@ -108,6 +109,9 @@ async function seedAllDependents(
     width: 500,
     height: 750,
   });
+  await database
+    .insert(watchedMarks)
+    .values({movieUid, submitterIp: '203.0.113.1'});
 }
 
 describe('movieDependentTables', () => {
@@ -183,6 +187,10 @@ describe('deleteMovieDependents', () => {
     expect(await database.select().from(translations)).toHaveLength(0);
   });
 
+  it('deletes watched marks', async () => {
+    expect(await database.select().from(watchedMarks)).toHaveLength(0);
+  });
+
   it('deletes posters', async () => {
     expect(await database.select().from(posterUrls)).toHaveLength(0);
   });
@@ -235,6 +243,10 @@ describe('reassignMovieDependents', () => {
       expect(
         await database.select().from(movieAvailabilityChecks),
       ).toHaveLength(0);
+    });
+
+    it('deletes the watched marks of the source', async () => {
+      expect(await database.select().from(watchedMarks)).toHaveLength(0);
     });
 
     it('moves movie selections to the target', async () => {
