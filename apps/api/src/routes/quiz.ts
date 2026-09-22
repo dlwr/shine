@@ -1,5 +1,6 @@
 import type {Environment} from '@shine/database';
 import type {QuizGuessResult} from '../types/quiz';
+import type {QuizDailyResponse} from '../types/responses';
 import {Hono} from 'hono';
 import {
   buildQuizHints,
@@ -39,10 +40,12 @@ quizRoutes.get('/daily', async c => {
     return c.json({error: 'Quiz unavailable'}, 503);
   }
 
-  return createCachedResponse(
-    {date, maxAttempts: QUIZ_MAX_ATTEMPTS, poolSize},
-    DAILY_TTL,
-  );
+  const puzzle: QuizDailyResponse = {
+    date,
+    maxAttempts: QUIZ_MAX_ATTEMPTS,
+    poolSize,
+  };
+  return createCachedResponse(puzzle, DAILY_TTL);
 });
 
 quizRoutes.get('/candidates', async c => {

@@ -1,6 +1,7 @@
 import {apiFetch, type LoadContext} from './api';
-import {resolveMovieTitle, type MovieTitleTranslation} from './movie-title';
-import {selectBestPoster, type PosterInfo} from './poster';
+import type {SelectionsData} from './api-types';
+import {resolveMovieTitle} from './movie-title';
+import {selectBestPoster} from './poster';
 
 export type MonthlyPickAward = {
   organization: string;
@@ -52,28 +53,7 @@ export type MonthlyPick = {
   awards: MonthlyPickAward[];
 };
 
-type SelectionNomination = {
-  isWinner: boolean;
-  category: {name: string; displayName?: string};
-  ceremony: {year: number};
-  organization: {
-    name: string;
-    shortName?: string;
-    displayName?: string;
-    slug?: string;
-  };
-};
-
-type SelectionsResponse = {
-  monthly?: {
-    uid: string;
-    year?: number;
-    title?: string;
-    translations?: MovieTitleTranslation[];
-    posterUrls?: PosterInfo[];
-    nominations?: SelectionNomination[];
-  };
-};
+type SelectionNomination = SelectionsData['monthly']['nominations'][number];
 
 function toAward(nomination: SelectionNomination): MonthlyPickAward {
   const {organization, category, ceremony} = nomination;
@@ -98,7 +78,7 @@ export async function fetchMonthlyPick(
       return undefined;
     }
 
-    const {monthly} = (await response.json()) as SelectionsResponse;
+    const {monthly} = (await response.json()) as SelectionsData;
     if (!monthly) {
       return undefined;
     }

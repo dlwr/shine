@@ -4,19 +4,8 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {apiFetch} from '@/lib/api';
+import type {AwardsListData, AwardSummaryData} from '@/lib/api-types';
 import {awardHeading} from '@/lib/awards';
-
-export type AwardSummaryData = {
-  slug: string;
-  name: string;
-  organization: string;
-  description: string;
-  grouping: 'year' | 'list' | 'person';
-  movieCount: number;
-  personCount?: number;
-  firstYear: number;
-  lastYear: number;
-};
 
 function AwardRow({award}: {award: AwardSummaryData}) {
   return (
@@ -64,7 +53,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
     throw new Response('Failed to load awards', {status: 502});
   }
 
-  const body = (await response.json()) as {awards: AwardSummaryData[]};
+  const body = (await response.json()) as AwardsListData;
   return {awards: body.awards, locale};
 }
 

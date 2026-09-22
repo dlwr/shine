@@ -1,4 +1,5 @@
 import {useEffect, useMemo, useState} from 'react';
+import type {QuizDailyData} from '@/lib/api-types';
 import {
   applyGuess,
   createGame,
@@ -15,7 +16,7 @@ import {
 
 const SUGGESTION_LIMIT = 8;
 
-export type QuizPuzzle = {date: string; maxAttempts: number; poolSize: number};
+export type QuizPuzzle = QuizDailyData;
 
 function readStorage<T>(key: string): T | undefined {
   try {

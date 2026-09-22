@@ -9,7 +9,7 @@ import type {
 } from '@/hooks/use-article-link-form';
 import {SITE_URL} from '@/lib/meta';
 
-export type ArticleLink = {
+type ArticleLink = {
   uid: string;
   url?: string;
   title?: string;

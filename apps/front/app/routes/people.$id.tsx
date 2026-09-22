@@ -2,8 +2,6 @@ import type {Route} from './+types/people.$id';
 import {
   AwardTags,
   PersonalAwardTags,
-  type AwardTag,
-  type AwardTagLegend,
   type PersonalAward,
 } from '@/components/editorial/award-tags';
 import {Masthead} from '@/components/editorial/masthead';
@@ -14,30 +12,10 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {apiFetch} from '@/lib/api';
+import type {PersonData} from '@/lib/api-types';
 
-export type PersonCreditData = {
-  movieUid: string;
-  title?: string;
-  year?: number;
-  posterUrl?: string;
-  jobs: string[];
-  character?: string;
-  awards: AwardTag[];
-  personAwards: PersonalAward[];
-};
-
-export type PersonAwardData = AwardTagLegend & {
-  grouping: 'year' | 'list';
-};
-
-export type PersonData = {
-  uid: string;
-  name: string;
-  originalName: string;
-  profilePath?: string;
-  credits: PersonCreditData[];
-  awards: PersonAwardData[];
-};
+export type PersonCreditData = PersonData['credits'][number];
+export type PersonAwardData = PersonData['awards'][number];
 
 function awardRecord(person: PersonData): {won: number; nominated: number} {
   const yearGrouped = new Set(
@@ -300,3 +278,5 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
     </div>
   );
 }
+
+export {type PersonData} from '@/lib/api-types';

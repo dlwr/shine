@@ -1,5 +1,6 @@
 import {getDatabase, type Environment} from '@shine/database';
 import {Hono} from 'hono';
+import type {MovieDetail} from '../../types/responses';
 import {MoviesService} from '../../services';
 import {
   findRelatedMovies,
@@ -56,7 +57,7 @@ movieDetailRoutes.get('/:id', async c => {
       ? `https://www.imdb.com/title/${movieDetails.imdbId}/`
       : undefined;
 
-    const result = {
+    const result: MovieDetail = {
       uid: movieDetails.uid,
       year: movieDetails.year,
       originalLanguage: movieDetails.originalLanguage,

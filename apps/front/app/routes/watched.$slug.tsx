@@ -5,6 +5,7 @@ import {useWatchedList} from '@/components/watched/use-watched-list';
 import {WatchedFilmList} from '@/components/watched/watched-film-list';
 import {WatchedScore} from '@/components/watched/watched-score';
 import {apiFetch} from '@/lib/api';
+import type {AwardDetailData} from '@/lib/api-types';
 import {awardHeading} from '@/lib/awards';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
@@ -17,24 +18,6 @@ import {
   watchedStats,
   type WatchedFilm,
 } from '@/lib/watched';
-
-type AwardResponse = {
-  slug: string;
-  name: string;
-  organization: string;
-  grouping: 'year' | 'list' | 'person';
-  subAward?: boolean;
-  years: Array<{
-    year: number;
-    movies: Array<{
-      uid: string;
-      title?: string;
-      movieYear?: number;
-      posterUrl?: string;
-      isWinner: boolean;
-    }>;
-  }>;
-};
 
 export type WatchedListData = {
   slug: string;
@@ -87,7 +70,7 @@ export async function loader({context, request, params}: Route.LoaderArgs) {
     throw new Response('Failed to load award', {status: 502});
   }
 
-  const award = (await response.json()) as AwardResponse;
+  const award = (await response.json()) as AwardDetailData;
   if (award.grouping !== 'year' || award.subAward) {
     throw new Response('Not Found', {status: 404});
   }

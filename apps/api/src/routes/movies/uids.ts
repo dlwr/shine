@@ -1,5 +1,6 @@
 import {type Environment} from '@shine/database';
 import {Hono} from 'hono';
+import type {MovieUidsResponse} from '../../types/responses';
 import {MoviesService} from '../../services';
 import {
   createCachedResponse,
@@ -13,7 +14,7 @@ export const movieUidsRoutes = new Hono<{Bindings: Environment}>();
 
 movieUidsRoutes.get('/uids', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const {data, status} = await readThroughCache(c, cache, {
+  const {data, status} = await readThroughCache<MovieUidsResponse>(c, cache, {
     key: 'movies:uids:v1',
     ttl: getCacheTTL.movie.uids,
     edgeTtl: IMPORTED_DATA_EDGE_TTL,

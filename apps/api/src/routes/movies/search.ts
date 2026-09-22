@@ -1,5 +1,6 @@
 import {type Environment} from '@shine/database';
 import {Hono} from 'hono';
+import type {MovieSearchResponse} from '../../types/responses';
 import {sanitizeText} from '../../middleware/sanitizer';
 import {MoviesService} from '../../services';
 import {
@@ -59,7 +60,7 @@ movieSearchRoutes.get('/search', async c => {
       hasAwards,
     });
 
-    const body = {
+    const body: MovieSearchResponse = {
       movies: result.movies,
       pagination: {
         currentPage: result.pagination.currentPage,

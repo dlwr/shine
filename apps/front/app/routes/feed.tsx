@@ -1,13 +1,12 @@
 import type {Route} from './+types/feed';
 import {apiFetch} from '@/lib/api';
+import type {SelectionHistoryItemData} from '@/lib/api-types';
 import {
   buildRssFeed,
   mergeFeedItems,
   type FeedItem,
   type FeedPeriod,
 } from '@/lib/feed';
-
-type HistoryItem = Omit<FeedItem, 'period'>;
 
 async function fetchHistory(
   context: Route.LoaderArgs['context'],
@@ -25,7 +24,9 @@ async function fetchHistory(
     return undefined;
   }
 
-  const {items} = (await response.json()) as {items: HistoryItem[]};
+  const {items} = (await response.json()) as {
+    items: SelectionHistoryItemData[];
+  };
   return items.map(item => ({...item, period}));
 }
 

@@ -1,5 +1,6 @@
 import type {Route} from './+types/sitemap-years';
 import {apiFetch, type LoadContext} from '@/lib/api';
+import type {YearsListData} from '@/lib/api-types';
 import {buildUrlSet, type SitemapEntry} from '@/lib/sitemap';
 import {sitemapResponse} from '@/lib/sitemap-source';
 
@@ -13,7 +14,7 @@ async function fetchYears(
       return [];
     }
 
-    const body = (await response.json()) as {years?: Array<{year: number}>};
+    const body = (await response.json()) as YearsListData;
     return (body.years ?? []).map(entry => entry.year);
   } catch {
     return [];

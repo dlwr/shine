@@ -1,6 +1,7 @@
 import type {Route} from './+types/monthly-ics';
 import {apiFetch} from '@/lib/api';
-import {buildMonthlyCalendar, type CalendarItem} from '@/lib/monthly-calendar';
+import type {SelectionHistoryItemData} from '@/lib/api-types';
+import {buildMonthlyCalendar} from '@/lib/monthly-calendar';
 
 export async function loader({context, request}: Route.LoaderArgs) {
   const response = await apiFetch(
@@ -13,7 +14,9 @@ export async function loader({context, request}: Route.LoaderArgs) {
     return new Response('Failed to load calendar', {status: 502});
   }
 
-  const {items} = (await response.json()) as {items: CalendarItem[]};
+  const {items} = (await response.json()) as {
+    items: SelectionHistoryItemData[];
+  };
 
   return new Response(buildMonthlyCalendar(items), {
     headers: {

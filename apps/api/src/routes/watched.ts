@@ -1,5 +1,6 @@
 import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
+import type {WatchedListsResponse} from '../types/responses';
 import {WatchedService} from '../services/watched-service';
 import {
   createCachedResponse,
@@ -17,14 +18,18 @@ const WATCHED_LISTS_CACHE_KEY = 'watched:lists:v1';
 
 watchedRoutes.get('/lists', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const {data: result, status} = await readThroughCache(c, cache, {
-    key: WATCHED_LISTS_CACHE_KEY,
-    ttl: WATCHED_LISTS_CACHE_TTL,
-    edgeTtl: IMPORTED_DATA_EDGE_TTL,
-    load: async () => ({
-      lists: await new WatchedService(c.env).listWatchedLists(),
-    }),
-  });
+  const {data: result, status} = await readThroughCache<WatchedListsResponse>(
+    c,
+    cache,
+    {
+      key: WATCHED_LISTS_CACHE_KEY,
+      ttl: WATCHED_LISTS_CACHE_TTL,
+      edgeTtl: IMPORTED_DATA_EDGE_TTL,
+      load: async () => ({
+        lists: await new WatchedService(c.env).listWatchedLists(),
+      }),
+    },
+  );
 
   const etag = createETag(result);
   if (shouldCheckETag(c.req, etag)) {

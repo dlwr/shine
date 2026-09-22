@@ -1,5 +1,6 @@
 import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
+import type {YearsListResponse} from '../types/responses';
 import {YearsService} from '../services/years-service';
 import {
   createCachedResponse,
@@ -16,12 +17,16 @@ const YEARS_CACHE_TTL = 604_800;
 
 yearsRoutes.get('/', async c => {
   const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-  const {data: result, status} = await readThroughCache(c, cache, {
-    key: 'years:list:v3',
-    ttl: YEARS_CACHE_TTL,
-    edgeTtl: IMPORTED_DATA_EDGE_TTL,
-    load: async () => ({years: await new YearsService(c.env).listYears()}),
-  });
+  const {data: result, status} = await readThroughCache<YearsListResponse>(
+    c,
+    cache,
+    {
+      key: 'years:list:v3',
+      ttl: YEARS_CACHE_TTL,
+      edgeTtl: IMPORTED_DATA_EDGE_TTL,
+      load: async () => ({years: await new YearsService(c.env).listYears()}),
+    },
+  );
 
   const etag = createETag(result);
   if (shouldCheckETag(c.req, etag)) {

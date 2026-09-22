@@ -6,27 +6,9 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {apiFetch} from '@/lib/api';
+import type {PersonCrossingsData} from '@/lib/api-types';
 
-type Organization = {
-  key: string;
-  name: string;
-  shortLabel: string;
-  performanceCount: number;
-};
-
-type Performance = {
-  person: {uid: string; name: string; profilePath?: string};
-  movie: {uid: string; title?: string; year?: number; posterUrl?: string};
-  awards: Array<{slug: string; organization: string; category: string}>;
-  organizationCount: number;
-};
-
-type PersonCrossingsData = {
-  organizations: Organization[];
-  pairs: Array<{a: string; b: string; shared: number}>;
-  distribution: Array<{organizationCount: number; performanceCount: number}>;
-  topPerformances: Performance[];
-};
+type Performance = PersonCrossingsData['topPerformances'][number];
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {locale} = loaderData as {locale?: Locale};

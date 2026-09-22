@@ -12,6 +12,7 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
+      "@shine/api/*": ["../api/src/*"],
       "@routes/*": ["./app/routes/*"],
       "@/*": ["./app/*"],
       "@/components/*": ["./app/components/*"],

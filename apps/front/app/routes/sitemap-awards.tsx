@@ -1,30 +1,24 @@
 import type {Route} from './+types/sitemap-awards';
 import {apiFetch, type LoadContext} from '@/lib/api';
+import type {
+  AwardPageData,
+  AwardsListData,
+  AwardSummaryData,
+} from '@/lib/api-types';
 import {buildUrlSet, type SitemapEntry} from '@/lib/sitemap';
 import {sitemapResponse} from '@/lib/sitemap-source';
-
-type AwardListing = {
-  slug: string;
-  grouping: 'year' | 'list' | 'person';
-  subAward?: boolean;
-};
-
-type AwardDetailShape = {
-  years?: Array<{year: number}>;
-  pagination?: {totalPages: number};
-};
 
 async function fetchAwards(
   context: LoadContext,
   signal?: AbortSignal,
-): Promise<AwardListing[]> {
+): Promise<AwardSummaryData[]> {
   try {
     const response = await apiFetch(context, `/awards`, {signal});
     if (!response.ok) {
       return [];
     }
 
-    const body = (await response.json()) as {awards?: AwardListing[]};
+    const body = (await response.json()) as AwardsListData;
     return body.awards ?? [];
   } catch {
     return [];
@@ -35,37 +29,38 @@ async function fetchAwardDetail(
   context: LoadContext,
   slug: string,
   signal?: AbortSignal,
-): Promise<AwardDetailShape> {
+): Promise<AwardPageData | undefined> {
   try {
     const response = await apiFetch(context, `/awards/${slug}`, {
       signal,
     });
     if (!response.ok) {
-      return {};
+      return undefined;
     }
 
-    return (await response.json()) as AwardDetailShape;
+    return (await response.json()) as AwardPageData;
   } catch {
-    return {};
+    return undefined;
   }
 }
 
 function subPageEntries(
-  award: AwardListing,
-  detail: AwardDetailShape,
+  award: AwardSummaryData,
+  detail: AwardPageData | undefined,
 ): SitemapEntry[] {
   if (award.grouping === 'person') {
     return [];
   }
 
   if (award.grouping === 'year') {
-    return (detail.years ?? []).map(group => ({
+    return (detail?.years ?? []).map(group => ({
       path: `/awards/${award.slug}/${group.year}`,
       changefreq: 'monthly',
     }));
   }
 
-  const totalPages = detail.pagination?.totalPages ?? 1;
+  const totalPages =
+    detail && 'pagination' in detail ? (detail.pagination?.totalPages ?? 1) : 1;
   return Array.from({length: Math.max(0, totalPages - 1)}, (_, index) => ({
     path: `/awards/${award.slug}?page=${index + 2}`,
     changefreq: 'weekly',

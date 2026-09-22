@@ -1,33 +1,18 @@
 import type {Route} from './+types/search';
 import type {ProminentPerson} from '@/lib/people';
+import type {MovieSearchData, PeopleSearchData} from '@/lib/api-types';
 import {Masthead} from '@/components/editorial/masthead';
 import {PeopleStrip} from '@/components/editorial/people-strip';
 import {SearchBox} from '@/components/editorial/search-box';
 import {SearchRow} from '@/components/editorial/search-row';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {selectBestPoster} from '@/lib/poster';
-import type {PosterInfo} from '@/lib/poster';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {buildSocialMeta} from '@/lib/meta';
 import {apiFetch, resolveApiUrl, type LoadContext} from '@/lib/api';
 
-type SearchMovieData = {
-  uid: string;
-  year?: number;
-  originalLanguage?: string;
-  imdbId?: string;
-  title?: string;
-  posterUrls?: PosterInfo[];
-  hasNominations?: boolean;
-};
-
-type SearchPaginationData = {
-  currentPage: number;
-  totalPages: number;
-  totalCount: number;
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
-};
+type SearchMovieData = MovieSearchData['movies'][number];
+type SearchPaginationData = MovieSearchData['pagination'];
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {searchQuery, locale} = loaderData as {
@@ -118,10 +103,7 @@ async function fetchMovies(
       return;
     }
 
-    return (await response.json()) as {
-      movies: SearchMovieData[];
-      pagination: SearchPaginationData;
-    };
+    return (await response.json()) as MovieSearchData;
   } catch {
     return;
   }
@@ -143,7 +125,7 @@ async function fetchPeople(
       return [];
     }
 
-    const body = (await response.json()) as {people: ProminentPerson[]};
+    const body = (await response.json()) as PeopleSearchData;
     return body.people;
   } catch {
     return [];

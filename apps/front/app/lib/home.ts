@@ -1,5 +1,6 @@
 import type {FilmCardMovie} from '@/components/editorial/film-card';
 import type {MonthlyPickMovie} from '@/components/editorial/monthly-pick';
+import type {SelectionsData} from './api-types';
 import {resolveMovieTitle} from './movie-title';
 
 export type HighlightedMovies = {
@@ -65,5 +66,5 @@ export async function fetchHighlightedMovies(
     throw new Error(`API request failed: ${response.status}`);
   }
 
-  return (await response.json()) as HighlightedMovies;
+  return (await response.json()) as SelectionsData;
 }

@@ -1,4 +1,4 @@
-export type MovieTitleTranslation = {
+type MovieTitleTranslation = {
   languageCode: string;
   content: string;
   isDefault: number;

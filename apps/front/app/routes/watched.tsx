@@ -3,19 +3,11 @@ import type {Route} from './+types/watched';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {apiFetch} from '@/lib/api';
+import type {WatchedListsData} from '@/lib/api-types';
 import {awardHeading} from '@/lib/awards';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {readWatched, watchedStats} from '@/lib/watched';
-
-type WatchedListResponse = {
-  slug: string;
-  name: string;
-  organization: string;
-  firstYear: number;
-  lastYear: number;
-  uids: string[];
-};
 
 export type WatchedListSummary = {
   slug: string;
@@ -54,7 +46,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
     throw new Response('Failed to load watched lists', {status: 502});
   }
 
-  const {lists} = (await response.json()) as {lists: WatchedListResponse[]};
+  const {lists} = (await response.json()) as WatchedListsData;
 
   return {
     lists: lists.map(list => ({

@@ -18,7 +18,6 @@ export function MovieWatchSection({
   const {availability, checking} = useOnDemandAvailability({
     movieUid: movieDetail.uid,
     apiUrl,
-    initial: movieDetail.availability,
   });
 
   return (
