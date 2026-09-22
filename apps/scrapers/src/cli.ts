@@ -22,6 +22,7 @@ import {createCommand as cannesFillImdbIds} from './cannes-fill-imdb-ids-cli';
 import {createCommand as cannesJuryAwards} from './cannes-jury-awards-cli';
 import {createCommand as cannesPalmeDor} from './cannes-palme-dor-cli';
 import {createCommand as cannesPersonAwards} from './cannes-person-awards-cli';
+import {createCommand as databaseBackup} from './database-backup-cli';
 import {createCommand as deleteOrphanMovies} from './delete-orphan-movies-cli';
 import {createCommand as fixDefaultTranslations} from './fix-default-translations-cli';
 import {createCommand as fixJapaneseTitleContamination} from './fix-japanese-title-contamination-cli';
@@ -125,6 +126,7 @@ const commandGroups: Array<{heading: string; factories: Array<() => Command>}> =
         workersErrorAlert,
         northStarReport,
         survey,
+        databaseBackup,
       ],
     },
   ];

@@ -1,0 +1,59 @@
+name: DB Backup
+
+on:
+  schedule:
+    # 毎週日曜 18:00 UTC (月曜 03:00 JST)
+    - cron: '0 18 * * 0'
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Backup database
+        working-directory: apps/scrapers
+        run: |
+          echo "BACKUP_DATE=$(date -u +%Y-%m-%d)" >> $GITHUB_ENV
+          pnpm run cli database-backup --out "$RUNNER_TEMP/shine.db"
+          gzip -6 "$RUNNER_TEMP/shine.db"
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+
+      - name: Upload backup
+        uses: actions/upload-artifact@v6
+        with:
+          name: shine-db-${{ env.BACKUP_DATE }}
+          path: ${{ runner.temp }}/shine.db.gz
+          retention-days: 90
+          compression-level: 0
+          if-no-files-found: error
