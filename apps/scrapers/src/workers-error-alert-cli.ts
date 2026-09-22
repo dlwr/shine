@@ -6,9 +6,9 @@ import process from 'node:process';
 import {Command, InvalidArgumentError} from 'commander';
 import {sendDiscordNotification} from './availability/discord';
 import {loadEnvironmentFiles} from './common/environment';
+import {DEFAULT_CLOUDFLARE_ACCOUNT_ID} from './web-analytics';
 import {evaluateWorkerErrors, fetchWorkerInvocations} from './workers-errors';
 
-const DEFAULT_ACCOUNT_ID = '2097531fd91db13e3e83de98d54962f1';
 const DEFAULT_WINDOW_HOURS = 6;
 const HOUR_MS = 3_600_000;
 
@@ -46,7 +46,8 @@ async function main(options: {
     const invocations = await fetchWorkerInvocations(
       {
         token,
-        account: process.env.CLOUDFLARE_ACCOUNT_ID || DEFAULT_ACCOUNT_ID,
+        account:
+          process.env.CLOUDFLARE_ACCOUNT_ID || DEFAULT_CLOUDFLARE_ACCOUNT_ID,
       },
       new Date(now.getTime() - options.hours * HOUR_MS),
       now,
@@ -118,7 +119,7 @@ export function createCommand(): Command {
       `
 Environment variables:
   CLOUDFLARE_API_TOKEN    Cloudflare API トークン (権限: Account Analytics:Read)
-  CLOUDFLARE_ACCOUNT_ID   アカウント ID (default: ${DEFAULT_ACCOUNT_ID})
+  CLOUDFLARE_ACCOUNT_ID   アカウント ID (default: ${DEFAULT_CLOUDFLARE_ACCOUNT_ID})
   DISCORD_WEBHOOK_URL     Discord webhook URL (通知先)
 `,
     )
