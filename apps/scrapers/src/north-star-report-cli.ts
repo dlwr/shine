@@ -12,8 +12,13 @@ import {
   collectMonthlyLinkCounts,
   DEFAULT_MONTHS,
   formatNorthStarReport,
+  monthlyPickPages,
   moviePageUrl,
 } from './north-star';
+import {
+  leadingIndicatorReport,
+  resolveWebAnalyticsCredentials,
+} from './web-analytics';
 
 function parseMonths(value: string): number {
   const months = Number(value);
@@ -40,7 +45,13 @@ async function main(options: {months: number; dryRun: boolean}): Promise<void> {
     const bookmarkCounts = await fetchHatenaBookmarkCountsOrUndefined(
       counts.map(count => moviePageUrl(count.movieUid)),
     );
-    const {content} = formatNorthStarReport(counts, new Date(), bookmarkCounts);
+    const now = new Date();
+    const northStar = formatNorthStarReport(counts, now, bookmarkCounts);
+    const credentials = resolveWebAnalyticsCredentials(process.env);
+    const leadingIndicator = credentials
+      ? await leadingIndicatorReport(credentials, monthlyPickPages(counts), now)
+      : 'CLOUDFLARE_API_TOKEN 未設定のため先行指標をスキップ';
+    const content = `${northStar.content}\n\n${leadingIndicator}`;
 
     console.log(content);
 
@@ -65,7 +76,7 @@ export function createCommand(): Command {
   return new Command()
     .name('north-star-report')
     .description(
-      '月替わりの映画に他人が付けた関連リンクの数を数えて Discord に投稿します',
+      '月替わりの映画に他人が付けた関連リンクの数と、直近 7 日の先行指標（日本からの訪問）を Discord に投稿します',
     )
     .option(
       '--months <N>',
@@ -81,6 +92,9 @@ Environment variables:
   NORTH_STAR_OWNER_IPS           本人の投稿とみなす IP (カンマ区切り)
   NORTH_STAR_OWNER_URL_PREFIXES  本人の投稿とみなす URL の接頭辞 (カンマ区切り)
   DISCORD_WEBHOOK_URL            Discord webhook URL (通知先)
+  CLOUDFLARE_API_TOKEN           Cloudflare API トークン（権限: Account Analytics:Read。無ければ先行指標をスキップ）
+  CLOUDFLARE_ACCOUNT_ID          アカウント ID (default: dlwr のアカウント)
+  CF_WEB_ANALYTICS_SITE_TAG      Web Analytics のサイト (default: shine-film.com)
 `,
     )
     .action(main);
