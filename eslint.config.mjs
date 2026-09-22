@@ -56,6 +56,9 @@ export default tseslint.config(
   },
   {
     rules: {
+      'unicorn/prefer-ternary': 'off',
+      'unicorn/prefer-combined-guards': 'off',
+      'unicorn/no-immediate-mutation': 'off',
       'unicorn/single-line-block-comment-style': ['error', 'single-line'],
       'unicorn/max-nested-calls': ['error', {max: 4}],
       'unicorn/consistent-boolean-name': [
