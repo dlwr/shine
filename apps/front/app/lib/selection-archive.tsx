@@ -4,6 +4,7 @@ import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
+import type {SelectionPreviewData} from '@/lib/api-types';
 
 type SelectionHistoryItem = {
   uid: string;
@@ -16,6 +17,7 @@ type SelectionHistoryItem = {
 
 export type SelectionArchiveData = {
   items: SelectionHistoryItem[];
+  next?: SelectionHistoryItem;
   locale: Locale;
   currentMonth: string;
   transformImages: boolean;
@@ -53,6 +55,31 @@ export function buildArchiveMeta(
   });
 }
 
+export async function loadNextSelection(
+  type: SelectionArchiveConfig['type'],
+  locale: Locale,
+  context: LoadContext,
+  request: Request,
+): Promise<SelectionHistoryItem | undefined> {
+  const response = await apiFetch(
+    context,
+    `/selections/${type}/next?locale=${locale}`,
+    {signal: request.signal},
+  );
+  if (!response.ok) {
+    return undefined;
+  }
+
+  const {date, movie} = (await response.json()) as SelectionPreviewData;
+  return {
+    uid: movie.uid,
+    title: movie.title,
+    year: movie.year,
+    selectionDate: date,
+    posterUrl: movie.posterUrl,
+  };
+}
+
 export async function loadSelectionArchive(
   config: SelectionArchiveConfig,
   context: LoadContext,
@@ -60,11 +87,16 @@ export async function loadSelectionArchive(
 ): Promise<SelectionArchiveData> {
   const locale = getLocaleFromRequest(request);
 
-  const response = await apiFetch(
-    context,
-    `/selections/${config.type}/history?locale=${locale}&limit=30`,
-    {signal: request.signal},
-  );
+  const [response, next] = await Promise.all([
+    apiFetch(
+      context,
+      `/selections/${config.type}/history?locale=${locale}&limit=30`,
+      {signal: request.signal},
+    ),
+    config.type === 'monthly'
+      ? loadNextSelection(config.type, locale, context, request)
+      : undefined,
+  ]);
 
   if (!response.ok) {
     throw new Response(`Failed to load ${config.type} history`, {status: 502});
@@ -73,6 +105,7 @@ export async function loadSelectionArchive(
   const body = (await response.json()) as {items: SelectionHistoryItem[]};
   return {
     items: body.items,
+    next,
     locale,
     currentMonth: new Date().toISOString().slice(0, 7),
     transformImages: canTransformImages(context),
@@ -95,9 +128,29 @@ function CalendarLinks({calendarPath}: {calendarPath: string}) {
   );
 }
 
+function rowLabel(
+  config: SelectionArchiveConfig,
+  item: SelectionHistoryItem,
+  currentMonth: string,
+  isNext: boolean,
+): string | undefined {
+  if (config.type !== 'monthly') {
+    return undefined;
+  }
+
+  if (isNext) {
+    return '来月の1本 — 先に観ておくなら';
+  }
+
+  return item.selectionDate.startsWith(currentMonth)
+    ? '今月みんなで観ている1本'
+    : undefined;
+}
+
 export function SelectionArchivePage({
   config,
   items,
+  next,
   locale,
   currentMonth,
   transformImages,
@@ -105,6 +158,12 @@ export function SelectionArchivePage({
   config: SelectionArchiveConfig;
 } & SelectionArchiveData) {
   const formatDate = config.formatDate ?? ((date: string) => date);
+  const rows = next
+    ? [
+        {item: next, isNext: true},
+        ...items.map(item => ({item, isNext: false})),
+      ]
+    : items.map(item => ({item, isNext: false}));
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -141,13 +200,13 @@ export function SelectionArchivePage({
         </nav>
 
         <div>
-          {items.map(item => (
+          {rows.map(({item, isNext}) => (
             <a
               key={`${item.selectionDate}-${item.uid}`}
               href={`/movies/${item.uid}`}
               className={`flex gap-3 py-3 border-t-2 border-ink no-underline text-ink ${
                 config.showPosters ? 'items-center' : 'items-baseline'
-              }`}>
+              }${isNext ? ' border-dashed' : ''}`}>
               {config.showPosters && (
                 <PosterFrame
                   posterUrl={item.posterUrl}
@@ -161,12 +220,11 @@ export function SelectionArchivePage({
                 {formatDate(item.selectionDate)}
               </span>
               <span className="flex-1 min-w-0">
-                {config.type === 'monthly' &&
-                  item.selectionDate.startsWith(currentMonth) && (
-                    <span className="block font-mono text-xs font-bold text-brand mb-1">
-                      今月みんなで観ている1本
-                    </span>
-                  )}
+                {rowLabel(config, item, currentMonth, isNext) && (
+                  <span className="block font-mono text-xs font-bold text-brand mb-1">
+                    {rowLabel(config, item, currentMonth, isNext)}
+                  </span>
+                )}
                 <span className="block font-display font-extrabold text-base md:text-lg leading-tight">
                   『{item.title}』{item.year ? `(${item.year})` : ''}
                 </span>
