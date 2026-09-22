@@ -34,6 +34,24 @@ const mockHistory = {
   ],
 };
 
+const mockNext = {
+  date: '2026-09-01',
+  movie: {
+    uid: 'movie-next',
+    title: 'ぬいぐるみとしゃべる人はやさしい',
+    year: 2023,
+    posterUrl: 'https://image.tmdb.org/t/p/original/nuigurumi.jpg',
+  },
+};
+
+const mockNextItem = {
+  uid: 'movie-next',
+  title: 'ぬいぐるみとしゃべる人はやさしい',
+  year: 2023,
+  selectionDate: '2026-09-01',
+  posterUrl: 'https://image.tmdb.org/t/p/original/nuigurumi.jpg',
+};
+
 const cast = <T,>(value?: unknown): T => value as T;
 
 type LoaderArguments = Route.LoaderArgs;
@@ -54,6 +72,7 @@ const createComponentProperties = (): ComponentProperties =>
   cast<ComponentProperties>({
     loaderData: {
       items: mockHistory.items,
+      next: mockNextItem,
       locale: 'ja',
       currentMonth: '2026-08',
       transformImages: false,
@@ -61,6 +80,20 @@ const createComponentProperties = (): ComponentProperties =>
     params: {},
     matches: [],
   });
+
+function mockHistoryAndNext() {
+  vi.mocked(fetch)
+    .mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => mockHistory,
+    } as Response)
+    .mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => mockNext,
+    } as Response);
+}
 
 describe('Monthly archive page', () => {
   beforeEach(() => {
@@ -70,11 +103,7 @@ describe('Monthly archive page', () => {
   describe('loader', () => {
     it('APIから月次セレクション履歴を取得する', async () => {
       const mockFetch = vi.mocked(fetch);
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => mockHistory,
-      } as Response);
+      mockHistoryAndNext();
 
       const request = new Request('http://localhost:3000/monthly');
       const result = await loader(
@@ -88,13 +117,43 @@ describe('Monthly archive page', () => {
       expect(result).toMatchObject({items: mockHistory.items, locale: 'ja'});
     });
 
+    it('来月の1本を取得して履歴の形に揃える', async () => {
+      const mockFetch = vi.mocked(fetch);
+      mockHistoryAndNext();
+
+      const request = new Request('http://localhost:3000/monthly');
+      const result = await loader(
+        createLoaderArguments(createMockContext(), request),
+      );
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:8787/selections/monthly/next?locale=ja',
+        {signal: request.signal},
+      );
+      expect(result.next).toEqual(mockNextItem);
+    });
+
+    it('来月の1本が取れなくても履歴は返す', async () => {
+      vi.mocked(fetch)
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => mockHistory,
+        } as Response)
+        .mockResolvedValueOnce({ok: false, status: 500} as Response);
+
+      const request = new Request('http://localhost:3000/monthly');
+      const result = await loader(
+        createLoaderArguments(createMockContext(), request),
+      );
+
+      expect(result.items).toEqual(mockHistory.items);
+      expect(result.next).toBeUndefined();
+    });
+
     it('今の月を UTC の YYYY-MM で返す', async () => {
       vi.useFakeTimers({now: new Date('2026-09-30T23:30:00Z')});
-      vi.mocked(fetch).mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => mockHistory,
-      } as Response);
+      mockHistoryAndNext();
 
       const request = new Request('http://localhost:3000/monthly');
       const result = await loader(
@@ -107,10 +166,16 @@ describe('Monthly archive page', () => {
 
     it('APIが失敗したら502を投げる', async () => {
       const mockFetch = vi.mocked(fetch);
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-      } as Response);
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 500,
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => mockNext,
+        } as Response);
 
       const request = new Request('http://localhost:3000/monthly');
 
@@ -188,6 +253,29 @@ describe('Monthly archive page', () => {
       render(<MonthlyArchivePage {...createComponentProperties()} />);
 
       expect(screen.getAllByText('今月みんなで観ている1本')).toHaveLength(1);
+    });
+
+    it('来月の1本を先頭に出す', () => {
+      render(<MonthlyArchivePage {...createComponentProperties()} />);
+
+      const link_ = screen
+        .getAllByRole('link')
+        .find(link => link.getAttribute('href')?.startsWith('/movies/'));
+      expect(link_).toHaveAttribute('href', '/movies/movie-next');
+      expect(link_).toHaveTextContent('来月の1本');
+      expect(link_).toHaveTextContent('2026-09');
+    });
+
+    it('来月の1本が無ければ履歴だけを出す', () => {
+      const properties = createComponentProperties();
+      render(
+        <MonthlyArchivePage
+          {...properties}
+          loaderData={{...properties.loaderData, next: undefined}}
+        />,
+      );
+
+      expect(screen.queryByText(/来月の1本/)).not.toBeInTheDocument();
     });
 
     it('他のアーカイブへのリンクを表示する', () => {

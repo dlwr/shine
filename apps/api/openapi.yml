@@ -60,6 +60,42 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /selections/{type}/next:
+    get:
+      summary: Get the next selection per type
+      description: Returns the movie already chosen for the next period of the given type, e.g. next month's pick shown ahead of time
+      operationId: getNextSelection
+      tags:
+        - Movies
+      security: []
+      parameters:
+        - name: type
+          in: path
+          description: Selection period type
+          required: true
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+        - name: locale
+          in: query
+          description: Language preference for movie titles
+          required: false
+          schema:
+            type: string
+            enum: [en, ja]
+            default: ja
+      responses:
+        '200':
+          description: Successfully retrieved the next selection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SelectionPreview'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /selections/{type}/history:
     get:
       summary: Get recent selections per type
@@ -4371,6 +4407,7 @@ components:
           $ref: '#/components/schemas/MovieWithDetails'
       required:
         - date
+        - movie
 
     OverrideSelectionRequest:
       type: object

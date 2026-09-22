@@ -301,6 +301,11 @@ const exercises: Exercise[] = [
         locale: 'ja',
       }),
   },
+  {
+    name: '来月の選出',
+    run: environment =>
+      new SelectionsService(environment).getNextSelection('monthly', 'ja'),
+  },
 ];
 
 describe('公開エンドポイントの実行計画', () => {

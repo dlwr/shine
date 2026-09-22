@@ -66,6 +66,30 @@ selectionsRoutes.get('/', async c => {
   }
 });
 
+selectionsRoutes.get('/selections/:type/next', async c => {
+  try {
+    const type = c.req.param('type');
+    if (!isSelectionType(type)) {
+      return c.json({error: 'Invalid selection type'}, 400);
+    }
+
+    const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
+    const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+    const preview = await new SelectionsService(c.env, cache).getNextSelection(
+      type,
+      locale,
+    );
+
+    const {hits} = cache.getMetrics();
+    return createCachedResponse(preview, getCacheTTL.selections[type], {
+      'X-Cache-Status': hits > 0 ? 'HIT' : 'MISS',
+    });
+  } catch (error) {
+    console.error('Error fetching next selection:', error);
+    return c.json({error: 'Internal server error'}, 500);
+  }
+});
+
 selectionsRoutes.get('/selections/:type/history', async c => {
   try {
     const type = c.req.param('type');

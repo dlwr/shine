@@ -1,5 +1,6 @@
 import type {RelatedMovie} from '@shine/api/services/related-movies';
 import type {SelectionHistoryItem} from '@shine/api/services/selection-history';
+import type {PeriodPreview} from '@shine/api/services/selections-service';
 import type {
   AwardDetail,
   AwardSummary,
@@ -76,4 +77,5 @@ export type RelatedMovieData = Json<RelatedMovie>;
 export type MovieSearchData = Json<MovieSearchResponse>;
 export type SelectionsData = Json<SelectionsResponse>;
 export type SelectionHistoryItemData = Json<SelectionHistoryItem>;
+export type SelectionPreviewData = Json<PeriodPreview>;
 export type QuizDailyData = Json<QuizDailyResponse>;
