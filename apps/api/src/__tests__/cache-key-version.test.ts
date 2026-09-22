@@ -106,6 +106,11 @@ const exercises: Exercise[] = [
   },
   {name: '日替わり選出', routes: selectionsRoutes, path: '/?locale=ja'},
   {
+    name: '来月の選出',
+    routes: selectionsRoutes,
+    path: '/selections/monthly/next?locale=ja',
+  },
+  {
     name: '選出の履歴',
     routes: selectionsRoutes,
     path: '/selections/daily/history?locale=ja',

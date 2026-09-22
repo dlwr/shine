@@ -22,7 +22,7 @@ import {
 import type {DateSeedOptions, MovieSelection} from '../types/movies';
 import type {SelectionsResponse} from '../types/responses';
 
-type PeriodPreview = {date: string; movie?: MovieSelection};
+export type PeriodPreview = {date: string; movie: MovieSelection};
 
 export class SelectionsService extends BaseService {
   private readonly cache: EdgeCache;
@@ -54,24 +54,23 @@ export class SelectionsService extends BaseService {
     nextWeekly: PeriodPreview;
     nextMonthly: PeriodPreview;
   }> {
-    const next = nextSelectionDates(new Date());
-
-    const [daily, weekly, monthly] = await Promise.all([
-      this.getSelection(next.daily, 'daily', locale),
-      this.getSelection(next.weekly, 'weekly', locale),
-      this.getSelection(next.monthly, 'monthly', locale),
+    const [nextDaily, nextWeekly, nextMonthly] = await Promise.all([
+      this.getNextSelection('daily', locale),
+      this.getNextSelection('weekly', locale),
+      this.getNextSelection('monthly', locale),
     ]);
 
+    return {nextDaily, nextWeekly, nextMonthly};
+  }
+
+  async getNextSelection(
+    type: SelectionType,
+    locale: string,
+  ): Promise<PeriodPreview> {
+    const date = nextSelectionDates(new Date())[type];
     return {
-      nextDaily: {date: getSelectionDate(next.daily, 'daily'), movie: daily},
-      nextWeekly: {
-        date: getSelectionDate(next.weekly, 'weekly'),
-        movie: weekly,
-      },
-      nextMonthly: {
-        date: getSelectionDate(next.monthly, 'monthly'),
-        movie: monthly,
-      },
+      date: getSelectionDate(date, type),
+      movie: await this.getSelection(date, type, locale),
     };
   }
 
