@@ -4,6 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
 import {articleLinks} from '@shine/database/schema/article-links';
+import {watchedMarks} from '@shine/database/schema/watched-marks';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
@@ -103,8 +104,45 @@ describe('collectMonthlyLinkCounts', () => {
         other: 1,
         owner: 1,
         test: 1,
+        watched: 0,
       },
     ]);
+  });
+
+  it('選出月に付いた本人以外の「観た」を数える', async () => {
+    const database = await createTestDatabase();
+    await seedMonthlySelection(database, {
+      movieUid: 'movie-1',
+      month: '2026-09',
+      title: 'ある映画',
+    });
+    await database.insert(watchedMarks).values([
+      {
+        movieUid: 'movie-1',
+        submitterIp: '203.0.113.1',
+        markedAt: new Date('2026-09-10T00:00:00+09:00'),
+      },
+      {
+        movieUid: 'movie-1',
+        submitterIp: '203.0.113.2',
+        markedAt: new Date('2026-09-11T00:00:00+09:00'),
+      },
+      {
+        movieUid: 'movie-1',
+        submitterIp: '203.0.113.3',
+        isOwner: true,
+        markedAt: new Date('2026-09-12T00:00:00+09:00'),
+      },
+      {
+        movieUid: 'movie-1',
+        submitterIp: '203.0.113.4',
+        markedAt: new Date('2026-08-20T00:00:00+09:00'),
+      },
+    ]);
+
+    const counts = await collectMonthlyLinkCounts(database, defaultRules);
+
+    expect(counts[0].watched).toBe(2);
   });
 
   it('本人の印が付いたリンクは URL が本人のものでなくても本人に数える', async () => {
@@ -397,6 +435,7 @@ describe('formatNorthStarReport', () => {
           other: 0,
           owner: 1,
           test: 0,
+          watched: 0,
         },
         {
           month: '2026-08',
@@ -405,6 +444,7 @@ describe('formatNorthStarReport', () => {
           other: 0,
           owner: 1,
           test: 0,
+          watched: 0,
         },
       ],
       now,
@@ -424,6 +464,7 @@ describe('formatNorthStarReport', () => {
           other: 0,
           owner: 1,
           test: 0,
+          watched: 0,
         },
         {
           month: '2026-08',
@@ -432,12 +473,15 @@ describe('formatNorthStarReport', () => {
           other: 2,
           owner: 1,
           test: 0,
+          watched: 0,
         },
       ],
       now,
     );
 
-    expect(content).toContain('2026-09 9月の映画: 他人 0 / 本人 1');
+    expect(content).toContain(
+      '2026-09 9月の映画: 他人 0 / 本人 1 / テスト 0 / 観た人 0',
+    );
     expect(content).toContain('2026-08 8月の映画: 他人 2 / 本人 1');
   });
 
@@ -451,6 +495,7 @@ describe('formatNorthStarReport', () => {
           other: 0,
           owner: 1,
           test: 0,
+          watched: 0,
         },
         {
           month: '2026-08',
@@ -459,6 +504,7 @@ describe('formatNorthStarReport', () => {
           other: 0,
           owner: 1,
           test: 0,
+          watched: 0,
         },
         {
           month: '2026-07',
@@ -467,6 +513,7 @@ describe('formatNorthStarReport', () => {
           other: 0,
           owner: 1,
           test: 0,
+          watched: 0,
         },
       ],
       now,
@@ -476,7 +523,7 @@ describe('formatNorthStarReport', () => {
       ]),
     );
 
-    expect(content).toContain('テスト 0 / はてブ 4');
+    expect(content).toContain('観た人 0 / はてブ 4');
   });
 
   it('はてなブックマーク数を渡さなければ添えない', () => {
@@ -489,6 +536,7 @@ describe('formatNorthStarReport', () => {
           other: 0,
           owner: 1,
           test: 0,
+          watched: 0,
         },
       ],
       now,
@@ -507,6 +555,7 @@ describe('formatNorthStarReport', () => {
           other: 1,
           owner: 1,
           test: 0,
+          watched: 0,
         },
       ],
       now,
@@ -526,6 +575,7 @@ describe('formatNorthStarReport', () => {
           other: 0,
           owner: 1,
           test: 3,
+          watched: 0,
         },
       ],
       now,
