@@ -138,6 +138,28 @@ describe('readThroughCache: キャッシュに無いとき', () => {
     expect(result.data).toEqual({years: [2024]});
   });
 
+  it('やり直すとき、元になったエラーをログに出す', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const {kv} = createKvStub();
+    const {context} = createContext();
+    const cause = new DOMException('The operation timed out', 'TimeoutError');
+    const load = vi
+      .fn<() => Promise<{years: number[]}>>()
+      .mockRejectedValueOnce(new Error('Failed query', {cause}))
+      .mockResolvedValueOnce({years: [2024]});
+
+    await readThroughCache(context, new EdgeCache(undefined, kv), {
+      key: KEY,
+      ttl: TTL,
+      load,
+    });
+
+    expect(log).toHaveBeenCalledWith(
+      'Caused by:',
+      'TimeoutError: The operation timed out',
+    );
+  });
+
   it('やり直しは 1 回だけにする', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const {kv} = createKvStub();
@@ -325,6 +347,28 @@ describe('readThroughCache: 期限を過ぎた値があるとき', () => {
     await settle();
 
     expect(storedData(store)).toEqual({years: [1999]});
+  });
+
+  it('作り直しに失敗したとき、元になったエラーをログに出す', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const {kv, store} = createKvStub();
+    const {context, settle} = createContext();
+    seed(store, {years: [1999]}, TTL + 1);
+    const cause = new DOMException('The operation timed out', 'TimeoutError');
+
+    await readThroughCache(context, new EdgeCache(undefined, kv), {
+      key: KEY,
+      ttl: TTL,
+      async load() {
+        throw new Error('Failed query', {cause});
+      },
+    });
+    await settle();
+
+    expect(log).toHaveBeenCalledWith(
+      'Caused by:',
+      'TimeoutError: The operation timed out',
+    );
   });
 
   it('読み込み直して見つからなければ古い値を消す', async () => {

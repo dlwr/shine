@@ -3,6 +3,7 @@ import {
   type RequestContext,
   writeCacheAfterResponse,
 } from './cache';
+import {logErrorWithCause} from './log-error';
 
 export const STALE_RETENTION = 2_592_000;
 
@@ -22,7 +23,7 @@ async function loadWithRetry<T>(
   try {
     return await load();
   } catch (error) {
-    console.error(`Cache load failed for ${key}, retrying once:`, error);
+    logErrorWithCause(`Cache load failed for ${key}, retrying once:`, error);
     return load();
   }
 }
@@ -37,7 +38,7 @@ async function revalidate<T>(
       ? cache.delete(key)
       : cache.set(key, data, ttl, {staleRetention: STALE_RETENTION}));
   } catch (error) {
-    console.error(`Cache revalidation failed for ${key}:`, error);
+    logErrorWithCause(`Cache revalidation failed for ${key}:`, error);
   }
 }
 
