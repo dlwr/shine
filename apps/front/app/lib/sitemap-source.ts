@@ -60,26 +60,26 @@ async function fetchUids<Key extends string>(
   }
 }
 
-export async function fetchMovieTotalCount(
-  context: LoadContext,
-  signal?: AbortSignal,
-): Promise<number> {
-  return fetchTotalCount(context, '/movies/search', signal);
-}
-
 export async function fetchMovieUids(
   context: LoadContext,
-  page: number,
   signal?: AbortSignal,
 ): Promise<string[]> {
-  return fetchUids(
-    context,
-    '/movies/search',
-    'movies',
-    page,
-    MOVIES_PER_SITEMAP,
-    signal,
-  );
+  try {
+    const response = await apiFetch(context, '/movies/uids', {signal});
+    if (!response.ok) {
+      throw new Error(`Sitemap source request failed: ${response.status}`);
+    }
+
+    const {uids} = (await response.json()) as {uids?: string[]};
+    return uids ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export function sliceMovieUidsForPage(uids: string[], page: number): string[] {
+  const start = (page - 1) * MOVIES_PER_SITEMAP;
+  return uids.slice(start, start + MOVIES_PER_SITEMAP);
 }
 
 export async function fetchPeopleTotalCount(
