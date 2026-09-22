@@ -30,10 +30,12 @@ function findActiveHref(pathname: string): string | undefined {
     const isMatch =
       pathname === item.href || pathname.startsWith(`${item.href}/`);
 
-    if (isMatch && item.href.length > bestLength) {
-      bestMatch = item.href;
-      bestLength = item.href.length;
+    if (!(isMatch && item.href.length > bestLength)) {
+      continue;
     }
+
+    bestMatch = item.href;
+    bestLength = item.href.length;
   }
 
   return bestMatch;

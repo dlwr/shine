@@ -208,10 +208,12 @@ describe('Academy Awards Scraper', () => {
 
       $('a').each((index, element) => {
         const href = $(element).attr('href');
-        if (href?.startsWith('/wiki/')) {
-          const fullUrl = `https://en.wikipedia.org${href}`;
-          expect(fullUrl).toMatch(/^https:\/\/en\.wikipedia\.org\/wiki\//);
+        if (!href?.startsWith('/wiki/')) {
+          return;
         }
+
+        const fullUrl = `https://en.wikipedia.org${href}`;
+        expect(fullUrl).toMatch(/^https:\/\/en\.wikipedia\.org\/wiki\//);
       });
     });
 

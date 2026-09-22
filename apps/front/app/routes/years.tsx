@@ -17,13 +17,7 @@ type Decade = {
 };
 
 function groupByDecade(years: YearSummaryData[]): Decade[] {
-  const byStart = new Map<number, YearSummaryData[]>();
-  for (const entry of years) {
-    const start = Math.floor(entry.year / 10) * 10;
-    const group = byStart.get(start) ?? [];
-    group.push(entry);
-    byStart.set(start, group);
-  }
+  const byStart = Map.groupBy(years, entry => Math.floor(entry.year / 10) * 10);
 
   return [...byStart]
     .map(([start, group]) => ({

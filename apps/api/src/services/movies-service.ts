@@ -69,19 +69,7 @@ export class MoviesService extends BaseService {
         : [];
 
     // Group posters by movie ID
-    const postersByMovie = new Map<
-      string,
-      Array<{
-        url: string;
-        languageCode: string | null;
-        isPrimary: number | null;
-      }>
-    >();
-    for (const poster of allPosters) {
-      const existing = postersByMovie.get(poster.movieUid) ?? [];
-      existing.push(poster);
-      postersByMovie.set(poster.movieUid, existing);
-    }
+    const postersByMovie = Map.groupBy(allPosters, poster => poster.movieUid);
 
     return {
       movies: searchResults.map(movie => ({

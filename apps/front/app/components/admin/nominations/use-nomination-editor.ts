@@ -62,10 +62,12 @@ export function useNominationEditor({
   const refreshMovieData = useCallback(async () => {
     const response = await adminFetch(`${apiUrl}/admin/movies/${movieId}`);
 
-    if (response.ok) {
-      const movie = (await response.json()) as MovieDetails;
-      onNominationsUpdate(movie);
+    if (!response.ok) {
+      return;
     }
+
+    const movie = (await response.json()) as MovieDetails;
+    onNominationsUpdate(movie);
   }, [apiUrl, movieId, onNominationsUpdate]);
 
   const mutate = useCallback(
