@@ -285,9 +285,9 @@ export default function PosterManager({
                     言語: {poster.languageCode}
                   </p>
                 )}
-                {poster.source && (
+                {poster.sourceType && (
                   <p className="text-xs text-gray-600">
-                    ソース: {poster.source}
+                    ソース: {poster.sourceType}
                   </p>
                 )}
                 {poster.width && poster.height && (

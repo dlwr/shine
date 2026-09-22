@@ -20,6 +20,7 @@ const awardsData: AwardsData = {
       year: 2022,
       ceremonyNumber: 45,
       organizationName: '日本アカデミー賞',
+      imdbEventUrl: null,
     },
     {
       uid: 'ceremony-2024',
@@ -27,6 +28,7 @@ const awardsData: AwardsData = {
       year: 2024,
       ceremonyNumber: 47,
       organizationName: '日本アカデミー賞',
+      imdbEventUrl: null,
     },
     {
       uid: 'ceremony-2023',
@@ -34,6 +36,7 @@ const awardsData: AwardsData = {
       year: 2023,
       ceremonyNumber: 46,
       organizationName: '日本アカデミー賞',
+      imdbEventUrl: null,
     },
     {
       uid: 'ceremony-kinejun',
@@ -41,6 +44,7 @@ const awardsData: AwardsData = {
       year: 2024,
       ceremonyNumber: 97,
       organizationName: 'キネマ旬報',
+      imdbEventUrl: null,
     },
   ],
   categories: [

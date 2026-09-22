@@ -5,7 +5,7 @@ import type {MovieDetails} from './types';
 type YearEditorProperties = {
   apiUrl: string;
   movieId: string;
-  year: number;
+  year: number | undefined;
   onMovieDataUpdate: (movieData: MovieDetails) => void;
 };
 

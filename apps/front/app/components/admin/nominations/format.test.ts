@@ -16,6 +16,7 @@ const ceremony = (
   year,
   ceremonyNumber,
   organizationName: '日本アカデミー賞',
+  imdbEventUrl: null,
 });
 
 const category = (uid: string, name: string) => ({

@@ -13,8 +13,9 @@ const createMovieData = (
   uid: 'movie-123',
   year: 2023,
   originalLanguage: 'ja',
-  imdbId: undefined,
-  tmdbId: undefined,
+  imdbId: null,
+  tmdbId: null,
+  mediaType: 'movie',
   translations: [
     {
       uid: 'translation-ja',
@@ -31,6 +32,7 @@ const createMovieData = (
   ],
   nominations: [],
   posters: [],
+  articleLinks: [],
   ...overrides,
 });
 

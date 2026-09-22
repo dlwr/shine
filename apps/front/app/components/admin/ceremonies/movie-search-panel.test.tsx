@@ -1,6 +1,18 @@
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {MovieSearchPanel} from './movie-search-panel';
+import type {MovieSearchResult} from './types';
+
+const sevenSamurai: MovieSearchResult = {
+  uid: 'movie-1',
+  title: '七人の侍',
+  year: 1954,
+  originalLanguage: 'ja',
+  imdbId: null,
+  mediaType: 'movie',
+  posterUrl: null,
+  nominationCount: 0,
+};
 
 const mockLocalStorage = {
   getItem: vi.fn(),
@@ -74,7 +86,7 @@ describe('MovieSearchPanel', () => {
 
   it('検索結果の選択でonSelectMovieが呼ばれる', async () => {
     const fetchMock = fetch as unknown as ReturnType<typeof vi.fn>;
-    const movie = {uid: 'movie-1', title: '七人の侍', year: 1954};
+    const movie = sevenSamurai;
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
@@ -107,7 +119,7 @@ describe('MovieSearchPanel', () => {
     render(
       <MovieSearchPanel
         apiUrl={apiUrl}
-        selectedMovie={{uid: 'movie-1', title: '七人の侍', year: 1954}}
+        selectedMovie={sevenSamurai}
         onSelectMovie={onSelectMovie}
       />,
     );

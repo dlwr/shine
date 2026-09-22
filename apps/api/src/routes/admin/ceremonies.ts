@@ -7,14 +7,16 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../services/errors';
+import type {AdminCeremoniesListResponse} from '../../types/admin';
 
 export const adminCeremoniesRoutes = new Hono<{Bindings: Environment}>();
 
 adminCeremoniesRoutes.get('/ceremonies', authMiddleware, async c => {
   try {
-    const ceremonies = await new AdminCeremoniesService(c.env).listCeremonies();
-
-    return c.json({ceremonies});
+    const body: AdminCeremoniesListResponse = {
+      ceremonies: await new AdminCeremoniesService(c.env).listCeremonies(),
+    };
+    return c.json(body);
   } catch (error) {
     console.error('Error fetching ceremonies list:', error);
     return c.json({error: 'Internal server error'}, 500);

@@ -7,12 +7,13 @@ const movieData: MovieDetails = {
   uid: 'movie-1',
   year: 2023,
   originalLanguage: 'ja',
-  imdbId: undefined,
-  tmdbId: undefined,
+  imdbId: null,
+  tmdbId: null,
   mediaType: 'movie',
   translations: [],
   nominations: [],
   posters: [],
+  articleLinks: [],
 };
 
 const mockLocalStorage = {

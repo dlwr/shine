@@ -58,13 +58,15 @@ export function AddMovieForm({apiUrl}: {apiUrl: string}) {
 
       const data = (await response.json()) as CreateMovieResponse;
 
-      if (!response.ok || !data.success) {
-        setCreateError(data.error || 'Failed to create movie.');
+      if (!response.ok || 'error' in data) {
+        setCreateError(
+          ('error' in data && data.error) || 'Failed to create movie.',
+        );
         return;
       }
 
-      const translations = data.imports?.translationsAdded ?? 0;
-      const posters = data.imports?.postersAdded ?? 0;
+      const translations = data.imports.translationsAdded;
+      const posters = data.imports.postersAdded;
       const importSummary =
         translations > 0 || posters > 0
           ? ` (translations: ${translations}, posters: ${posters})`

@@ -8,20 +8,7 @@ import ArticleLinkManager from '../components/article-link-manager';
 import type {Route} from './+types/admin.movies.$id';
 import {resolveApiUrl} from '@/lib/api';
 import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
-import type {MovieDetails as BaseMovieDetails} from '@/components/admin/movie-info/types';
-
-type ArticleLink = {
-  uid: string;
-  url: string;
-  title: string;
-  description?: string;
-  isSpam: boolean;
-  isOwnerSubmission: boolean;
-};
-
-export type MovieDetails = BaseMovieDetails & {
-  articleLinks?: ArticleLink[];
-};
+import type {MovieDetails} from '@/components/admin/movie-info/types';
 
 type LoaderData = {
   apiUrl: string;
@@ -80,14 +67,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
           throw new Error('Failed to fetch movie data');
         }
 
-        const data = (await response.json()) as MovieDetails;
-        setMovieData({
-          ...data,
-          translations: data.translations || [],
-          nominations: data.nominations || [],
-          posters: data.posters || [],
-          articleLinks: data.articleLinks ?? [],
-        });
+        setMovieData((await response.json()) as MovieDetails);
       } catch (error) {
         console.error('Error loading movie:', error);
         setError('Failed to load movie data');
@@ -177,7 +157,7 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
           <ArticleLinkManager
             movieId={movieId}
             apiUrl={apiUrl}
-            articleLinks={movieData.articleLinks ?? []}
+            articleLinks={movieData.articleLinks}
             onArticleLinksUpdate={setMovieData}
           />
         </div>

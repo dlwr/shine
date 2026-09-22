@@ -111,6 +111,7 @@ export async function fetchAdminMovieDetail(
     originalLanguage: movie.originalLanguage,
     imdbId: movie.imdbId,
     tmdbId: movie.tmdbId,
+    mediaType: movie.mediaType,
     translations: translationsResult,
     posters: postersResult,
     nominations: nominationsResult.map(nom => ({

@@ -2,6 +2,17 @@ import type {RelatedMovie} from '@shine/api/services/related-movies';
 import type {SelectionHistoryItem} from '@shine/api/services/selection-history';
 import type {PeriodPreview} from '@shine/api/services/selections-service';
 import type {
+  AdminAwardsReference,
+  AdminCeremonyDetail,
+  AdminCeremonyListItem,
+  AdminMovieDetail,
+  AdminMovieListItem,
+  AdminMoviesListResponse,
+  CreateMovieResponse,
+  ExternalIdSearchResponse,
+  PreviewSelectionsResponse,
+} from '@shine/api/types/admin';
+import type {
   AwardDetail,
   AwardSummary,
   AwardYearDetail,
@@ -78,4 +89,14 @@ export type MovieSearchData = Json<MovieSearchResponse>;
 export type SelectionsData = Json<SelectionsResponse>;
 export type SelectionHistoryItemData = Json<SelectionHistoryItem>;
 export type SelectionPreviewData = Json<PeriodPreview>;
+export type PreviewSelectionsData = Json<PreviewSelectionsResponse>;
+
+export type AdminMovieDetailData = Json<AdminMovieDetail>;
+export type AdminMovieListItemData = Json<AdminMovieListItem>;
+export type AdminMoviesListData = Json<AdminMoviesListResponse>;
+export type CreateMovieData = Json<CreateMovieResponse>;
+export type AdminCeremonyListItemData = Json<AdminCeremonyListItem>;
+export type AdminCeremonyDetailData = Json<AdminCeremonyDetail>;
+export type AdminAwardsReferenceData = Json<AdminAwardsReference>;
+export type ExternalIdSearchData = Json<ExternalIdSearchResponse>;
 export type QuizDailyData = Json<QuizDailyResponse>;

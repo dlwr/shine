@@ -16,7 +16,7 @@ const nominations: Nomination[] = [
   {
     uid: 'nomination-2',
     isWinner: false,
-    specialMention: undefined,
+    specialMention: null,
     category: {uid: 'category-2', name: '最優秀監督賞'},
     ceremony: {uid: 'ceremony-2', number: 46, year: 2023},
     organization: {uid: 'org-1', name: '日本アカデミー賞', shortName: 'JAA'},

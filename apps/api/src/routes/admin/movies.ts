@@ -11,6 +11,10 @@ import {
 import {invalidateMovieDetailsCache} from '../../services/movie-cache-invalidation';
 import {parsePagination} from '../../utils/pagination';
 import {serviceErrorResponse} from './service-error-response';
+import type {
+  AdminMoviesListResponse,
+  CreateMovieResponse,
+} from '../../types/admin';
 
 export const adminMoviesRoutes = new Hono<{Bindings: Environment}>();
 
@@ -47,17 +51,19 @@ adminMoviesRoutes.get('/movies', authMiddleware, async c => {
       search,
     });
 
-    return c.json({
+    const body: AdminMoviesListResponse = {
       movies: result.movies.map(movie => ({
         uid: movie.uid,
         year: movie.year,
         originalLanguage: movie.originalLanguage,
         imdbId: movie.imdbId,
+        mediaType: movie.mediaType,
         title: movie.title || 'Untitled',
         posterUrl: movie.posterUrl,
         imdbUrl: movie.imdbId
           ? `https://www.imdb.com/title/${movie.imdbId}/`
           : undefined,
+        nominationCount: movie.nominationCount,
       })),
       pagination: {
         page: result.pagination.currentPage,
@@ -65,7 +71,8 @@ adminMoviesRoutes.get('/movies', authMiddleware, async c => {
         totalCount: result.pagination.totalCount,
         totalPages: result.pagination.totalPages,
       },
-    });
+    };
+    return c.json(body);
   } catch (error) {
     console.error('Error fetching movies list:', error);
     return c.json({error: 'Internal server error'}, 500);
@@ -95,23 +102,21 @@ adminMoviesRoutes.post('/movies', authMiddleware, async c => {
       {fetchTMDBData: refreshData !== false},
     );
 
-    return c.json(
-      {
-        success: true,
-        movie: {
-          uid: result.movie.uid,
-          imdbId: result.movie.imdbId ?? undefined,
-          tmdbId: result.movie.tmdbId ?? undefined,
-          year: result.movie.year ?? undefined,
-          originalLanguage: result.movie.originalLanguage,
-        },
-        imports: {
-          translationsAdded: result.translationsAdded,
-          postersAdded: result.postersAdded,
-        },
+    const created: CreateMovieResponse = {
+      success: true,
+      movie: {
+        uid: result.movie.uid,
+        imdbId: result.movie.imdbId ?? undefined,
+        tmdbId: result.movie.tmdbId ?? undefined,
+        year: result.movie.year ?? undefined,
+        originalLanguage: result.movie.originalLanguage,
       },
-      201,
-    );
+      imports: {
+        translationsAdded: result.translationsAdded,
+        postersAdded: result.postersAdded,
+      },
+    };
+    return c.json(created, 201);
   } catch (error) {
     console.error('Error creating movie:', error);
     return (

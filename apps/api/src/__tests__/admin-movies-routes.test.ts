@@ -137,6 +137,27 @@ describe('GET /movies', () => {
     expect(pagination).toMatchObject({limit: 1, totalCount: 2, totalPages: 2});
   });
 
+  it('メディアタイプとノミネート数を返す', async () => {
+    await database
+      .update(movies)
+      .set({mediaType: 'tv'})
+      .where(eq(movies.uid, 'movie-2'));
+
+    const response = await adminMoviesRoutes.request(
+      '/movies',
+      {headers: authHeaders},
+      environment,
+    );
+
+    const {movies: list} = (await response.json()) as {
+      movies: Array<{uid: string; mediaType: string; nominationCount: number}>;
+    };
+    expect(list.find(movie => movie.uid === 'movie-2')).toMatchObject({
+      mediaType: 'tv',
+      nominationCount: 0,
+    });
+  });
+
   it('題名で絞り込む', async () => {
     const response = await adminMoviesRoutes.request(
       '/movies?search=Yongary',
@@ -172,6 +193,23 @@ describe('GET /movies/:id', () => {
     expect(response.status).toBe(200);
     expect((await response.json()) as {uid: string}).toMatchObject({
       uid: 'movie-1',
+    });
+  });
+
+  it('メディアタイプを返す', async () => {
+    await database
+      .update(movies)
+      .set({mediaType: 'tv'})
+      .where(eq(movies.uid, 'movie-1'));
+
+    const response = await adminMoviesRoutes.request(
+      '/movies/movie-1',
+      {headers: authHeaders},
+      environment,
+    );
+
+    expect((await response.json()) as {mediaType: string}).toMatchObject({
+      mediaType: 'tv',
     });
   });
 

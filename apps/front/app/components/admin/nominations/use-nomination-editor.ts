@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useReducer} from 'react';
 import type {FormEvent} from 'react';
-import type {MovieDetails} from '../../../routes/admin.movies.$id';
+import type {MovieDetails} from '../movie-info/types';
 import {adminFetch, readErrorMessage} from '@/lib/admin-fetch';
 import {ensureToken} from '../ceremonies/ensure-token';
 import {

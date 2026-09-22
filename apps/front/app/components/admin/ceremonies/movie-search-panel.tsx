@@ -55,14 +55,7 @@ export function MovieSearchPanel({
         throw new Error(`Failed with status ${response.status}`);
       }
 
-      const data = (await response.json()) as {
-        movies: Array<{
-          uid: string;
-          title: string;
-          year: number | null;
-          imdbUrl?: string | null;
-        }>;
-      };
+      const data = (await response.json()) as {movies: MovieSearchResult[]};
 
       setMovieSearchResults(data.movies ?? []);
     } catch (error) {
