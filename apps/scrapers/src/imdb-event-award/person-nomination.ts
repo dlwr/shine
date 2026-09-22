@@ -72,20 +72,22 @@ export async function ensurePersonNominations(
       continue;
     }
 
-    if (winnerFlag === 1 && current === 0) {
-      await database
-        .update(nominations)
-        .set({isWinner: 1})
-        .where(
-          and(
-            eq(nominations.movieUid, movieUid),
-            eq(nominations.ceremonyUid, ceremonyUid),
-            eq(nominations.categoryUid, categoryUid),
-            eq(nominations.personUid, personUid),
-          ),
-        );
-      winnerByPersonUid.set(personUid, 1);
-      stats.winnersUpdated++;
+    if (!(winnerFlag === 1 && current === 0)) {
+      continue;
     }
+
+    await database
+      .update(nominations)
+      .set({isWinner: 1})
+      .where(
+        and(
+          eq(nominations.movieUid, movieUid),
+          eq(nominations.ceremonyUid, ceremonyUid),
+          eq(nominations.categoryUid, categoryUid),
+          eq(nominations.personUid, personUid),
+        ),
+      );
+    winnerByPersonUid.set(personUid, 1);
+    stats.winnersUpdated++;
   }
 }

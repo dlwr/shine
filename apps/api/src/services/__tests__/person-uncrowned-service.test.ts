@@ -90,14 +90,16 @@ async function seedAwards(database: TestDatabase): Promise<void> {
       name: award.categoryName,
     });
 
-    if (!seededCeremonies.has(award.ceremonyUid)) {
-      seededCeremonies.add(award.ceremonyUid);
-      await database.insert(awardCeremonies).values({
-        uid: award.ceremonyUid,
-        organizationUid: award.orgUid,
-        year: award.ceremonyYear,
-      });
+    if (seededCeremonies.has(award.ceremonyUid)) {
+      continue;
     }
+
+    seededCeremonies.add(award.ceremonyUid);
+    await database.insert(awardCeremonies).values({
+      uid: award.ceremonyUid,
+      organizationUid: award.orgUid,
+      year: award.ceremonyYear,
+    });
   }
 }
 

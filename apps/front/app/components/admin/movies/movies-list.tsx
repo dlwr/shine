@@ -94,29 +94,26 @@ export const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
 
   const handleDelete = async (movieId: string, movieTitle: string) => {
     const success = await deleteMovie(movieId, movieTitle, apiUrl);
-    if (success) {
-      // Re-fetch movies
-      const event = new CustomEvent('refetchMovies');
-      dispatchEvent(event);
+    if (!success) {
+      return;
     }
+
+    dispatchEvent(new CustomEvent('refetchMovies'));
   };
 
   // eslint-disable-next-line unicorn/no-declarations-before-early-exit -- 後続の分岐でも使うので前に置く
   const handleMerge = async (sourceId: string, sourceTitle: string) => {
     const targetId = showMergeDialog(sourceId, sourceTitle);
-    if (targetId) {
-      const success = await mergeMovies(
-        sourceId,
-        targetId,
-        sourceTitle,
-        apiUrl,
-      );
-      if (success) {
-        // Re-fetch movies
-        const event = new CustomEvent('refetchMovies');
-        dispatchEvent(event);
-      }
+    if (!targetId) {
+      return;
     }
+
+    const success = await mergeMovies(sourceId, targetId, sourceTitle, apiUrl);
+    if (!success) {
+      return;
+    }
+
+    dispatchEvent(new CustomEvent('refetchMovies'));
   };
 
   if (loading) {

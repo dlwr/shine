@@ -94,18 +94,20 @@ export async function syncTmdbData(
 
     for (const translation of translationsData.translations) {
       const translatedTitle = translation.data?.title || translation.data?.name;
-      if (translatedTitle && translation.iso_639_1) {
-        const isOriginalLanguage =
-          translation.iso_639_1 === movieData.original_language;
-        rowsByLanguage.set(translation.iso_639_1, {
-          resourceType: 'movie_title',
-          resourceUid: movieUid,
-          languageCode: translation.iso_639_1,
-          content: translatedTitle,
-          isDefault: isOriginalLanguage ? 1 : 0,
-        });
-        translationsAdded++;
+      if (!translatedTitle || !translation.iso_639_1) {
+        continue;
       }
+
+      const isOriginalLanguage =
+        translation.iso_639_1 === movieData.original_language;
+      rowsByLanguage.set(translation.iso_639_1, {
+        resourceType: 'movie_title',
+        resourceUid: movieUid,
+        languageCode: translation.iso_639_1,
+        content: translatedTitle,
+        isDefault: isOriginalLanguage ? 1 : 0,
+      });
+      translationsAdded++;
     }
 
     const rows = rowsByLanguage.values().toArray();

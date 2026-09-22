@@ -61,15 +61,17 @@ export async function backfillJapaneseTitlesByImdbId(
       .from(movies)
       .where(and(inArray(movies.imdbId, batch), isNull(movies.deletedAt)));
 
-    for (const row of rows) {
+    const targets = rows.flatMap(row => {
       const title = row.imdbId ? titleByImdbId.get(row.imdbId) : undefined;
-      if (title) {
-        const outcome = await saveJapaneseTitle(database, row.uid, title);
-        if (outcome === 'saved') {
-          stats.saved++;
-        } else if (outcome === 'replaced') {
-          stats.replaced++;
-        }
+      return title ? [{uid: row.uid, title}] : [];
+    });
+
+    for (const {uid, title} of targets) {
+      const outcome = await saveJapaneseTitle(database, uid, title);
+      if (outcome === 'saved') {
+        stats.saved++;
+      } else if (outcome === 'replaced') {
+        stats.replaced++;
       }
     }
   }

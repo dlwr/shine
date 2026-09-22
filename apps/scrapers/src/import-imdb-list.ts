@@ -125,11 +125,13 @@ export async function importMoviesFromCsv({
       skipLookup: true,
       verbose: false,
     });
-    if (nominationCreated) {
-      existingCreated++;
-      stats.nominationsCreated++;
-      nominatedMovieUids.add(existing.uid);
+    if (!nominationCreated) {
+      continue;
     }
+
+    existingCreated++;
+    stats.nominationsCreated++;
+    nominatedMovieUids.add(existing.uid);
   }
 
   stats.skippedExisting += existingRecordsForNomination.length;

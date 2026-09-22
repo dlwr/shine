@@ -272,25 +272,27 @@ export async function fixPosterContamination(
       `  ${movie.uid}: primaryを整理 (降格${demote.length}, 昇格${promote.length})${isDryRun ? ' (dry-run)' : ''}`,
     );
 
-    if (!isDryRun) {
-      if (demote.length > 0) {
-        await database
-          .update(posterUrls)
-          .set({isPrimary: 0})
-          .where(
-            inArray(
-              posterUrls.uid,
-              demote.map(row => row.uid),
-            ),
-          );
-      }
+    if (isDryRun) {
+      continue;
+    }
 
-      if (promote.length > 0) {
-        await database
-          .update(posterUrls)
-          .set({isPrimary: 1})
-          .where(eq(posterUrls.uid, keeper.uid));
-      }
+    if (demote.length > 0) {
+      await database
+        .update(posterUrls)
+        .set({isPrimary: 0})
+        .where(
+          inArray(
+            posterUrls.uid,
+            demote.map(row => row.uid),
+          ),
+        );
+    }
+
+    if (promote.length > 0) {
+      await database
+        .update(posterUrls)
+        .set({isPrimary: 1})
+        .where(eq(posterUrls.uid, keeper.uid));
     }
   }
 

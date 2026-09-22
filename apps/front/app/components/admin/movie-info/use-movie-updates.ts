@@ -16,10 +16,12 @@ export function useMovieUpdates({
   const refreshMovieData = useCallback(async () => {
     const movieResponse = await adminFetch(`${apiUrl}/admin/movies/${movieId}`);
 
-    if (movieResponse.ok) {
-      const data = (await movieResponse.json()) as MovieDetails;
-      onMovieDataUpdate(data);
+    if (!movieResponse.ok) {
+      return;
     }
+
+    const data = (await movieResponse.json()) as MovieDetails;
+    onMovieDataUpdate(data);
   }, [apiUrl, movieId, onMovieDataUpdate]);
 
   const performImdbUpdate = useCallback<PerformImdbUpdate>(

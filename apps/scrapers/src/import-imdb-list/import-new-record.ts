@@ -168,8 +168,10 @@ async function ensureNominationForInserted(
     dryRun,
     skipLookup: true,
   });
-  if (nominationCreated) {
-    stats.nominationsCreated++;
-    nominatedMovieUids.add(movieUid);
+  if (!nominationCreated) {
+    return;
   }
+
+  stats.nominationsCreated++;
+  nominatedMovieUids.add(movieUid);
 }

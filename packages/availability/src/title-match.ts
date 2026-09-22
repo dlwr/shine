@@ -24,10 +24,8 @@ export function normalizeTitle(title: string): string {
     isStripped = false;
     for (const pattern of editionSuffixPatterns) {
       const next = result.replace(pattern, '').trim();
-      if (next !== result) {
-        result = next;
-        isStripped = true;
-      }
+      isStripped ||= next !== result;
+      result = next;
     }
   }
 
