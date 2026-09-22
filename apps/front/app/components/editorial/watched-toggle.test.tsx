@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {WatchedToggle} from './watched-toggle';
 import {WATCHED_STORAGE_KEY} from '@/lib/watched';
 
@@ -18,6 +18,76 @@ function storedUids(): string[] {
 describe('WatchedToggle', () => {
   beforeEach(() => {
     localStorage.clear();
+  });
+
+  describe('匿名の「観た」の記録', () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response('{}'));
+
+    beforeEach(() => {
+      fetchMock.mockClear();
+      vi.stubGlobal('fetch', fetchMock);
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('押したら API に観た印を送る', async () => {
+      const user = userEvent.setup();
+      render(<WatchedToggle uid="movie-1" apiUrl="https://api.example" />);
+
+      await user.click(screen.getByRole('button', {name: '観た'}));
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://api.example/movies/movie-1/watched',
+        {method: 'POST', headers: {}},
+      );
+    });
+
+    it('管理者でログインしていればトークンを付ける', async () => {
+      localStorage.setItem('adminToken', 'jwt-token');
+      const user = userEvent.setup();
+      render(<WatchedToggle uid="movie-1" apiUrl="https://api.example" />);
+
+      await user.click(screen.getByRole('button', {name: '観た'}));
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://api.example/movies/movie-1/watched',
+        {method: 'POST', headers: {Authorization: 'Bearer jwt-token'}},
+      );
+    });
+
+    it('外すときは送らない', async () => {
+      const user = userEvent.setup();
+      render(<WatchedToggle uid="movie-1" apiUrl="https://api.example" />);
+
+      await user.click(screen.getByRole('button', {name: '観た'}));
+      await user.click(screen.getByRole('button', {name: '✓ 観た'}));
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('apiUrl が無ければ送らない', async () => {
+      const user = userEvent.setup();
+      render(<WatchedToggle uid="movie-1" />);
+
+      await user.click(screen.getByRole('button', {name: '観た'}));
+
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('送信に失敗しても観た状態は残す', async () => {
+      fetchMock.mockRejectedValueOnce(new Error('offline'));
+      const user = userEvent.setup();
+      render(<WatchedToggle uid="movie-1" apiUrl="https://api.example" />);
+
+      await user.click(screen.getByRole('button', {name: '観た'}));
+
+      await waitFor(() => {
+        expect(storedUids()).toEqual(['movie-1']);
+      });
+      expect(screen.getByRole('button', {name: '✓ 観た'})).toBeInTheDocument();
+    });
   });
 
   it('未チェックの「観た」ボタンから始まる', () => {

@@ -27,6 +27,26 @@ const monthly = {
 };
 
 describe('MonthlyBand', () => {
+  it('観た人の数を賞の前に添える', () => {
+    render(
+      <MonthlyBand monthly={{...monthly, watchedCount: 3}} currentPath="/" />,
+    );
+
+    expect(
+      screen.getByText(
+        '観た人 3 人 · POPEYE 21st Century Movie Greatest Hits 受賞（2025）',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('観た人が 0 なら数を添えない', () => {
+    render(
+      <MonthlyBand monthly={{...monthly, watchedCount: 0}} currentPath="/" />,
+    );
+
+    expect(screen.queryByText(/観た人/)).not.toBeInTheDocument();
+  });
+
   it('今月の1本の題名と年を映画ページへのリンクで出す', () => {
     render(<MonthlyBand monthly={monthly} locale="ja" currentPath="/awards" />);
 

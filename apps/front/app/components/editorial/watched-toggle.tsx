@@ -1,12 +1,23 @@
 import {useEffect, useState} from 'react';
+import {getAdminToken} from '@/lib/admin-fetch';
 import {readWatched, toggleWatched, writeWatched} from '@/lib/watched';
+
+function sendWatchedMark(apiUrl: string, uid: string): void {
+  const token = getAdminToken();
+  void fetch(`${apiUrl}/movies/${uid}/watched`, {
+    method: 'POST',
+    headers: token ? {Authorization: `Bearer ${token}`} : {},
+  }).catch(() => {});
+}
 
 export function WatchedToggle({
   uid,
   isMonthlyPick = false,
+  apiUrl,
 }: {
   uid: string;
   isMonthlyPick?: boolean;
+  apiUrl?: string;
 }) {
   const [watched, setWatched] = useState(false);
 
@@ -18,6 +29,9 @@ export function WatchedToggle({
     const next = toggleWatched(readWatched(), uid);
     writeWatched(next);
     setWatched(next.has(uid));
+    if (apiUrl && next.has(uid)) {
+      sendWatchedMark(apiUrl, uid);
+    }
   }
 
   return (
