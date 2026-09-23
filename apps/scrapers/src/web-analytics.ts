@@ -117,7 +117,13 @@ export async function fetchJapanPageTraffic(
   }
 
   const rows =
-    body.data?.viewer?.accounts?.[0]?.rumPageloadEventsAdaptiveGroups ?? [];
+    body.data?.viewer?.accounts?.[0]?.rumPageloadEventsAdaptiveGroups;
+  if (!rows || rows.length === 0) {
+    throw new Error(
+      'Cloudflare GraphQL が空応答を返しました（記録が 1 件も無い窓は想定しない）',
+    );
+  }
+
   return rows.map(row => ({
     path: row.dimensions.requestPath,
     pageviews: row.count,
@@ -152,21 +158,28 @@ export async function leadingIndicatorReport(
   fetchImpl: typeof fetch = fetch,
 ): Promise<string> {
   const window = leadingIndicatorWindow(now);
-  const traffic = await fetchJapanPageTraffic(
-    credentials,
-    window.from,
-    window.to,
-    fetchImpl,
-  );
+  const fetchTraffic = () =>
+    fetchJapanPageTraffic(credentials, window.from, window.to, fetchImpl);
+  let traffic: PageTraffic[];
+  try {
+    traffic = await fetchTraffic();
+  } catch {
+    traffic = await fetchTraffic();
+  }
   return formatLeadingIndicator(traffic, monthlyPicks, window);
 }
 
+function isVisitorPath(path: string): boolean {
+  return path !== '/admin' && !path.startsWith('/admin/');
+}
+
 export function formatLeadingIndicator(
-  traffic: PageTraffic[],
+  allTraffic: PageTraffic[],
   monthlyPicks: MonthlyPickPage[],
   window: {from: Date; to: Date},
   topPaths = 5,
 ): string {
+  const traffic = allTraffic.filter(page => isVisitorPath(page.path));
   const total = {pageviews: 0, visits: 0};
   for (const page of traffic) {
     total.pageviews += page.pageviews;
@@ -180,7 +193,7 @@ export function formatLeadingIndicator(
     .join('、');
 
   return [
-    `先行指標（国=Japan・bot 除外、${tokyoDateTime(window.from)} 〜 ${tokyoDateTime(window.to)} JST）${isSampled(traffic) ? '（値が全部 10 の倍数なのでサンプル推定の可能性がある）' : ''}`,
+    `先行指標（国=Japan・bot と /admin 除外、${tokyoDateTime(window.from)} 〜 ${tokyoDateTime(window.to)} JST）${isSampled(traffic) ? '（値が全部 10 の倍数なのでサンプル推定の可能性がある）' : ''}`,
     `全体: PV ${total.pageviews} / 訪問 ${total.visits}`,
     ...monthlyPicks.map(pick => {
       const page = byPath.get(pick.path);

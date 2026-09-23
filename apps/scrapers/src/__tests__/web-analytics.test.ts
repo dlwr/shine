@@ -2,6 +2,7 @@ import {describe, expect, it, vi} from 'vitest';
 import {
   fetchJapanPageTraffic,
   formatLeadingIndicator,
+  leadingIndicatorReport,
   leadingIndicatorWindow,
   type PageTraffic,
 } from '../web-analytics';
@@ -65,7 +66,9 @@ describe('fetchJapanPageTraffic', () => {
   });
 
   it('日本からの人の閲覧に絞り、窓を filter に入れる', async () => {
-    const fetchImpl = vi.fn(async () => trafficResponse([]));
+    const fetchImpl = vi.fn(async () =>
+      trafficResponse([{path: '/', pageviews: 1, visits: 1}]),
+    );
 
     await fetchJapanPageTraffic(
       credentials,
@@ -106,6 +109,34 @@ describe('fetchJapanPageTraffic', () => {
     ).rejects.toThrow('unauthorized');
   });
 
+  it('accounts の無い応答は空応答として例外にする', async () => {
+    const fetchImpl = vi.fn(async () =>
+      Response.json({data: {viewer: {accounts: []}}}, {status: 200}),
+    );
+
+    await expect(
+      fetchJapanPageTraffic(
+        credentials,
+        new Date('2026-09-15T00:00:00.000Z'),
+        new Date('2026-09-22T00:00:00.000Z'),
+        fetchImpl,
+      ),
+    ).rejects.toThrow('空応答');
+  });
+
+  it('記録が 0 件の応答も空応答として例外にする', async () => {
+    const fetchImpl = vi.fn(async () => trafficResponse([]));
+
+    await expect(
+      fetchJapanPageTraffic(
+        credentials,
+        new Date('2026-09-15T00:00:00.000Z'),
+        new Date('2026-09-22T00:00:00.000Z'),
+        fetchImpl,
+      ),
+    ).rejects.toThrow('空応答');
+  });
+
   it('HTTP エラーを例外にする', async () => {
     const fetchImpl = vi.fn(async () => new Response('', {status: 500}));
 
@@ -120,10 +151,43 @@ describe('fetchJapanPageTraffic', () => {
   });
 });
 
+describe('leadingIndicatorReport', () => {
+  const now = new Date('2026-09-22T09:00:00.000Z');
+
+  it('空応答なら 1 回だけやり直す', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(trafficResponse([]))
+      .mockResolvedValueOnce(
+        trafficResponse([{path: '/', pageviews: 3, visits: 1}]),
+      );
+
+    const report = await leadingIndicatorReport(
+      credentials,
+      [],
+      now,
+      fetchImpl,
+    );
+
+    expect(report).toContain('全体: PV 3 / 訪問 1');
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it('2 回とも空応答なら例外にする', async () => {
+    const fetchImpl = vi.fn(async () => trafficResponse([]));
+
+    await expect(
+      leadingIndicatorReport(credentials, [], now, fetchImpl),
+    ).rejects.toThrow('空応答');
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe('formatLeadingIndicator', () => {
   const traffic: PageTraffic[] = [
     {path: '/', pageviews: 60, visits: 20},
     {path: '/quiz', pageviews: 40, visits: 10},
+    {path: '/admin/movies/selections', pageviews: 14, visits: 3},
     {path: '/movies/sep', pageviews: 9, visits: 1},
     {path: '/people', pageviews: 5, visits: 2},
   ];
@@ -143,7 +207,7 @@ describe('formatLeadingIndicator', () => {
     );
 
     expect(heading).toBe(
-      '先行指標（国=Japan・bot 除外、2026-09-15 19:00 〜 2026-09-22 18:00 JST）',
+      '先行指標（国=Japan・bot と /admin 除外、2026-09-15 19:00 〜 2026-09-22 18:00 JST）',
     );
   });
 
@@ -162,6 +226,15 @@ describe('formatLeadingIndicator', () => {
   it('記録の無い映画ページは 0 にする', () => {
     expect(formatLeadingIndicator(traffic, picks, window)).toContain(
       '2026-08 リアリティー: PV 0 / 訪問 0',
+    );
+  });
+
+  it('/admin 配下は本人の操作なので全体にも上位にも数えない', () => {
+    const report = formatLeadingIndicator(traffic, picks, window);
+
+    expect(report).toContain('全体: PV 114 / 訪問 33');
+    expect(report).toContain(
+      '上位のパス: / 60、/quiz 40、/movies/sep 9、/people 5',
     );
   });
 
