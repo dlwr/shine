@@ -1,9 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
-    "apps/scrapers": {
-      "entry": ["database-query.mts"]
-    },
     "apps/front": {
       "entry": ["workers/og.ts"]
     }
