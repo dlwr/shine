@@ -2,6 +2,7 @@ import {describe, expect, it, vi} from 'vitest';
 import {
   fetchJapanPageTraffic,
   formatLeadingIndicator,
+  leadingIndicatorReport,
   leadingIndicatorWindow,
   type PageTraffic,
 } from '../web-analytics';
@@ -65,7 +66,9 @@ describe('fetchJapanPageTraffic', () => {
   });
 
   it('日本からの人の閲覧に絞り、窓を filter に入れる', async () => {
-    const fetchImpl = vi.fn(async () => trafficResponse([]));
+    const fetchImpl = vi.fn(async () =>
+      trafficResponse([{path: '/', pageviews: 1, visits: 1}]),
+    );
 
     await fetchJapanPageTraffic(
       credentials,
@@ -106,6 +109,34 @@ describe('fetchJapanPageTraffic', () => {
     ).rejects.toThrow('unauthorized');
   });
 
+  it('accounts の無い応答は空応答として例外にする', async () => {
+    const fetchImpl = vi.fn(async () =>
+      Response.json({data: {viewer: {accounts: []}}}, {status: 200}),
+    );
+
+    await expect(
+      fetchJapanPageTraffic(
+        credentials,
+        new Date('2026-09-15T00:00:00.000Z'),
+        new Date('2026-09-22T00:00:00.000Z'),
+        fetchImpl,
+      ),
+    ).rejects.toThrow('空応答');
+  });
+
+  it('記録が 0 件の応答も空応答として例外にする', async () => {
+    const fetchImpl = vi.fn(async () => trafficResponse([]));
+
+    await expect(
+      fetchJapanPageTraffic(
+        credentials,
+        new Date('2026-09-15T00:00:00.000Z'),
+        new Date('2026-09-22T00:00:00.000Z'),
+        fetchImpl,
+      ),
+    ).rejects.toThrow('空応答');
+  });
+
   it('HTTP エラーを例外にする', async () => {
     const fetchImpl = vi.fn(async () => new Response('', {status: 500}));
 
@@ -117,6 +148,38 @@ describe('fetchJapanPageTraffic', () => {
         fetchImpl,
       ),
     ).rejects.toThrow('HTTP 500');
+  });
+});
+
+describe('leadingIndicatorReport', () => {
+  const now = new Date('2026-09-22T09:00:00.000Z');
+
+  it('空応答なら 1 回だけやり直す', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(trafficResponse([]))
+      .mockResolvedValueOnce(
+        trafficResponse([{path: '/', pageviews: 3, visits: 1}]),
+      );
+
+    const report = await leadingIndicatorReport(
+      credentials,
+      [],
+      now,
+      fetchImpl,
+    );
+
+    expect(report).toContain('全体: PV 3 / 訪問 1');
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it('2 回とも空応答なら例外にする', async () => {
+    const fetchImpl = vi.fn(async () => trafficResponse([]));
+
+    await expect(
+      leadingIndicatorReport(credentials, [], now, fetchImpl),
+    ).rejects.toThrow('空応答');
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 });
 

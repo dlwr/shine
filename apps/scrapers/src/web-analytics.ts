@@ -117,7 +117,13 @@ export async function fetchJapanPageTraffic(
   }
 
   const rows =
-    body.data?.viewer?.accounts?.[0]?.rumPageloadEventsAdaptiveGroups ?? [];
+    body.data?.viewer?.accounts?.[0]?.rumPageloadEventsAdaptiveGroups;
+  if (!rows || rows.length === 0) {
+    throw new Error(
+      'Cloudflare GraphQL が空応答を返しました（記録が 1 件も無い窓は想定しない）',
+    );
+  }
+
   return rows.map(row => ({
     path: row.dimensions.requestPath,
     pageviews: row.count,
@@ -152,12 +158,14 @@ export async function leadingIndicatorReport(
   fetchImpl: typeof fetch = fetch,
 ): Promise<string> {
   const window = leadingIndicatorWindow(now);
-  const traffic = await fetchJapanPageTraffic(
-    credentials,
-    window.from,
-    window.to,
-    fetchImpl,
-  );
+  const fetchTraffic = () =>
+    fetchJapanPageTraffic(credentials, window.from, window.to, fetchImpl);
+  let traffic: PageTraffic[];
+  try {
+    traffic = await fetchTraffic();
+  } catch {
+    traffic = await fetchTraffic();
+  }
   return formatLeadingIndicator(traffic, monthlyPicks, window);
 }
 

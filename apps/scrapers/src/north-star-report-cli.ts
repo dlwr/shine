@@ -17,7 +17,9 @@ import {
 } from './north-star';
 import {
   leadingIndicatorReport,
+  type MonthlyPickPage,
   resolveWebAnalyticsCredentials,
+  type WebAnalyticsCredentials,
 } from './web-analytics';
 
 function parseMonths(value: string): number {
@@ -49,7 +51,11 @@ async function main(options: {months: number; dryRun: boolean}): Promise<void> {
     const northStar = formatNorthStarReport(counts, now, bookmarkCounts);
     const credentials = resolveWebAnalyticsCredentials(process.env);
     const leadingIndicator = credentials
-      ? await leadingIndicatorReport(credentials, monthlyPickPages(counts), now)
+      ? await leadingIndicatorOrFailure(
+          credentials,
+          monthlyPickPages(counts),
+          now,
+        )
       : 'CLOUDFLARE_API_TOKEN 未設定のため先行指標をスキップ';
     const content = `${northStar.content}\n\n${leadingIndicator}`;
 
@@ -69,6 +75,18 @@ async function main(options: {months: number; dryRun: boolean}): Promise<void> {
   } catch (error) {
     console.error('北極星の集計に失敗しました:', error);
     process.exitCode = 1;
+  }
+}
+
+async function leadingIndicatorOrFailure(
+  credentials: WebAnalyticsCredentials,
+  picks: MonthlyPickPage[],
+  now: Date,
+): Promise<string> {
+  try {
+    return await leadingIndicatorReport(credentials, picks, now);
+  } catch (error) {
+    return `先行指標の取得に失敗しました: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
 
