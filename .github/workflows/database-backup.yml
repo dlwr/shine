@@ -49,11 +49,19 @@ jobs:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
 
+      - name: Encrypt backup
+        run: |
+          sudo apt-get install -y age
+          age -r "$BACKUP_RECIPIENT" -o "$RUNNER_TEMP/shine.db.gz.age" "$RUNNER_TEMP/shine.db.gz"
+          rm "$RUNNER_TEMP/shine.db.gz"
+        env:
+          BACKUP_RECIPIENT: age1pvxt57nupmcu5xjhux33z2x0jv0s0ceder0mqyrp5pl79nm6s4sqg3p2m8
+
       - name: Upload backup
         uses: actions/upload-artifact@v6
         with:
           name: shine-db-${{ env.BACKUP_DATE }}
-          path: ${{ runner.temp }}/shine.db.gz
+          path: ${{ runner.temp }}/shine.db.gz.age
           retention-days: 90
           compression-level: 0
           if-no-files-found: error
