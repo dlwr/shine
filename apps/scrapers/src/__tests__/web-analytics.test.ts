@@ -187,6 +187,7 @@ describe('formatLeadingIndicator', () => {
   const traffic: PageTraffic[] = [
     {path: '/', pageviews: 60, visits: 20},
     {path: '/quiz', pageviews: 40, visits: 10},
+    {path: '/admin/movies/selections', pageviews: 14, visits: 3},
     {path: '/movies/sep', pageviews: 9, visits: 1},
     {path: '/people', pageviews: 5, visits: 2},
   ];
@@ -206,7 +207,7 @@ describe('formatLeadingIndicator', () => {
     );
 
     expect(heading).toBe(
-      '先行指標（国=Japan・bot 除外、2026-09-15 19:00 〜 2026-09-22 18:00 JST）',
+      '先行指標（国=Japan・bot と /admin 除外、2026-09-15 19:00 〜 2026-09-22 18:00 JST）',
     );
   });
 
@@ -225,6 +226,15 @@ describe('formatLeadingIndicator', () => {
   it('記録の無い映画ページは 0 にする', () => {
     expect(formatLeadingIndicator(traffic, picks, window)).toContain(
       '2026-08 リアリティー: PV 0 / 訪問 0',
+    );
+  });
+
+  it('/admin 配下は本人の操作なので全体にも上位にも数えない', () => {
+    const report = formatLeadingIndicator(traffic, picks, window);
+
+    expect(report).toContain('全体: PV 114 / 訪問 33');
+    expect(report).toContain(
+      '上位のパス: / 60、/quiz 40、/movies/sep 9、/people 5',
     );
   });
 

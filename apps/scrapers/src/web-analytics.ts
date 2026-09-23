@@ -169,12 +169,17 @@ export async function leadingIndicatorReport(
   return formatLeadingIndicator(traffic, monthlyPicks, window);
 }
 
+function isVisitorPath(path: string): boolean {
+  return path !== '/admin' && !path.startsWith('/admin/');
+}
+
 export function formatLeadingIndicator(
-  traffic: PageTraffic[],
+  allTraffic: PageTraffic[],
   monthlyPicks: MonthlyPickPage[],
   window: {from: Date; to: Date},
   topPaths = 5,
 ): string {
+  const traffic = allTraffic.filter(page => isVisitorPath(page.path));
   const total = {pageviews: 0, visits: 0};
   for (const page of traffic) {
     total.pageviews += page.pageviews;
@@ -188,7 +193,7 @@ export function formatLeadingIndicator(
     .join('、');
 
   return [
-    `先行指標（国=Japan・bot 除外、${tokyoDateTime(window.from)} 〜 ${tokyoDateTime(window.to)} JST）${isSampled(traffic) ? '（値が全部 10 の倍数なのでサンプル推定の可能性がある）' : ''}`,
+    `先行指標（国=Japan・bot と /admin 除外、${tokyoDateTime(window.from)} 〜 ${tokyoDateTime(window.to)} JST）${isSampled(traffic) ? '（値が全部 10 の倍数なのでサンプル推定の可能性がある）' : ''}`,
     `全体: PV ${total.pageviews} / 訪問 ${total.visits}`,
     ...monthlyPicks.map(pick => {
       const page = byPath.get(pick.path);
