@@ -7,7 +7,7 @@ import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
 import {OG_HEIGHT, OG_WIDTH, buildMovieCardHtml} from '@/lib/og/template';
 import {TAGLINE} from '@/lib/tagline';
 import {upgradePosterForSharing} from '@/lib/meta';
-import {apiFetch, type LoadContext} from '@/lib/api';
+import {tryApiJson, type LoadContext} from '@/lib/api';
 
 type MovieDetail = {
   title?: string;
@@ -36,14 +36,13 @@ export async function renderMovieCard(
     return new Response('Not Found', {status: 404});
   }
 
-  const response = await apiFetch(context, `/movies/${id}`, {
+  const movie = await tryApiJson<MovieDetail>(context, `/movies/${id}`, {
     signal: request.signal,
   });
-  if (!response.ok) {
+  if (!movie) {
     return new Response('Not Found', {status: 404});
   }
 
-  const movie = (await response.json()) as MovieDetail;
   const title = movie.title ?? 'タイトル不明';
   const originalTitle = movie.translations?.find(
     translation => translation.languageCode === movie.originalLanguage,

@@ -3,7 +3,7 @@ import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {apiFetch} from '@/lib/api';
+import {loadApiJson} from '@/lib/api';
 import type {YearsListData, YearSummaryData} from '@/lib/api-types';
 
 type Decade = {
@@ -44,12 +44,10 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
 
-  const response = await apiFetch(context, `/years`, {signal: request.signal});
-  if (!response.ok) {
-    throw new Response('Failed to load years', {status: 502});
-  }
-
-  const body = (await response.json()) as YearsListData;
+  const body = await loadApiJson<YearsListData>(context, `/years`, {
+    label: 'years',
+    signal: request.signal,
+  });
   return {years: body.years, locale};
 }
 

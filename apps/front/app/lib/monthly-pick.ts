@@ -1,4 +1,4 @@
-import {apiFetch, type LoadContext} from './api';
+import {tryApiJson, type LoadContext} from './api';
 import type {SelectionsData} from './api-types';
 import {resolveMovieTitle} from './movie-title';
 import {selectBestPoster} from './poster';
@@ -74,12 +74,18 @@ export async function fetchMonthlyPick(
   signal?: AbortSignal,
 ): Promise<MonthlyPick | undefined> {
   try {
-    const response = await apiFetch(context, `/?locale=${locale}`, {signal});
-    if (!response.ok) {
+    const body = await tryApiJson<SelectionsData>(
+      context,
+      `/?locale=${locale}`,
+      {
+        signal,
+      },
+    );
+    if (!body) {
       return undefined;
     }
 
-    const {monthly} = (await response.json()) as SelectionsData;
+    const {monthly} = body;
     if (!monthly) {
       return undefined;
     }

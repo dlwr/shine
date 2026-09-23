@@ -2,6 +2,7 @@ import {
   apiFetch,
   resolveApiUrl,
   resolveEnvironment,
+  tryApiJson,
   type LoadContext,
 } from './api';
 import {getLocaleFromRequest, type Locale} from './locale';
@@ -48,18 +49,12 @@ export async function fetchRelatedMovies(
   signal?: AbortSignal,
 ): Promise<RelatedMovie[]> {
   try {
-    const response = await apiFetch(
+    const body = await tryApiJson<{movies?: RelatedMovie[]}>(
       context,
       `/movies/${movieId}/related?locale=${locale}&limit=6`,
       {signal},
     );
-
-    if (!response?.ok) {
-      return [];
-    }
-
-    const body = (await response.json()) as {movies?: RelatedMovie[]};
-    return body.movies ?? [];
+    return body?.movies ?? [];
   } catch {
     return [];
   }

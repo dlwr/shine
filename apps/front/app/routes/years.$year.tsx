@@ -7,7 +7,7 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {YearNavLink} from '@/components/editorial/year-nav-link';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {apiFetch} from '@/lib/api';
+import {loadApiJson} from '@/lib/api';
 import type {YearDetailData} from '@/lib/api-types';
 
 export type YearAwardData = YearDetailData['awards'][number];
@@ -73,19 +73,11 @@ export async function loader({context, request, params}: Route.LoaderArgs) {
 
   const locale = getLocaleFromRequest(request);
 
-  const response = await apiFetch(context, `/years/${params.year}`, {
-    signal: request.signal,
-  });
-
-  if (response.status === 404) {
-    throw new Response('Not Found', {status: 404});
-  }
-
-  if (!response.ok) {
-    throw new Response('Failed to load year', {status: 502});
-  }
-
-  const detail = (await response.json()) as YearDetailData;
+  const detail = await loadApiJson<YearDetailData>(
+    context,
+    `/years/${params.year}`,
+    {label: 'year', signal: request.signal},
+  );
   return {detail, locale};
 }
 

@@ -7,7 +7,7 @@ import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {awardHeading} from '@/lib/awards';
 import type {AwardYearDetailData} from '@/lib/api-types';
-import {apiFetch} from '@/lib/api';
+import {loadApiJson} from '@/lib/api';
 
 function buildItemList(award: AwardYearDetailData): Record<string, unknown> {
   return {
@@ -57,21 +57,11 @@ export async function loader({context, request, params}: Route.LoaderArgs) {
 
   const locale = getLocaleFromRequest(request);
 
-  const response = await apiFetch(
+  const award = await loadApiJson<AwardYearDetailData>(
     context,
     `/awards/${params.slug}/${params.year}`,
-    {signal: request.signal},
+    {label: 'award year', signal: request.signal},
   );
-
-  if (response.status === 404) {
-    throw new Response('Not Found', {status: 404});
-  }
-
-  if (!response.ok) {
-    throw new Response('Failed to load award year', {status: 502});
-  }
-
-  const award = (await response.json()) as AwardYearDetailData;
   return {award, locale};
 }
 

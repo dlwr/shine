@@ -1,4 +1,9 @@
-import {apiFetch, canTransformImages, type LoadContext} from '@/lib/api';
+import {
+  canTransformImages,
+  loadApiJson,
+  tryApiJson,
+  type LoadContext,
+} from '@/lib/api';
 import {Masthead} from '@/components/editorial/masthead';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
@@ -61,16 +66,16 @@ export async function loadNextSelection(
   context: LoadContext,
   request: Request,
 ): Promise<SelectionHistoryItem | undefined> {
-  const response = await apiFetch(
+  const preview = await tryApiJson<SelectionPreviewData>(
     context,
     `/selections/${type}/next?locale=${locale}`,
     {signal: request.signal},
   );
-  if (!response.ok) {
+  if (!preview) {
     return undefined;
   }
 
-  const {date, movie} = (await response.json()) as SelectionPreviewData;
+  const {date, movie} = preview;
   return {
     uid: movie.uid,
     title: movie.title,
@@ -87,22 +92,17 @@ export async function loadSelectionArchive(
 ): Promise<SelectionArchiveData> {
   const locale = getLocaleFromRequest(request);
 
-  const [response, next] = await Promise.all([
-    apiFetch(
+  const [body, next] = await Promise.all([
+    loadApiJson<{items: SelectionHistoryItem[]}>(
       context,
       `/selections/${config.type}/history?locale=${locale}&limit=30`,
-      {signal: request.signal},
+      {label: `${config.type} history`, signal: request.signal},
     ),
     config.type === 'monthly'
       ? loadNextSelection(config.type, locale, context, request)
       : undefined,
   ]);
 
-  if (!response.ok) {
-    throw new Response(`Failed to load ${config.type} history`, {status: 502});
-  }
-
-  const body = (await response.json()) as {items: SelectionHistoryItem[]};
   return {
     items: body.items,
     next,

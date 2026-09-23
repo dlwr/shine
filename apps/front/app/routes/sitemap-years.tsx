@@ -1,5 +1,5 @@
 import type {Route} from './+types/sitemap-years';
-import {apiFetch, type LoadContext} from '@/lib/api';
+import {tryApiJson, type LoadContext} from '@/lib/api';
 import type {YearsListData} from '@/lib/api-types';
 import {buildUrlSet, type SitemapEntry} from '@/lib/sitemap';
 import {sitemapResponse} from '@/lib/sitemap-source';
@@ -9,12 +9,11 @@ async function fetchYears(
   signal?: AbortSignal,
 ): Promise<number[]> {
   try {
-    const response = await apiFetch(context, `/years`, {signal});
-    if (!response.ok) {
+    const body = await tryApiJson<YearsListData>(context, `/years`, {signal});
+    if (!body) {
       return [];
     }
 
-    const body = (await response.json()) as YearsListData;
     return (body.years ?? []).map(entry => entry.year);
   } catch {
     return [];

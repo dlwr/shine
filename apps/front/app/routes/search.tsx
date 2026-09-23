@@ -9,7 +9,7 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {selectBestPoster} from '@/lib/poster';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {buildSocialMeta} from '@/lib/meta';
-import {apiFetch, resolveApiUrl, type LoadContext} from '@/lib/api';
+import {tryApiJson, resolveApiUrl, type LoadContext} from '@/lib/api';
 
 type SearchMovieData = MovieSearchData['movies'][number];
 type SearchPaginationData = MovieSearchData['pagination'];
@@ -93,17 +93,11 @@ async function fetchMovies(
   signal: AbortSignal,
 ) {
   try {
-    const response = await apiFetch(
+    return await tryApiJson<MovieSearchData>(
       context,
       `/movies/search?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${limit}`,
       {signal},
     );
-
-    if (!response.ok) {
-      return;
-    }
-
-    return (await response.json()) as MovieSearchData;
   } catch {
     return;
   }
@@ -115,17 +109,15 @@ async function fetchPeople(
   signal: AbortSignal,
 ): Promise<ProminentPerson[]> {
   try {
-    const response = await apiFetch(
+    const body = await tryApiJson<PeopleSearchData>(
       context,
       `/people/search?q=${encodeURIComponent(searchQuery)}&locale=ja`,
       {signal},
     );
-
-    if (!response.ok) {
+    if (!body) {
       return [];
     }
 
-    const body = (await response.json()) as PeopleSearchData;
     return body.people;
   } catch {
     return [];

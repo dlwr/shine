@@ -12,7 +12,7 @@ import {
   buildAwardItemList,
   type AwardPageData,
 } from '@/lib/award-page';
-import {apiFetch} from '@/lib/api';
+import {loadApiJson} from '@/lib/api';
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {award, locale} = loaderData as {
@@ -38,21 +38,11 @@ export async function loader({context, request, params}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
 
   const page = new URL(request.url).searchParams.get('page') ?? '1';
-  const response = await apiFetch(
+  const award = await loadApiJson<AwardPageData>(
     context,
     `/awards/${params.slug}?page=${encodeURIComponent(page)}`,
-    {signal: request.signal},
+    {label: 'award', signal: request.signal},
   );
-
-  if (response.status === 404) {
-    throw new Response('Not Found', {status: 404});
-  }
-
-  if (!response.ok) {
-    throw new Response('Failed to load award', {status: 502});
-  }
-
-  const award = (await response.json()) as AwardPageData;
   return {award, locale};
 }
 

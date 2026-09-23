@@ -5,7 +5,7 @@ import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {apiFetch} from '@/lib/api';
+import {loadApiJson} from '@/lib/api';
 import type {CrossingsData} from '@/lib/api-types';
 
 type CrossingsAward = CrossingsData['awards'][number];
@@ -27,14 +27,10 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
 
-  const response = await apiFetch(context, `/crossings`, {
+  const body = await loadApiJson<CrossingsData>(context, `/crossings`, {
+    label: 'crossings',
     signal: request.signal,
   });
-  if (!response.ok) {
-    throw new Response('Failed to load crossings', {status: 502});
-  }
-
-  const body = (await response.json()) as CrossingsData;
   return {...body, locale};
 }
 

@@ -1,5 +1,5 @@
 import type {Route} from './+types/sitemap-awards';
-import {apiFetch, type LoadContext} from '@/lib/api';
+import {tryApiJson, type LoadContext} from '@/lib/api';
 import type {
   AwardPageData,
   AwardsListData,
@@ -13,12 +13,13 @@ async function fetchAwards(
   signal?: AbortSignal,
 ): Promise<AwardSummaryData[]> {
   try {
-    const response = await apiFetch(context, `/awards`, {signal});
-    if (!response.ok) {
+    const body = await tryApiJson<AwardsListData>(context, `/awards`, {
+      signal,
+    });
+    if (!body) {
       return [];
     }
 
-    const body = (await response.json()) as AwardsListData;
     return body.awards ?? [];
   } catch {
     return [];
@@ -31,14 +32,9 @@ async function fetchAwardDetail(
   signal?: AbortSignal,
 ): Promise<AwardPageData | undefined> {
   try {
-    const response = await apiFetch(context, `/awards/${slug}`, {
+    return await tryApiJson<AwardPageData>(context, `/awards/${slug}`, {
       signal,
     });
-    if (!response.ok) {
-      return undefined;
-    }
-
-    return (await response.json()) as AwardPageData;
   } catch {
     return undefined;
   }

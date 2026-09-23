@@ -4,7 +4,7 @@ import {pickRepresentativeTitles} from '@/lib/og/person-card';
 import {OG_HEIGHT, OG_WIDTH, buildPersonCardHtml} from '@/lib/og/template';
 import {TAGLINE} from '@/lib/tagline';
 import {profileImageUrl} from '@/lib/profile-image';
-import {apiFetch, type LoadContext} from '@/lib/api';
+import {tryApiJson, type LoadContext} from '@/lib/api';
 
 type PersonDetail = {
   name: string;
@@ -33,14 +33,15 @@ export async function renderPersonCard(
     return new Response('Not Found', {status: 404});
   }
 
-  const response = await apiFetch(context, `/people/${id}?locale=ja`, {
-    signal: request.signal,
-  });
-  if (!response.ok) {
+  const person = await tryApiJson<PersonDetail>(
+    context,
+    `/people/${id}?locale=ja`,
+    {signal: request.signal},
+  );
+  if (!person) {
     return new Response('Not Found', {status: 404});
   }
 
-  const person = (await response.json()) as PersonDetail;
   const topTitles = pickRepresentativeTitles(person.credits, person.awards);
 
   const cardText =
