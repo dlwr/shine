@@ -105,6 +105,13 @@ describe('formatRows', () => {
   });
 });
 
+const hangingFetch = async (_url: string, init?: RequestInit) =>
+  new Promise<Response>((_resolve, reject) => {
+    init?.signal?.addEventListener('abort', () => {
+      reject(init.signal?.reason);
+    });
+  });
+
 describe('fetchRowsRead', () => {
   it('組織の利用量 API を期間つきで叩いて rows_read を返す', async () => {
     const calls: Array<{url: string; headers: Record<string, string>}> = [];
@@ -144,12 +151,11 @@ describe('fetchRowsRead', () => {
   });
 
   it('API が応答しないと待ち時間を過ぎた時点で例外にする', async () => {
-    const fetchImpl = (async (_url: string, init?: RequestInit) =>
-      new Promise((_resolve, reject) => {
-        init?.signal?.addEventListener('abort', () => {
-          reject(init.signal?.reason);
-        });
-      })) as unknown as typeof fetch;
+    let calls = 0;
+    const fetchImpl = (async (url: string, init?: RequestInit) => {
+      calls += 1;
+      return hangingFetch(url, init);
+    }) as unknown as typeof fetch;
 
     await expect(
       fetchRowsRead(
@@ -160,5 +166,47 @@ describe('fetchRowsRead', () => {
         10,
       ),
     ).rejects.toThrow('Turso usage API timed out after 10ms');
+    expect(calls).toBe(2);
+  });
+
+  it('時間切れは 1 回だけやり直す', async () => {
+    let calls = 0;
+    const fetchImpl = (async (url: string, init?: RequestInit) => {
+      calls += 1;
+      if (calls === 1) {
+        return hangingFetch(url, init);
+      }
+
+      return Response.json({organization: {usage: {rows_read: 42}}});
+    }) as unknown as typeof fetch;
+
+    const rows = await fetchRowsRead(
+      {token: 'tok', organization: 'dlwr'},
+      new Date('2026-08-01T00:00:00Z'),
+      new Date('2026-09-02T00:00:00Z'),
+      fetchImpl,
+      10,
+    );
+
+    expect(rows).toBe(42);
+    expect(calls).toBe(2);
+  });
+
+  it('HTTP の失敗はやり直さない', async () => {
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls += 1;
+      return new Response('nope', {status: 500});
+    }) as unknown as typeof fetch;
+
+    await expect(
+      fetchRowsRead(
+        {token: 'tok', organization: 'dlwr'},
+        new Date('2026-08-01T00:00:00Z'),
+        new Date('2026-09-02T00:00:00Z'),
+        fetchImpl,
+      ),
+    ).rejects.toThrow('500');
+    expect(calls).toBe(1);
   });
 });
