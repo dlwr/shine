@@ -79,12 +79,37 @@ export function evaluateTursoUsage(
   return {alerts, summary};
 }
 
+class UsageApiTimeoutError extends Error {
+  constructor(timeoutMs: number, cause: unknown) {
+    super(`Turso usage API timed out after ${timeoutMs}ms`, {cause});
+    this.name = 'UsageApiTimeoutError';
+  }
+}
+
 export async function fetchRowsRead(
   credentials: PlatformApiCredentials,
   from: Date,
   to: Date,
   fetchImpl: typeof fetch = fetch,
   timeoutMs = USAGE_API_TIMEOUT_MS,
+): Promise<number> {
+  try {
+    return await fetchRowsReadOnce(credentials, from, to, fetchImpl, timeoutMs);
+  } catch (error) {
+    if (!(error instanceof UsageApiTimeoutError)) {
+      throw error;
+    }
+
+    return fetchRowsReadOnce(credentials, from, to, fetchImpl, timeoutMs);
+  }
+}
+
+async function fetchRowsReadOnce(
+  credentials: PlatformApiCredentials,
+  from: Date,
+  to: Date,
+  fetchImpl: typeof fetch,
+  timeoutMs: number,
 ): Promise<number> {
   const url = new URL(`${USAGE_API_BASE}/${credentials.organization}/usage`);
   url.searchParams.set('from', from.toISOString());
@@ -106,9 +131,7 @@ export async function fetchRowsRead(
     body = (await response.json()) as typeof body;
   } catch (error) {
     if (signal.aborted) {
-      throw new Error(`Turso usage API timed out after ${timeoutMs}ms`, {
-        cause: error,
-      });
+      throw new UsageApiTimeoutError(timeoutMs, error);
     }
 
     throw error;
