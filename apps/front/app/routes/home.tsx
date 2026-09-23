@@ -71,7 +71,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
       throw new Error(`API request failed: ${response.status}`);
     }
 
-    const movies = await response.json();
+    const movies = (await response.json()) as HighlightedMovies;
     return {
       movies,
       error: undefined,
