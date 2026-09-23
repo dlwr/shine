@@ -4,7 +4,7 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {useWatchedList} from '@/components/watched/use-watched-list';
 import {WatchedFilmList} from '@/components/watched/watched-film-list';
 import {WatchedScore} from '@/components/watched/watched-score';
-import {apiFetch} from '@/lib/api';
+import {loadApiJson} from '@/lib/api';
 import type {AwardDetailData} from '@/lib/api-types';
 import {awardHeading} from '@/lib/awards';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
@@ -59,18 +59,11 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 export async function loader({context, request, params}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
 
-  const response = await apiFetch(context, `/awards/${params.slug}`, {
-    signal: request.signal,
-  });
-  if (response.status === 404) {
-    throw new Response('Not Found', {status: 404});
-  }
-
-  if (!response.ok) {
-    throw new Response('Failed to load award', {status: 502});
-  }
-
-  const award = (await response.json()) as AwardDetailData;
+  const award = await loadApiJson<AwardDetailData>(
+    context,
+    `/awards/${params.slug}`,
+    {label: 'award', signal: request.signal},
+  );
   if (award.grouping !== 'year' || award.subAward) {
     throw new Response('Not Found', {status: 404});
   }

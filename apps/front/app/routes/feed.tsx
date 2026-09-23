@@ -1,5 +1,5 @@
 import type {Route} from './+types/feed';
-import {apiFetch} from '@/lib/api';
+import {tryApiJson} from '@/lib/api';
 import type {SelectionHistoryItemData} from '@/lib/api-types';
 import {
   buildRssFeed,
@@ -14,20 +14,12 @@ async function fetchHistory(
   limit: number,
   signal: AbortSignal,
 ): Promise<FeedItem[] | undefined> {
-  const response = await apiFetch(
+  const body = await tryApiJson<{items: SelectionHistoryItemData[]}>(
     context,
     `/selections/${period}/history?locale=ja&limit=${limit}`,
     {signal},
   );
-
-  if (!response.ok) {
-    return undefined;
-  }
-
-  const {items} = (await response.json()) as {
-    items: SelectionHistoryItemData[];
-  };
-  return items.map(item => ({...item, period}));
+  return body?.items.map(item => ({...item, period}));
 }
 
 export async function loader({context, request}: Route.LoaderArgs) {

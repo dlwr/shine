@@ -11,7 +11,7 @@ import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {apiFetch} from '@/lib/api';
+import {loadApiJson} from '@/lib/api';
 import type {PersonData} from '@/lib/api-types';
 
 export type PersonCreditData = PersonData['credits'][number];
@@ -147,21 +147,11 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 export async function loader({context, request, params}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
 
-  const response = await apiFetch(
+  const person = await loadApiJson<PersonData>(
     context,
     `/people/${params.id}?locale=${locale}`,
-    {signal: request.signal},
+    {label: 'person', signal: request.signal},
   );
-
-  if (response.status === 404) {
-    throw new Response('Not Found', {status: 404});
-  }
-
-  if (!response.ok) {
-    throw new Response('Failed to load person', {status: 502});
-  }
-
-  const person = (await response.json()) as PersonData;
   return {person, locale};
 }
 

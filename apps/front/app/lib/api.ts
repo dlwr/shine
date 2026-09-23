@@ -91,3 +91,37 @@ export async function apiFetch(
 
   return response;
 }
+
+type ApiJsonOptions = RequestInit & {label: string};
+
+export async function loadApiJson<T>(
+  context: LoadContext,
+  path: string,
+  {label, ...init}: ApiJsonOptions,
+): Promise<T> {
+  const response = await apiFetch(context, path, init);
+
+  if (response.status === 404) {
+    throw new Response('Not Found', {status: 404});
+  }
+
+  if (!response.ok) {
+    throw new Response(`Failed to load ${label}`, {status: 502});
+  }
+
+  return (await response.json()) as T;
+}
+
+export async function tryApiJson<T>(
+  context: LoadContext,
+  path: string,
+  init?: RequestInit,
+): Promise<T | undefined> {
+  const response = await apiFetch(context, path, init);
+
+  if (!response.ok) {
+    return undefined;
+  }
+
+  return (await response.json()) as T;
+}

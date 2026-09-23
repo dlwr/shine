@@ -1,5 +1,5 @@
 import {createImageResponse} from '@/lib/og/image-response';
-import {apiFetch, resolveQuizKey, type LoadContext} from '@/lib/api';
+import {tryApiJson, resolveQuizKey, type LoadContext} from '@/lib/api';
 import {fetchPosterAsDataUri} from '@/lib/og/assets';
 import {
   buildQuizPosterHtml,
@@ -34,15 +34,15 @@ export async function renderQuizPoster(
     return new Response('Quiz unavailable', {status: 503});
   }
 
-  const response = await apiFetch(context, `/quiz/answer?date=${date}`, {
-    headers: {'X-Quiz-Key': quizKey},
-    signal: request.signal,
-  });
-  if (!response.ok) {
+  const answer = await tryApiJson<QuizAnswer>(
+    context,
+    `/quiz/answer?date=${date}`,
+    {headers: {'X-Quiz-Key': quizKey}, signal: request.signal},
+  );
+  if (!answer) {
     return new Response('Not Found', {status: 404});
   }
 
-  const answer = (await response.json()) as QuizAnswer;
   const posterDataUri = await fetchPosterAsDataUri(
     upgradePosterForSharing(answer.posterUrl),
   );

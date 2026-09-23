@@ -5,7 +5,7 @@ import {PersonPortrait} from '@/components/editorial/person-portrait';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {apiFetch} from '@/lib/api';
+import {loadApiJson} from '@/lib/api';
 import type {PersonCrossingsData} from '@/lib/api-types';
 
 type Performance = PersonCrossingsData['topPerformances'][number];
@@ -27,18 +27,11 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
 
-  const response = await apiFetch(
+  const body = await loadApiJson<PersonCrossingsData>(
     context,
     `/people/crossings?locale=${locale}`,
-    {
-      signal: request.signal,
-    },
+    {label: 'people crossings', signal: request.signal},
   );
-  if (!response.ok) {
-    throw new Response('Failed to load people crossings', {status: 502});
-  }
-
-  const body = (await response.json()) as PersonCrossingsData;
   return {...body, locale};
 }
 

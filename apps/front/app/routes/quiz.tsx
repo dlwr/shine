@@ -5,7 +5,7 @@ import {QuizClues} from '@/components/quiz/quiz-clues';
 import {QuizGuessForm} from '@/components/quiz/quiz-guess-form';
 import {QuizResult} from '@/components/quiz/quiz-result';
 import {useQuizGame, type QuizPuzzle} from '@/components/quiz/use-quiz-game';
-import {apiFetch, resolveApiUrl, canTransformImages} from '@/lib/api';
+import {loadApiJson, resolveApiUrl, canTransformImages} from '@/lib/api';
 import {transformedImageUrl} from '@/lib/image-transformations';
 import {fetchMonthlyPick, type MonthlyPick} from '@/lib/monthly-pick';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
@@ -39,16 +39,13 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const apiUrl = resolveApiUrl(context);
   const transformImages = canTransformImages(context);
 
-  const [dailyResponse, monthly] = await Promise.all([
-    apiFetch(context, '/quiz/daily', {signal: request.signal}),
+  const [puzzle, monthly] = await Promise.all([
+    loadApiJson<QuizPuzzle>(context, '/quiz/daily', {
+      label: 'quiz',
+      signal: request.signal,
+    }),
     fetchMonthlyPick(context, 'ja', request.signal),
   ]);
-
-  if (!dailyResponse.ok) {
-    throw new Response('Failed to load quiz', {status: 502});
-  }
-
-  const puzzle = (await dailyResponse.json()) as QuizPuzzle;
 
   return {puzzle, apiUrl, locale, monthly, transformImages};
 }

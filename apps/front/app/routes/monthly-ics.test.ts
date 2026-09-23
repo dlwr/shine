@@ -108,8 +108,8 @@ describe('monthly.ics', () => {
     mockHistory({}, false);
     mockHistory(next);
 
-    const response = await loader(createArguments());
-
-    expect(response.status).toBe(502);
+    await expect(loader(createArguments())).rejects.toMatchObject({
+      status: 502,
+    });
   });
 });

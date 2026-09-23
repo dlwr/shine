@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react';
 import type {Route} from './+types/watched';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
-import {apiFetch} from '@/lib/api';
+import {loadApiJson} from '@/lib/api';
 import type {WatchedListsData} from '@/lib/api-types';
 import {awardHeading} from '@/lib/awards';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
@@ -39,14 +39,11 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
 
-  const response = await apiFetch(context, `/watched/lists`, {
-    signal: request.signal,
-  });
-  if (!response.ok) {
-    throw new Response('Failed to load watched lists', {status: 502});
-  }
-
-  const {lists} = (await response.json()) as WatchedListsData;
+  const {lists} = await loadApiJson<WatchedListsData>(
+    context,
+    `/watched/lists`,
+    {label: 'watched lists', signal: request.signal},
+  );
 
   return {
     lists: lists.map(list => ({

@@ -1,5 +1,5 @@
 import {createImageResponse} from '@/lib/og/image-response';
-import {apiFetch, resolveQuizKey, type LoadContext} from '@/lib/api';
+import {tryApiJson, resolveQuizKey, type LoadContext} from '@/lib/api';
 import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
 import {OG_HEIGHT, OG_WIDTH, buildQuizCardHtml} from '@/lib/og/template';
 import {upgradePosterForSharing} from '@/lib/meta';
@@ -23,15 +23,14 @@ async function fetchTodaysPoster(
     return {};
   }
 
-  const response = await apiFetch(context, `/quiz/answer`, {
+  const answer = await tryApiJson<QuizAnswer>(context, `/quiz/answer`, {
     headers: {'X-Quiz-Key': quizKey},
     signal,
   });
-  if (!response.ok) {
+  if (!answer) {
     return {};
   }
 
-  const answer = (await response.json()) as QuizAnswer;
   return {
     posterDataUri: await fetchPosterAsDataUri(
       upgradePosterForSharing(answer.posterUrl),
@@ -46,17 +45,16 @@ export async function renderQuizCard(
   request: Request,
   context: LoadContext,
 ): Promise<Response> {
-  const dailyResponse = await apiFetch(context, `/quiz/daily`, {
-    signal: request.signal,
-  });
-  if (!dailyResponse.ok) {
+  const daily = await tryApiJson<{date: string; poolSize: number}>(
+    context,
+    `/quiz/daily`,
+    {signal: request.signal},
+  );
+  if (!daily) {
     return new Response('Quiz unavailable', {status: 503});
   }
 
-  const {date, poolSize} = (await dailyResponse.json()) as {
-    date: string;
-    poolSize: number;
-  };
+  const {date, poolSize} = daily;
 
   const crop = await fetchTodaysPoster(context, request.signal);
   const html = buildQuizCardHtml({date, poolSize, ...crop});
