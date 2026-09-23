@@ -4,7 +4,7 @@ import {PersonPortrait} from '@/components/editorial/person-portrait';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
-import {resolveApiUrl} from '@/lib/api';
+import {loadApiJson} from '@/lib/api';
 import type {PersonUncrownedData} from '@/lib/api-types';
 
 type UncrownedAward = PersonUncrownedData['awards'][number];
@@ -27,16 +27,12 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
-  const apiUrl = resolveApiUrl(context);
 
-  const response = await fetch(`${apiUrl}/people/uncrowned?locale=${locale}`, {
-    signal: request.signal,
-  });
-  if (!response.ok) {
-    throw new Response('Failed to load uncrowned people', {status: 502});
-  }
-
-  const body = (await response.json()) as PersonUncrownedData;
+  const body = await loadApiJson<PersonUncrownedData>(
+    context,
+    `/people/uncrowned?locale=${locale}`,
+    {label: 'uncrowned people', signal: request.signal},
+  );
   return {...body, locale};
 }
 
