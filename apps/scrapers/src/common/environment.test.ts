@@ -1,18 +1,17 @@
-import {config} from 'dotenv';
 import {describe, expect, it, vi} from 'vitest';
-import {
-  assertDatabaseEnvironment,
-  buildEnvironment,
-  loadEnvironmentFiles,
-} from './environment';
-
-vi.mock('dotenv', () => ({config: vi.fn()}));
+import {assertDatabaseEnvironment, buildEnvironment} from './environment';
 
 describe('loadEnvironmentFiles', () => {
-  it('dotenv の宣伝ログを出さない', () => {
+  it('dotenv の宣伝ログを出さない', async () => {
+    vi.resetModules();
+    vi.doMock('dotenv', () => ({config: vi.fn()}));
+    const {config} = await import('dotenv');
+    const {loadEnvironmentFiles} = await import('./environment');
+
     loadEnvironmentFiles();
 
     expect(config).toHaveBeenCalledWith(expect.objectContaining({quiet: true}));
+    vi.doUnmock('dotenv');
   });
 });
 
