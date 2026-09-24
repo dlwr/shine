@@ -116,17 +116,25 @@ describe('Database Schema', () => {
     });
 
     it('allows same resource in another language', async () => {
-      await database.insert(translations).values({
-        resourceType: 'movie_title',
-        resourceUid: 'movie-1',
-        languageCode: 'en',
-        content: 'Title',
-      });
+      await database.insert(translations).values([
+        {
+          resourceType: 'movie_title',
+          resourceUid: 'movie-3',
+          languageCode: 'ja',
+          content: 'タイトル',
+        },
+        {
+          resourceType: 'movie_title',
+          resourceUid: 'movie-3',
+          languageCode: 'en',
+          content: 'Title',
+        },
+      ]);
 
       const rows = await database
         .select()
         .from(translations)
-        .where(eq(translations.resourceUid, 'movie-1'));
+        .where(eq(translations.resourceUid, 'movie-3'));
       expect(rows).toHaveLength(2);
     });
   });
@@ -244,14 +252,18 @@ describe('Database Schema', () => {
 
     it('rejects the same category name within one organization', async () => {
       const [organization] = await database
-        .select()
-        .from(awardOrganizations)
-        .where(eq(awardOrganizations.name, 'Org A'));
+        .insert(awardOrganizations)
+        .values({name: 'Org C', shortName: 'C'})
+        .returning();
+      await database.insert(awardCategories).values({
+        organizationUid: organization.uid,
+        name: 'Best Director',
+      });
 
       await expect(
         database.insert(awardCategories).values({
           organizationUid: organization.uid,
-          name: 'Best Picture',
+          name: 'Best Director',
         }),
       ).rejects.toSatisfy(isUniqueViolation);
     });
