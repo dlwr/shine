@@ -1,3 +1,5 @@
+import type {AdminMovieDetailData} from '@/lib/api-types';
+
 const tokenKey = 'adminToken';
 
 export function getAdminToken(): string | undefined {
@@ -44,4 +46,29 @@ export async function readErrorMessage(
   } catch {
     return fallback;
   }
+}
+
+export async function adminJson<T>(
+  input: string | URL | Request,
+  failureMessage: string,
+  init?: RequestInit,
+): Promise<T> {
+  const response = await adminFetch(input, init);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, failureMessage));
+  }
+
+  return (await response.json()) as T;
+}
+
+export async function fetchAdminMovie(
+  apiUrl: string,
+  movieId: string,
+): Promise<AdminMovieDetailData | undefined> {
+  const response = await adminFetch(`${apiUrl}/admin/movies/${movieId}`);
+  if (!response.ok) {
+    return undefined;
+  }
+
+  return (await response.json()) as AdminMovieDetailData;
 }
