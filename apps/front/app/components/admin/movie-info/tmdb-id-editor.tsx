@@ -1,5 +1,10 @@
 import {useState} from 'react';
-import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
+import {
+  adminFetch,
+  fetchAdminMovie,
+  getAdminToken,
+  readErrorMessage,
+} from '@/lib/admin-fetch';
 import type {MovieDetails, PerformTmdbUpdate} from './types';
 
 type TmdbIdEditorProperties = {
@@ -96,12 +101,8 @@ export function TmdbIdEditor({
         );
       }
 
-      const movieResponse = await adminFetch(
-        `${apiUrl}/admin/movies/${movieId}`,
-      );
-
-      if (movieResponse.ok) {
-        const data = (await movieResponse.json()) as MovieDetails;
+      const data = await fetchAdminMovie(apiUrl, movieId);
+      if (data) {
         onMovieDataUpdate(data);
       }
 

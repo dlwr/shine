@@ -1,7 +1,7 @@
 import {useCallback, useEffect, useReducer} from 'react';
 import type {FormEvent} from 'react';
 import type {MovieDetails} from '../movie-info/types';
-import {adminFetch, readErrorMessage} from '@/lib/admin-fetch';
+import {adminFetch, fetchAdminMovie, readErrorMessage} from '@/lib/admin-fetch';
 import {ensureToken} from '../ceremonies/ensure-token';
 import {
   initialNominationEditorState,
@@ -60,14 +60,10 @@ export function useNominationEditor({
   }, [nominations, editingNominationId]);
 
   const refreshMovieData = useCallback(async () => {
-    const response = await adminFetch(`${apiUrl}/admin/movies/${movieId}`);
-
-    if (!response.ok) {
-      return;
+    const movie = await fetchAdminMovie(apiUrl, movieId);
+    if (movie) {
+      onNominationsUpdate(movie);
     }
-
-    const movie = (await response.json()) as MovieDetails;
-    onNominationsUpdate(movie);
   }, [apiUrl, movieId, onNominationsUpdate]);
 
   const mutate = useCallback(

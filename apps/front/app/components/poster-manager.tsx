@@ -1,5 +1,10 @@
 import {useState} from 'react';
-import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
+import {
+  adminFetch,
+  fetchAdminMovie,
+  getAdminToken,
+  readErrorMessage,
+} from '@/lib/admin-fetch';
 import type {MovieDetails} from '@/components/admin/movie-info/types';
 
 type PosterUrl = MovieDetails['posters'][number];
@@ -68,12 +73,8 @@ export default function PosterManager({
         );
       }
 
-      const movieResponse = await adminFetch(
-        `${apiUrl}/admin/movies/${movieId}`,
-      );
-
-      if (movieResponse.ok) {
-        const data = (await movieResponse.json()) as MovieDetails;
+      const data = await fetchAdminMovie(apiUrl, movieId);
+      if (data) {
         onPostersUpdate(data);
       }
 
@@ -125,12 +126,8 @@ export default function PosterManager({
         );
       }
 
-      const movieResponse = await adminFetch(
-        `${apiUrl}/admin/movies/${movieId}`,
-      );
-
-      if (movieResponse.ok) {
-        const data = (await movieResponse.json()) as MovieDetails;
+      const data = await fetchAdminMovie(apiUrl, movieId);
+      if (data) {
         onPostersUpdate(data);
       }
 
