@@ -180,6 +180,17 @@ describe('adminJson', () => {
     expect(lastFetchHeaders().get('authorization')).toBe('Bearer token-xyz');
   });
 
+  it('401 ならログイン画面へ送って undefined を返す', async () => {
+    fetchMock.mockResolvedValue(new Response('Unauthorized', {status: 401}));
+
+    const data = await adminJson(
+      'https://api.example.com/admin/movies',
+      '失敗',
+    );
+
+    expect(data).toBeUndefined();
+  });
+
   it('失敗したら API のエラー文言で投げる', async () => {
     fetchMock.mockResolvedValue(
       new Response('{"error":"Movie not found"}', {status: 404}),

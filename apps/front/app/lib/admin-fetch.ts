@@ -52,8 +52,12 @@ export async function adminJson<T>(
   input: string | URL | Request,
   failureMessage: string,
   init?: RequestInit,
-): Promise<T> {
+): Promise<T | undefined> {
   const response = await adminFetch(input, init);
+  if (response.status === 401) {
+    return undefined;
+  }
+
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, failureMessage));
   }

@@ -7,7 +7,7 @@ import NominationManager from '../components/nomination-manager';
 import ArticleLinkManager from '../components/article-link-manager';
 import type {Route} from './+types/admin.movies.$id';
 import {resolveApiUrl} from '@/lib/api';
-import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+import {adminJson, getAdminToken} from '@/lib/admin-fetch';
 import type {MovieDetails} from '@/components/admin/movie-info/types';
 
 type LoaderData = {
@@ -57,17 +57,15 @@ export default function AdminMovieEdit({loaderData}: Route.ComponentProps) {
       setError(undefined);
 
       try {
-        const response = await adminFetch(`${apiUrl}/admin/movies/${movieId}`);
-
-        if (response.status === 401) {
+        const data = await adminJson<MovieDetails>(
+          `${apiUrl}/admin/movies/${movieId}`,
+          'Failed to fetch movie data',
+        );
+        if (!data) {
           return;
         }
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch movie data');
-        }
-
-        setMovieData((await response.json()) as MovieDetails);
+        setMovieData(data);
       } catch (error) {
         console.error('Error loading movie:', error);
         setError('Failed to load movie data');
