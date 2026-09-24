@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/card';
 import type {Route} from './+types/admin.movies.selections';
 import {resolveApiUrl} from '@/lib/api';
-import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+import {adminFetch, adminJson, getAdminToken} from '@/lib/admin-fetch';
 
 export function meta(): Route.MetaDescriptors {
   return [
@@ -60,19 +60,14 @@ export default function AdminMovieSelections({
       setError(undefined);
 
       try {
-        const response = await adminFetch(
+        const data = await adminJson<PreviewSelections>(
           `${apiUrl}/admin/preview-selections?locale=${locale}`,
+          'Failed to fetch selections',
         );
-
-        if (response.status === 401) {
+        if (!data) {
           return;
         }
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch selections');
-        }
-
-        const data = (await response.json()) as PreviewSelections;
         setSelections(data);
       } catch (error) {
         console.error('Error loading selections:', error);

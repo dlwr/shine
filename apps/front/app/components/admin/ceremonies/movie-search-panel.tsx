@@ -1,7 +1,7 @@
 import {useState, type FormEvent} from 'react';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
-import {adminFetch} from '@/lib/admin-fetch';
+import {adminJson} from '@/lib/admin-fetch';
 import {ensureToken} from './ensure-token';
 import type {MovieSearchResult} from './types';
 
@@ -43,19 +43,13 @@ export function MovieSearchPanel({
     setIsSearchingMovies(true);
 
     try {
-      const response = await adminFetch(
+      const data = await adminJson<{movies: MovieSearchResult[]}>(
         `${apiUrl}/admin/movies?limit=10&search=${encodeURIComponent(trimmedQuery)}`,
+        'Failed to search movies',
       );
-
-      if (response.status === 401) {
+      if (!data) {
         return;
       }
-
-      if (!response.ok) {
-        throw new Error(`Failed with status ${response.status}`);
-      }
-
-      const data = (await response.json()) as {movies: MovieSearchResult[]};
 
       setMovieSearchResults(data.movies ?? []);
     } catch (error) {

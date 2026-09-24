@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+import {adminJson, getAdminToken} from '@/lib/admin-fetch';
 import type {AwardsData} from './types';
 
 export function useAwardsData(apiUrl: string) {
@@ -22,17 +22,14 @@ export function useAwardsData(apiUrl: string) {
       setAwardsError(undefined);
 
       try {
-        const response = await adminFetch(`${apiUrl}/admin/awards`);
-
-        if (response.status === 401) {
+        const data = await adminJson<AwardsData>(
+          `${apiUrl}/admin/awards`,
+          'Failed to fetch awards data',
+        );
+        if (!data) {
           return;
         }
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch awards data');
-        }
-
-        const data = (await response.json()) as AwardsData;
         setAwardsData(data);
       } catch (error) {
         console.error('Error loading awards data:', error);

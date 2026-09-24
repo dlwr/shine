@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
+import {adminJson, fetchAdminMovie, getAdminToken} from '@/lib/admin-fetch';
 import type {MovieDetails} from './types';
 
 type TmdbAutoFetchProperties = {
@@ -33,38 +33,24 @@ export function TmdbAutoFetch({
     setAutoFetchError(undefined);
 
     try {
-      const response = await adminFetch(
-        `${apiUrl}/admin/movies/${movieId}/auto-fetch-tmdb`,
-        {
-          method: 'POST',
-        },
-      );
-
-      if (response.status === 401) {
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          await readErrorMessage(response, 'TMDb自動取得に失敗しました'),
-        );
-      }
-
-      const result = (await response.json()) as {
+      const result = await adminJson<{
         success: boolean;
         fetchResults: {
           tmdbIdSet: boolean;
           postersAdded: number;
           translationsAdded: number;
         };
-      };
-
-      const movieResponse = await adminFetch(
-        `${apiUrl}/admin/movies/${movieId}`,
+      }>(
+        `${apiUrl}/admin/movies/${movieId}/auto-fetch-tmdb`,
+        'TMDb自動取得に失敗しました',
+        {method: 'POST'},
       );
+      if (!result) {
+        return;
+      }
 
-      if (movieResponse.ok) {
-        const data = (await movieResponse.json()) as MovieDetails;
+      const data = await fetchAdminMovie(apiUrl, movieId);
+      if (data) {
         onMovieDataUpdate(data);
       }
 

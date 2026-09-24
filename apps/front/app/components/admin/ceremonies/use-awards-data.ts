@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useState} from 'react';
-import {adminFetch} from '@/lib/admin-fetch';
+import {adminJson} from '@/lib/admin-fetch';
 import {ensureToken} from './ensure-token';
 import type {AwardsCategory, AwardsData, AwardsOrganization} from './types';
 
@@ -17,20 +17,13 @@ export function useAwardsData(apiUrl: string) {
     setAwardsError(undefined);
 
     try {
-      const response = await adminFetch(`${apiUrl}/admin/awards`);
-
-      if (response.status === 401) {
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed with status ${response.status}`);
-      }
-
-      const data = (await response.json()) as {
+      const data = await adminJson<{
         organizations: AwardsOrganization[];
         categories: AwardsCategory[];
-      };
+      }>(`${apiUrl}/admin/awards`, 'Failed to fetch awards');
+      if (!data) {
+        return;
+      }
 
       setAwardsData({
         organizations: data.organizations ?? [],

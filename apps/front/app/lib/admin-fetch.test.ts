@@ -1,7 +1,9 @@
 import {beforeEach, describe, expect, it, vi, type Mock} from 'vitest';
 import {
   adminFetch,
+  adminJson,
   clearAdminToken,
+  fetchAdminMovie,
   getAdminToken,
   setAdminToken,
 } from './admin-fetch';
@@ -154,5 +156,84 @@ describe('adminFetch', () => {
     expect(response.status).toBe(500);
     expect(localStorage.getItem('adminToken')).toBe('token-xyz');
     expect(location.href).toBe('http://localhost:3000/');
+  });
+});
+
+describe('adminJson', () => {
+  it('成功したら応答の JSON を返す', async () => {
+    fetchMock.mockResolvedValue(new Response('{"movies":[]}', {status: 200}));
+
+    const data = await adminJson<{movies: unknown[]}>(
+      'https://api.example.com/admin/movies',
+      '取得に失敗しました',
+    );
+
+    expect(data).toEqual({movies: []});
+  });
+
+  it('トークンを付けて送る', async () => {
+    localStorage.setItem('adminToken', 'token-xyz');
+    fetchMock.mockResolvedValue(new Response('{}', {status: 200}));
+
+    await adminJson('https://api.example.com/admin/movies', '失敗');
+
+    expect(lastFetchHeaders().get('authorization')).toBe('Bearer token-xyz');
+  });
+
+  it('401 ならログイン画面へ送って undefined を返す', async () => {
+    fetchMock.mockResolvedValue(new Response('Unauthorized', {status: 401}));
+
+    const data = await adminJson(
+      'https://api.example.com/admin/movies',
+      '失敗',
+    );
+
+    expect(data).toBeUndefined();
+  });
+
+  it('失敗したら API のエラー文言で投げる', async () => {
+    fetchMock.mockResolvedValue(
+      new Response('{"error":"Movie not found"}', {status: 404}),
+    );
+
+    await expect(
+      adminJson('https://api.example.com/admin/movies/x', '取得に失敗しました'),
+    ).rejects.toThrow('Movie not found');
+  });
+
+  it('失敗した応答にエラー文言が無ければ既定の文言で投げる', async () => {
+    fetchMock.mockResolvedValue(new Response('Server Error', {status: 500}));
+
+    await expect(
+      adminJson('https://api.example.com/admin/movies', '取得に失敗しました'),
+    ).rejects.toThrow('取得に失敗しました');
+  });
+});
+
+describe('fetchAdminMovie', () => {
+  it('管理用の映画詳細を取得する', async () => {
+    fetchMock.mockResolvedValue(new Response('{"uid":"m1"}', {status: 200}));
+
+    const movie = await fetchAdminMovie('https://api.example.com', 'm1');
+
+    expect(movie).toEqual({uid: 'm1'});
+  });
+
+  it('管理用の映画詳細の URL を叩く', async () => {
+    fetchMock.mockResolvedValue(new Response('{}', {status: 200}));
+
+    await fetchAdminMovie('https://api.example.com', 'm1');
+
+    expect(fetchMock.mock.calls.at(-1)?.[0]).toBe(
+      'https://api.example.com/admin/movies/m1',
+    );
+  });
+
+  it('取得に失敗したら undefined を返す', async () => {
+    fetchMock.mockResolvedValue(new Response('Server Error', {status: 500}));
+
+    const movie = await fetchAdminMovie('https://api.example.com', 'm1');
+
+    expect(movie).toBeUndefined();
   });
 });

@@ -1,6 +1,6 @@
 import {memo, useEffect, useState} from 'react';
 import {Button} from '@/components/ui/button';
-import {adminFetch, getAdminToken} from '@/lib/admin-fetch';
+import {adminJson, getAdminToken} from '@/lib/admin-fetch';
 import {deleteMovie, mergeMovies, showMergeDialog} from './movie-actions';
 import type {Movie, MoviesResponse, PaginationData} from './types';
 
@@ -53,19 +53,14 @@ export const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
         const searchParameter = search
           ? `&search=${encodeURIComponent(search)}`
           : '';
-        const response = await adminFetch(
+        const data = await adminJson<MoviesResponse>(
           `${apiUrl}/admin/movies?page=${page}&limit=${limit}${searchParameter}`,
+          'Failed to fetch movies',
         );
-
-        if (response.status === 401) {
+        if (!data) {
           return;
         }
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch movies');
-        }
-
-        const data = (await response.json()) as MoviesResponse;
         setMovies(data.movies || []);
         setPagination(
           data.pagination || {

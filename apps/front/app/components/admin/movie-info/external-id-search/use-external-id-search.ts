@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import type {FormEvent} from 'react';
-import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
+import {adminJson, getAdminToken} from '@/lib/admin-fetch';
 import type {
   ExternalIdSearchResponse,
   ExternalIdSuggestion,
@@ -104,19 +104,14 @@ export function useExternalIdSearch({
     setUsedYear(undefined);
 
     try {
-      const response = await adminFetch(
+      const data = await adminJson<ExternalIdSearchResponse>(
         `${apiUrl}/admin/movies/${movieId}/external-id-search?${parameters.toString()}`,
+        '検索に失敗しました',
       );
-
-      if (response.status === 401) {
+      if (!data) {
         return;
       }
 
-      if (!response.ok) {
-        throw new Error(await readErrorMessage(response, '検索に失敗しました'));
-      }
-
-      const data = (await response.json()) as ExternalIdSearchResponse;
       setResults(data.results);
       setUsedQuery(data.usedQuery);
       setUsedYear(data.usedYear);

@@ -1,5 +1,10 @@
 import {useCallback} from 'react';
-import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
+import {
+  adminFetch,
+  fetchAdminMovie,
+  getAdminToken,
+  readErrorMessage,
+} from '@/lib/admin-fetch';
 import type {MovieDetails, PerformImdbUpdate, PerformTmdbUpdate} from './types';
 
 type UseMovieUpdatesOptions = {
@@ -14,14 +19,10 @@ export function useMovieUpdates({
   onMovieDataUpdate,
 }: UseMovieUpdatesOptions) {
   const refreshMovieData = useCallback(async () => {
-    const movieResponse = await adminFetch(`${apiUrl}/admin/movies/${movieId}`);
-
-    if (!movieResponse.ok) {
-      return;
+    const data = await fetchAdminMovie(apiUrl, movieId);
+    if (data) {
+      onMovieDataUpdate(data);
     }
-
-    const data = (await movieResponse.json()) as MovieDetails;
-    onMovieDataUpdate(data);
   }, [apiUrl, movieId, onMovieDataUpdate]);
 
   const performImdbUpdate = useCallback<PerformImdbUpdate>(

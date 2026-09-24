@@ -1,6 +1,11 @@
 import {useState} from 'react';
 import type {MovieDetails} from '@/components/admin/movie-info/types';
-import {adminFetch, getAdminToken, readErrorMessage} from '@/lib/admin-fetch';
+import {
+  adminFetch,
+  fetchAdminMovie,
+  getAdminToken,
+  readErrorMessage,
+} from '@/lib/admin-fetch';
 import {
   deleteTranslationRequest,
   hasRequiredTranslationFields,
@@ -57,10 +62,9 @@ export function useTranslationEditor({
       throw new Error(await readErrorMessage(response, failureMessage));
     }
 
-    const movieResponse = await adminFetch(`${apiUrl}/admin/movies/${movieId}`);
-
-    if (movieResponse.ok) {
-      onTranslationsUpdate((await movieResponse.json()) as MovieDetails);
+    const movie = await fetchAdminMovie(apiUrl, movieId);
+    if (movie) {
+      onTranslationsUpdate(movie);
     }
 
     return 'sent';

@@ -1,5 +1,5 @@
 import {useEffect, useMemo, useState} from 'react';
-import {adminFetch} from '@/lib/admin-fetch';
+import {adminJson} from '@/lib/admin-fetch';
 import {filterCeremonies, organizationOptions} from './ceremony-list';
 import {ensureToken} from './ensure-token';
 import type {CeremonyListItem} from './types';
@@ -21,19 +21,14 @@ export function useCeremonyList(apiUrl: string) {
       setError(undefined);
 
       try {
-        const response = await adminFetch(`${apiUrl}/admin/ceremonies`);
-
-        if (response.status === 401) {
+        const data = await adminJson<{ceremonies: CeremonyListItem[]}>(
+          `${apiUrl}/admin/ceremonies`,
+          'Failed to fetch ceremonies',
+        );
+        if (!data) {
           return;
         }
 
-        if (!response.ok) {
-          throw new Error(`Failed with status ${response.status}`);
-        }
-
-        const data = (await response.json()) as {
-          ceremonies: CeremonyListItem[];
-        };
         setCeremonies(data.ceremonies ?? []);
       } catch (fetchError) {
         console.error('Failed to load ceremonies:', fetchError);
