@@ -7,6 +7,7 @@ import {
   type ImdbEventNomination,
   type ImdbEventNominationTitle,
 } from '../imdb-event-award';
+import {addImportStats, emptyImportStats} from '../imdb-event-award/stats';
 import {
   filmReferenceKey,
   resolveFilmReferences,
@@ -239,20 +240,6 @@ async function resolveFilms(
   });
 }
 
-function emptyStats(): ImdbEventImportStats {
-  return {
-    editionsProcessed: 0,
-    moviesCreated: 0,
-    moviesExisting: 0,
-    skippedSoftDeleted: 0,
-    nominationsCreated: 0,
-    winnersUpdated: 0,
-    tmdbNotFound: 0,
-    peopleUnresolved: 0,
-    failed: 0,
-  };
-}
-
 export async function importListPersonAward({
   environment,
   source,
@@ -312,7 +299,7 @@ export async function importListPersonAwardEditions({
     throttleMs,
   );
 
-  const total = emptyStats();
+  const total = emptyImportStats();
   const seen = new Set<string>();
   for (const category of categories) {
     if (seen.has(category.category)) {
@@ -330,9 +317,7 @@ export async function importListPersonAwardEditions({
       throttleMs,
     });
 
-    for (const key of Object.keys(total) as Array<keyof ImdbEventImportStats>) {
-      total[key] += stats[key];
-    }
+    addImportStats(total, stats);
   }
 
   return total;

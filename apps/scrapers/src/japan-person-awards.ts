@@ -7,6 +7,7 @@ import {
 } from './common/ja-wikipedia-person-award';
 import {hochiCeremonyNumber} from './hochi-film-awards';
 import {type ImdbEventImportStats} from './imdb-event-award';
+import {addImportStats, emptyImportStats} from './imdb-event-award/stats';
 import {kinemaJunpoCeremonyNumber} from './kinema-junpo';
 import {mainichiCeremonyNumber} from './mainichi-film-concours';
 import {nikkanSportsCeremonyNumber} from './nikkan-sports-film-awards';
@@ -299,17 +300,7 @@ export async function importJapanPersonAwards({
   year?: number;
   throttleMs?: number;
 }): Promise<ImdbEventImportStats> {
-  const total: ImdbEventImportStats = {
-    editionsProcessed: 0,
-    moviesCreated: 0,
-    moviesExisting: 0,
-    skippedSoftDeleted: 0,
-    nominationsCreated: 0,
-    winnersUpdated: 0,
-    tmdbNotFound: 0,
-    peopleUnresolved: 0,
-    failed: 0,
-  };
+  const total = emptyImportStats();
 
   for (const source of sources) {
     const categories =
@@ -329,9 +320,7 @@ export async function importJapanPersonAwards({
       throttleMs,
     });
 
-    for (const key of Object.keys(total) as Array<keyof ImdbEventImportStats>) {
-      total[key] += stats[key];
-    }
+    addImportStats(total, stats);
   }
 
   return total;

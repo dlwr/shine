@@ -15,6 +15,7 @@ import {
   type ImdbEventImportStats,
   type ImdbEventNomination,
 } from './imdb-event-award';
+import {addImportStats, emptyImportStats} from './imdb-event-award/stats';
 import {japanAcademyCeremonyNumber} from './japan-academy-awards';
 import {
   fetchJapanAcademyPersonWikitext,
@@ -283,17 +284,7 @@ export async function importJapanAcademyPersonAwards({
   year?: number;
   throttleMs?: number;
 }): Promise<ImdbEventImportStats> {
-  const total: ImdbEventImportStats = {
-    editionsProcessed: 0,
-    moviesCreated: 0,
-    moviesExisting: 0,
-    skippedSoftDeleted: 0,
-    nominationsCreated: 0,
-    winnersUpdated: 0,
-    tmdbNotFound: 0,
-    peopleUnresolved: 0,
-    failed: 0,
-  };
+  const total = emptyImportStats();
 
   for (const award of awards) {
     const stats = await importJapanAcademyPersonAward({
@@ -304,9 +295,7 @@ export async function importJapanAcademyPersonAwards({
       throttleMs,
     });
 
-    for (const key of Object.keys(total) as Array<keyof ImdbEventImportStats>) {
-      total[key] += stats[key];
-    }
+    addImportStats(total, stats);
   }
 
   return total;
