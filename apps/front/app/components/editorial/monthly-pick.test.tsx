@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 import {render, screen} from '@testing-library/react';
-import {describe, expect, it} from 'vitest';
+import userEvent from '@testing-library/user-event';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {MonthlyPick} from './monthly-pick';
 
 const movie = {
@@ -159,5 +160,46 @@ describe('MonthlyPick のポスター配信', () => {
     expect(
       screen.getByRole('link', {name: 'これまでの今月の1本 →'}),
     ).toHaveAttribute('href', '/monthly');
+  });
+});
+
+describe('MonthlyPick の「観た」ボタン', () => {
+  const fetchMock = vi.fn().mockResolvedValue(new Response('{}'));
+
+  beforeEach(() => {
+    localStorage.clear();
+    fetchMock.mockClear();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('押したら API に観た印を送る', async () => {
+    const user = userEvent.setup();
+    render(
+      <MonthlyPick movie={movie} locale="ja" apiUrl="https://api.example" />,
+    );
+
+    await user.click(screen.getByRole('button', {name: '観た'}));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.example/movies/movie-3/watched',
+      {method: 'POST', headers: {}},
+    );
+  });
+
+  it('押したら映画ページのひとこと残す欄へ誘う', async () => {
+    const user = userEvent.setup();
+    render(
+      <MonthlyPick movie={movie} locale="ja" apiUrl="https://api.example" />,
+    );
+
+    await user.click(screen.getByRole('button', {name: '観た'}));
+
+    expect(
+      screen.getByRole('link', {name: /今月の1本.*ひとこと/}),
+    ).toHaveAttribute('href', '/movies/movie-3#article-links');
   });
 });

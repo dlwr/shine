@@ -14,10 +14,12 @@ export function WatchedToggle({
   uid,
   isMonthlyPick = false,
   apiUrl,
+  articleLinksHref = '#article-links',
 }: {
   uid: string;
   isMonthlyPick?: boolean;
   apiUrl?: string;
+  articleLinksHref?: string;
 }) {
   const [watched, setWatched] = useState(false);
 
@@ -49,7 +51,7 @@ export function WatchedToggle({
       </button>
       {watched && isMonthlyPick && (
         <a
-          href="#article-links"
+          href={articleLinksHref}
           className="font-mono text-xs font-bold text-brand underline underline-offset-2">
           今月の1本を観ましたね。ひとこと残す ↓
         </a>
