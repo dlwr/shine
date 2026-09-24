@@ -157,6 +157,23 @@ describe('WatchedToggle', () => {
     ).toHaveAttribute('href', '#article-links');
   });
 
+  it('ひとこと残す欄が別のページにあれば、そこへ誘う', async () => {
+    const user = userEvent.setup();
+    render(
+      <WatchedToggle
+        isMonthlyPick
+        uid="movie-1"
+        articleLinksHref="/movies/movie-1#article-links"
+      />,
+    );
+
+    await user.click(screen.getByRole('button', {name: '観た'}));
+
+    expect(
+      screen.getByRole('link', {name: /今月の1本.*ひとこと/}),
+    ).toHaveAttribute('href', '/movies/movie-1#article-links');
+  });
+
   it('今月の1本でも、観ていなければ誘わない', () => {
     render(<WatchedToggle uid="movie-1" isMonthlyPick />);
 
