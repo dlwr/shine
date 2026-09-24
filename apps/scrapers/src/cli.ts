@@ -23,12 +23,9 @@ import {createCommand as cannesJuryAwards} from './cannes-jury-awards-cli';
 import {createCommand as cannesPalmeDor} from './cannes-palme-dor-cli';
 import {createCommand as cannesPersonAwards} from './cannes-person-awards-cli';
 import {createCommand as databaseBackup} from './database-backup-cli';
-import {createCommand as deleteOrphanMovies} from './delete-orphan-movies-cli';
 import {createCommand as fixDefaultTranslations} from './fix-default-translations-cli';
-import {createCommand as fixJapaneseTitleContamination} from './fix-japanese-title-contamination-cli';
 import {createCommand as fixMisattributedNominations} from './fix-misattributed-nominations-cli';
 import {createCommand as fixOriginalLanguages} from './fix-original-languages-cli';
-import {createCommand as fixPosterContamination} from './fix-poster-contamination-cli';
 import {createCommand as goldenGlobeAwards} from './golden-globe-awards-cli';
 import {createCommand as hochiFilmAwards} from './hochi-film-awards-cli';
 import {createCommand as importImdbList} from './import-imdb-list-cli';
@@ -112,9 +109,6 @@ const commandGroups: Array<{heading: string; factories: Array<() => Command>}> =
         fixMisattributedNominations,
         fixDefaultTranslations,
         fixOriginalLanguages,
-        fixPosterContamination,
-        fixJapaneseTitleContamination,
-        deleteOrphanMovies,
       ],
     },
     {
