@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 import {defineConfig} from 'drizzle-kit';
 
-dotenv.config();
+dotenv.config({quiet: true});
 
 const environment = process.env.NODE_ENV || 'development';
 const isDevelopment = environment === 'development';
