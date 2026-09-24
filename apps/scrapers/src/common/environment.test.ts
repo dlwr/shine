@@ -1,5 +1,20 @@
-import {describe, expect, it} from 'vitest';
-import {assertDatabaseEnvironment, buildEnvironment} from './environment';
+import {config} from 'dotenv';
+import {describe, expect, it, vi} from 'vitest';
+import {
+  assertDatabaseEnvironment,
+  buildEnvironment,
+  loadEnvironmentFiles,
+} from './environment';
+
+vi.mock('dotenv', () => ({config: vi.fn()}));
+
+describe('loadEnvironmentFiles', () => {
+  it('dotenv の宣伝ログを出さない', () => {
+    loadEnvironmentFiles();
+
+    expect(config).toHaveBeenCalledWith(expect.objectContaining({quiet: true}));
+  });
+});
 
 describe('buildEnvironment', () => {
   it('TURSO_DATABASE_URLを読み取る', () => {

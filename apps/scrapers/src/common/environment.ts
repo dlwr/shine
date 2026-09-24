@@ -8,10 +8,12 @@ import {type Environment} from '@shine/database';
  * CLI は apps/scrapers を cwd として起動されるため、リポジトリルートも見る。
  */
 export function loadEnvironmentFiles(): void {
-  config();
-  config({path: path.resolve(process.cwd(), '.dev.vars')});
-  config({path: path.resolve(process.cwd(), '../../.env')});
-  config({path: path.resolve(process.cwd(), '../../.dev.vars')});
+  config({
+    path: ['.env', '.dev.vars', '../../.env', '../../.dev.vars'].map(file =>
+      path.resolve(process.cwd(), file),
+    ),
+    quiet: true,
+  });
 }
 
 export function buildEnvironment(source: NodeJS.ProcessEnv): Environment {
