@@ -245,6 +245,7 @@ function Movies({
             movie={movies.monthly}
             locale={locale}
             transformImages={transformImages}
+            apiUrl={apiUrl}
           />
         ) : (
           <p className="text-sm text-ink/50 font-mono">{noMovieLabel}</p>

@@ -2,6 +2,7 @@ import {AvailabilityBadges} from './availability-badges';
 import {BigYear} from './big-year';
 import type {FilmCardMovie} from './film-card';
 import {PosterFrame} from './poster-frame';
+import {WatchedToggle} from './watched-toggle';
 import {selectBestPoster} from '@/lib/poster';
 import {TAGLINE} from '@/lib/tagline';
 import {resolveMovieTitle} from '@/lib/movie-title';
@@ -42,10 +43,12 @@ export function MonthlyPick({
   movie,
   locale = 'ja',
   transformImages = false,
+  apiUrl,
 }: {
   movie: MonthlyPickMovie;
   locale?: string;
   transformImages?: boolean;
+  apiUrl?: string;
 }) {
   const copy = COPY[locale as keyof typeof COPY] ?? COPY.ja;
   const title = resolveMovieTitle(movie, {locale});
@@ -108,6 +111,12 @@ export function MonthlyPick({
             availability={movie.availability}
             movieTitle={title}
             tmdbId={movie.tmdbId}
+          />
+          <WatchedToggle
+            isMonthlyPick
+            uid={movie.uid}
+            apiUrl={apiUrl}
+            articleLinksHref={`${movieHref}#article-links`}
           />
           <div className="border-t-2 border-ink pt-3">
             <p className="font-mono text-xs text-ink-muted mb-2">
