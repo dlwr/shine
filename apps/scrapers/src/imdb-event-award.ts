@@ -7,6 +7,7 @@ import {
 } from './imdb-event-award/award-records';
 import {extractAwardEditions} from './imdb-event-award/editions';
 import {processEdition} from './imdb-event-award/process-edition';
+import {emptyImportStats} from './imdb-event-award/stats';
 import {
   type ImdbEventAwardConfig,
   type ImdbEventCollectedData,
@@ -41,17 +42,7 @@ export async function importImdbEventAward({
   throttleMs?: number;
   personOverrides?: ReadonlyMap<string, number>;
 }): Promise<ImdbEventImportStats> {
-  const stats: ImdbEventImportStats = {
-    editionsProcessed: 0,
-    moviesCreated: 0,
-    moviesExisting: 0,
-    skippedSoftDeleted: 0,
-    nominationsCreated: 0,
-    winnersUpdated: 0,
-    tmdbNotFound: 0,
-    peopleUnresolved: 0,
-    failed: 0,
-  };
+  const stats = emptyImportStats();
 
   const allEditions = extractAwardEditions(data, config);
   const editions =

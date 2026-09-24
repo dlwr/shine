@@ -6,6 +6,7 @@ import {
   type ImdbEventImportStats,
   type ImdbEventNomination,
 } from '../imdb-event-award';
+import {addImportStats, emptyImportStats} from '../imdb-event-award/stats';
 import {type AwardEdition, type FilmAwardEntry} from './award-table-types';
 import {
   parseFilmAwardWikitext,
@@ -316,17 +317,7 @@ export async function importEnWikipediaAwards({
   year?: number;
   throttleMs?: number;
 }): Promise<ImdbEventImportStats> {
-  const total: ImdbEventImportStats = {
-    editionsProcessed: 0,
-    moviesCreated: 0,
-    moviesExisting: 0,
-    skippedSoftDeleted: 0,
-    nominationsCreated: 0,
-    winnersUpdated: 0,
-    tmdbNotFound: 0,
-    peopleUnresolved: 0,
-    failed: 0,
-  };
+  const total = emptyImportStats();
 
   for (const award of awards) {
     const stats = await importEnWikipediaAward({
@@ -338,9 +329,7 @@ export async function importEnWikipediaAwards({
       throttleMs,
     });
 
-    for (const key of Object.keys(total) as Array<keyof ImdbEventImportStats>) {
-      total[key] += stats[key];
-    }
+    addImportStats(total, stats);
   }
 
   return total;
