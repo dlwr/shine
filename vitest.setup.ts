@@ -179,6 +179,7 @@ vi.stubGlobal(
 
 afterEach(() => {
   cleanup();
+  globalThis.localStorage?.clear();
 });
 
 afterAll(() => {
