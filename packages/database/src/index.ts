@@ -37,6 +37,8 @@ export type Environment = {
   NORTH_STAR_OWNER_IPS?: string;
   CACHE_KV?: KVNamespace;
   SUGGEST_RATE_LIMITER?: RateLimit;
+  AVAILABILITY_RATE_LIMITER?: RateLimit;
+  LOGIN_RATE_LIMITER?: RateLimit;
 };
 
 export const getDatabase = (environment: Environment) => {
