@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {D1_MAX_BOUND_PARAMETERS, inChunks} from '../src/index';
+import {D1_MAX_BOUND_PARAMETERS, inChunks, runInChunks} from '../src/index';
 
 type FakeQuery = Promise<number[]> & {toSQL(): {params: unknown[]}};
 
@@ -47,6 +47,50 @@ describe('inChunks', () => {
     const calls: number[][] = [];
 
     await inChunks([], chunk => fakeQuery(chunk, 3, calls));
+
+    expect(calls).toEqual([]);
+  });
+});
+
+const fakeWrite = (
+  chunk: number[],
+  parametersPerRow: number,
+  otherParameters: number,
+  calls: number[][],
+) => {
+  calls.push(chunk);
+  return Object.assign(Promise.resolve(), {
+    toSQL: () => ({
+      params: Array.from({
+        length: chunk.length * parametersPerRow + otherParameters,
+      }),
+    }),
+  });
+};
+
+describe('runInChunks', () => {
+  it('keeps every multi-row statement within the bound parameter limit', async () => {
+    const calls: number[][] = [];
+
+    await runInChunks(values, chunk => fakeWrite(chunk, 6, 2, calls));
+
+    expect(
+      calls.every(chunk => chunk.length * 6 + 2 <= D1_MAX_BOUND_PARAMETERS),
+    ).toBe(true);
+  });
+
+  it('writes every row exactly once', async () => {
+    const calls: number[][] = [];
+
+    await runInChunks(values, chunk => fakeWrite(chunk, 6, 2, calls));
+
+    expect(calls.slice(2).flat()).toEqual(values);
+  });
+
+  it('does not write for an empty list', async () => {
+    const calls: number[][] = [];
+
+    await runInChunks([], chunk => fakeWrite(chunk, 6, 2, calls));
 
     expect(calls).toEqual([]);
   });
