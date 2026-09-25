@@ -27,6 +27,29 @@ export type {SQL} from 'drizzle-orm';
 export const stringLiteral = (value: string): SQL =>
   sql.raw(`'${value.replaceAll("'", "''")}'`);
 
+export const D1_MAX_BOUND_PARAMETERS = 100;
+
+type ChunkQuery<R> = PromiseLike<R[]> & {toSQL(): {params: unknown[]}};
+
+export const inChunks = async <T, R>(
+  values: readonly T[],
+  build: (chunk: T[]) => ChunkQuery<R>,
+): Promise<R[]> => {
+  if (values.length === 0) {
+    return [];
+  }
+
+  const otherParameters = build([values[0]]).toSQL().params.length - 1;
+  const size = D1_MAX_BOUND_PARAMETERS - otherParameters;
+  const chunks: T[][] = [];
+  for (let start = 0; start < values.length; start += size) {
+    chunks.push(values.slice(start, start + size));
+  }
+
+  const results = await Promise.all(chunks.map(async chunk => build(chunk)));
+  return results.flat();
+};
+
 export type Environment = {
   TMDB_API_KEY?: string;
   TMDB_LEAD_ACCESS_TOKEN?: string;
