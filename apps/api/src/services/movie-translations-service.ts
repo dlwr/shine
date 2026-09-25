@@ -1,4 +1,4 @@
-import {and, eq, isNull} from '@shine/database';
+import {and, eq, isNull, runBatch} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {BaseService} from './base-service';
@@ -22,76 +22,64 @@ export class MovieTranslationsService extends BaseService {
       throw new NotFoundError('Movie not found');
     }
 
-    await this.database.transaction(async trx => {
-      const now = Math.floor(Date.now() / 1000);
+    const now = Math.floor(Date.now() / 1000);
+    const existingTitle = await this.findTranslationUid(
+      movieId,
+      'movie_title',
+      languageCode,
+    );
+    const existingDescription = description
+      ? await this.findTranslationUid(
+          movieId,
+          'movie_description',
+          languageCode,
+        )
+      : undefined;
 
-      if (isDefault) {
-        await trx
+    const clearDefault = this.database
+      .update(translations)
+      .set({isDefault: 0})
+      .where(
+        and(
+          eq(translations.resourceUid, movieId),
+          eq(translations.resourceType, 'movie_title'),
+        ),
+      );
+    const saveTitle = existingTitle
+      ? this.database
           .update(translations)
-          .set({isDefault: 0})
-          .where(
-            and(
-              eq(translations.resourceUid, movieId),
-              eq(translations.resourceType, 'movie_title'),
-            ),
-          );
-      }
+          .set({content: title, isDefault: isDefault ? 1 : 0})
+          .where(eq(translations.uid, existingTitle))
+      : this.database.insert(translations).values({
+          resourceType: 'movie_title',
+          resourceUid: movieId,
+          languageCode,
+          content: title,
+          isDefault: isDefault ? 1 : 0,
+          createdAt: now,
+        });
+    const saveDescription = description
+      ? [
+          existingDescription
+            ? this.database
+                .update(translations)
+                .set({content: description})
+                .where(eq(translations.uid, existingDescription))
+            : this.database.insert(translations).values({
+                resourceType: 'movie_description',
+                resourceUid: movieId,
+                languageCode,
+                content: description,
+                createdAt: now,
+              }),
+        ]
+      : [];
 
-      const existingTitle = await trx
-        .select({uid: translations.uid})
-        .from(translations)
-        .where(
-          and(
-            eq(translations.resourceUid, movieId),
-            eq(translations.resourceType, 'movie_title'),
-            eq(translations.languageCode, languageCode),
-          ),
-        )
-        .limit(1);
-
-      await (existingTitle.length > 0
-        ? trx
-            .update(translations)
-            .set({content: title, isDefault: isDefault ? 1 : 0})
-            .where(eq(translations.uid, existingTitle[0].uid))
-        : trx.insert(translations).values({
-            resourceType: 'movie_title',
-            resourceUid: movieId,
-            languageCode,
-            content: title,
-            isDefault: isDefault ? 1 : 0,
-            createdAt: now,
-          }));
-
-      if (!description) {
-        return;
-      }
-
-      const existingDescription = await trx
-        .select({uid: translations.uid})
-        .from(translations)
-        .where(
-          and(
-            eq(translations.resourceUid, movieId),
-            eq(translations.resourceType, 'movie_description'),
-            eq(translations.languageCode, languageCode),
-          ),
-        )
-        .limit(1);
-
-      await (existingDescription.length > 0
-        ? trx
-            .update(translations)
-            .set({content: description})
-            .where(eq(translations.uid, existingDescription[0].uid))
-        : trx.insert(translations).values({
-            resourceType: 'movie_description',
-            resourceUid: movieId,
-            languageCode,
-            content: description,
-            createdAt: now,
-          }));
-    });
+    await runBatch(this.database, [
+      ...(isDefault ? [clearDefault] : []),
+      saveTitle,
+      ...saveDescription,
+    ]);
   }
 
   async deleteMovieTranslation(
@@ -108,5 +96,24 @@ export class MovieTranslationsService extends BaseService {
           eq(translations.languageCode, languageCode),
         ),
       );
+  }
+
+  private async findTranslationUid(
+    movieId: string,
+    resourceType: 'movie_title' | 'movie_description',
+    languageCode: string,
+  ): Promise<string | undefined> {
+    const row = await this.database
+      .select({uid: translations.uid})
+      .from(translations)
+      .where(
+        and(
+          eq(translations.resourceUid, movieId),
+          eq(translations.resourceType, resourceType),
+          eq(translations.languageCode, languageCode),
+        ),
+      )
+      .get();
+    return row?.uid;
   }
 }

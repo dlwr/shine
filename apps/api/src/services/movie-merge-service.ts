@@ -1,22 +1,30 @@
-import {and, eq, isNull, not} from '@shine/database';
+import {
+  and,
+  eq,
+  isNull,
+  not,
+  runBatch,
+  type getDatabase,
+  type WriteStatement,
+} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {BaseService} from './base-service';
 import {NotFoundError, ValidationError} from './errors';
 import {
   deleteMovieDependents,
-  type MovieDependentsExecutor,
   reassignMovieDependents,
 } from './movie-dependents';
 import type {MergeMoviesOptions} from '../types/movies';
 
+type Database = ReturnType<typeof getDatabase>;
 type MovieRow = typeof movies.$inferSelect;
 
 export class MovieMergeService extends BaseService {
   async deleteMovie(movieId: string): Promise<void> {
-    await this.database.transaction(async trx => {
-      await deleteMovieDependents(trx, movieId);
-      await trx.delete(movies).where(eq(movies.uid, movieId));
-    });
+    await runBatch(this.database, [
+      ...deleteMovieDependents(this.database, movieId),
+      this.database.delete(movies).where(eq(movies.uid, movieId)),
+    ]);
   }
 
   async mergeMovies(options: MergeMoviesOptions): Promise<void> {
@@ -51,32 +59,35 @@ export class MovieMergeService extends BaseService {
       throw new NotFoundError('Target movie not found');
     }
 
-    await this.database.transaction(async trx => {
-      await reassignMovieDependents(trx, sourceMovieId, targetMovieId, {
-        preserveTranslations,
-        preservePosters,
-      });
-      await trx.delete(movies).where(eq(movies.uid, sourceMovieId));
-      await carryOverExternalIds(trx, sourceMovie, targetMovie);
-    });
+    await runBatch(this.database, [
+      ...(await reassignMovieDependents(
+        this.database,
+        sourceMovieId,
+        targetMovieId,
+        {preserveTranslations, preservePosters},
+      )),
+      this.database.delete(movies).where(eq(movies.uid, sourceMovieId)),
+      ...(await carryOverExternalIds(this.database, sourceMovie, targetMovie)),
+    ]);
   }
 }
 
 async function carryOverExternalIds(
-  trx: MovieDependentsExecutor,
+  database: Database,
   sourceMovie: MovieRow,
   targetMovie: MovieRow,
-): Promise<void> {
+): Promise<WriteStatement[]> {
   const updateData: Partial<typeof movies.$inferInsert> = {};
 
   if (!targetMovie.imdbId && sourceMovie.imdbId) {
-    const existingImdbMovie = await trx
+    const existingImdbMovie = await database
       .select({uid: movies.uid})
       .from(movies)
       .where(
         and(
           eq(movies.imdbId, sourceMovie.imdbId),
           not(eq(movies.uid, targetMovie.uid)),
+          not(eq(movies.uid, sourceMovie.uid)),
         ),
       )
       .limit(1);
@@ -87,7 +98,7 @@ async function carryOverExternalIds(
   }
 
   if (!targetMovie.tmdbId && sourceMovie.tmdbId) {
-    const existingTmdbMovie = await trx
+    const existingTmdbMovie = await database
       .select({uid: movies.uid})
       .from(movies)
       .where(
@@ -95,6 +106,7 @@ async function carryOverExternalIds(
           eq(movies.tmdbId, sourceMovie.tmdbId),
           eq(movies.mediaType, sourceMovie.mediaType),
           not(eq(movies.uid, targetMovie.uid)),
+          not(eq(movies.uid, sourceMovie.uid)),
         ),
       )
       .limit(1);
@@ -105,10 +117,12 @@ async function carryOverExternalIds(
     }
   }
 
-  if (Object.keys(updateData).length > 0) {
-    await trx
-      .update(movies)
-      .set(updateData)
-      .where(eq(movies.uid, targetMovie.uid));
-  }
+  return Object.keys(updateData).length > 0
+    ? [
+        database
+          .update(movies)
+          .set(updateData)
+          .where(eq(movies.uid, targetMovie.uid)),
+      ]
+    : [];
 }
