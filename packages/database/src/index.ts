@@ -188,7 +188,10 @@ export const getDatabase = (environment: Environment): Database => {
     return drizzleD1(environment.DB, {schema, casing: 'snake_case'});
   }
 
-  if (environment.D1_PROXY_URL) {
+  if (
+    environment.D1_PROXY_URL &&
+    !environment.TURSO_DATABASE_URL.startsWith('file:')
+  ) {
     return createProxyDatabase({
       url: environment.D1_PROXY_URL,
       key: environment.D1_PROXY_KEY ?? '',
