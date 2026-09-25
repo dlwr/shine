@@ -119,6 +119,7 @@ export const createD1TestDatabase = async (
   });
   await migrateD1(proxy.env.DB, config);
   return {
+    binding: proxy.env.DB,
     database: getDatabase({
       TURSO_DATABASE_URL: '',
       TURSO_AUTH_TOKEN: '',

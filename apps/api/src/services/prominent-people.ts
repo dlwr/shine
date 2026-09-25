@@ -5,6 +5,7 @@ import {
   inArray,
   isNull,
   sql,
+  stringLiteral,
   type getDatabase,
 } from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
@@ -79,8 +80,8 @@ export async function rankProminentPeople(
 function awardedCountOf(aggregate: ReturnType<typeof sql>) {
   const definitions = sql.join(
     personAwardDefinitions.flatMap(definition =>
-      definition.categoryNames.map(
-        name => sql`${`${definition.organizationName}\u{1F}${name}`}`,
+      definition.categoryNames.map(name =>
+        stringLiteral(`${definition.organizationName}\u{1F}${name}`),
       ),
     ),
     sql`, `,
