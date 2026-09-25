@@ -13,7 +13,7 @@
 - `pnpm dev` boots API (`wrangler`) and front dev server concurrently; run package-specific dev with `pnpm api:dev` or `pnpm front:dev`. Note: `pnpm --filter @shine/api run dev` skips the DB environment setup that the root scripts perform — prefer the root scripts.
 - Execute `pnpm front:build` for production assets, and `pnpm api:deploy:prod` / `pnpm front:deploy:prod` to deploy (production only; the dev environment is not used).
 - Run `pnpm test` for the Vitest suite, or scoped variants: `pnpm test:api`, `pnpm test:front`, `pnpm test:scrapers`.
-- Database migrations rely on `pnpm db:generate` and `pnpm db:migrate` (`:prod` variants for production); studio launches via `pnpm db:studio`.
+- Database migrations: `pnpm db:generate`, then `pnpm scrapers database-migrate --apply` (applies pending migrations to D1 through the database proxy).
 
 ## Coding Style & Naming Conventions
 
@@ -38,5 +38,5 @@
 
 ## Environment & Configuration Notes
 
-- Turso credentials and API keys are loaded from `.dev.vars` at the repo root via `scripts/setup-database-environment.cjs` (API/DB) and `apps/scrapers/src/common/environment.ts` (scraper CLIs); never commit secrets.
+- The D1 proxy credentials (`D1_PROXY_URL` / `D1_PROXY_KEY`) and API keys are loaded from `.dev.vars` at the repo root via `scripts/setup-database-environment.cjs` (API/DB) and `apps/scrapers/src/common/environment.ts` (scraper CLIs); never commit secrets.
 - When using the scrapers, populate `tmp/` instead of `data/` until outputs are vetted, and clean transient artifacts before submitting PRs.

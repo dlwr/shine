@@ -20,12 +20,7 @@
     "og:deploy:prod": "cd apps/front && pnpm wrangler deploy --config wrangler.og.jsonc --minify",
     "database-proxy:deploy:prod": "pnpm wrangler deploy --config apps/api/wrangler.database-proxy.toml --minify",
     "scrapers": "pnpm --filter @shine/scrapers run cli",
-    "db:studio": "node scripts/setup-database-environment.cjs drizzle-kit studio",
-    "db:generate": "node scripts/setup-database-environment.cjs drizzle-kit generate",
-    "db:migrate": "node scripts/setup-database-environment.cjs drizzle-kit migrate",
-    "db:studio:prod": "NODE_ENV=production node scripts/setup-database-environment.cjs drizzle-kit studio",
-    "db:generate:prod": "NODE_ENV=production node scripts/setup-database-environment.cjs drizzle-kit generate",
-    "db:migrate:prod": "NODE_ENV=production node scripts/setup-database-environment.cjs drizzle-kit migrate",
+    "db:generate": "drizzle-kit generate",
     "docs:validate": "redocly lint apps/api/openapi.yml",
     "docs:build": "redocly build-docs apps/api/openapi.yml --output docs/api.html",
     "docs:serve": "redocly preview-docs apps/api/openapi.yml",
@@ -68,7 +63,6 @@
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
-    "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2"
   },
   "packageManager": "pnpm@10.26.2",

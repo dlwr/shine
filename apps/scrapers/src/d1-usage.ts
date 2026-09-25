@@ -9,7 +9,7 @@ const GRAPHQL_ENDPOINT = 'https://api.cloudflare.com/client/v4/graphql';
 const GRAPHQL_TIMEOUT_MS = 30_000;
 const DAY_MS = 86_400_000;
 
-export const PRODUCTION_D1_DATABASE_ID = 'db94198f-ceb4-4814-ac36-ed12e24647ec';
+export const PRODUCTION_D1_DATABASE_ID = 'ef1ae873-1ab5-4b99-aa60-9673857c0974';
 
 export type D1UsageSnapshot = {
   lastHourRowsRead: number;
