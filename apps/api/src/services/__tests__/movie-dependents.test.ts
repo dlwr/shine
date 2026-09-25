@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {is} from 'drizzle-orm';
-import {eq, getDatabase, type Environment} from '@shine/database';
+import {eq, getDatabase, runBatch, type Environment} from '@shine/database';
 import * as schema from '@shine/database/schema/index';
 import {articleLinks} from '@shine/database/schema/article-links';
 import {awardCategories} from '@shine/database/schema/award-categories';
@@ -148,9 +148,7 @@ describe('deleteMovieDependents', () => {
       .values({uid: 'person', tmdbId: 5026, name: '黒澤明'});
     await seedAwardTree(database);
     await seedAllDependents(database, 'source');
-    await database.transaction(async trx => {
-      await deleteMovieDependents(trx, 'source');
-    });
+    await runBatch(database, deleteMovieDependents(database, 'source'));
   });
 
   it('deletes article links', async () => {
@@ -218,9 +216,10 @@ describe('reassignMovieDependents', () => {
   async function reassign(
     options: {preserveTranslations?: boolean; preservePosters?: boolean} = {},
   ): Promise<void> {
-    await database.transaction(async trx => {
-      await reassignMovieDependents(trx, 'source', 'target', options);
-    });
+    await runBatch(
+      database,
+      await reassignMovieDependents(database, 'source', 'target', options),
+    );
   }
 
   describe('when the target has no rows of its own', () => {
@@ -331,9 +330,10 @@ describe('reassignMovieDependents', () => {
         languageCode: 'ja',
         content: '邦題',
       });
-      await database.transaction(async trx => {
-        await reassignMovieDependents(trx, 'source-2', 'target', {});
-      });
+      await runBatch(
+        database,
+        await reassignMovieDependents(database, 'source-2', 'target', {}),
+      );
 
       const rows = await database
         .select({languageCode: translations.languageCode})
@@ -360,9 +360,10 @@ describe('reassignMovieDependents', () => {
         movieUid: 'source-2',
         url: 'https://img.example.com/target.jpg',
       });
-      await database.transaction(async trx => {
-        await reassignMovieDependents(trx, 'source-2', 'target', {});
-      });
+      await runBatch(
+        database,
+        await reassignMovieDependents(database, 'source-2', 'target', {}),
+      );
 
       const rows = await database
         .select({movieUid: posterUrls.movieUid, url: posterUrls.url})

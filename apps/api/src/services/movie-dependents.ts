@@ -1,4 +1,4 @@
-import {eq, type getDatabase} from '@shine/database';
+import {eq, type getDatabase, type WriteStatement} from '@shine/database';
 import {articleLinks} from '@shine/database/schema/article-links';
 import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {movieCredits} from '@shine/database/schema/movie-credits';
@@ -12,9 +12,6 @@ import {watchedMarks} from '@shine/database/schema/watched-marks';
 import type {MergeMoviesOptions} from '../types/movies';
 
 type Database = ReturnType<typeof getDatabase>;
-export type MovieDependentsExecutor = Parameters<
-  Parameters<Database['transaction']>[0]
->[0];
 
 export const movieDependentTables = [
   articleLinks,
@@ -34,113 +31,114 @@ export type ReassignMovieDependentsOptions = Pick<
   'preserveTranslations' | 'preservePosters'
 >;
 
-export async function deleteMovieDependents(
-  trx: MovieDependentsExecutor,
+export function deleteMovieDependents(
+  database: Database,
   movieUid: string,
-): Promise<void> {
-  await trx.delete(articleLinks).where(eq(articleLinks.movieUid, movieUid));
-  await trx.delete(movieCredits).where(eq(movieCredits.movieUid, movieUid));
-  await trx
-    .delete(movieAvailabilityChecks)
-    .where(eq(movieAvailabilityChecks.movieUid, movieUid));
-  await trx
-    .delete(movieSelections)
-    .where(eq(movieSelections.movieId, movieUid));
-  await trx.delete(quizSelections).where(eq(quizSelections.movieUid, movieUid));
-  await trx.delete(nominations).where(eq(nominations.movieUid, movieUid));
-  await trx.delete(referenceUrls).where(eq(referenceUrls.movieUid, movieUid));
-  await trx.delete(translations).where(eq(translations.resourceUid, movieUid));
-  await trx.delete(posterUrls).where(eq(posterUrls.movieUid, movieUid));
-  await trx.delete(watchedMarks).where(eq(watchedMarks.movieUid, movieUid));
+): WriteStatement[] {
+  return [
+    database.delete(articleLinks).where(eq(articleLinks.movieUid, movieUid)),
+    database.delete(movieCredits).where(eq(movieCredits.movieUid, movieUid)),
+    database
+      .delete(movieAvailabilityChecks)
+      .where(eq(movieAvailabilityChecks.movieUid, movieUid)),
+    database
+      .delete(movieSelections)
+      .where(eq(movieSelections.movieId, movieUid)),
+    database
+      .delete(quizSelections)
+      .where(eq(quizSelections.movieUid, movieUid)),
+    database.delete(nominations).where(eq(nominations.movieUid, movieUid)),
+    database.delete(referenceUrls).where(eq(referenceUrls.movieUid, movieUid)),
+    database.delete(translations).where(eq(translations.resourceUid, movieUid)),
+    database.delete(posterUrls).where(eq(posterUrls.movieUid, movieUid)),
+    database.delete(watchedMarks).where(eq(watchedMarks.movieUid, movieUid)),
+  ];
 }
 
+/** 読み取りを先に済ませ、付け替えの書き込みだけを順に並べて返す */
 export async function reassignMovieDependents(
-  trx: MovieDependentsExecutor,
+  database: Database,
   sourceMovieUid: string,
   targetMovieUid: string,
   options: ReassignMovieDependentsOptions = {},
-): Promise<void> {
+): Promise<WriteStatement[]> {
   const {preserveTranslations = true, preservePosters = true} = options;
 
-  await trx
-    .update(articleLinks)
-    .set({movieUid: targetMovieUid})
-    .where(eq(articleLinks.movieUid, sourceMovieUid));
-
-  await reassignCredits(trx, sourceMovieUid, targetMovieUid);
-
-  await trx
-    .delete(movieAvailabilityChecks)
-    .where(eq(movieAvailabilityChecks.movieUid, sourceMovieUid));
-
-  await trx
-    .update(movieSelections)
-    .set({movieId: targetMovieUid})
-    .where(eq(movieSelections.movieId, sourceMovieUid));
-
-  await trx
-    .update(quizSelections)
-    .set({movieUid: targetMovieUid})
-    .where(eq(quizSelections.movieUid, sourceMovieUid));
-
-  await trx
-    .update(nominations)
-    .set({movieUid: targetMovieUid})
-    .where(eq(nominations.movieUid, sourceMovieUid));
-
-  await trx
-    .update(referenceUrls)
-    .set({movieUid: targetMovieUid})
-    .where(eq(referenceUrls.movieUid, sourceMovieUid));
-
-  if (preserveTranslations) {
-    await mergeTranslations(trx, sourceMovieUid, targetMovieUid);
-  }
-
-  await trx
-    .delete(translations)
-    .where(eq(translations.resourceUid, sourceMovieUid));
-
-  if (preservePosters) {
-    await mergePosters(trx, sourceMovieUid, targetMovieUid);
-  }
-
-  await trx.delete(posterUrls).where(eq(posterUrls.movieUid, sourceMovieUid));
-  await trx
-    .delete(watchedMarks)
-    .where(eq(watchedMarks.movieUid, sourceMovieUid));
+  return [
+    database
+      .update(articleLinks)
+      .set({movieUid: targetMovieUid})
+      .where(eq(articleLinks.movieUid, sourceMovieUid)),
+    ...(await reassignCredits(database, sourceMovieUid, targetMovieUid)),
+    database
+      .delete(movieAvailabilityChecks)
+      .where(eq(movieAvailabilityChecks.movieUid, sourceMovieUid)),
+    database
+      .update(movieSelections)
+      .set({movieId: targetMovieUid})
+      .where(eq(movieSelections.movieId, sourceMovieUid)),
+    database
+      .update(quizSelections)
+      .set({movieUid: targetMovieUid})
+      .where(eq(quizSelections.movieUid, sourceMovieUid)),
+    database
+      .update(nominations)
+      .set({movieUid: targetMovieUid})
+      .where(eq(nominations.movieUid, sourceMovieUid)),
+    database
+      .update(referenceUrls)
+      .set({movieUid: targetMovieUid})
+      .where(eq(referenceUrls.movieUid, sourceMovieUid)),
+    ...(preserveTranslations
+      ? await mergeTranslations(database, sourceMovieUid, targetMovieUid)
+      : []),
+    database
+      .delete(translations)
+      .where(eq(translations.resourceUid, sourceMovieUid)),
+    ...(preservePosters
+      ? await mergePosters(database, sourceMovieUid, targetMovieUid)
+      : []),
+    database.delete(posterUrls).where(eq(posterUrls.movieUid, sourceMovieUid)),
+    database
+      .delete(watchedMarks)
+      .where(eq(watchedMarks.movieUid, sourceMovieUid)),
+  ];
 }
 
 async function reassignCredits(
-  trx: MovieDependentsExecutor,
+  database: Database,
   sourceMovieUid: string,
   targetMovieUid: string,
-): Promise<void> {
-  const targetCredits = await trx
+): Promise<WriteStatement[]> {
+  const targetCredits = await database
     .select({uid: movieCredits.uid})
     .from(movieCredits)
     .where(eq(movieCredits.movieUid, targetMovieUid));
 
-  await (targetCredits.length > 0
-    ? trx.delete(movieCredits).where(eq(movieCredits.movieUid, sourceMovieUid))
-    : trx
-        .update(movieCredits)
-        .set({movieUid: targetMovieUid})
-        .where(eq(movieCredits.movieUid, sourceMovieUid)));
+  return [
+    targetCredits.length > 0
+      ? database
+          .delete(movieCredits)
+          .where(eq(movieCredits.movieUid, sourceMovieUid))
+      : database
+          .update(movieCredits)
+          .set({movieUid: targetMovieUid})
+          .where(eq(movieCredits.movieUid, sourceMovieUid)),
+  ];
 }
 
 async function mergeTranslations(
-  trx: MovieDependentsExecutor,
+  database: Database,
   sourceMovieUid: string,
   targetMovieUid: string,
-): Promise<void> {
-  const sourceTranslations = await trx
+): Promise<WriteStatement[]> {
+  const sourceTranslations = await database
     .select()
     .from(translations)
     .where(eq(translations.resourceUid, sourceMovieUid));
 
-  for (const translation of sourceTranslations) {
-    await trx
+  return sourceTranslations.map(translation =>
+    database
       .insert(translations)
       .values({
         resourceType: translation.resourceType,
@@ -155,41 +153,39 @@ async function mergeTranslations(
           translations.resourceUid,
           translations.languageCode,
         ],
-      });
-  }
+      }),
+  );
 }
 
 async function mergePosters(
-  trx: MovieDependentsExecutor,
+  database: Database,
   sourceMovieUid: string,
   targetMovieUid: string,
-): Promise<void> {
-  const sourcePosters = await trx
+): Promise<WriteStatement[]> {
+  const sourcePosters = await database
     .select()
     .from(posterUrls)
     .where(eq(posterUrls.movieUid, sourceMovieUid));
 
-  const existingTargetPosters = await trx
+  const existingTargetPosters = await database
     .select({url: posterUrls.url})
     .from(posterUrls)
     .where(eq(posterUrls.movieUid, targetMovieUid));
 
   const existingUrls = new Set(existingTargetPosters.map(poster => poster.url));
 
-  for (const poster of sourcePosters) {
-    if (existingUrls.has(poster.url)) {
-      continue;
-    }
-
-    await trx.insert(posterUrls).values({
-      movieUid: targetMovieUid,
-      url: poster.url,
-      width: poster.width,
-      height: poster.height,
-      languageCode: poster.languageCode,
-      countryCode: poster.countryCode,
-      sourceType: poster.sourceType,
-      isPrimary: poster.isPrimary,
-    });
-  }
+  return sourcePosters
+    .filter(poster => !existingUrls.has(poster.url))
+    .map(poster =>
+      database.insert(posterUrls).values({
+        movieUid: targetMovieUid,
+        url: poster.url,
+        width: poster.width,
+        height: poster.height,
+        languageCode: poster.languageCode,
+        countryCode: poster.countryCode,
+        sourceType: poster.sourceType,
+        isPrimary: poster.isPrimary,
+      }),
+    );
 }
