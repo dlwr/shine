@@ -29,4 +29,25 @@ describe('assertDatabaseEnvironment', () => {
       assertDatabaseEnvironment(environment);
     }).toThrow(/TURSO_DATABASE_URL/);
   });
+
+  it('D1 の proxy があれば Turso の接続先を求めない', () => {
+    const environment = buildEnvironment({
+      D1_PROXY_URL: 'https://shine-database-proxy.example.workers.dev',
+      D1_PROXY_KEY: 'key',
+    });
+
+    expect(() => {
+      assertDatabaseEnvironment(environment);
+    }).not.toThrow();
+  });
+
+  it('D1 の proxy の鍵が無ければ失敗する', () => {
+    const environment = buildEnvironment({
+      D1_PROXY_URL: 'https://shine-database-proxy.example.workers.dev',
+    });
+
+    expect(() => {
+      assertDatabaseEnvironment(environment);
+    }).toThrow(/D1_PROXY_KEY/);
+  });
 });
