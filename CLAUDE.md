@@ -64,6 +64,7 @@ Important schema rules:
 Local development reads `.dev.vars` at the repo root (loaded by `scripts/setup-database-environment.cjs` and `apps/scrapers/src/common/environment.ts`):
 
 - `D1_PROXY_URL` / `D1_PROXY_KEY`（scrapers・手元の API 開発・GitHub Actions は D1 に proxy の worker `shine-database-proxy` 経由で繋ぐ。本番の API は binding `DB`）
+- `DATABASE_FILE_URL`（`file:...` を渡すとそのローカルの SQLite を proxy より優先して使う。テストと手元の試し用）
 - `ADMIN_PASSWORD`, `JWT_SECRET` (admin auth; JWT expires after 7 days)
 - `TMDB_API_KEY`, `TMDB_LEAD_ACCESS_TOKEN`, `OMDB_API_KEY`
 - `TURNSTILE_SECRET_KEY` / `PUBLIC_TURNSTILE_SITE_KEY`
