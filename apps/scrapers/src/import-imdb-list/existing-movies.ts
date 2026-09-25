@@ -21,7 +21,9 @@ export async function loadExistingMovies(
               deletedAt: movies.deletedAt,
             })
             .from(movies)
-            .where(and(isNotNull(movies.imdbId), inArray(movies.imdbId, chunk))),
+            .where(
+              and(isNotNull(movies.imdbId), inArray(movies.imdbId, chunk)),
+            ),
         )
       : [];
 
