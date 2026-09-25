@@ -92,6 +92,18 @@ export const migrateD1 = async (
       ...objects.filter(object => object.type === 'trigger'),
     ].map(object => d1.prepare(object.sql));
     await d1.batch(statements);
+    const applied = await client.execute(
+      'SELECT hash, created_at FROM __drizzle_migrations ORDER BY id',
+    );
+    await d1.batch(
+      applied.rows.map(row =>
+        d1
+          .prepare(
+            'INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)',
+          )
+          .bind(row.hash, row.created_at),
+      ),
+    );
   } finally {
     client.close();
   }
