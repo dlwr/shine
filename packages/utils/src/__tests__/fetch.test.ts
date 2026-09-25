@@ -197,17 +197,13 @@ describe('Fetch Utilities', () => {
           text: vi.fn().mockResolvedValue('success'),
         } as unknown as Response);
 
-      const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
-
       const promise = fetchWithRetry('https://example.com', {}, 3, 10);
-      await vi.runAllTimersAsync();
-      const result = await promise;
+      await vi.advanceTimersByTimeAsync(1999);
+      expect(fetch).toHaveBeenCalledTimes(1);
 
-      expect(result).toBe('success');
+      await vi.advanceTimersByTimeAsync(1);
       expect(fetch).toHaveBeenCalledTimes(2);
-      expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 2000);
-
-      setTimeoutSpy.mockRestore();
+      await expect(promise).resolves.toBe('success');
     });
 
     it('should fall back to backoff delay on 429 without Retry-After', async () => {
