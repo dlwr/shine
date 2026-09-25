@@ -117,6 +117,44 @@ describe('POST /movies/:id/availability/check', () => {
     ]);
   });
 
+  it('同一IPからの過剰リクエストには429を返す', async () => {
+    await database.insert(movieAvailabilityChecks).values([
+      {
+        movieUid: 'movie-a',
+        source: 'unext',
+        status: 'ok',
+        detail: 'Matched',
+        checkedAt: Math.floor(Date.now() / 1000) - 60,
+      },
+      {
+        movieUid: 'movie-a',
+        source: 'discas',
+        status: 'ng',
+        detail: 'No match',
+        checkedAt: Math.floor(Date.now() / 1000) - 60,
+      },
+      {
+        movieUid: 'movie-a',
+        source: 'tmdb',
+        status: 'ng',
+        detail: 'No JP providers',
+        checkedAt: Math.floor(Date.now() / 1000) - 60,
+      },
+    ]);
+
+    let lastStatus = 0;
+    for (let index = 0; index < 31; index++) {
+      const response = await moviesRoutes.request(
+        '/movie-a/availability/check',
+        {method: 'POST', headers: {'cf-connecting-ip': '203.0.113.7'}},
+        environment,
+      );
+      lastStatus = response.status;
+    }
+
+    expect(lastStatus).toBe(429);
+  });
+
   it('上限を超えたら 429 を返す', async () => {
     const response = await moviesRoutes.request(
       '/movie-a/availability/check',
