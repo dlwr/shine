@@ -1,0 +1,9 @@
+name = "shine-d1-proxy"
+main = "src/poc/d1-proxy.ts"
+compatibility_date = "2025-03-26"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "shine-d1-poc"
+database_id = "ff28e770-932f-4c6d-ac7d-f7afc6e40a56"
