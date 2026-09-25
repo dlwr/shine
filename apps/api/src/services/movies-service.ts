@@ -1,4 +1,4 @@
-import {and, eq, inArray, isNull, sql} from '@shine/database';
+import {and, eq, inArray, inChunks, isNull, sql} from '@shine/database';
 import {articleLinks} from '@shine/database/schema/article-links';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
@@ -54,18 +54,20 @@ export class MoviesService extends BaseService {
     const movieIds = searchResults.map(m => m.uid);
     const allPosters =
       movieIds.length > 0
-        ? await this.database
-            .select({
-              movieUid: posterUrls.movieUid,
-              url: posterUrls.url,
-              languageCode: posterUrls.languageCode,
-              isPrimary: posterUrls.isPrimary,
-            })
-            .from(posterUrls)
-            .where(inArray(posterUrls.movieUid, movieIds))
-            .orderBy(
-              sql`${posterUrls.isPrimary} DESC, ${posterUrls.createdAt} ASC`,
-            )
+        ? await inChunks(movieIds, chunk =>
+            this.database
+              .select({
+                movieUid: posterUrls.movieUid,
+                url: posterUrls.url,
+                languageCode: posterUrls.languageCode,
+                isPrimary: posterUrls.isPrimary,
+              })
+              .from(posterUrls)
+              .where(inArray(posterUrls.movieUid, chunk))
+              .orderBy(
+                sql`${posterUrls.isPrimary} DESC, ${posterUrls.createdAt} ASC`,
+              ),
+          )
         : [];
 
     // Group posters by movie ID

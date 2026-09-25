@@ -3,6 +3,7 @@ import {
   desc,
   eq,
   inArray,
+  inChunks,
   isNull,
   sql,
   stringLiteral,
@@ -168,29 +169,31 @@ async function loadTopMovies(
     return byPerson;
   }
 
-  const rows = await joinAwardContext(
-    database
-      .select({
-        personUid: sql<string>`${nominations.personUid}`.as('person_uid'),
-        uid: movies.uid,
-        year: movies.year,
-        title: localizedMovieTitle(locale),
-      })
-      .from(nominations)
-      .innerJoin(
-        movies,
-        and(eq(movies.uid, nominations.movieUid), isNull(movies.deletedAt)),
-      )
-      .$dynamic(),
-  )
-    .where(
-      and(
-        inArray(nominations.personUid, personUids),
-        eq(nominations.isWinner, 1),
-        personAwardNominations(role),
-      ),
+  const rows = await inChunks(personUids, chunk =>
+    joinAwardContext(
+      database
+        .select({
+          personUid: sql<string>`${nominations.personUid}`.as('person_uid'),
+          uid: movies.uid,
+          year: movies.year,
+          title: localizedMovieTitle(locale),
+        })
+        .from(nominations)
+        .innerJoin(
+          movies,
+          and(eq(movies.uid, nominations.movieUid), isNull(movies.deletedAt)),
+        )
+        .$dynamic(),
     )
-    .orderBy(desc(movies.year));
+      .where(
+        and(
+          inArray(nominations.personUid, chunk),
+          eq(nominations.isWinner, 1),
+          personAwardNominations(role),
+        ),
+      )
+      .orderBy(desc(movies.year)),
+  );
 
   for (const row of rows) {
     const movieList = byPerson.get(row.personUid) ?? [];
