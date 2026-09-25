@@ -3,7 +3,11 @@ import os from 'node:os';
 import path from 'node:path';
 import {createClient} from '@libsql/client';
 import {afterAll, beforeAll, describe, expect, it} from 'vitest';
-import {formatQueryResult, runReadOnlyQuery} from '../sql-query';
+import {
+  formatQueryResult,
+  runReadOnlyQuery,
+  runReadOnlyQueryOnD1,
+} from '../sql-query';
 
 let directory: string;
 let url: string;
@@ -134,5 +138,45 @@ describe('formatQueryResult', () => {
 
   it('行が無いときは見出しだけ出す', () => {
     expect(formatQueryResult({columns: ['n'], rows: []}, 'tsv')).toBe('n');
+  });
+});
+
+const proxyReturning = (rows: unknown[][], sent: unknown[]): typeof fetch =>
+  (async (_input: unknown, init?: RequestInit) => {
+    sent.push(JSON.parse(String(init?.body)));
+    return Response.json({rows});
+  }) as typeof fetch;
+
+describe('runReadOnlyQueryOnD1', () => {
+  it('proxy の見出し行を列名にして返す', async () => {
+    const result = await runReadOnlyQueryOnD1(
+      {
+        url: 'https://proxy.test',
+        key: 'k',
+        fetch: proxyReturning(
+          [
+            ['uid', 'year'],
+            ['a', 2015],
+          ],
+          [],
+        ),
+      },
+      'SELECT uid, year FROM films',
+    );
+
+    expect(result).toEqual({columns: ['uid', 'year'], rows: [['a', 2015]]});
+  });
+
+  it('書き込みの文は proxy に送らない', async () => {
+    const sent: unknown[] = [];
+
+    await expect(
+      runReadOnlyQueryOnD1(
+        {url: 'https://proxy.test', key: 'k', fetch: proxyReturning([], sent)},
+        "DELETE FROM films WHERE uid = 'a'",
+      ),
+    ).rejects.toThrow();
+
+    expect(sent).toEqual([]);
   });
 });
