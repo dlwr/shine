@@ -1,0 +1,32 @@
+name = "shine-api-d1poc"
+main = "src/index.ts"
+compatibility_date = "2025-03-26"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "shine-d1-poc"
+database_id = "ff28e770-932f-4c6d-ac7d-f7afc6e40a56"
+
+[[kv_namespaces]]
+binding = "CACHE_KV"
+id = "990b506afd8d4c3198b800f019bef8cc"
+
+[[ratelimits]]
+name = "SUGGEST_RATE_LIMITER"
+namespace_id = "2001"
+simple = { limit = 30, period = 10 }
+
+[[ratelimits]]
+name = "AVAILABILITY_RATE_LIMITER"
+namespace_id = "2002"
+simple = { limit = 10, period = 60 }
+
+[[ratelimits]]
+name = "LOGIN_RATE_LIMITER"
+namespace_id = "2003"
+simple = { limit = 5, period = 60 }
+
+[observability.logs]
+enabled = true
