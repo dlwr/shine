@@ -1,5 +1,7 @@
 import {createClient} from '@libsql/client';
+import {drizzle as drizzleD1} from 'drizzle-orm/d1';
 import {drizzle} from 'drizzle-orm/libsql';
+import {drizzle as drizzleProxy} from 'drizzle-orm/sqlite-proxy';
 import * as schema from './schema/index';
 import {createTimeoutFetch, resolveRequestTimeout} from './timeout-fetch';
 
@@ -36,12 +38,57 @@ export type Environment = {
   NORTH_STAR_OWNER_URL_PREFIXES?: string;
   NORTH_STAR_OWNER_IPS?: string;
   CACHE_KV?: KVNamespace;
+  DB?: D1Database;
+  D1_PROXY_URL?: string;
+  D1_PROXY_KEY?: string;
   SUGGEST_RATE_LIMITER?: RateLimit;
   AVAILABILITY_RATE_LIMITER?: RateLimit;
   LOGIN_RATE_LIMITER?: RateLimit;
 };
 
 export const getDatabase = (environment: Environment) => {
+  if (environment.DB) {
+    return drizzleD1(environment.DB, {
+      schema: {
+        ...schema,
+      },
+      casing: 'snake_case',
+    }) as unknown as ReturnType<typeof getLibsqlDatabase>;
+  }
+
+  if (environment.D1_PROXY_URL) {
+    const proxyUrl = environment.D1_PROXY_URL;
+    const post = async (body: unknown) => {
+      const response = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${environment.D1_PROXY_KEY ?? ''}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) {
+        throw new Error(
+          `D1 proxy ${response.status}: ${await response.text()}`,
+        );
+      }
+
+      return response.json();
+    };
+
+    return drizzleProxy(
+      async (sql, parameters, method) =>
+        post({sql, params: parameters, method}) as Promise<{rows: unknown[]}>,
+      async queries =>
+        post({batch: queries}) as Promise<Array<{rows: unknown[]}>>,
+      {schema: {...schema}, casing: 'snake_case'},
+    ) as unknown as ReturnType<typeof getLibsqlDatabase>;
+  }
+
+  return getLibsqlDatabase(environment);
+};
+
+const getLibsqlDatabase = (environment: Environment) => {
   const requestTimeoutMs = resolveRequestTimeout(
     environment.TURSO_REQUEST_TIMEOUT_MS,
   );

@@ -26,6 +26,10 @@ export function buildEnvironment(source: NodeJS.ProcessEnv): Environment {
     ADMIN_PASSWORD: source.ADMIN_PASSWORD ?? '',
     JWT_SECRET: source.JWT_SECRET ?? '',
     TURNSTILE_SECRET_KEY: source.TURNSTILE_SECRET_KEY ?? '',
+    ...(source.D1_PROXY_URL && {
+      D1_PROXY_URL: source.D1_PROXY_URL,
+      D1_PROXY_KEY: source.D1_PROXY_KEY,
+    }),
   };
 }
 
