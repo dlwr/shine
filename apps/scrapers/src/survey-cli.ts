@@ -1,6 +1,6 @@
 /**
  * 「なんかやろう」の前に毎回やっていた計測をまとめて流す。
- * 本番の TTFB・Turso の読み取り量・今月の北極星・大きいソースファイル・直近のコミット。
+ * 本番の TTFB・D1 の読み取り量・今月の北極星・大きいソースファイル・直近のコミット。
  */
 import {execFile} from 'node:child_process';
 import path from 'node:path';
@@ -32,12 +32,19 @@ import {
   SURVEY_PAGES,
   type SurveySection,
 } from './survey';
-import {billingCycle, evaluateTursoUsage, fetchRowsRead} from './turso-usage';
 import {
+  evaluateD1Usage,
+  fetchD1Usage,
+  PRODUCTION_D1_DATABASE_ID,
+} from './d1-usage';
+import {billingCycle} from './turso-usage';
+import {
+  DEFAULT_CLOUDFLARE_ACCOUNT_ID,
   leadingIndicatorReport,
   resolveWebAnalyticsCredentials,
 } from './web-analytics';
 
+const HOUR_MS = 3_600_000;
 const DAY_MS = 86_400_000;
 const REPOSITORY_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -49,7 +56,7 @@ type SurveyOptions = {
   rounds: number;
   top: number;
   network: boolean;
-  turso: boolean;
+  d1: boolean;
   northStar: boolean;
 };
 
@@ -97,34 +104,48 @@ async function pageTimingsSection(rounds: number): Promise<SurveySection> {
   };
 }
 
-async function tursoSection(): Promise<SurveySection> {
-  const token = process.env.TURSO_PLATFORM_API_TOKEN || '';
+async function d1Section(): Promise<SurveySection> {
+  const token = process.env.CLOUDFLARE_API_TOKEN || '';
 
   if (!token) {
     return {
-      title: 'Turso 読み取り',
-      body: 'TURSO_PLATFORM_API_TOKEN 未設定のためスキップ',
+      title: 'D1 読み取り',
+      body: 'CLOUDFLARE_API_TOKEN 未設定のためスキップ',
     };
   }
 
   const credentials = {
     token,
-    organization: process.env.TURSO_ORGANIZATION || 'dlwr',
+    account: process.env.CLOUDFLARE_ACCOUNT_ID || DEFAULT_CLOUDFLARE_ACCOUNT_ID,
   };
+  const databaseId = process.env.D1_DATABASE_ID || PRODUCTION_D1_DATABASE_ID;
   const now = new Date();
   const {start} = billingCycle(now);
-  const [last24hRowsRead, monthToDateRowsRead] = await Promise.all([
-    fetchRowsRead(credentials, new Date(now.getTime() - DAY_MS), now),
-    fetchRowsRead(credentials, start, now),
+  const [lastHour, last24h, monthToDate] = await Promise.all([
+    fetchD1Usage(
+      credentials,
+      databaseId,
+      new Date(now.getTime() - HOUR_MS),
+      now,
+    ),
+    fetchD1Usage(
+      credentials,
+      databaseId,
+      new Date(now.getTime() - DAY_MS),
+      now,
+    ),
+    fetchD1Usage(credentials, databaseId, start, now),
   ]);
-  const {alerts, summary} = evaluateTursoUsage({
-    last24hRowsRead,
-    monthToDateRowsRead,
+  const {alerts, summary} = evaluateD1Usage({
+    lastHourRowsRead: lastHour.rowsRead,
+    last24hRowsRead: last24h.rowsRead,
+    monthToDateRowsRead: monthToDate.rowsRead,
+    monthToDateRowsWritten: monthToDate.rowsWritten,
     now,
   });
 
   return {
-    title: 'Turso 読み取り',
+    title: 'D1 読み取り',
     body: [summary, ...alerts.map(alert => `⚠️ ${alert}`)].join('\n'),
   };
 }
@@ -204,8 +225,8 @@ async function main(options: SurveyOptions): Promise<void> {
     );
   }
 
-  if (options.turso) {
-    sections.push(await settleSection('Turso 読み取り', tursoSection));
+  if (options.d1) {
+    sections.push(await settleSection('D1 読み取り', d1Section));
   }
 
   if (options.northStar) {
@@ -231,7 +252,7 @@ export function createCommand(): Command {
     .description(
       [
         '「なんかやろう」の前の定点計測をまとめて流します。',
-        '本番の TTFB・Turso の読み取り量・北極星・先行指標・大きいソースファイル・直近のコミットを出します。',
+        '本番の TTFB・D1 の読み取り量・北極星・先行指標・大きいソースファイル・直近のコミットを出します。',
       ].join('\n'),
     )
     .option(
@@ -247,20 +268,19 @@ export function createCommand(): Command {
       15,
     )
     .option('--no-network', '本番ページの計測を省く')
-    .option('--no-turso', 'Turso の読み取り量を省く')
+    .option('--no-d1', 'D1 の読み取り量を省く')
     .option('--no-north-star', '北極星の集計と先行指標を省く')
     .addHelpText(
       'after',
       `
 Examples:
   pnpm scrapers survey
-  pnpm scrapers survey --rounds 2 --no-turso
+  pnpm scrapers survey --rounds 2 --no-d1
 
 Environment variables:
   SHINE_SITE_URL                 計測するサイト (default: https://shine-film.com)
   SHINE_API_URL                  今月の1本を引く API (default: https://shine-api.yuta25.workers.dev)
-  TURSO_PLATFORM_API_TOKEN       Turso Platform API トークン（無ければ Turso の節をスキップ）
-  CLOUDFLARE_API_TOKEN           Cloudflare API トークン（権限: Account Analytics:Read。無ければ先行指標をスキップ）
+  CLOUDFLARE_API_TOKEN           Cloudflare API トークン（権限: Account Analytics:Read。無ければ D1 と先行指標をスキップ）
   CLOUDFLARE_ACCOUNT_ID          アカウント ID (default: dlwr のアカウント)
   CF_WEB_ANALYTICS_SITE_TAG      Web Analytics のサイト (default: shine-film.com)
   NORTH_STAR_OWNER_IPS           本人の投稿とみなす IP (カンマ区切り)
