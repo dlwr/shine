@@ -1,4 +1,5 @@
 import {createClient, type Value} from '@libsql/client';
+import {queryWithColumnNames} from '@shine/database';
 
 export type QuerySource = {
   url: string;
@@ -74,6 +75,15 @@ export async function runReadOnlyQuery(
   } finally {
     client.close();
   }
+}
+
+export async function runReadOnlyQueryOnD1(
+  proxy: Parameters<typeof queryWithColumnNames>[0],
+  query: string,
+): Promise<QueryResult> {
+  const statement = assertReadOnlyQuery(query);
+  const {columns, rows} = await queryWithColumnNames(proxy, statement);
+  return {columns, rows: rows as Value[][]};
 }
 
 function formatCell(value: Value): string {

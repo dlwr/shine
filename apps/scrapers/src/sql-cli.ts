@@ -1,6 +1,6 @@
 /**
- * 本番（.env の Turso）に読み取り専用の SQL を 1 文流す。
- * 書き込みの句は実行前に拒否し、読み取りトランザクションはコミットしない。
+ * 本番（.env の D1 の proxy か Turso）に読み取り専用の SQL を 1 文流す。
+ * 書き込みの句は実行前に拒否する。Turso では読み取りトランザクションもコミットしない。
  */
 import process from 'node:process';
 import {Command, InvalidArgumentError} from 'commander';
@@ -9,6 +9,7 @@ import {
   formatQueryResult,
   type QueryFormat,
   runReadOnlyQuery,
+  runReadOnlyQueryOnD1,
 } from './sql-query';
 
 function parseFormat(value: string): QueryFormat {
@@ -26,13 +27,21 @@ async function main(
   const environment = loadScraperEnvironment();
 
   try {
-    const result = await runReadOnlyQuery(
-      {
-        url: environment.TURSO_DATABASE_URL,
-        authToken: environment.TURSO_AUTH_TOKEN,
-      },
-      query,
-    );
+    const result = environment.D1_PROXY_URL
+      ? await runReadOnlyQueryOnD1(
+          {
+            url: environment.D1_PROXY_URL,
+            key: environment.D1_PROXY_KEY ?? '',
+          },
+          query,
+        )
+      : await runReadOnlyQuery(
+          {
+            url: environment.TURSO_DATABASE_URL,
+            authToken: environment.TURSO_AUTH_TOKEN,
+          },
+          query,
+        );
     console.log(formatQueryResult(result, options.format));
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
@@ -44,7 +53,7 @@ export function createCommand(): Command {
   return new Command()
     .name('sql')
     .description(
-      '.env の Turso に読み取り専用の SQL を 1 文流します（SELECT・WITH・EXPLAIN のみ）',
+      '.env の D1 の proxy か Turso に読み取り専用の SQL を 1 文流します（SELECT・WITH・EXPLAIN のみ）',
     )
     .argument('<query>', '実行する SQL')
     .option(

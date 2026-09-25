@@ -3,6 +3,7 @@ import {fileURLToPath} from 'node:url';
 import {
   createProxyDatabase,
   eq,
+  queryWithColumnNames,
   runBatch,
   sql,
   type getDatabase,
@@ -103,6 +104,29 @@ describe('database proxy', () => {
       .from(movies)
       .where(eq(movies.uid, 'proxy-batch'));
     expect(rows).toEqual([]);
+  });
+
+  it('returns column names with the rows of an ad hoc query', async () => {
+    await database.insert(movies).values({uid: 'columns-movie', year: 1960});
+
+    const result = await queryWithColumnNames(
+      {url: 'https://proxy.test', key: PROXY_KEY, fetch: proxyFetch},
+      `SELECT uid, year FROM movies WHERE uid = 'columns-movie'`,
+    );
+
+    expect(result).toEqual({
+      columns: ['uid', 'year'],
+      rows: [['columns-movie', 1960]],
+    });
+  });
+
+  it('returns column names even when no row matches', async () => {
+    const result = await queryWithColumnNames(
+      {url: 'https://proxy.test', key: PROXY_KEY, fetch: proxyFetch},
+      `SELECT uid FROM movies WHERE uid = 'missing'`,
+    );
+
+    expect(result).toEqual({columns: ['uid'], rows: []});
   });
 
   it('refuses a request with the wrong key', async () => {
