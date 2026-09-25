@@ -117,41 +117,40 @@ describe('POST /movies/:id/availability/check', () => {
     ]);
   });
 
-  it('同一IPからの過剰リクエストには429を返す', async () => {
-    await database.insert(movieAvailabilityChecks).values([
+  it('上限を超えたら 429 を返す', async () => {
+    const response = await moviesRoutes.request(
+      '/movie-a/availability/check',
+      {method: 'POST', headers: {'cf-connecting-ip': '203.0.113.7'}},
       {
-        movieUid: 'movie-a',
-        source: 'unext',
-        status: 'ok',
-        detail: 'Matched',
-        checkedAt: Math.floor(Date.now() / 1000) - 60,
+        ...environment,
+        AVAILABILITY_RATE_LIMITER: {
+          async limit() {
+            return {success: false};
+          },
+        },
       },
-      {
-        movieUid: 'movie-a',
-        source: 'discas',
-        status: 'ng',
-        detail: 'No match',
-        checkedAt: Math.floor(Date.now() / 1000) - 60,
-      },
-      {
-        movieUid: 'movie-a',
-        source: 'tmdb',
-        status: 'ng',
-        detail: 'No JP providers',
-        checkedAt: Math.floor(Date.now() / 1000) - 60,
-      },
-    ]);
+    );
 
-    let lastStatus = 0;
-    for (let index = 0; index < 31; index++) {
-      const response = await moviesRoutes.request(
-        '/movie-a/availability/check',
-        {method: 'POST', headers: {'cf-connecting-ip': '203.0.113.7'}},
-        environment,
-      );
-      lastStatus = response.status;
-    }
+    expect(response.status).toBe(429);
+  });
 
-    expect(lastStatus).toBe(429);
+  it('service binding 越しでも訪問者の IP で数える', async () => {
+    const keys: string[] = [];
+
+    await moviesRoutes.request(
+      '/no-such-movie/availability/check',
+      {method: 'POST', headers: {'x-real-ip': '203.0.113.9'}},
+      {
+        ...environment,
+        AVAILABILITY_RATE_LIMITER: {
+          async limit({key}) {
+            keys.push(key);
+            return {success: true};
+          },
+        },
+      },
+    );
+
+    expect(keys).toEqual(['203.0.113.9']);
   });
 });

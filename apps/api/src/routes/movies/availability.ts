@@ -5,34 +5,17 @@ import {resolveClientIp} from '../../utils/client-ip';
 
 export const movieAvailabilityRoutes = new Hono<{Bindings: Environment}>();
 
-const AVAILABILITY_RATE_LIMIT = 30;
-const AVAILABILITY_RATE_WINDOW_MS = 60 * 60 * 1000;
-const AVAILABILITY_RATE_LOG_MAX_ENTRIES = 10_000;
-const availabilityRequestLog = new Map<
-  string,
-  {windowStart: number; count: number}
->();
-
-function isAvailabilityRateLimited(ip: string, now = Date.now()): boolean {
-  if (availabilityRequestLog.size > AVAILABILITY_RATE_LOG_MAX_ENTRIES) {
-    availabilityRequestLog.clear();
-  }
-
-  const entry = availabilityRequestLog.get(ip);
-  if (!entry || now - entry.windowStart > AVAILABILITY_RATE_WINDOW_MS) {
-    availabilityRequestLog.set(ip, {windowStart: now, count: 1});
-    return false;
-  }
-
-  entry.count++;
-  return entry.count > AVAILABILITY_RATE_LIMIT;
-}
-
 movieAvailabilityRoutes.post('/:id/availability/check', async c => {
-  const ip = resolveClientIp(c);
-
-  if (isAvailabilityRateLimited(ip)) {
-    return c.json({error: 'Rate limit exceeded. Please try again later.'}, 429);
+  const limiter = c.env.AVAILABILITY_RATE_LIMITER;
+  if (limiter) {
+    const {success} = await limiter.limit({key: resolveClientIp(c)});
+    if (!success) {
+      return c.json(
+        {error: 'Rate limit exceeded. Please try again later.'},
+        429,
+        {'Retry-After': '60'},
+      );
+    }
   }
 
   try {
