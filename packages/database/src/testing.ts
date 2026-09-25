@@ -1,6 +1,10 @@
+import {mkdtempSync, rmSync, writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
 import {createClient, type Client} from '@libsql/client';
 import {drizzle, type LibSQLDatabase} from 'drizzle-orm/libsql';
 import {migrate as migrateLibsql} from 'drizzle-orm/libsql/migrator';
+import {getDatabase} from './index';
 
 export const migrate = async (
   database: object,
@@ -91,4 +95,38 @@ export const migrateD1 = async (
   } finally {
     client.close();
   }
+};
+
+export const createD1TestDatabase = async (
+  config: Parameters<typeof migrateLibsql>[1],
+) => {
+  const {getPlatformProxy} = await import('wrangler');
+  const directory = mkdtempSync(path.join(tmpdir(), 'shine-d1-test-'));
+  const configPath = path.join(directory, 'wrangler.json');
+  writeFileSync(
+    configPath,
+    JSON.stringify({
+      name: 'shine-d1-test',
+      compatibility_date: '2025-03-26',
+      d1_databases: [
+        {binding: 'DB', database_id: 'test', database_name: 'test'},
+      ],
+    }),
+  );
+  const proxy = await getPlatformProxy<{DB: D1Database}>({
+    configPath,
+    persist: {path: directory},
+  });
+  await migrateD1(proxy.env.DB, config);
+  return {
+    database: getDatabase({
+      TURSO_DATABASE_URL: '',
+      TURSO_AUTH_TOKEN: '',
+      DB: proxy.env.DB,
+    }),
+    async dispose() {
+      await proxy.dispose();
+      rmSync(directory, {recursive: true, force: true});
+    },
+  };
 };
