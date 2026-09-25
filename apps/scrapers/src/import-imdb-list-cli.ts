@@ -1,6 +1,10 @@
 import {Command} from 'commander';
 import {importMoviesFromCsv} from './import-imdb-list';
-import {buildEnvironment, loadEnvironmentFiles} from './common/environment';
+import {
+  assertDatabaseEnvironment,
+  buildEnvironment,
+  loadEnvironmentFiles,
+} from './common/environment';
 
 function finiteNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value)
@@ -44,18 +48,10 @@ export function createCommand(): Command {
         const categoryName = optionalString(options.category);
         const ceremonyName = optionalString(options.ceremony);
 
-        const requiredEnvironment = [
-          'TURSO_DATABASE_URL',
-          'TURSO_AUTH_TOKEN',
-          'TMDB_API_KEY',
-        ] as const;
-        const missingEnvironment = requiredEnvironment.filter(
-          // eslint-disable-next-line unicorn/no-computed-property-existence-check -- 存在ではなく値の真偽を見ている
-          key => !process.env[key],
-        );
-        if (missingEnvironment.length > 0) {
+        assertDatabaseEnvironment(buildEnvironment(process.env));
+        if (!process.env.TMDB_API_KEY) {
           throw new Error(
-            `Missing required environment variables: ${missingEnvironment.join(', ')}`,
+            'Missing required environment variables: TMDB_API_KEY',
           );
         }
 
