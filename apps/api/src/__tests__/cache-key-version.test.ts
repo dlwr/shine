@@ -166,6 +166,19 @@ describe('キャッシュ鍵の版', () => {
   beforeAll(async () => {
     seededEnvironment = await createSeededEnvironment();
     recorded = await readRecord();
+    const background: Array<Promise<unknown>> = [];
+    await selectionsRoutes.request(
+      '/?locale=ja',
+      {},
+      {...seededEnvironment, CACHE_KV: createRecordingKv([])},
+      {
+        waitUntil(promise: Promise<unknown>) {
+          background.push(promise);
+        },
+        passThroughOnException() {},
+      } as ExecutionContext,
+    );
+    await Promise.all(background);
   });
 
   afterAll(async () => {
