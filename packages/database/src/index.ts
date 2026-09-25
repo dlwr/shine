@@ -2,6 +2,7 @@ import {createClient} from '@libsql/client';
 import {drizzle as drizzleD1} from 'drizzle-orm/d1';
 import {drizzle} from 'drizzle-orm/libsql';
 import {sql, type SQL} from 'drizzle-orm';
+import type {BatchItem} from 'drizzle-orm/batch';
 import type {BaseSQLiteDatabase} from 'drizzle-orm/sqlite-core';
 import * as schema from './schema/index';
 import {createTimeoutFetch, resolveRequestTimeout} from './timeout-fetch';
@@ -95,6 +96,24 @@ export type Environment = {
 };
 
 export type Database = BaseSQLiteDatabase<'async', unknown, typeof schema>;
+
+export type WriteStatement = BatchItem<'sqlite'>;
+
+type BatchCapableDatabase = {
+  batch(statements: [WriteStatement, ...WriteStatement[]]): Promise<unknown>;
+};
+
+export const runBatch = async (
+  database: Database,
+  statements: WriteStatement[],
+): Promise<void> => {
+  const [first, ...rest] = statements;
+  if (!first) {
+    return;
+  }
+
+  await (database as unknown as BatchCapableDatabase).batch([first, ...rest]);
+};
 
 export const getDatabase = (environment: Environment): Database => {
   if (environment.DB) {
