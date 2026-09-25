@@ -10,7 +10,7 @@ import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
 import {createD1TestDatabase, migrate} from '@shine/database/testing';
 import {afterAll, beforeAll, describe, expect, it} from 'vitest';
-import {buildD1ImportStatements} from '../d1-import-sql';
+import {buildD1ImportStatements, libsqlReader} from '../d1-import-sql';
 
 const migrationsFolder = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -72,7 +72,9 @@ describe('buildD1ImportStatements', () => {
     const d1 = await createD1TestDatabase();
     ({dispose} = d1);
     target = d1.binding;
-    const statements = await buildD1ImportStatements(source);
+    const statements = await buildD1ImportStatements(libsqlReader(source), {
+      pageSize: 7,
+    });
     await target.batch(statements.map(statement => target.prepare(statement)));
     for (const table of copiedTables) {
       importedCounts.set(table, await count(target, table));

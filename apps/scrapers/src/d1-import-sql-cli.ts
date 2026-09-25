@@ -2,12 +2,12 @@ import {mkdir, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {createClient} from '@libsql/client';
 import {Command} from 'commander';
-import {buildD1ImportStatements} from './d1-import-sql';
+import {buildD1ImportStatements, libsqlReader} from './d1-import-sql';
 
 async function main(options: {from: string; out: string}): Promise<void> {
   const client = createClient({url: `file:${path.resolve(options.from)}`});
   try {
-    const statements = await buildD1ImportStatements(client);
+    const statements = await buildD1ImportStatements(libsqlReader(client));
     const outputPath = path.resolve(options.out);
     await mkdir(path.dirname(outputPath), {recursive: true});
     await writeFile(outputPath, `${statements.join(';\n')};\n`);
