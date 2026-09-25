@@ -1,11 +1,14 @@
+import type {Environment} from '@shine/database';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {createLoginRateLimiter, loginRateLimiter} from '../login-rate-limiter';
 import app from '../index';
 
-const environment = {
+const environment: Environment = {
+  TURSO_DATABASE_URL: '',
+  TURSO_AUTH_TOKEN: '',
   ADMIN_PASSWORD: 'correct-password',
   JWT_SECRET: 'test-jwt-secret',
-} as never;
+};
 
 const login = async (password: string, ip = '203.0.113.1') =>
   app.request(
@@ -127,5 +130,54 @@ describe('POST /auth/login rate limiting', () => {
 
     const after = await login('wrong-password');
     expect(after.status).toBe(401);
+  });
+});
+
+const loginWithLimiter = async (
+  limiter: RateLimit,
+  headers: Record<string, string>,
+) =>
+  app.request(
+    '/auth/login',
+    {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', ...headers},
+      body: JSON.stringify({password: 'correct-password'}),
+    },
+    {...environment, LOGIN_RATE_LIMITER: limiter},
+  );
+
+describe('POST /auth/login の LOGIN_RATE_LIMITER', () => {
+  beforeEach(() => {
+    loginRateLimiter.reset();
+  });
+
+  it('上限を超えたら正しいパスワードでも 429 を返す', async () => {
+    const response = await loginWithLimiter(
+      {
+        async limit() {
+          return {success: false};
+        },
+      },
+      {'CF-Connecting-IP': '203.0.113.1'},
+    );
+
+    expect(response.status).toBe(429);
+  });
+
+  it('service binding 越しでも訪問者の IP で数える', async () => {
+    const keys: string[] = [];
+
+    await loginWithLimiter(
+      {
+        async limit({key}) {
+          keys.push(key);
+          return {success: true};
+        },
+      },
+      {'x-real-ip': '203.0.113.9'},
+    );
+
+    expect(keys).toEqual(['203.0.113.9']);
   });
 });

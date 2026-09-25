@@ -10,11 +10,23 @@ import {
   createValidationError,
 } from '../utils/error-handlers';
 
+const LOGIN_ATTEMPTS_PER_MINUTE = 5;
+
 export const authRoutes = new Hono<{Bindings: Environment}>();
 
 authRoutes.post('/login', async c => {
   try {
     const clientIp = resolveClientIp(c);
+    const limiter = c.env.LOGIN_RATE_LIMITER;
+    const attempt = await limiter?.limit({key: clientIp});
+    if (attempt?.success === false) {
+      return createRateLimitError(
+        c,
+        Date.now() + 60_000,
+        LOGIN_ATTEMPTS_PER_MINUTE,
+      );
+    }
+
     if (loginRateLimiter.isBlocked(clientIp)) {
       return createRateLimitError(
         c,
