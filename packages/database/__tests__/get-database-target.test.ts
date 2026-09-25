@@ -21,8 +21,7 @@ describe('getDatabase with both a local file and a D1 proxy', () => {
     directory = mkdtempSync(path.join(tmpdir(), 'shine-target-'));
     url = `file:${path.join(directory, 'test.db')}`;
     const database = getDatabase({
-      TURSO_DATABASE_URL: url,
-      TURSO_AUTH_TOKEN: '',
+      DATABASE_FILE_URL: url,
       D1_PROXY_URL: 'https://proxy.invalid',
       D1_PROXY_KEY: 'key',
     });
@@ -51,8 +50,7 @@ describe('getDatabase without a D1 binding, proxy or local file', () => {
   it('refuses a remote libsql URL', () => {
     expect(() =>
       getDatabase({
-        TURSO_DATABASE_URL: 'libsql://example.turso.io',
-        TURSO_AUTH_TOKEN: 'token',
+        DATABASE_FILE_URL: 'libsql://example.turso.io',
       }),
     ).toThrow(/D1_PROXY_URL/);
   });

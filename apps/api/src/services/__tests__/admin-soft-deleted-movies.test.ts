@@ -35,8 +35,7 @@ let database: ReturnType<typeof getDatabase>;
 beforeEach(async () => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
   environment = {
-    TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-    TURSO_AUTH_TOKEN: '',
+    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
     TMDB_API_KEY: 'test-key',
     JWT_SECRET,
   };

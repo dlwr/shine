@@ -135,8 +135,6 @@ export const createD1TestDatabase = async (
   return {
     binding: proxy.env.DB,
     database: getDatabase({
-      TURSO_DATABASE_URL: '',
-      TURSO_AUTH_TOKEN: '',
       DB: proxy.env.DB,
     }),
     async dispose() {

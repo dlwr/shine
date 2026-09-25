@@ -84,8 +84,7 @@ const createAuthContext = (
     req: {header},
     env: {
       TMDB_API_KEY: 'test-api-key',
-      TURSO_DATABASE_URL: 'test-url',
-      TURSO_AUTH_TOKEN: 'test-token',
+      DATABASE_FILE_URL: 'test-url',
       JWT_SECRET: 'test-secret',
       ...environmentOverrides,
     },

@@ -22,8 +22,7 @@ async function createSeededDatabase(): Promise<Database> {
     path.join(os.tmpdir(), 'shine-selection-movie-'),
   );
   const database = getDatabase({
-    TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-    TURSO_AUTH_TOKEN: '',
+    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
   });
   await migrate(database, {migrationsFolder});
   await seedPublicData(database);

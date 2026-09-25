@@ -25,8 +25,7 @@ describe('MovieMergeService.deleteMovie', () => {
   beforeEach(async () => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
     environment = {
-      TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-      TURSO_AUTH_TOKEN: '',
+      DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
     };
     database = getDatabase(environment);
     await migrate(database, {migrationsFolder});
@@ -99,8 +98,7 @@ describe('MovieMergeService.mergeMovies', () => {
   beforeEach(async () => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
     environment = {
-      TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-      TURSO_AUTH_TOKEN: '',
+      DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
     };
     database = getDatabase(environment);
     await migrate(database, {migrationsFolder});

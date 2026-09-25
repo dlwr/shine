@@ -23,8 +23,6 @@ describe('movie writes on D1', () => {
     const d1 = await createD1TestDatabase({migrationsFolder});
     ({database, dispose} = d1);
     environment = {
-      TURSO_DATABASE_URL: '',
-      TURSO_AUTH_TOKEN: '',
       DB: d1.binding,
     };
   }, 60_000);

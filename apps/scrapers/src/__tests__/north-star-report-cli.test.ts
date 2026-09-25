@@ -40,7 +40,7 @@ function sentContent(): string {
 beforeEach(() => {
   vi.useFakeTimers({toFake: ['Date']});
   vi.setSystemTime(new Date('2026-10-01T00:00:00Z'));
-  vi.stubEnv('TURSO_DATABASE_URL', 'file:north-star-report-test.db');
+  vi.stubEnv('DATABASE_FILE_URL', 'file:north-star-report-test.db');
   vi.stubEnv('DISCORD_WEBHOOK_URL', WEBHOOK_URL);
   vi.stubEnv('CLOUDFLARE_API_TOKEN', 'token');
   vi.stubEnv('NORTH_STAR_OWNER_IPS', '');

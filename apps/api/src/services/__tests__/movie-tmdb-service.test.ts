@@ -94,8 +94,7 @@ async function setUp(apiKey = 'test-key'): Promise<void> {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
   kvStore = new Map();
   environment = {
-    TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-    TURSO_AUTH_TOKEN: '',
+    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
     TMDB_API_KEY: apiKey,
     CACHE_KV: createKvStub(kvStore),
   } as Environment;

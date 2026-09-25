@@ -77,8 +77,7 @@ export type Environment = {
   TMDB_API_KEY?: string;
   TMDB_LEAD_ACCESS_TOKEN?: string;
   OMDB_API_KEY?: string;
-  TURSO_DATABASE_URL: string;
-  TURSO_AUTH_TOKEN: string;
+  DATABASE_FILE_URL?: string;
   ADMIN_PASSWORD?: string;
   JWT_SECRET?: string;
   TURNSTILE_SECRET_KEY?: string;
@@ -188,7 +187,7 @@ export const getDatabase = (environment: Environment): Database => {
 
   if (
     environment.D1_PROXY_URL &&
-    !environment.TURSO_DATABASE_URL.startsWith('file:')
+    !environment.DATABASE_FILE_URL?.startsWith('file:')
   ) {
     return createProxyDatabase({
       url: environment.D1_PROXY_URL,
@@ -196,13 +195,13 @@ export const getDatabase = (environment: Environment): Database => {
     });
   }
 
-  if (!environment.TURSO_DATABASE_URL.startsWith('file:')) {
+  if (!environment.DATABASE_FILE_URL?.startsWith('file:')) {
     throw new Error(
-      'データベースの接続先がありません: D1_PROXY_URL か file: の TURSO_DATABASE_URL を設定してください',
+      'データベースの接続先がありません: D1_PROXY_URL か file: の DATABASE_FILE_URL を設定してください',
     );
   }
 
-  const client = createClient({url: environment.TURSO_DATABASE_URL});
+  const client = createClient({url: environment.DATABASE_FILE_URL});
 
   return drizzle({client, schema, casing: 'snake_case'});
 };

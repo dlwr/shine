@@ -16,12 +16,12 @@ describe('loadEnvironmentFiles', () => {
 });
 
 describe('buildEnvironment', () => {
-  it('TURSO_DATABASE_URLを読み取る', () => {
+  it('DATABASE_FILE_URLを読み取る', () => {
     const environment = buildEnvironment({
-      TURSO_DATABASE_URL: 'libsql://example.turso.io',
+      DATABASE_FILE_URL: 'file:/tmp/shine.db',
     });
 
-    expect(environment.TURSO_DATABASE_URL).toBe('libsql://example.turso.io');
+    expect(environment.DATABASE_FILE_URL).toBe('file:/tmp/shine.db');
   });
 
   it('TMDB_API_KEYを読み取る', () => {
@@ -48,17 +48,17 @@ describe('buildEnvironment', () => {
     expect(environment.TURNSTILE_SECRET_KEY).toBe('turnstile');
   });
 
-  it('未設定の項目は空文字になる', () => {
+  it('未設定のファイルの接続先は持たない', () => {
     const environment = buildEnvironment({});
 
-    expect(environment.TURSO_DATABASE_URL).toBe('');
+    expect(environment.DATABASE_FILE_URL).toBeUndefined();
   });
 
-  it('廃止された_DEVサフィックス付きの変数は読まない', () => {
+  it('Turso の接続先は読まない', () => {
     const environment = buildEnvironment({
-      TURSO_DATABASE_URL_DEV: 'libsql://legacy.turso.io',
+      TURSO_DATABASE_URL: 'file:/tmp/turso.db',
     });
 
-    expect(environment.TURSO_DATABASE_URL).toBe('');
+    expect(environment.DATABASE_FILE_URL).toBeUndefined();
   });
 });

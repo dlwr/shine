@@ -41,8 +41,7 @@ async function createTestEnvironment(): Promise<Environment> {
     path.join(os.tmpdir(), 'shine-article-links-'),
   );
   const created = {
-    TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-    TURSO_AUTH_TOKEN: '',
+    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
   } as Environment;
   const database = getDatabase(created);
   await migrate(database, {migrationsFolder});

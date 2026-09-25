@@ -96,8 +96,7 @@ async function seedMovie(
 async function createTestEnvironment(): Promise<Environment> {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-quiz-'));
   const environment = {
-    TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-    TURSO_AUTH_TOKEN: '',
+    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
     QUIZ_ANSWER_KEY: QUIZ_KEY,
   } as Environment;
   const database = getDatabase(environment);

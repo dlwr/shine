@@ -26,7 +26,7 @@ async function main(
     const proxy = d1ProxyOf(environment);
     const result = proxy
       ? await runReadOnlyQueryOnD1(proxy, query)
-      : await runReadOnlyQuery(environment.TURSO_DATABASE_URL, query);
+      : await runReadOnlyQuery(environment.DATABASE_FILE_URL ?? '', query);
     console.log(formatQueryResult(result, options.format));
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
@@ -58,7 +58,7 @@ Examples:
 Environment variables:
   D1_PROXY_URL        本番の D1 の proxy
   D1_PROXY_KEY        proxy の鍵
-  TURSO_DATABASE_URL  file:... を指定するとそのファイルを読む（proxy より優先）
+  DATABASE_FILE_URL   file:... を指定するとそのファイルを読む（proxy より優先）
 `,
     )
     .action(main);

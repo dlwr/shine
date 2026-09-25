@@ -49,8 +49,6 @@ describe('JWT Authentication', () => {
         json: vi.fn(),
         env: {
           JWT_SECRET: testSecret,
-          TURSO_DATABASE_URL: '',
-          TURSO_AUTH_TOKEN: '',
           TMDB_API_KEY: undefined,
         },
       } as unknown as Context<{Bindings: Environment}>;

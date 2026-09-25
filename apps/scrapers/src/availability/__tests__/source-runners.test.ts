@@ -30,7 +30,7 @@ const buildAlternativeTitleFetchStub = () =>
 describe('buildSourceRunners', () => {
   it('does not include geo (blocked with constant HTTP 403)', () => {
     const runners = buildSourceRunners({
-      environment: {TURSO_DATABASE_URL: '', TURSO_AUTH_TOKEN: ''},
+      environment: {DATABASE_FILE_URL: ''},
     });
     expect(Object.keys(runners)).toEqual(['tmdb', 'unext', 'discas']);
   });
@@ -42,8 +42,6 @@ describe('buildSourceRunners', () => {
     );
     const runners = buildSourceRunners({
       environment: {
-        TURSO_DATABASE_URL: '',
-        TURSO_AUTH_TOKEN: '',
         TMDB_API_KEY: 'api-key',
       },
       waitMs: 0,
@@ -62,7 +60,7 @@ describe('buildSourceRunners', () => {
   it('邦題の無い映画は U-NEXT を検索せず ng にする', async () => {
     const fetchImpl = vi.fn();
     const runners = buildSourceRunners({
-      environment: {TURSO_DATABASE_URL: '', TURSO_AUTH_TOKEN: ''},
+      environment: {DATABASE_FILE_URL: ''},
       fetchImpl,
       waitMs: 0,
     });
@@ -77,8 +75,6 @@ describe('buildSourceRunners', () => {
     it('matches a U-NEXT title that only appears as an alternative title', async () => {
       const runners = buildSourceRunners({
         environment: {
-          TURSO_DATABASE_URL: '',
-          TURSO_AUTH_TOKEN: '',
           TMDB_API_KEY: 'api-key',
         },
         fetchImpl: buildAlternativeTitleFetchStub(),
@@ -94,8 +90,6 @@ describe('buildSourceRunners', () => {
       const fetchStub = buildAlternativeTitleFetchStub();
       const runners = buildSourceRunners({
         environment: {
-          TURSO_DATABASE_URL: '',
-          TURSO_AUTH_TOKEN: '',
           TMDB_API_KEY: 'api-key',
         },
         fetchImpl: fetchStub,
@@ -116,8 +110,6 @@ describe('buildSourceRunners', () => {
       const fetchStub = buildAlternativeTitleFetchStub();
       const runners = buildSourceRunners({
         environment: {
-          TURSO_DATABASE_URL: '',
-          TURSO_AUTH_TOKEN: '',
           TMDB_API_KEY: 'api-key',
         },
         fetchImpl: fetchStub,

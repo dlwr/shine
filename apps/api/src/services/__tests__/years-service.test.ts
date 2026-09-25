@@ -25,8 +25,7 @@ type TestDatabase = ReturnType<typeof getDatabase>;
 async function createTestEnvironment(): Promise<Environment> {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-years-'));
   const environment: Environment = {
-    TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-    TURSO_AUTH_TOKEN: '',
+    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
   };
   const database: TestDatabase = getDatabase(environment);
   await migrate(database, {migrationsFolder});

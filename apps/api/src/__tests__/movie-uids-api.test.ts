@@ -40,8 +40,7 @@ function createMemoryKv(): KVNamespace {
 async function createTestEnvironment(): Promise<Environment> {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
   const environment: Environment = {
-    TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-    TURSO_AUTH_TOKEN: '',
+    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
     CACHE_KV: createMemoryKv(),
   };
   const database = getDatabase(environment);

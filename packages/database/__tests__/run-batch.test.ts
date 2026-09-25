@@ -23,8 +23,7 @@ const backends: Array<{
     async open() {
       const directory = mkdtempSync(path.join(tmpdir(), 'shine-batch-'));
       const database = getDatabase({
-        TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-        TURSO_AUTH_TOKEN: '',
+        DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
       });
       await migrate(database, {migrationsFolder});
       return {

@@ -72,8 +72,7 @@ async function createTestEnvironment(): Promise<{
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-academy-'));
   temporaryDirectories.push(directory);
   const environment: Environment = {
-    TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-    TURSO_AUTH_TOKEN: '',
+    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
     TMDB_API_KEY: 'test-key',
   };
   const database = getDatabase(environment);
