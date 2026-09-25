@@ -1,4 +1,4 @@
-import {and, eq, inArray, isNull} from 'drizzle-orm';
+import {and, eq, isNull} from 'drizzle-orm';
 import {type Environment, type getDatabase} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
@@ -97,10 +97,6 @@ export async function importMovieDescriptions(
           and(
             eq(translations.resourceType, 'movie_description'),
             eq(translations.languageCode, 'ja'),
-            inArray(
-              translations.resourceUid,
-              eligible.map(target => target.uid),
-            ),
           ),
         );
   const alreadyDescribed = new Set(described.map(row => row.resourceUid));
