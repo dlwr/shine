@@ -25,6 +25,7 @@ import {createCommand as cannesPersonAwards} from './cannes-person-awards-cli';
 import {createCommand as d1ImportSql} from './d1-import-sql-cli';
 import {createCommand as d1UsageAlert} from './d1-usage-alert-cli';
 import {createCommand as databaseBackup} from './database-backup-cli';
+import {createCommand as databaseMigrate} from './database-migrate-cli';
 import {createCommand as fixDefaultTranslations} from './fix-default-translations-cli';
 import {createCommand as fixMisattributedNominations} from './fix-misattributed-nominations-cli';
 import {createCommand as fixOriginalLanguages} from './fix-original-languages-cli';
@@ -125,6 +126,7 @@ const commandGroups: Array<{heading: string; factories: Array<() => Command>}> =
         northStarReport,
         survey,
         databaseBackup,
+        databaseMigrate,
         d1ImportSql,
         sql,
       ],

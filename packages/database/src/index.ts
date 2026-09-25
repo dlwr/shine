@@ -156,6 +156,19 @@ export const createProxyDatabase = (config: ProxyConfig): Database =>
     {schema, casing: 'snake_case'},
   );
 
+export const runStatementsOnProxy = async (
+  config: ProxyConfig,
+  statements: string[],
+): Promise<void> => {
+  await postToProxy(config, {
+    batch: statements.map(statement => ({
+      sql: statement,
+      params: [],
+      method: 'run',
+    })),
+  });
+};
+
 export const queryWithColumnNames = async (
   config: ProxyConfig,
   query: string,
