@@ -29,8 +29,10 @@ simple = { limit = 5, period = 60 }
 [env.production]
 name = "shine-api"
 
-[env.production.vars]
-TURSO_REQUEST_TIMEOUT_MS = "10000"
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "shine-production"
+database_id = "db94198f-ceb4-4814-ac36-ed12e24647ec"
 
 [[env.production.kv_namespaces]]
 binding = "CACHE_KV"
@@ -50,9 +52,6 @@ simple = { limit = 10, period = 60 }
 name = "LOGIN_RATE_LIMITER"
 namespace_id = "1003"
 simple = { limit = 5, period = 60 }
-# TURSO_DATABASE_URL and TURSO_AUTH_TOKEN should be set via:
-# wrangler secret put TURSO_DATABASE_URL --env production
-# wrangler secret put TURSO_AUTH_TOKEN --env production
 # wrangler.toml (wrangler v3.88.0^)
 [observability.logs]
 enabled = true
