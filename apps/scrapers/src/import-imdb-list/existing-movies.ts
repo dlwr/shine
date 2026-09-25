@@ -1,4 +1,5 @@
 import {and, inArray, isNotNull} from 'drizzle-orm';
+import {inChunks} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {type DatabaseClient, type ExistingMovieRecord} from './types';
 
@@ -11,15 +12,17 @@ export async function loadExistingMovies(
 }> {
   const existingMovies =
     imdbIds.length > 0
-      ? await database
-          .select({
-            uid: movies.uid,
-            imdbId: movies.imdbId,
-            tmdbId: movies.tmdbId,
-            deletedAt: movies.deletedAt,
-          })
-          .from(movies)
-          .where(and(isNotNull(movies.imdbId), inArray(movies.imdbId, imdbIds)))
+      ? await inChunks(imdbIds, chunk =>
+          database
+            .select({
+              uid: movies.uid,
+              imdbId: movies.imdbId,
+              tmdbId: movies.tmdbId,
+              deletedAt: movies.deletedAt,
+            })
+            .from(movies)
+            .where(and(isNotNull(movies.imdbId), inArray(movies.imdbId, chunk))),
+        )
       : [];
 
   const existingByImdbId = new Map<string, ExistingMovieRecord>();

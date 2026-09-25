@@ -1,4 +1,5 @@
 import {and, inArray, isNotNull} from 'drizzle-orm';
+import {inChunks} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {createMovie} from './create-movie';
 import {ensureFilmNomination, loadFilmNominations} from './film-nomination';
@@ -14,14 +15,16 @@ export async function processEdition(
   const {database, stats} = context;
   const imdbIds = edition.films.map(film => film.imdbId);
 
-  const existingMovies = await database
-    .select({
-      uid: movies.uid,
-      imdbId: movies.imdbId,
-      deletedAt: movies.deletedAt,
-    })
-    .from(movies)
-    .where(and(isNotNull(movies.imdbId), inArray(movies.imdbId, imdbIds)));
+  const existingMovies = await inChunks(imdbIds, chunk =>
+    database
+      .select({
+        uid: movies.uid,
+        imdbId: movies.imdbId,
+        deletedAt: movies.deletedAt,
+      })
+      .from(movies)
+      .where(and(isNotNull(movies.imdbId), inArray(movies.imdbId, chunk))),
+  );
 
   const activeByImdbId = new Map<string, string>();
   const softDeletedImdbIds = new Set<string>();
