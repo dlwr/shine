@@ -15,7 +15,7 @@ description: Drizzleスキーマ変更のマイグレーションを生成し、
 
 ## 本番適用（忘れやすいので必ずやる）
 
-`pnpm scrapers database-migrate` で流す文を確かめ、`pnpm scrapers database-migrate --apply` で D1（`shine-production`）に proxy 経由で 1 回の batch として流す。反映は `pnpm scrapers sql "SELECT ..."` で確かめる。過去に適用忘れがあった（0014）。
+`pnpm scrapers database-migrate` で流す文を確かめ、`pnpm scrapers database-migrate --apply` で D1（`shine-main`）に proxy 経由で 1 回の batch として流す。反映は `pnpm scrapers sql "SELECT ..."` で確かめる。過去に適用忘れがあった（0014）。
 
 **dev用のDBは無い。`.env` / `.dev.vars` の `D1_PROXY_URL` は本番の D1 を指す。**
 

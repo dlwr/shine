@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SHINE is a comprehensive movie database project designed to be the world's most organized movie database. It collects and organizes movie information, awards, nominations, and multilingual translations. The project is built on Cloudflare Workers with Cloudflare D1 (`shine-production`, moved from Turso on 2026-09-25).
+SHINE is a comprehensive movie database project designed to be the world's most organized movie database. It collects and organizes movie information, awards, nominations, and multilingual translations. The project is built on Cloudflare Workers with Cloudflare D1 (`shine-main`, moved from Turso on 2026-09-25).
 
 ## 価値と北極星（2026-09-04）
 
@@ -99,7 +99,7 @@ Cloudflare Workers: non-secret vars go in `wrangler.jsonc`/`wrangler.toml` `vars
 - **Scrapers**: `apps/scrapers/` 配下を編集する前に `new-scraper` スキルを読む（env読み込み・soft-deleteスキップ・TMDbユーティリティ・Wikipedia重複防止・dry-run・冪等性の必須パターン）。CLI は `pnpm scrapers <command> [options]` の単一エントリ（`apps/scrapers/src/cli.ts`）で、各 `*-cli.ts` は `createCommand()` を export するだけでトップレベルの副作用を持たない（`cli.test.ts` が検査する）。一覧は `pnpm scrapers --help`（用途ごとに分類して出る）。既存データを書き換える・消す修復系（`fix-*`）は既定が dry-run で、書き込むときだけ `--apply` を付ける。本番のデータを確かめるときは `pnpm scrapers sql "<SELECT ...>"`（読み取り専用。一時スクリプトを置かない）
 - **Rate limiting / security**: public submission endpoints need rate limiting; external URL fetches must go through `validateExternalUrl()`
 - **D1 の制約**: 1 文の bind 変数は 100 個まで（長い IN は `inChunks`、複数行 insert・IN の delete は `runInChunks`、コードの定数は `stringLiteral`）。`transaction()` は使えない（読み取りを先に済ませて書き込みを `runBatch` にまとめる）。async 関数から drizzle のビルダを 1 つ返すと thenable なので実行されてしまう（文は配列で返す）。`IN (SELECT value FROM json_each(?))` は結合の中では索引を使わない
-- **D1 の読み取り量**: 課金はスキャン行数で、上限なしで課金される（Workers Paid の込みは月 250 億行、書き込み 5,000 万行）。`pnpm scrapers d1-usage-alert --dry-run` で直近 1 時間・24 時間・月累計を確認でき、GitHub Actions が毎時同じ確認をして Discord に警告する。重いクエリは `wrangler d1 insights shine-production`
+- **D1 の読み取り量**: 課金はスキャン行数で、上限なしで課金される（Workers Paid の込みは月 250 億行、書き込み 5,000 万行）。`pnpm scrapers d1-usage-alert --dry-run` で直近 1 時間・24 時間・月累計を確認でき、GitHub Actions が毎時同じ確認をして Discord に警告する。重いクエリは `wrangler d1 insights shine-main`
 - **マイグレーション**: `pnpm db:generate` で生成し、`pnpm scrapers database-migrate`（dry-run）→ `--apply` で proxy 経由で流す（`create-migration` スキル）。表を作り直すマイグレーションで D1 は `PRAGMA foreign_keys=OFF` が効かないので `PRAGMA defer_foreign_keys = on` を使う。0022 は libSQL 独自の構文で D1 では 0 から流せないので、D1 のテスト DB は `createD1TestDatabase`（migrate 済みの libsql からスキーマを写す）で作る
 - **バックアップと移し替え**: `pnpm scrapers database-backup` は D1 を proxy 経由で読んで SQLite ファイルにする（週次の workflow が age で暗号化して artifact に置く）。SQLite ファイルから D1 へは `pnpm scrapers d1-import-sql` で SQL にして `wrangler d1 execute <DB> --remote --file` で流す（空の D1 に。約 1.5 分）
 - **Favicon**: `apps/front/public/favicon.svg` is the master; `favicon.ico`（16/32/48）と `apple-touch-icon.png`（180）はそこから `rsvg-convert` → `magick` で焼き直す（`magick <png...> favicon.ico`、PNG は `-strip -define png:compression-level=9` を付けないと倍に膨らむ）。下地の色は `styles/tokens.css` の `--brand` と同じで、ずれると `styles/brand-color.test.ts` が落ちる（OG カードの `lib/og/template.ts` も同じテストで縛っている）

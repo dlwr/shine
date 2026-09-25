@@ -120,7 +120,7 @@ export function createCommand(): Command {
 Environment variables:
   CLOUDFLARE_API_TOKEN    Account Analytics:Read のトークン
   CLOUDFLARE_ACCOUNT_ID   アカウント ID (default: dlwr のアカウント)
-  D1_DATABASE_ID          見る D1 (default: shine-production)
+  D1_DATABASE_ID          見る D1 (default: shine-main)
   DISCORD_WEBHOOK_URL     Discord webhook URL (通知先)
 `,
     )

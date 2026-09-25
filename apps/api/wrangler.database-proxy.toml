@@ -5,8 +5,8 @@ workers_dev = true
 
 [[d1_databases]]
 binding = "DB"
-database_name = "shine-production"
-database_id = "db94198f-ceb4-4814-ac36-ed12e24647ec"
+database_name = "shine-main"
+database_id = "ef1ae873-1ab5-4b99-aa60-9673857c0974"
 
 [observability.logs]
 enabled = true
