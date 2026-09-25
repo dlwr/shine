@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SHINE is a comprehensive movie database project designed to be the world's most organized movie database. It collects and organizes movie information, awards, nominations, and multilingual translations. The project is built on Cloudflare Workers with Turso (libSQL) database.
+SHINE is a comprehensive movie database project designed to be the world's most organized movie database. It collects and organizes movie information, awards, nominations, and multilingual translations. The project is built on Cloudflare Workers with Cloudflare D1 (`shine-production`, moved from Turso on 2026-09-25).
 
 ## 価値と北極星（2026-09-04）
 
@@ -55,7 +55,7 @@ Important schema rules:
 - **`nominations.personUid`**: 個人賞（監督賞・演技賞）は人物に紐づく。作品賞は `person_uid IS NULL` の部分ユニークインデックス、個人賞は人物を含む部分ユニークインデックスで一意性を担保しているので、作品側のクエリには `person_uid IS NULL` を付ける。作品賞の賞ページは `awardPageDefinitions`、個人賞の賞ページと `/people` のランキングは `personAwardDefinitions` で定義する（`award-definitions.ts` が `award-definitions/` の映画祭・年次賞・リストごとのファイルを結合する。組織の DB 名と日本語名は `award-definitions/organizations.ts` の定数を使う。ロジックは作品賞が `awards-service.ts`、個人賞が `person-awards-service.ts`、両者が使うカテゴリの解決・邦題の列・賞の要約が `award-category-queries.ts`）。`/years`・crossings・uncrowned は `awardPageNominations()` で作品賞に絞ること。映画祭のグランプリ・審査員賞は `subAward: true` で定義し、この集計からは除く（`findTopAwardPageDefinition`）
 - **`people` / `movie_credits`**: 監督・出演者。`people.tmdbId` と `movie_credits.creditId`（TMDbの`credit_id`）が一意キー。日本人は `people.name` が日本語表記、外国人は `translations` の `person_name` に日本語名が入る二系統なので、表示・検索は両方を見る
 - Schema fields are camelCase (`createdAt`) but map to snake_case columns; always reference schema fields in queries, never hardcoded column names
-- **索引**: 外部キー列にはその列を先頭にした部分条件なしの索引を必ず置く（`foreign-key-indexes.test.ts` が検査する）。一意索引を `.where(...)` の部分索引に変えるときも先頭列の単独索引を残すこと。部分索引は WHERE の条件を含むクエリにしか使われず、#358 で `nominations.movie_uid` の索引が消えて `searchMovies` が映画ごとに全件走査になり、Turso の読み取りが 600 倍になった
+- **索引**: 外部キー列にはその列を先頭にした部分条件なしの索引を必ず置く（`foreign-key-indexes.test.ts` が検査する）。一意索引を `.where(...)` の部分索引に変えるときも先頭列の単独索引を残すこと。部分索引は WHERE の条件を含むクエリにしか使われず、#358 で `nominations.movie_uid` の索引が消えて `searchMovies` が映画ごとに全件走査になり、当時の Turso の読み取りが 600 倍になった
 - 映画ごとに評価される相関サブクエリを持つクエリは、`movie-search-query-plan.test.ts` のように `EXPLAIN QUERY PLAN` で CORRELATED の下に SCAN が無いことをテストで固定する。公開の読み取り経路を足したら `public-read-query-plan.test.ts` の `exercises` にも足す（発行された SQL を全部拾って実行計画を検査する。詳細ページは `indexOnly`）。本番は `ANALYZE` を流していないので実行計画はスキーマだけで決まり、ローカルの空 DB と一致する。本番で `ANALYZE` を流すとこの前提が崩れる
 - **検索索引**: 人物名（`people.name` と `person_name`）と映画題名（`movie_title`）は FTS5 の `person_search` / `movie_search` に文字 bigram で入り、`people`・`translations` のトリガーが `*_search_entries`（元の行の uid → FTS の rowid）を介して同期する（マイグレーション 0028。スキーマ TS には無い）。名前・題名の一致は `search-terms.ts` を通す（2 文字以上は MATCH、1 文字は LIKE）。FTS5 の UNINDEXED 列での削除は全件走査になるので、トリガーは対応表の索引で rowid を引く形を崩さない。drizzle-kit が `people` / `translations` を作り直すマイグレーション（`__new_*` への複製と DROP TABLE）を出すとトリガーが消えるので、同じマイグレーションで張り直す。`db:push` は使わない
 
@@ -63,7 +63,7 @@ Important schema rules:
 
 Local development reads `.dev.vars` at the repo root (loaded by `scripts/setup-database-environment.cjs` and `apps/scrapers/src/common/environment.ts`):
 
-- `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN`
+- `D1_PROXY_URL` / `D1_PROXY_KEY`（scrapers・手元の API 開発・GitHub Actions は D1 に proxy の worker `shine-database-proxy` 経由で繋ぐ。本番の API は binding `DB`）
 - `ADMIN_PASSWORD`, `JWT_SECRET` (admin auth; JWT expires after 7 days)
 - `TMDB_API_KEY`, `TMDB_LEAD_ACCESS_TOKEN`, `OMDB_API_KEY`
 - `TURNSTILE_SECRET_KEY` / `PUBLIC_TURNSTILE_SITE_KEY`
@@ -98,7 +98,9 @@ Cloudflare Workers: non-secret vars go in `wrangler.jsonc`/`wrangler.toml` `vars
 - **Foreign keys / cascading deletes**: most tables lack `onDelete: 'cascade'`. Movie deletion order: article_links → movie_credits → movie_availability_checks → movie_selections → nominations → reference_urls → translations → poster_urls → movies. When adding delete operations, grep the whole schema for FK references first
 - **Scrapers**: `apps/scrapers/` 配下を編集する前に `new-scraper` スキルを読む（env読み込み・soft-deleteスキップ・TMDbユーティリティ・Wikipedia重複防止・dry-run・冪等性の必須パターン）。CLI は `pnpm scrapers <command> [options]` の単一エントリ（`apps/scrapers/src/cli.ts`）で、各 `*-cli.ts` は `createCommand()` を export するだけでトップレベルの副作用を持たない（`cli.test.ts` が検査する）。一覧は `pnpm scrapers --help`（用途ごとに分類して出る）。既存データを書き換える・消す修復系（`fix-*`）は既定が dry-run で、書き込むときだけ `--apply` を付ける。本番のデータを確かめるときは `pnpm scrapers sql "<SELECT ...>"`（読み取り専用。一時スクリプトを置かない）
 - **Rate limiting / security**: public submission endpoints need rate limiting; external URL fetches must go through `validateExternalUrl()`
-- **Turso の時間切れ**: Workers から Turso への HTTP リクエストはまれに宙づりになる（2026-09-21、主キー 1 行の読み取りが 90 秒待って失敗していた）。API の worker は `TURSO_REQUEST_TIMEOUT_MS`（`wrangler.toml` の vars、10 秒）で打ち切り、`readThroughCache` の読み込みは 1 回だけやり直す。scrapers には設定しない（一括処理が長い）。探すときは `workersInvocationsAdaptive` の `max { wallTime }` を 1 分刻みで見て、山に合わせて `wrangler tail` を流す
-- **Turso の読み取り量**: 課金はスキャン行数。`turso db inspect shine --queries` で重いクエリを、`pnpm scrapers turso-usage-alert --dry-run` で直近 24 時間と月累計を確認できる。GitHub Actions が 6 時間ごとに同じ確認をして Discord に警告する。overage は無効なので月の上限に達すると読み取りが止まる
+- **D1 の制約**: 1 文の bind 変数は 100 個まで（長い IN は `inChunks`、複数行 insert・IN の delete は `runInChunks`、コードの定数は `stringLiteral`）。`transaction()` は使えない（読み取りを先に済ませて書き込みを `runBatch` にまとめる）。async 関数から drizzle のビルダを 1 つ返すと thenable なので実行されてしまう（文は配列で返す）。`IN (SELECT value FROM json_each(?))` は結合の中では索引を使わない
+- **D1 の読み取り量**: 課金はスキャン行数で、上限なしで課金される（Workers Paid の込みは月 250 億行、書き込み 5,000 万行）。`pnpm scrapers d1-usage-alert --dry-run` で直近 1 時間・24 時間・月累計を確認でき、GitHub Actions が毎時同じ確認をして Discord に警告する。重いクエリは `wrangler d1 insights shine-production`
+- **マイグレーション**: `pnpm db:generate` で生成し、`pnpm scrapers database-migrate`（dry-run）→ `--apply` で proxy 経由で流す（`create-migration` スキル）。表を作り直すマイグレーションで D1 は `PRAGMA foreign_keys=OFF` が効かないので `PRAGMA defer_foreign_keys = on` を使う。0022 は libSQL 独自の構文で D1 では 0 から流せないので、D1 のテスト DB は `createD1TestDatabase`（migrate 済みの libsql からスキーマを写す）で作る
+- **バックアップと移し替え**: `pnpm scrapers database-backup` は D1 を proxy 経由で読んで SQLite ファイルにする（週次の workflow が age で暗号化して artifact に置く）。SQLite ファイルから D1 へは `pnpm scrapers d1-import-sql` で SQL にして `wrangler d1 execute <DB> --remote --file` で流す（空の D1 に。約 1.5 分）
 - **Favicon**: `apps/front/public/favicon.svg` is the master; `favicon.ico`（16/32/48）と `apple-touch-icon.png`（180）はそこから `rsvg-convert` → `magick` で焼き直す（`magick <png...> favicon.ico`、PNG は `-strip -define png:compression-level=9` を付けないと倍に膨らむ）。下地の色は `styles/tokens.css` の `--brand` と同じで、ずれると `styles/brand-color.test.ts` が落ちる（OG カードの `lib/og/template.ts` も同じテストで縛っている）
-- **Testing DB code**: prefer real libsql `file:` databases with `migrate()` over deep drizzle mocks
+- **Testing DB code**: prefer real libsql `file:` databases with `migrate()` over deep drizzle mocks. D1 固有の振る舞い（変数 100 個・transaction 不可）に関わる経路は `@shine/database/testing` の `createD1TestDatabase`（wrangler のローカル D1）でも通す
