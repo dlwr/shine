@@ -1,6 +1,7 @@
 import {createClient} from '@libsql/client';
 import {drizzle as drizzleD1} from 'drizzle-orm/d1';
 import {drizzle} from 'drizzle-orm/libsql';
+import {sql, type SQL} from 'drizzle-orm';
 import type {BaseSQLiteDatabase} from 'drizzle-orm/sqlite-core';
 import * as schema from './schema/index';
 import {createTimeoutFetch, resolveRequestTimeout} from './timeout-fetch';
@@ -21,6 +22,10 @@ export {
   or,
   sql,
 } from 'drizzle-orm';
+export type {SQL} from 'drizzle-orm';
+
+export const stringLiteral = (value: string): SQL =>
+  sql.raw(`'${value.replaceAll("'", "''")}'`);
 
 export type Environment = {
   TMDB_API_KEY?: string;
