@@ -48,8 +48,6 @@ jobs:
         env:
           D1_PROXY_URL: ${{ secrets.D1_PROXY_URL }}
           D1_PROXY_KEY: ${{ secrets.D1_PROXY_KEY }}
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
 
       - name: Encrypt backup
         run: |
