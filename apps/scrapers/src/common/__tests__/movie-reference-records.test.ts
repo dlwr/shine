@@ -28,8 +28,7 @@ async function createTestDatabase() {
   );
   temporaryDirectories.push(directory);
   const database = getDatabase({
-    TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-    TURSO_AUTH_TOKEN: '',
+    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
   });
   await migrate(database, {migrationsFolder});
   const [movie] = await database

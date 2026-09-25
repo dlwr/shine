@@ -1,6 +1,6 @@
-# Turso Database
-TURSO_DATABASE_URL=libsql://your-database.turso.io
-TURSO_AUTH_TOKEN=your-auth-token
+# Cloudflare D1 (via shine-database-proxy)
+D1_PROXY_URL=https://shine-database-proxy.your-account.workers.dev
+D1_PROXY_KEY=your-proxy-key
 
 # Movie Data APIs
 TMDB_API_KEY=your-tmdb-api-key

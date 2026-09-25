@@ -48,8 +48,7 @@ describe('selections cache and locale', () => {
   beforeEach(async () => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
     environment = {
-      TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-      TURSO_AUTH_TOKEN: '',
+      DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
     } as Environment;
     const database = getDatabase(environment);
     await migrate(database, {migrationsFolder});

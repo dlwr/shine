@@ -38,8 +38,7 @@ beforeEach(async () => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
   environment = {
-    TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-    TURSO_AUTH_TOKEN: '',
+    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
     JWT_SECRET,
   };
   const database = getDatabase(environment);
@@ -250,7 +249,7 @@ describe('DB が読めないとき', () => {
     const empty = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
     environment = {
       ...environment,
-      TURSO_DATABASE_URL: `file:${path.join(empty, 'unmigrated.db')}`,
+      DATABASE_FILE_URL: `file:${path.join(empty, 'unmigrated.db')}`,
     };
   });
 

@@ -25,8 +25,7 @@ beforeEach(async () => {
     path.join(os.tmpdir(), 'shine-article-link-owner-'),
   );
   environment = {
-    TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-    TURSO_AUTH_TOKEN: '',
+    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
     JWT_SECRET,
   } as Environment;
   const database = getDatabase(environment);

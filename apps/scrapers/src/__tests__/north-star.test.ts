@@ -34,8 +34,7 @@ async function createTestDatabase(): Promise<ReturnType<typeof getDatabase>> {
     path.join(os.tmpdir(), 'shine-north-star-'),
   );
   const environment: Environment = {
-    TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-    TURSO_AUTH_TOKEN: '',
+    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
   };
   const database = getDatabase(environment);
   await migrate(database, {migrationsFolder});

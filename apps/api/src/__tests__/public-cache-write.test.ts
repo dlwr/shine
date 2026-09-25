@@ -43,8 +43,7 @@ async function createTestEnvironment(
     path.join(os.tmpdir(), 'shine-public-cache-'),
   );
   const environment: Environment = {
-    TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-    TURSO_AUTH_TOKEN: '',
+    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
     CACHE_KV: createKv(puts, onPut),
   };
   const database = getDatabase(environment);

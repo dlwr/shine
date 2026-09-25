@@ -43,8 +43,7 @@ function createKvStub(): KVNamespace {
 beforeEach(async () => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
   environment = {
-    TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-    TURSO_AUTH_TOKEN: '',
+    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
     JWT_SECRET,
     CACHE_KV: createKvStub(),
   };

@@ -1,7 +1,3 @@
-/**
- * 本番（.env の D1 の proxy か Turso）に読み取り専用の SQL を 1 文流す。
- * 書き込みの句は実行前に拒否する。Turso では読み取りトランザクションもコミットしない。
- */
 import process from 'node:process';
 import {Command, InvalidArgumentError} from 'commander';
 import {d1ProxyOf, loadScraperEnvironment} from './common/environment';
@@ -30,13 +26,7 @@ async function main(
     const proxy = d1ProxyOf(environment);
     const result = proxy
       ? await runReadOnlyQueryOnD1(proxy, query)
-      : await runReadOnlyQuery(
-          {
-            url: environment.TURSO_DATABASE_URL,
-            authToken: environment.TURSO_AUTH_TOKEN,
-          },
-          query,
-        );
+      : await runReadOnlyQuery(environment.DATABASE_FILE_URL ?? '', query);
     console.log(formatQueryResult(result, options.format));
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
@@ -48,7 +38,7 @@ export function createCommand(): Command {
   return new Command()
     .name('sql')
     .description(
-      '.env の D1 の proxy か Turso に読み取り専用の SQL を 1 文流します（SELECT・WITH・EXPLAIN のみ）',
+      '.env の D1 の proxy か file: の DB に読み取り専用の SQL を 1 文流します（SELECT・WITH・EXPLAIN のみ）',
     )
     .argument('<query>', '実行する SQL')
     .option(
@@ -66,8 +56,9 @@ Examples:
   pnpm scrapers sql "EXPLAIN QUERY PLAN SELECT * FROM movies WHERE year = 2015"
 
 Environment variables:
-  TURSO_DATABASE_URL  接続先 (libsql://... または file:...)
-  TURSO_AUTH_TOKEN    接続先のトークン
+  D1_PROXY_URL        本番の D1 の proxy
+  D1_PROXY_KEY        proxy の鍵
+  DATABASE_FILE_URL   file:... を指定するとそのファイルを読む（proxy より優先）
 `,
     )
     .action(main);

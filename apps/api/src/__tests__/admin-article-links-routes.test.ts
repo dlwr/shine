@@ -55,8 +55,7 @@ beforeEach(async () => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
   deletedCacheKeys = [];
   environment = {
-    TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-    TURSO_AUTH_TOKEN: '',
+    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
     JWT_SECRET,
     CACHE_KV: createKvStub(),
   } as Environment;
@@ -116,7 +115,7 @@ describe('POST /article-links/:id/spam', () => {
     const empty = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
     environment = {
       ...environment,
-      TURSO_DATABASE_URL: `file:${path.join(empty, 'unmigrated.db')}`,
+      DATABASE_FILE_URL: `file:${path.join(empty, 'unmigrated.db')}`,
     } as Environment;
 
     const response = await flagAsSpam('link-1');
@@ -163,7 +162,7 @@ describe('DELETE /article-links/:id', () => {
     const empty = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-test-'));
     environment = {
       ...environment,
-      TURSO_DATABASE_URL: `file:${path.join(empty, 'unmigrated.db')}`,
+      DATABASE_FILE_URL: `file:${path.join(empty, 'unmigrated.db')}`,
     } as Environment;
 
     const response = await deleteLink('link-1');

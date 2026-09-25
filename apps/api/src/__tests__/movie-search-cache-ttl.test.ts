@@ -33,8 +33,7 @@ async function createTestEnvironment(puts: Put[]): Promise<Environment> {
     path.join(os.tmpdir(), 'shine-search-ttl-'),
   );
   const environment: Environment = {
-    TURSO_DATABASE_URL: `file:${path.join(directory, 'test.db')}`,
-    TURSO_AUTH_TOKEN: '',
+    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
     CACHE_KV: createRecordingKv(puts),
   };
   const database = getDatabase(environment);

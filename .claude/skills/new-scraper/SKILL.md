@@ -23,7 +23,7 @@ description: apps/scrapersに新しいスクレイパーCLIを追加するとき
 
 全件実行の前に少数サンプルで実行し、保存内容をSQLで確認する（過去にNull 223件保存の事故あり）。実行後も件数と内容をSQLで検証する。
 
-ローカルの一時DBで試せる。`TURSO_DATABASE_URL="file:/tmp/x.db"` を渡せば認証トークンは要らず、`.env` の `D1_PROXY_URL`（本番の D1）より優先される（`getDatabase` と `d1ProxyOf` が `file:` を特別扱いする）。マイグレーションは `migrate()` を呼ぶ小さい `.mts` をパッケージ内に置いて `npx tsx` で流す（スクラッチパッド直下だとモジュール解決に失敗する）。
+ローカルの一時DBで試せる。`DATABASE_FILE_URL="file:/tmp/x.db"` を渡すと `.env` の `D1_PROXY_URL`（本番の D1）より優先される（`getDatabase` と `d1ProxyOf` が `file:` を特別扱いする）。マイグレーションは `migrate()` を呼ぶ小さい `.mts` をパッケージ内に置いて `npx tsx` で流す（スクラッチパッド直下だとモジュール解決に失敗する）。
 
 ## テスト
 

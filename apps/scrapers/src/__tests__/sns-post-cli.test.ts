@@ -204,7 +204,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-09-13T03:00:00Z'));
   vi.stubEnv('SHINE_API_URL', undefined);
   vi.stubEnv('ADMIN_PASSWORD', '');
-  vi.stubEnv('TURSO_DATABASE_URL', 'file:sns-post-test.db');
+  vi.stubEnv('DATABASE_FILE_URL', 'file:sns-post-test.db');
   vi.stubEnv('BLUESKY_IDENTIFIER', undefined);
   vi.stubEnv('BLUESKY_APP_PASSWORD', undefined);
   vi.stubEnv('X_API_KEY', undefined);

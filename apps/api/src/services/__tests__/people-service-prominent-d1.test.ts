@@ -54,8 +54,6 @@ describe('PeopleService on D1', () => {
       });
     }
     service = new PeopleService({
-      TURSO_DATABASE_URL: '',
-      TURSO_AUTH_TOKEN: '',
       DB: d1.binding,
     });
   }, 60_000);

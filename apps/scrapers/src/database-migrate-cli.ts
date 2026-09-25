@@ -22,7 +22,7 @@ async function main(options: WriteModeOptions): Promise<void> {
   const proxy = d1ProxyOf(environment);
   if (!proxy) {
     console.error(
-      'D1_PROXY_URL が設定されていないか、TURSO_DATABASE_URL に file: が指定されています',
+      'D1_PROXY_URL が設定されていないか、DATABASE_FILE_URL に file: が指定されています',
     );
     process.exitCode = 1;
     return;

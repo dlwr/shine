@@ -8,7 +8,7 @@ import {
 describe('assertDatabaseEnvironment', () => {
   it('ローカルのfile:データベースでは認証トークンを求めない', () => {
     const environment = buildEnvironment({
-      TURSO_DATABASE_URL: 'file:/tmp/test.db',
+      DATABASE_FILE_URL: 'file:/tmp/test.db',
     });
 
     expect(() => {
@@ -16,25 +16,25 @@ describe('assertDatabaseEnvironment', () => {
     }).not.toThrow();
   });
 
-  it('リモートデータベースでは認証トークンを求める', () => {
+  it('file: でない接続先は受け付けない', () => {
     const environment = buildEnvironment({
-      TURSO_DATABASE_URL: 'libsql://shine.turso.io',
+      DATABASE_FILE_URL: 'libsql://shine.turso.io',
     });
 
     expect(() => {
       assertDatabaseEnvironment(environment);
-    }).toThrow(/TURSO_AUTH_TOKEN/);
+    }).toThrow(/D1_PROXY_URL/);
   });
 
   it('接続先が無ければ失敗する', () => {
-    const environment = buildEnvironment({TURSO_AUTH_TOKEN: 'token'});
+    const environment = buildEnvironment({});
 
     expect(() => {
       assertDatabaseEnvironment(environment);
-    }).toThrow(/TURSO_DATABASE_URL/);
+    }).toThrow(/D1_PROXY_URL/);
   });
 
-  it('D1 の proxy があれば Turso の接続先を求めない', () => {
+  it('D1 の proxy があればファイルの接続先を求めない', () => {
     const environment = buildEnvironment({
       D1_PROXY_URL: 'https://shine-database-proxy.example.workers.dev',
       D1_PROXY_KEY: 'key',
@@ -71,7 +71,7 @@ describe('d1ProxyOf', () => {
 
   it('ローカルの file: データベースが指定されていれば proxy を使わない', () => {
     const environment = buildEnvironment({
-      TURSO_DATABASE_URL: 'file:/tmp/test.db',
+      DATABASE_FILE_URL: 'file:/tmp/test.db',
       D1_PROXY_URL: 'https://proxy.example',
       D1_PROXY_KEY: 'key',
     });

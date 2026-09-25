@@ -1,14 +1,10 @@
-/**
- * 本番の Turso を埋め込みレプリカとして同期し、1 ファイルの SQLite に固める。
- * 読み取りは bytes synced として数えられ、rows read には乗らない。
- */
 import path from 'node:path';
 import process from 'node:process';
 import {fileURLToPath} from 'node:url';
 import {Command} from 'commander';
-import {d1ProxyOf, loadScraperEnvironment} from './common/environment';
+import {loadScraperEnvironment} from './common/environment';
 import {getDatabase} from '@shine/database';
-import {backupD1Database, backupDatabase} from './database-backup';
+import {backupDatabase} from './database-backup';
 import {databaseReader} from './d1-import-sql';
 
 const REPOSITORY_ROOT = path.resolve(
@@ -26,18 +22,10 @@ async function main(options: {out?: string}): Promise<void> {
   const outputPath = path.resolve(options.out ?? defaultOutputPath(new Date()));
   const started = Date.now();
 
-  const result = d1ProxyOf(environment)
-    ? await backupD1Database(
-        databaseReader(getDatabase(environment)),
-        outputPath,
-      )
-    : await backupDatabase(
-        {
-          url: environment.TURSO_DATABASE_URL,
-          authToken: environment.TURSO_AUTH_TOKEN,
-        },
-        outputPath,
-      );
+  const result = await backupDatabase(
+    databaseReader(getDatabase(environment)),
+    outputPath,
+  );
 
   console.log(
     `${result.outputPath}: movies ${result.movies} 件、integrity_check ${result.integrity}、${Math.round((Date.now() - started) / 1000)} 秒`,
@@ -52,7 +40,7 @@ export function createCommand(): Command {
   return new Command()
     .name('database-backup')
     .description(
-      '本番の Turso を埋め込みレプリカとして同期し、1 ファイルの SQLite に固めます',
+      '本番の D1 を proxy 経由で読み、1 ファイルの SQLite に固めます',
     )
     .option(
       '--out <path>',
@@ -66,10 +54,8 @@ Examples:
   pnpm scrapers database-backup --out /Volumes/ExternalSSD/backup/shine.db
 
 Environment variables:
-  D1_PROXY_URL        あれば D1 から proxy 経由で取る
+  D1_PROXY_URL        本番の D1 の proxy
   D1_PROXY_KEY        proxy の鍵
-  TURSO_DATABASE_URL  D1_PROXY_URL が無いときの同期元 (libsql://...)
-  TURSO_AUTH_TOKEN    同期元のトークン
 `,
     )
     .action(main);

@@ -6,7 +6,6 @@ import {sql, type SQL} from 'drizzle-orm';
 import type {BatchItem} from 'drizzle-orm/batch';
 import type {BaseSQLiteDatabase} from 'drizzle-orm/sqlite-core';
 import * as schema from './schema/index';
-import {createTimeoutFetch, resolveRequestTimeout} from './timeout-fetch';
 
 // Re-export drizzle-orm utilities
 export {
@@ -78,9 +77,7 @@ export type Environment = {
   TMDB_API_KEY?: string;
   TMDB_LEAD_ACCESS_TOKEN?: string;
   OMDB_API_KEY?: string;
-  TURSO_DATABASE_URL: string;
-  TURSO_AUTH_TOKEN: string;
-  TURSO_REQUEST_TIMEOUT_MS?: string;
+  DATABASE_FILE_URL?: string;
   ADMIN_PASSWORD?: string;
   JWT_SECRET?: string;
   TURNSTILE_SECRET_KEY?: string;
@@ -190,7 +187,7 @@ export const getDatabase = (environment: Environment): Database => {
 
   if (
     environment.D1_PROXY_URL &&
-    !environment.TURSO_DATABASE_URL.startsWith('file:')
+    !environment.DATABASE_FILE_URL?.startsWith('file:')
   ) {
     return createProxyDatabase({
       url: environment.D1_PROXY_URL,
@@ -198,14 +195,13 @@ export const getDatabase = (environment: Environment): Database => {
     });
   }
 
-  const requestTimeoutMs = resolveRequestTimeout(
-    environment.TURSO_REQUEST_TIMEOUT_MS,
-  );
-  const client = createClient({
-    url: environment.TURSO_DATABASE_URL,
-    authToken: environment.TURSO_AUTH_TOKEN,
-    ...(requestTimeoutMs && {fetch: createTimeoutFetch(requestTimeoutMs)}),
-  });
+  if (!environment.DATABASE_FILE_URL?.startsWith('file:')) {
+    throw new Error(
+      'データベースの接続先がありません: D1_PROXY_URL か file: の DATABASE_FILE_URL を設定してください',
+    );
+  }
+
+  const client = createClient({url: environment.DATABASE_FILE_URL});
 
   return drizzle({client, schema, casing: 'snake_case'});
 };

@@ -4,8 +4,6 @@ import {createLoginRateLimiter, loginRateLimiter} from '../login-rate-limiter';
 import app from '../index';
 
 const environment: Environment = {
-  TURSO_DATABASE_URL: '',
-  TURSO_AUTH_TOKEN: '',
   ADMIN_PASSWORD: 'correct-password',
   JWT_SECRET: 'test-jwt-secret',
 };

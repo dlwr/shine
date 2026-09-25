@@ -45,8 +45,7 @@ describe('buildD1ImportStatements', () => {
     directory = mkdtempSync(path.join(tmpdir(), 'shine-d1-import-'));
     const url = `file:${path.join(directory, 'source.db')}`;
     const database = getDatabase({
-      TURSO_DATABASE_URL: url,
-      TURSO_AUTH_TOKEN: '',
+      DATABASE_FILE_URL: url,
     });
     await migrate(database, {migrationsFolder});
     await database.insert(movies).values({uid: 'movie-1', year: 1954});
