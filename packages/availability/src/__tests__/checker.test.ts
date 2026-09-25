@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
 import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {movies} from '@shine/database/schema/movies';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {checkMovieAvailability, deleteNonOkChecks} from '../checker';
 import type {SourceCheckResult} from '../types';

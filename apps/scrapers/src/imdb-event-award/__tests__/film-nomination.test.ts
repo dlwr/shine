@@ -9,7 +9,7 @@ import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {afterEach, describe, expect, it} from 'vitest';
 import {ensureFilmNomination, loadFilmNominations} from '../film-nomination';
 import {type AwardFilm, type ImportContext} from '../types';

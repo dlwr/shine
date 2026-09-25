@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {afterEach, describe, expect, it} from 'vitest';
 import {getScrapeDatabase} from '../common/dry-run';
 import {backfillPersonEnglishNames} from '../person-english-names';

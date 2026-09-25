@@ -6,7 +6,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {AvailabilityService} from '../availability-service';
 import type {SourceRunners} from '@shine/availability';

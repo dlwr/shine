@@ -7,7 +7,7 @@ import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {searchRoutes} from '../routes/search';
 

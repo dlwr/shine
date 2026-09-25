@@ -12,7 +12,7 @@ import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {
   buildSparqlQuery,

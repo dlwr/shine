@@ -10,7 +10,7 @@ import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {quizRoutes} from '../routes/quiz';
 import {QuizService} from '../services/quiz-service';

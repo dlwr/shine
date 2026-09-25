@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {describe, expect, it} from 'vitest';
 import {awardsRoutes} from '../routes/awards';
 import {crossingsRoutes} from '../routes/crossings';

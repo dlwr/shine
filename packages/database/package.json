@@ -7,7 +7,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./schema/*": "./src/schema/*.ts",
-    "./seeds/*": "./seeds/*.ts"
+    "./seeds/*": "./seeds/*.ts",
+    "./testing": "./src/testing.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",

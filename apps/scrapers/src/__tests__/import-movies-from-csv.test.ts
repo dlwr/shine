@@ -6,7 +6,7 @@ import {eq} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {importMoviesFromCsv} from '../import-imdb-list';
 

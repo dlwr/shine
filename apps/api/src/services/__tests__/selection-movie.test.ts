@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {getDatabase} from '@shine/database';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {beforeAll, describe, expect, it} from 'vitest';
 import {seedPublicData} from '../../__tests__/public-data-seed';
 import {watchedMarks} from '@shine/database/schema/watched-marks';

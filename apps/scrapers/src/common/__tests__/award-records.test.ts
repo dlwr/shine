@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {getDatabase} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {afterEach, describe, expect, it} from 'vitest';
 import {ensureAwardCategory, ensureAwardOrganization} from '../award-records';
 

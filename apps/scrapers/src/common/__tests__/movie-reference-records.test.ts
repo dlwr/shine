@@ -6,7 +6,7 @@ import {getDatabase} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {afterEach, describe, expect, it} from 'vitest';
 import {
   insertImdbAndTmdbReferenceUrls,

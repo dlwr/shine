@@ -6,7 +6,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {buildTmdbJaWorklist} from '../tmdb-ja-worklist';
 
