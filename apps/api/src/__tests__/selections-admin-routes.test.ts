@@ -162,6 +162,18 @@ describe('POST /reselect', () => {
     expect(response.status).toBe(400);
   });
 
+  it('除外が 50 本を超えれば 400 を返す', async () => {
+    const response = await post('/reselect', {
+      type: 'daily',
+      excludeMovieUids: Array.from(
+        {length: 51},
+        (_, index) => `movie-${index}`,
+      ),
+    });
+
+    expect(response.status).toBe(400);
+  });
+
   it('除外の指定が配列でなければ 400 を返す', async () => {
     const response = await post('/reselect', {
       type: 'daily',

@@ -7,6 +7,7 @@ import {loadSelectionMovie} from '../services/selection-movie';
 import {pickNominatedMovieUid} from '../services/selection-pick';
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const MAX_EXCLUDED_MOVIES = 50;
 
 export const selectionsAdminRoutes = new Hono<{Bindings: Environment}>();
 
@@ -21,6 +22,7 @@ selectionsAdminRoutes.post('/reselect', authMiddleware, async c => {
 
     if (
       !Array.isArray(excludeMovieUids) ||
+      excludeMovieUids.length > MAX_EXCLUDED_MOVIES ||
       excludeMovieUids.some(uid => typeof uid !== 'string')
     ) {
       return c.json({error: 'Invalid excludeMovieUids'}, 400);
