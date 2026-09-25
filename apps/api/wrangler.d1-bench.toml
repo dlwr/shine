@@ -1,0 +1,19 @@
+name = "shine-d1-bench"
+main = "src/poc/d1-bench.ts"
+compatibility_date = "2025-03-26"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[vars]
+TURSO_REQUEST_TIMEOUT_MS = "10000"
+
+[triggers]
+crons = ["*/2 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "shine-d1-poc"
+database_id = "ff28e770-932f-4c6d-ac7d-f7afc6e40a56"
+
+[observability.logs]
+enabled = true
