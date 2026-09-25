@@ -33,8 +33,21 @@ export function buildEnvironment(source: NodeJS.ProcessEnv): Environment {
   };
 }
 
+export function d1ProxyOf(
+  environment: Environment,
+): {url: string; key: string} | undefined {
+  if (
+    !environment.D1_PROXY_URL ||
+    environment.TURSO_DATABASE_URL.startsWith('file:')
+  ) {
+    return undefined;
+  }
+
+  return {url: environment.D1_PROXY_URL, key: environment.D1_PROXY_KEY ?? ''};
+}
+
 export function assertDatabaseEnvironment(environment: Environment): void {
-  if (environment.D1_PROXY_URL) {
+  if (d1ProxyOf(environment)) {
     if (!environment.D1_PROXY_KEY) {
       throw new Error(
         'データベース接続情報が不足しています: D1_PROXY_KEY を .env または .dev.vars に設定してください。',

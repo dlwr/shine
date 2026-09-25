@@ -3,7 +3,7 @@ import process from 'node:process';
 import {fileURLToPath} from 'node:url';
 import {getDatabase, runStatementsOnProxy} from '@shine/database';
 import {Command} from 'commander';
-import {loadScraperEnvironment} from './common/environment';
+import {d1ProxyOf, loadScraperEnvironment} from './common/environment';
 import {
   applyOption,
   dryRunOption,
@@ -19,9 +19,10 @@ const MIGRATIONS_FOLDER = path.resolve(
 
 async function main(options: WriteModeOptions): Promise<void> {
   const environment = loadScraperEnvironment();
-  if (!environment.D1_PROXY_URL) {
+  const proxy = d1ProxyOf(environment);
+  if (!proxy) {
     console.error(
-      'D1_PROXY_URL が設定されていません（Turso には pnpm db:migrate:prod を使う）',
+      'D1_PROXY_URL が設定されていないか、TURSO_DATABASE_URL に file: が指定されています',
     );
     process.exitCode = 1;
     return;
@@ -45,10 +46,7 @@ async function main(options: WriteModeOptions): Promise<void> {
     return;
   }
 
-  await runStatementsOnProxy(
-    {url: environment.D1_PROXY_URL, key: environment.D1_PROXY_KEY ?? ''},
-    statements,
-  );
+  await runStatementsOnProxy(proxy, statements);
   console.log(`\n${statements.length} 文を 1 回の batch で流しました`);
 }
 

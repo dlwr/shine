@@ -4,7 +4,7 @@
  */
 import process from 'node:process';
 import {Command, InvalidArgumentError} from 'commander';
-import {loadScraperEnvironment} from './common/environment';
+import {d1ProxyOf, loadScraperEnvironment} from './common/environment';
 import {
   formatQueryResult,
   type QueryFormat,
@@ -27,14 +27,9 @@ async function main(
   const environment = loadScraperEnvironment();
 
   try {
-    const result = environment.D1_PROXY_URL
-      ? await runReadOnlyQueryOnD1(
-          {
-            url: environment.D1_PROXY_URL,
-            key: environment.D1_PROXY_KEY ?? '',
-          },
-          query,
-        )
+    const proxy = d1ProxyOf(environment);
+    const result = proxy
+      ? await runReadOnlyQueryOnD1(proxy, query)
       : await runReadOnlyQuery(
           {
             url: environment.TURSO_DATABASE_URL,

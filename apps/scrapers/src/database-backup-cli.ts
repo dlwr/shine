@@ -6,7 +6,7 @@ import path from 'node:path';
 import process from 'node:process';
 import {fileURLToPath} from 'node:url';
 import {Command} from 'commander';
-import {loadScraperEnvironment} from './common/environment';
+import {d1ProxyOf, loadScraperEnvironment} from './common/environment';
 import {getDatabase} from '@shine/database';
 import {backupD1Database, backupDatabase} from './database-backup';
 import {databaseReader} from './d1-import-sql';
@@ -26,7 +26,7 @@ async function main(options: {out?: string}): Promise<void> {
   const outputPath = path.resolve(options.out ?? defaultOutputPath(new Date()));
   const started = Date.now();
 
-  const result = environment.D1_PROXY_URL
+  const result = d1ProxyOf(environment)
     ? await backupD1Database(
         databaseReader(getDatabase(environment)),
         outputPath,
