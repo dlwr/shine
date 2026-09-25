@@ -39,6 +39,7 @@ export default defineConfig({
     },
     pool: 'forks',
     isolate: false,
+    sequence: {shuffle: {files: false, tests: true}},
     projects: [
       {
         test: {

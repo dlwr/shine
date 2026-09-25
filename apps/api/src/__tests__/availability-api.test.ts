@@ -96,11 +96,16 @@ describe('POST /movies/:id/availability/check', () => {
       detail: 'Matched (stale)',
       checkedAt: Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60,
     });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Promise<Response>(() => {})),
+    );
 
     const response = await moviesRoutes.request(
       '/movie-a/availability/check',
       {method: 'POST'},
       environment,
+      {waitUntil: vi.fn(), passThroughOnException: vi.fn(), props: {}},
     );
 
     expect(response.status).toBe(200);

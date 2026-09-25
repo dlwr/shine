@@ -5,6 +5,8 @@ import homeSource from './home.tsx?raw';
 import Home, {loader, meta} from './home';
 import type {Route} from './+types/home';
 import {createMockContext} from '@/lib/test-context';
+import '@/components/admin/admin-session-bar';
+import '@/components/admin/selection-admin-controls';
 
 // Cloudflare環境のモック
 
