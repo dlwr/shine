@@ -43,8 +43,8 @@ beforeEach(() => {
   vi.stubEnv('TURSO_DATABASE_URL', 'file:north-star-report-test.db');
   vi.stubEnv('DISCORD_WEBHOOK_URL', WEBHOOK_URL);
   vi.stubEnv('CLOUDFLARE_API_TOKEN', 'token');
-  vi.stubEnv('NORTH_STAR_OWNER_IPS', undefined);
-  vi.stubEnv('NORTH_STAR_OWNER_URL_PREFIXES', undefined);
+  vi.stubEnv('NORTH_STAR_OWNER_IPS', '');
+  vi.stubEnv('NORTH_STAR_OWNER_URL_PREFIXES', '');
   vi.mocked(collectMonthlyLinkCounts)
     .mockReset()
     .mockResolvedValue([
@@ -108,7 +108,7 @@ describe('north-star-report', () => {
   });
 
   it('CLOUDFLARE_API_TOKEN が無ければ先行指標を取らずに断り書きを送る', async () => {
-    vi.stubEnv('CLOUDFLARE_API_TOKEN', undefined);
+    vi.stubEnv('CLOUDFLARE_API_TOKEN', '');
 
     await runCli();
 
