@@ -48,6 +48,8 @@ jobs:
         working-directory: apps/scrapers
         run: pnpm run cli availability-check ${{ inputs.dry_run && '--dry-run' || '' }}
         env:
+          D1_PROXY_URL: ${{ secrets.D1_PROXY_URL }}
+          D1_PROXY_KEY: ${{ secrets.D1_PROXY_KEY }}
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}

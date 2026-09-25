@@ -51,6 +51,8 @@ jobs:
         working-directory: apps/scrapers
         run: pnpm run cli sns-post --monthly-links ${{ inputs.dry_run && '--dry-run' || '' }}
         env:
+          D1_PROXY_URL: ${{ secrets.D1_PROXY_URL }}
+          D1_PROXY_KEY: ${{ secrets.D1_PROXY_KEY }}
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
           NORTH_STAR_OWNER_IPS: ${{ secrets.NORTH_STAR_OWNER_IPS }}
