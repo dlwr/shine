@@ -1,0 +1,12 @@
+name = "shine-database-proxy"
+main = "src/database-proxy.ts"
+compatibility_date = "2025-03-26"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "shine-production"
+database_id = "db94198f-ceb4-4814-ac36-ed12e24647ec"
+
+[observability.logs]
+enabled = true

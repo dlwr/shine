@@ -3,6 +3,9 @@
   "workspaces": {
     "apps/front": {
       "entry": ["workers/og.ts"]
+    },
+    "apps/api": {
+      "entry": ["src/database-proxy.ts"]
     }
   }
 }
