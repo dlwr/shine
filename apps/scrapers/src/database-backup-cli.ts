@@ -7,7 +7,9 @@ import process from 'node:process';
 import {fileURLToPath} from 'node:url';
 import {Command} from 'commander';
 import {loadScraperEnvironment} from './common/environment';
-import {backupDatabase} from './database-backup';
+import {getDatabase} from '@shine/database';
+import {backupD1Database, backupDatabase} from './database-backup';
+import {databaseReader} from './d1-import-sql';
 
 const REPOSITORY_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -24,13 +26,18 @@ async function main(options: {out?: string}): Promise<void> {
   const outputPath = path.resolve(options.out ?? defaultOutputPath(new Date()));
   const started = Date.now();
 
-  const result = await backupDatabase(
-    {
-      url: environment.TURSO_DATABASE_URL,
-      authToken: environment.TURSO_AUTH_TOKEN,
-    },
-    outputPath,
-  );
+  const result = environment.D1_PROXY_URL
+    ? await backupD1Database(
+        databaseReader(getDatabase(environment)),
+        outputPath,
+      )
+    : await backupDatabase(
+        {
+          url: environment.TURSO_DATABASE_URL,
+          authToken: environment.TURSO_AUTH_TOKEN,
+        },
+        outputPath,
+      );
 
   console.log(
     `${result.outputPath}: movies ${result.movies} 件、integrity_check ${result.integrity}、${Math.round((Date.now() - started) / 1000)} 秒`,
@@ -59,7 +66,9 @@ Examples:
   pnpm scrapers database-backup --out /Volumes/ExternalSSD/backup/shine.db
 
 Environment variables:
-  TURSO_DATABASE_URL  同期元 (libsql://...)
+  D1_PROXY_URL        あれば D1 から proxy 経由で取る
+  D1_PROXY_KEY        proxy の鍵
+  TURSO_DATABASE_URL  D1_PROXY_URL が無いときの同期元 (libsql://...)
   TURSO_AUTH_TOKEN    同期元のトークン
 `,
     )

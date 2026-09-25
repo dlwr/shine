@@ -1,6 +1,7 @@
 import {mkdir, rm} from 'node:fs/promises';
 import path from 'node:path';
-import {createClient} from '@libsql/client';
+import {createClient, type Client} from '@libsql/client';
+import {buildD1ImportStatements, type SqlReader} from './d1-import-sql';
 
 export type BackupSource = {
   url: string;
@@ -51,7 +52,29 @@ export async function backupDatabase(
   }
   await removeReplica(replicaPath);
 
+  return inspectBackup(outputPath);
+}
+
+export async function backupD1Database(
+  read: SqlReader,
+  outputPath: string,
+): Promise<BackupResult> {
+  await mkdir(path.dirname(outputPath), {recursive: true});
+  await rm(outputPath, {force: true});
+
+  const statements = await buildD1ImportStatements(read);
   const backup = createClient({url: `file:${outputPath}`});
+  try {
+    await backup.batch(statements, 'write');
+  } finally {
+    backup.close();
+  }
+
+  return inspectBackup(outputPath);
+}
+
+async function inspectBackup(outputPath: string): Promise<BackupResult> {
+  const backup: Client = createClient({url: `file:${outputPath}`});
   try {
     const [integrity, movies] = await Promise.all([
       backup.execute('PRAGMA integrity_check'),
