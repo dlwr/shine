@@ -118,40 +118,56 @@ export const runBatch = async (
   await (database as unknown as BatchCapableDatabase).batch([first, ...rest]);
 };
 
-export const createProxyDatabase = ({
-  url,
-  key,
-  fetch: fetchImpl = fetch,
-}: {
+type ProxyConfig = {
   url: string;
   key: string;
   fetch?: typeof fetch;
-}): Database => {
-  const post = async (body: unknown) => {
-    const response = await fetchImpl(url, {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${key}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-    if (!response.ok) {
-      throw new Error(`D1 proxy ${response.status}: ${await response.text()}`);
-    }
+};
 
-    return response.json();
-  };
+const postToProxy = async (
+  {url, key, fetch: fetchImpl = fetch}: ProxyConfig,
+  body: unknown,
+): Promise<unknown> => {
+  const response = await fetchImpl(url, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${key}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    throw new Error(`D1 proxy ${response.status}: ${await response.text()}`);
+  }
 
-  return drizzleProxy(
+  return response.json();
+};
+
+export const createProxyDatabase = (config: ProxyConfig): Database =>
+  drizzleProxy(
     async (query, parameters, method) =>
-      post({sql: query, params: parameters, method}) as Promise<{
+      postToProxy(config, {sql: query, params: parameters, method}) as Promise<{
         rows: unknown[];
       }>,
     async queries =>
-      post({batch: queries}) as Promise<Array<{rows: unknown[]}>>,
+      postToProxy(config, {batch: queries}) as Promise<
+        Array<{rows: unknown[]}>
+      >,
     {schema, casing: 'snake_case'},
   );
+
+export const queryWithColumnNames = async (
+  config: ProxyConfig,
+  query: string,
+): Promise<{columns: string[]; rows: unknown[][]}> => {
+  const {rows} = (await postToProxy(config, {
+    sql: query,
+    params: [],
+    method: 'all',
+    columnNames: true,
+  })) as {rows: unknown[][]};
+  const [columns = [], ...values] = rows;
+  return {columns: columns.map(String), rows: values};
 };
 
 export const getDatabase = (environment: Environment): Database => {

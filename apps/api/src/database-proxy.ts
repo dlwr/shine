@@ -4,6 +4,7 @@ type ProxyQuery = {
   sql: string;
   params: unknown[];
   method: 'run' | 'all' | 'values' | 'get';
+  columnNames?: boolean;
 };
 
 type ProxyBody = ProxyQuery | {batch: ProxyQuery[]};
@@ -32,7 +33,9 @@ const execute = async (
     return {rows: []};
   }
 
-  const rows = await statement.raw();
+  const rows = query.columnNames
+    ? await statement.raw({columnNames: true})
+    : await statement.raw();
   return {rows: query.method === 'get' ? rows[0] : rows};
 };
 
