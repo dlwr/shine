@@ -1,4 +1,4 @@
-import {and, eq, inArray, or} from '@shine/database';
+import {and, eq, or, sql, stringLiteral} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
 import {
@@ -49,6 +49,12 @@ export function awardPageLinkForOrganizationName(
   };
 }
 
+const categoryNameIn = (names: readonly string[]) =>
+  sql`${awardCategories.name} IN (${sql.join(
+    names.map(name => stringLiteral(name)),
+    sql`, `,
+  )})`;
+
 /** 最高賞の賞ページを持つ (組織, 部門) だけに絞る条件。個人賞や映画祭のサブ賞は含まない */
 export function awardPageNominations() {
   return or(
@@ -56,8 +62,11 @@ export function awardPageNominations() {
       .filter(definition => !definition.subAward)
       .map(definition =>
         and(
-          eq(awardOrganizations.name, definition.organizationName),
-          inArray(awardCategories.name, definition.categoryNames),
+          eq(
+            awardOrganizations.name,
+            stringLiteral(definition.organizationName),
+          ),
+          categoryNameIn(definition.categoryNames),
         ),
       ),
   );
@@ -119,8 +128,11 @@ export function personAwardNominations(role?: PersonAwardDefinition['role']) {
       .filter(definition => role === undefined || definition.role === role)
       .map(definition =>
         and(
-          eq(awardOrganizations.name, definition.organizationName),
-          inArray(awardCategories.name, definition.categoryNames),
+          eq(
+            awardOrganizations.name,
+            stringLiteral(definition.organizationName),
+          ),
+          categoryNameIn(definition.categoryNames),
         ),
       ),
   );

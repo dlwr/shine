@@ -1,9 +1,13 @@
+import type {SQL} from '@shine/database';
+import {SQLiteSyncDialect} from 'drizzle-orm/sqlite-core';
 import {describe, expect, it} from 'vitest';
 import {
   awardPageLinkForOrganizationName,
+  awardPageNominations,
   findPersonAwardDefinition,
   findTopAwardPageDefinition,
   japaneseAwardNames,
+  personAwardNominations,
 } from '../award-definition-lookup';
 
 describe('awardPageLinkForOrganizationName', () => {
@@ -225,5 +229,19 @@ describe('findPersonAwardDefinition', () => {
         'Silver Bear for Best Supporting Performance',
       )?.role,
     ).toBe('actor');
+  });
+});
+
+describe('award definition conditions', () => {
+  const dialect = new SQLiteSyncDialect();
+  const parametersOf = (condition: SQL | undefined) =>
+    condition ? dialect.sqlToQuery(condition).params : [];
+
+  it('awardPageNominations は賞の定義を bind 変数にしない', () => {
+    expect(parametersOf(awardPageNominations())).toEqual([]);
+  });
+
+  it('personAwardNominations は賞の定義を bind 変数にしない', () => {
+    expect(parametersOf(personAwardNominations())).toEqual([]);
   });
 });
