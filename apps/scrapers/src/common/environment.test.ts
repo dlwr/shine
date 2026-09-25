@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from 'vitest';
-import {assertDatabaseEnvironment, buildEnvironment} from './environment';
+import {buildEnvironment} from './environment';
 
 describe('loadEnvironmentFiles', () => {
   it('dotenv の宣伝ログを出さない', async () => {
@@ -22,12 +22,6 @@ describe('buildEnvironment', () => {
     });
 
     expect(environment.TURSO_DATABASE_URL).toBe('libsql://example.turso.io');
-  });
-
-  it('TURSO_AUTH_TOKENを読み取る', () => {
-    const environment = buildEnvironment({TURSO_AUTH_TOKEN: 'token-abc'});
-
-    expect(environment.TURSO_AUTH_TOKEN).toBe('token-abc');
   });
 
   it('TMDB_API_KEYを読み取る', () => {
@@ -66,34 +60,5 @@ describe('buildEnvironment', () => {
     });
 
     expect(environment.TURSO_DATABASE_URL).toBe('');
-  });
-});
-
-describe('assertDatabaseEnvironment', () => {
-  const valid = {
-    TURSO_DATABASE_URL: 'libsql://example.turso.io',
-    TURSO_AUTH_TOKEN: 'token-abc',
-  };
-
-  it('URLとトークンが揃っていれば通る', () => {
-    expect(() => {
-      assertDatabaseEnvironment(buildEnvironment(valid));
-    }).not.toThrow();
-  });
-
-  it('URLが未設定なら例外を投げる', () => {
-    expect(() => {
-      assertDatabaseEnvironment(
-        buildEnvironment({...valid, TURSO_DATABASE_URL: ''}),
-      );
-    }).toThrow(/TURSO_DATABASE_URL/);
-  });
-
-  it('トークンが未設定なら例外を投げる', () => {
-    expect(() => {
-      assertDatabaseEnvironment(
-        buildEnvironment({...valid, TURSO_AUTH_TOKEN: ''}),
-      );
-    }).toThrow(/TURSO_AUTH_TOKEN/);
   });
 });

@@ -1,11 +1,6 @@
 import {createClient, type Value} from '@libsql/client';
 import {queryWithColumnNames} from '@shine/database';
 
-export type QuerySource = {
-  url: string;
-  authToken: string;
-};
-
 export type QueryResult = {
   columns: string[];
   rows: Value[][];
@@ -53,11 +48,11 @@ function assertReadOnlyQuery(query: string): string {
 }
 
 export async function runReadOnlyQuery(
-  source: QuerySource,
+  url: string,
   query: string,
 ): Promise<QueryResult> {
   const statement = assertReadOnlyQuery(query);
-  const client = createClient({url: source.url, authToken: source.authToken});
+  const client = createClient({url});
 
   try {
     const transaction = await client.transaction('read');

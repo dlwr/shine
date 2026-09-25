@@ -3,96 +3,62 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createClient} from '@libsql/client';
-import {getDatabase} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
-import {libsqlClientOf, migrate} from '@shine/database/testing';
-import {beforeAll, describe, expect, it, vi} from 'vitest';
-import {backupDatabase, type BackupSource} from '../database-backup';
+import {people} from '@shine/database/schema/people';
+import {createD1TestDatabase} from '@shine/database/testing';
+import {afterAll, beforeAll, describe, expect, it} from 'vitest';
+import {backupDatabase, type BackupResult} from '../database-backup';
+import {databaseReader} from '../d1-import-sql';
 
-const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
-  currentDirectory,
+  path.dirname(fileURLToPath(import.meta.url)),
   '../../../../packages/database/migrations',
 );
 
-const source: BackupSource = {url: 'libsql://example', authToken: 'token'};
-
-let directory: string;
-let sourcePath: string;
-
-beforeAll(async () => {
-  directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-db-backup-'));
-  sourcePath = path.join(directory, 'source.db');
-  const database = getDatabase({
-    TURSO_DATABASE_URL: `file:${sourcePath}`,
-    TURSO_AUTH_TOKEN: '',
-  });
-  await migrate(database, {migrationsFolder});
-  await database.insert(movies).values([
-    {uid: 'm1', year: 2001},
-    {uid: 'm2', year: 2002},
-  ]);
-  libsqlClientOf(database).close();
-});
-
-function copySourceAsReplica(): typeof backupDatabase extends (
-  source: BackupSource,
-  outputPath: string,
-  sync: infer S,
-) => unknown
-  ? S
-  : never {
-  return vi.fn(async (_source: BackupSource, replicaPath: string) => {
-    await fs.copyFile(sourcePath, replicaPath);
-  });
-}
-
 describe('backupDatabase', () => {
-  it('同期したレプリカを 1 ファイルの SQLite に固める', async () => {
-    const outputPath = path.join(directory, 'out', 'shine.db');
+  let directory: string;
+  let outputPath: string;
+  let result: BackupResult;
+  let dispose: () => Promise<void>;
 
-    const result = await backupDatabase(
-      source,
-      outputPath,
-      copySourceAsReplica(),
-    );
+  beforeAll(async () => {
+    const d1 = await createD1TestDatabase({migrationsFolder});
+    ({dispose} = d1);
+    await d1.database.insert(movies).values([
+      {uid: 'm1', year: 2001},
+      {uid: 'm2', year: 2002},
+    ]);
+    await d1.database
+      .insert(people)
+      .values({uid: 'p1', tmdbId: 5026, name: '黒澤明'});
 
-    expect(result).toStrictEqual({
-      outputPath,
-      movies: 2,
-      integrity: 'ok',
-    });
+    directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-d1-backup-'));
+    outputPath = path.join(directory, 'backup.db');
+    result = await backupDatabase(databaseReader(d1.database), outputPath);
+  }, 60_000);
+
+  afterAll(async () => {
+    await dispose?.();
+    await fs.rm(directory, {recursive: true, force: true});
   });
 
-  it('固めたファイルは単体で開けて元の行を持つ', async () => {
-    const outputPath = path.join(directory, 'out2', 'shine.db');
-    await backupDatabase(source, outputPath, copySourceAsReplica());
-
-    const backup = createClient({url: `file:${outputPath}`});
-    const rows = await backup.execute('SELECT uid FROM movies ORDER BY uid');
-    backup.close();
-
-    expect(rows.rows.map(row => row.uid)).toStrictEqual(['m1', 'm2']);
+  it('counts the movies in the backup', () => {
+    expect(result.movies).toBe(2);
   });
 
-  it('同期に使ったレプリカは残さない', async () => {
-    const outputPath = path.join(directory, 'out3', 'shine.db');
-    await backupDatabase(source, outputPath, copySourceAsReplica());
-
-    const left = await fs.readdir(path.dirname(outputPath));
-
-    expect(left).toStrictEqual(['shine.db']);
+  it('writes a file that passes the integrity check', () => {
+    expect(result.integrity).toBe('ok');
   });
 
-  it('レプリカへの同期に本番の接続先を渡す', async () => {
-    const outputPath = path.join(directory, 'out4', 'shine.db');
-    const sync = copySourceAsReplica();
-
-    await backupDatabase(source, outputPath, sync);
-
-    expect(sync).toHaveBeenCalledWith(
-      source,
-      path.join(directory, 'out4', 'replica.db'),
-    );
+  it('keeps the name search index usable', async () => {
+    const client = createClient({url: `file:${outputPath}`});
+    try {
+      const found = await client.execute(
+        `SELECT person_uid FROM person_search_entries WHERE id IN (SELECT rowid FROM person_search WHERE person_search MATCH '"黒澤 澤明"')`,
+      );
+      expect(found.rows.map(row => row.person_uid)).toEqual(['p1']);
+    } finally {
+      client.close();
+    }
   });
 });

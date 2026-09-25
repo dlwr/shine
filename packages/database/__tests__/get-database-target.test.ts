@@ -46,3 +46,14 @@ describe('getDatabase with both a local file and a D1 proxy', () => {
     }
   });
 });
+
+describe('getDatabase without a D1 binding, proxy or local file', () => {
+  it('refuses a remote libsql URL', () => {
+    expect(() =>
+      getDatabase({
+        TURSO_DATABASE_URL: 'libsql://example.turso.io',
+        TURSO_AUTH_TOKEN: 'token',
+      }),
+    ).toThrow(/D1_PROXY_URL/);
+  });
+});

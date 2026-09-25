@@ -57,18 +57,9 @@ export function assertDatabaseEnvironment(environment: Environment): void {
     return;
   }
 
-  const isLocalFileDatabase =
-    environment.TURSO_DATABASE_URL.startsWith('file:');
-  const missing = [
-    environment.TURSO_DATABASE_URL ? undefined : 'TURSO_DATABASE_URL',
-    isLocalFileDatabase || environment.TURSO_AUTH_TOKEN
-      ? undefined
-      : 'TURSO_AUTH_TOKEN',
-  ].filter(Boolean);
-
-  if (missing.length > 0) {
+  if (!environment.TURSO_DATABASE_URL.startsWith('file:')) {
     throw new Error(
-      `データベース接続情報が不足しています: ${missing.join(', ')} を .env または .dev.vars に設定してください。`,
+      'データベース接続情報が不足しています: D1_PROXY_URL か file: の TURSO_DATABASE_URL を .env または .dev.vars に設定してください。',
     );
   }
 }

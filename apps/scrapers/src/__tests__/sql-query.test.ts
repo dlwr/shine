@@ -43,7 +43,7 @@ async function countRows(): Promise<number> {
 describe('runReadOnlyQuery', () => {
   it('SELECT の列名と行を返す', async () => {
     const result = await runReadOnlyQuery(
-      {url, authToken: ''},
+      url,
       'SELECT uid, title, year FROM films ORDER BY uid',
     );
 
@@ -56,7 +56,7 @@ describe('runReadOnlyQuery', () => {
 
   it('WITH で始まる読み取りを通す', async () => {
     const result = await runReadOnlyQuery(
-      {url, authToken: ''},
+      url,
       'WITH recent AS (SELECT * FROM films WHERE year IS NOT NULL) SELECT count(*) AS n FROM recent',
     );
 
@@ -65,7 +65,7 @@ describe('runReadOnlyQuery', () => {
 
   it('文字列の中に delete があっても読み取りなら通す', async () => {
     const result = await runReadOnlyQuery(
-      {url, authToken: ''},
+      url,
       "SELECT uid FROM films WHERE title = 'Delete Me'",
     );
 
@@ -74,10 +74,7 @@ describe('runReadOnlyQuery', () => {
 
   it('INSERT を拒否して何も書かない', async () => {
     await expect(
-      runReadOnlyQuery(
-        {url, authToken: ''},
-        "INSERT INTO films VALUES ('c', 'x', 2000)",
-      ),
+      runReadOnlyQuery(url, "INSERT INTO films VALUES ('c', 'x', 2000)"),
     ).rejects.toThrow(/読み取り専用/);
     expect(await countRows()).toBe(2);
   });
@@ -85,7 +82,7 @@ describe('runReadOnlyQuery', () => {
   it('WITH で始まる書き込みも拒否する', async () => {
     await expect(
       runReadOnlyQuery(
-        {url, authToken: ''},
+        url,
         "WITH x AS (SELECT 'c' AS uid) INSERT INTO films (uid) SELECT uid FROM x",
       ),
     ).rejects.toThrow(/読み取り専用/);
@@ -94,7 +91,7 @@ describe('runReadOnlyQuery', () => {
 
   it('deleted_at のような列名は書き込みとみなさない', async () => {
     const result = await runReadOnlyQuery(
-      {url, authToken: ''},
+      url,
       "SELECT uid AS deleted_at, year AS created FROM films WHERE uid = 'a'",
     );
 
@@ -104,7 +101,7 @@ describe('runReadOnlyQuery', () => {
   it('複数文を拒否する', async () => {
     await expect(
       runReadOnlyQuery(
-        {url, authToken: ''},
+        url,
         "SELECT 1; INSERT INTO films VALUES ('c', 'x', 2000)",
       ),
     ).rejects.toThrow(/1 文だけ/);

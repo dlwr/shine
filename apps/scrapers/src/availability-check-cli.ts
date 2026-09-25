@@ -112,10 +112,8 @@ export function createCommand(): Command {
       'after',
       `
 Environment variables:
-  D1_PROXY_URL           D1 の proxy（あれば Turso より優先）
+  D1_PROXY_URL           D1 の proxy
   D1_PROXY_KEY           proxy の鍵
-  TURSO_DATABASE_URL     TursoデータベースURL
-  TURSO_AUTH_TOKEN       Turso認証トークン
   TMDB_API_KEY           TMDb APIキー
   ADMIN_PASSWORD         API管理者パスワード
   SHINE_API_URL          APIのURL (default: https://shine-api.yuta25.workers.dev)

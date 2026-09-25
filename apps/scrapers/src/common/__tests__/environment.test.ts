@@ -16,22 +16,22 @@ describe('assertDatabaseEnvironment', () => {
     }).not.toThrow();
   });
 
-  it('リモートデータベースでは認証トークンを求める', () => {
+  it('file: でない接続先は受け付けない', () => {
     const environment = buildEnvironment({
       TURSO_DATABASE_URL: 'libsql://shine.turso.io',
     });
 
     expect(() => {
       assertDatabaseEnvironment(environment);
-    }).toThrow(/TURSO_AUTH_TOKEN/);
+    }).toThrow(/D1_PROXY_URL/);
   });
 
   it('接続先が無ければ失敗する', () => {
-    const environment = buildEnvironment({TURSO_AUTH_TOKEN: 'token'});
+    const environment = buildEnvironment({});
 
     expect(() => {
       assertDatabaseEnvironment(environment);
-    }).toThrow(/TURSO_DATABASE_URL/);
+    }).toThrow(/D1_PROXY_URL/);
   });
 
   it('D1 の proxy があれば Turso の接続先を求めない', () => {
