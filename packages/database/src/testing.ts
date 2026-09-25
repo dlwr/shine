@@ -98,7 +98,7 @@ export const migrateD1 = async (
 };
 
 export const createD1TestDatabase = async (
-  config: Parameters<typeof migrateLibsql>[1],
+  config?: Parameters<typeof migrateLibsql>[1],
 ) => {
   const {getPlatformProxy} = await import('wrangler');
   const directory = mkdtempSync(path.join(tmpdir(), 'shine-d1-test-'));
@@ -117,7 +117,9 @@ export const createD1TestDatabase = async (
     configPath,
     persist: {path: directory},
   });
-  await migrateD1(proxy.env.DB, config);
+  if (config) {
+    await migrateD1(proxy.env.DB, config);
+  }
   return {
     binding: proxy.env.DB,
     database: getDatabase({
