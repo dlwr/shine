@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {watchedMarks} from '@shine/database/schema/watched-marks';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {createJWT} from '../auth';
 import {moviesRoutes} from '../routes/movies';

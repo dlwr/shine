@@ -8,7 +8,7 @@ import {watchedMarks} from '@shine/database/schema/watched-marks';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {describe, expect, it} from 'vitest';
 import {DEFAULT_OWNER_URL_PREFIXES} from '@shine/utils';
 import {

@@ -12,7 +12,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {AwardsService} from '../awards-service';
 import {PersonAwardsService} from '../person-awards-service';

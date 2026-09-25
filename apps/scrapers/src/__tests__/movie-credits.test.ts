@@ -12,7 +12,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
 import {eq} from 'drizzle-orm';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import {getScrapeDatabase} from '../common/dry-run';
 import {importMovieCredits} from '../movie-credits';

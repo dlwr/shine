@@ -21,7 +21,7 @@ import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
 import {watchedMarks} from '@shine/database/schema/watched-marks';
 import {getTableConfig, SQLiteTable} from 'drizzle-orm/sqlite-core';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {
   deleteMovieDependents,

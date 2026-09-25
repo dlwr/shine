@@ -1,5 +1,7 @@
 import {createClient} from '@libsql/client';
+import {drizzle as drizzleD1} from 'drizzle-orm/d1';
 import {drizzle} from 'drizzle-orm/libsql';
+import type {BaseSQLiteDatabase} from 'drizzle-orm/sqlite-core';
 import * as schema from './schema/index';
 import {createTimeoutFetch, resolveRequestTimeout} from './timeout-fetch';
 
@@ -36,12 +38,19 @@ export type Environment = {
   NORTH_STAR_OWNER_URL_PREFIXES?: string;
   NORTH_STAR_OWNER_IPS?: string;
   CACHE_KV?: KVNamespace;
+  DB?: D1Database;
   SUGGEST_RATE_LIMITER?: RateLimit;
   AVAILABILITY_RATE_LIMITER?: RateLimit;
   LOGIN_RATE_LIMITER?: RateLimit;
 };
 
-export const getDatabase = (environment: Environment) => {
+export type Database = BaseSQLiteDatabase<'async', unknown, typeof schema>;
+
+export const getDatabase = (environment: Environment): Database => {
+  if (environment.DB) {
+    return drizzleD1(environment.DB, {schema, casing: 'snake_case'});
+  }
+
   const requestTimeoutMs = resolveRequestTimeout(
     environment.TURSO_REQUEST_TIMEOUT_MS,
   );
@@ -51,13 +60,7 @@ export const getDatabase = (environment: Environment) => {
     ...(requestTimeoutMs && {fetch: createTimeoutFetch(requestTimeoutMs)}),
   });
 
-  return drizzle({
-    client,
-    schema: {
-      ...schema,
-    },
-    casing: 'snake_case',
-  });
+  return drizzle({client, schema, casing: 'snake_case'});
 };
 
 export type Movie = typeof schema.movies.$inferSelect;

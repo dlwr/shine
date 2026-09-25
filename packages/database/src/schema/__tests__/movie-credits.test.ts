@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {sql} from 'drizzle-orm';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {describe, expect, it} from 'vitest';
 import {getDatabase, type Environment} from '../../index';
 

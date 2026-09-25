@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {libsqlClientOf, migrate} from '@shine/database/testing';
 import {
   afterAll,
   beforeAll,
@@ -28,8 +28,7 @@ import {WatchedService} from '../services/watched-service';
 import {YearsService} from '../services/years-service';
 import {seededPeopleUids, seedPublicData} from './public-data-seed';
 
-type Database = ReturnType<typeof getDatabase>;
-type Client = Database['$client'];
+type Client = ReturnType<typeof libsqlClientOf>;
 type Statement = Extract<Parameters<Client['batch']>[0][number], {sql: string}>;
 type PlanRow = {id: number; parent: number; detail: string};
 
@@ -49,7 +48,7 @@ vi.mock('@shine/database', async importOriginal => {
     ...original,
     getDatabase(environment: Environment) {
       const database = original.getDatabase(environment);
-      const client = database.$client;
+      const client = libsqlClientOf(database);
       const execute = client.execute.bind(client);
       client.execute = ((statement: Statement | string) => {
         captured.push(
@@ -328,7 +327,7 @@ describe('公開エンドポイントの実行計画', () => {
     expect(statements.length).toBeGreaterThan(0);
 
     // FTS5 の文を EXPLAIN した接続は後の書き込みを SQLITE_BUSY にするので、毎回閉じる
-    const client = getDatabase(seededEnvironment).$client;
+    const client = libsqlClientOf(getDatabase(seededEnvironment));
     const plans = new Map<string, PlanRow[]>();
     try {
       for (const statement of statements) {

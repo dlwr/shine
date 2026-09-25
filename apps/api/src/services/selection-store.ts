@@ -44,16 +44,17 @@ export async function deleteSelectionsAfter(
   type: SelectionType,
   selectionDate: string,
 ): Promise<number> {
-  const result = await database
+  const deleted = await database
     .delete(movieSelections)
     .where(
       and(
         eq(movieSelections.selectionType, type),
         sql`${movieSelections.selectionDate} > ${selectionDate}`,
       ),
-    );
+    )
+    .returning({uid: movieSelections.uid});
 
-  return result.rowsAffected || 0;
+  return deleted.length;
 }
 
 export async function pickSelectionMovieUid(

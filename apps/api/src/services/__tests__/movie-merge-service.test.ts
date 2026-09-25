@@ -8,7 +8,7 @@ import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
 import {people} from '@shine/database/schema/people';
 import {quizSelections} from '@shine/database/schema/quiz-selections';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {MovieMergeService} from '../movie-merge-service';
 

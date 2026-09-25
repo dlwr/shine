@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {createClient} from '@libsql/client';
 import {getDatabase} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {libsqlClientOf, migrate} from '@shine/database/testing';
 import {beforeAll, describe, expect, it, vi} from 'vitest';
 import {backupDatabase, type BackupSource} from '../database-backup';
 
@@ -32,7 +32,7 @@ beforeAll(async () => {
     {uid: 'm1', year: 2001},
     {uid: 'm2', year: 2002},
   ]);
-  database.$client.close();
+  libsqlClientOf(database).close();
 });
 
 function copySourceAsReplica(): typeof backupDatabase extends (

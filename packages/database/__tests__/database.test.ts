@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {createClient, type Client} from '@libsql/client';
 import {eq, sql} from 'drizzle-orm';
 import {drizzle, type LibSQLDatabase} from 'drizzle-orm/libsql';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {afterAll, beforeAll, describe, expect, it} from 'vitest';
 import {
   awardCategories,

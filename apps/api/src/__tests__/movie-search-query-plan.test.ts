@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {getDatabase, sql, type Environment} from '@shine/database';
-import {migrate} from 'drizzle-orm/libsql/migrator';
+import {migrate} from '@shine/database/testing';
 import {beforeAll, describe, expect, it} from 'vitest';
 import {buildMovieSearchQueries} from '../services/movie-search-query';
 
