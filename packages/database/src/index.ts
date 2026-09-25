@@ -1,6 +1,7 @@
 import {createClient} from '@libsql/client';
 import {drizzle as drizzleD1} from 'drizzle-orm/d1';
 import {drizzle} from 'drizzle-orm/libsql';
+import {drizzle as drizzleProxy} from 'drizzle-orm/sqlite-proxy';
 import {sql, type SQL} from 'drizzle-orm';
 import type {BatchItem} from 'drizzle-orm/batch';
 import type {BaseSQLiteDatabase} from 'drizzle-orm/sqlite-core';
@@ -90,6 +91,8 @@ export type Environment = {
   NORTH_STAR_OWNER_IPS?: string;
   CACHE_KV?: KVNamespace;
   DB?: D1Database;
+  D1_PROXY_URL?: string;
+  D1_PROXY_KEY?: string;
   SUGGEST_RATE_LIMITER?: RateLimit;
   AVAILABILITY_RATE_LIMITER?: RateLimit;
   LOGIN_RATE_LIMITER?: RateLimit;
@@ -115,9 +118,52 @@ export const runBatch = async (
   await (database as unknown as BatchCapableDatabase).batch([first, ...rest]);
 };
 
+export const createProxyDatabase = ({
+  url,
+  key,
+  fetch: fetchImpl = fetch,
+}: {
+  url: string;
+  key: string;
+  fetch?: typeof fetch;
+}): Database => {
+  const post = async (body: unknown) => {
+    const response = await fetchImpl(url, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${key}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      throw new Error(`D1 proxy ${response.status}: ${await response.text()}`);
+    }
+
+    return response.json();
+  };
+
+  return drizzleProxy(
+    async (query, parameters, method) =>
+      post({sql: query, params: parameters, method}) as Promise<{
+        rows: unknown[];
+      }>,
+    async queries =>
+      post({batch: queries}) as Promise<Array<{rows: unknown[]}>>,
+    {schema, casing: 'snake_case'},
+  );
+};
+
 export const getDatabase = (environment: Environment): Database => {
   if (environment.DB) {
     return drizzleD1(environment.DB, {schema, casing: 'snake_case'});
+  }
+
+  if (environment.D1_PROXY_URL) {
+    return createProxyDatabase({
+      url: environment.D1_PROXY_URL,
+      key: environment.D1_PROXY_KEY ?? '',
+    });
   }
 
   const requestTimeoutMs = resolveRequestTimeout(
