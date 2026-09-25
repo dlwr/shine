@@ -1,4 +1,12 @@
-import {and, eq, inArray, isNull, sql, type getDatabase} from '@shine/database';
+import {
+  and,
+  eq,
+  inArray,
+  inChunks,
+  isNull,
+  sql,
+  type getDatabase,
+} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
@@ -155,17 +163,19 @@ async function attachCreditAwards(
     return presentSlugs;
   }
 
-  const rows = await joinAwardContext(
-    database
-      .select({
-        movieUid: nominations.movieUid,
-        isWinner: nominations.isWinner,
-        organizationName: awardOrganizations.name,
-        categoryName: awardCategories.name,
-      })
-      .from(nominations)
-      .$dynamic(),
-  ).where(inArray(nominations.movieUid, movieUids));
+  const rows = await inChunks(movieUids, chunk =>
+    joinAwardContext(
+      database
+        .select({
+          movieUid: nominations.movieUid,
+          isWinner: nominations.isWinner,
+          organizationName: awardOrganizations.name,
+          categoryName: awardCategories.name,
+        })
+        .from(nominations)
+        .$dynamic(),
+    ).where(inArray(nominations.movieUid, chunk)),
+  );
 
   for (const row of rows) {
     const credit = byMovie.get(row.movieUid);

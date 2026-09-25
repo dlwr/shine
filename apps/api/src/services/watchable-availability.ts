@@ -1,6 +1,6 @@
 import {inArray} from 'drizzle-orm';
 import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
-import type {getDatabase} from '@shine/database';
+import {inChunks, type getDatabase} from '@shine/database';
 import type {WatchableAvailability} from '../types/common';
 
 type Database = ReturnType<typeof getDatabase>;
@@ -15,17 +15,19 @@ export async function loadWatchableAvailabilityByMovie(
     return new Map();
   }
 
-  const rows = await database
-    .select({
-      movieUid: movieAvailabilityChecks.movieUid,
-      source: movieAvailabilityChecks.source,
-      status: movieAvailabilityChecks.status,
-      detail: movieAvailabilityChecks.detail,
-      checkedAt: movieAvailabilityChecks.checkedAt,
-    })
-    .from(movieAvailabilityChecks)
-    .where(inArray(movieAvailabilityChecks.movieUid, movieUids))
-    .orderBy(movieAvailabilityChecks.checkedAt);
+  const rows = await inChunks(movieUids, chunk =>
+    database
+      .select({
+        movieUid: movieAvailabilityChecks.movieUid,
+        source: movieAvailabilityChecks.source,
+        status: movieAvailabilityChecks.status,
+        detail: movieAvailabilityChecks.detail,
+        checkedAt: movieAvailabilityChecks.checkedAt,
+      })
+      .from(movieAvailabilityChecks)
+      .where(inArray(movieAvailabilityChecks.movieUid, chunk))
+      .orderBy(movieAvailabilityChecks.checkedAt),
+  );
 
   // Latest record per source; expose only sources currently judged watchable
   type Row = (typeof rows)[number];

@@ -1,4 +1,4 @@
-import {and, eq, inArray, type getDatabase} from '@shine/database';
+import {and, eq, inArray, inChunks, type getDatabase} from '@shine/database';
 import {translations} from '@shine/database/schema/translations';
 
 type Database = ReturnType<typeof getDatabase>;
@@ -39,20 +39,22 @@ export async function loadNominationMovieTitles(
     return titlesMap;
   }
 
-  const titleRows = await database
-    .select({
-      movieUid: translations.resourceUid,
-      languageCode: translations.languageCode,
-      title: translations.content,
-      isDefault: translations.isDefault,
-    })
-    .from(translations)
-    .where(
-      and(
-        eq(translations.resourceType, 'movie_title'),
-        inArray(translations.resourceUid, movieUids),
+  const titleRows = await inChunks(movieUids, chunk =>
+    database
+      .select({
+        movieUid: translations.resourceUid,
+        languageCode: translations.languageCode,
+        title: translations.content,
+        isDefault: translations.isDefault,
+      })
+      .from(translations)
+      .where(
+        and(
+          eq(translations.resourceType, 'movie_title'),
+          inArray(translations.resourceUid, chunk),
+        ),
       ),
-    );
+  );
 
   const translationsByMovie = new Map<string, TitleEntry[]>();
   for (const row of titleRows) {

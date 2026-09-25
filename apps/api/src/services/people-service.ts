@@ -1,4 +1,4 @@
-import {inArray, type Environment} from '@shine/database';
+import {inArray, inChunks, type Environment} from '@shine/database';
 import {people} from '@shine/database/schema/people';
 import type {
   PeopleListResult,
@@ -96,10 +96,12 @@ export class PeopleService extends BaseService {
       return new Map();
     }
 
-    const rows = await this.database
-      .select({uid: people.uid, name: people.name})
-      .from(people)
-      .where(inArray(people.uid, uids));
+    const rows = await inChunks(uids, chunk =>
+      this.database
+        .select({uid: people.uid, name: people.name})
+        .from(people)
+        .where(inArray(people.uid, chunk)),
+    );
     return new Map(rows.map(row => [row.uid, row.name]));
   }
 }
