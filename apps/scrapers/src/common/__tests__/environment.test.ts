@@ -1,5 +1,9 @@
 import {describe, expect, it} from 'vitest';
-import {assertDatabaseEnvironment, buildEnvironment} from '../environment';
+import {
+  assertDatabaseEnvironment,
+  buildEnvironment,
+  d1ProxyOf,
+} from '../environment';
 
 describe('assertDatabaseEnvironment', () => {
   it('ローカルのfile:データベースでは認証トークンを求めない', () => {
@@ -49,5 +53,29 @@ describe('assertDatabaseEnvironment', () => {
     expect(() => {
       assertDatabaseEnvironment(environment);
     }).toThrow(/D1_PROXY_KEY/);
+  });
+});
+
+describe('d1ProxyOf', () => {
+  it('D1 の proxy の接続先を返す', () => {
+    const environment = buildEnvironment({
+      D1_PROXY_URL: 'https://proxy.example',
+      D1_PROXY_KEY: 'key',
+    });
+
+    expect(d1ProxyOf(environment)).toEqual({
+      url: 'https://proxy.example',
+      key: 'key',
+    });
+  });
+
+  it('ローカルの file: データベースが指定されていれば proxy を使わない', () => {
+    const environment = buildEnvironment({
+      TURSO_DATABASE_URL: 'file:/tmp/test.db',
+      D1_PROXY_URL: 'https://proxy.example',
+      D1_PROXY_KEY: 'key',
+    });
+
+    expect(d1ProxyOf(environment)).toBeUndefined();
   });
 });
