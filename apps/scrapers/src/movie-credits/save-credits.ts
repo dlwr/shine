@@ -1,5 +1,5 @@
 import {and, eq, inArray, isNotNull} from 'drizzle-orm';
-import {type getDatabase} from '@shine/database';
+import {inChunks, runInChunks, type getDatabase} from '@shine/database';
 import {movieCredits} from '@shine/database/schema/movie-credits';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
@@ -23,10 +23,9 @@ export async function upsertMovieCredits(
   const tmdbPersonIds = [
     ...new Set(credits.map(credit => credit.tmdbPersonId)),
   ];
-  const existing = await context.database
-    .select()
-    .from(people)
-    .where(inArray(people.tmdbId, tmdbPersonIds));
+  const existing = await inChunks(tmdbPersonIds, chunk =>
+    context.database.select().from(people).where(inArray(people.tmdbId, chunk)),
+  );
   const known = new Set(existing.map(row => row.tmdbId));
 
   const missing = new Map<number, SelectedCredit>();
@@ -37,25 +36,23 @@ export async function upsertMovieCredits(
   }
 
   if (missing.size > 0 && !context.isDryRun) {
-    await context.database
-      .insert(people)
-      .values(
-        missing
-          .values()
-          .map(credit => ({
+    await runInChunks(missing.values().toArray(), chunk =>
+      context.database
+        .insert(people)
+        .values(
+          chunk.map(credit => ({
             tmdbId: credit.tmdbPersonId,
             name: credit.name,
             profilePath: credit.profilePath,
-          }))
-          .toArray(),
-      )
-      .onConflictDoNothing({target: people.tmdbId});
+          })),
+        )
+        .onConflictDoNothing({target: people.tmdbId}),
+    );
   }
 
-  const stored = await context.database
-    .select()
-    .from(people)
-    .where(inArray(people.tmdbId, tmdbPersonIds));
+  const stored = await inChunks(tmdbPersonIds, chunk =>
+    context.database.select().from(people).where(inArray(people.tmdbId, chunk)),
+  );
   const personUidByTmdbId = new Map(stored.map(row => [row.tmdbId, row.uid]));
 
   await savePersonNames(
@@ -79,16 +76,18 @@ export async function upsertMovieCredits(
 
   const added = credits.filter(credit => !storedCreditIds.has(credit.creditId));
   if (added.length > 0 && !context.isDryRun) {
-    await context.database.insert(movieCredits).values(
-      added.map(credit => ({
-        movieUid,
-        personUid: personUidByTmdbId.get(credit.tmdbPersonId) ?? '',
-        creditId: credit.creditId,
-        department: credit.department,
-        job: credit.job,
-        character: credit.character,
-        castOrder: credit.castOrder,
-      })),
+    await runInChunks(added, chunk =>
+      context.database.insert(movieCredits).values(
+        chunk.map(credit => ({
+          movieUid,
+          personUid: personUidByTmdbId.get(credit.tmdbPersonId) ?? '',
+          creditId: credit.creditId,
+          department: credit.department,
+          job: credit.job,
+          character: credit.character,
+          castOrder: credit.castOrder,
+        })),
+      ),
     );
   }
 
@@ -122,9 +121,11 @@ export async function saveMovieCredits(
     .filter(row => !keptCreditIds.has(row.creditId))
     .map(row => row.creditId);
   if (removable.length > 0 && !context.isDryRun) {
-    await context.database
-      .delete(movieCredits)
-      .where(inArray(movieCredits.creditId, removable));
+    await runInChunks(removable, chunk =>
+      context.database
+        .delete(movieCredits)
+        .where(inArray(movieCredits.creditId, chunk)),
+    );
   }
 }
 
@@ -169,36 +170,40 @@ async function savePersonNames(
   }
 
   const personUids = translated.keys().toArray();
-  const existing = await context.database
-    .select()
-    .from(translations)
-    .where(
-      and(
-        eq(translations.resourceType, 'person_name'),
-        eq(translations.languageCode, languageCode),
-        inArray(translations.resourceUid, personUids),
+  const existing = await inChunks(personUids, chunk =>
+    context.database
+      .select()
+      .from(translations)
+      .where(
+        and(
+          eq(translations.resourceType, 'person_name'),
+          eq(translations.languageCode, languageCode),
+          inArray(translations.resourceUid, chunk),
+        ),
       ),
-    );
+  );
   const known = new Set(existing.map(row => row.resourceUid));
 
   const added = [...translated].filter(([personUid]) => !known.has(personUid));
   if (added.length > 0 && !context.isDryRun) {
-    await context.database
-      .insert(translations)
-      .values(
-        added.map(([personUid, content]) => ({
-          resourceType: 'person_name' as const,
-          resourceUid: personUid,
-          languageCode,
-          content,
-        })),
-      )
-      .onConflictDoNothing({
-        target: [
-          translations.resourceType,
-          translations.resourceUid,
-          translations.languageCode,
-        ],
-      });
+    await runInChunks(added, chunk =>
+      context.database
+        .insert(translations)
+        .values(
+          chunk.map(([personUid, content]) => ({
+            resourceType: 'person_name' as const,
+            resourceUid: personUid,
+            languageCode,
+            content,
+          })),
+        )
+        .onConflictDoNothing({
+          target: [
+            translations.resourceType,
+            translations.resourceUid,
+            translations.languageCode,
+          ],
+        }),
+    );
   }
 }

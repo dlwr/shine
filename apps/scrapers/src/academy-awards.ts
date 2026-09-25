@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import {runInChunks} from '@shine/database';
 import {nominations} from '@shine/database/schema/nominations';
 import {referenceUrls} from '@shine/database/schema/reference-urls';
 import {translations} from '@shine/database/schema/translations';
@@ -73,30 +74,27 @@ export async function scrapeAcademyAwards(context: ScrapeContext) {
       console.log(
         `\nInserting ${translationsBatch.length} translations in batch...`,
       );
-      await database
-        .insert(translations)
-        .values(translationsBatch)
-        .onConflictDoNothing();
+      await runInChunks(translationsBatch, chunk =>
+        database.insert(translations).values(chunk).onConflictDoNothing(),
+      );
     }
 
     if (referenceUrlsBatch.length > 0) {
       console.log(
         `Inserting ${referenceUrlsBatch.length} reference URLs in batch...`,
       );
-      await database
-        .insert(referenceUrls)
-        .values(referenceUrlsBatch)
-        .onConflictDoNothing();
+      await runInChunks(referenceUrlsBatch, chunk =>
+        database.insert(referenceUrls).values(chunk).onConflictDoNothing(),
+      );
     }
 
     if (nominationsBatch.length > 0) {
       console.log(
         `Inserting ${nominationsBatch.length} nominations in batch...`,
       );
-      await database
-        .insert(nominations)
-        .values(nominationsBatch)
-        .onConflictDoNothing();
+      await runInChunks(nominationsBatch, chunk =>
+        database.insert(nominations).values(chunk).onConflictDoNothing(),
+      );
     }
 
     console.log(

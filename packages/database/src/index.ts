@@ -50,6 +50,28 @@ export const inChunks = async <T, R>(
   return results.flat();
 };
 
+type ChunkStatement = PromiseLike<unknown> & {toSQL(): {params: unknown[]}};
+
+export const runInChunks = async <T>(
+  values: readonly T[],
+  build: (chunk: T[]) => ChunkStatement,
+): Promise<void> => {
+  if (values.length === 0) {
+    return;
+  }
+
+  const one = build([values[0]]).toSQL().params.length;
+  const two = build([values[0], values[0]]).toSQL().params.length;
+  const perValue = two - one;
+  const size = Math.max(
+    1,
+    Math.floor((D1_MAX_BOUND_PARAMETERS - (one - perValue)) / perValue),
+  );
+  for (let start = 0; start < values.length; start += size) {
+    await build(values.slice(start, start + size));
+  }
+};
+
 export type Environment = {
   TMDB_API_KEY?: string;
   TMDB_LEAD_ACCESS_TOKEN?: string;
