@@ -1,4 +1,23 @@
 import type {Client, Value} from '@libsql/client';
+import {sql, type getDatabase} from '@shine/database';
+
+export type SqlReader = (query: string) => Promise<Value[][]>;
+
+export const libsqlReader =
+  (client: Client): SqlReader =>
+  async query => {
+    const result = await client.execute(query);
+    return result.rows.map(row =>
+      result.columns.map((_, index) => row[index] ?? null),
+    );
+  };
+
+export const databaseReader =
+  (database: ReturnType<typeof getDatabase>): SqlReader =>
+  async query =>
+    database.values<Value[]>(sql.raw(query));
+
+const DEFAULT_PAGE_SIZE = 10_000;
 
 type SchemaObject = {
   type: string;
@@ -31,33 +50,34 @@ function append(target: string[], items: string[]): void {
   }
 }
 
-async function schemaObjects(client: Client): Promise<SchemaObject[]> {
-  const result = await client.execute(`
+async function schemaObjects(read: SqlReader): Promise<SchemaObject[]> {
+  const rows = await read(`
     SELECT type, name, tbl_name, sql FROM sqlite_master
     WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%'
+      AND substr(name, 1, 4) <> '_cf_'
     ORDER BY rowid
   `);
-  return result.rows.map(row => ({
-    type: String(row.type),
-    name: String(row.name),
-    tableName: String(row.tbl_name),
-    sql: String(row.sql),
+  return rows.map(([type, name, tableName, statement]) => ({
+    type: String(type),
+    name: String(name),
+    tableName: String(tableName),
+    sql: String(statement),
   }));
 }
 
 async function inDependencyOrder(
-  client: Client,
+  read: SqlReader,
   tables: SchemaObject[],
 ): Promise<SchemaObject[]> {
   const byName = new Map(tables.map(table => [table.name, table]));
   const dependencies = new Map<string, string[]>();
   for (const table of tables) {
-    const result = await client.execute(
+    const rows = await read(
       `SELECT "table" FROM pragma_foreign_key_list('${table.name}')`,
     );
     dependencies.set(
       table.name,
-      result.rows.map(row => String(row.table)),
+      rows.map(([referenced]) => String(referenced)),
     );
   }
 
@@ -88,26 +108,38 @@ async function inDependencyOrder(
 }
 
 async function insertStatements(
-  client: Client,
+  read: SqlReader,
   table: string,
-  selectColumns: string,
+  columns: string,
+  pageSize: number,
   insertColumns?: string,
 ): Promise<string[]> {
-  const result = await client.execute(
-    `SELECT ${selectColumns} FROM "${table}"`,
-  );
   const target = insertColumns ? `"${table}" (${insertColumns})` : `"${table}"`;
-  return result.rows.map(
-    row =>
-      `INSERT INTO ${target} VALUES (${Array.from(row, sqlLiteral).join(', ')})`,
-  );
+  const statements: string[] = [];
+  let lastRowid: Value = -1;
+  for (;;) {
+    const rows = await read(
+      `SELECT rowid, ${columns} FROM "${table}" WHERE rowid > ${String(lastRowid)} ORDER BY rowid LIMIT ${pageSize}`,
+    );
+    for (const [rowid, ...values] of rows) {
+      statements.push(
+        `INSERT INTO ${target} VALUES (${values.map(value => sqlLiteral(value)).join(', ')})`,
+      );
+      lastRowid = rowid;
+    }
+
+    if (rows.length < pageSize) {
+      return statements;
+    }
+  }
 }
 
 /** FTS は元の索引の中身をそのまま写し、トリガーは行を入れ終えてから張る */
 export async function buildD1ImportStatements(
-  client: Client,
+  read: SqlReader,
+  {pageSize = DEFAULT_PAGE_SIZE}: {pageSize?: number} = {},
 ): Promise<string[]> {
-  const objects = await schemaObjects(client);
+  const objects = await schemaObjects(read);
   const virtualTables = objects.filter(
     object =>
       object.type === 'table' && object.sql.startsWith('CREATE VIRTUAL TABLE'),
@@ -119,7 +151,7 @@ export async function buildD1ImportStatements(
     ),
   ]);
   const tables = await inDependencyOrder(
-    client,
+    read,
     objects.filter(
       object => object.type === 'table' && !excluded.has(object.name),
     ),
@@ -130,22 +162,23 @@ export async function buildD1ImportStatements(
     ...tables.map(table => table.sql),
   ];
   for (const table of tables) {
-    append(statements, await insertStatements(client, table.name, '*'));
+    append(statements, await insertStatements(read, table.name, '*', pageSize));
   }
 
   for (const table of virtualTables) {
     statements.push(table.sql);
-    const columns = await client.execute(
+    const columns = await read(
       `SELECT name FROM pragma_table_info('${table.name}')`,
     );
-    const names = columns.rows.map(row => `"${String(row.name)}"`);
+    const names = ['rowid', ...columns.map(([name]) => `"${String(name)}"`)];
     append(
       statements,
       await insertStatements(
-        client,
+        read,
         table.name,
-        ['rowid', ...names].join(', '),
-        ['rowid', ...names].join(', '),
+        names.join(', '),
+        pageSize,
+        names.join(', '),
       ),
     );
   }
