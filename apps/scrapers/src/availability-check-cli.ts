@@ -12,7 +12,11 @@ import {
   sendDiscordNotification,
 } from './availability/discord';
 import {runAvailabilityCheck} from './availability/run';
-import {buildEnvironment, loadEnvironmentFiles} from './common/environment';
+import {
+  assertDatabaseEnvironment,
+  buildEnvironment,
+  loadEnvironmentFiles,
+} from './common/environment';
 
 async function main(options: {dryRun: boolean}): Promise<void> {
   loadEnvironmentFiles();
@@ -20,8 +24,10 @@ async function main(options: {dryRun: boolean}): Promise<void> {
   const isDryRun = options.dryRun;
   const environment = buildEnvironment(process.env);
 
-  if (!environment.TURSO_DATABASE_URL || !environment.TURSO_AUTH_TOKEN) {
-    console.error('TURSO_DATABASE_URL / TURSO_AUTH_TOKEN が設定されていません');
+  try {
+    assertDatabaseEnvironment(environment);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
     return;
   }
@@ -106,6 +112,8 @@ export function createCommand(): Command {
       'after',
       `
 Environment variables:
+  D1_PROXY_URL           D1 の proxy（あれば Turso より優先）
+  D1_PROXY_KEY           proxy の鍵
   TURSO_DATABASE_URL     TursoデータベースURL
   TURSO_AUTH_TOKEN       Turso認証トークン
   TMDB_API_KEY           TMDb APIキー
