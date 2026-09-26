@@ -1,5 +1,3 @@
-import {billingCycle, formatRows} from './turso-usage';
-
 const INCLUDED_ROWS_READ = 25_000_000_000;
 const INCLUDED_ROWS_WRITTEN = 50_000_000;
 const HOURLY_ROWS_READ_THRESHOLD = 100_000_000;
@@ -36,6 +34,27 @@ type GraphqlResponse = {
   };
   errors?: Array<{message: string}>;
 };
+
+export function billingCycle(now: Date): {start: Date; end: Date} {
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth();
+  return {
+    start: new Date(Date.UTC(year, month, 1)),
+    end: new Date(Date.UTC(year, month + 1, 1)),
+  };
+}
+
+export function formatRows(rows: number): string {
+  if (rows >= 1_000_000_000) {
+    return `${(rows / 1_000_000_000).toFixed(1)}B`;
+  }
+
+  if (rows >= 1_000_000) {
+    return `${Math.round(rows / 1_000_000)}M`;
+  }
+
+  return String(rows);
+}
 
 const percentOf = (value: number, limit: number) =>
   Math.round((value / limit) * 100);
