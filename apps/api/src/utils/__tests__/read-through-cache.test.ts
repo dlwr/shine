@@ -126,7 +126,7 @@ describe('readThroughCache: キャッシュに無いとき', () => {
     const {context} = createContext();
     const load = vi
       .fn<() => Promise<{years: number[]}>>()
-      .mockRejectedValueOnce(new Error('turso timed out'))
+      .mockRejectedValueOnce(new Error('database timed out'))
       .mockResolvedValueOnce({years: [2024]});
 
     const result = await readThroughCache(
@@ -166,7 +166,7 @@ describe('readThroughCache: キャッシュに無いとき', () => {
     const {context} = createContext();
     const load = vi
       .fn<() => Promise<{years: number[]}>>()
-      .mockRejectedValue(new Error('turso timed out'));
+      .mockRejectedValue(new Error('database timed out'));
 
     await expect(
       readThroughCache(context, new EdgeCache(undefined, kv), {
@@ -189,10 +189,10 @@ describe('readThroughCache: キャッシュに無いとき', () => {
         key: KEY,
         ttl: TTL,
         async load() {
-          throw new Error('turso is down');
+          throw new Error('database is down');
         },
       }),
-    ).rejects.toThrow('turso is down');
+    ).rejects.toThrow('database is down');
   });
 
   it('見つからなかった結果は書き込まない', async () => {
@@ -341,7 +341,7 @@ describe('readThroughCache: 期限を過ぎた値があるとき', () => {
       key: KEY,
       ttl: TTL,
       async load() {
-        throw new Error('turso is down');
+        throw new Error('database is down');
       },
     });
     await settle();

@@ -9,7 +9,7 @@ tools: Read, Grep, Glob, Bash
 ## チェック項目
 
 1. **Soft delete**: moviesを参照するクエリに `isNull(movies.deletedAt)` があるか。スクレイパーがsoft-deleted映画にデータを付与していないか（復活禁止）。例外: imdbId/tmdbIdの重複チェックはdeleted行を含める必要があるため、そこにフィルタを足していたら逆に違反
-2. **Turso読み取り予算**: 新規・変更された公開エンドポイント（/admin以外）がKVキャッシュ（`EdgeCache` / Workers KV）を使っているか。キャッシュなしの公開エンドポイントは読み取り枯渇の原因になる
+2. **D1読み取り量**: 新規・変更された公開エンドポイント（/admin以外）がKVキャッシュ（`EdgeCache` / Workers KV）を使っているか。キャッシュなしの公開エンドポイントは読み取り枯渇の原因になる
 3. **キャッシュ無効化**: 映画データの変更時に `getMovieCacheKeysForAllLocales()` で全ロケールのキーを無効化しているか。キャッシュキーにロケールが含まれているか
 4. **FK削除順序**: 削除処理が article_links → movie_selections → nominations → reference_urls → translations → poster_urls → movies の順序を守っているか。新しいFK参照が増えていたら `packages/database/src/schema/` をgrepして削除処理への影響を確認
 5. **translations規約**: 映画タイトルはtranslationsのみに保存（moviesにタイトル列はない）。contentに `title:` プレフィックスがないか。resourceTypeは `'movie_title' | 'movie_description'` のみ

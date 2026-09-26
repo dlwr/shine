@@ -77,7 +77,7 @@ export async function rankProminentPeople(
   }));
 }
 
-/** 部門の条件を OR で連ねると Turso の式の深さ上限 100 を超えるので、平らな IN にする */
+/** 部門の条件を OR で連ねると libSQL の式の深さ上限 100 を超えるので、平らな IN にする */
 function awardedCountOf(aggregate: ReturnType<typeof sql>) {
   const definitions = sql.join(
     personAwardDefinitions.flatMap(definition =>
