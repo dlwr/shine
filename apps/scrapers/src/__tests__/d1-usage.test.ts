@@ -1,5 +1,10 @@
 import {describe, expect, it} from 'vitest';
-import {evaluateD1Usage, fetchD1Usage} from '../d1-usage';
+import {
+  billingCycle,
+  evaluateD1Usage,
+  fetchD1Usage,
+  formatRows,
+} from '../d1-usage';
 
 const NOW = new Date('2026-10-02T01:00:00Z');
 
@@ -100,5 +105,28 @@ describe('fetchD1Usage', () => {
     await expect(
       fetchD1Usage({token: 't', account: 'a'}, 'db', NOW, NOW, failing),
     ).rejects.toThrow('not authorized');
+  });
+});
+
+describe('billingCycle', () => {
+  it('UTC の月初から翌月初までを返す', () => {
+    expect(billingCycle(NOW)).toEqual({
+      start: new Date('2026-10-01T00:00:00Z'),
+      end: new Date('2026-11-01T00:00:00Z'),
+    });
+  });
+});
+
+describe('formatRows', () => {
+  it('10億以上は B で小数1桁にする', () => {
+    expect(formatRows(69_421_600_000)).toBe('69.4B');
+  });
+
+  it('100万以上10億未満は M で整数にする', () => {
+    expect(formatRows(120_400_000)).toBe('120M');
+  });
+
+  it('100万未満はそのまま出す', () => {
+    expect(formatRows(4303)).toBe('4303');
   });
 });

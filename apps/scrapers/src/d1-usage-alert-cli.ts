@@ -3,11 +3,11 @@ import {Command} from 'commander';
 import {sendDiscordNotification} from './availability/discord';
 import {loadEnvironmentFiles} from './common/environment';
 import {
+  billingCycle,
   evaluateD1Usage,
   fetchD1Usage,
   PRODUCTION_D1_DATABASE_ID,
 } from './d1-usage';
-import {billingCycle} from './turso-usage';
 import {DEFAULT_CLOUDFLARE_ACCOUNT_ID} from './web-analytics';
 
 const HOUR_MS = 3_600_000;
