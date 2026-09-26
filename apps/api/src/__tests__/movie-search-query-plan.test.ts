@@ -1,10 +1,8 @@
-import fs from 'node:fs/promises';
-import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {getDatabase, sql, type Environment} from '@shine/database';
-import {migrate} from '@shine/database/testing';
-import {beforeAll, describe, expect, it} from 'vitest';
+import {sql, type getDatabase} from '@shine/database';
+import {createD1TestDatabase} from '@shine/database/testing';
+import {afterAll, beforeAll, describe, expect, it} from 'vitest';
 import {buildMovieSearchQueries} from '../services/movie-search-query';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -16,16 +14,6 @@ const migrationsFolder = path.resolve(
 type Database = ReturnType<typeof getDatabase>;
 type PlanRow = {id: number; parent: number; detail: string};
 type Explainable = {toSQL(): {sql: string; params: unknown[]}};
-
-async function createTestDatabase(): Promise<Database> {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-plan-'));
-  const environment: Environment = {
-    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
-  };
-  const database = getDatabase(environment);
-  await migrate(database, {migrationsFolder});
-  return database;
-}
 
 async function explain(
   database: Database,
@@ -73,9 +61,14 @@ function fullScansPerMovie(rows: PlanRow[]): string[] {
 
 describe('映画検索クエリの実行計画', () => {
   let database: Database;
+  let dispose: (() => Promise<void>) | undefined;
 
   beforeAll(async () => {
-    database = await createTestDatabase();
+    ({database, dispose} = await createD1TestDatabase({migrationsFolder}));
+  }, 60_000);
+
+  afterAll(async () => {
+    await dispose?.();
   });
 
   it('検索語なしの一覧は映画ごとのサブクエリで全件走査をしない', async () => {

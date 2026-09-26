@@ -1,18 +1,8 @@
-import fs from 'node:fs/promises';
-import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {getDatabase, type Environment} from '@shine/database';
-import {libsqlClientOf, migrate} from '@shine/database/testing';
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import type {Environment} from '@shine/database';
+import {createD1TestDatabase} from '@shine/database/testing';
+import {afterAll, beforeAll, beforeEach, describe, expect, it} from 'vitest';
 import {moviesRoutes} from '../routes/movies';
 import {AwardsService} from '../services/awards-service';
 import {CrossingsService} from '../services/crossings-service';
@@ -28,38 +18,8 @@ import {WatchedService} from '../services/watched-service';
 import {YearsService} from '../services/years-service';
 import {seededPeopleUids, seedPublicData} from './public-data-seed';
 
-type Client = ReturnType<typeof libsqlClientOf>;
-type Statement = Extract<Parameters<Client['batch']>[0][number], {sql: string}>;
+type Statement = {sql: string; args: unknown[]};
 type PlanRow = {id: number; parent: number; detail: string};
-
-const {captured} = vi.hoisted(() => ({captured: [] as Statement[]}));
-
-vi.hoisted(() => {
-  vi.resetModules();
-});
-
-afterAll(() => {
-  vi.resetModules();
-});
-
-vi.mock('@shine/database', async importOriginal => {
-  const original = await importOriginal<typeof import('@shine/database')>();
-  return {
-    ...original,
-    getDatabase(environment: Environment) {
-      const database = original.getDatabase(environment);
-      const client = libsqlClientOf(database);
-      const execute = client.execute.bind(client);
-      client.execute = ((statement: Statement | string) => {
-        captured.push(
-          typeof statement === 'string' ? {sql: statement} : statement,
-        );
-        return execute(statement);
-      }) as Client['execute'];
-      return database;
-    },
-  };
-});
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -67,15 +27,41 @@ const migrationsFolder = path.resolve(
   '../../../../packages/database/migrations',
 );
 
-async function createTestEnvironment(): Promise<Environment> {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'shine-plan-'));
-  const environment: Environment = {
-    DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
-  };
-  const database = getDatabase(environment);
-  await migrate(database, {migrationsFolder});
-  await seedPublicData(database);
-  return environment;
+function capturing(d1: D1Database, captured: Statement[]): D1Database {
+  return new Proxy(d1, {
+    get(target, property, receiver) {
+      if (property !== 'prepare') {
+        const value: unknown = Reflect.get(target, property, receiver);
+        return typeof value === 'function' ? value.bind(target) : value;
+      }
+
+      return (sql: string) => {
+        const statement: Statement = {sql, args: []};
+        captured.push(statement);
+        return new Proxy(target.prepare(sql), {
+          get(prepared, preparedProperty, preparedReceiver) {
+            const value: unknown = Reflect.get(
+              prepared,
+              preparedProperty,
+              preparedReceiver,
+            );
+            if (typeof value !== 'function') {
+              return value;
+            }
+
+            if (preparedProperty !== 'bind') {
+              return value.bind(prepared);
+            }
+
+            return (...arguments_: unknown[]) => {
+              statement.args = arguments_;
+              return prepared.bind(...arguments_);
+            };
+          },
+        });
+      };
+    },
+  });
 }
 
 function createMemoryKv(): KVNamespace {
@@ -102,14 +88,14 @@ function createMemoryKv(): KVNamespace {
 }
 
 async function explain(
-  client: Client,
+  d1: D1Database,
   statement: Statement,
 ): Promise<PlanRow[]> {
-  const result = await client.execute({
-    sql: `EXPLAIN QUERY PLAN ${statement.sql}`,
-    args: statement.args,
-  });
-  return result.rows.map(row => ({
+  const result = await d1
+    .prepare(`EXPLAIN QUERY PLAN ${statement.sql}`)
+    .bind(...statement.args)
+    .all<PlanRow>();
+  return result.results.map(row => ({
     id: Number(row.id),
     parent: Number(row.parent),
     detail: String(row.detail),
@@ -307,15 +293,27 @@ const exercises: Exercise[] = [
 ];
 
 describe('公開エンドポイントの実行計画', () => {
-  let seededEnvironment: Environment;
+  const captured: Statement[] = [];
+  let binding: D1Database;
+  let dispose: (() => Promise<void>) | undefined;
   let environment: Environment;
 
   beforeAll(async () => {
-    seededEnvironment = await createTestEnvironment();
+    const d1 = await createD1TestDatabase({migrationsFolder});
+    binding = d1.binding;
+    dispose = d1.dispose;
+    await seedPublicData(d1.database);
+  }, 60_000);
+
+  afterAll(async () => {
+    await dispose?.();
   });
 
   beforeEach(() => {
-    environment = {...seededEnvironment, CACHE_KV: createMemoryKv()};
+    environment = {
+      DB: capturing(binding, captured),
+      CACHE_KV: createMemoryKv(),
+    };
     captured.length = 0;
   });
 
@@ -325,15 +323,11 @@ describe('公開エンドポイントの実行計画', () => {
     captured.length = 0;
     expect(statements.length).toBeGreaterThan(0);
 
-    // FTS5 の文を EXPLAIN した接続は後の書き込みを SQLITE_BUSY にするので、毎回閉じる
-    const client = libsqlClientOf(getDatabase(seededEnvironment));
     const plans = new Map<string, PlanRow[]>();
-    try {
-      for (const statement of statements) {
-        plans.set(statement.sql, await explain(client, statement));
+    for (const statement of statements) {
+      if (!plans.has(statement.sql)) {
+        plans.set(statement.sql, await explain(binding, statement));
       }
-    } finally {
-      client.close();
     }
 
     return plans;

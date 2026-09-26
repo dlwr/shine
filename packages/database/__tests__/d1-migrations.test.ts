@@ -17,12 +17,12 @@ const SCHEMA_QUERIES = {
   columns: String.raw`
     SELECT m.name AS tableName, c.name, c.type, c."notnull", c.dflt_value, c.pk
     FROM sqlite_master m, pragma_table_info(m.name) c
-    WHERE m.type = 'table' AND m.name NOT LIKE 'sqlite_%' AND m.name NOT LIKE '%search_%' AND m.name NOT LIKE '\_%' ESCAPE '\'
+    WHERE m.type = 'table' AND m.name NOT LIKE 'sqlite_%' AND m.sql NOT LIKE 'CREATE VIRTUAL TABLE%' AND m.name NOT LIKE '\_%' ESCAPE '\'
     ORDER BY m.name, c.cid`,
   foreignKeys: String.raw`
     SELECT m.name AS tableName, f."table", f."from", f."to", f.on_delete
     FROM sqlite_master m, pragma_foreign_key_list(m.name) f
-    WHERE m.type = 'table' AND m.name NOT LIKE 'sqlite_%' AND m.name NOT LIKE '%search_%' AND m.name NOT LIKE '\_%' ESCAPE '\'
+    WHERE m.type = 'table' AND m.name NOT LIKE 'sqlite_%' AND m.sql NOT LIKE 'CREATE VIRTUAL TABLE%' AND m.name NOT LIKE '\_%' ESCAPE '\'
     ORDER BY m.name, f."from"`,
   objects: String.raw`
     SELECT type, name, tbl_name AS tableName FROM sqlite_master
