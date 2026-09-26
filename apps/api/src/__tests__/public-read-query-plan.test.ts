@@ -378,6 +378,21 @@ describe('公開エンドポイントの実行計画', () => {
     },
   );
 
+  it('関連映画は受賞作を部門と受賞の索引で引く', async () => {
+    const exercise = exercises.find(current => current.name === '関連映画');
+    const plans = await plansOf(exercise!);
+    const details = plans
+      .values()
+      .toArray()
+      .flat()
+      .map(row => row.detail);
+    expect(details).toContainEqual(
+      expect.stringMatching(
+        /^SEARCH nominations USING (?:COVERING )?INDEX nominations_category_winner_idx \(category_uid=\? AND is_winner=\?\)$/,
+      ),
+    );
+  });
+
   it.each(exercises.filter(exercise => exercise.indexOnly))(
     '$name は索引だけで引く',
     async exercise => {

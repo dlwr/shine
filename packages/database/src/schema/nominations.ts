@@ -53,6 +53,11 @@ export const nominations = sqliteTable(
       table.categoryUid,
       table.movieUid,
     ),
+    index('nominations_category_winner_idx').on(
+      table.categoryUid,
+      table.isWinner,
+      table.movieUid,
+    ),
     index('nominations_person_idx').on(table.personUid),
     index('nominations_movie_idx').on(table.movieUid),
   ],

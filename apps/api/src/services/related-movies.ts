@@ -1,4 +1,12 @@
-import {and, eq, inArray, isNull, sql, type getDatabase} from '@shine/database';
+import {
+  and,
+  eq,
+  inArray,
+  isNull,
+  notInArray,
+  sql,
+  type getDatabase,
+} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 
@@ -29,28 +37,20 @@ export async function findRelatedMovies(
 
   const targetYear = target[0].year ?? 0;
 
-  const candidates = await database
-    .select({
-      uid: movies.uid,
-      year: movies.year,
-    })
-    .from(nominations)
-    .innerJoin(movies, eq(nominations.movieUid, movies.uid))
-    .where(
-      and(
-        sql`${nominations.categoryUid} IN (
-          SELECT category_uid FROM nominations WHERE movie_uid = ${movieId}
-        )`,
-        sql`${movies.uid} != ${movieId}`,
-        sql`+${movies.deletedAt} IS NULL`,
-      ),
-    )
-    .groupBy(movies.uid)
-    .orderBy(
-      sql`MAX(${nominations.isWinner}) DESC`,
-      sql`ABS(COALESCE(${movies.year}, 0) - ${targetYear}) ASC`,
-    )
-    .limit(limit);
+  const winners = await findCandidates(database, movieId, targetYear, {
+    isWinner: 1,
+    excludedUids: [],
+    limit,
+  });
+  const nominees =
+    winners.length < limit
+      ? await findCandidates(database, movieId, targetYear, {
+          isWinner: 0,
+          excludedUids: winners.map(row => row.uid),
+          limit: limit - winners.length,
+        })
+      : [];
+  const candidates = [...winners, ...nominees];
 
   const candidateUids = candidates.map(row => row.uid);
   const rows =
@@ -95,4 +95,35 @@ export async function findRelatedMovies(
   });
 
   return relatedMovies;
+}
+
+async function findCandidates(
+  database: Database,
+  movieId: string,
+  targetYear: number,
+  options: {isWinner: number; excludedUids: string[]; limit: number},
+): Promise<Array<{uid: string; year: number | null}>> {
+  return database
+    .select({uid: movies.uid, year: movies.year})
+    .from(nominations)
+    .innerJoin(movies, eq(nominations.movieUid, movies.uid))
+    .where(
+      and(
+        sql`${nominations.categoryUid} IN (
+          SELECT category_uid FROM nominations WHERE movie_uid = ${movieId}
+        )`,
+        eq(nominations.isWinner, options.isWinner),
+        sql`${movies.uid} != ${movieId}`,
+        sql`+${movies.deletedAt} IS NULL`,
+        options.excludedUids.length > 0
+          ? notInArray(movies.uid, options.excludedUids)
+          : undefined,
+      ),
+    )
+    .groupBy(movies.uid)
+    .orderBy(
+      sql`ABS(COALESCE(${movies.year}, 0) - ${targetYear}) ASC`,
+      movies.uid,
+    )
+    .limit(options.limit);
 }

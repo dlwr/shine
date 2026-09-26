@@ -244,6 +244,91 @@ describe('GET /movies/:id/related', () => {
   });
 });
 
+function nomination(
+  uid: string,
+  movieUid: string,
+  categoryUid: string,
+  hasWon: boolean,
+) {
+  return {
+    uid,
+    movieUid,
+    ceremonyUid: 'cer-2023',
+    categoryUid,
+    isWinner: hasWon ? 1 : 0,
+  };
+}
+
+async function addRankingFixtures(environment: Environment): Promise<void> {
+  const database = getDatabase(environment);
+  await database.insert(awardCategories).values({
+    uid: 'cat-jury',
+    organizationUid: 'org-cannes',
+    name: 'Jury Prize',
+  });
+  await database.insert(movies).values([
+    {uid: 'movie-dual', year: 2023},
+    {uid: 'movie-w2024', year: 2024},
+    {uid: 'movie-w2020', year: 2020},
+    {uid: 'movie-w2010', year: 2010},
+    {uid: 'movie-otherwin', year: 2023},
+    {uid: 'movie-n2000', year: 2000},
+  ]);
+  await database
+    .insert(nominations)
+    .values([
+      nomination('nom-target-jury', 'movie-target', 'cat-jury', false),
+      nomination('nom-dual-palme', 'movie-dual', 'cat-palme', false),
+      nomination('nom-dual-jury', 'movie-dual', 'cat-jury', true),
+      nomination('nom-w2024', 'movie-w2024', 'cat-jury', true),
+      nomination('nom-w2020', 'movie-w2020', 'cat-palme', true),
+      nomination('nom-w2010', 'movie-w2010', 'cat-palme', true),
+      nomination('nom-otherwin-palme', 'movie-otherwin', 'cat-palme', false),
+      nomination('nom-otherwin-other', 'movie-otherwin', 'cat-other', true),
+      nomination('nom-n2000', 'movie-n2000', 'cat-palme', false),
+    ]);
+}
+
+describe('GET /movies/:id/related の並び', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+    await addRankingFixtures(environment);
+  });
+
+  async function relatedUids(limit: number): Promise<string[]> {
+    const response = await moviesRoutes.request(
+      `/movie-target/related?limit=${limit}`,
+      {},
+      environment,
+    );
+    const body = (await response.json()) as RelatedResponse;
+    return body.movies.map(movie => movie.uid);
+  }
+
+  it('共有する部門の受賞作を年の近い順に並べ、続けてノミネート作を年の近い順に並べる', async () => {
+    expect(await relatedUids(12)).toEqual([
+      'movie-dual',
+      'movie-w2024',
+      'movie-winner',
+      'movie-w2020',
+      'movie-w2010',
+      'movie-otherwin',
+      'movie-nominee',
+      'movie-n2000',
+    ]);
+  });
+
+  it('受賞作だけで件数が埋まるときはノミネート作を含めない', async () => {
+    expect(await relatedUids(3)).toEqual([
+      'movie-dual',
+      'movie-w2024',
+      'movie-winner',
+    ]);
+  });
+});
+
 function createMemoryKv(): KVNamespace {
   const store = new Map<string, string>();
   return {
