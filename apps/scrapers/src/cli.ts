@@ -49,7 +49,6 @@ import {createCommand as snsPost} from './sns-post-cli';
 import {createCommand as sql} from './sql-cli';
 import {createCommand as survey} from './survey-cli';
 import {createCommand as tmdbJaWorklist} from './tmdb-ja-worklist-cli';
-import {createCommand as tursoUsageAlert} from './turso-usage-alert-cli';
 import {createCommand as veniceFilmFestival} from './venice-film-festival-cli';
 import {createCommand as veniceJuryAwards} from './venice-jury-awards-cli';
 import {createCommand as venicePersonAwards} from './venice-person-awards-cli';
@@ -120,7 +119,6 @@ const commandGroups: Array<{heading: string; factories: Array<() => Command>}> =
         availabilityCheck,
         snsPost,
         indexNow,
-        tursoUsageAlert,
         d1UsageAlert,
         workersErrorAlert,
         northStarReport,
