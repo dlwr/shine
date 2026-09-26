@@ -1,0 +1,1 @@
+CREATE INDEX `nominations_category_winner_idx` ON `nominations` (`category_uid`,`is_winner`,`movie_uid`);
