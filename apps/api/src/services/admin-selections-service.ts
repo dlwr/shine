@@ -28,7 +28,7 @@ export class AdminSelectionsService extends BaseService {
 
   constructor(
     environment: Environment,
-    cache = new EdgeCache(undefined, environment.CACHE_KV),
+    cache = new EdgeCache(environment.CACHE_KV),
   ) {
     super(environment);
     this.cache = cache;

@@ -16,7 +16,7 @@ const UNCROWNED_CACHE_TTL = 604_800;
 const UNCROWNED_CACHE_KEY = 'uncrowned:v12';
 
 uncrownedRoutes.get('/', async c => {
-  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cache = new EdgeCache(c.env.CACHE_KV);
   const {data: result, status} = await readThroughCache(c, cache, {
     key: UNCROWNED_CACHE_KEY,
     ttl: UNCROWNED_CACHE_TTL,

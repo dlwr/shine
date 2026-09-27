@@ -153,7 +153,7 @@ export class QuizService extends BaseService {
   }
 
   async getPool(): Promise<QuizPoolEntry[]> {
-    const cache = new EdgeCache(undefined, this.env.CACHE_KV);
+    const cache = new EdgeCache(this.env.CACHE_KV);
     const {data} = await readThroughCache(this.requestContext, cache, {
       key: POOL_CACHE_KEY,
       ttl: POOL_CACHE_TTL,
@@ -171,7 +171,7 @@ export class QuizService extends BaseService {
   }
 
   async getPoolSize(): Promise<number> {
-    const cache = new EdgeCache(undefined, this.env.CACHE_KV);
+    const cache = new EdgeCache(this.env.CACHE_KV);
     const {data} = await readThroughCache(this.requestContext, cache, {
       key: POOL_SIZE_CACHE_KEY,
       ttl: POOL_CACHE_TTL,

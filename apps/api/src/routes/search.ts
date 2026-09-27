@@ -61,7 +61,7 @@ searchRoutes.get('/suggest', async c => {
   }
 
   const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
-  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cache = new EdgeCache(c.env.CACHE_KV);
   const cacheKey = `search:suggest:${locale}:${query}:v1`;
   const cached = await cache.get(cacheKey);
   const result =

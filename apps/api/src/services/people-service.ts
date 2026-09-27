@@ -21,7 +21,7 @@ export class PeopleService extends BaseService {
   constructor(environment: Environment) {
     super(environment);
     this.rankingCache = environment.CACHE_KV
-      ? new EdgeCache(undefined, environment.CACHE_KV)
+      ? new EdgeCache(environment.CACHE_KV)
       : undefined;
   }
 

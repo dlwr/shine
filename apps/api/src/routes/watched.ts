@@ -17,7 +17,7 @@ const WATCHED_LISTS_CACHE_TTL = 604_800;
 const WATCHED_LISTS_CACHE_KEY = 'watched:lists:v1';
 
 watchedRoutes.get('/lists', async c => {
-  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cache = new EdgeCache(c.env.CACHE_KV);
   const {data: result, status} = await readThroughCache<WatchedListsResponse>(
     c,
     cache,

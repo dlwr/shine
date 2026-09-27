@@ -41,7 +41,7 @@ movieSearchRoutes.get('/search', async c => {
       hasAwards,
     };
 
-    const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+    const cache = new EdgeCache(c.env.CACHE_KV);
     const cacheKey = getCacheKeyForSearch(query ?? '', page, limit, filters);
     const cached = await cache.get(cacheKey);
 

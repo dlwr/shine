@@ -10,7 +10,7 @@ export async function invalidateMovieCaches(
   environment: Environment,
   movieUid: string,
 ): Promise<void> {
-  const cache = new EdgeCache(undefined, environment.CACHE_KV);
+  const cache = new EdgeCache(environment.CACHE_KV);
   await Promise.all(
     CACHEABLE_LOCALES.map(async locale =>
       cache.delete(getCacheKeyForRelatedMovies(movieUid, locale)),
