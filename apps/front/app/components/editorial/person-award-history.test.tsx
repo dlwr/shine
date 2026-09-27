@@ -85,12 +85,20 @@ describe('PersonAwardHistory', () => {
     );
   });
 
-  it('長いタイトルは行の見出しで切り詰める', () => {
+  it('長いタイトルは切り詰めずに折り返す', () => {
     render(<PersonAwardHistory credits={credits} />);
 
-    expect(screen.getByRole('link', {name: 'PERFECT DAYS'})).toHaveClass(
+    expect(screen.getByRole('link', {name: 'PERFECT DAYS'})).not.toHaveClass(
       'truncate',
     );
+  });
+
+  it('行の見出しは折り返しを許す', () => {
+    render(<PersonAwardHistory credits={credits} />);
+
+    expect(
+      screen.getByRole('rowheader', {name: /PERFECT DAYS/}),
+    ).not.toHaveClass('whitespace-nowrap');
   });
 
   it('行の見出しに作品年を出す', () => {
@@ -107,6 +115,24 @@ describe('PersonAwardHistory', () => {
     expect(
       screen.getByRole('columnheader', {name: '日本アカデミー'}),
     ).toBeInTheDocument();
+  });
+
+  it('団体の見出しは語の途中で改行しない', () => {
+    render(<PersonAwardHistory credits={credits} />);
+
+    expect(screen.getByRole('columnheader', {name: 'アカデミー'})).toHaveClass(
+      'break-keep',
+    );
+  });
+
+  it('日本アカデミーの見出しは日本とアカデミーの間で折り返せる', () => {
+    render(<PersonAwardHistory credits={credits} />);
+
+    expect(
+      screen
+        .getByRole('columnheader', {name: '日本アカデミー'})
+        .querySelector('wbr'),
+    ).not.toBeNull();
   });
 
   it('列は海外の賞から国内の賞の順に並べる', () => {

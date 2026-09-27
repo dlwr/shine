@@ -222,8 +222,13 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
             </p>
             {nominated > 0 && (
               <p className="mt-1 font-mono text-xs text-ink-muted">
-                <span className="font-bold text-brand">{won}</span>
-                作受賞 / {nominated}作ノミネート
+                <span className="whitespace-nowrap">
+                  <span className="font-bold text-brand">{won}</span>作受賞
+                </span>{' '}
+                /{' '}
+                <span className="whitespace-nowrap">
+                  {nominated}作ノミネート
+                </span>
               </p>
             )}
             {personalRecords.map(record => (
@@ -237,8 +242,13 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
                 ) : (
                   `${record.organization} ${record.category}`
                 )}{' '}
-                <span className="font-bold text-brand">{record.won}</span>
-                受賞 / {record.nominated}ノミネート
+                <span className="whitespace-nowrap">
+                  <span className="font-bold text-brand">{record.won}</span>受賞
+                </span>{' '}
+                /{' '}
+                <span className="whitespace-nowrap">
+                  {record.nominated}ノミネート
+                </span>
               </p>
             ))}
           </div>
