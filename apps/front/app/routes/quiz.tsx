@@ -1,3 +1,4 @@
+import {useEffect} from 'react';
 import type {Route} from './+types/quiz';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
@@ -50,6 +51,13 @@ export async function loader({context, request}: Route.LoaderArgs) {
   return {puzzle, apiUrl, locale, monthly, transformImages};
 }
 
+function quizPosterUrl(date: string, stage: number, canTransform: boolean) {
+  return transformedImageUrl(
+    `/quiz/poster.png?date=${date}&stage=${stage}`,
+    canTransform,
+  );
+}
+
 export default function QuizPage({loaderData}: Route.ComponentProps) {
   const {puzzle, apiUrl, monthly, transformImages} = loaderData as {
     monthly?: MonthlyPick;
@@ -71,6 +79,22 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
   } = useQuizGame(puzzle, apiUrl);
 
   const stage = isFinished ? puzzle.maxAttempts : game.guesses.length;
+
+  useEffect(() => {
+    if (isFinished) {
+      return;
+    }
+
+    const upcomingStages = new Set([stage + 1, puzzle.maxAttempts]);
+    for (const nextStage of upcomingStages) {
+      new Image().src = quizPosterUrl(
+        puzzle.date,
+        nextStage,
+        transformImages ?? false,
+      );
+    }
+  }, [isFinished, stage, puzzle.date, puzzle.maxAttempts, transformImages]);
+
   const remaining = puzzle.maxAttempts - game.guesses.length;
   const streak = streakOf(history, puzzle.date);
 
@@ -104,10 +128,7 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
 
           <div className="border-2 border-ink bg-surface md:col-start-1 md:row-start-1 md:row-span-2">
             <img
-              src={transformedImageUrl(
-                `/quiz/poster.png?date=${puzzle.date}&stage=${stage}`,
-                transformImages ?? false,
-              )}
+              src={quizPosterUrl(puzzle.date, stage, transformImages ?? false)}
               alt={isFinished ? game.answer?.title : 'ポスターの一部'}
               width={480}
               height={720}
