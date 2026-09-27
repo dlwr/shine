@@ -268,13 +268,38 @@ describe('MovieDetail Component', () => {
           signal: request.signal,
         },
       );
-      expect(result).toEqual({
+      expect(result).toMatchObject({
         movieDetail: mockMovieDetail,
-        relatedMovies: mockRelatedMovies,
         turnstileSiteKey: 'test-site-key',
         locale: 'ja',
         apiUrl: 'http://localhost:8787',
       });
+      await expect(
+        (result as {relatedMovies: Promise<unknown>}).relatedMovies,
+      ).resolves.toEqual(mockRelatedMovies);
+    });
+
+    it('関連映画の応答を待たずに返す', async () => {
+      const mockFetch = vi.mocked(fetch);
+      mockFetch.mockImplementation(async input =>
+        String(input).includes('/related')
+          ? new Promise<Response>(() => {})
+          : ({ok: true, json: async () => mockMovieDetail} as Response),
+      );
+
+      const context = createMockContext();
+      const parameters = {id: 'movie-123'};
+      const request = new Request('http://localhost:3000/movies/movie-123');
+      const result = await loader(
+        createLoaderArguments(context, request, parameters, {
+          matches: createMatches(
+            createLoaderData(),
+            createParameters(parameters.id),
+          ),
+        }),
+      );
+
+      expect(result).toMatchObject({movieDetail: mockMovieDetail});
     });
 
     it('関連映画の取得に失敗しても詳細は返す', async () => {
@@ -297,10 +322,10 @@ describe('MovieDetail Component', () => {
         }),
       );
 
-      expect(result).toMatchObject({
-        movieDetail: mockMovieDetail,
-        relatedMovies: [],
-      });
+      expect(result).toMatchObject({movieDetail: mockMovieDetail});
+      await expect(
+        (result as {relatedMovies: Promise<unknown>}).relatedMovies,
+      ).resolves.toEqual([]);
     });
 
     it('存在しない映画IDの場合は404エラーを返す', async () => {
@@ -603,8 +628,10 @@ describe('MovieDetail Component', () => {
   });
 
   describe('Component', () => {
-    it('関連映画のリンクを表示する', () => {
-      const loaderData = createLoaderData({relatedMovies: mockRelatedMovies});
+    it('関連映画のリンクを表示する', async () => {
+      const loaderData = createLoaderData({
+        relatedMovies: Promise.resolve(mockRelatedMovies),
+      });
       const parameters = createParameters('movie-123');
 
       render(
@@ -616,13 +643,13 @@ describe('MovieDetail Component', () => {
         />,
       );
 
-      const link = screen.getByRole('link', {name: /関連映画A/});
+      const link = await screen.findByRole('link', {name: /関連映画A/});
       expect(link).toHaveAttribute('href', '/movies/related-1');
       expect(screen.getByText('関連映画')).toBeInTheDocument();
     });
 
     it('「観た」トグルを表示する', () => {
-      const loaderData = createLoaderData({relatedMovies: []});
+      const loaderData = createLoaderData({relatedMovies: Promise.resolve([])});
       const parameters = createParameters('movie-123');
 
       render(
@@ -641,7 +668,7 @@ describe('MovieDetail Component', () => {
     });
 
     it('関連映画が無ければセクションを出さない', () => {
-      const loaderData = createLoaderData({relatedMovies: []});
+      const loaderData = createLoaderData({relatedMovies: Promise.resolve([])});
       const parameters = createParameters('movie-123');
 
       render(
@@ -1191,8 +1218,10 @@ describe('MovieDetail Component', () => {
       expect(section).toHaveTextContent('観た人の記事・ポスト');
     });
 
-    it('記事・ポストの欄は関連映画より前に出る', () => {
-      const loaderData = createLoaderData({relatedMovies: mockRelatedMovies});
+    it('記事・ポストの欄は関連映画より前に出る', async () => {
+      const loaderData = createLoaderData({
+        relatedMovies: Promise.resolve(mockRelatedMovies),
+      });
       const parameters = createParameters('movie-123');
 
       render(
@@ -1204,8 +1233,8 @@ describe('MovieDetail Component', () => {
         />,
       );
 
+      const related = await screen.findByText('関連映画');
       const articles = screen.getByText('観た人の記事・ポスト');
-      const related = screen.getByText('関連映画');
       expect(
         articles.compareDocumentPosition(related) &
           Node.DOCUMENT_POSITION_FOLLOWING,
