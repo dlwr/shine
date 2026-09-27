@@ -10,11 +10,9 @@ import {
   createCachedResponse,
   createETag,
   EdgeCache,
-  getCacheKeyForMovie,
   getCacheKeyForRelatedMovies,
   getCacheTTL,
   IMPORTED_DATA_EDGE_TTL,
-  normalizeCacheLocale,
   shouldCheckETag,
   writeCacheAfterResponse,
 } from '../../utils/cache';
@@ -33,24 +31,6 @@ movieDetailRoutes.get('/:id', async c => {
     }
 
     const locale = c.req.query('locale') || 'ja';
-    const cache = new EdgeCache(undefined, c.env.CACHE_KV);
-
-    // Check cache first
-    const cacheLocale = normalizeCacheLocale(locale);
-    const cacheKey = cacheLocale
-      ? getCacheKeyForMovie(movieId, cacheLocale)
-      : undefined;
-    const cachedResponse = cacheKey ? await cache.get(cacheKey) : undefined;
-
-    if (cachedResponse) {
-      console.log('Cache hit for movie details:', movieId);
-      return c.json(cachedResponse.data as Record<string, unknown>, 200, {
-        'X-Cache-Status': 'HIT',
-      });
-    }
-
-    console.log('Cache miss for movie details:', movieId);
-
     const movieDetails = await moviesService.getMovieDetails(movieId, locale);
 
     const imdbUrl = movieDetails.imdbId
@@ -85,16 +65,7 @@ movieDetailRoutes.get('/:id', async c => {
 
     // Create cached response with 24 hour TTL
     const ttl = getCacheTTL.movie.details;
-    const response = createCachedResponse(result, ttl, {
-      ETag: etag,
-      'X-Cache-Status': 'MISS',
-    });
-
-    if (cacheKey) {
-      await writeCacheAfterResponse(c, cache.set(cacheKey, result, ttl));
-    }
-
-    return response;
+    return createCachedResponse(result, ttl, {ETag: etag});
   } catch (error) {
     console.error('Error fetching movie details:', error);
 

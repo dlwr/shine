@@ -4,7 +4,6 @@ import {
   createCachedResponse,
   createETag,
   EdgeCache,
-  getCacheKeyForMovie,
   getCacheKeyForPerson,
   getCacheKeyForSelection,
   getCacheTTL,
@@ -36,15 +35,6 @@ describe('Cache Utilities', () => {
       expect(getCacheKeyForPerson('person-1', 'en')).toBe(
         'person:person-1:en:v6',
       );
-    });
-
-    it('should generate consistent cache keys for movies', () => {
-      const movieId = 'test-movie-123';
-      const japaneseKey = getCacheKeyForMovie(movieId, 'ja');
-      const englishKey = getCacheKeyForMovie(movieId, 'en');
-
-      expect(japaneseKey).toBe(`movie:${movieId}:ja:v9`);
-      expect(englishKey).toBe(`movie:${movieId}:en:v9`);
     });
   });
 

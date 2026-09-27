@@ -6,7 +6,10 @@ import {eq, getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {migrate} from '@shine/database/testing';
 import {beforeEach, describe, expect, it} from 'vitest';
-import {getMovieCacheKeysForAllLocales} from '../../utils/cache';
+import {
+  CACHEABLE_LOCALES,
+  getCacheKeyForRelatedMovies,
+} from '../../utils/cache';
 import {AdminMoviesService} from '../admin-movies-service';
 import {NotFoundError, ValidationError} from '../errors';
 
@@ -130,9 +133,12 @@ describe('AdminMoviesService.updateMovie', () => {
     expect(row.mediaType).toBe('tv');
   });
 
-  it('invalidates the movie detail cache after an update', async () => {
-    for (const key of getMovieCacheKeysForAllLocales('movie-a')) {
-      kvStore.set(key, JSON.stringify({data: {}, cachedAt: 0}));
+  it('invalidates the related movies cache after an update', async () => {
+    for (const locale of CACHEABLE_LOCALES) {
+      kvStore.set(
+        getCacheKeyForRelatedMovies('movie-a', locale),
+        JSON.stringify({data: {}, cachedAt: 0}),
+      );
     }
 
     await service.updateMovie('movie-a', {year: 2021});
@@ -141,8 +147,11 @@ describe('AdminMoviesService.updateMovie', () => {
   });
 
   it('leaves the cache untouched when nothing is updated', async () => {
-    for (const key of getMovieCacheKeysForAllLocales('movie-a')) {
-      kvStore.set(key, JSON.stringify({data: {}, cachedAt: 0}));
+    for (const locale of CACHEABLE_LOCALES) {
+      kvStore.set(
+        getCacheKeyForRelatedMovies('movie-a', locale),
+        JSON.stringify({data: {}, cachedAt: 0}),
+      );
     }
 
     await service.updateMovie('movie-a', {});
