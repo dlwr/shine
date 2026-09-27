@@ -1,3 +1,4 @@
+import {useState} from 'react';
 import {ThemeToggle} from './theme-toggle';
 import {LanguageSelector} from '@/components/molecules/language-selector';
 
@@ -25,9 +26,10 @@ const NAV_LINKS = [
 export function Masthead({locale = 'en'}: {locale?: string}) {
   const [taglineTop, taglineBottom] =
     TAGLINES[locale as keyof typeof TAGLINES] ?? TAGLINES.en;
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2.5 border-b-2 border-ink pb-2.5 mb-6">
+    <header className="relative flex flex-wrap items-end justify-between gap-x-4 gap-y-2.5 border-b-2 border-ink pb-2.5 mb-6">
       <h1 className="font-display font-black text-4xl md:text-5xl tracking-[-0.06em] leading-none">
         <a href="/" className="no-underline text-ink">
           SHINE
@@ -39,23 +41,40 @@ export function Masthead({locale = 'en'}: {locale?: string}) {
           <br />
           {taglineBottom} — {today()}
         </p>
-        <LanguageSelector locale={locale} />
-        {NAV_LINKS.map(link => (
-          <a
-            key={link.href}
-            href={link.href}
-            aria-label={link.ariaLabel}
-            className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-ink text-ink">
-            {link.label}
-          </a>
-        ))}
+        <nav
+          id="site-nav"
+          aria-label="Site"
+          className={`${menuOpen ? 'flex' : 'hidden'} absolute inset-x-0 top-full z-20 flex-wrap items-center gap-2 border-2 border-ink bg-paper p-3 md:contents`}>
+          <LanguageSelector locale={locale} />
+          {NAV_LINKS.map(link => (
+            <a
+              key={link.href}
+              href={link.href}
+              aria-label={link.ariaLabel}
+              className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-ink text-ink">
+              {link.label}
+            </a>
+          ))}
+          <div className="md:order-last">
+            <ThemeToggle />
+          </div>
+        </nav>
         <a
           href="/search"
           aria-label="Search"
           className="font-mono text-xs font-bold bg-brand text-brand-on px-2.5 py-1 border-2 border-ink shadow-[3px_3px_0_var(--ink)]">
           SEARCH
         </a>
-        <ThemeToggle />
+        <button
+          type="button"
+          aria-expanded={menuOpen}
+          aria-controls="site-nav"
+          onClick={() => {
+            setMenuOpen(open => !open);
+          }}
+          className="md:hidden font-mono text-xs font-bold px-2.5 py-1 border-2 border-ink text-ink">
+          MENU
+        </button>
       </div>
     </header>
   );
