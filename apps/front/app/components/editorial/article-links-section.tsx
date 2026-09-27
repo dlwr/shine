@@ -73,7 +73,7 @@ export function ArticleLinksSection({
   const adminToken = useAdminToken();
 
   return (
-    <section id="article-links">
+    <section id="article-links" className="mb-8">
       <p className="font-mono text-xs text-ink-muted mb-3">
         観た人の記事・ポスト
       </p>
