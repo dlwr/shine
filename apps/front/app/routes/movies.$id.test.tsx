@@ -1212,6 +1212,96 @@ describe('MovieDetail Component', () => {
       ).toBeTruthy();
     });
 
+    it('視聴手段はあらすじより前に出る', () => {
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(
+        screen
+          .getByText('WATCH')
+          .compareDocumentPosition(screen.getByText('あらすじ')) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('記事・ポストの欄はキャストより前に出る', () => {
+      const loaderData = createLoaderData({
+        movieDetail: {
+          ...mockMovieDetail,
+          credits: {
+            cast: [{uid: 'p1', name: '西島秀俊', character: 'Yusuke Kafuku'}],
+            crew: [{uid: 'p2', name: '濱口竜介', job: 'Director'}],
+          },
+        },
+      });
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(
+        screen
+          .getByText('観た人の記事・ポスト')
+          .compareDocumentPosition(screen.getByText('CAST & CREW')) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('長いあらすじは折りたたみ、続きを読むで全文を開く', async () => {
+      const description = 'あ'.repeat(300);
+      const loaderData = createLoaderData({
+        movieDetail: {...mockMovieDetail, description},
+      });
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      const toggle = screen.getByRole('button', {name: '続きを読む'});
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      await userEvent.click(toggle);
+      expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('短いあらすじには続きを読むを出さない', () => {
+      const loaderData = createLoaderData();
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(
+        screen.queryByRole('button', {name: '続きを読む'}),
+      ).not.toBeInTheDocument();
+    });
+
     it('URLの説明文にポストも貼れることを書く', () => {
       const loaderData = createLoaderData();
       const parameters = createParameters('movie-123');

@@ -5,6 +5,7 @@ import {CreditsList} from '@/components/editorial/credits-list';
 import {Masthead} from '@/components/editorial/masthead';
 import {MovieDetailErrorView} from '@/components/editorial/movie-detail-error-view';
 import {MovieHero} from '@/components/editorial/movie-hero';
+import {MovieSynopsis} from '@/components/editorial/movie-synopsis';
 import {MovieWatchSection} from '@/components/editorial/movie-watch-section';
 import {RelatedMovies} from '@/components/editorial/related-movies';
 import {SiteFooter} from '@/components/editorial/site-footer';
@@ -89,36 +90,6 @@ export default function MovieDetail({
           apiUrl={apiUrl}
         />
 
-        {/* Synopsis */}
-        {movieDetail.description && (
-          <section className="mb-8">
-            <p className="font-mono text-xs text-ink-muted mb-3">あらすじ</p>
-            <p className="text-sm leading-relaxed text-ink">
-              {movieDetail.description}
-            </p>
-          </section>
-        )}
-
-        {/* Cast & Crew */}
-        {movieDetail.credits &&
-          (movieDetail.credits.cast.length > 0 ||
-            movieDetail.credits.crew.length > 0) && (
-            <section className="mb-8">
-              <p className="font-mono text-xs text-ink-muted mb-3">
-                CAST &amp; CREW
-              </p>
-              <CreditsList credits={movieDetail.credits} />
-            </section>
-          )}
-
-        {/* Awards */}
-        {movieDetail.nominations && movieDetail.nominations.length > 0 && (
-          <section className="mb-8">
-            <p className="font-mono text-xs text-ink-muted mb-3">AWARDS</p>
-            <AwardTree nominations={movieDetail.nominations} />
-          </section>
-        )}
-
         <MovieWatchSection
           movieDetail={movieDetail}
           title={title}
@@ -126,7 +97,17 @@ export default function MovieDetail({
           locale={locale}
         />
 
-        {/* Article Links */}
+        {movieDetail.description && (
+          <MovieSynopsis description={movieDetail.description} />
+        )}
+
+        {movieDetail.nominations && movieDetail.nominations.length > 0 && (
+          <section className="mb-8">
+            <p className="font-mono text-xs text-ink-muted mb-3">AWARDS</p>
+            <AwardTree nominations={movieDetail.nominations} />
+          </section>
+        )}
+
         <ArticleLinksSection
           articleLinks={movieDetail.articleLinks}
           movieUid={movieDetail.uid}
@@ -141,7 +122,17 @@ export default function MovieDetail({
           isMonthlyPick={isThisMonthsPick}
         />
 
-        {/* Related Movies */}
+        {movieDetail.credits &&
+          (movieDetail.credits.cast.length > 0 ||
+            movieDetail.credits.crew.length > 0) && (
+            <section className="mb-8">
+              <p className="font-mono text-xs text-ink-muted mb-3">
+                CAST &amp; CREW
+              </p>
+              <CreditsList credits={movieDetail.credits} />
+            </section>
+          )}
+
         <RelatedMovies movies={relatedMovies} />
 
         <SiteFooter locale={locale} />
