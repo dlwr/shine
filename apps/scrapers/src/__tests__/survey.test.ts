@@ -102,6 +102,23 @@ describe('measurePages', () => {
     expect(rounds[0].map(timing => timing.path)).toEqual(['/', '/quiz']);
   });
 
+  it('ボット扱いで全部揃うまで待たされないようブラウザの UA で叩く', async () => {
+    const userAgents: Array<string | null> = [];
+    const fetchImpl = (async (
+      _input: string | URL | Request,
+      init?: RequestInit,
+    ) => {
+      userAgents.push(new Headers(init?.headers).get('user-agent'));
+      return new Response('ok', {status: 200});
+    }) as typeof fetch;
+
+    await measurePages('https://example.com', ['/'], 1, fetchImpl);
+
+    expect(userAgents[0]).toMatch(
+      /Mozilla\/5\.0 \(.+\) AppleWebKit\/.+ Safari\//,
+    );
+  });
+
   it('ステータスを記録する', async () => {
     const fetchImpl = (async () =>
       new Response('missing', {status: 404})) as typeof fetch;
