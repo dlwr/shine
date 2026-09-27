@@ -20,25 +20,20 @@ const migrationsFolder = path.resolve(
   '../../../../packages/database/migrations',
 );
 
-function createStatefulCacheStub() {
-  const store = new Map<string, Response>();
+function createKvStub(): KVNamespace {
+  const store = new Map<string, string>();
   return {
-    async match(key: string) {
-      return store.get(key)?.clone();
+    async get(key: string) {
+      const value = store.get(key);
+      return value === undefined ? null : JSON.parse(value);
     },
-    async put(key: string, response: Response) {
-      store.set(key, response);
+    async put(key: string, value: string) {
+      store.set(key, value);
     },
     async delete(key: string) {
-      return store.delete(key);
+      store.delete(key);
     },
-    async keys() {
-      return store
-        .keys()
-        .map(key => new Request(key))
-        .toArray();
-    },
-  } as unknown as Cache;
+  } as unknown as KVNamespace;
 }
 
 describe('selections cache and locale', () => {
@@ -87,10 +82,7 @@ describe('selections cache and locale', () => {
       categoryUid: 'category-1',
     });
 
-    service = new SelectionsService(
-      environment,
-      new EdgeCache(createStatefulCacheStub()),
-    );
+    service = new SelectionsService(environment, new EdgeCache(createKvStub()));
   });
 
   it('does not leak cached selections across locales', async () => {

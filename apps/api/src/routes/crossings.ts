@@ -16,7 +16,7 @@ const CROSSINGS_CACHE_TTL = 604_800;
 const CROSSINGS_CACHE_KEY = 'crossings:v12';
 
 crossingsRoutes.get('/', async c => {
-  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cache = new EdgeCache(c.env.CACHE_KV);
   const {data: result, status} = await readThroughCache(c, cache, {
     key: CROSSINGS_CACHE_KEY,
     ttl: CROSSINGS_CACHE_TTL,

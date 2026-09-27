@@ -16,7 +16,7 @@ export const yearsRoutes = new Hono<{Bindings: Environment}>();
 const YEARS_CACHE_TTL = 604_800;
 
 yearsRoutes.get('/', async c => {
-  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cache = new EdgeCache(c.env.CACHE_KV);
   const {data: result, status} = await readThroughCache<YearsListResponse>(
     c,
     cache,
@@ -45,7 +45,7 @@ yearsRoutes.get('/:year', async c => {
     return c.json({error: 'Year not found'}, 404);
   }
 
-  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cache = new EdgeCache(c.env.CACHE_KV);
   const {data: detail, status} = await readThroughCache(c, cache, {
     key: `years:${year}:v3`,
     ttl: YEARS_CACHE_TTL,

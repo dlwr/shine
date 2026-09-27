@@ -88,7 +88,7 @@ movieDetailRoutes.get('/:id/related', async c => {
         ? Math.min(limitParameter, MAX_RELATED_MOVIES)
         : 6;
 
-    const relatedCache = new EdgeCache(undefined, c.env.CACHE_KV);
+    const relatedCache = new EdgeCache(c.env.CACHE_KV);
     const cacheKey = getCacheKeyForRelatedMovies(movieId, locale);
     const cached = await relatedCache.get(cacheKey, {
       edgeTtl: IMPORTED_DATA_EDGE_TTL,

@@ -95,7 +95,7 @@ function createMemoryCache(): EdgeCache {
     },
   } as unknown as KVNamespace;
 
-  return new EdgeCache(undefined, kv);
+  return new EdgeCache(kv);
 }
 
 describe('AdminSelectionsService.reselectMovie with excludeMovieUids', () => {
@@ -362,10 +362,7 @@ describe('SelectionsService selection cache reads', () => {
     const get = vi.fn().mockResolvedValue(undefined);
     const kv = {get, put: vi.fn(), delete: vi.fn()} as unknown as KVNamespace;
 
-    const service = new SelectionsService(
-      environment,
-      new EdgeCache(undefined, kv),
-    );
+    const service = new SelectionsService(environment, new EdgeCache(kv));
     await expect(
       service.getDateSeededSelections({
         locale: 'ja',
@@ -389,10 +386,7 @@ describe('AdminSelectionsService selection cache purge', () => {
       put: vi.fn(),
       delete: vi.fn(),
     } as unknown as KVNamespace;
-    const service = new AdminSelectionsService(
-      environment,
-      new EdgeCache(undefined, kv),
-    );
+    const service = new AdminSelectionsService(environment, new EdgeCache(kv));
 
     await service.overrideSelection('daily', 'movie-1', new Date());
 

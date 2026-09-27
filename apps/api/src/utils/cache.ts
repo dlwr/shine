@@ -7,55 +7,9 @@ export type CacheMetrics = {
 };
 
 export class EdgeCache {
-  private readonly cacheStorage?: Cache;
-  private readonly kv?: KVNamespace;
   private readonly metrics: CacheMetrics = {hits: 0, misses: 0, hitRate: 0};
 
-  constructor(cacheStorage?: Cache, kv?: KVNamespace) {
-    this.cacheStorage = cacheStorage;
-    this.kv = kv;
-  }
-
-  async getResponse(key: string): Promise<Response | undefined> {
-    try {
-      const cached = await this.cache.match(this.keyToUrl(key));
-      if (cached) {
-        this.metrics.hits++;
-        this.updateHitRate();
-        return cached;
-      }
-
-      this.metrics.misses++;
-      this.updateHitRate();
-      return undefined;
-    } catch (error) {
-      console.error('Cache get error:', error);
-      this.metrics.misses++;
-      this.updateHitRate();
-      return undefined;
-    }
-  }
-
-  async put(key: string, response: Response, ttl?: number): Promise<void> {
-    try {
-      const responseToCache = response.clone();
-
-      if (ttl) {
-        const headers = new Headers(responseToCache.headers);
-        headers.set('Cache-Control', `public, max-age=${ttl}, s-maxage=${ttl}`);
-        const cachedResponse = new Response(responseToCache.body, {
-          status: responseToCache.status,
-          statusText: responseToCache.statusText,
-          headers,
-        });
-        await this.cache.put(this.keyToUrl(key), cachedResponse);
-      } else {
-        await this.cache.put(this.keyToUrl(key), responseToCache);
-      }
-    } catch (error) {
-      console.error('Cache put error:', error);
-    }
-  }
+  constructor(private readonly kv?: KVNamespace) {}
 
   async set(
     key: string,
@@ -63,24 +17,14 @@ export class EdgeCache {
     ttl = 3600,
     options?: {staleRetention?: number},
   ): Promise<void> {
-    try {
-      if (this.kv) {
-        await this.kv.put(key, JSON.stringify({data, cachedAt: Date.now()}), {
-          expirationTtl: ttl + (options?.staleRetention ?? 0),
-        });
-        return;
-      }
+    if (!this.kv) {
+      return;
+    }
 
-      const response = Response.json(
-        {data, cachedAt: Date.now()},
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': `max-age=${ttl}`,
-          },
-        },
-      );
-      await this.cache.put(this.keyToUrl(key), response);
+    try {
+      await this.kv.put(key, JSON.stringify({data, cachedAt: Date.now()}), {
+        expirationTtl: ttl + (options?.staleRetention ?? 0),
+      });
     } catch (error) {
       console.error('Cache set error:', error);
     }
@@ -91,32 +35,17 @@ export class EdgeCache {
     options?: {edgeTtl?: number},
   ): Promise<{data: unknown; cachedAt: number} | undefined> {
     try {
-      if (this.kv) {
-        const cached = (await (options?.edgeTtl
-          ? this.kv.get(key, {type: 'json', cacheTtl: options.edgeTtl})
-          : this.kv.get(key, 'json'))) as {
-          data: unknown;
-          cachedAt: number;
-        } | null;
-        this.metrics[cached ? 'hits' : 'misses']++;
-        this.updateHitRate();
-        return cached ?? undefined;
-      }
-
-      const cached = await this.cache.match(this.keyToUrl(key));
-      if (cached) {
-        const result: {
-          data: unknown;
-          cachedAt: number;
-        } = await cached.json();
-        this.metrics.hits++;
-        this.updateHitRate();
-        return result;
-      }
-
-      this.metrics.misses++;
+      const cached = this.kv
+        ? ((await (options?.edgeTtl
+            ? this.kv.get(key, {type: 'json', cacheTtl: options.edgeTtl})
+            : this.kv.get(key, 'json'))) as {
+            data: unknown;
+            cachedAt: number;
+          } | null)
+        : null;
+      this.metrics[cached ? 'hits' : 'misses']++;
       this.updateHitRate();
-      return undefined;
+      return cached ?? undefined;
     } catch (error) {
       console.error('Cache get error:', error);
       this.metrics.misses++;
@@ -126,50 +55,21 @@ export class EdgeCache {
   }
 
   async delete(key: string): Promise<boolean> {
-    try {
-      if (this.kv) {
-        await this.kv.delete(key);
-        return true;
-      }
+    if (!this.kv) {
+      return false;
+    }
 
-      return await this.cache.delete(this.keyToUrl(key));
+    try {
+      await this.kv.delete(key);
+      return true;
     } catch (error) {
       console.error('Cache delete error:', error);
       return false;
     }
   }
 
-  async deleteByPattern(pattern: string): Promise<number> {
-    try {
-      // Note: cache.keys() is unsupported on Cloudflare Workers; this only
-      // works in tests. Prefer explicit key deletion.
-      const keys = await this.cache.keys();
-      const encodedPattern = encodeURIComponent(pattern);
-      const deletePromises = keys
-        .filter(request => request.url.includes(encodedPattern))
-        .map(async request => this.cache.delete(request));
-
-      const results = await Promise.all(deletePromises);
-      const deleted = results.filter(Boolean).length;
-
-      return deleted;
-    } catch (error) {
-      console.error('Cache delete by pattern error:', error);
-      return 0;
-    }
-  }
-
   getMetrics(): CacheMetrics {
     return {...this.metrics};
-  }
-
-  private get cache(): Cache {
-    return this.cacheStorage ?? (caches as unknown as {default: Cache}).default;
-  }
-
-  // Cache API keys must be valid request URLs; map logical keys onto one
-  private keyToUrl(key: string): string {
-    return `https://edge-cache.internal/${encodeURIComponent(key)}`;
   }
 
   private updateHitRate(): void {
@@ -277,36 +177,6 @@ export const createCachedResponse = (
   };
 
   return Response.json(data, {headers});
-};
-
-export const shouldCacheSearch = (
-  query: string,
-  year?: number,
-  language?: string,
-): boolean => {
-  if (!query || query.length < 3) {
-    return true;
-  }
-
-  if (year !== undefined || language !== undefined) {
-    return false;
-  }
-
-  const commonQueries = [
-    'アカデミー',
-    'oscar',
-    'cannes',
-    'カンヌ',
-    '日本アカデミー',
-    'winner',
-    '受賞',
-    'ノミネート',
-    'nominated',
-  ];
-
-  return commonQueries.some(common =>
-    query.toLowerCase().includes(common.toLowerCase()),
-  );
 };
 
 export const createETag = (data: unknown): string => {

@@ -62,7 +62,7 @@ peopleRoutes.get('/', async c => {
   }
 
   const limit = Math.min(requestedLimit, PEOPLE_LIST_MAX_LIMIT);
-  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cache = new EdgeCache(c.env.CACHE_KV);
   const {data: result, status} = await readThroughCache(c, cache, {
     key: `people:list:${page}:${limit}:v2`,
     ttl: PEOPLE_LIST_CACHE_TTL,
@@ -93,7 +93,7 @@ peopleRoutes.get('/prominent', async c => {
   }
 
   const limit = Math.min(requestedLimit, PROMINENT_MAX_LIMIT);
-  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cache = new EdgeCache(c.env.CACHE_KV);
   const {data: result, status} = await readThroughCache(c, cache, {
     key: `people:prominent:${locale}:${limit}:v13`,
     ttl: PROMINENT_CACHE_TTL,
@@ -120,7 +120,7 @@ peopleRoutes.get('/search', async c => {
   }
 
   const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
-  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cache = new EdgeCache(c.env.CACHE_KV);
   const cacheKey = `people:search:${locale}:${query}:v1`;
   const cached = await cache.get(cacheKey, {edgeTtl: IMPORTED_DATA_EDGE_TTL});
   const result =
@@ -149,7 +149,7 @@ peopleRoutes.get('/search', async c => {
 
 peopleRoutes.get('/crossings', async c => {
   const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
-  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cache = new EdgeCache(c.env.CACHE_KV);
   const {data: result, status} = await readThroughCache(c, cache, {
     key: `people:crossings:${locale}:v5`,
     ttl: PERSON_CROSSINGS_CACHE_TTL,
@@ -171,7 +171,7 @@ peopleRoutes.get('/crossings', async c => {
 
 peopleRoutes.get('/uncrowned', async c => {
   const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
-  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cache = new EdgeCache(c.env.CACHE_KV);
   const {data: result} = await readThroughCache(c, cache, {
     key: `people:uncrowned:${locale}:v3`,
     ttl: PERSON_UNCROWNED_CACHE_TTL,
@@ -200,7 +200,7 @@ peopleRoutes.get('/:id', async c => {
   const cacheLocale = normalizeCacheLocale(locale) ?? 'ja';
   const cacheKey = getCacheKeyForPerson(personUid, cacheLocale);
 
-  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cache = new EdgeCache(c.env.CACHE_KV);
   const {data: person, status} = await readThroughCache(c, cache, {
     key: cacheKey,
     ttl: PERSON_CACHE_TTL,

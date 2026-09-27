@@ -13,7 +13,7 @@ import {readThroughCache} from '../../utils/read-through-cache';
 export const movieUidsRoutes = new Hono<{Bindings: Environment}>();
 
 movieUidsRoutes.get('/uids', async c => {
-  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cache = new EdgeCache(c.env.CACHE_KV);
   const {data, status} = await readThroughCache<MovieUidsResponse>(c, cache, {
     key: 'movies:uids:v1',
     ttl: getCacheTTL.movie.uids,

@@ -1,71 +1,14 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 import {EdgeCache} from '../cache';
 
-function createStatefulCacheStub() {
-  const store = new Map<string, Response>();
-  return {
-    async match(key: string) {
-      const cached = store.get(key);
-      return cached?.clone();
-    },
-    async put(key: string, response: Response) {
-      store.set(key, response);
-    },
-    async delete(key: string) {
-      return store.delete(key);
-    },
-    async keys() {
-      return store
-        .keys()
-        .map(key => new Request(`http://cache/${key}`))
-        .toArray();
-    },
-  };
-}
-
-describe('EdgeCache', () => {
-  let cacheStub: ReturnType<typeof createStatefulCacheStub>;
-
-  beforeEach(() => {
-    cacheStub = createStatefulCacheStub();
-  });
-
-  it('caches and returns data for non-preview keys', async () => {
-    const cache = new EdgeCache(cacheStub as unknown as Cache);
+describe('EdgeCache without KV', () => {
+  it('KV が無ければ保存せず undefined を返す', async () => {
+    const cache = new EdgeCache();
     await cache.set('selections:daily:2024-06-24:en:v1', {title: 'Movie'}, 60);
 
-    const cached = await cache.get('selections:daily:2024-06-24:en:v1');
-
-    expect(cached?.data).toEqual({title: 'Movie'});
-  });
-
-  it('returns undefined for keys that were never set', async () => {
-    const cache = new EdgeCache(cacheStub as unknown as Cache);
-
-    const cached = await cache.get('selections:daily:2024-06-24:en:v1');
-
-    expect(cached).toBeUndefined();
-  });
-
-  it('deletes cached entries', async () => {
-    const cache = new EdgeCache(cacheStub as unknown as Cache);
-    await cache.set('movie:abc:basic:ja:v2', {title: 'Movie'}, 60);
-
-    await cache.delete('movie:abc:basic:ja:v2');
-
-    expect(await cache.get('movie:abc:basic:ja:v2')).toBeUndefined();
-  });
-
-  it('keeps entries for different locales separate', async () => {
-    const cache = new EdgeCache(cacheStub as unknown as Cache);
-    await cache.set('selections:daily:2024-06-24:en:v1', {title: 'Movie'}, 60);
-    await cache.set('selections:daily:2024-06-24:ja:v1', {title: '映画'}, 60);
-
-    const en = await cache.get('selections:daily:2024-06-24:en:v1');
-    const ja = await cache.get('selections:daily:2024-06-24:ja:v1');
-
-    expect(en?.data).toEqual({title: 'Movie'});
-    expect(ja?.data).toEqual({title: '映画'});
+    expect(
+      await cache.get('selections:daily:2024-06-24:en:v1'),
+    ).toBeUndefined();
   });
 });
 
@@ -89,7 +32,7 @@ function createKvStub() {
 describe('EdgeCache with KV backend', () => {
   it('stores and returns data through KV', async () => {
     const kv = createKvStub();
-    const cache = new EdgeCache(undefined, kv as unknown as KVNamespace);
+    const cache = new EdgeCache(kv as unknown as KVNamespace);
 
     await cache.set('kv:key', {value: 42}, 600);
     const cached = await cache.get('kv:key');
@@ -99,7 +42,7 @@ describe('EdgeCache with KV backend', () => {
 
   it('passes the TTL to KV as expirationTtl', async () => {
     const kv = createKvStub();
-    const cache = new EdgeCache(undefined, kv as unknown as KVNamespace);
+    const cache = new EdgeCache(kv as unknown as KVNamespace);
 
     await cache.set('kv:ttl', {value: 1}, 600);
 
@@ -108,14 +51,14 @@ describe('EdgeCache with KV backend', () => {
 
   it('returns undefined for keys that were never set', async () => {
     const kv = createKvStub();
-    const cache = new EdgeCache(undefined, kv as unknown as KVNamespace);
+    const cache = new EdgeCache(kv as unknown as KVNamespace);
 
     expect(await cache.get('kv:none')).toBeUndefined();
   });
 
   it('deletes cached entries', async () => {
     const kv = createKvStub();
-    const cache = new EdgeCache(undefined, kv as unknown as KVNamespace);
+    const cache = new EdgeCache(kv as unknown as KVNamespace);
 
     await cache.set('kv:gone', {value: 1}, 600);
     await cache.delete('kv:gone');
@@ -127,7 +70,7 @@ describe('EdgeCache with KV backend', () => {
 describe('EdgeCache KV reads', () => {
   it('reads KV as json without an edge TTL by default', async () => {
     const get = vi.fn().mockResolvedValue(undefined);
-    const cache = new EdgeCache(undefined, {get} as unknown as KVNamespace);
+    const cache = new EdgeCache({get} as unknown as KVNamespace);
 
     await cache.get('awards:list:v20');
 
@@ -136,7 +79,7 @@ describe('EdgeCache KV reads', () => {
 
   it('lets the colo keep the value for the given edge TTL', async () => {
     const get = vi.fn().mockResolvedValue(undefined);
-    const cache = new EdgeCache(undefined, {get} as unknown as KVNamespace);
+    const cache = new EdgeCache({get} as unknown as KVNamespace);
 
     await cache.get('awards:list:v20', {edgeTtl: 600});
 

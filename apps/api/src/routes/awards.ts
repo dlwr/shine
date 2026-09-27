@@ -18,7 +18,7 @@ export const awardsRoutes = new Hono<{Bindings: Environment}>();
 const AWARDS_CACHE_TTL = 604_800;
 
 awardsRoutes.get('/', async c => {
-  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cache = new EdgeCache(c.env.CACHE_KV);
   const {data: result, status} = await readThroughCache<AwardsListResponse>(
     c,
     cache,
@@ -42,7 +42,7 @@ awardsRoutes.get('/', async c => {
 });
 
 awardsRoutes.get('/:slug', async c => {
-  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cache = new EdgeCache(c.env.CACHE_KV);
   const slug = c.req.param('slug');
   const pageParameter = Number(c.req.query('page') ?? '1');
   const page =
@@ -85,7 +85,7 @@ awardsRoutes.get('/:slug', async c => {
 });
 
 awardsRoutes.get('/:slug/:year', async c => {
-  const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+  const cache = new EdgeCache(c.env.CACHE_KV);
   const year = Number(c.req.param('year'));
   if (!Number.isSafeInteger(year)) {
     return c.json({error: 'Award not found'}, 404);

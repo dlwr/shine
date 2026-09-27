@@ -74,7 +74,7 @@ Cloudflare Workers: non-secret vars go in `wrangler.jsonc`/`wrangler.toml` `vars
 ## API Design
 
 - `apps/api/openapi.yml` documents the full endpoint list — `openapi-routes.test.ts` fails when a route is added or removed without updating it, and `pnpm run docs:validate` must stay green
-- Edge caching via `EdgeCache` (`apps/api/src/utils/cache.ts`): cache keys include locale; writes use `set()`, reads use `get()`. When invalidating movie caches use `getMovieCacheKeysForAllLocales()`
+- Edge caching via `EdgeCache` (`apps/api/src/utils/cache.ts`, KV only: `new EdgeCache(c.env.CACHE_KV)`): cache keys include locale; writes use `set()`, reads use `get()`. After movie mutations call `invalidateMovieCaches()`. 映画詳細（`GET /movies/:id`）は KV に載せず D1 から返す（冷えた KV の読みが APAC の D1 より遅いため）
 - 取り込みでしか変わらない 7 日 TTL の経路は `readThroughCache`（`apps/api/src/utils/read-through-cache.ts`）で読む。期限を過ぎた値はそのまま返して応答の後で作り直し（`X-Cache-Status: STALE`）、KV には TTL より 30 日長く残す。ルートの外（`QuizService` の出題プール）で使うときは service のコンストラクタに `c` を渡す（無ければ書き込みを待つ）。鍵に利用者入力が入る経路（`/people/search` など）には使わない（鍵空間が入力しだいで膨らむ）。反映を急ぐときは従来どおり鍵を消す
 - **キャッシュ鍵の版**は `cache-key-version.test.ts` が固定する。公開経路が KV に書く中身の鍵の並びを `cache-payload-shapes.json` に記録してあり、応答の形が変わったのに鍵の版（`:v9` など）が同じだと落ちる。版を上げたら `UPDATE_CACHE_SHAPES=1 pnpm vitest run --project node apps/api/src/__tests__/cache-key-version.test.ts` で記録し直す（版を上げずに記録だけ更新することはできない）。テストデータ（`public-data-seed.ts`）を変えて形が変わっただけのときは、記録から該当の鍵を消してから記録し直す
 

@@ -62,15 +62,11 @@ describe('readThroughCache: キャッシュに無いとき', () => {
     const {kv} = createKvStub();
     const {context} = createContext();
 
-    const result = await readThroughCache(
-      context,
-      new EdgeCache(undefined, kv),
-      {
-        key: KEY,
-        ttl: TTL,
-        load: async () => ({years: [2024]}),
-      },
-    );
+    const result = await readThroughCache(context, new EdgeCache(kv), {
+      key: KEY,
+      ttl: TTL,
+      load: async () => ({years: [2024]}),
+    });
 
     expect(result.data).toEqual({years: [2024]});
   });
@@ -79,15 +75,11 @@ describe('readThroughCache: キャッシュに無いとき', () => {
     const {kv} = createKvStub();
     const {context} = createContext();
 
-    const result = await readThroughCache(
-      context,
-      new EdgeCache(undefined, kv),
-      {
-        key: KEY,
-        ttl: TTL,
-        load: async () => ({years: [2024]}),
-      },
-    );
+    const result = await readThroughCache(context, new EdgeCache(kv), {
+      key: KEY,
+      ttl: TTL,
+      load: async () => ({years: [2024]}),
+    });
 
     expect(result.status).toBe('MISS');
   });
@@ -96,7 +88,7 @@ describe('readThroughCache: キャッシュに無いとき', () => {
     const {kv, store} = createKvStub();
     const {context, settle} = createContext();
 
-    await readThroughCache(context, new EdgeCache(undefined, kv), {
+    await readThroughCache(context, new EdgeCache(kv), {
       key: KEY,
       ttl: TTL,
       load: async () => ({years: [2024]}),
@@ -110,7 +102,7 @@ describe('readThroughCache: キャッシュに無いとき', () => {
     const {kv, store} = createKvStub();
     const {context, settle} = createContext();
 
-    await readThroughCache(context, new EdgeCache(undefined, kv), {
+    await readThroughCache(context, new EdgeCache(kv), {
       key: KEY,
       ttl: TTL,
       load: async () => ({years: [2024]}),
@@ -129,11 +121,11 @@ describe('readThroughCache: キャッシュに無いとき', () => {
       .mockRejectedValueOnce(new Error('database timed out'))
       .mockResolvedValueOnce({years: [2024]});
 
-    const result = await readThroughCache(
-      context,
-      new EdgeCache(undefined, kv),
-      {key: KEY, ttl: TTL, load},
-    );
+    const result = await readThroughCache(context, new EdgeCache(kv), {
+      key: KEY,
+      ttl: TTL,
+      load,
+    });
 
     expect(result.data).toEqual({years: [2024]});
   });
@@ -148,7 +140,7 @@ describe('readThroughCache: キャッシュに無いとき', () => {
       .mockRejectedValueOnce(new Error('Failed query', {cause}))
       .mockResolvedValueOnce({years: [2024]});
 
-    await readThroughCache(context, new EdgeCache(undefined, kv), {
+    await readThroughCache(context, new EdgeCache(kv), {
       key: KEY,
       ttl: TTL,
       load,
@@ -169,7 +161,7 @@ describe('readThroughCache: キャッシュに無いとき', () => {
       .mockRejectedValue(new Error('database timed out'));
 
     await expect(
-      readThroughCache(context, new EdgeCache(undefined, kv), {
+      readThroughCache(context, new EdgeCache(kv), {
         key: KEY,
         ttl: TTL,
         load,
@@ -185,7 +177,7 @@ describe('readThroughCache: キャッシュに無いとき', () => {
     const {context} = createContext();
 
     await expect(
-      readThroughCache(context, new EdgeCache(undefined, kv), {
+      readThroughCache(context, new EdgeCache(kv), {
         key: KEY,
         ttl: TTL,
         async load() {
@@ -199,7 +191,7 @@ describe('readThroughCache: キャッシュに無いとき', () => {
     const {kv, store} = createKvStub();
     const {context, settle} = createContext();
 
-    await readThroughCache(context, new EdgeCache(undefined, kv), {
+    await readThroughCache(context, new EdgeCache(kv), {
       key: KEY,
       ttl: TTL,
       load: async () => {},
@@ -216,15 +208,11 @@ describe('readThroughCache: 期限内の値があるとき', () => {
     const {context} = createContext();
     seed(store, {years: [1999]}, TTL - 1);
 
-    const result = await readThroughCache(
-      context,
-      new EdgeCache(undefined, kv),
-      {
-        key: KEY,
-        ttl: TTL,
-        load: async () => ({years: [2024]}),
-      },
-    );
+    const result = await readThroughCache(context, new EdgeCache(kv), {
+      key: KEY,
+      ttl: TTL,
+      load: async () => ({years: [2024]}),
+    });
 
     expect(result.data).toEqual({years: [1999]});
   });
@@ -234,15 +222,11 @@ describe('readThroughCache: 期限内の値があるとき', () => {
     const {context} = createContext();
     seed(store, {years: [1999]}, TTL - 1);
 
-    const result = await readThroughCache(
-      context,
-      new EdgeCache(undefined, kv),
-      {
-        key: KEY,
-        ttl: TTL,
-        load: async () => ({years: [2024]}),
-      },
-    );
+    const result = await readThroughCache(context, new EdgeCache(kv), {
+      key: KEY,
+      ttl: TTL,
+      load: async () => ({years: [2024]}),
+    });
 
     expect(result.status).toBe('HIT');
   });
@@ -253,7 +237,7 @@ describe('readThroughCache: 期限内の値があるとき', () => {
     seed(store, {years: [1999]}, TTL - 1);
     const load = vi.fn(async () => ({years: [2024]}));
 
-    await readThroughCache(context, new EdgeCache(undefined, kv), {
+    await readThroughCache(context, new EdgeCache(kv), {
       key: KEY,
       ttl: TTL,
       load,
@@ -268,7 +252,7 @@ describe('readThroughCache: 期限内の値があるとき', () => {
     const {context} = createContext();
     seed(store, {years: [1999]}, TTL - 1);
 
-    await readThroughCache(context, new EdgeCache(undefined, kv), {
+    await readThroughCache(context, new EdgeCache(kv), {
       key: KEY,
       ttl: TTL,
       edgeTtl: 600,
@@ -285,15 +269,11 @@ describe('readThroughCache: 期限を過ぎた値があるとき', () => {
     const {context} = createContext();
     seed(store, {years: [1999]}, TTL + 1);
 
-    const result = await readThroughCache(
-      context,
-      new EdgeCache(undefined, kv),
-      {
-        key: KEY,
-        ttl: TTL,
-        load: async () => ({years: [2024]}),
-      },
-    );
+    const result = await readThroughCache(context, new EdgeCache(kv), {
+      key: KEY,
+      ttl: TTL,
+      load: async () => ({years: [2024]}),
+    });
 
     expect(result.data).toEqual({years: [1999]});
   });
@@ -303,15 +283,11 @@ describe('readThroughCache: 期限を過ぎた値があるとき', () => {
     const {context} = createContext();
     seed(store, {years: [1999]}, TTL + 1);
 
-    const result = await readThroughCache(
-      context,
-      new EdgeCache(undefined, kv),
-      {
-        key: KEY,
-        ttl: TTL,
-        load: async () => ({years: [2024]}),
-      },
-    );
+    const result = await readThroughCache(context, new EdgeCache(kv), {
+      key: KEY,
+      ttl: TTL,
+      load: async () => ({years: [2024]}),
+    });
 
     expect(result.status).toBe('STALE');
   });
@@ -321,7 +297,7 @@ describe('readThroughCache: 期限を過ぎた値があるとき', () => {
     const {context, settle} = createContext();
     seed(store, {years: [1999]}, TTL + 1);
 
-    await readThroughCache(context, new EdgeCache(undefined, kv), {
+    await readThroughCache(context, new EdgeCache(kv), {
       key: KEY,
       ttl: TTL,
       load: async () => ({years: [2024]}),
@@ -337,7 +313,7 @@ describe('readThroughCache: 期限を過ぎた値があるとき', () => {
     const {context, settle} = createContext();
     seed(store, {years: [1999]}, TTL + 1);
 
-    await readThroughCache(context, new EdgeCache(undefined, kv), {
+    await readThroughCache(context, new EdgeCache(kv), {
       key: KEY,
       ttl: TTL,
       async load() {
@@ -356,7 +332,7 @@ describe('readThroughCache: 期限を過ぎた値があるとき', () => {
     seed(store, {years: [1999]}, TTL + 1);
     const cause = new DOMException('The operation timed out', 'TimeoutError');
 
-    await readThroughCache(context, new EdgeCache(undefined, kv), {
+    await readThroughCache(context, new EdgeCache(kv), {
       key: KEY,
       ttl: TTL,
       async load() {
@@ -376,7 +352,7 @@ describe('readThroughCache: 期限を過ぎた値があるとき', () => {
     const {context, settle} = createContext();
     seed(store, {years: [1999]}, TTL + 1);
 
-    await readThroughCache(context, new EdgeCache(undefined, kv), {
+    await readThroughCache(context, new EdgeCache(kv), {
       key: KEY,
       ttl: TTL,
       load: async () => {},

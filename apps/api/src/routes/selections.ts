@@ -23,7 +23,7 @@ export const selectionsRoutes = new Hono<{Bindings: Environment}>();
 
 selectionsRoutes.get('/', async c => {
   try {
-    const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+    const cache = new EdgeCache(c.env.CACHE_KV);
     const selectionsService = new SelectionsService(c.env, cache);
     const localeParameter = c.req.query('locale');
     const acceptLanguage = c.req.header('accept-language');
@@ -74,7 +74,7 @@ selectionsRoutes.get('/selections/:type/next', async c => {
     }
 
     const locale = c.req.query('locale') === 'en' ? 'en' : 'ja';
-    const cache = new EdgeCache(undefined, c.env.CACHE_KV);
+    const cache = new EdgeCache(c.env.CACHE_KV);
     const preview = await new SelectionsService(c.env, cache).getNextSelection(
       type,
       locale,
@@ -105,7 +105,7 @@ selectionsRoutes.get('/selections/:type/history', async c => {
         : 14;
     const today = getSelectionDate(new Date(), type);
 
-    const historyCache = new EdgeCache(undefined, c.env.CACHE_KV);
+    const historyCache = new EdgeCache(c.env.CACHE_KV);
     const cacheKey = getCacheKeyForSelectionHistory(type, today, locale);
     const cached = await historyCache.get(cacheKey, {
       edgeTtl: IMPORTED_DATA_EDGE_TTL,

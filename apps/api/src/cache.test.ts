@@ -7,7 +7,6 @@ import {
   getCacheKeyForPerson,
   getCacheKeyForSelection,
   getCacheTTL,
-  shouldCacheSearch,
 } from './utils/cache';
 
 describe('Cache Utilities', () => {
@@ -109,32 +108,6 @@ describe('Cache Utilities', () => {
     });
   });
 
-  describe('Search Caching Strategy', () => {
-    it('should cache simple queries', () => {
-      expect(shouldCacheSearch('')).toBe(true); // Empty query (all movies)
-      expect(shouldCacheSearch('ab')).toBe(true); // Short query (< 3 chars) gets cached
-      expect(shouldCacheSearch('oscar')).toBe(true); // Common query gets cached
-    });
-
-    it('should cache common search terms', () => {
-      expect(shouldCacheSearch('アカデミー')).toBe(true);
-      expect(shouldCacheSearch('oscar')).toBe(true);
-      expect(shouldCacheSearch('cannes')).toBe(true);
-      expect(shouldCacheSearch('winner')).toBe(true);
-    });
-
-    it('should not cache specific filtered searches', () => {
-      expect(shouldCacheSearch('test', 2024)).toBe(false); // Has year filter
-      expect(shouldCacheSearch('test', undefined, 'ja')).toBe(false); // Has language filter
-      expect(shouldCacheSearch('test', 2024, 'en')).toBe(false); // Has both filters
-    });
-
-    it('should handle long specific queries', () => {
-      expect(shouldCacheSearch('ab')).toBe(true); // Less than 3 chars gets cached
-      expect(shouldCacheSearch('specific-movie-title')).toBe(false); // Long query >= 3 chars, not common term
-    });
-  });
-
   describe('Cache Response Creation', () => {
     it('should create proper cached response', () => {
       const data = {message: 'test'};
@@ -172,19 +145,6 @@ describe('Cache Utilities', () => {
       expect(initialMetrics.hitRate).toBe(0);
     });
 
-    it('should handle cache operations gracefully', async () => {
-      const key = 'test-key';
-      const testData = {message: 'test'};
-      const response = createCachedResponse(testData, 3600);
-
-      // Test cache miss
-      const cachedResponse = await cache.get(key);
-      expect(cachedResponse).toBeUndefined();
-
-      // Test cache put - should not throw
-      await expect(cache.put(key, response)).resolves.toBeUndefined();
-    });
-
     it('should handle cache errors gracefully', async () => {
       // Test with invalid key that might cause errors
       const invalidKey = '';
@@ -192,29 +152,6 @@ describe('Cache Utilities', () => {
       // Should not throw errors
       await expect(cache.get(invalidKey)).resolves.toBeUndefined();
       await expect(cache.delete(invalidKey)).resolves.toBe(false);
-    });
-  });
-
-  describe('Cache Key Search Patterns', () => {
-    it('should generate proper search cache keys', () => {
-      // Test that search cache key generation works (this is a utility function)
-      const filters = {year: 2024, hasAwards: true};
-
-      // Just verify the concept - actual implementation is in utility functions
-      expect(filters).toHaveProperty('year');
-      expect(filters).toHaveProperty('hasAwards');
-    });
-  });
-
-  describe('Cache Invalidation Patterns', () => {
-    it('should support pattern-based cache deletion', async () => {
-      // Test that deleteByPattern doesn't throw
-      await expect(cache.deleteByPattern('selections:')).resolves.toBeTypeOf(
-        'number',
-      );
-      await expect(cache.deleteByPattern('movie:')).resolves.toBeTypeOf(
-        'number',
-      );
     });
   });
 });
