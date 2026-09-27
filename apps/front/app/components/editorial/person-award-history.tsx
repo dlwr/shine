@@ -1,3 +1,4 @@
+import {Fragment} from 'react';
 import {Chip, type PersonalAward} from './award-tags';
 
 export type AwardHistoryCredit = {
@@ -14,7 +15,7 @@ const ORGANIZATION_SHORT_LABELS = new Map([
   ['カンヌ国際映画祭', 'カンヌ'],
   ['ヴェネツィア国際映画祭', 'ヴェネツィア'],
   ['ベルリン国際映画祭', 'ベルリン'],
-  ['日本アカデミー賞', '日本アカデミー'],
+  ['日本アカデミー賞', '日本 アカデミー'],
   ['キネマ旬報', 'キネ旬'],
   ['毎日映画コンクール', '毎日'],
   ['ブルーリボン賞', 'ブルーリボン'],
@@ -36,6 +37,15 @@ type Column = {
   organization: string;
   shortLabel: string;
 };
+
+function HeaderLabel({label}: {label: string}) {
+  return label.split(' ').map((segment, index) => (
+    <Fragment key={segment}>
+      {index > 0 && <wbr />}
+      {segment}
+    </Fragment>
+  ));
+}
 
 function organizationRank(organization: string): number {
   const rank = ORGANIZATION_SHORT_LABELS.keys().toArray().indexOf(organization);
@@ -69,7 +79,7 @@ export function PersonAwardHistory({credits}: {credits: AwardHistoryCredit[]}) {
 
   return (
     <div className="overflow-x-auto border-2 border-ink">
-      <table className="border-separate border-spacing-0 font-mono text-[10px]">
+      <table className="w-full border-separate border-spacing-0 font-mono text-[10px]">
         <thead>
           <tr>
             <td className="sticky left-0 z-10 border-b-2 border-r-2 border-ink bg-paper" />
@@ -77,8 +87,8 @@ export function PersonAwardHistory({credits}: {credits: AwardHistoryCredit[]}) {
               <th
                 key={column.organization}
                 scope="col"
-                className="w-12 min-w-12 border-b-2 border-ink px-1 pb-1 pt-2 align-bottom font-normal leading-tight text-ink-muted md:w-14 md:min-w-14">
-                {column.shortLabel}
+                className="w-12 min-w-12 border-b-2 border-ink px-1 pb-1 pt-2 align-bottom font-normal leading-tight break-keep text-ink-muted md:w-14 md:min-w-14">
+                <HeaderLabel label={column.shortLabel} />
               </th>
             ))}
           </tr>
@@ -88,16 +98,15 @@ export function PersonAwardHistory({credits}: {credits: AwardHistoryCredit[]}) {
             <tr key={credit.movieUid}>
               <th
                 scope="row"
-                className="sticky left-0 z-10 border-r-2 border-ink bg-paper py-1 pr-2 text-left font-normal whitespace-nowrap">
+                className="sticky left-0 z-10 border-r-2 border-ink bg-paper min-w-28 py-1 pr-2 text-left font-normal leading-snug">
                 {credit.year && (
-                  <span className="mr-1.5 text-ink-muted tabular-nums">
+                  <span className="mr-1.5 whitespace-nowrap text-ink-muted tabular-nums">
                     {credit.year}
                   </span>
                 )}
                 <a
                   href={`/movies/${credit.movieUid}`}
-                  title={credit.title}
-                  className="inline-block max-w-24 truncate align-bottom text-ink no-underline md:max-w-56">
+                  className="text-ink no-underline">
                   {credit.title ?? 'Unknown Title'}
                 </a>
               </th>
