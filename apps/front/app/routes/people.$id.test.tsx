@@ -233,6 +233,29 @@ describe('PersonPage', () => {
     ).toBeInTheDocument();
   });
 
+  it('個人賞の受賞数は語の途中で折り返さない', () => {
+    renderPage();
+
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === 'SPAN' && element.textContent === '1受賞',
+      ),
+    ).toHaveClass('whitespace-nowrap');
+  });
+
+  it('個人賞のノミネート数は語の途中で折り返さない', () => {
+    renderPage();
+
+    expect(screen.getByText('2ノミネート')).toHaveClass('whitespace-nowrap');
+  });
+
+  it('年度制の賞のノミネート数は語の途中で折り返さない', () => {
+    renderPage();
+
+    expect(screen.getByText('2作ノミネート')).toHaveClass('whitespace-nowrap');
+  });
+
   it('個人賞の通算成績から賞ページへリンクする', () => {
     renderPage();
 
