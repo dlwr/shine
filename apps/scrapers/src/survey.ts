@@ -88,6 +88,9 @@ export async function collectSourceFileSizes(
   return sizes;
 }
 
+const BROWSER_USER_AGENT =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
+
 export async function measurePages(
   baseUrl: string,
   paths: string[],
@@ -102,6 +105,7 @@ export async function measurePages(
       const started = performance.now();
       const response = await fetchImpl(`${baseUrl}${pagePath}`, {
         redirect: 'manual',
+        headers: {'user-agent': BROWSER_USER_AGENT},
       });
       const ttfbMs = performance.now() - started;
       await response.arrayBuffer();
