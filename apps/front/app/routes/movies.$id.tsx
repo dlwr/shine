@@ -1,3 +1,5 @@
+import {Suspense} from 'react';
+import {Await} from 'react-router';
 import type {Route} from './+types/movies.$id';
 import {ArticleLinksSection} from '@/components/editorial/article-links-section';
 import {AwardTree} from '@/components/editorial/award-tree';
@@ -74,7 +76,6 @@ export default function MovieDetail({
   }
 
   const {movieDetail, turnstileSiteKey, locale} = data;
-  const relatedMovies = data.relatedMovies ?? [];
   const title = movieDetail.title || 'タイトル不明';
   const isThisMonthsPick = isMonthlyPick(matches, movieDetail.uid);
 
@@ -133,7 +134,13 @@ export default function MovieDetail({
             </section>
           )}
 
-        <RelatedMovies movies={relatedMovies} />
+        {data.relatedMovies && (
+          <Suspense>
+            <Await resolve={data.relatedMovies}>
+              {movies => <RelatedMovies movies={movies} />}
+            </Await>
+          </Suspense>
+        )}
 
         <SiteFooter locale={locale} />
       </div>

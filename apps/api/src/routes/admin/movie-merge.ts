@@ -3,10 +3,7 @@ import {Hono} from 'hono';
 import {authMiddleware} from '../../auth';
 import {MovieMergeService} from '../../services';
 import {NotFoundError} from '../../services/errors';
-import {
-  invalidateMovieCaches,
-  invalidateMovieDetailsCache,
-} from '../../services/movie-cache-invalidation';
+import {invalidateMovieCaches} from '../../services/movie-cache-invalidation';
 
 export const adminMovieMergeRoutes = new Hono<{Bindings: Environment}>();
 
@@ -33,7 +30,6 @@ adminMovieMergeRoutes.post(
         targetMovieId: targetId,
       });
 
-      await invalidateMovieDetailsCache(c.env, sourceId);
       await invalidateMovieCaches(c.env, targetId);
 
       return c.json({

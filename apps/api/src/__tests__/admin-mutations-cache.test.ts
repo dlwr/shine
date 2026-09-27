@@ -114,7 +114,7 @@ describe('admin mutations cache invalidation', () => {
     authHeaders = {Authorization: `Bearer ${await createJWT(JWT_SECRET)}`};
   });
 
-  it('admin映画削除後に映画詳細キャッシュが無効化される', async () => {
+  it('admin映画削除後に映画詳細が404になる', async () => {
     expect(await getMovieDetailStatus(environment)).toBe(200);
 
     const response = await adminMoviesRoutes.request(
@@ -127,7 +127,7 @@ describe('admin mutations cache invalidation', () => {
     expect(await getMovieDetailStatus(environment)).toBe(404);
   });
 
-  it('admin映画更新後に映画詳細キャッシュが無効化される', async () => {
+  it('admin映画更新後に映画詳細に更新が出る', async () => {
     const before = await getMovieDetailBody(environment);
     expect(before.year).toBe(2020);
 
@@ -146,7 +146,7 @@ describe('admin mutations cache invalidation', () => {
     expect(after.year).toBe(2021);
   });
 
-  it('adminノミネート削除後に映画詳細キャッシュが無効化される', async () => {
+  it('adminノミネート削除後に映画詳細からノミネートが消える', async () => {
     const before = await getMovieDetailBody(environment);
     expect(before.nominations).toHaveLength(1);
 

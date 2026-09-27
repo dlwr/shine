@@ -8,7 +8,6 @@ import {
   MovieImportService,
   MovieMergeService,
 } from '../../services';
-import {invalidateMovieDetailsCache} from '../../services/movie-cache-invalidation';
 import {parsePagination} from '../../utils/pagination';
 import {serviceErrorResponse} from './service-error-response';
 import type {
@@ -137,7 +136,6 @@ adminMoviesRoutes.delete('/movies/:id', authMiddleware, async c => {
       movieId,
     );
     await new MovieMergeService(c.env).deleteMovie(movieId);
-    await invalidateMovieDetailsCache(c.env, movieId);
 
     return c.json({success: true});
   } catch (error) {

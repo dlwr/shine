@@ -6,7 +6,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from '@shine/database/testing';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vitest';
 import {moviesRoutes} from '../routes/movies';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -15,33 +15,27 @@ const migrationsFolder = path.resolve(
   '../../../../packages/database/migrations',
 );
 
-type Put = {key: string; expirationTtl: number | undefined};
-
-function createKv(puts: Put[], onPut: () => Promise<void>): KVNamespace {
-  const store = new Map<string, string>();
+function createKv(accessedKeys: string[]): KVNamespace {
   return {
     async get(key: string) {
-      const value = store.get(key);
-      return value === undefined ? null : JSON.parse(value);
+      accessedKeys.push(key);
+      return null;
     },
-    async put(key: string, value: string, options?: {expirationTtl?: number}) {
-      puts.push({key, expirationTtl: options?.expirationTtl});
-      await onPut();
-      store.set(key, value);
+    async put(key: string) {
+      accessedKeys.push(key);
     },
   } as unknown as KVNamespace;
 }
 
 async function createTestEnvironment(
-  puts: Put[],
-  onPut: () => Promise<void> = async () => {},
+  accessedKeys: string[],
 ): Promise<Environment> {
   const directory = await fs.mkdtemp(
     path.join(os.tmpdir(), 'shine-movie-detail-cache-'),
   );
   const environment: Environment = {
     DATABASE_FILE_URL: `file:${path.join(directory, 'test.db')}`,
-    CACHE_KV: createKv(puts, onPut),
+    CACHE_KV: createKv(accessedKeys),
   };
   const database = getDatabase(environment);
   await migrate(database, {migrationsFolder});
@@ -57,23 +51,9 @@ async function createTestEnvironment(
 }
 
 describe('GET /movies/:id のキャッシュ', () => {
-  let puts: Put[];
-
-  beforeEach(() => {
-    puts = [];
-  });
-
-  it('MISS のとき KV に書くのは映画詳細の 1 キーだけ', async () => {
-    const environment = await createTestEnvironment(puts);
-
-    await moviesRoutes.request('/movie-ran?locale=ja', {}, environment);
-
-    expect(puts.map(put => put.key)).toEqual(['movie:movie-ran:ja:v9']);
-  });
-
-  it('2 回目は KV から返す', async () => {
-    const environment = await createTestEnvironment(puts);
-    await moviesRoutes.request('/movie-ran?locale=ja', {}, environment);
+  it('KV を読まずに D1 から返す', async () => {
+    const accessedKeys: string[] = [];
+    const environment = await createTestEnvironment(accessedKeys);
 
     const response = await moviesRoutes.request(
       '/movie-ran?locale=ja',
@@ -81,36 +61,7 @@ describe('GET /movies/:id のキャッシュ', () => {
       environment,
     );
 
-    expect(response.headers.get('X-Cache-Status')).toBe('HIT');
-  });
-
-  it('KV への書き込みが終わる前に応答を返す', async () => {
-    const put = Promise.withResolvers<void>();
-    const environment = await createTestEnvironment(puts, () => put.promise);
-    const background: Promise<unknown>[] = [];
-    const executionContext = {
-      waitUntil(promise: Promise<unknown>) {
-        background.push(promise);
-      },
-      passThroughOnException() {},
-    } as ExecutionContext;
-
-    const outcome = await Promise.race([
-      moviesRoutes.request(
-        '/movie-ran?locale=ja',
-        {},
-        environment,
-        executionContext,
-      ),
-      new Promise<'blocked'>(resolve => {
-        setTimeout(() => resolve('blocked'), 300);
-      }),
-    ]);
-
-    expect(outcome).toBeInstanceOf(Response);
-    expect(background).toHaveLength(1);
-    put.resolve();
-    await Promise.all(background);
-    expect(puts).toHaveLength(1);
+    expect(response.status).toBe(200);
+    expect(accessedKeys).toEqual([]);
   });
 });

@@ -203,9 +203,6 @@ export const getCacheKeyForSelectionHistory = (
   locale: string,
 ): string => `selections:history:${type}:${date}:${locale}:v4`;
 
-export const getCacheKeyForMovie = (movieId: string, locale: string): string =>
-  `movie:${movieId}:${locale}:v9`;
-
 export const getCacheKeyForRelatedMovies = (
   movieId: string,
   locale: string,
@@ -215,9 +212,6 @@ export const getCacheKeyForPerson = (
   personUid: string,
   locale: string,
 ): string => `person:${personUid}:${locale}:v6`;
-
-export const getMovieCacheKeysForAllLocales = (movieId: string): string[] =>
-  CACHEABLE_LOCALES.map(locale => getCacheKeyForMovie(movieId, locale));
 
 export const getCacheKeyForSearch = (
   query: string,

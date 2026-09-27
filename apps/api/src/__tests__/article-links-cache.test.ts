@@ -199,7 +199,7 @@ describe('article links cache invalidation', () => {
     expect(response.status).toBe(201);
   });
 
-  it('投稿後にjaロケールの映画詳細キャッシュが無効化される', async () => {
+  it('投稿後にjaロケールの映画詳細にリンクが出る', async () => {
     expect(await getMovieArticleLinks(environment, 'ja')).toEqual([]);
 
     await submitArticleLink(environment);
@@ -209,7 +209,7 @@ describe('article links cache invalidation', () => {
     );
   });
 
-  it('投稿後にenロケールの映画詳細キャッシュが無効化される', async () => {
+  it('投稿後にenロケールの映画詳細にリンクが出る', async () => {
     expect(await getMovieArticleLinks(environment, 'en')).toEqual([]);
 
     await submitArticleLink(environment);
@@ -219,7 +219,7 @@ describe('article links cache invalidation', () => {
     );
   });
 
-  it('admin削除後に映画詳細キャッシュが無効化される', async () => {
+  it('admin削除後に映画詳細からリンクが消える', async () => {
     await submitArticleLink(environment);
     const [article] = await getDatabase(environment)
       .select({uid: articleLinks.uid})
@@ -276,7 +276,7 @@ describe('article links cache invalidation', () => {
     expect(await getDailySelectionArticleLinks(environment)).toEqual([]);
   });
 
-  it('adminスパム報告後に映画詳細キャッシュが無効化される', async () => {
+  it('adminスパム報告後に映画詳細からリンクが消える', async () => {
     await submitArticleLink(environment);
     const [article] = await getDatabase(environment)
       .select({uid: articleLinks.uid})
@@ -317,24 +317,6 @@ describe('article links cache invalidation (CACHE_KV)', () => {
   beforeEach(async () => {
     environment = await createTestEnvironment();
     environment.CACHE_KV = createKvStub();
-  });
-
-  it('映画詳細がKVにキャッシュされる', async () => {
-    expect(await getMovieArticleLinks(environment, 'ja')).toEqual([]);
-
-    await insertArticleLinkDirectly(environment);
-
-    expect(await getMovieArticleLinks(environment, 'ja')).toEqual([]);
-  });
-
-  it('投稿後にKV上の映画詳細キャッシュが無効化される', async () => {
-    expect(await getMovieArticleLinks(environment, 'ja')).toEqual([]);
-
-    await submitArticleLink(environment);
-
-    expect(await getMovieArticleLinks(environment, 'ja')).toContain(
-      'https://example.com/article',
-    );
   });
 
   it('selectionsがKVにキャッシュされる', async () => {

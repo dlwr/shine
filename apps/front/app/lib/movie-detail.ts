@@ -24,7 +24,7 @@ export type LoaderErrorResponse = {
 
 export type LoaderSuccessResponse = {
   movieDetail: MovieDetailData;
-  relatedMovies?: RelatedMovie[];
+  relatedMovies?: Promise<RelatedMovie[]>;
   turnstileSiteKey?: string;
   locale: Locale;
   apiUrl?: string;
@@ -70,12 +70,16 @@ export async function loadMovieDetail(
   try {
     const environment = resolveEnvironment(context);
     const apiUrl = resolveApiUrl(context);
-    const [response, relatedMovies] = await Promise.all([
-      apiFetch(context, `/movies/${movieId}`, {
-        signal: request.signal,
-      }),
-      fetchRelatedMovies(context, movieId, locale, request.signal),
-    ]);
+    const detailResponse = apiFetch(context, `/movies/${movieId}`, {
+      signal: request.signal,
+    });
+    const relatedMovies = fetchRelatedMovies(
+      context,
+      movieId,
+      locale,
+      request.signal,
+    );
+    const response = await detailResponse;
 
     if (response.status === 404) {
       return {
