@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import QuizPage, {loader, meta} from './quiz';
 import type {Route} from './+types/quiz';
 import {QUIZ_STATE_KEY} from '@/lib/quiz-state';
@@ -9,6 +9,8 @@ import {createEnvironmentContext} from '@/lib/api';
 import {createMockContext} from '@/lib/test-context';
 
 vi.stubGlobal('fetch', vi.fn());
+
+const OriginalImage = Image;
 
 const cast = <T,>(value?: unknown): T => value as T;
 
@@ -311,6 +313,76 @@ describe('Quiz page', () => {
         'src',
         '/cdn-cgi/image/format=auto,quality=80/quiz/poster.png?date=2026-08-16&stage=0',
       );
+    });
+
+    describe('ポスターの先読み', () => {
+      const prefetched: string[] = [];
+
+      beforeEach(() => {
+        prefetched.length = 0;
+        vi.stubGlobal(
+          'Image',
+          class {
+            set src(value: string) {
+              prefetched.push(value);
+            }
+          },
+        );
+      });
+
+      afterEach(() => {
+        vi.stubGlobal('Image', OriginalImage);
+      });
+
+      it('次の段階のポスターを先読みする', async () => {
+        render(<QuizPage {...createComponentProperties()} />);
+
+        await waitFor(() => {
+          expect(prefetched).toContain(
+            '/quiz/poster.png?date=2026-08-16&stage=1',
+          );
+        });
+      });
+
+      it('正解したときに出る最後の段階のポスターを先読みする', async () => {
+        render(<QuizPage {...createComponentProperties()} />);
+
+        await waitFor(() => {
+          expect(prefetched).toContain(
+            '/quiz/poster.png?date=2026-08-16&stage=6',
+          );
+        });
+      });
+
+      it('Image Transformations が使えるなら先読みもその経路で取る', async () => {
+        render(
+          <QuizPage {...createComponentProperties({transformImages: true})} />,
+        );
+
+        await waitFor(() => {
+          expect(prefetched).toContain(
+            '/cdn-cgi/image/format=auto,quality=80/quiz/poster.png?date=2026-08-16&stage=1',
+          );
+        });
+      });
+
+      it('外したら、その次の段階を先読みする', async () => {
+        stubApi({
+          correct: false,
+          hint: {label: '製作年', value: '1965年'},
+        });
+
+        render(<QuizPage {...createComponentProperties()} />);
+        await userEvent.click(
+          screen.getByRole('button', {name: /パスしてヒントを見る/}),
+        );
+
+        await waitFor(() => {
+          expect(prefetched).toContain(
+            '/quiz/poster.png?date=2026-08-16&stage=2',
+          );
+        });
+      });
     });
 
     it('回答候補はブラウザから取りに行く', async () => {
