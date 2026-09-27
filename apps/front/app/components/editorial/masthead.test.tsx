@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {render, screen} from '@testing-library/react';
+import {fireEvent, render, screen} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import {Masthead} from './masthead';
 
@@ -76,6 +76,59 @@ describe('Masthead', () => {
     render(<Masthead locale="en" />);
 
     expect(screen.getByText(/ONE FILM A MONTH/i)).toBeInTheDocument();
+  });
+
+  it('狭い画面ではナビの項目を閉じた状態で描画する', () => {
+    render(<Masthead locale="ja" />);
+
+    expect(screen.getByRole('button', {name: 'MENU'})).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+  });
+
+  it('閉じている間はナビの項目を狭い画面で隠す', () => {
+    render(<Masthead locale="ja" />);
+
+    expect(screen.getByRole('navigation', {name: 'Site'})).toHaveClass(
+      'hidden',
+    );
+  });
+
+  it('MENU を押すとナビの項目を開く', () => {
+    render(<Masthead locale="ja" />);
+
+    fireEvent.click(screen.getByRole('button', {name: 'MENU'}));
+
+    expect(screen.getByRole('navigation', {name: 'Site'})).not.toHaveClass(
+      'hidden',
+    );
+  });
+
+  it('MENU をもう一度押すとナビの項目を閉じる', () => {
+    render(<Masthead locale="ja" />);
+    const menu = screen.getByRole('button', {name: 'MENU'});
+
+    fireEvent.click(menu);
+    fireEvent.click(menu);
+
+    expect(menu).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('広い画面ではナビの項目を開閉せずに並べる', () => {
+    render(<Masthead locale="ja" />);
+
+    expect(screen.getByRole('navigation', {name: 'Site'})).toHaveClass(
+      'md:contents',
+    );
+  });
+
+  it('検索リンクは閉じている間も出す', () => {
+    render(<Masthead locale="ja" />);
+
+    expect(screen.getByRole('navigation', {name: 'Site'})).not.toContainElement(
+      screen.getByRole('link', {name: /search/i}),
+    );
   });
 
   it('ナビゲーションは折り返す(項目を増やしても横幅からはみ出さないため)', () => {
