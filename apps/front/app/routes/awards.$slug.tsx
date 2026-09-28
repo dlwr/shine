@@ -56,23 +56,23 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Masthead locale={locale} />
 
-        <nav className="font-mono text-[10px] text-ink-muted mb-4">
+        <nav className="font-label text-[10px] text-ink-muted mb-4">
           <a href="/awards" className="text-ink-muted">
             AWARDS & LISTS
           </a>
         </nav>
 
-        <h1 className="font-display font-black text-2xl md:text-3xl tracking-tight mb-2">
+        <h1 className="font-display font-bold text-2xl md:text-3xl mb-2">
           {heading}
         </h1>
-        <p className="font-mono text-xs text-ink-muted mb-4">
+        <p className="font-label text-xs text-ink-muted mb-4">
           {awardSummaryLine(award)}
         </p>
 
         {award.grouping === 'year' && !award.subAward && (
           <a
             href={`/watched/${award.slug}`}
-            className="inline-block mb-8 border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold no-underline text-ink shadow-[3px_3px_0_var(--brand)]">
+            className="inline-block mb-8 border border-ink px-3 py-1.5 font-label text-xs font-bold no-underline text-ink">
             受賞作、何本観た？ →
           </a>
         )}

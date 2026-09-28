@@ -60,10 +60,10 @@ export default function YearsIndex({loaderData}: Route.ComponentProps) {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Masthead locale={locale} />
 
-        <h1 className="font-display font-black text-2xl md:text-3xl tracking-tight mb-2">
+        <h1 className="font-display font-bold text-2xl md:text-3xl mb-2">
           YEARS
         </h1>
-        <p className="font-mono text-xs text-ink-muted mb-8">
+        <p className="font-label text-xs text-ink-muted mb-8">
           製作年から映画賞・映画リストに選ばれた作品を探す
         </p>
 
@@ -77,7 +77,7 @@ export default function YearsIndex({loaderData}: Route.ComponentProps) {
                 <a
                   key={entry.year}
                   href={`/years/${entry.year}`}
-                  className="flex items-baseline gap-1.5 border-2 border-ink px-2.5 py-1 font-mono text-xs font-bold no-underline text-ink">
+                  className="flex items-baseline gap-1.5 border border-ink px-2.5 py-1 font-label text-xs font-bold no-underline text-ink">
                   {entry.year}
                   <span className="text-[10px] font-normal text-ink-muted">
                     {entry.movieCount}

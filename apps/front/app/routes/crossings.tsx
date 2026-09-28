@@ -48,7 +48,7 @@ function AwardTags({
         .map(award => (
           <span
             key={award.slug}
-            className="border border-ink-muted px-1 py-0.5 font-mono text-[10px] text-ink-muted">
+            className="border border-ink-muted px-1 py-0.5 font-label text-[10px] text-ink-muted">
             {award.shortLabel}
           </span>
         ))}
@@ -70,16 +70,16 @@ export default function Crossings({loaderData}: Route.ComponentProps) {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Masthead locale={locale} />
 
-        <h1 className="font-display font-black text-2xl md:text-3xl tracking-tight mb-2">
+        <h1 className="font-display font-bold text-2xl md:text-3xl mb-2">
           CROSSINGS
         </h1>
-        <p className="font-mono text-xs text-ink-muted mb-8">
+        <p className="font-label text-xs text-ink-muted mb-8">
           {awards.length}の映画賞・映画リストが、同じ映画をどれだけ選んでいるか
         </p>
 
         {leader && (
-          <section className="mb-10 border-2 border-ink p-4 shadow-[6px_6px_0_var(--brand)]">
-            <p className="font-mono text-xs text-ink-muted mb-3">
+          <section className="mb-10 border border-ink p-4">
+            <p className="font-label text-xs text-ink-muted mb-3">
               最も多くの賞に選ばれた映画
             </p>
             <div className="flex gap-4">
@@ -93,16 +93,16 @@ export default function Crossings({loaderData}: Route.ComponentProps) {
                 />
               </a>
               <div className="flex flex-col justify-center gap-2">
-                <p className="font-display font-black text-5xl leading-none text-brand">
+                <p className="font-display font-bold text-5xl leading-none text-brand">
                   {leader.awardSlugs.length}
                 </p>
-                <h2 className="font-display font-black text-xl md:text-2xl leading-tight">
+                <h2 className="font-display font-bold text-xl md:text-2xl leading-tight">
                   <a href={`/movies/${leader.uid}`} className="text-ink">
                     {leader.title ?? 'タイトル不明'}
                   </a>
                 </h2>
                 {leader.year && (
-                  <p className="font-mono text-xs text-ink-muted">
+                  <p className="font-label text-xs text-ink-muted">
                     {leader.year}
                   </p>
                 )}
@@ -113,7 +113,7 @@ export default function Crossings({loaderData}: Route.ComponentProps) {
         )}
 
         <section className="mb-10">
-          <p className="font-mono text-xs text-ink-muted mb-3">
+          <p className="font-label text-xs text-ink-muted mb-3">
             いくつの賞に選ばれたか
           </p>
           <ul>
@@ -121,7 +121,7 @@ export default function Crossings({loaderData}: Route.ComponentProps) {
               <li
                 key={entry.awardCount}
                 className="flex items-center gap-3 border-t border-ink/20 py-1.5">
-                <span className="w-16 shrink-0 font-mono text-xs text-ink-muted">
+                <span className="w-16 shrink-0 font-label text-xs text-ink-muted">
                   {entry.awardCount}賞
                 </span>
                 <span
@@ -135,7 +135,7 @@ export default function Crossings({loaderData}: Route.ComponentProps) {
                     )}%`,
                   }}
                 />
-                <span className="font-mono text-xs">
+                <span className="font-label text-xs">
                   {entry.filmCount.toLocaleString('en-US')}
                 </span>
               </li>
@@ -144,7 +144,7 @@ export default function Crossings({loaderData}: Route.ComponentProps) {
         </section>
 
         <section className="mb-10">
-          <p className="font-mono text-xs text-ink-muted mb-3">
+          <p className="font-label text-xs text-ink-muted mb-3">
             賞と賞の重なり（両方に選ばれた本数）
           </p>
           <CrossingMatrix
@@ -160,7 +160,7 @@ export default function Crossings({loaderData}: Route.ComponentProps) {
         </section>
 
         <section className="mb-10">
-          <p className="font-mono text-xs text-ink-muted mb-3">
+          <p className="font-label text-xs text-ink-muted mb-3">
             多くの賞に選ばれた映画
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -176,7 +176,7 @@ export default function Crossings({loaderData}: Route.ComponentProps) {
                     displaySize="w342"
                   />
                   <span className="mt-1.5 flex items-baseline gap-1.5">
-                    <span className="font-display font-black text-sm text-brand">
+                    <span className="font-display font-bold text-sm text-brand">
                       {movie.awardSlugs.length}
                     </span>
                     <span className="font-display font-bold text-xs leading-tight">
@@ -184,7 +184,7 @@ export default function Crossings({loaderData}: Route.ComponentProps) {
                     </span>
                   </span>
                 </a>
-                <span className="mt-1 block font-mono text-[10px] text-ink-muted">
+                <span className="mt-1 block font-label text-[10px] text-ink-muted">
                   {movie.year}
                 </span>
               </div>
@@ -195,12 +195,12 @@ export default function Crossings({loaderData}: Route.ComponentProps) {
         <div className="flex flex-wrap gap-3">
           <a
             href="/awards"
-            className="inline-block font-mono text-xs font-bold border-2 border-ink px-3 py-1.5 shadow-[3px_3px_0_var(--ink)] no-underline text-ink">
+            className="inline-block font-label text-xs font-bold border border-ink px-3 py-1.5 no-underline text-ink">
             映画賞・リスト一覧
           </a>
           <a
             href="/people/crossings"
-            className="inline-block font-mono text-xs font-bold border-2 border-ink px-3 py-1.5 shadow-[3px_3px_0_var(--ink)] no-underline text-ink">
+            className="inline-block font-label text-xs font-bold border border-ink px-3 py-1.5 no-underline text-ink">
             映画人の交差
           </a>
         </div>

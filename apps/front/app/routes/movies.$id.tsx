@@ -104,7 +104,7 @@ export default function MovieDetail({
 
         {movieDetail.nominations && movieDetail.nominations.length > 0 && (
           <section className="mb-8">
-            <p className="font-mono text-xs text-ink-muted mb-3">AWARDS</p>
+            <p className="font-label text-xs text-ink-muted mb-3">AWARDS</p>
             <AwardTree nominations={movieDetail.nominations} />
           </section>
         )}
@@ -127,7 +127,7 @@ export default function MovieDetail({
           (movieDetail.credits.cast.length > 0 ||
             movieDetail.credits.crew.length > 0) && (
             <section className="mb-8">
-              <p className="font-mono text-xs text-ink-muted mb-3">
+              <p className="font-label text-xs text-ink-muted mb-3">
                 CAST &amp; CREW
               </p>
               <CreditsList credits={movieDetail.credits} />

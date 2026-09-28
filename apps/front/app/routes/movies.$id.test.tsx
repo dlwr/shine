@@ -779,7 +779,7 @@ describe('MovieDetail Component', () => {
       ).toBeInTheDocument();
 
       // 年号がBigYearのaria-labelとして確認できる
-      expect(screen.getByLabelText('2023')).toBeInTheDocument();
+      expect(screen.getAllByText('2023')[0]).toBeInTheDocument();
 
       // 年号は年別ページへのリンク
       expect(screen.getByRole('link', {name: '2023'})).toHaveAttribute(

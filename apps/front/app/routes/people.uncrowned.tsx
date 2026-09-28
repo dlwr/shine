@@ -53,7 +53,7 @@ function LossTags({
         <a
           key={`${loss.slug}:${loss.year}`}
           href={`/awards/${loss.slug}`}
-          className="border border-ink-muted px-1 py-0.5 font-mono text-[10px] text-ink-muted no-underline">
+          className="border border-ink-muted px-1 py-0.5 font-label text-[10px] text-ink-muted no-underline">
           {labels.get(loss.slug) ?? loss.slug} {loss.year}
         </a>
       ))}
@@ -80,10 +80,10 @@ export default function PeopleUncrowned({loaderData}: Route.ComponentProps) {
       <div className="mx-auto max-w-4xl px-4 py-8">
         <Masthead locale={locale} />
 
-        <h1 className="mb-2 font-display text-2xl font-black tracking-tight md:text-3xl">
+        <h1 className="mb-2 font-display text-2xl font-bold md:text-3xl">
           UNCROWNED PEOPLE
         </h1>
-        <p className="mb-8 font-mono text-xs text-ink-muted">
+        <p className="mb-8 font-label text-xs text-ink-muted">
           一度も勝てなかった映画人たち
         </p>
 
@@ -93,11 +93,11 @@ export default function PeopleUncrowned({loaderData}: Route.ComponentProps) {
             <br />
             だが個人賞にノミネートされた
             {nominatedPersonCount.toLocaleString('en-US')}人のうち
-            <span className="font-black text-brand">
+            <span className="font-bold text-brand">
               {uncrownedPersonCount.toLocaleString('en-US')}人
             </span>
             ——
-            <span className="font-black">{uncrownedShare}%</span>
+            <span className="font-bold">{uncrownedShare}%</span>
             ——は、まだ一度も呼ばれていない。
             <br />
             ここは、その名前たちの頁。
@@ -105,8 +105,8 @@ export default function PeopleUncrowned({loaderData}: Route.ComponentProps) {
         </section>
 
         {leader && (
-          <section className="mb-10 border-2 border-ink p-4 shadow-[6px_6px_0_var(--brand)]">
-            <p className="mb-3 font-mono text-xs text-ink-muted">
+          <section className="mb-10 border border-ink p-4">
+            <p className="mb-3 font-label text-xs text-ink-muted">
               最も多く敗れた映画人
             </p>
             <div className="flex gap-4">
@@ -118,11 +118,11 @@ export default function PeopleUncrowned({loaderData}: Route.ComponentProps) {
                 />
               </a>
               <div className="flex flex-col justify-center gap-2">
-                <p className="font-display text-5xl leading-none font-black text-brand">
+                <p className="font-display text-5xl leading-none font-bold text-brand">
                   <span>{leader.losses.length}</span>
                   <span className="text-2xl">敗</span>
                 </p>
-                <h2 className="font-display text-xl leading-tight font-black md:text-2xl">
+                <h2 className="font-display text-xl leading-tight font-bold md:text-2xl">
                   <a href={`/people/${leader.uid}`} className="text-ink">
                     {leader.name}
                   </a>
@@ -135,7 +135,7 @@ export default function PeopleUncrowned({loaderData}: Route.ComponentProps) {
 
         {rest.length > 0 && (
           <section className="mb-10">
-            <p className="mb-3 font-mono text-xs text-ink-muted">
+            <p className="mb-3 font-label text-xs text-ink-muted">
               敗北を重ねた映画人
             </p>
             <ul className="grid list-none grid-cols-2 gap-4 p-0 md:grid-cols-4">
@@ -150,7 +150,7 @@ export default function PeopleUncrowned({loaderData}: Route.ComponentProps) {
                       className="w-full"
                     />
                     <span className="mt-1.5 flex items-baseline gap-1.5">
-                      <span className="font-display text-sm font-black text-brand">
+                      <span className="font-display text-sm font-bold text-brand">
                         {person.losses.length}敗
                       </span>
                       <span className="font-display text-xs leading-tight font-bold">
@@ -170,17 +170,17 @@ export default function PeopleUncrowned({loaderData}: Route.ComponentProps) {
         <div className="flex flex-wrap gap-3">
           <a
             href="/people"
-            className="inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold text-ink no-underline shadow-[3px_3px_0_var(--ink)]">
+            className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold text-ink no-underline">
             映画人ランキング
           </a>
           <a
             href="/people/crossings"
-            className="inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold text-ink no-underline shadow-[3px_3px_0_var(--ink)]">
+            className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold text-ink no-underline">
             映画人の交差
           </a>
           <a
             href="/uncrowned"
-            className="inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold text-ink no-underline shadow-[3px_3px_0_var(--ink)]">
+            className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold text-ink no-underline">
             無冠の映画
           </a>
         </div>

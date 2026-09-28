@@ -1,9 +1,9 @@
 import type {WatchedFilm, WatchedStats} from '@/lib/watched';
 
 const PRIMARY_BUTTON =
-  'font-mono text-xs font-bold bg-brand text-brand-on px-3 py-1.5 border-2 border-ink shadow-[3px_3px_0_var(--ink)]';
+  'font-label text-xs font-bold bg-brand text-brand-on px-3 py-1.5 border border-ink';
 const SECONDARY_BUTTON =
-  'font-mono text-xs font-bold px-3 py-1.5 border-2 border-ink text-ink no-underline';
+  'font-label text-xs font-bold px-3 py-1.5 border border-ink text-ink no-underline';
 
 function WatchedGrid({
   films,
@@ -51,27 +51,27 @@ export function WatchedScore({
   onReset: () => void;
 }) {
   return (
-    <section className="border-2 border-ink bg-surface p-4 mb-8">
+    <section className="border border-ink bg-surface p-4 mb-8">
       {viewingShared && (
-        <p className="font-mono text-[10px] text-ink-muted mb-2">
+        <p className="font-label text-[10px] text-ink-muted mb-2">
           共有された結果を見ています
         </p>
       )}
       <div className="flex items-end gap-3">
         <span
           data-testid="watched-count"
-          className="font-display font-black text-5xl md:text-6xl leading-none text-brand tabular-nums">
+          className="font-display font-bold text-5xl md:text-6xl leading-none text-brand tabular-nums">
           {stats.count}
         </span>
-        <span className="font-display font-black text-2xl leading-none tabular-nums">
+        <span className="font-display font-bold text-2xl leading-none tabular-nums">
           / {stats.total}
         </span>
-        <span className="font-mono text-sm text-ink-muted ml-auto tabular-nums">
+        <span className="font-label text-sm text-ink-muted ml-auto tabular-nums">
           {stats.percent}%
         </span>
       </div>
       <div
-        className="h-3 border-2 border-ink mt-3"
+        className="h-3 border border-ink mt-3"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={stats.total}

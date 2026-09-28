@@ -12,7 +12,7 @@ function MovieLinks({movies}: {movies: PersonAwardMovieData[]}) {
         <a
           key={movie.uid}
           href={`/movies/${movie.uid}`}
-          className="border-b border-ink-muted font-mono text-[10px] text-ink no-underline">
+          className="border-b border-ink-muted font-label text-[10px] text-ink no-underline">
           {movie.title ?? 'Unknown Title'}
         </a>
       ))}
@@ -36,13 +36,13 @@ function NomineeRow({nominee}: {nominee: PersonAwardNomineeData}) {
             {nominee.name}
           </a>
           {nominee.originalName !== nominee.name && (
-            <span className="font-mono text-[10px] text-ink-muted">
+            <span className="font-label text-[10px] text-ink-muted">
               {nominee.originalName}
             </span>
           )}
           <MovieLinks movies={nominee.movies} />
         </span>
-        <span className="shrink-0 bg-brand px-1.5 py-0.5 font-mono text-[9px] text-brand-on">
+        <span className="shrink-0 bg-brand px-1.5 py-0.5 font-label text-[9px] text-brand-on">
           WINNER
         </span>
       </div>
@@ -53,11 +53,11 @@ function NomineeRow({nominee}: {nominee: PersonAwardNomineeData}) {
     <div className="flex items-baseline gap-3 py-1.5">
       <a
         href={`/people/${nominee.uid}`}
-        className="shrink-0 font-mono text-sm leading-tight text-ink no-underline">
+        className="shrink-0 font-label text-sm leading-tight text-ink no-underline">
         {nominee.name}
       </a>
       {nominee.originalName !== nominee.name && (
-        <span className="font-mono text-[10px] text-ink-muted">
+        <span className="font-label text-[10px] text-ink-muted">
           {nominee.originalName}
         </span>
       )}
@@ -74,11 +74,11 @@ export function PersonAwardYearSection({
   return (
     <section>
       <div className="mb-2 flex items-baseline gap-3 border-t-[3px] border-ink pt-2">
-        <h2 className="font-display text-3xl font-black leading-none tracking-[-0.06em] md:text-4xl">
+        <h2 className="font-display text-3xl font-bold leading-none md:text-4xl">
           {group.year}
         </h2>
         {group.ceremonyNumber && (
-          <span className="font-mono text-[10px] text-ink-muted">
+          <span className="font-label text-[10px] text-ink-muted">
             第{group.ceremonyNumber}回
           </span>
         )}

@@ -74,7 +74,7 @@ export function ArticleLinksSection({
 
   return (
     <section id="article-links" className="mb-8">
-      <p className="font-mono text-xs text-ink-muted mb-3">
+      <p className="font-label text-xs text-ink-muted mb-3">
         観た人の記事・ポスト
       </p>
 
@@ -106,7 +106,7 @@ export function ArticleLinksSection({
             </div>
           ))
         ) : (
-          <div className="border-2 border-dashed border-ink/30 px-4 py-3">
+          <div className="border border-dashed border-ink/30 px-4 py-3">
             <p className="text-ink text-sm font-medium">
               まだ誰も書いていません。
             </p>
@@ -137,14 +137,14 @@ export function ArticleLinksSection({
             href={shareUrls.x}
             target="_blank"
             rel="noopener noreferrer"
-            className="border-2 border-ink px-3 py-1.5 text-sm font-medium text-ink hover:bg-ink hover:text-surface transition-colors">
+            className="border border-ink px-3 py-1.5 text-sm font-medium text-ink hover:bg-ink hover:text-surface transition-colors">
             X に書く
           </a>
           <a
             href={shareUrls.bluesky}
             target="_blank"
             rel="noopener noreferrer"
-            className="border-2 border-ink px-3 py-1.5 text-sm font-medium text-ink hover:bg-ink hover:text-surface transition-colors">
+            className="border border-ink px-3 py-1.5 text-sm font-medium text-ink hover:bg-ink hover:text-surface transition-colors">
             Bluesky に書く
           </a>
         </div>
@@ -184,7 +184,7 @@ export function ArticleLinksSection({
               onChange={handleInputChange}
               maxLength={500}
               rows={3}
-              className="w-full px-3 py-2 border-2 border-ink focus:outline-none focus:ring-2 focus:ring-brand"
+              className="w-full px-3 py-2 border border-ink focus:outline-none focus:ring-2 focus:ring-brand"
               placeholder="観てどうだったか。一行でいい"
             />
           </div>
@@ -201,7 +201,7 @@ export function ArticleLinksSection({
               name="url"
               value={formData.url}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border-2 border-ink focus:outline-none focus:ring-2 focus:ring-brand"
+              className="w-full px-3 py-2 border border-ink focus:outline-none focus:ring-2 focus:ring-brand"
               placeholder="ブログ記事や X・Bluesky のポストの URL"
             />
           </div>
@@ -224,7 +224,7 @@ export function ArticleLinksSection({
                 onChange={handleInputChange}
                 required
                 maxLength={200}
-                className="w-full px-3 py-2 border-2 border-ink focus:outline-none focus:ring-2 focus:ring-brand"
+                className="w-full px-3 py-2 border border-ink focus:outline-none focus:ring-2 focus:ring-brand"
                 placeholder="URL から自動で入ります"
               />
             </div>

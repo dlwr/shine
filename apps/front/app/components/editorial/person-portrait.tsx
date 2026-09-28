@@ -17,7 +17,7 @@ export function PersonPortrait({
 
   return (
     <div
-      className={`aspect-2/3 overflow-hidden border-2 border-ink ${className}`}
+      className={`aspect-2/3 overflow-hidden border border-ink ${className}`}
       style={{background: 'var(--poster-bg)'}}>
       {source ? (
         <img
@@ -28,7 +28,7 @@ export function PersonPortrait({
           className="h-full w-full object-cover"
         />
       ) : (
-        <div className="flex h-full items-center justify-center font-display font-black text-ink-muted">
+        <div className="flex h-full items-center justify-center font-display font-bold text-ink-muted">
           {[...name][0]}
         </div>
       )}

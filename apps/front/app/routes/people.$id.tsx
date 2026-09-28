@@ -181,11 +181,11 @@ function CreditRow({
         <PersonalAwardTags awards={credit.personAwards} />
         <AwardTags tags={credit.awards} legend={legend} />
       </span>
-      <span className="font-mono text-[10px] text-ink-muted shrink-0">
+      <span className="font-label text-[10px] text-ink-muted shrink-0">
         {roleLabel(credit)}
       </span>
       {credit.year && (
-        <span className="font-mono text-xs text-ink-muted shrink-0 tabular-nums">
+        <span className="font-label text-xs text-ink-muted shrink-0 tabular-nums">
           {credit.year}
         </span>
       )}
@@ -212,16 +212,16 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
             className="w-24 shrink-0 md:w-32"
           />
           <div>
-            <h1 className="mb-2 font-display text-2xl font-black tracking-tight md:text-3xl">
+            <h1 className="mb-2 font-display text-2xl font-bold md:text-3xl">
               {person.name}
             </h1>
-            <p className="font-mono text-xs text-ink-muted">
+            <p className="font-label text-xs text-ink-muted">
               {person.name === person.originalName
                 ? `${person.credits.length} FILMS`
                 : `${person.originalName} / ${person.credits.length} FILMS`}
             </p>
             {nominated > 0 && (
-              <p className="mt-1 font-mono text-xs text-ink-muted">
+              <p className="mt-1 font-label text-xs text-ink-muted">
                 <span className="whitespace-nowrap">
                   <span className="font-bold text-brand">{won}</span>作受賞
                 </span>{' '}
@@ -234,7 +234,7 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
             {personalRecords.map(record => (
               <p
                 key={`${record.organization} ${record.category}`}
-                className="mt-1 font-mono text-xs text-ink-muted">
+                className="mt-1 font-label text-xs text-ink-muted">
                 {record.slug ? (
                   <a href={`/awards/${record.slug}`} className="text-ink-muted">
                     {record.organization} {record.category}
@@ -256,7 +256,7 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
 
         {personalRecords.length > 0 && (
           <section className="mb-8">
-            <p className="mb-2 font-mono text-xs text-ink-muted">
+            <p className="mb-2 font-label text-xs text-ink-muted">
               AWARD HISTORY
             </p>
             <PersonAwardHistory credits={person.credits} />

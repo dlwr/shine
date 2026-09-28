@@ -26,7 +26,7 @@ function ListRow({movie}: {movie: AwardMovieEntryData}) {
         {title}
       </span>
       {movie.movieYear && (
-        <span className="font-mono text-xs text-ink-muted shrink-0">
+        <span className="font-label text-xs text-ink-muted shrink-0">
           {movie.movieYear}
         </span>
       )}
@@ -46,20 +46,20 @@ function YearSection({
   return (
     <section>
       <div className="flex items-baseline gap-3 border-t-[3px] border-ink pt-2 mb-2">
-        <h2 className="font-display font-black text-3xl md:text-4xl tracking-[-0.06em] leading-none">
+        <h2 className="font-display font-bold text-3xl md:text-4xl leading-none">
           <a href={yearHref} className="text-ink no-underline">
             {group.year}
           </a>
         </h2>
         {group.ceremonyNumber && (
-          <span className="font-mono text-[10px] text-ink-muted">
+          <span className="font-label text-[10px] text-ink-muted">
             第{group.ceremonyNumber}回
           </span>
         )}
         {group.filmCount > group.movies.length && (
           <a
             href={yearHref}
-            className="ml-auto font-mono text-[10px] text-ink-muted no-underline shrink-0">
+            className="ml-auto font-label text-[10px] text-ink-muted no-underline shrink-0">
             出品作{group.filmCount}本を見る →
           </a>
         )}
@@ -70,7 +70,7 @@ function YearSection({
             <AwardMovieRow key={movie.uid} movie={movie} />
           ))
         ) : (
-          <p className="font-mono text-xs text-ink-muted py-3">受賞作なし</p>
+          <p className="font-label text-xs text-ink-muted py-3">受賞作なし</p>
         )}
       </div>
     </section>
@@ -92,7 +92,7 @@ function Pagination({
     page === 1 ? `/awards/${award.slug}` : `/awards/${award.slug}?page=${page}`;
 
   return (
-    <nav className="flex items-center justify-between gap-4 border-t-2 border-ink pt-4 mt-6 font-mono text-xs">
+    <nav className="flex items-center justify-between gap-4 border-t-2 border-ink pt-4 mt-6 font-label text-xs">
       {pagination.page > 1 ? (
         <a href={pageHref(pagination.page - 1)} className="text-ink">
           ← 前の{pagination.perPage}件

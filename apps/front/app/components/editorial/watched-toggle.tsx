@@ -44,20 +44,20 @@ export function WatchedToggle({
         onClick={toggle}
         className={
           watched
-            ? 'font-mono text-xs font-bold bg-brand text-brand-on px-2.5 py-1 border-2 border-ink shadow-[3px_3px_0_var(--ink)]'
-            : 'font-mono text-xs font-bold px-2.5 py-1 border-2 border-ink text-ink'
+            ? 'font-label text-xs font-bold bg-brand text-brand-on px-2.5 py-1 border border-ink'
+            : 'font-label text-xs font-bold px-2.5 py-1 border border-ink text-ink'
         }>
         {watched ? '✓ 観た' : '観た'}
       </button>
       {watched && isMonthlyPick && (
         <a
           href={articleLinksHref}
-          className="font-mono text-xs font-bold text-brand underline underline-offset-2">
+          className="font-label text-xs font-bold text-brand underline underline-offset-2">
           今月の1本を観ましたね。ひとこと残す ↓
         </a>
       )}
       {watched && !isMonthlyPick && (
-        <a href="/watched" className="font-mono text-[10px] text-ink-muted">
+        <a href="/watched" className="font-label text-[10px] text-ink-muted">
           観た映画チェックで進捗を見る →
         </a>
       )}

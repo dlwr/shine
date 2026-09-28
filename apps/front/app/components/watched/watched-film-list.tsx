@@ -40,7 +40,7 @@ function FilmRow({
       </label>
       <a
         href={`/movies/${film.uid}`}
-        className="font-mono text-[10px] text-ink-muted no-underline shrink-0">
+        className="font-label text-[10px] text-ink-muted no-underline shrink-0">
         詳細 →
       </a>
     </div>
@@ -62,7 +62,7 @@ export function WatchedFilmList({
     <div className="space-y-8">
       {groupWatchedByYear(films).map(group => (
         <section key={group.year}>
-          <h2 className="font-display font-black text-3xl md:text-4xl tracking-[-0.06em] leading-none mb-2">
+          <h2 className="font-display font-bold text-3xl md:text-4xl leading-none mb-2">
             {group.year}
           </h2>
           {group.films.map(film => (

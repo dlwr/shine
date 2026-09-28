@@ -49,7 +49,7 @@ function LossTags({
       {losses.map(loss => (
         <span
           key={`${loss.slug}:${loss.year}`}
-          className="border border-ink-muted px-1 py-0.5 font-mono text-[10px] text-ink-muted">
+          className="border border-ink-muted px-1 py-0.5 font-label text-[10px] text-ink-muted">
           {labels.get(loss.slug) ?? loss.slug} {loss.year}
         </span>
       ))}
@@ -72,10 +72,10 @@ export default function Uncrowned({loaderData}: Route.ComponentProps) {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Masthead locale={locale} />
 
-        <h1 className="font-display font-black text-2xl md:text-3xl tracking-tight mb-2">
+        <h1 className="font-display font-bold text-2xl md:text-3xl mb-2">
           UNCROWNED
         </h1>
-        <p className="font-mono text-xs text-ink-muted mb-8">
+        <p className="font-label text-xs text-ink-muted mb-8">
           一度も勝てなかった映画たち
         </p>
 
@@ -85,11 +85,11 @@ export default function Uncrowned({loaderData}: Route.ComponentProps) {
             <br />
             だがノミネートされた
             {nominatedFilmCount.toLocaleString('en-US')}本のうち
-            <span className="font-black text-brand">
+            <span className="font-bold text-brand">
               {uncrownedFilmCount.toLocaleString('en-US')}本
             </span>
             ——
-            <span className="font-black">{uncrownedShare}%</span>
+            <span className="font-bold">{uncrownedShare}%</span>
             ——は、一度も勝っていない。
             <br />
             ここは、その敗者たちの頁。
@@ -97,8 +97,8 @@ export default function Uncrowned({loaderData}: Route.ComponentProps) {
         </section>
 
         {leader && (
-          <section className="mb-10 border-2 border-ink p-4 shadow-[6px_6px_0_var(--brand)]">
-            <p className="font-mono text-xs text-ink-muted mb-3">
+          <section className="mb-10 border border-ink p-4">
+            <p className="font-label text-xs text-ink-muted mb-3">
               最も多く敗れた映画
             </p>
             <div className="flex gap-4">
@@ -112,17 +112,17 @@ export default function Uncrowned({loaderData}: Route.ComponentProps) {
                 />
               </a>
               <div className="flex flex-col justify-center gap-2">
-                <p className="font-display font-black text-5xl leading-none text-brand">
+                <p className="font-display font-bold text-5xl leading-none text-brand">
                   <span>{leader.losses.length}</span>
                   <span className="text-2xl">敗</span>
                 </p>
-                <h2 className="font-display font-black text-xl md:text-2xl leading-tight">
+                <h2 className="font-display font-bold text-xl md:text-2xl leading-tight">
                   <a href={`/movies/${leader.uid}`} className="text-ink">
                     {leader.title ?? 'タイトル不明'}
                   </a>
                 </h2>
                 {leader.year && (
-                  <p className="font-mono text-xs text-ink-muted">
+                  <p className="font-label text-xs text-ink-muted">
                     {leader.year}
                   </p>
                 )}
@@ -133,7 +133,7 @@ export default function Uncrowned({loaderData}: Route.ComponentProps) {
         )}
 
         <section className="mb-10">
-          <p className="font-mono text-xs text-ink-muted mb-3">
+          <p className="font-label text-xs text-ink-muted mb-3">
             敗北を重ねた映画
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -149,7 +149,7 @@ export default function Uncrowned({loaderData}: Route.ComponentProps) {
                     displaySize="w342"
                   />
                   <span className="mt-1.5 flex items-baseline gap-1.5">
-                    <span className="font-display font-black text-sm text-brand">
+                    <span className="font-display font-bold text-sm text-brand">
                       {movie.losses.length}敗
                     </span>
                     <span className="font-display font-bold text-xs leading-tight">
@@ -157,7 +157,7 @@ export default function Uncrowned({loaderData}: Route.ComponentProps) {
                     </span>
                   </span>
                 </a>
-                <span className="mt-1 block font-mono text-[10px] text-ink-muted">
+                <span className="mt-1 block font-label text-[10px] text-ink-muted">
                   {movie.year}
                 </span>
                 <div className="mt-1">
@@ -171,17 +171,17 @@ export default function Uncrowned({loaderData}: Route.ComponentProps) {
         <div className="flex flex-wrap gap-3">
           <a
             href="/awards"
-            className="inline-block font-mono text-xs font-bold border-2 border-ink px-3 py-1.5 shadow-[3px_3px_0_var(--ink)] no-underline text-ink">
+            className="inline-block font-label text-xs font-bold border border-ink px-3 py-1.5 no-underline text-ink">
             映画賞・リスト一覧
           </a>
           <a
             href="/crossings"
-            className="inline-block font-mono text-xs font-bold border-2 border-ink px-3 py-1.5 shadow-[3px_3px_0_var(--ink)] no-underline text-ink">
+            className="inline-block font-label text-xs font-bold border border-ink px-3 py-1.5 no-underline text-ink">
             賞の交差
           </a>
           <a
             href="/people/uncrowned"
-            className="inline-block font-mono text-xs font-bold border-2 border-ink px-3 py-1.5 shadow-[3px_3px_0_var(--ink)] no-underline text-ink">
+            className="inline-block font-label text-xs font-bold border border-ink px-3 py-1.5 no-underline text-ink">
             無冠の映画人
           </a>
         </div>

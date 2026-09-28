@@ -4,7 +4,7 @@ import type {AwardMovieEntryData} from '@/lib/award-page';
 
 function RankLabel({rank}: {rank: string}) {
   return (
-    <span className="font-mono text-[10px] text-ink-muted w-7 shrink-0 tabular-nums">
+    <span className="font-label text-[10px] text-ink-muted w-7 shrink-0 tabular-nums">
       {rank}
     </span>
   );
@@ -12,7 +12,7 @@ function RankLabel({rank}: {rank: string}) {
 
 function Note({text}: {text: string}) {
   return (
-    <span className="block font-mono text-[10px] text-ink-muted leading-snug mt-1">
+    <span className="block font-label text-[10px] text-ink-muted leading-snug mt-1">
       {text}
     </span>
   );
@@ -50,7 +50,7 @@ export function AwardMovieRow({movie}: {movie: AwardMovieEntryData}) {
           />
         </div>
         {!rank && (
-          <span className="font-mono text-[9px] bg-brand text-brand-on px-1.5 py-0.5 shrink-0">
+          <span className="font-label text-[9px] bg-brand text-brand-on px-1.5 py-0.5 shrink-0">
             WINNER
           </span>
         )}
@@ -64,7 +64,7 @@ export function AwardMovieRow({movie}: {movie: AwardMovieEntryData}) {
       className="flex items-center gap-4 py-1.5 no-underline text-ink">
       {rank && <RankLabel rank={rank} />}
       <div className="flex-1 min-w-0">
-        <span className="block font-mono text-sm leading-tight">{title}</span>
+        <span className="block font-label text-sm leading-tight">{title}</span>
         {note && <Note text={note} />}
         <AvailabilityBadges
           availability={movie.availability}

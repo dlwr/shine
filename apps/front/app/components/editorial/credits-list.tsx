@@ -55,7 +55,7 @@ export function CreditsList({credits}: {credits: MovieCredits}) {
         <dl className="grid grid-cols-[4rem_1fr] gap-x-3 gap-y-1 text-sm">
           {crewGroups.map(([label, names]) => (
             <div key={label} className="contents">
-              <dt className="font-mono text-xs text-ink-muted pt-0.5">
+              <dt className="font-label text-xs text-ink-muted pt-0.5">
                 {label}
               </dt>
               <dd className="text-ink">
@@ -73,7 +73,7 @@ export function CreditsList({credits}: {credits: MovieCredits}) {
 
       {credits.cast.length > 0 && (
         <div>
-          <p className="font-mono text-xs text-ink-muted mb-1">出演</p>
+          <p className="font-label text-xs text-ink-muted mb-1">出演</p>
           <ul className="list-none p-0 m-0 space-y-0.5 text-sm">
             {credits.cast.map(member => (
               <li key={member.uid} className="text-ink">

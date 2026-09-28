@@ -19,7 +19,7 @@ export function QuizClues({game, maxAttempts}: QuizCluesProperties) {
           return (
             <span
               key={index}
-              className={`w-4 h-4 border-2 border-ink ${filled}`}
+              className={`w-4 h-4 border border-ink ${filled}`}
             />
           );
         })}
@@ -31,7 +31,7 @@ export function QuizClues({game, maxAttempts}: QuizCluesProperties) {
             <div
               key={hint.label}
               className="flex gap-3 py-2 border-t-2 border-ink">
-              <dt className="font-mono text-[10px] text-ink-muted w-24 shrink-0 pt-0.5">
+              <dt className="font-label text-[10px] text-ink-muted w-24 shrink-0 pt-0.5">
                 {hint.label}
               </dt>
               <dd className="font-display font-bold text-sm leading-snug">

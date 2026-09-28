@@ -56,7 +56,7 @@ function PerformanceRow({
       <div className="min-w-0 flex-1">
         <p className="flex items-baseline gap-2">
           {showCount && (
-            <span className="font-display text-sm font-black text-brand">
+            <span className="font-display text-sm font-bold text-brand">
               {performance.organizationCount}
             </span>
           )}
@@ -66,7 +66,7 @@ function PerformanceRow({
             {person.name}
           </a>
         </p>
-        <p className="mt-0.5 font-mono text-[10px] text-ink-muted">
+        <p className="mt-0.5 font-label text-[10px] text-ink-muted">
           <a
             href={`/movies/${movie.uid}`}
             className="border-b border-ink-muted text-ink no-underline">
@@ -79,7 +79,7 @@ function PerformanceRow({
             <a
               key={award.slug}
               href={`/awards/${award.slug}`}
-              className="border border-ink-muted px-1 py-0.5 font-mono text-[10px] text-ink-muted no-underline">
+              className="border border-ink-muted px-1 py-0.5 font-label text-[10px] text-ink-muted no-underline">
               {`${shortLabels.get(award.organization) ?? award.organization} ${award.category}`}
             </a>
           ))}
@@ -113,24 +113,24 @@ export default function PeopleCrossings({loaderData}: Route.ComponentProps) {
       <div className="mx-auto max-w-4xl px-4 py-8">
         <Masthead locale={locale} />
 
-        <h1 className="mb-2 font-display text-2xl font-black tracking-tight md:text-3xl">
+        <h1 className="mb-2 font-display text-2xl font-bold md:text-3xl">
           PEOPLE CROSSINGS
         </h1>
-        <p className="mb-8 font-mono text-xs text-ink-muted">
+        <p className="mb-8 font-label text-xs text-ink-muted">
           {organizations.length}
           の映画賞の監督賞・演技賞が、同じ演技・演出をどれだけ選んでいるか
         </p>
 
         {leaders.length > 0 && (
-          <section className="mb-10 border-2 border-ink p-4 shadow-[6px_6px_0_var(--brand)]">
-            <p className="mb-3 font-mono text-xs text-ink-muted">
+          <section className="mb-10 border border-ink p-4">
+            <p className="mb-3 font-label text-xs text-ink-muted">
               最も多くの団体に選ばれた演技・演出
             </p>
             <div className="mb-3 flex items-baseline gap-3">
-              <p className="font-display text-5xl leading-none font-black text-brand">
+              <p className="font-display text-5xl leading-none font-bold text-brand">
                 {`${maxOrganizationCount}冠`}
               </p>
-              <p className="font-mono text-xs text-ink-muted">
+              <p className="font-label text-xs text-ink-muted">
                 {leaders.length}件
               </p>
             </div>
@@ -147,7 +147,7 @@ export default function PeopleCrossings({loaderData}: Route.ComponentProps) {
         )}
 
         <section className="mb-10">
-          <p className="mb-3 font-mono text-xs text-ink-muted">
+          <p className="mb-3 font-label text-xs text-ink-muted">
             いくつの団体に選ばれたか
           </p>
           <ul>
@@ -155,7 +155,7 @@ export default function PeopleCrossings({loaderData}: Route.ComponentProps) {
               <li
                 key={entry.organizationCount}
                 className="flex items-center gap-3 border-t border-ink/20 py-1.5">
-                <span className="w-16 shrink-0 font-mono text-xs text-ink-muted">
+                <span className="w-16 shrink-0 font-label text-xs text-ink-muted">
                   {entry.organizationCount}冠
                 </span>
                 <span
@@ -169,7 +169,7 @@ export default function PeopleCrossings({loaderData}: Route.ComponentProps) {
                     )}%`,
                   }}
                 />
-                <span className="font-mono text-xs">
+                <span className="font-label text-xs">
                   {entry.performanceCount.toLocaleString('en-US')}
                 </span>
               </li>
@@ -178,7 +178,7 @@ export default function PeopleCrossings({loaderData}: Route.ComponentProps) {
         </section>
 
         <section className="mb-10">
-          <p className="mb-3 font-mono text-xs text-ink-muted">
+          <p className="mb-3 font-label text-xs text-ink-muted">
             団体と団体の重なり（両方に選ばれた演技・演出の数）
           </p>
           <CrossingMatrix
@@ -195,7 +195,7 @@ export default function PeopleCrossings({loaderData}: Route.ComponentProps) {
 
         {rest.length > 0 && (
           <section className="mb-10">
-            <p className="mb-3 font-mono text-xs text-ink-muted">
+            <p className="mb-3 font-label text-xs text-ink-muted">
               多くの団体に選ばれた演技・演出
             </p>
             <ul className="list-none border-b border-ink/20 p-0 md:grid md:grid-cols-2 md:gap-x-6">
@@ -214,12 +214,12 @@ export default function PeopleCrossings({loaderData}: Route.ComponentProps) {
         <div className="flex flex-wrap gap-3">
           <a
             href="/people"
-            className="inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold text-ink no-underline shadow-[3px_3px_0_var(--ink)]">
+            className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold text-ink no-underline">
             映画人ランキング
           </a>
           <a
             href="/crossings"
-            className="inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold text-ink no-underline shadow-[3px_3px_0_var(--ink)]">
+            className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold text-ink no-underline">
             映画の賞の交差
           </a>
         </div>

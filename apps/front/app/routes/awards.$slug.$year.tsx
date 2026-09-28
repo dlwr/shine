@@ -78,7 +78,7 @@ export default function AwardYearPage({loaderData}: Route.ComponentProps) {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Masthead locale={locale} />
 
-        <nav className="font-mono text-[10px] text-ink-muted mb-4">
+        <nav className="font-label text-[10px] text-ink-muted mb-4">
           <a href="/awards" className="text-ink-muted">
             AWARDS & LISTS
           </a>
@@ -89,17 +89,17 @@ export default function AwardYearPage({loaderData}: Route.ComponentProps) {
         </nav>
 
         <div className="flex items-baseline gap-3 mb-2">
-          <h1 className="font-display font-black text-4xl md:text-5xl tracking-[-0.06em] leading-none">
+          <h1 className="font-display font-bold text-4xl md:text-5xl leading-none">
             {award.year}
           </h1>
           {award.ceremonyNumber && (
-            <span className="font-mono text-xs text-ink-muted">
+            <span className="font-label text-xs text-ink-muted">
               第{award.ceremonyNumber}回
             </span>
           )}
         </div>
         <p
-          className={`font-mono text-xs text-ink-muted ${watchableCount > 0 ? 'mb-2' : 'mb-8'}`}>
+          className={`font-label text-xs text-ink-muted ${watchableCount > 0 ? 'mb-2' : 'mb-8'}`}>
           {heading} / {award.movies.length} FILMS
         </p>
         {watchableCount > 0 && (
@@ -122,7 +122,7 @@ export default function AwardYearPage({loaderData}: Route.ComponentProps) {
           />
           <a
             href={`/awards/${award.slug}`}
-            className="font-mono text-[10px] text-ink-muted no-underline">
+            className="font-label text-[10px] text-ink-muted no-underline">
             ALL YEARS
           </a>
           <YearNavLink

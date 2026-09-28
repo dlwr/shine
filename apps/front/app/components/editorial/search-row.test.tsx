@@ -13,6 +13,6 @@ describe('SearchRow', () => {
     );
     const link = screen.getByRole('link', {name: /PARASITE/});
     expect(link).toHaveAttribute('href', '/movies/m1');
-    expect(screen.getByText('19')).toBeInTheDocument();
+    expect(screen.getByText('2019')).toBeInTheDocument();
   });
 });

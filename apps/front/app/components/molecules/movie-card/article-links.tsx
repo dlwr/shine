@@ -25,7 +25,7 @@ export function MovieCardArticleLinks({
                 href={article.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-md no-underline text-inherit transition-all duration-200 hover:bg-gray-100 hover:border-gray-300 hover:translate-x-0.5">
+                className="block px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-md no-underline text-inherit transition-all duration-200 hover:bg-gray-100 hover:border-gray-300">
                 <span className="text-xs text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap block leading-snug">
                   {article.title ?? article.url}
                 </span>
