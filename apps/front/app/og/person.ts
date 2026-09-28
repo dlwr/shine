@@ -1,7 +1,12 @@
 import {createImageResponse} from '@/lib/og/image-response';
 import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
 import {pickRepresentativeTitles} from '@/lib/og/person-card';
-import {OG_HEIGHT, OG_WIDTH, buildPersonCardHtml} from '@/lib/og/template';
+import {
+  OG_HEIGHT,
+  OG_WIDTH,
+  buildPersonCardHtml,
+  OG_FONT_FAMILY,
+} from '@/lib/og/template';
 import {TAGLINE} from '@/lib/tagline';
 import {profileImageUrl} from '@/lib/profile-image';
 import {tryApiJson, type LoadContext} from '@/lib/api';
@@ -20,7 +25,7 @@ type PersonDetail = {
 
 const CACHE_CONTROL = 'public, max-age=86400';
 /** Satoriへ渡すフォントに最低限含める文字 */
-const BASE_TEXT = `SHINEFILMS0123456789${TAGLINE} `;
+const BASE_TEXT = `SHINE出演・監督本0123456789${TAGLINE} `;
 
 export async function renderPersonCard(
   request: Request,
@@ -47,12 +52,12 @@ export async function renderPersonCard(
   const cardText =
     BASE_TEXT + person.name + person.originalName + topTitles.join('');
 
-  const [portraitDataUri, notoSans] = await Promise.all([
+  const [portraitDataUri, ogFont] = await Promise.all([
     fetchPosterAsDataUri(profileImageUrl(person.profilePath, 'h632')),
-    loadGoogleFont('Noto Sans JP', 700, cardText),
+    loadGoogleFont(OG_FONT_FAMILY, 700, cardText),
   ]);
 
-  if (!notoSans) {
+  if (!ogFont) {
     return new Response('Font unavailable', {status: 503});
   }
 
@@ -67,9 +72,7 @@ export async function renderPersonCard(
   const image = await createImageResponse(html, {
     width: OG_WIDTH,
     height: OG_HEIGHT,
-    fonts: [
-      {name: 'Noto Sans JP', data: notoSans, weight: 700, style: 'normal'},
-    ],
+    fonts: [{name: OG_FONT_FAMILY, data: ogFont, weight: 700, style: 'normal'}],
   });
 
   // ストリームのままだとレンダリング失敗が空レスポンスに化けるため、先に全量を読む

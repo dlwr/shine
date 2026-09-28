@@ -4,7 +4,12 @@ import {
   type AvailabilityInfo,
 } from '@/components/editorial/availability-badges';
 import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
-import {OG_HEIGHT, OG_WIDTH, buildMovieCardHtml} from '@/lib/og/template';
+import {
+  OG_HEIGHT,
+  OG_WIDTH,
+  buildMovieCardHtml,
+  OG_FONT_FAMILY,
+} from '@/lib/og/template';
 import {TAGLINE} from '@/lib/tagline';
 import {upgradePosterForSharing} from '@/lib/meta';
 import {tryApiJson, type LoadContext} from '@/lib/api';
@@ -67,12 +72,12 @@ export async function renderMovieCard(
     organizations.join('') +
     availabilityLabels.join('');
 
-  const [posterDataUri, notoSans] = await Promise.all([
+  const [posterDataUri, ogFont] = await Promise.all([
     fetchPosterAsDataUri(upgradePosterForSharing(movie.posterUrl)),
-    loadGoogleFont('Noto Sans JP', 700, cardText),
+    loadGoogleFont(OG_FONT_FAMILY, 700, cardText),
   ]);
 
-  if (!notoSans) {
+  if (!ogFont) {
     return new Response('Font unavailable', {status: 503});
   }
 
@@ -88,9 +93,7 @@ export async function renderMovieCard(
   const image = await createImageResponse(html, {
     width: OG_WIDTH,
     height: OG_HEIGHT,
-    fonts: [
-      {name: 'Noto Sans JP', data: notoSans, weight: 700, style: 'normal'},
-    ],
+    fonts: [{name: OG_FONT_FAMILY, data: ogFont, weight: 700, style: 'normal'}],
   });
 
   // ストリームのままだとレンダリング失敗が空レスポンスに化けるため、先に全量を読む

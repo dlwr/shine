@@ -9,8 +9,8 @@ export const QUIZ_POSTER_HEIGHT = 720;
 const ZOOM_STAGES = [6, 4.5, 3.2, 2.4, 1.8, 1.4, 1];
 
 const COLORS = {
-  paper: '#ece8df',
-  ink: '#15140f',
+  paper: '#211a1e',
+  rule: '#6b5a5f',
 };
 
 export function zoomForStage(stage: number): number {
@@ -83,7 +83,7 @@ export function buildQuizPosterHtml({
     frameHeight,
   });
 
-  return `<div style="display:flex;position:relative;width:${frameWidth}px;height:${frameHeight}px;overflow:hidden;background:${COLORS.paper};border:8px solid ${COLORS.ink};">
+  return `<div style="display:flex;position:relative;width:${frameWidth}px;height:${frameHeight}px;overflow:hidden;background:${COLORS.paper};border:2px solid ${COLORS.rule};">
   <img src="${posterDataUri}" width="${layout.width}" height="${layout.height}" style="position:absolute;left:${layout.left}px;top:${layout.top}px;" />
 </div>`;
 }

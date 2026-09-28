@@ -1,7 +1,12 @@
 import {createImageResponse} from '@/lib/og/image-response';
 import {tryApiJson, resolveQuizKey, type LoadContext} from '@/lib/api';
 import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
-import {OG_HEIGHT, OG_WIDTH, buildQuizCardHtml} from '@/lib/og/template';
+import {
+  OG_HEIGHT,
+  OG_WIDTH,
+  buildQuizCardHtml,
+  OG_FONT_FAMILY,
+} from '@/lib/og/template';
 import {upgradePosterForSharing} from '@/lib/meta';
 
 const CACHE_CONTROL = 'public, max-age=3600';
@@ -58,18 +63,16 @@ export async function renderQuizCard(
 
   const crop = await fetchTodaysPoster(context, request.signal);
   const html = buildQuizCardHtml({date, poolSize, ...crop});
-  const notoSans = await loadGoogleFont('Noto Sans JP', 700, html);
+  const ogFont = await loadGoogleFont(OG_FONT_FAMILY, 700, html);
 
-  if (!notoSans) {
+  if (!ogFont) {
     return new Response('Font unavailable', {status: 503});
   }
 
   const image = await createImageResponse(html, {
     width: OG_WIDTH,
     height: OG_HEIGHT,
-    fonts: [
-      {name: 'Noto Sans JP', data: notoSans, weight: 700, style: 'normal'},
-    ],
+    fonts: [{name: OG_FONT_FAMILY, data: ogFont, weight: 700, style: 'normal'}],
   });
 
   // ストリームのままだとレンダリング失敗が空レスポンスに化けるため、先に全量を読む

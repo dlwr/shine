@@ -1,7 +1,12 @@
 import {createImageResponse} from '@/lib/og/image-response';
 import {apiFetch, type LoadContext} from '@/lib/api';
 import {loadGoogleFont} from '@/lib/og/assets';
-import {OG_HEIGHT, OG_WIDTH, buildWatchedCardHtml} from '@/lib/og/template';
+import {
+  OG_HEIGHT,
+  OG_WIDTH,
+  buildWatchedCardHtml,
+  OG_FONT_FAMILY,
+} from '@/lib/og/template';
 import {
   decodeWatched,
   isWatchedEncoding,
@@ -61,17 +66,15 @@ export async function renderWatchedCard(
     ...watchedStats(order, watched),
     watchedFlags: order.map(uid => watched.has(uid)),
   });
-  const notoSans = await loadGoogleFont('Noto Sans JP', 700, html);
-  if (!notoSans) {
+  const ogFont = await loadGoogleFont(OG_FONT_FAMILY, 700, html);
+  if (!ogFont) {
     return new Response('Font unavailable', {status: 503});
   }
 
   const image = await createImageResponse(html, {
     width: OG_WIDTH,
     height: OG_HEIGHT,
-    fonts: [
-      {name: 'Noto Sans JP', data: notoSans, weight: 700, style: 'normal'},
-    ],
+    fonts: [{name: OG_FONT_FAMILY, data: ogFont, weight: 700, style: 'normal'}],
   });
 
   // ストリームのままだとレンダリング失敗が空レスポンスに化けるため、先に全量を読む
