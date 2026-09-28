@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {describeNomination} from '../quiz-service';
+import {describeNomination} from '../quiz-nomination';
 
 describe('describeNomination', () => {
   it('年度制の賞は組織名と年で説明する', () => {
