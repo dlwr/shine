@@ -2,13 +2,9 @@ import type {Environment} from '@shine/database';
 import type {QuizGuessResult} from '../types/quiz';
 import type {QuizDailyResponse} from '../types/responses';
 import {Hono} from 'hono';
-import {
-  buildQuizHints,
-  QUIZ_MAX_ATTEMPTS,
-  QuizService,
-  toQuizAnswer,
-  type QuizPoolEntry,
-} from '../services/quiz-service';
+import {buildQuizHints, toQuizAnswer} from '../services/quiz-hints';
+import type {QuizPoolEntry} from '../services/quiz-pool-query';
+import {QUIZ_MAX_ATTEMPTS, QuizService} from '../services/quiz-service';
 import {createCachedResponse} from '../utils/cache';
 
 export const quizRoutes = new Hono<{Bindings: Environment}>();
