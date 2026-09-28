@@ -291,7 +291,9 @@ describe('Home Component', () => {
         />,
       );
 
-      expect(screen.getByText('MONTHLY / 今月の1本')).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', {name: '今月の1本'}),
+      ).toBeInTheDocument();
       const monthly = screen.getByText('月間映画');
       const daily = screen.getByText('テスト映画');
       expect(

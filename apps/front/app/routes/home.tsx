@@ -150,7 +150,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
         </Suspense>
       )}
       <div className="max-w-5xl mx-auto px-4 py-6">
-        <Masthead locale={locale} />
+        <Masthead locale={locale} showTagline={false} />
         <Movies
           movies={movies}
           error={error}
@@ -194,11 +194,11 @@ function Movies({
       ? '現在表示できる映画がありません。'
       : 'No movie selected yet.';
 
-  const periodLabels: Record<PeriodType, string> = {
-    daily: 'DAILY',
-    weekly: 'WEEKLY',
-    monthly: 'MONTHLY',
-  };
+  const periodLabels: Record<PeriodType, string> =
+    locale === 'ja'
+      ? {daily: '今日', weekly: '今週', monthly: '今月'}
+      : {daily: 'Today', weekly: 'This week', monthly: 'This month'};
+  const alsoShowing = locale === 'ja' ? '併映' : 'Also showing';
 
   const renderAdminControls = (period: PeriodType) => {
     if (!adminToken) {
@@ -225,21 +225,21 @@ function Movies({
       {isDataLoading && (
         <div className="text-center mb-8">
           <div className="inline-flex items-center px-4 py-2 text-ink/60">
-            <div className="animate-spin h-5 w-5 border-2 border-ink/40 border-t-transparent rounded-full mr-3"></div>
+            <div className="animate-spin h-5 w-5 border border-ink/40 border-t-transparent rounded-full mr-3"></div>
             {locale === 'ja' ? 'データを読み込み中...' : 'Loading data...'}
           </div>
         </div>
       )}
 
       {error && (
-        <div className="mb-4 p-4 border-2 border-red-600 text-red-600 font-mono text-sm">
+        <div className="mb-4 p-4 border border-red-600 text-red-600 font-label text-sm">
           {locale === 'ja'
             ? `APIから映画データを取得できませんでした。エラー: ${error}`
             : `Failed to fetch movie data from API. Error: ${error}`}
         </div>
       )}
 
-      <div className="flex flex-col gap-2 anim-rise anim-rise-1">
+      <div className="flex flex-col gap-2">
         {movies?.monthly ? (
           <MonthlyPick
             movie={movies.monthly}
@@ -248,19 +248,20 @@ function Movies({
             apiUrl={apiUrl}
           />
         ) : (
-          <p className="text-sm text-ink/50 font-mono">{noMovieLabel}</p>
+          <p className="text-sm text-ink/50 font-label">{noMovieLabel}</p>
         )}
         {renderAdminControls('monthly')}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        {SECONDARY_PERIODS.map((period, index) => {
+      <h2 className="mt-8 border-b border-rule pb-2 font-display text-lg font-bold">
+        {alsoShowing}
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 md:gap-x-8">
+        {SECONDARY_PERIODS.map(period => {
           const movie = movies?.[period];
 
           return (
-            <div
-              key={period}
-              className={`flex flex-col gap-2 anim-rise anim-rise-${index + 2}`}>
+            <div key={period} className="flex flex-col gap-2">
               {movie ? (
                 <FilmCard
                   movie={movie}
@@ -270,7 +271,7 @@ function Movies({
                   transformImages={transformImages}
                 />
               ) : (
-                <p className="text-sm text-ink/50 font-mono">{noMovieLabel}</p>
+                <p className="text-sm text-ink/50 font-label">{noMovieLabel}</p>
               )}
               {renderAdminControls(period)}
             </div>

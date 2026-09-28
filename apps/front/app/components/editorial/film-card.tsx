@@ -54,28 +54,26 @@ export function FilmCard({
     return (
       <a
         href={`/movies/${movie.uid}`}
-        className="flex border-[3px] border-ink/40 bg-surface no-underline text-ink">
-        {label ? (
-          <div className="flex items-center justify-center bg-ink px-1 text-paper font-mono text-[10px] font-bold [writing-mode:vertical-rl] rotate-180">
-            {label}
-          </div>
-        ) : undefined}
-        <div className="flex gap-3 p-3">
-          <PosterFrame
-            posterUrl={posterUrl}
-            alt={`${title} poster`}
-            className="w-16 shrink-0"
-            priority={priority}
-            displaySize="w185"
-            transformImages={transformImages}
-          />
-          <div className="min-w-0">
-            <BigYear year={movie.year} className="text-4xl" />
-            <div className="font-display text-base font-black tracking-tight mt-1">
-              {title}
-            </div>
-          </div>
-        </div>
+        className="grid grid-cols-[3.5em_4rem_minmax(0,1fr)] items-start gap-3 border-b border-rule py-3 text-ink no-underline">
+        <span className="pt-0.5 font-display text-sm font-bold">{label}</span>
+        <PosterFrame
+          posterUrl={posterUrl}
+          alt={`${title} poster`}
+          className="w-16"
+          priority={priority}
+          displaySize="w185"
+          transformImages={transformImages}
+        />
+        <span className="min-w-0">
+          <span className="block font-display text-lg leading-snug font-bold">
+            {title}
+          </span>
+          {movie.year ? (
+            <span className="mt-1 block font-display text-sm text-ink-muted tabular-nums">
+              {movie.year}
+            </span>
+          ) : undefined}
+        </span>
       </a>
     );
   }
@@ -91,12 +89,12 @@ export function FilmCard({
   return (
     <a
       href={`/movies/${movie.uid}`}
-      className="block border-[3px] border-ink bg-surface no-underline text-ink shadow-[var(--shadow-offset-sm)]">
+      className="block border border-ink bg-surface no-underline text-ink">
       {label ? (
         <div className="flex items-center justify-between bg-ink px-3 py-1 text-paper">
-          <span className="font-mono text-xs font-bold">{label}</span>
+          <span className="font-label text-xs font-bold">{label}</span>
           {index ? (
-            <span className="font-mono text-xs">{index}</span>
+            <span className="font-label text-xs">{index}</span>
           ) : undefined}
         </div>
       ) : undefined}
@@ -111,12 +109,12 @@ export function FilmCard({
         <div className="mt-3 flex items-end justify-between gap-2">
           <div className="min-w-0">
             <BigYear year={movie.year} className="text-5xl" />
-            <div className="font-display text-lg font-black leading-tight tracking-tight mt-1">
+            <div className="font-display text-lg font-bold leading-tight mt-1">
               {title}
             </div>
           </div>
           {chip ? (
-            <span className="shrink-0 bg-brand px-2 py-0.5 font-mono text-[10px] font-bold text-brand-on">
+            <span className="shrink-0 bg-brand px-2 py-0.5 font-label text-[10px] font-bold text-brand-on">
               {chip}
             </span>
           ) : undefined}
