@@ -121,12 +121,12 @@ export function awardSummaryLine(award: AwardPageData): string {
   const {first, last} = yearRange(award);
 
   if (award.grouping === 'person') {
-    return `${first}–${last} / ${countPersonWinners(award)} WINNERS / ${countNominees(award)} NOMINEES`;
+    return `${first}–${last} 受賞 ${countPersonWinners(award)} 人・ノミネート ${countNominees(award)} 人`;
   }
 
   if (award.grouping === 'year') {
-    return `${first}–${last} / ${countWinners(award)} WINNERS / ${countMovies(award)} FILMS`;
+    return `${first}–${last} 受賞 ${countWinners(award)} 本・全 ${countMovies(award)} 本`;
   }
 
-  return `${countMovies(award)} FILMS`;
+  return `全 ${countMovies(award)} 本`;
 }

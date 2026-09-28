@@ -56,10 +56,10 @@ describe('AwardTree', () => {
     expect(screen.getByText('Best Actor')).toBeInTheDocument();
   });
 
-  it('受賞は WINNER、ノミネートは NOMINEE バッジを出す', () => {
+  it('受賞とノミネートのバッジを出す', () => {
     render(<AwardTree nominations={noms} />);
-    expect(screen.getByText(/WINNER/)).toBeInTheDocument();
-    expect(screen.getByText(/NOMINEE/)).toBeInTheDocument();
+    expect(screen.getByText('受賞')).toBeInTheDocument();
+    expect(screen.getByText('ノミネート')).toBeInTheDocument();
   });
 
   it('nominations 空なら何も描画しない', () => {

@@ -81,9 +81,9 @@ export function FilmCard({
   const winner = movie.nominations?.some(n => n.isWinner);
   const nomCount = movie.nominations?.length ?? 0;
   const chip = winner
-    ? '★ WINNER'
+    ? '受賞'
     : nomCount > 0
-      ? `${nomCount} NOMS`
+      ? `ノミネート ${nomCount}`
       : undefined;
 
   return (
@@ -114,7 +114,7 @@ export function FilmCard({
             </div>
           </div>
           {chip ? (
-            <span className="shrink-0 bg-brand px-2 py-0.5 font-label text-[10px] font-bold text-brand-on">
+            <span className="shrink-0 border border-brand px-1.5 py-0.5 font-display text-xs leading-none text-brand">
               {chip}
             </span>
           ) : undefined}

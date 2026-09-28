@@ -109,6 +109,6 @@ describe('FilmCard', () => {
     );
     expect(screen.getByText('DAILY / 日替わり')).toBeInTheDocument();
     expect(screen.getByText('NO.001')).toBeInTheDocument();
-    expect(screen.getByText('★ WINNER')).toBeInTheDocument();
+    expect(screen.getByText('受賞')).toBeInTheDocument();
   });
 });

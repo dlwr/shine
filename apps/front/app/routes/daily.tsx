@@ -10,7 +10,7 @@ import {
 const CONFIG: SelectionArchiveConfig = {
   type: 'daily',
   path: '/daily',
-  heading: 'DAILY PICKS',
+  heading: '今日の1本',
   subtitle: '「今日の1本」の過去のセレクション',
   metaTitle: '今日の1本 アーカイブ | SHINE',
   metaDescription:

@@ -168,7 +168,7 @@ describe('Year page', () => {
       );
 
       expect(screen.getAllByText('1997')[0]).toBeInTheDocument();
-      expect(screen.getByText('3 FILMS')).toBeInTheDocument();
+      expect(screen.getByText('3 本')).toBeInTheDocument();
       expect(screen.getByRole('link', {name: /HANA-BI/})).toHaveAttribute(
         'href',
         '/movies/movie-hanabi',

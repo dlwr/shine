@@ -204,19 +204,19 @@ describe('PersonAwardHistory', () => {
     );
   });
 
-  it('受賞のセルはブランド色で塗る', () => {
+  it('受賞のセルは朱の枠で囲む', () => {
     render(<PersonAwardHistory credits={credits} />);
 
     expect(within(rowOf(/三度目の殺人/)).getByText('助演')).toHaveClass(
-      'bg-brand',
+      'border-brand',
     );
   });
 
-  it('ノミネートのセルは塗らない', () => {
+  it('ノミネートのセルは朱にしない', () => {
     render(<PersonAwardHistory credits={credits} />);
 
     expect(within(rowOf(/三度目の殺人/)).getByText('主演')).not.toHaveClass(
-      'bg-brand',
+      'border-brand',
     );
   });
 

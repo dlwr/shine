@@ -173,7 +173,7 @@ describe('Award year page', () => {
       expect(screen.getByText('第76回')).toBeInTheDocument();
       expect(screen.getByText('落下の解剖学')).toBeInTheDocument();
       expect(screen.getByText('怪物')).toBeInTheDocument();
-      expect(screen.getByText('WINNER')).toBeInTheDocument();
+      expect(screen.getByText('受賞')).toBeInTheDocument();
     });
 
     it('順位を持つ賞は順位を表示する', () => {
@@ -197,7 +197,7 @@ describe('Award year page', () => {
       expect(screen.getByText('2位')).toBeInTheDocument();
     });
 
-    it('順位を持つ賞はWINNERバッジを出さない', () => {
+    it('順位を持つ賞は受賞バッジを出さない', () => {
       const award = {
         ...mockAwardYear,
         movies: [{...mockAwardYear.movies[0], specialMention: '1位'}],
@@ -211,7 +211,7 @@ describe('Award year page', () => {
         />,
       );
 
-      expect(screen.queryByText('WINNER')).not.toBeInTheDocument();
+      expect(screen.queryByText('受賞')).not.toBeInTheDocument();
     });
 
     describe('順位ではない注記', () => {
@@ -230,10 +230,10 @@ describe('Award year page', () => {
         expect(screen.getByText(NOTE)).not.toHaveClass('w-7');
       });
 
-      it('注記つきの受賞作にも WINNER を出す', () => {
+      it('注記つきの受賞作にも 受賞を出す', () => {
         renderPage(notedAward);
 
-        expect(screen.getByText('WINNER')).toBeInTheDocument();
+        expect(screen.getByText('受賞')).toBeInTheDocument();
       });
 
       it('次点は順位の欄に出す', () => {

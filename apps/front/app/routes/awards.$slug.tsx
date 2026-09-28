@@ -58,7 +58,7 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
 
         <nav className="font-label text-[10px] text-ink-muted mb-4">
           <a href="/awards" className="text-ink-muted">
-            AWARDS & LISTS
+            映画賞・リスト
           </a>
         </nav>
 
@@ -73,7 +73,7 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
           <a
             href={`/watched/${award.slug}`}
             className="inline-block mb-8 border border-ink px-3 py-1.5 font-label text-xs font-bold no-underline text-ink">
-            受賞作、何本観た？ →
+            受賞作、何本観た？
           </a>
         )}
 

@@ -93,12 +93,12 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
                   )}
                 </span>
                 {nomination.isWinner ? (
-                  <span className="bg-brand px-1.5 py-0.5 font-label text-[10px] text-brand-on">
-                    ★ WINNER
+                  <span className="border border-brand px-1.5 py-0.5 font-display text-xs leading-none text-brand">
+                    受賞
                   </span>
                 ) : (
-                  <span className="border border-ink-muted px-1.5 py-0.5 font-label text-[10px]">
-                    NOMINEE
+                  <span className="border border-ink-muted px-1.5 py-0.5 font-display text-xs leading-none text-ink-muted">
+                    ノミネート
                   </span>
                 )}
               </div>

@@ -43,8 +43,8 @@ export function SearchRow({
         {title}
       </span>
       {movie.hasWinner ? (
-        <span className="font-label text-[9px] bg-brand text-brand-on px-1.5 py-0.5">
-          ★
+        <span className="border border-brand px-1.5 py-0.5 font-display text-xs leading-none text-brand">
+          受賞
         </span>
       ) : undefined}
     </a>

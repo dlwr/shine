@@ -104,7 +104,9 @@ export default function MovieDetail({
 
         {movieDetail.nominations && movieDetail.nominations.length > 0 && (
           <section className="mb-8">
-            <p className="font-label text-xs text-ink-muted mb-3">AWARDS</p>
+            <p className="font-label text-xs text-ink-muted mb-3">
+              受賞・ノミネート
+            </p>
             <AwardTree nominations={movieDetail.nominations} />
           </section>
         )}
@@ -128,7 +130,7 @@ export default function MovieDetail({
             movieDetail.credits.crew.length > 0) && (
             <section className="mb-8">
               <p className="font-label text-xs text-ink-muted mb-3">
-                CAST &amp; CREW
+                監督・出演
               </p>
               <CreditsList credits={movieDetail.credits} />
             </section>

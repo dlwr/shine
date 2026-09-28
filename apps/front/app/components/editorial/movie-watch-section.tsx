@@ -22,7 +22,7 @@ export function MovieWatchSection({
 
   return (
     <section className="mb-8">
-      <p className="font-label text-xs text-ink-muted mb-3">WATCH</p>
+      <p className="font-label text-xs text-ink-muted mb-3">観られる場所</p>
       {checking ? (
         <p className="font-label text-xs text-ink-muted mb-3">
           配信状況を確認中…

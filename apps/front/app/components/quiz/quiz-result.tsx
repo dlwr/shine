@@ -96,7 +96,7 @@ export function QuizResult({game, maxAttempts, monthly}: QuizResultProperties) {
             </span>
             <span className="font-label text-[10px]">{TAGLINE}</span>
             <span className="mt-1 self-start font-label text-xs font-bold bg-brand text-brand-on px-3 py-1 border border-ink">
-              映画ページへ →
+              映画ページへ
             </span>
           </span>
         </a>
