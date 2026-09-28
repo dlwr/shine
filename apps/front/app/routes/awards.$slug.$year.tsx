@@ -80,7 +80,7 @@ export default function AwardYearPage({loaderData}: Route.ComponentProps) {
 
         <nav className="font-label text-[10px] text-ink-muted mb-4">
           <a href="/awards" className="text-ink-muted">
-            AWARDS & LISTS
+            映画賞・リスト
           </a>
           {' / '}
           <a href={`/awards/${award.slug}`} className="text-ink-muted">
@@ -100,7 +100,7 @@ export default function AwardYearPage({loaderData}: Route.ComponentProps) {
         </div>
         <p
           className={`font-label text-xs text-ink-muted ${watchableCount > 0 ? 'mb-2' : 'mb-8'}`}>
-          {heading} / {award.movies.length} FILMS
+          {heading} 全 {award.movies.length} 本
         </p>
         {watchableCount > 0 && (
           <p className="text-sm mb-8">

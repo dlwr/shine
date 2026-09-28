@@ -10,7 +10,7 @@ import {
 const CONFIG: SelectionArchiveConfig = {
   type: 'weekly',
   path: '/weekly',
-  heading: 'WEEKLY PICKS',
+  heading: '今週の1本',
   subtitle: '「今週の1本」の過去のセレクション（日付は週の開始日・金曜）',
   metaTitle: '今週の1本 アーカイブ | SHINE',
   metaDescription:

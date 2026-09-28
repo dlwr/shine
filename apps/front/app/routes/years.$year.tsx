@@ -140,7 +140,7 @@ export default function YearPage({loaderData}: Route.ComponentProps) {
           <BigYear year={detail.year} className="text-6xl md:text-7xl" />
         </h1>
         <p className="font-label text-xs text-ink-muted mb-8">
-          {detail.movies.length} FILMS
+          {detail.movies.length} 本
         </p>
 
         <div className="border-t-[3px] border-ink">

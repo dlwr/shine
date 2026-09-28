@@ -121,7 +121,7 @@ describe('PersonPage', () => {
   it('作品数を出す', () => {
     renderPage();
 
-    expect(screen.getByText(/2 FILMS/)).toBeInTheDocument();
+    expect(screen.getByText(/出演・監督 2 本/)).toBeInTheDocument();
   });
 
   it('タイトルに人物名を含む', () => {
@@ -303,12 +303,12 @@ describe('PersonPage', () => {
       credits: person.credits.map(credit => ({...credit, personAwards: []})),
     });
 
-    expect(screen.queryByText('AWARD HISTORY')).toBeNull();
+    expect(screen.queryByText('受賞歴')).toBeNull();
   });
 
   it('個人賞があれば受賞歴の見出しを出す', () => {
     renderPage();
 
-    expect(screen.getByText('AWARD HISTORY')).toBeInTheDocument();
+    expect(screen.getByText('受賞歴')).toBeInTheDocument();
   });
 });

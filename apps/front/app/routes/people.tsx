@@ -140,17 +140,17 @@ export default function PeoplePage({loaderData}: Route.ComponentProps) {
           <a
             href="/people/crossings"
             className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold text-ink no-underline">
-            映画人の交差を見る →
+            映画人の交差を見る
           </a>
           <a
             href="/people/uncrowned"
             className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold text-ink no-underline">
-            無冠の映画人を見る →
+            無冠の映画人を見る
           </a>
         </div>
 
-        <Ranking title="DIRECTORS" subtitle="監督賞" people={directors} />
-        <Ranking title="ACTORS" subtitle="主演・助演の演技賞" people={actors} />
+        <Ranking title="監督" subtitle="監督賞" people={directors} />
+        <Ranking title="俳優" subtitle="主演・助演の演技賞" people={actors} />
 
         <SiteFooter locale={locale} />
       </div>

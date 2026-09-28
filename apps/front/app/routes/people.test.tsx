@@ -195,7 +195,7 @@ describe('People page', () => {
       renderPage();
 
       expect(
-        screen.getByRole('link', {name: '映画人の交差を見る →'}),
+        screen.getByRole('link', {name: '映画人の交差を見る'}),
       ).toHaveAttribute('href', '/people/crossings');
     });
   });

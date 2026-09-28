@@ -217,8 +217,8 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
             </h1>
             <p className="font-label text-xs text-ink-muted">
               {person.name === person.originalName
-                ? `${person.credits.length} FILMS`
-                : `${person.originalName} / ${person.credits.length} FILMS`}
+                ? `出演・監督 ${person.credits.length} 本`
+                : `${person.originalName} 出演・監督 ${person.credits.length} 本`}
             </p>
             {nominated > 0 && (
               <p className="mt-1 font-label text-xs text-ink-muted">
@@ -257,7 +257,7 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
         {personalRecords.length > 0 && (
           <section className="mb-8">
             <p className="mb-2 font-label text-xs text-ink-muted">
-              AWARD HISTORY
+              受賞歴
             </p>
             <PersonAwardHistory credits={person.credits} />
           </section>

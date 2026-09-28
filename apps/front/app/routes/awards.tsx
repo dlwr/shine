@@ -25,7 +25,7 @@ function AwardRow({award}: {award: AwardSummaryData}) {
       <span className="font-label text-xs text-ink-muted shrink-0">
         {award.grouping === 'person'
           ? `${award.personCount} PEOPLE`
-          : `${award.movieCount} FILMS`}
+          : `${award.movieCount} 本`}
       </span>
     </a>
   );
@@ -67,7 +67,7 @@ export default function AwardsIndex({loaderData}: Route.ComponentProps) {
         <Masthead locale={locale} />
 
         <h1 className="font-display font-bold text-2xl md:text-3xl mb-2">
-          AWARDS & LISTS
+          映画賞・リスト
         </h1>
         <p className="font-label text-xs text-ink-muted mb-4">
           映画賞・映画リストから作品を探す
@@ -77,17 +77,17 @@ export default function AwardsIndex({loaderData}: Route.ComponentProps) {
           <a
             href="/crossings"
             className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold no-underline text-ink">
-            賞の交差を見る →
+            賞の交差を見る
           </a>
           <a
             href="/uncrowned"
             className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold no-underline text-ink">
-            無冠の映画を見る →
+            無冠の映画を見る
           </a>
           <a
             href="/watched"
             className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold no-underline text-ink">
-            観た映画チェック →
+            観た映画チェック
           </a>
         </div>
 
@@ -100,7 +100,7 @@ export default function AwardsIndex({loaderData}: Route.ComponentProps) {
         {personAwards.length > 0 && (
           <section className="mt-10">
             <h2 className="font-display font-bold text-xl mb-2">
-              PERSONAL AWARDS
+              個人賞
             </h2>
             <p className="font-label text-xs text-ink-muted mb-4">
               監督賞・演技賞から映画人を探す

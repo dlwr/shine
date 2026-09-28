@@ -230,7 +230,7 @@ describe('Award detail page', () => {
       );
 
       expect(screen.getByText('落下の解剖学')).toBeInTheDocument();
-      expect(screen.getAllByText('WINNER')).toHaveLength(3);
+      expect(screen.getAllByText('受賞')).toHaveLength(3);
     });
 
     it('各年から出品作一覧へのリンクを表示する', () => {
@@ -457,7 +457,7 @@ describe('Person award page', () => {
   it('受賞者にWINNERバッジを表示する', () => {
     renderPersonAward();
 
-    expect(screen.getAllByText('WINNER')).toHaveLength(2);
+    expect(screen.getAllByText('受賞')).toHaveLength(2);
   });
 
   it('ノミネート作を映画ページへリンクする', () => {
@@ -492,7 +492,7 @@ describe('Person award page', () => {
     renderPersonAward();
 
     expect(
-      screen.getByText('1990–1994 / 2 WINNERS / 3 NOMINEES'),
+      screen.getByText('1990–1994 受賞 2 人・ノミネート 3 人'),
     ).toBeInTheDocument();
   });
 });

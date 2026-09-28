@@ -50,8 +50,8 @@ export function AwardMovieRow({movie}: {movie: AwardMovieEntryData}) {
           />
         </div>
         {!rank && (
-          <span className="font-label text-[9px] bg-brand text-brand-on px-1.5 py-0.5 shrink-0">
-            WINNER
+          <span className="shrink-0 border border-brand px-1.5 py-0.5 font-display text-xs leading-none text-brand">
+            受賞
           </span>
         )}
       </a>

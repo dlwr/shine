@@ -60,7 +60,7 @@ function YearSection({
           <a
             href={yearHref}
             className="ml-auto font-label text-[10px] text-ink-muted no-underline shrink-0">
-            出品作{group.filmCount}本を見る →
+            出品作{group.filmCount}本を見る
           </a>
         )}
       </div>

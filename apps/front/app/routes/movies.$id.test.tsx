@@ -721,7 +721,7 @@ describe('MovieDetail Component', () => {
         />,
       );
 
-      expect(screen.queryByText('CAST & CREW')).not.toBeInTheDocument();
+      expect(screen.queryByText('監督・出演')).not.toBeInTheDocument();
     });
 
     it('あらすじを表示する', () => {
@@ -849,10 +849,10 @@ describe('MovieDetail Component', () => {
       );
 
       // AwardTreeによる受賞表示
-      expect(screen.getByText(/WINNER/)).toBeInTheDocument();
+      expect(screen.getByText('受賞')).toBeInTheDocument();
 
       // AwardTreeによるノミネート表示
-      expect(screen.getByText(/NOMINEE/)).toBeInTheDocument();
+      expect(screen.getByText('ノミネート')).toBeInTheDocument();
     });
 
     it('404エラー状態が正常に表示される', () => {
@@ -1256,7 +1256,7 @@ describe('MovieDetail Component', () => {
 
       expect(
         screen
-          .getByText('WATCH')
+          .getByText('観られる場所')
           .compareDocumentPosition(screen.getByText('あらすじ')) &
           Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
@@ -1286,7 +1286,7 @@ describe('MovieDetail Component', () => {
       expect(
         screen
           .getByText('観た人の記事・ポスト')
-          .compareDocumentPosition(screen.getByText('CAST & CREW')) &
+          .compareDocumentPosition(screen.getByText('監督・出演')) &
           Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
     });

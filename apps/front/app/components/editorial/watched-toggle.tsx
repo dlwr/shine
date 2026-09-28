@@ -58,7 +58,7 @@ export function WatchedToggle({
       )}
       {watched && !isMonthlyPick && (
         <a href="/watched" className="font-label text-[10px] text-ink-muted">
-          観た映画チェックで進捗を見る →
+          観た映画チェックで進捗を見る
         </a>
       )}
     </div>

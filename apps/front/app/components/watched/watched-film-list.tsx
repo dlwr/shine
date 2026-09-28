@@ -41,7 +41,7 @@ function FilmRow({
       <a
         href={`/movies/${film.uid}`}
         className="font-label text-[10px] text-ink-muted no-underline shrink-0">
-        詳細 →
+        詳細
       </a>
     </div>
   );

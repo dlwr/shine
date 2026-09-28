@@ -42,8 +42,8 @@ function NomineeRow({nominee}: {nominee: PersonAwardNomineeData}) {
           )}
           <MovieLinks movies={nominee.movies} />
         </span>
-        <span className="shrink-0 bg-brand px-1.5 py-0.5 font-label text-[9px] text-brand-on">
-          WINNER
+        <span className="shrink-0 border border-brand px-1.5 py-0.5 font-display text-xs leading-none text-brand">
+          受賞
         </span>
       </div>
     );

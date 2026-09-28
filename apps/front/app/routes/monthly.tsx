@@ -10,7 +10,7 @@ import {
 const CONFIG: SelectionArchiveConfig = {
   type: 'monthly',
   path: '/monthly',
-  heading: 'MONTHLY PICKS',
+  heading: 'これまでの今月の1本',
   subtitle: '「今月の1本」の過去のセレクション',
   metaTitle: '今月の1本 アーカイブ | SHINE',
   metaDescription:

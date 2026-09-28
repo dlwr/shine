@@ -97,17 +97,17 @@ describe('awardPageTitle', () => {
 describe('awardSummaryLine', () => {
   it('年度制は受賞作数と出品作数を出す', () => {
     expect(awardSummaryLine(yearAward)).toBe(
-      '2021–2023 / 2 WINNERS / 63 FILMS',
+      '2021–2023 受賞 2 本・全 63 本',
     );
   });
 
   it('リスト型は作品数だけを出す', () => {
-    expect(awardSummaryLine(listAward)).toBe('3 FILMS');
+    expect(awardSummaryLine(listAward)).toBe('全 3 本');
   });
 
   it('個人賞は受賞者数とノミネート数を出す', () => {
     expect(awardSummaryLine(personAward)).toBe(
-      '1990–1991 / 2 WINNERS / 3 NOMINEES',
+      '1990–1991 受賞 2 人・ノミネート 3 人',
     );
   });
 });
