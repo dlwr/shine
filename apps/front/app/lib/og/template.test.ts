@@ -7,7 +7,6 @@ import {
   buildQuizCardHtml,
   buildWatchedCardHtml,
   escapeHtml,
-  splitYear,
   titleFontSize,
 } from './template';
 
@@ -20,16 +19,6 @@ describe('escapeHtml', () => {
     expect(escapeHtml('ランド・オブ・ザ・デッド')).toBe(
       'ランド・オブ・ザ・デッド',
     );
-  });
-});
-
-describe('splitYear', () => {
-  it('年を前2桁と後2桁に分ける', () => {
-    expect(splitYear(2005)).toEqual({head: '20', tail: '05'});
-  });
-
-  it('年が無ければundefinedを返す', () => {
-    expect(splitYear()).toBeUndefined();
   });
 });
 
@@ -56,6 +45,10 @@ describe('buildMovieCardHtml', () => {
     organizations: ['POPEYE'],
     availabilityLabels: ['U-NEXT 見放題'],
   };
+
+  it('年を分けずに出す', () => {
+    expect(buildMovieCardHtml(baseProperties)).toContain('>2005<');
+  });
 
   it('タイトルを含む', () => {
     expect(buildMovieCardHtml(baseProperties)).toContain(
@@ -229,8 +222,8 @@ describe('buildPersonCardHtml', () => {
     expect(html.split('Clint Eastwood').length - 1).toBe(1);
   });
 
-  it('作品数を含む', () => {
-    expect(buildPersonCardHtml(baseProperties)).toContain('21');
+  it('作品数を日本語の見出しで出す', () => {
+    expect(buildPersonCardHtml(baseProperties)).toContain('出演・監督 21 本');
   });
 
   it('代表作を含む', () => {
@@ -277,6 +270,12 @@ describe('buildWatchedCardHtml', () => {
     });
 
     expect(html.match(/パルム・ドール/g)).toHaveLength(1);
+  });
+
+  it('観た映画チェックの見出しを出す', () => {
+    expect(buildWatchedCardHtml(baseProperties)).toContain(
+      '>観た映画チェック<',
+    );
   });
 
   it('観た本数と総数と割合を含む', () => {
