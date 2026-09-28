@@ -99,9 +99,7 @@ export default function AwardsIndex({loaderData}: Route.ComponentProps) {
 
         {personAwards.length > 0 && (
           <section className="mt-10">
-            <h2 className="font-display font-bold text-xl mb-2">
-              個人賞
-            </h2>
+            <h2 className="font-display font-bold text-xl mb-2">個人賞</h2>
             <p className="font-label text-xs text-ink-muted mb-4">
               監督賞・演技賞から映画人を探す
             </p>

@@ -96,9 +96,7 @@ describe('awardPageTitle', () => {
 
 describe('awardSummaryLine', () => {
   it('年度制は受賞作数と出品作数を出す', () => {
-    expect(awardSummaryLine(yearAward)).toBe(
-      '2021–2023 受賞 2 本・全 63 本',
-    );
+    expect(awardSummaryLine(yearAward)).toBe('2021–2023 受賞 2 本・全 63 本');
   });
 
   it('リスト型は作品数だけを出す', () => {

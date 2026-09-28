@@ -216,9 +216,7 @@ describe('Awards index page', () => {
         />,
       );
 
-      expect(
-        screen.getByRole('heading', {name: '個人賞'}),
-      ).toBeInTheDocument();
+      expect(screen.getByRole('heading', {name: '個人賞'})).toBeInTheDocument();
     });
   });
 });

@@ -256,9 +256,7 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
 
         {personalRecords.length > 0 && (
           <section className="mb-8">
-            <p className="mb-2 font-label text-xs text-ink-muted">
-              受賞歴
-            </p>
+            <p className="mb-2 font-label text-xs text-ink-muted">受賞歴</p>
             <PersonAwardHistory credits={person.credits} />
           </section>
         )}
