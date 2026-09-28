@@ -10,6 +10,7 @@ import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import type {SelectionPreviewData} from '@/lib/api-types';
+import {TAGLINE} from '@/lib/tagline';
 
 type SelectionHistoryItem = {
   uid: string;
@@ -130,21 +131,68 @@ function CalendarLinks({calendarPath}: {calendarPath: string}) {
 
 function rowLabel(
   config: SelectionArchiveConfig,
-  item: SelectionHistoryItem,
-  currentMonth: string,
   isNext: boolean,
 ): string | undefined {
-  if (config.type !== 'monthly') {
-    return undefined;
-  }
-
-  if (isNext) {
-    return '来月の1本 — 先に観ておくなら';
-  }
-
-  return item.selectionDate.startsWith(currentMonth)
-    ? '今月みんなで観ている1本'
+  return isNext && config.type === 'monthly'
+    ? '来月の1本 — 先に観ておくなら'
     : undefined;
+}
+
+const CURRENT_MONTHLY_LABEL = '今月みんなで観ている1本';
+
+function CurrentMonthlyPick({
+  item,
+  transformImages,
+}: {
+  item: SelectionHistoryItem;
+  transformImages: boolean;
+}) {
+  const movieHref = `/movies/${item.uid}`;
+
+  return (
+    <section
+      aria-labelledby="current-monthly-pick"
+      className="flex gap-4 mb-8 pb-6 border-b-[4px] border-double border-rule">
+      <a
+        href={movieHref}
+        aria-hidden="true"
+        tabIndex={-1}
+        className="block w-24 md:w-32 shrink-0 no-underline">
+        <PosterFrame
+          posterUrl={item.posterUrl}
+          alt={item.title}
+          displaySize="w185"
+          transformImages={transformImages}
+          className="w-full"
+        />
+      </a>
+      <div className="flex min-w-0 flex-col gap-2">
+        <h2
+          id="current-monthly-pick"
+          className="font-display text-sm font-bold text-brand">
+          {CURRENT_MONTHLY_LABEL}
+        </h2>
+        <a
+          href={movieHref}
+          className="font-display font-bold text-xl md:text-2xl leading-tight text-ink no-underline">
+          『{item.title}』{item.year ? `(${item.year})` : ''}
+        </a>
+        <p className="font-display text-sm text-ink-muted">{TAGLINE}</p>
+        {(item.articleLinkCount ?? 0) > 0 && (
+          <p className="font-label text-xs text-ink-muted">
+            みんなの投稿 {item.articleLinkCount} 件
+          </p>
+        )}
+        <p className="mt-1">
+          <a
+            href={`${movieHref}#article-links`}
+            className="inline-block border border-ink bg-ink px-4 py-2 font-label text-sm font-bold text-paper no-underline">
+            観たら感想・ポストのリンクを貼る
+          </a>
+        </p>
+      </div>
+    </section>
+  );
 }
 
 export function SelectionArchivePage({
@@ -158,12 +206,14 @@ export function SelectionArchivePage({
   config: SelectionArchiveConfig;
 } & SelectionArchiveData) {
   const formatDate = config.formatDate ?? ((date: string) => date);
-  const rows = next
-    ? [
-        {item: next, isNext: true},
-        ...items.map(item => ({item, isNext: false})),
-      ]
-    : items.map(item => ({item, isNext: false}));
+  const current =
+    config.type === 'monthly'
+      ? items.find(item => item.selectionDate.startsWith(currentMonth))
+      : undefined;
+  const pastRows = items
+    .filter(item => item !== current)
+    .map(item => ({item, isNext: false}));
+  const rows = next ? [{item: next, isNext: true}, ...pastRows] : pastRows;
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -199,6 +249,13 @@ export function SelectionArchivePage({
           )}
         </nav>
 
+        {current && (
+          <CurrentMonthlyPick
+            item={current}
+            transformImages={transformImages}
+          />
+        )}
+
         <div>
           {rows.map(({item, isNext}) => (
             <a
@@ -220,9 +277,9 @@ export function SelectionArchivePage({
                 {formatDate(item.selectionDate)}
               </span>
               <span className="flex-1 min-w-0">
-                {rowLabel(config, item, currentMonth, isNext) && (
+                {rowLabel(config, isNext) && (
                   <span className="block font-label text-xs font-bold text-brand mb-1">
-                    {rowLabel(config, item, currentMonth, isNext)}
+                    {rowLabel(config, isNext)}
                   </span>
                 )}
                 <span className="block font-display font-extrabold text-base md:text-lg leading-tight">
