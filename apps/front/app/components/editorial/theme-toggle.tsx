@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react';
 import {applyTheme, type Theme} from '@/lib/theme';
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
     setTheme(
@@ -16,7 +16,7 @@ export function ThemeToggle() {
     setTheme(next);
   };
 
-  const label = theme === 'dark' ? '☾ DARK' : '☀ LIGHT';
+  const label = theme === 'dark' ? 'Dark' : 'Light';
 
   return (
     <button
@@ -24,7 +24,7 @@ export function ThemeToggle() {
       aria-label={`${label} — テーマを切り替える`}
       aria-pressed={theme === 'dark'}
       onClick={toggle}
-      className="font-mono text-xs border-2 border-ink px-2 py-1 text-ink">
+      className="font-label text-sm text-ink-muted underline">
       {label}
     </button>
   );

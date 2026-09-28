@@ -7,13 +7,12 @@ describe('resolveTheme', () => {
   });
 
   it('保存済みの値を優先する', () => {
-    localStorage.setItem(THEME_KEY, 'dark');
-    expect(resolveTheme(false)).toBe('dark');
+    localStorage.setItem(THEME_KEY, 'light');
+    expect(resolveTheme()).toBe('light');
   });
 
-  it('保存が無ければ OS 設定に追従する', () => {
-    expect(resolveTheme(true)).toBe('dark');
-    expect(resolveTheme(false)).toBe('light');
+  it('保存が無ければ暗い画面にする', () => {
+    expect(resolveTheme()).toBe('dark');
   });
 });
 

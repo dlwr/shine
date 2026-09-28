@@ -75,13 +75,13 @@ describe('Masthead', () => {
   it('英語ロケールでは英語のタグラインを描画する', () => {
     render(<Masthead locale="en" />);
 
-    expect(screen.getByText(/ONE FILM A MONTH/i)).toBeInTheDocument();
+    expect(screen.getByText(/One film a month/i)).toBeInTheDocument();
   });
 
   it('狭い画面ではナビの項目を閉じた状態で描画する', () => {
     render(<Masthead locale="ja" />);
 
-    expect(screen.getByRole('button', {name: 'MENU'})).toHaveAttribute(
+    expect(screen.getByRole('button', {name: 'メニュー'})).toHaveAttribute(
       'aria-expanded',
       'false',
     );
@@ -98,7 +98,7 @@ describe('Masthead', () => {
   it('MENU を押すとナビの項目を開く', () => {
     render(<Masthead locale="ja" />);
 
-    fireEvent.click(screen.getByRole('button', {name: 'MENU'}));
+    fireEvent.click(screen.getByRole('button', {name: 'メニュー'}));
 
     expect(screen.getByRole('navigation', {name: 'Site'})).not.toHaveClass(
       'hidden',
@@ -107,7 +107,7 @@ describe('Masthead', () => {
 
   it('MENU をもう一度押すとナビの項目を閉じる', () => {
     render(<Masthead locale="ja" />);
-    const menu = screen.getByRole('button', {name: 'MENU'});
+    const menu = screen.getByRole('button', {name: 'メニュー'});
 
     fireEvent.click(menu);
     fireEvent.click(menu);
