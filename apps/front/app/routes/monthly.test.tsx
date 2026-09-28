@@ -217,14 +217,16 @@ describe('Monthly archive page', () => {
     it('月をYYYY-MM形式で表示する', () => {
       render(<MonthlyArchivePage {...createComponentProperties()} />);
 
-      expect(screen.getByText('2026-08')).toBeInTheDocument();
-      expect(screen.queryByText('2026-08-01')).not.toBeInTheDocument();
+      expect(screen.getByText('2026-07')).toBeInTheDocument();
+      expect(screen.queryByText('2026-07-01')).not.toBeInTheDocument();
     });
 
     it('ポスターを表示する', () => {
       render(<MonthlyArchivePage {...createComponentProperties()} />);
 
-      expect(screen.getByRole('img', {name: '脱出'})).toHaveAttribute(
+      expect(
+        screen.getByRole('img', {name: '脱出', hidden: true}),
+      ).toHaveAttribute(
         'src',
         'https://image.tmdb.org/t/p/w185/deliverance.jpg',
       );
@@ -242,11 +244,43 @@ describe('Monthly archive page', () => {
       expect(screen.getAllByText(/みんなの投稿/)).toHaveLength(1);
     });
 
-    it('今月の行に「今月みんなで観ている1本」と出す', () => {
+    it('今月の1本に「今月みんなで観ている1本」と出す', () => {
       render(<MonthlyArchivePage {...createComponentProperties()} />);
 
-      const link = screen.getByRole('link', {name: /脱出/});
-      expect(link).toHaveTextContent('今月みんなで観ている1本');
+      expect(
+        screen.getByRole('region', {name: '今月みんなで観ている1本'}),
+      ).toHaveTextContent('脱出');
+    });
+
+    it('今月の1本に「毎月1本、みんなで同じ映画を観る」と出す', () => {
+      render(<MonthlyArchivePage {...createComponentProperties()} />);
+
+      expect(
+        screen.getByRole('region', {name: '今月みんなで観ている1本'}),
+      ).toHaveTextContent('毎月1本、みんなで同じ映画を観る');
+    });
+
+    it('今月の1本に投稿欄へのリンクを出す', () => {
+      render(<MonthlyArchivePage {...createComponentProperties()} />);
+
+      expect(
+        screen.getByRole('link', {name: '観たら感想・ポストのリンクを貼る'}),
+      ).toHaveAttribute('href', '/movies/movie-1#article-links');
+    });
+
+    it('今月の1本を最初に出す', () => {
+      render(<MonthlyArchivePage {...createComponentProperties()} />);
+
+      const firstMovieLink = screen
+        .getAllByRole('link')
+        .find(link => link.getAttribute('href')?.startsWith('/movies/'));
+      expect(firstMovieLink).toHaveAttribute('href', '/movies/movie-1');
+    });
+
+    it('今月の1本を一覧に重ねて出さない', () => {
+      render(<MonthlyArchivePage {...createComponentProperties()} />);
+
+      expect(screen.getAllByRole('link', {name: /脱出/})).toHaveLength(1);
     });
 
     it('過去の月には「今月みんなで観ている1本」を出さない', () => {
@@ -255,12 +289,17 @@ describe('Monthly archive page', () => {
       expect(screen.getAllByText('今月みんなで観ている1本')).toHaveLength(1);
     });
 
-    it('来月の1本を先頭に出す', () => {
+    it('来月の1本を一覧の先頭に出す', () => {
       render(<MonthlyArchivePage {...createComponentProperties()} />);
 
       const link_ = screen
         .getAllByRole('link')
-        .find(link => link.getAttribute('href')?.startsWith('/movies/'));
+        .find(
+          link =>
+            link.getAttribute('href')?.startsWith('/movies/') &&
+            link.getAttribute('href') !== '/movies/movie-1' &&
+            !link.getAttribute('href')?.includes('#'),
+        );
       expect(link_).toHaveAttribute('href', '/movies/movie-next');
       expect(link_).toHaveTextContent('来月の1本');
       expect(link_).toHaveTextContent('2026-09');
