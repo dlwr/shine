@@ -33,7 +33,7 @@ export function PosterFrame({
         style={{background: 'var(--poster-glow)'}}
       />
       <div
-        className="poster-glow-target relative aspect-2/3 overflow-hidden border-2 border-ink"
+        className="poster-glow-target relative aspect-2/3 overflow-hidden border border-ink"
         style={{background: 'var(--poster-bg)'}}>
         {source ? (
           <img
@@ -45,7 +45,7 @@ export function PosterFrame({
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full items-center justify-center font-mono text-xs text-ink-muted">
+          <div className="flex h-full items-center justify-center font-label text-xs text-ink-muted">
             {placeholderLabel}
           </div>
         )}

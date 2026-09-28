@@ -26,7 +26,7 @@ export function CeremonyListTable({ceremonies}: CeremonyListTableProperties) {
             {COLUMNS.map(column => (
               <th
                 key={column}
-                className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-gray-500">
                 {column}
               </th>
             ))}

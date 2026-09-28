@@ -37,8 +37,8 @@ export function CrossingMatrix({
   const max = Math.max(...pairs.map(pair => pair.shared), 1);
 
   return (
-    <div className="overflow-x-auto border-2 border-ink">
-      <table className="border-separate border-spacing-0 font-mono text-[10px]">
+    <div className="overflow-x-auto border border-ink">
+      <table className="border-separate border-spacing-0 font-label text-[10px]">
         <thead>
           <tr>
             <td className="sticky left-0 z-10 border-b-2 border-r-2 border-ink bg-paper" />

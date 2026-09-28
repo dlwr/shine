@@ -104,14 +104,14 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
         <Masthead locale={locale} />
 
         <div className="flex items-baseline justify-between gap-3 mb-2">
-          <h1 className="font-display font-black text-2xl md:text-3xl tracking-tight">
+          <h1 className="font-display font-bold text-2xl md:text-3xl">
             TODAY&apos;S QUIZ
           </h1>
-          <span className="font-mono text-xs text-ink-muted">
+          <span className="font-label text-xs text-ink-muted">
             {puzzle.date}
           </span>
         </div>
-        <p className="font-mono text-xs text-ink-muted mb-6">
+        <p className="font-label text-xs text-ink-muted mb-6">
           ポスターの一部と5つのヒントから、今日の1本を当てる（全
           {puzzle.poolSize.toLocaleString('ja-JP')}本）
           {streak >= 2 ? ` — ${streak}日連続正解中` : ''}
@@ -126,7 +126,7 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
             />
           )}
 
-          <div className="border-2 border-ink bg-surface md:col-start-1 md:row-start-1 md:row-span-2">
+          <div className="border border-ink bg-surface md:col-start-1 md:row-start-1 md:row-span-2">
             <img
               src={quizPosterUrl(puzzle.date, stage, transformImages ?? false)}
               alt={isFinished ? game.answer?.title : 'ポスターの一部'}

@@ -117,7 +117,7 @@ function CalendarLinks({calendarPath}: {calendarPath: string}) {
   const googleUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`;
 
   return (
-    <p className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs mb-4">
+    <p className="flex flex-wrap gap-x-4 gap-y-1 font-label text-xs mb-4">
       <a href={webcalUrl} className="text-ink underline">
         カレンダーに登録
       </a>
@@ -170,10 +170,10 @@ export function SelectionArchivePage({
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Masthead locale={locale} />
 
-        <h1 className="font-display font-black text-2xl md:text-3xl tracking-tight mb-2">
+        <h1 className="font-display font-bold text-2xl md:text-3xl mb-2">
           {config.heading}
         </h1>
-        <p className="font-mono text-xs text-ink-muted mb-4">
+        <p className="font-label text-xs text-ink-muted mb-4">
           {config.subtitle}
         </p>
         {config.calendarPath && (
@@ -185,14 +185,14 @@ export function SelectionArchivePage({
             link.path === config.path ? (
               <span
                 key={link.path}
-                className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-ink bg-brand text-brand-on">
+                className="font-label text-xs font-bold px-2.5 py-1 border border-ink bg-brand text-brand-on">
                 {link.label}
               </span>
             ) : (
               <a
                 key={link.path}
                 href={link.path}
-                className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-ink text-ink no-underline">
+                className="font-label text-xs font-bold px-2.5 py-1 border border-ink text-ink no-underline">
                 {link.label}
               </a>
             ),
@@ -216,12 +216,12 @@ export function SelectionArchivePage({
                   className="w-14 shrink-0"
                 />
               )}
-              <span className="font-mono text-xs text-ink-muted shrink-0">
+              <span className="font-label text-xs text-ink-muted shrink-0">
                 {formatDate(item.selectionDate)}
               </span>
               <span className="flex-1 min-w-0">
                 {rowLabel(config, item, currentMonth, isNext) && (
-                  <span className="block font-mono text-xs font-bold text-brand mb-1">
+                  <span className="block font-label text-xs font-bold text-brand mb-1">
                     {rowLabel(config, item, currentMonth, isNext)}
                   </span>
                 )}
@@ -229,7 +229,7 @@ export function SelectionArchivePage({
                   『{item.title}』{item.year ? `(${item.year})` : ''}
                 </span>
                 {(item.articleLinkCount ?? 0) > 0 && (
-                  <span className="block font-mono text-xs text-ink-muted mt-1">
+                  <span className="block font-label text-xs text-ink-muted mt-1">
                     みんなの投稿 {item.articleLinkCount} 件
                   </span>
                 )}

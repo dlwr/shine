@@ -23,19 +23,19 @@ export function NominationTable({
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-gray-500">
               映画
             </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-gray-500">
               部門
             </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-gray-500">
               受賞
             </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-gray-500">
               特記事項
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <th className="px-4 py-3 text-right text-xs font-semibold tracking-wider text-gray-500">
               操作
             </th>
           </tr>

@@ -16,13 +16,13 @@ function AwardRow({award}: {award: AwardSummaryData}) {
         <span className="block font-display font-extrabold text-base md:text-lg leading-tight">
           {awardHeading(award)}
         </span>
-        <span className="block font-mono text-[10px] text-ink-muted mt-1">
+        <span className="block font-label text-[10px] text-ink-muted mt-1">
           {award.firstYear === award.lastYear
             ? award.firstYear
             : `${award.firstYear}–${award.lastYear}`}
         </span>
       </span>
-      <span className="font-mono text-xs text-ink-muted shrink-0">
+      <span className="font-label text-xs text-ink-muted shrink-0">
         {award.grouping === 'person'
           ? `${award.personCount} PEOPLE`
           : `${award.movieCount} FILMS`}
@@ -66,27 +66,27 @@ export default function AwardsIndex({loaderData}: Route.ComponentProps) {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Masthead locale={locale} />
 
-        <h1 className="font-display font-black text-2xl md:text-3xl tracking-tight mb-2">
+        <h1 className="font-display font-bold text-2xl md:text-3xl mb-2">
           AWARDS & LISTS
         </h1>
-        <p className="font-mono text-xs text-ink-muted mb-4">
+        <p className="font-label text-xs text-ink-muted mb-4">
           映画賞・映画リストから作品を探す
         </p>
 
         <div className="mb-8 flex flex-wrap gap-3">
           <a
             href="/crossings"
-            className="inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold no-underline text-ink shadow-[3px_3px_0_var(--brand)]">
+            className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold no-underline text-ink">
             賞の交差を見る →
           </a>
           <a
             href="/uncrowned"
-            className="inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold no-underline text-ink shadow-[3px_3px_0_var(--brand)]">
+            className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold no-underline text-ink">
             無冠の映画を見る →
           </a>
           <a
             href="/watched"
-            className="inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold no-underline text-ink shadow-[3px_3px_0_var(--brand)]">
+            className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold no-underline text-ink">
             観た映画チェック →
           </a>
         </div>
@@ -99,10 +99,10 @@ export default function AwardsIndex({loaderData}: Route.ComponentProps) {
 
         {personAwards.length > 0 && (
           <section className="mt-10">
-            <h2 className="font-display font-black text-xl tracking-tight mb-2">
+            <h2 className="font-display font-bold text-xl mb-2">
               PERSONAL AWARDS
             </h2>
-            <p className="font-mono text-xs text-ink-muted mb-4">
+            <p className="font-label text-xs text-ink-muted mb-4">
               監督賞・演技賞から映画人を探す
             </p>
             <div>

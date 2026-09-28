@@ -4,18 +4,18 @@ import {posterUrlForDisplay} from '@/lib/poster-size';
 const COPY = {
   ja: {
     label: '今月の1本',
-    cta: 'みんなで観る →',
+    cta: 'みんなで観る',
     ownLabel: 'この映画が今月の1本',
-    ownCta: '観たら記事・ポストを貼る →',
+    ownCta: '観たら記事・ポストを貼る',
     watched: (count: number) => `観た人 ${count} 人`,
     award: (award: MonthlyPickAward) =>
       `${award.organization} ${award.category} ${award.isWinner ? '受賞' : '選出'}（${award.year}）`,
   },
   en: {
-    label: 'THIS MONTH',
-    cta: 'Watch together →',
-    ownLabel: "THIS MONTH'S FILM",
-    ownCta: 'Add your post →',
+    label: 'This month',
+    cta: 'Watch together',
+    ownLabel: "This month's film",
+    ownCta: 'Add your post',
     watched: (count: number) => `${count} watched`,
     award: (award: MonthlyPickAward) =>
       `${award.isWinner ? 'Won' : 'Selected'} ${award.organization} ${award.category} (${award.year})`,
@@ -61,7 +61,7 @@ export function MonthlyBand({
     .join(' · ');
 
   return (
-    <aside className="border-b-2 border-ink bg-surface">
+    <aside className="border-b border-rule bg-surface">
       <a
         href={href}
         className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-2 no-underline text-ink">
@@ -75,24 +75,24 @@ export function MonthlyBand({
           />
         )}
         <span className="min-w-0 flex-1 leading-tight">
-          <span className="block font-mono text-[10px] font-bold uppercase text-brand">
+          <span className="block font-display text-xs font-bold text-brand">
             {isOwnPage ? copy.ownLabel : copy.label}
           </span>
           <span className="line-clamp-2 font-display text-sm font-bold">
             {monthly.title}
             {monthly.year && (
-              <span className="ml-1.5 font-mono text-[10px] font-normal text-ink-muted">
+              <span className="ml-1.5 font-label text-[10px] font-normal text-ink-muted">
                 {monthly.year}
               </span>
             )}
           </span>
           {subline && (
-            <span className="block truncate font-mono text-[10px] text-ink-muted">
+            <span className="block truncate font-label text-[10px] text-ink-muted">
               {subline}
             </span>
           )}
         </span>
-        <span className="shrink-0 font-mono text-[10px] font-bold text-ink-muted">
+        <span className="shrink-0 font-label text-xs text-ink-muted underline">
           {isOwnPage ? copy.ownCta : copy.cta}
         </span>
       </a>

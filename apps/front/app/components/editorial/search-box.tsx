@@ -149,7 +149,7 @@ export function SearchBox({
 
   return (
     <form method="get" action="/search" role="search" className="relative">
-      <div className="flex border-[3px] border-ink shadow-[var(--shadow-offset-sm)]">
+      <div className="flex border border-ink">
         <input
           type="search"
           name="q"
@@ -178,7 +178,7 @@ export function SearchBox({
         />
         <button
           type="submit"
-          className="bg-ink px-4 font-display font-black text-paper">
+          className="bg-ink px-4 font-display font-bold text-paper">
           GO
         </button>
       </div>
@@ -189,7 +189,7 @@ export function SearchBox({
           onMouseDown={event => {
             event.preventDefault();
           }}
-          className="absolute right-0 left-0 z-10 mt-1 list-none border-[3px] border-ink bg-surface p-0 shadow-[var(--shadow-offset-sm)]">
+          className="absolute right-0 left-0 z-10 mt-1 list-none border border-ink bg-surface p-0">
           {items.map((item, index) => (
             <li
               key={item.href}
@@ -201,7 +201,7 @@ export function SearchBox({
                 href={item.href}
                 className="flex items-baseline justify-between gap-3 px-3 py-2 text-inherit no-underline">
                 <span className="font-display font-bold">{item.primary}</span>
-                <span className="shrink-0 font-mono text-[10px] opacity-70">
+                <span className="shrink-0 font-label text-[10px] opacity-70">
                   {item.group}
                   {item.secondary ? ` · ${item.secondary}` : ''}
                 </span>

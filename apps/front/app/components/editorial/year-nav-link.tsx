@@ -15,7 +15,7 @@ export function YearNavLink({
   return (
     <a
       href={href}
-      className={`w-24 font-mono text-xs text-ink no-underline ${
+      className={`w-24 font-label text-xs text-ink no-underline ${
         label === 'NEXT' ? 'text-right' : ''
       }`}>
       {text}

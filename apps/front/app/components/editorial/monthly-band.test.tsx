@@ -96,7 +96,7 @@ describe('MonthlyBand', () => {
     render(<MonthlyBand monthly={monthly} locale="en" currentPath="/awards" />);
 
     const link = screen.getByRole('link');
-    expect(link).toHaveTextContent('THIS MONTH');
+    expect(link).toHaveTextContent('This month');
     expect(link).toHaveTextContent('Watch together');
   });
 

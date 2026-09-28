@@ -81,11 +81,11 @@ function ListRow({
           <span className="block font-display font-extrabold text-base md:text-lg leading-tight">
             {list.heading}
           </span>
-          <span className="block font-mono text-[10px] text-ink-muted mt-1">
+          <span className="block font-label text-[10px] text-ink-muted mt-1">
             {yearRange(list)}
           </span>
         </span>
-        <span className="font-mono text-xs shrink-0 tabular-nums">
+        <span className="font-label text-xs shrink-0 tabular-nums">
           <span className="font-bold text-brand">{stats.count}</span>
           <span className="text-ink-muted"> / {stats.total}</span>
         </span>
@@ -117,33 +117,33 @@ export default function WatchedIndexPage({loaderData}: Route.ComponentProps) {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Masthead locale={locale} />
 
-        <h1 className="font-display font-black text-2xl md:text-3xl tracking-tight mb-2">
+        <h1 className="font-display font-bold text-2xl md:text-3xl mb-2">
           WATCHED
         </h1>
-        <p className="font-mono text-xs text-ink-muted mb-6">
+        <p className="font-label text-xs text-ink-muted mb-6">
           映画賞の歴代受賞作、何本観た？
           チェックはこの端末に保存され、結果は共有URLで見せられる
         </p>
 
-        <section className="border-2 border-ink bg-surface p-4 mb-8">
-          <p className="font-mono text-[10px] text-ink-muted mb-2">
+        <section className="border border-ink bg-surface p-4 mb-8">
+          <p className="font-label text-[10px] text-ink-muted mb-2">
             {lists.length}リストの受賞作（重複を除く）
           </p>
           <div className="flex items-end gap-3">
             <span
               data-testid="watched-total-count"
-              className="font-display font-black text-5xl md:text-6xl leading-none text-brand tabular-nums">
+              className="font-display font-bold text-5xl md:text-6xl leading-none text-brand tabular-nums">
               {overall.count}
             </span>
-            <span className="font-display font-black text-2xl leading-none tabular-nums">
+            <span className="font-display font-bold text-2xl leading-none tabular-nums">
               / {overall.total}
             </span>
-            <span className="font-mono text-sm text-ink-muted ml-auto tabular-nums">
+            <span className="font-label text-sm text-ink-muted ml-auto tabular-nums">
               {overall.percent}%
             </span>
           </div>
           <div
-            className="h-3 border-2 border-ink mt-3"
+            className="h-3 border border-ink mt-3"
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={overall.total}

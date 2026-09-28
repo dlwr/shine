@@ -132,7 +132,7 @@ export const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
       <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] border-collapse text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <thead className="bg-slate-50 text-left text-xs font-semibold tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3">Poster</th>
                 <th className="px-4 py-3">Title</th>
@@ -228,7 +228,7 @@ export const MoviesList = memo(({apiUrl}: {apiUrl: string}) => {
             className="min-w-[120px]">
             Previous
           </Button>
-          <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+          <span className="text-xs font-medium tracking-wide text-slate-500">
             Page {pagination.page} of {pagination.totalPages}
           </span>
           <Button

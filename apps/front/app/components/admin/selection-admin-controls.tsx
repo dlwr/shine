@@ -108,12 +108,12 @@ export function SelectionAdminControls({
           asChild
           variant="outline"
           size="sm"
-          className="w-full border-2 border-ink font-mono text-xs">
+          className="w-full border border-ink font-label text-xs">
           <a href={`/admin/movies/${movieUid}`}>{editLabel}</a>
         </Button>
       )}
       <Button
-        className="w-full border-2 border-ink font-mono text-xs"
+        className="w-full border border-ink font-label text-xs"
         size="sm"
         onClick={() => {
           void handleReselect();
@@ -121,7 +121,7 @@ export function SelectionAdminControls({
         disabled={isLoading}>
         {isLoading ? (
           <div className="flex items-center justify-center">
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ink border-t-transparent mr-2" />
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border border-ink border-t-transparent mr-2" />
             {processingLabel}
           </div>
         ) : (
@@ -131,7 +131,7 @@ export function SelectionAdminControls({
       <Button
         variant="outline"
         size="sm"
-        className="w-full border-2 border-ink font-mono text-xs"
+        className="w-full border border-ink font-label text-xs"
         onClick={() => {
           setIsSearchVisible(previous => !previous);
         }}

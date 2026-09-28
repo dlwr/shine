@@ -40,7 +40,7 @@ function PersonRow({person, rank}: {person: ProminentPerson; rank: number}) {
     <li
       aria-label={person.name}
       className="flex items-start gap-3 border-t-2 border-ink py-3">
-      <span className="w-6 shrink-0 pt-1 font-mono text-xs tabular-nums text-ink-muted">
+      <span className="w-6 shrink-0 pt-1 font-label text-xs tabular-nums text-ink-muted">
         {String(rank).padStart(2, '0')}
       </span>
       <PersonPortrait
@@ -55,11 +55,11 @@ function PersonRow({person, rank}: {person: ProminentPerson; rank: number}) {
           {person.name}
         </a>
         {person.originalName !== person.name && (
-          <p className="font-mono text-[10px] text-ink-muted">
+          <p className="font-label text-[10px] text-ink-muted">
             {person.originalName}
           </p>
         )}
-        <p className="mt-0.5 font-mono text-[10px] text-ink-muted">
+        <p className="mt-0.5 font-label text-[10px] text-ink-muted">
           <span className="font-bold text-brand">{person.wonCount}</span>
           回受賞 / {person.nominatedCount}回ノミネート
         </p>
@@ -68,7 +68,7 @@ function PersonRow({person, rank}: {person: ProminentPerson; rank: number}) {
             <a
               key={movie.uid}
               href={`/movies/${movie.uid}`}
-              className="border-b border-ink-muted font-mono text-[10px] text-ink no-underline">
+              className="border-b border-ink-muted font-label text-[10px] text-ink no-underline">
               {movie.title ?? 'Unknown Title'}
               {movie.year ? ` ${movie.year}` : ''}
             </a>
@@ -90,10 +90,8 @@ function Ranking({
 }) {
   return (
     <section className="mb-10">
-      <h2 className="font-display text-xl font-black tracking-tight">
-        {title}
-      </h2>
-      <p className="mb-3 font-mono text-xs text-ink-muted">{subtitle}</p>
+      <h2 className="font-display text-xl font-bold">{title}</h2>
+      <p className="mb-3 font-label text-xs text-ink-muted">{subtitle}</p>
       <ul className="list-none border-b-2 border-ink p-0">
         {people.map((person, index) => (
           <PersonRow key={person.uid} person={person} rank={index + 1} />
@@ -115,10 +113,10 @@ export default function PeoplePage({loaderData}: Route.ComponentProps) {
       <div className="mx-auto max-w-4xl px-4 py-8">
         <Masthead locale={locale} />
 
-        <h1 className="mb-2 font-display text-2xl font-black tracking-tight md:text-3xl">
+        <h1 className="mb-2 font-display text-2xl font-bold md:text-3xl">
           PEOPLE
         </h1>
-        <p className="mb-8 font-mono text-xs text-ink-muted">
+        <p className="mb-8 font-label text-xs text-ink-muted">
           最も多く勝った映画人
         </p>
 
@@ -141,12 +139,12 @@ export default function PeoplePage({loaderData}: Route.ComponentProps) {
         <div className="mb-8 flex flex-wrap gap-3">
           <a
             href="/people/crossings"
-            className="inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold text-ink no-underline shadow-[3px_3px_0_var(--brand)]">
+            className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold text-ink no-underline">
             映画人の交差を見る →
           </a>
           <a
             href="/people/uncrowned"
-            className="inline-block border-2 border-ink px-3 py-1.5 font-mono text-xs font-bold text-ink no-underline shadow-[3px_3px_0_var(--brand)]">
+            className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold text-ink no-underline">
             無冠の映画人を見る →
           </a>
         </div>

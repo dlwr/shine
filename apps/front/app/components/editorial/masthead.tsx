@@ -2,59 +2,65 @@ import {useState} from 'react';
 import {ThemeToggle} from './theme-toggle';
 import {LanguageSelector} from '@/components/molecules/language-selector';
 
-function today(): string {
-  const d = new Date();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}.${mm}.${dd}`;
-}
-
 const TAGLINES = {
-  ja: ['毎月1本、みんなで', '同じ映画を観る'],
-  en: ['ONE FILM A MONTH,', 'WATCHED TOGETHER'],
+  ja: '毎月1本、みんなで同じ映画を観る',
+  en: 'One film a month, watched together',
 } as const;
 
 const NAV_LINKS = [
-  {href: '/quiz', label: 'QUIZ', ariaLabel: 'Quiz'},
-  {href: '/watched', label: 'WATCHED', ariaLabel: 'Watched films'},
-  {href: '/daily', label: 'DAILY', ariaLabel: 'Daily picks'},
-  {href: '/awards', label: 'AWARDS', ariaLabel: 'Awards'},
-  {href: '/people', label: 'PEOPLE', ariaLabel: 'People'},
-  {href: '/years', label: 'YEARS', ariaLabel: 'Years'},
+  {href: '/quiz', ja: 'クイズ', en: 'Quiz', ariaLabel: 'Quiz'},
+  {href: '/watched', ja: '観た映画', en: 'Watched', ariaLabel: 'Watched films'},
+  {href: '/daily', ja: '日替わり', en: 'Daily', ariaLabel: 'Daily picks'},
+  {href: '/awards', ja: '映画賞', en: 'Awards', ariaLabel: 'Awards'},
+  {href: '/people', ja: '人物', en: 'People', ariaLabel: 'People'},
+  {href: '/years', ja: '年代', en: 'Years', ariaLabel: 'Years'},
 ] as const;
 
-export function Masthead({locale = 'en'}: {locale?: string}) {
-  const [taglineTop, taglineBottom] =
-    TAGLINES[locale as keyof typeof TAGLINES] ?? TAGLINES.en;
+const CONTROLS = {
+  ja: {search: '検索', menu: 'メニュー'},
+  en: {search: 'Search', menu: 'Menu'},
+} as const;
+
+export function Masthead({
+  locale = 'en',
+  showTagline = true,
+}: {
+  locale?: string;
+  showTagline?: boolean;
+}) {
+  const lang = locale === 'ja' ? 'ja' : 'en';
+  const controls = CONTROLS[lang];
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="relative flex flex-wrap items-end justify-between gap-x-4 gap-y-2.5 border-b-2 border-ink pb-2.5 mb-6">
-      <h1 className="font-display font-black text-4xl md:text-5xl tracking-[-0.06em] leading-none">
-        <a href="/" className="no-underline text-ink">
-          SHINE
-        </a>
-      </h1>
-      <div className="ml-auto flex flex-wrap items-center justify-end gap-2 md:gap-3">
-        <p className="hidden md:block text-right font-mono text-[10px] leading-tight text-ink-muted">
-          {taglineTop}
-          <br />
-          {taglineBottom} — {today()}
-        </p>
+    <header className="relative mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b-[4px] border-double border-rule pb-3">
+      <div className="flex items-baseline gap-4">
+        <h1 className="font-display text-3xl leading-none font-bold tracking-[0.2em] md:text-4xl">
+          <a href="/" className="text-ink no-underline">
+            SHINE
+          </a>
+        </h1>
+        {showTagline && (
+          <p className="hidden font-display text-sm text-ink-muted md:block">
+            {TAGLINES[lang]}
+          </p>
+        )}
+      </div>
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
         <nav
           id="site-nav"
           aria-label="Site"
-          className={`${menuOpen ? 'flex' : 'hidden'} absolute inset-x-0 top-full z-20 flex-wrap items-center gap-2 border-2 border-ink bg-paper p-3 md:contents`}>
-          <LanguageSelector locale={locale} />
+          className={`${menuOpen ? 'flex' : 'hidden'} absolute inset-x-0 top-full z-20 flex-wrap items-center gap-x-4 gap-y-3 border-b border-rule bg-paper px-1 py-4 md:contents`}>
           {NAV_LINKS.map(link => (
             <a
               key={link.href}
               href={link.href}
               aria-label={link.ariaLabel}
-              className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-ink text-ink">
-              {link.label}
+              className="font-label text-sm text-ink no-underline hover:underline">
+              {link[lang]}
             </a>
           ))}
+          <LanguageSelector locale={locale} />
           <div className="md:order-last">
             <ThemeToggle />
           </div>
@@ -62,8 +68,8 @@ export function Masthead({locale = 'en'}: {locale?: string}) {
         <a
           href="/search"
           aria-label="Search"
-          className="font-mono text-xs font-bold bg-brand text-brand-on px-2.5 py-1 border-2 border-ink shadow-[3px_3px_0_var(--ink)]">
-          SEARCH
+          className="border border-ink px-3 py-1 font-label text-sm text-ink no-underline">
+          {controls.search}
         </a>
         <button
           type="button"
@@ -72,8 +78,8 @@ export function Masthead({locale = 'en'}: {locale?: string}) {
           onClick={() => {
             setMenuOpen(open => !open);
           }}
-          className="md:hidden font-mono text-xs font-bold px-2.5 py-1 border-2 border-ink text-ink">
-          MENU
+          className="border border-ink px-3 py-1 font-label text-sm text-ink md:hidden">
+          {controls.menu}
         </button>
       </div>
     </header>

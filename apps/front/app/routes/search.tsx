@@ -149,7 +149,7 @@ export default function Search({loaderData}: Route.ComponentProps) {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Masthead locale={locale} />
 
-        <h2 className="font-display font-black text-2xl md:text-3xl tracking-tight mb-6">
+        <h2 className="font-display font-bold text-2xl md:text-3xl mb-6">
           SEARCH
         </h2>
 
@@ -164,8 +164,8 @@ export default function Search({loaderData}: Route.ComponentProps) {
 
         {/* エラー表示 */}
         {error && (
-          <div className="border-[3px] border-ink p-4 mb-6">
-            <p className="font-mono text-sm">{error}</p>
+          <div className="border border-ink p-4 mb-6">
+            <p className="font-label text-sm">{error}</p>
           </div>
         )}
 
@@ -174,16 +174,16 @@ export default function Search({loaderData}: Route.ComponentProps) {
         {/* 検索結果 */}
         {searchResults && (
           <div>
-            <p className="font-mono text-xs text-ink-muted mb-4">
+            <p className="font-label text-xs text-ink-muted mb-4">
               {searchResults.pagination.totalCount} RESULTS
             </p>
 
             {searchResults.movies.length === 0 ? (
               <div className="text-center py-12">
-                <p className="font-mono text-sm">
+                <p className="font-label text-sm">
                   検索結果が見つかりませんでした
                 </p>
-                <p className="font-mono text-xs text-ink-muted mt-2">
+                <p className="font-label text-xs text-ink-muted mt-2">
                   別のキーワードで検索してみてください
                 </p>
               </div>
@@ -217,12 +217,12 @@ export default function Search({loaderData}: Route.ComponentProps) {
                     href={`/search?q=${encodeURIComponent(searchQuery)}&page=${
                       searchResults.pagination.currentPage - 1
                     }`}
-                    className="font-mono text-xs border-[2px] border-ink px-4 py-2">
+                    className="font-label text-xs border border-ink px-4 py-2">
                     前のページ
                   </a>
                 )}
 
-                <span className="font-mono text-xs px-4 py-2">
+                <span className="font-label text-xs px-4 py-2">
                   {searchResults.pagination.currentPage} /{' '}
                   {searchResults.pagination.totalPages}
                 </span>
@@ -232,7 +232,7 @@ export default function Search({loaderData}: Route.ComponentProps) {
                     href={`/search?q=${encodeURIComponent(searchQuery)}&page=${
                       searchResults.pagination.currentPage + 1
                     }`}
-                    className="font-mono text-xs border-[2px] border-ink px-4 py-2">
+                    className="font-label text-xs border border-ink px-4 py-2">
                     次のページ
                   </a>
                 )}

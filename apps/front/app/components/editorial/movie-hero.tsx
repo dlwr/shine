@@ -41,9 +41,7 @@ export function MovieHero({
             <BigYear year={movieDetail.year} className="text-6xl md:text-7xl" />
           </a>
         )}
-        <h1 className="font-display font-black text-2xl md:text-3xl tracking-tight">
-          {title}
-        </h1>
+        <h1 className="font-display font-bold text-2xl md:text-3xl">{title}</h1>
         <MetaLine items={metaItems} />
         <WatchedToggle
           uid={movieDetail.uid}

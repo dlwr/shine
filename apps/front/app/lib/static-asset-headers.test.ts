@@ -28,8 +28,4 @@ describe('public/_headers', () => {
       'public, max-age=31536000, immutable',
     );
   });
-
-  it('ファイル名にハッシュの無い /fonts/* は 30 日で再検証する', () => {
-    expect(cacheControlFor('/fonts/*')).toBe('public, max-age=2592000');
-  });
 });

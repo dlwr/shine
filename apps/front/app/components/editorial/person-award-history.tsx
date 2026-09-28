@@ -78,8 +78,8 @@ export function PersonAwardHistory({credits}: {credits: AwardHistoryCredit[]}) {
   const columns = columnsOf(rows);
 
   return (
-    <div className="overflow-x-auto border-2 border-ink">
-      <table className="w-full border-separate border-spacing-0 font-mono text-[10px]">
+    <div className="overflow-x-auto border border-ink">
+      <table className="w-full border-separate border-spacing-0 font-label text-[10px]">
         <thead>
           <tr>
             <td className="sticky left-0 z-10 border-b-2 border-r-2 border-ink bg-paper" />

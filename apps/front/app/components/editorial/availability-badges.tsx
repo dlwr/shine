@@ -137,7 +137,7 @@ export function buildBadges(
 }
 
 const BADGE_CLASS =
-  'inline-flex items-center rounded-sm border border-ink-muted/30 px-1.5 py-0.5 font-mono text-[10px] text-ink-muted';
+  'inline-flex items-center rounded-sm border border-ink-muted/30 px-1.5 py-0.5 font-label text-[10px] text-ink-muted';
 
 const ACTION_BADGE_CLASS = `${BADGE_CLASS} border-ink text-ink underline decoration-dotted underline-offset-2 hover:bg-ink hover:text-surface transition-colors`;
 
@@ -209,7 +209,7 @@ export function AvailabilityBadges({
         ),
       )}
       {showCheckedDate && (
-        <span className="font-mono text-[10px] text-ink-muted">
+        <span className="font-label text-[10px] text-ink-muted">
           {formatCheckedDate(latestCheckedAt)} 時点
         </span>
       )}

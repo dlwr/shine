@@ -48,20 +48,6 @@ export const links: Route.LinksFunction = () => [
     title: 'SHINE — 今月の1本と今日の1本',
     href: '/feed.xml',
   },
-  {
-    rel: 'preload',
-    href: '/fonts/space-grotesk.woff2',
-    as: 'font',
-    type: 'font/woff2',
-    crossOrigin: 'anonymous',
-  },
-  {
-    rel: 'preload',
-    href: '/fonts/jetbrains-mono.woff2',
-    as: 'font',
-    type: 'font/woff2',
-    crossOrigin: 'anonymous',
-  },
 ];
 
 export function Layout({children}: {children: React.ReactNode}) {

@@ -71,10 +71,30 @@ describe('MonthlyPick', () => {
   it('「今月の1本」のラベルと、みんなで観ることを書く', () => {
     render(<MonthlyPick movie={movie} locale="ja" />);
 
-    expect(screen.getByText('MONTHLY / 今月の1本')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {name: '今月の1本'}),
+    ).toBeInTheDocument();
     expect(
       screen.getByText('毎月1本、みんなで同じ映画を観る'),
     ).toBeInTheDocument();
+  });
+
+  it('日本語の題名は縦に組む', () => {
+    render(<MonthlyPick movie={movie} locale="ja" />);
+
+    expect(screen.getByRole('link', {name: '浮雲'})).toHaveClass(
+      '[writing-mode:vertical-rl]',
+    );
+  });
+
+  it('英語ロケールでは題名を横に組む', () => {
+    render(
+      <MonthlyPick movie={{...movie, title: 'Floating Clouds'}} locale="en" />,
+    );
+
+    expect(screen.getByRole('link', {name: 'Floating Clouds'})).not.toHaveClass(
+      '[writing-mode:vertical-rl]',
+    );
   });
 
   it('観た人の記事・ポストを新しいタブで開くリンクにする', () => {
@@ -158,7 +178,7 @@ describe('MonthlyPick のポスター配信', () => {
     render(<MonthlyPick movie={movie} locale="ja" />);
 
     expect(
-      screen.getByRole('link', {name: 'これまでの今月の1本 →'}),
+      screen.getByRole('link', {name: 'これまでの今月の1本'}),
     ).toHaveAttribute('href', '/monthly');
   });
 });

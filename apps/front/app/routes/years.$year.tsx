@@ -115,7 +115,7 @@ function MovieRow({
     <a
       href={`/movies/${movie.uid}`}
       className="flex flex-wrap items-center gap-x-4 gap-y-1 py-1.5 no-underline text-ink">
-      <span className="font-mono text-sm leading-tight">{title}</span>
+      <span className="font-label text-sm leading-tight">{title}</span>
       <AwardTags tags={movie.awards} legend={awards} />
     </a>
   );
@@ -130,7 +130,7 @@ export default function YearPage({loaderData}: Route.ComponentProps) {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Masthead locale={locale} />
 
-        <nav className="font-mono text-[10px] text-ink-muted mb-4">
+        <nav className="font-label text-[10px] text-ink-muted mb-4">
           <a href="/years" className="text-ink-muted">
             YEARS
           </a>
@@ -139,7 +139,7 @@ export default function YearPage({loaderData}: Route.ComponentProps) {
         <h1 className="mb-2">
           <BigYear year={detail.year} className="text-6xl md:text-7xl" />
         </h1>
-        <p className="font-mono text-xs text-ink-muted mb-8">
+        <p className="font-label text-xs text-ink-muted mb-8">
           {detail.movies.length} FILMS
         </p>
 
@@ -157,7 +157,7 @@ export default function YearPage({loaderData}: Route.ComponentProps) {
           />
           <a
             href="/years"
-            className="font-mono text-[10px] text-ink-muted no-underline">
+            className="font-label text-[10px] text-ink-muted no-underline">
             ALL YEARS
           </a>
           <YearNavLink

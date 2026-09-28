@@ -89,16 +89,16 @@ export default function WatchedListPage({loaderData}: Route.ComponentProps) {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Masthead locale={locale} />
 
-        <nav className="font-mono text-[10px] text-ink-muted mb-4">
+        <nav className="font-label text-[10px] text-ink-muted mb-4">
           <a href="/watched" className="text-ink-muted">
             WATCHED
           </a>
         </nav>
 
-        <h1 className="font-display font-black text-2xl md:text-3xl tracking-tight mb-2">
+        <h1 className="font-display font-bold text-2xl md:text-3xl mb-2">
           {heading}
         </h1>
-        <p className="font-mono text-xs text-ink-muted mb-6">
+        <p className="font-label text-xs text-ink-muted mb-6">
           歴代受賞作{list.stats.total}本、何本観た？
         </p>
 

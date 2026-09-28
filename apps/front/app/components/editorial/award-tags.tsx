@@ -34,8 +34,8 @@ export function Chip({
       title={title}
       className={
         isWinner
-          ? 'bg-brand text-brand-on px-1 py-0.5 font-mono text-[10px]'
-          : 'border border-ink-muted px-1 py-0.5 font-mono text-[10px] text-ink-muted'
+          ? 'bg-brand text-brand-on px-1 py-0.5 font-label text-[10px]'
+          : 'border border-ink-muted px-1 py-0.5 font-label text-[10px] text-ink-muted'
       }>
       {label}
     </span>

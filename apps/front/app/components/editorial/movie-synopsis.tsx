@@ -9,7 +9,7 @@ export function MovieSynopsis({description}: {description: string}) {
 
   return (
     <section className="mb-8">
-      <p className="font-mono text-xs text-ink-muted mb-3">あらすじ</p>
+      <p className="font-label text-xs text-ink-muted mb-3">あらすじ</p>
       <p
         id="movie-synopsis"
         className={`text-sm leading-relaxed text-ink ${isFolded ? 'line-clamp-4' : ''}`}>

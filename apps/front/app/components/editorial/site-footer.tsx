@@ -28,10 +28,8 @@ export function SiteFooter({locale = 'ja'}: {locale?: string}) {
   const copy = COPY[locale as keyof typeof COPY] ?? COPY.ja;
 
   return (
-    <footer className="mt-12 border-t-2 border-ink pt-6 pb-10">
-      <h2 className="font-display font-black text-lg tracking-tight mb-2">
-        {copy.heading}
-      </h2>
+    <footer className="mt-12 border-t border-rule pt-6 pb-10">
+      <h2 className="font-display font-bold text-lg mb-2">{copy.heading}</h2>
       <p className="text-sm leading-relaxed text-ink mb-1.5">{copy.lead}</p>
       <p className="text-sm leading-relaxed text-ink-muted mb-4">
         {copy.sources}
@@ -40,17 +38,17 @@ export function SiteFooter({locale = 'ja'}: {locale?: string}) {
       <div className="flex flex-wrap gap-2">
         <a
           href="/search"
-          className="inline-block font-mono text-xs font-bold border-2 border-ink px-3 py-1.5 shadow-[3px_3px_0_var(--ink)] no-underline text-ink">
+          className="inline-block font-label text-xs font-bold border border-ink px-3 py-1.5 no-underline text-ink">
           {copy.searchLabel}
         </a>
         <a
           href="/awards"
-          className="inline-block font-mono text-xs font-bold border-2 border-ink px-3 py-1.5 shadow-[3px_3px_0_var(--ink)] no-underline text-ink">
+          className="inline-block font-label text-xs font-bold border border-ink px-3 py-1.5 no-underline text-ink">
           {copy.awardsLabel}
         </a>
       </div>
 
-      <p className="mt-6 font-mono text-[10px] leading-relaxed text-ink-muted">
+      <p className="mt-6 font-label text-[10px] leading-relaxed text-ink-muted">
         {copy.dataCredit}{' '}
         <a
           href="https://www.themoviedb.org/"

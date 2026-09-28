@@ -15,7 +15,7 @@ describe('FilmCard', () => {
   it('hero variant でタイトル・年号・ポスターを描画する', () => {
     render(<FilmCard movie={movie} variant="hero" locale="en" />);
     expect(screen.getByText('PARASITE')).toBeInTheDocument();
-    expect(screen.getByText('19')).toBeInTheDocument();
+    expect(screen.getByText('2019')).toBeInTheDocument();
     expect(screen.getByAltText(/PARASITE/)).toBeInTheDocument();
   });
 

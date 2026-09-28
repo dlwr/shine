@@ -48,7 +48,8 @@
   --color-brand: var(--brand);
   --color-brand-on: var(--brand-on);
   --font-display: var(--font-display);
-  --font-mono: var(--font-mono);
+  --font-label: var(--font-label);
+  --color-rule: var(--rule);
 }
 
 :root {

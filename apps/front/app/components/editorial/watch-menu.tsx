@@ -50,7 +50,7 @@ export function WatchMenu({title, year, tmdbId, imdbUrl}: WatchMenuProperties) {
   ];
 
   const buttonClass =
-    'border-2 border-ink px-2 py-1 font-mono text-[10px] font-bold shadow-[2px_2px_0_var(--ink)]';
+    'border border-ink px-2 py-1 font-label text-[10px] font-bold';
 
   return (
     <div className="flex flex-wrap gap-1.5">
