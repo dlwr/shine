@@ -39,6 +39,31 @@ describe('POST /fetch-url-title', () => {
     expect(await response.json()).toEqual({title: 'Example Article'});
   });
 
+  it('decodes character references in the title', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        '<title>&lrm;&#8216;45 Years&#x2019; review by davidehrlich &bull; Letterboxd &amp; more</title>',
+        {status: 200},
+      ),
+    );
+
+    const response = await postUrl('https://letterboxd.com/x/film/45-years/');
+
+    expect(await response.json()).toEqual({
+      title: '‘45 Years’ review by davidehrlich • Letterboxd & more',
+    });
+  });
+
+  it('leaves unknown named references as they are', async () => {
+    fetchMock.mockResolvedValue(
+      new Response('<title>A &unknown; B</title>', {status: 200}),
+    );
+
+    const response = await postUrl('https://example.com/article');
+
+    expect(await response.json()).toEqual({title: 'A &unknown; B'});
+  });
+
   it('rejects private addresses without fetching', async () => {
     const response = await postUrl('http://127.0.0.1/admin');
 
