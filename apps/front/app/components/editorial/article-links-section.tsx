@@ -116,8 +116,8 @@ export function ArticleLinksSection({
               </p>
             )}
             <p className="text-ink-muted text-xs mt-1">
-              最初の一人になってください。一行の感想でも、X や Bluesky
-              に書いたポストの URL でもかまいません。
+              最初の一人になってください。一行の感想でも、Filmarks のレビューや
+              X・Bluesky のポストの URL でもかまいません。
             </p>
           </div>
         )}
@@ -202,7 +202,7 @@ export function ArticleLinksSection({
               value={formData.url}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-ink focus:outline-none focus:ring-2 focus:ring-brand"
-              placeholder="ブログ記事や X・Bluesky のポストの URL"
+              placeholder="ブログ、Filmarks のレビュー、X・Bluesky のポストの URL"
             />
           </div>
 

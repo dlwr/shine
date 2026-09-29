@@ -45,12 +45,12 @@ describe('ArticleLinksSection', () => {
     expect(screen.getByText('まだ誰も書いていません。')).toBeInTheDocument();
   });
 
-  it('投稿が無ければ一行でもポストの URL でもよいと添える', () => {
+  it('投稿が無ければ一行でも Filmarks のレビューやポストの URL でもよいと添える', () => {
     render(<ArticleLinksSection {...baseProperties} />);
 
     expect(
       screen.getByText(
-        /一行の感想でも、X や Bluesky に書いたポストの URL でも/,
+        /一行の感想でも、Filmarks のレビューや X・Bluesky のポストの URL でも/,
       ),
     ).toBeInTheDocument();
   });
