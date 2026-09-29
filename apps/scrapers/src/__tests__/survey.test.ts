@@ -93,6 +93,7 @@ describe('measurePages', () => {
     );
 
     expect(calls).toEqual([
+      'https://example.com/favicon.svg',
       'https://example.com/',
       'https://example.com/quiz',
       'https://example.com/',
@@ -100,6 +101,24 @@ describe('measurePages', () => {
     ]);
     expect(rounds).toHaveLength(2);
     expect(rounds[0].map(timing => timing.path)).toEqual(['/', '/quiz']);
+  });
+
+  it('最初のページだけが接続の確立を払わないよう、静的ファイルで接続を温めてから測る', async () => {
+    const calls: string[] = [];
+    const fetchImpl = (async (input: string | URL | Request) => {
+      calls.push(String(input));
+      return new Response('ok', {status: 200});
+    }) as typeof fetch;
+
+    const [round] = await measurePages(
+      'https://example.com',
+      ['/'],
+      1,
+      fetchImpl,
+    );
+
+    expect(calls[0]).toBe('https://example.com/favicon.svg');
+    expect(round.map(timing => timing.path)).toEqual(['/']);
   });
 
   it('ボット扱いで全部揃うまで待たされないようブラウザの UA で叩く', async () => {
