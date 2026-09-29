@@ -313,15 +313,6 @@
     "data.watchedCount",
     "data.year"
   ],
-  "selections:history:daily:{date}:ja:v4": [
-    "cachedAt",
-    "data.items[].articleLinkCount",
-    "data.items[].posterUrl",
-    "data.items[].selectionDate",
-    "data.items[].title",
-    "data.items[].uid",
-    "data.items[].year"
-  ],
   "selections:monthly:{date}:ja:v4": [
     "cachedAt",
     "data.articleLinks[].title",
