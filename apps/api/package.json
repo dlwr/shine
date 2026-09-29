@@ -11,8 +11,8 @@
     "@shine/database": "workspace:*",
     "@shine/tmdb": "workspace:*",
     "@shine/utils": "workspace:*",
-    "drizzle-orm": "^0.45.2",
-    "hono": "^4.13.8",
+    "drizzle-orm": "^0.45.3",
+    "hono": "^4.13.9",
     "jose": "^6.2.12"
   },
   "devDependencies": {
