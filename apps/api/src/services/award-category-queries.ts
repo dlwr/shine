@@ -63,6 +63,15 @@ export async function summarizeAward(
   grouping: AwardSummary['grouping'],
 ): Promise<AwardSummary | undefined> {
   const categoryUids = await resolveCategoryUids(database, definition);
+  return summarizeCategories(database, definition, grouping, categoryUids);
+}
+
+export async function summarizeCategories(
+  database: Database,
+  definition: AwardPageDefinition | PersonAwardDefinition,
+  grouping: AwardSummary['grouping'],
+  categoryUids: string[],
+): Promise<AwardSummary | undefined> {
   if (categoryUids.length === 0) {
     return undefined;
   }
