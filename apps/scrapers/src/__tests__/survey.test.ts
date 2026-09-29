@@ -2,10 +2,12 @@ import {describe, expect, it} from 'vitest';
 import {
   formatPageTimings,
   formatSurveyReport,
+  formatWorkflowStatus,
   isSurveySourceFile,
   largestSourceFiles,
   measurePages,
   settleSection,
+  type WorkflowRun,
 } from '../survey';
 
 describe('isSurveySourceFile', () => {
@@ -234,5 +236,73 @@ describe('settleSection', () => {
     expect(section.body).toBe(
       '取得に失敗: fetch failed（getaddrinfo ENOTFOUND shine-film.com）',
     );
+  });
+});
+
+function run(overrides: Partial<WorkflowRun>): WorkflowRun {
+  return {
+    workflowName: 'CI',
+    status: 'completed',
+    conclusion: 'success',
+    createdAt: '2026-09-29T06:12:51Z',
+    url: 'https://github.com/dlwr/shine/actions/runs/1',
+    ...overrides,
+  };
+}
+
+describe('formatWorkflowStatus', () => {
+  it('workflow ごとに最新の run の結果を出す', () => {
+    const text = formatWorkflowStatus([
+      run({createdAt: '2026-09-28T01:00:00Z', conclusion: 'failure'}),
+      run({createdAt: '2026-09-29T06:12:51Z', conclusion: 'success'}),
+    ]);
+
+    expect(text).toBe('CI  success  2026-09-29 06:12Z');
+  });
+
+  it('skipped の run は飛ばして、その前の run を見る', () => {
+    const text = formatWorkflowStatus([
+      run({
+        workflowName: 'Deploy',
+        createdAt: '2026-09-29T06:16:00Z',
+        conclusion: 'success',
+      }),
+      run({
+        workflowName: 'Deploy',
+        createdAt: '2026-09-29T07:00:00Z',
+        conclusion: 'skipped',
+      }),
+    ]);
+
+    expect(text).toBe('Deploy  success  2026-09-29 06:16Z');
+  });
+
+  it('失敗した workflow を先頭に出し、run の URL を添える', () => {
+    const text = formatWorkflowStatus([
+      run({workflowName: 'CI'}),
+      run({
+        workflowName: 'DB Backup',
+        conclusion: 'failure',
+        createdAt: '2026-09-27T20:35:17Z',
+        url: 'https://github.com/dlwr/shine/actions/runs/2',
+      }),
+    ]);
+
+    expect(text.split('\n')).toEqual([
+      '⚠️ DB Backup  failure  2026-09-27 20:35Z  https://github.com/dlwr/shine/actions/runs/2',
+      'CI         success  2026-09-29 06:12Z',
+    ]);
+  });
+
+  it('実行中の run は status を出す', () => {
+    const text = formatWorkflowStatus([
+      run({status: 'in_progress', conclusion: ''}),
+    ]);
+
+    expect(text).toBe('CI  in_progress  2026-09-29 06:12Z');
+  });
+
+  it('run が 1 つも無ければそう書く', () => {
+    expect(formatWorkflowStatus([])).toBe('run なし');
   });
 });

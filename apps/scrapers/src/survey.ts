@@ -165,3 +165,65 @@ export async function settleSection(
     return {title, body: `取得に失敗: ${failureReason(error)}`};
   }
 }
+
+export type WorkflowRun = {
+  workflowName: string;
+  status: string;
+  conclusion: string;
+  createdAt: string;
+  url: string;
+};
+
+function runOutcome(run: WorkflowRun): string {
+  return run.status === 'completed' ? run.conclusion : run.status;
+}
+
+function isFailedRun(run: WorkflowRun): boolean {
+  return ['failure', 'timed_out', 'startup_failure'].includes(runOutcome(run));
+}
+
+export function formatWorkflowStatus(runs: WorkflowRun[]): string {
+  const latestByWorkflow = new Map<string, WorkflowRun>();
+
+  for (const run of runs) {
+    if (run.conclusion === 'skipped') {
+      continue;
+    }
+
+    const latest = latestByWorkflow.get(run.workflowName);
+    if (!latest || run.createdAt > latest.createdAt) {
+      latestByWorkflow.set(run.workflowName, run);
+    }
+  }
+
+  const latestRuns = latestByWorkflow
+    .values()
+    .toArray()
+    .toSorted(
+      (a, b) =>
+        Number(isFailedRun(b)) - Number(isFailedRun(a)) ||
+        a.workflowName.localeCompare(b.workflowName),
+    );
+
+  if (latestRuns.length === 0) {
+    return 'run なし';
+  }
+
+  const nameWidth = Math.max(...latestRuns.map(run => run.workflowName.length));
+  const outcomeWidth = Math.max(
+    ...latestRuns.map(run => runOutcome(run).length),
+  );
+
+  return latestRuns
+    .map(run => {
+      const isFailed = isFailedRun(run);
+      const cells = [
+        `${isFailed ? '⚠️ ' : ''}${run.workflowName.padEnd(nameWidth)}`,
+        runOutcome(run).padEnd(outcomeWidth),
+        `${run.createdAt.slice(0, 10)} ${run.createdAt.slice(11, 16)}Z`,
+        ...(isFailed ? [run.url] : []),
+      ];
+      return cells.join('  ');
+    })
+    .join('\n');
+}

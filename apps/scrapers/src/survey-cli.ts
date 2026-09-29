@@ -1,8 +1,9 @@
 /**
  * 「なんかやろう」の前に毎回やっていた計測をまとめて流す。
- * 本番の TTFB・D1 の読み取り量・今月の北極星・大きいソースファイル・直近のコミット。
+ * 本番の TTFB・D1 の読み取り量・今月の北極星・main の GitHub Actions・大きいソースファイル・直近のコミット。
  */
 import {execFile} from 'node:child_process';
+import {readdir} from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import {fileURLToPath} from 'node:url';
@@ -26,11 +27,13 @@ import {
   collectSourceFileSizes,
   formatPageTimings,
   formatSurveyReport,
+  formatWorkflowStatus,
   largestSourceFiles,
   measurePages,
   settleSection,
   SURVEY_PAGES,
   type SurveySection,
+  type WorkflowRun,
 } from './survey';
 import {
   billingCycle,
@@ -203,6 +206,39 @@ async function sourceFilesSection(top: number): Promise<SurveySection> {
   };
 }
 
+async function workflowRuns(file: string): Promise<WorkflowRun[]> {
+  const {stdout} = await execFileAsync(
+    'gh',
+    [
+      'run',
+      'list',
+      '--workflow',
+      file,
+      '--limit',
+      '20',
+      '--json',
+      'workflowName,headBranch,status,conclusion,createdAt,url',
+    ],
+    {cwd: REPOSITORY_ROOT},
+  );
+  const runs = JSON.parse(stdout) as Array<WorkflowRun & {headBranch: string}>;
+  return runs.filter(run => run.headBranch === 'main');
+}
+
+async function workflowStatusSection(): Promise<SurveySection> {
+  const files = await readdir(path.join(REPOSITORY_ROOT, '.github/workflows'));
+  const runs = await Promise.all(
+    files
+      .filter(file => /\.ya?ml$/.test(file))
+      .map(async file => workflowRuns(file)),
+  );
+
+  return {
+    title: 'main の GitHub Actions（workflow ごとの最新の run）',
+    body: formatWorkflowStatus(runs.flat()),
+  };
+}
+
 async function recentCommitsSection(): Promise<SurveySection> {
   const {stdout} = await execFileAsync(
     'git',
@@ -237,6 +273,7 @@ async function main(options: SurveyOptions): Promise<void> {
   }
 
   sections.push(
+    await settleSection('main の GitHub Actions', workflowStatusSection),
     await settleSection('大きいソースファイル', async () =>
       sourceFilesSection(options.top),
     ),
@@ -252,7 +289,7 @@ export function createCommand(): Command {
     .description(
       [
         '「なんかやろう」の前の定点計測をまとめて流します。',
-        '本番の TTFB・D1 の読み取り量・北極星・先行指標・大きいソースファイル・直近のコミットを出します。',
+        '本番の TTFB・D1 の読み取り量・北極星・先行指標・main の GitHub Actions・大きいソースファイル・直近のコミットを出します。',
       ].join('\n'),
     )
     .option(
