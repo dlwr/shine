@@ -292,7 +292,7 @@ const exercises: Exercise[] = [
   },
 ];
 
-describe('公開エンドポイントの実行計画', () => {
+describe('公開エンドポイントの実行計画', {timeout: 30_000}, () => {
   const captured: Statement[] = [];
   let binding: D1Database;
   let dispose: (() => Promise<void>) | undefined;

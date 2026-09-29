@@ -28,7 +28,9 @@ export const preparePage = async (page: Page) => {
 };
 
 export const openPage = async (page: Page, pathname: string) => {
-  await page.goto(`http://localhost:${frontPort}${pathname}`);
+  await page.goto(`http://localhost:${frontPort}${pathname}`, {
+    waitUntil: 'networkidle',
+  });
   await page.evaluate(async () => {
     const images = [...document.images];
     for (const image of images) {
