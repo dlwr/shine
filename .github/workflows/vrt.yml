@@ -1,0 +1,47 @@
+name: VRT
+
+on:
+  pull_request:
+    paths:
+      - 'apps/front/**'
+      - 'apps/api/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/vrt.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vrt:
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install CJK fonts
+        run: apt-get update -qq && apt-get install -y -qq fonts-noto-cjk
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check Playwright version
+        run: test "$(node -p "require('./apps/front/node_modules/@playwright/test/package.json').version")" = 1.63.0 || { echo "container の image の版を @playwright/test に合わせる"; exit 1; }
+
+      - name: VRT
+        run: pnpm --filter @shine/front run vrt
+
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: vrt-report
+          path: apps/front/playwright-report
+          retention-days: 14
