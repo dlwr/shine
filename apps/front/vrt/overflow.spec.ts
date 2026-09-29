@@ -1,20 +1,14 @@
 import {expect, test} from '@playwright/test';
-import {fixedNow} from './clock';
+import {openPage, preparePage} from './page-setup';
 import {pages} from './pages';
-import {frontPort} from './ports';
 
 test.beforeEach(async ({page}) => {
-  await page.clock.setFixedTime(fixedNow);
-  await page.route('**/*', async route => {
-    const {hostname} = new URL(route.request().url());
-    await (hostname === 'localhost' ? route.continue() : route.abort());
-  });
+  await preparePage(page);
 });
 
 for (const path of pages) {
   test(`${path} は横にはみ出さない`, async ({page}) => {
-    await page.goto(`http://localhost:${frontPort}${path}`);
-    await page.evaluate(async () => document.fonts.ready);
+    await openPage(page, path);
     const overflow = await page.evaluate(() => {
       const {clientWidth, scrollWidth} = document.documentElement;
       const offenders = [...document.querySelectorAll('body *')]

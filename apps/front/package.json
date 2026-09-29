@@ -11,7 +11,8 @@
     "postinstall": "pnpm run cf-typegen",
     "preview": "pnpm run build && vite preview",
     "typecheck": "pnpm run cf-typegen && react-router typegen && tsc -b --clean && tsc -b",
-    "vrt": "CLOUDFLARE_ENV=development react-router build && playwright test"
+    "vrt": "CLOUDFLARE_ENV=development react-router build && playwright test",
+    "vrt:update": "bash vrt/update-in-docker.sh"
   },
   "dependencies": {
     "@marsidev/react-turnstile": "^1.6.1",
