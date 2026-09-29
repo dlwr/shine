@@ -85,7 +85,7 @@ Cloudflare Workers: non-secret vars go in `wrangler.jsonc`/`wrangler.toml` `vars
 - Tests: Vitest + React Testing Library, co-located `*.test.tsx`
 - **OG 画像**は別 worker `shine-og`（入口 `workers/og.ts`、設定 `wrangler.og.jsonc`、描画は `app/og/`）。front の `workers/app.ts` が `/og/*.png` と `/quiz/poster.png` を service binding `OG` へ転送するので URL は front と同じ。front の起動を軽くするための分離なので、front 側から `app/og/` の描画コードや `workers-og` を import しない（`front-imports.test.ts`）。パスを足すときは `app/og/paths.ts` と `router.ts` の両方に足す。ローカルは `pnpm og:dev`（`pnpm front:dev` では OG 画像は出ない）。`QUIZ_ANSWER_KEY` は API と `shine-og` の secret
 - **Masthead のナビ**: 項目は `NAV_LINKS` に足す。ボタンの行は `flex-wrap` 前提で、横並び固定にすると狭い画面で必ずはみ出す（過去2回のデグレ原因）
-- **横幅のはみ出し確認**: 共通レイアウトやヘッダを触ったら `agent-browser set viewport 375 812` の後、各ページで `document.documentElement.scrollWidth <= clientWidth` を確認する（jsdomはレイアウトを持たないのでvitestでは検出できない）
+- **VRT**（`apps/front/vrt/`）: seed を入れたローカル D1 に向けた API と front を時計を 2026-09-15 12:00 JST に固定して起動し、主要ページのスクショ比較（375/1280）と 375px のはみ出し検査（`scrollWidth <= clientWidth`）を回す。PR で front・api・packages を触ると `.github/workflows/vrt.yml` が走る。基準の更新は `pnpm --filter @shine/front vrt:update`（Docker の Linux で撮る。mac で撮ると字形が変わるので `--update-snapshots` を手元で直に使わない）。手元の mac で回せるのははみ出し検査だけ（`pnpm --filter @shine/front vrt vrt/overflow.spec.ts`）。見るページは `vrt/pages.ts`、VRT だけのデータは `vrt/seed.ts` に足す。`@playwright/test` を上げたら `vrt.yml` の container の版も合わせる
 
 ## Code Style and Conventions
 
