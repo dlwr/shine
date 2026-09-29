@@ -85,8 +85,9 @@ describe('収集済みデータ', () => {
     expect(editions[0].year).toBe(1951);
     expect(editions.at(-1)?.year).toBe(2026);
     expect(
-      editions.every((entry, index) =>
-        index === 0 ? true : entry.year === editions[index - 1].year + 1,
+      editions.every(
+        (entry, index) =>
+          index === 0 || entry.year === editions[index - 1].year + 1,
       ),
     ).toBe(true);
   });
