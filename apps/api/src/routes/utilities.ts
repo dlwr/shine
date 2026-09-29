@@ -1,5 +1,6 @@
 import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
+import {decodeHtmlText} from '../utils/html-text';
 import {validateExternalUrl} from '../utils/url-safety';
 
 const MAX_REDIRECTS = 5;
@@ -62,7 +63,7 @@ utilitiesRoutes.post('/fetch-url-title', async c => {
 
     // Extract title from HTML
     const titleMatch = /<title[^>]*>([^<]+)<\/title>/i.exec(html);
-    const title = titleMatch ? titleMatch[1].trim() : '';
+    const title = titleMatch ? decodeHtmlText(titleMatch[1]) : '';
 
     if (!title) {
       return c.json({error: 'Could not extract title from URL'}, 400);

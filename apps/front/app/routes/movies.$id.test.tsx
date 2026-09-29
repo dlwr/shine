@@ -1346,7 +1346,7 @@ describe('MovieDetail Component', () => {
 
       expect(screen.getByLabelText('URL（任意）')).toHaveAttribute(
         'placeholder',
-        'ブログ記事や X・Bluesky のポストの URL',
+        'ブログ、Filmarks のレビュー、X・Bluesky のポストの URL',
       );
     });
 
