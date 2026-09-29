@@ -9,7 +9,6 @@ import {awardsRoutes} from '../routes/awards';
 import {crossingsRoutes} from '../routes/crossings';
 import {moviesRoutes} from '../routes/movies';
 import {searchRoutes} from '../routes/search';
-import {selectionsRoutes} from '../routes/selections';
 import {uncrownedRoutes} from '../routes/uncrowned';
 import {watchedRoutes} from '../routes/watched';
 import {yearsRoutes} from '../routes/years';
@@ -60,7 +59,6 @@ describe('公開ルートのキャッシュ書き込み', () => {
     ['watched', '/lists', watchedRoutes],
     ['search', '/suggest?q=%E9%BB%92%E6%BE%A4&locale=ja', searchRoutes],
     ['movies', '/search?q=kurosawa', moviesRoutes],
-    ['selections', '/selections/daily/history?locale=ja', selectionsRoutes],
   ])(
     '%s %s は KV への書き込みが終わる前に応答を返す',
     async (_name, path, routes) => {

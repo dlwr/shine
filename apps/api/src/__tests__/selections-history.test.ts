@@ -11,7 +11,6 @@ import {translations} from '@shine/database/schema/translations';
 import {migrate} from '@shine/database/testing';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {selectionsRoutes} from '../routes/selections';
-import {getSelectionDate} from '../services/selection-dates';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -388,80 +387,32 @@ describe('GET /selections/monthly/history', () => {
 });
 
 describe('GET /selections/:type/history のキャッシュ', () => {
-  type Put = {key: string; ttl: number | undefined};
-
-  function createKv(store: Map<string, string>, puts: Put[]): KVNamespace {
-    return {
-      async get(key: string) {
-        const raw = store.get(key);
-        return raw === undefined ? null : JSON.parse(raw);
-      },
-      async put(
-        key: string,
-        value: string,
-        options?: {expirationTtl?: number},
-      ) {
-        store.set(key, value);
-        puts.push({key, ttl: options?.expirationTtl});
-      },
-      async delete(key: string) {
-        store.delete(key);
-      },
-    } as unknown as KVNamespace;
-  }
-
   let environment: Environment;
-  let puts: Put[];
+  let kvCalls: string[];
 
   beforeEach(async () => {
     environment = await createTestEnvironment();
-    puts = [];
-    environment.CACHE_KV = createKv(new Map(), puts);
-  });
-
-  it('鍵は type・locale・期間の日付だけで決まり、limit を含めない', async () => {
-    await selectionsRoutes.request(
-      '/selections/daily/history?locale=ja&limit=30',
-      {},
-      environment,
-    );
-
-    expect(puts.map(put => put.key)).toEqual([
-      `selections:history:daily:${getSelectionDate(new Date(), 'daily')}:ja:v4`,
-    ]);
-  });
-
-  it('limit が違っても同じキャッシュを読み、件数だけ絞る', async () => {
-    await selectionsRoutes.request(
-      '/selections/daily/history?locale=ja&limit=30',
-      {},
-      environment,
-    );
-    const response = await selectionsRoutes.request(
-      '/selections/daily/history?locale=ja&limit=2',
-      {},
-      environment,
-    );
-
-    expect(response.headers.get('X-Cache-Status')).toBe('HIT');
-    const body = (await response.json()) as HistoryResponse;
-    expect(body.items).toHaveLength(2);
-    expect(puts).toHaveLength(1);
-  });
-
-  it('期間の日付が鍵に入るので値は 7 日残す', async () => {
-    await selectionsRoutes.request(
-      '/selections/weekly/history?locale=en',
-      {},
-      environment,
-    );
-
-    expect(puts).toEqual([
-      {
-        key: `selections:history:weekly:${getSelectionDate(new Date(), 'weekly')}:en:v4`,
-        ttl: 604_800,
+    kvCalls = [];
+    environment.CACHE_KV = {
+      async get(key: string) {
+        kvCalls.push(`get ${key}`);
+        return null;
       },
-    ]);
+      async put(key: string) {
+        kvCalls.push(`put ${key}`);
+      },
+    } as unknown as KVNamespace;
+  });
+
+  it('KV を読み書きせず D1 から返す', async () => {
+    const response = await selectionsRoutes.request(
+      '/selections/daily/history?locale=ja',
+      {},
+      environment,
+    );
+
+    expect(response.status).toBe(200);
+    expect(kvCalls).toEqual([]);
   });
 });
 

@@ -15,7 +15,6 @@ import {migrate} from '@shine/database/testing';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {EdgeCache} from '../../utils/cache';
 import {AdminSelectionsService} from '../admin-selections-service';
-import {getSelectionDate} from '../selection-dates';
 import {pickSelectionMovieUid} from '../selection-store';
 import {SelectionsService} from '../selections-service';
 
@@ -373,29 +372,6 @@ describe('SelectionsService selection cache reads', () => {
     expect(get).toHaveBeenCalledWith(
       expect.stringMatching(/^selections:daily:/),
       expect.objectContaining({type: 'json', cacheTtl: 600}),
-    );
-  });
-});
-
-describe('AdminSelectionsService selection cache purge', () => {
-  it('上書きしたら今日の履歴の鍵も両 locale で消す', async () => {
-    const {environment, database} = await createTestEnvironment();
-    await seedNominatedMovie(database, 'movie-1', 'Movie One');
-    const kv = {
-      get: vi.fn().mockResolvedValue(undefined),
-      put: vi.fn(),
-      delete: vi.fn(),
-    } as unknown as KVNamespace;
-    const service = new AdminSelectionsService(environment, new EdgeCache(kv));
-
-    await service.overrideSelection('daily', 'movie-1', new Date());
-
-    const today = getSelectionDate(new Date(), 'daily');
-    expect(kv.delete).toHaveBeenCalledWith(
-      `selections:history:daily:${today}:ja:v4`,
-    );
-    expect(kv.delete).toHaveBeenCalledWith(
-      `selections:history:daily:${today}:en:v4`,
     );
   });
 });

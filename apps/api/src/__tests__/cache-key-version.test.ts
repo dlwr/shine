@@ -109,11 +109,6 @@ const exercises: Exercise[] = [
     routes: selectionsRoutes,
     path: '/selections/monthly/next?locale=ja',
   },
-  {
-    name: '選出の履歴',
-    routes: selectionsRoutes,
-    path: '/selections/daily/history?locale=ja',
-  },
   {name: 'クイズの出題', routes: quizRoutes, path: '/daily'},
 ];
 

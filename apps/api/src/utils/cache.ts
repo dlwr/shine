@@ -97,12 +97,6 @@ export const getCacheKeyForSelection = (
   locale: string,
 ): string => `selections:${type}:${date}:${locale}:v4`;
 
-export const getCacheKeyForSelectionHistory = (
-  type: string,
-  date: string,
-  locale: string,
-): string => `selections:history:${type}:${date}:${locale}:v4`;
-
 export const getCacheKeyForRelatedMovies = (
   movieId: string,
   locale: string,
@@ -145,7 +139,6 @@ export const getCacheTTL = {
     daily: 3600, // 1 hour
     weekly: 21_600, // 6 hours
     monthly: 86_400, // 24 hours
-    history: 604_800, // 7 days
   },
   movie: {
     details: 86_400, // 24 hours

@@ -5,18 +5,14 @@ import {getSelectionDate, isSelectionType} from '../services/selection-dates';
 import {
   HISTORY_MAX_LIMIT,
   loadSelectionHistory,
-  type SelectionHistoryItem,
 } from '../services/selection-history';
 import {parseAcceptLanguage} from '../utils/accept-language';
 import {
   createCachedResponse,
   createETag,
   EdgeCache,
-  getCacheKeyForSelectionHistory,
   getCacheTTL,
-  IMPORTED_DATA_EDGE_TTL,
   shouldCheckETag,
-  writeCacheAfterResponse,
 } from '../utils/cache';
 
 export const selectionsRoutes = new Hono<{Bindings: Environment}>();
@@ -105,18 +101,6 @@ selectionsRoutes.get('/selections/:type/history', async c => {
         : 14;
     const today = getSelectionDate(new Date(), type);
 
-    const historyCache = new EdgeCache(c.env.CACHE_KV);
-    const cacheKey = getCacheKeyForSelectionHistory(type, today, locale);
-    const cached = await historyCache.get(cacheKey, {
-      edgeTtl: IMPORTED_DATA_EDGE_TTL,
-    });
-    if (cached) {
-      const {items} = cached.data as {items: SelectionHistoryItem[]};
-      return c.json({items: items.slice(0, limit)}, 200, {
-        'X-Cache-Status': 'HIT',
-      });
-    }
-
     const items = await loadSelectionHistory(
       getDatabase(c.env),
       type,
@@ -124,15 +108,9 @@ selectionsRoutes.get('/selections/:type/history', async c => {
       locale,
     );
 
-    await writeCacheAfterResponse(
-      c,
-      historyCache.set(cacheKey, {items}, getCacheTTL.selections.history),
-    );
-
     return createCachedResponse(
       {items: items.slice(0, limit)},
       getCacheTTL.selections[type],
-      {'X-Cache-Status': 'MISS'},
     );
   } catch (error) {
     console.error('Error fetching selection history:', error);
