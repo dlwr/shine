@@ -91,6 +91,8 @@ export async function collectSourceFileSizes(
 const BROWSER_USER_AGENT =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
 
+const CONNECTION_PRIMING_PATH = '/favicon.svg';
+
 export async function measurePages(
   baseUrl: string,
   paths: string[],
@@ -98,6 +100,11 @@ export async function measurePages(
   fetchImpl: typeof fetch = fetch,
 ): Promise<PageTiming[][]> {
   const results: PageTiming[][] = [];
+
+  const priming = await fetchImpl(`${baseUrl}${CONNECTION_PRIMING_PATH}`, {
+    headers: {'user-agent': BROWSER_USER_AGENT},
+  });
+  await priming.arrayBuffer();
 
   for (let round = 0; round < rounds; round++) {
     const timings: PageTiming[] = [];
