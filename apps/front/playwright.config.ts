@@ -1,32 +1,29 @@
-import {defineConfig, devices} from '@playwright/test';
+import {defineConfig} from '@playwright/test';
+import {apiPort, frontPort} from './vrt/ports';
 
 export default defineConfig({
-  testDir: './tests',
-  timeout: 30 * 1000,
-  expect: {
-    timeout: 5000,
-  },
+  testDir: './vrt',
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: process.env.CI ? [['list'], ['html', {open: 'never'}]] : 'list',
   use: {
-    baseURL: 'http://localhost:5175',
-    trace: 'on-first-retry',
+    viewport: {width: 375, height: 812},
+    deviceScaleFactor: 1,
+    locale: 'ja-JP',
+    timezoneId: 'Asia/Tokyo',
   },
-
-  projects: [
+  webServer: [
     {
-      name: 'chromium',
-      use: {...devices['Desktop Chrome']},
+      command: `tsx vrt/setup.ts && wrangler dev --config vrt/wrangler.api.jsonc --persist-to vrt/.state --port ${apiPort}`,
+      url: `http://localhost:${apiPort}/`,
+      reuseExistingServer: false,
+      timeout: 120_000,
+    },
+    {
+      command: `wrangler dev --config vrt/.generated/wrangler.front.json --port ${frontPort}`,
+      url: `http://localhost:${frontPort}/`,
+      reuseExistingServer: false,
+      timeout: 120_000,
     },
   ],
-
-  webServer: {
-    command: 'pnpm run dev --port 5175',
-    url: 'http://localhost:5175',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
 });

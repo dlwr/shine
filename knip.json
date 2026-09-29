@@ -2,7 +2,12 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
     "apps/front": {
-      "entry": ["workers/og.ts"]
+      "entry": [
+        "workers/og.ts",
+        "vrt/setup.ts",
+        "vrt/api-worker.ts",
+        "vrt/front-worker.ts"
+      ]
     },
     "apps/api": {
       "entry": ["src/database-proxy.ts"]
