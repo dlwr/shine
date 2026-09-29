@@ -22,6 +22,22 @@ describe('fallbackTitleFromUrl', () => {
     ).toBe('@dlwr.bsky.social のポスト');
   });
 
+  it('Filmarks のレビューは Filmarks のレビューと題を付ける', () => {
+    expect(
+      fallbackTitleFromUrl(
+        'https://filmarks.com/movies/75581/reviews/144397688',
+      ),
+    ).toBe('Filmarks のレビュー');
+  });
+
+  it('Letterboxd のレビューはアカウント名から題を作る', () => {
+    expect(
+      fallbackTitleFromUrl(
+        'https://letterboxd.com/davidehrlich/film/45-years/',
+      ),
+    ).toBe('@davidehrlich の Letterboxd のレビュー');
+  });
+
   it('X のプロフィールページはホスト名を返す', () => {
     expect(fallbackTitleFromUrl('https://x.com/dlwr')).toBe('x.com');
   });

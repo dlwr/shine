@@ -64,6 +64,18 @@ export function fallbackTitleFromUrl(url: string): string {
     return `@${segments[1]} のポスト`;
   }
 
+  if (
+    hostname === 'filmarks.com' &&
+    segments[0] === 'movies' &&
+    segments[2] === 'reviews'
+  ) {
+    return 'Filmarks のレビュー';
+  }
+
+  if (hostname === 'letterboxd.com' && segments[1] === 'film') {
+    return `@${segments[0]} の Letterboxd のレビュー`;
+  }
+
   return hostname;
 }
 
