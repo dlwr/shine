@@ -10,7 +10,7 @@ export function AdminSessionBar({locale}: {locale: string}) {
   const t = LABELS[locale as keyof typeof LABELS] ?? LABELS.en;
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex gap-2">
+    <div className="mb-3 flex justify-end gap-2">
       <a
         href="/admin/movies"
         className={
