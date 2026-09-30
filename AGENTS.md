@@ -34,7 +34,6 @@
 - Commit history follows Conventional Commits (`feat`, `fix`, `chore`, optional scope like `fix(api): …`); keep summaries imperative and ≤72 chars.
 - Reference issues in the body (`Refs #123`) and detail database or schema updates explicitly.
 - Pull requests should summarize scope concisely (no boilerplate Summary/Test Plan sections).
-- Ensure schema or OpenAPI adjustments update `apps/api/openapi.yml` and pass `pnpm docs:validate` before review.
 
 ## Environment & Configuration Notes
 
