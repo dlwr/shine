@@ -1,33 +1,14 @@
 /**
  * カンヌ国際映画祭のコンペティション部門（パルム・ドール）取り込みのCLIエントリーポイント
  */
-import {Command, InvalidArgumentError} from 'commander';
+import {Command} from 'commander';
 import {importCannesPalmeDOr} from './cannes-palme-dor';
 import {
   assertDatabaseEnvironment,
   buildEnvironment,
   loadEnvironmentFiles,
 } from './common/environment';
-
-function parseYear(value: string): number {
-  const year = Number(value);
-
-  if (!Number.isSafeInteger(year) || year < 1946) {
-    throw new InvalidArgumentError('yearは1946以上の整数で指定してください。');
-  }
-
-  return year;
-}
-
-function parseThrottle(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    throw new InvalidArgumentError('throttleは0以上の整数で指定してください。');
-  }
-
-  return parsed;
-}
+import {integerAtLeast} from './common/cli-options';
 
 export function createCommand(): Command {
   return new Command()
@@ -41,14 +22,23 @@ export function createCommand(): Command {
         '1951年より前の回は表でなく箇条書きなので、Awards 節から受賞作を読みます。',
       ].join('\n'),
     )
-    .requiredOption('--year <year>', '取り込む映画祭の開催年', parseYear)
+    .requiredOption(
+      '--year <year>',
+      '取り込む映画祭の開催年',
+      integerAtLeast(1946, 'year'),
+    )
     .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
     .option(
       '--winners-only',
       '出品作は取り込まず、受賞作だけを取り込む（既に出品作が入っている年の受賞漏れを埋める用）',
       false,
     )
-    .option('--throttle <ms>', 'TMDb呼び出し間の待機ミリ秒', parseThrottle, 300)
+    .option(
+      '--throttle <ms>',
+      'TMDb呼び出し間の待機ミリ秒',
+      integerAtLeast(0, 'throttle'),
+      300,
+    )
     .addHelpText(
       'after',
       `

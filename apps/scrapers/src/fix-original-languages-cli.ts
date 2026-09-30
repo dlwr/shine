@@ -1,7 +1,7 @@
 /**
  * TMDbと食い違っている映画の原語を直すCLI
  */
-import {Command, InvalidArgumentError} from 'commander';
+import {Command} from 'commander';
 import {applyOption, dryRunOption, isDryRun} from './common/write-mode';
 import {
   assertDatabaseEnvironment,
@@ -10,16 +10,7 @@ import {
 } from './common/environment';
 import {getScrapeDatabase} from './common/dry-run';
 import {fixOriginalLanguages} from './fix-original-languages';
-
-function parsePositiveInteger(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
-    throw new InvalidArgumentError('1以上の整数を指定してください。');
-  }
-
-  return parsed;
-}
+import {integerAtLeast} from './common/cli-options';
 
 export function createCommand(): Command {
   return new Command()
@@ -31,12 +22,17 @@ export function createCommand(): Command {
         'TMDbが原語を持たない場合と無言語(xx)の場合は書き換えません。',
       ].join('\n'),
     )
-    .option('--limit <n>', '処理する映画の件数上限', parsePositiveInteger)
-    .option('--throttle <ms>', 'リクエスト間隔(ms)', parsePositiveInteger, 150)
+    .option('--limit <n>', '処理する映画の件数上限', integerAtLeast(1, 'limit'))
+    .option(
+      '--throttle <ms>',
+      'リクエスト間隔(ms)',
+      integerAtLeast(1, 'throttle'),
+      150,
+    )
     .option(
       '--concurrency <n>',
       '同時に処理する映画の数',
-      parsePositiveInteger,
+      integerAtLeast(1, 'concurrency'),
       5,
     )
     .addOption(applyOption())

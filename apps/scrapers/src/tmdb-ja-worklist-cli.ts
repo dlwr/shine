@@ -9,16 +9,7 @@ import {
   loadEnvironmentFiles,
 } from './common/environment';
 import {buildTmdbJaWorklist} from './tmdb-ja-worklist';
-
-function parsePositiveInteger(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
-    throw new InvalidArgumentError('1以上の整数を指定してください。');
-  }
-
-  return parsed;
-}
+import {integerAtLeast} from './common/cli-options';
 
 function parseDate(value: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -39,8 +30,13 @@ export function createCommand(): Command {
         '書き込みは行いません。',
       ].join('\n'),
     )
-    .option('--limit <n>', '照会する映画の件数上限', parsePositiveInteger)
-    .option('--throttle <ms>', 'リクエスト間隔(ms)', parsePositiveInteger, 150)
+    .option('--limit <n>', '照会する映画の件数上限', integerAtLeast(1, 'limit'))
+    .option(
+      '--throttle <ms>',
+      'リクエスト間隔(ms)',
+      integerAtLeast(1, 'throttle'),
+      150,
+    )
     .option(
       '--selection-date <date>',
       'その日の選出映画（daily/weekly/monthly）だけを対象にする',

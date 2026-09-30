@@ -1,23 +1,14 @@
 /**
  * IMDb ID を持たないカンヌの出品作に、記事から引いた IMDb ID を付けるCLI
  */
-import {Command, InvalidArgumentError} from 'commander';
+import {Command} from 'commander';
 import {fillCannesImdbIds} from './cannes-fill-imdb-ids';
 import {
   assertDatabaseEnvironment,
   buildEnvironment,
   loadEnvironmentFiles,
 } from './common/environment';
-
-function parseYear(value: string): number {
-  const year = Number(value);
-
-  if (!Number.isSafeInteger(year) || year < 1946) {
-    throw new InvalidArgumentError('yearは1946以上の整数で指定してください。');
-  }
-
-  return year;
-}
+import {integerAtLeast} from './common/cli-options';
 
 export function createCommand(): Command {
   return new Command()
@@ -29,7 +20,11 @@ export function createCommand(): Command {
         '英題が一意に一致した作品だけを対象にし、その ID を既に別の映画が持っていれば書きません。',
       ].join('\n'),
     )
-    .requiredOption('--year <year>', '対象の映画祭の開催年', parseYear)
+    .requiredOption(
+      '--year <year>',
+      '対象の映画祭の開催年',
+      integerAtLeast(1946, 'year'),
+    )
     .option('--dry-run', '実際の書き込みは行わず、対象のみ表示', false)
     .addHelpText(
       'after',

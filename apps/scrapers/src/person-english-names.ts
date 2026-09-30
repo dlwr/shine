@@ -1,3 +1,4 @@
+import {setTimeout as sleep} from 'node:timers/promises';
 import {type getDatabase} from '@shine/database';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
@@ -21,12 +22,6 @@ export type BackfillStats = {
   skipped: number;
   failed: number;
 };
-
-async function sleep(ms: number): Promise<void> {
-  await new Promise(resolve => {
-    setTimeout(resolve, ms);
-  });
-}
 
 /** 原語がラテン文字でも日本語でもない人物に、TMDb の英語表記を en の person_name として足す */
 export async function backfillPersonEnglishNames(

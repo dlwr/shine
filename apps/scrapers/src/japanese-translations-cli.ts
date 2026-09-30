@@ -1,7 +1,7 @@
 /**
  * 日本語翻訳スクレイピングのCLIエントリーポイント
  */
-import {Command, InvalidArgumentError} from 'commander';
+import {Command} from 'commander';
 import {getDatabase, type Environment} from '@shine/database';
 import {
   getMoviesWithoutJapaneseTranslation,
@@ -15,21 +15,10 @@ import {
   buildEnvironment,
   loadEnvironmentFiles,
 } from './common/environment';
+import {integerAtLeast} from './common/cli-options';
 
 // 処理するバッチサイズ（デフォルト）
 const DEFAULT_BATCH_SIZE = 20;
-
-function parseLimit(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
-    throw new InvalidArgumentError(
-      '無効なバッチサイズです。正の整数を指定してください。',
-    );
-  }
-
-  return parsed;
-}
 
 /**
  * 日本語翻訳スクレイピングのメイン処理
@@ -172,7 +161,7 @@ export function createCommand(): Command {
     .option(
       '--limit <number>',
       '処理する映画の件数を指定 (デフォルト: 20)',
-      parseLimit,
+      integerAtLeast(1, 'limit'),
     )
     .option(
       '--all',

@@ -2,7 +2,7 @@
  * 月替わりの映画に他人が付けた関連リンクの数を数えて Discord に投稿する。
  */
 import process from 'node:process';
-import {Command, InvalidArgumentError} from 'commander';
+import {Command} from 'commander';
 import {getDatabase} from '@shine/database';
 import {parseOriginRules} from '@shine/utils';
 import {sendDiscordNotification} from './availability/discord';
@@ -21,18 +21,7 @@ import {
   resolveWebAnalyticsCredentials,
   type WebAnalyticsCredentials,
 } from './web-analytics';
-
-function parseMonths(value: string): number {
-  const months = Number(value);
-
-  if (!Number.isSafeInteger(months) || months < 1) {
-    throw new InvalidArgumentError(
-      '--months には 1 以上の整数を指定してください',
-    );
-  }
-
-  return months;
-}
+import {integerAtLeast} from './common/cli-options';
 
 async function main(options: {months: number; dryRun: boolean}): Promise<void> {
   const environment = loadScraperEnvironment();
@@ -99,7 +88,7 @@ export function createCommand(): Command {
     .option(
       '--months <N>',
       `集計する月数 (default: ${DEFAULT_MONTHS})`,
-      parseMonths,
+      integerAtLeast(1, 'months'),
       DEFAULT_MONTHS,
     )
     .option('--dry-run', '集計だけ行い、Discord には投稿しない', false)

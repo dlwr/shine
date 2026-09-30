@@ -10,6 +10,7 @@ import {
   buildEnvironment,
   loadEnvironmentFiles,
 } from './environment';
+import {integerAtLeast} from './cli-options';
 
 export type EnWikipediaAwardCliOptions = {
   name: string;
@@ -24,16 +25,6 @@ export type EnWikipediaAwardCliOptions = {
     throttleMs?: number;
   }) => Promise<ImdbEventImportStats>;
 };
-
-function parseThrottle(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    throw new InvalidArgumentError('throttleは0以上の整数で指定してください。');
-  }
-
-  return parsed;
-}
 
 export function createEnWikipediaAwardCommand({
   name,
@@ -72,7 +63,12 @@ export function createEnWikipediaAwardCommand({
     .option('--year <year>', '取り込む映画祭の開催年を1つに絞る', parseYear)
     .option('--category <name>', '取り込む部門を1つに絞る', parseCategory)
     .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
-    .option('--throttle <ms>', 'TMDb呼び出し間の待機ミリ秒', parseThrottle, 300)
+    .option(
+      '--throttle <ms>',
+      'TMDb呼び出し間の待機ミリ秒',
+      integerAtLeast(0, 'throttle'),
+      300,
+    )
     .addHelpText(
       'after',
       `

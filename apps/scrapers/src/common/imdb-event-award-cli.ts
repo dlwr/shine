@@ -15,18 +15,7 @@ import {
   buildEnvironment,
   loadEnvironmentFiles,
 } from './environment';
-
-function parseThrottle(value: string): number {
-  const ms = Number(value);
-
-  if (!Number.isSafeInteger(ms) || ms < 0) {
-    throw new InvalidArgumentError(
-      'throttleは0以上のミリ秒で指定してください。',
-    );
-  }
-
-  return ms;
-}
+import {integerAtLeast} from './cli-options';
 
 export type ImdbEventAwardCliOptions = {
   name: string;
@@ -81,7 +70,7 @@ export function createImdbEventAwardCommand({
     .option(
       '--throttle <ms>',
       'TMDbリクエスト間の待機ミリ秒 (デフォルト: 300)',
-      parseThrottle,
+      integerAtLeast(0, 'throttle'),
       300,
     )
     .addHelpText(

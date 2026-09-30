@@ -9,6 +9,7 @@ import {
   buildEnvironment,
   loadEnvironmentFiles,
 } from './environment';
+import {integerAtLeast} from './cli-options';
 
 export type FilmAwardCliOptions = {
   name: string;
@@ -23,16 +24,6 @@ export type FilmAwardCliOptions = {
     throttleMs?: number;
   }) => Promise<Record<string, ImdbEventImportStats>>;
 };
-
-function parseThrottle(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    throw new InvalidArgumentError('throttleは0以上の整数で指定してください。');
-  }
-
-  return parsed;
-}
 
 export function createFilmAwardCommand({
   name,
@@ -64,7 +55,12 @@ export function createFilmAwardCommand({
     )
     .option('--year <year>', `取り込む${yearUnit}を1つに絞る`, parseYear)
     .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
-    .option('--throttle <ms>', 'TMDb呼び出し間の待機ミリ秒', parseThrottle, 300)
+    .option(
+      '--throttle <ms>',
+      'TMDb呼び出し間の待機ミリ秒',
+      integerAtLeast(0, 'throttle'),
+      300,
+    )
     .addHelpText(
       'after',
       `

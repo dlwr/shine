@@ -1,7 +1,7 @@
 /**
  * 日本アカデミー賞の個人賞取り込みのCLIエントリーポイント
  */
-import {Command, InvalidArgumentError} from 'commander';
+import {Command} from 'commander';
 import {
   assertDatabaseEnvironment,
   buildEnvironment,
@@ -11,38 +11,9 @@ import {
   importJapanAcademyPersonAwards,
   JAPAN_ACADEMY_PERSON_AWARDS,
 } from './japan-academy-person-awards';
+import {integerAtLeast, oneOf} from './common/cli-options';
 
 const CATEGORIES = JAPAN_ACADEMY_PERSON_AWARDS.map(award => award.category);
-
-function parseYear(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed < 1978) {
-    throw new InvalidArgumentError('yearは1978以上の整数で指定してください。');
-  }
-
-  return parsed;
-}
-
-function parseThrottle(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    throw new InvalidArgumentError('throttleは0以上の整数で指定してください。');
-  }
-
-  return parsed;
-}
-
-function parseCategory(value: string): string {
-  if (!CATEGORIES.includes(value)) {
-    throw new InvalidArgumentError(
-      `categoryは次のいずれかで指定してください: ${CATEGORIES.join(' / ')}`,
-    );
-  }
-
-  return value;
-}
 
 export function createCommand(): Command {
   return new Command()
@@ -55,10 +26,23 @@ export function createCommand(): Command {
         '最優秀賞は優秀賞の中から選ばれるので、受賞として保存します。',
       ].join('\n'),
     )
-    .option('--year <year>', '取り込む授賞式の年を1つに絞る', parseYear)
-    .option('--category <name>', '取り込む部門を1つに絞る', parseCategory)
+    .option(
+      '--year <year>',
+      '取り込む授賞式の年を1つに絞る',
+      integerAtLeast(1978, 'year'),
+    )
+    .option(
+      '--category <name>',
+      '取り込む部門を1つに絞る',
+      oneOf(CATEGORIES, 'category'),
+    )
     .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
-    .option('--throttle <ms>', 'TMDb呼び出し間の待機ミリ秒', parseThrottle, 300)
+    .option(
+      '--throttle <ms>',
+      'TMDb呼び出し間の待機ミリ秒',
+      integerAtLeast(0, 'throttle'),
+      300,
+    )
     .addHelpText(
       'after',
       `

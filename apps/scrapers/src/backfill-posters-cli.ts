@@ -1,27 +1,14 @@
 /**
  * ポスターが無い映画にTMDbからポスターを補完するCLI
  */
-import {Command, InvalidArgumentError} from 'commander';
+import {Command} from 'commander';
 import {backfillPosters} from './backfill-posters';
 import {
   assertDatabaseEnvironment,
   buildEnvironment,
   loadEnvironmentFiles,
 } from './common/environment';
-
-function parsePositiveInteger(label: string) {
-  return (value: string): number => {
-    const parsed = Number(value);
-
-    if (!Number.isSafeInteger(parsed) || parsed < 0) {
-      throw new InvalidArgumentError(
-        `${label}は0以上の整数で指定してください。`,
-      );
-    }
-
-    return parsed;
-  };
-}
+import {integerAtLeast} from './common/cli-options';
 
 export function createCommand(): Command {
   return new Command()
@@ -33,12 +20,12 @@ export function createCommand(): Command {
         '厳格な一致で解決します（一致しない場合は何も書き込みません）。',
       ].join('\n'),
     )
-    .option('--limit <count>', '処理件数の上限', parsePositiveInteger('limit'))
+    .option('--limit <count>', '処理件数の上限', integerAtLeast(0, 'limit'))
     .option('--dry-run', '実際の書き込みは行わず、処理内容のみ表示', false)
     .option(
       '--throttle <ms>',
       'TMDbリクエスト間の待機ミリ秒 (デフォルト: 300)',
-      parsePositiveInteger('throttle'),
+      integerAtLeast(0, 'throttle'),
       300,
     )
     .addHelpText(

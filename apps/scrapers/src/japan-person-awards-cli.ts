@@ -13,6 +13,7 @@ import {
   importJapanPersonAwards,
   JAPAN_PERSON_AWARD_SOURCES,
 } from './japan-person-awards';
+import {integerAtLeast, oneOf} from './common/cli-options';
 
 const AWARDS = JAPAN_PERSON_AWARD_SOURCES.map(source => source.key);
 const CATEGORIES = [
@@ -33,36 +34,6 @@ function parseAward(value: string): string {
   return value;
 }
 
-function parseCategory(value: string): string {
-  if (!CATEGORIES.includes(value)) {
-    throw new InvalidArgumentError(
-      `categoryは次のいずれかで指定してください: ${CATEGORIES.join(' / ')}`,
-    );
-  }
-
-  return value;
-}
-
-function parseYear(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed < 1924) {
-    throw new InvalidArgumentError('yearは1924以上の整数で指定してください。');
-  }
-
-  return parsed;
-}
-
-function parseThrottle(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    throw new InvalidArgumentError('throttleは0以上の整数で指定してください。');
-  }
-
-  return parsed;
-}
-
 export function createCommand(): Command {
   return new Command()
     .name('japan-person-awards')
@@ -76,10 +47,23 @@ export function createCommand(): Command {
       ].join('\n'),
     )
     .option('--award <name>', '取り込む賞を1つに絞る', parseAward)
-    .option('--category <name>', '取り込む部門を1つに絞る', parseCategory)
-    .option('--year <year>', '取り込む年度を1つに絞る', parseYear)
+    .option(
+      '--category <name>',
+      '取り込む部門を1つに絞る',
+      oneOf(CATEGORIES, 'category'),
+    )
+    .option(
+      '--year <year>',
+      '取り込む年度を1つに絞る',
+      integerAtLeast(1924, 'year'),
+    )
     .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
-    .option('--throttle <ms>', 'TMDb呼び出し間の待機ミリ秒', parseThrottle, 300)
+    .option(
+      '--throttle <ms>',
+      'TMDb呼び出し間の待機ミリ秒',
+      integerAtLeast(0, 'throttle'),
+      300,
+    )
     .addHelpText(
       'after',
       `
