@@ -1,3 +1,4 @@
+import {setTimeout as sleep} from 'node:timers/promises';
 import {and, eq, isNull} from 'drizzle-orm';
 import {type Environment, type getDatabase} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
@@ -66,12 +67,6 @@ export type ImportResult = {
   skipped: number;
   failed: number;
 };
-
-async function sleep(ms: number): Promise<void> {
-  await new Promise(resolve => {
-    setTimeout(resolve, ms);
-  });
-}
 
 export async function importMovieDescriptions(
   context: ImportContext,

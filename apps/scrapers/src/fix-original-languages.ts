@@ -1,3 +1,4 @@
+import {setTimeout as sleep} from 'node:timers/promises';
 import {eq, isNull} from 'drizzle-orm';
 import {type Environment, type getDatabase} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
@@ -28,12 +29,6 @@ export type FixResult = {
 };
 
 const NO_LANGUAGE = 'xx';
-
-async function sleep(ms: number): Promise<void> {
-  await new Promise(resolve => {
-    setTimeout(resolve, ms);
-  });
-}
 
 export async function fixOriginalLanguages(
   context: FixContext,
