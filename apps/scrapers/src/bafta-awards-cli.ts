@@ -1,86 +1,21 @@
 /**
  * 英国アカデミー賞取り込みのCLIエントリーポイント
  */
-import {Command} from 'commander';
+import {type Command} from 'commander';
 import {BAFTA_AWARDS, importBaftaAwards} from './bafta-awards';
-import {
-  assertDatabaseEnvironment,
-  buildEnvironment,
-  loadEnvironmentFiles,
-} from './common/environment';
-import {integerAtLeast, oneOf} from './common/cli-options';
-
-const CATEGORIES = BAFTA_AWARDS.map(award => award.category);
+import {createAwardImportCommand} from './common/award-import-cli';
 
 export function createCommand(): Command {
-  return new Command()
-    .name('bafta-awards')
-    .description(
-      [
-        '英語版Wikipediaの「BAFTA Award for Best Film」などから作品賞と個人賞を取り込みます。',
-        '記事名からWikidataのIMDb ID (P345) を引いて映画を同定し、',
-        '個人賞はその映画のクレジットから人物を引き当てて1人1行で保存します。',
-      ].join('\n'),
-    )
-    .option(
-      '--year <year>',
-      '取り込む授賞式の年を1つに絞る',
-      integerAtLeast(1948, 'year'),
-    )
-    .option(
-      '--category <name>',
-      '取り込む部門を1つに絞る',
-      oneOf(CATEGORIES, 'category'),
-    )
-    .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
-    .option(
-      '--throttle <ms>',
-      'TMDb呼び出し間の待機ミリ秒',
-      integerAtLeast(0, 'throttle'),
-      300,
-    )
-    .addHelpText(
-      'after',
-      `
-部門:
-${CATEGORIES.map(category => `  ${category}`).join('\n')}
-
-例:
-  pnpm scrapers bafta-awards --dry-run
-  pnpm scrapers bafta-awards --year 2026
-  pnpm scrapers bafta-awards --category "BAFTA Award for Best Film"
-`,
-    )
-    .action(
-      async (options: {
-        year?: number;
-        category?: string;
-        dryRun: boolean;
-        throttle: number;
-      }) => {
-        loadEnvironmentFiles();
-        const environment = buildEnvironment(process.env);
-
-        if (!options.dryRun) {
-          assertDatabaseEnvironment(environment);
-        }
-
-        const stats = await importBaftaAwards({
-          environment,
-          awards:
-            options.category === undefined
-              ? undefined
-              : BAFTA_AWARDS.filter(
-                  award => award.category === options.category,
-                ),
-          dryRun: options.dryRun,
-          year: options.year,
-          throttleMs: options.throttle,
-        });
-
-        if (stats.failed > 0) {
-          process.exitCode = 1;
-        }
-      },
-    );
+  return createAwardImportCommand({
+    name: 'bafta-awards',
+    description: [
+      '英語版Wikipediaの「BAFTA Award for Best Film」などから作品賞と個人賞を取り込みます。',
+      '記事名からWikidataのIMDb ID (P345) を引いて映画を同定し、',
+      '個人賞はその映画のクレジットから人物を引き当てて1人1行で保存します。',
+    ],
+    firstYear: 1948,
+    yearDescription: '取り込む授賞式の年を1つに絞る',
+    awards: BAFTA_AWARDS,
+    importAwards: importBaftaAwards,
+  });
 }
