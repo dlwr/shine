@@ -3,10 +3,10 @@
  */
 import {type Command} from 'commander';
 import {BERLIN_JURY_AWARDS, importBerlinJuryAwards} from './berlin-jury-awards';
-import {createEnWikipediaAwardCommand} from './common/en-wikipedia-award-cli';
+import {createAwardImportCommand} from './common/award-import-cli';
 
 export function createCommand(): Command {
-  return createEnWikipediaAwardCommand({
+  return createAwardImportCommand({
     name: 'berlin-jury-awards',
     description: [
       '英語版Wikipediaの「Silver Bear Grand Jury Prize」「Silver Bear Jury Prize」から',

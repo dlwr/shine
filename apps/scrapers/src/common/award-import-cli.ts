@@ -1,67 +1,47 @@
-/**
- * 英語版Wikipediaの受賞者一覧記事から賞を取り込むCLIの共通実装
- */
-import {Command, InvalidArgumentError} from 'commander';
+import process from 'node:process';
+import {Command} from 'commander';
 import {type Environment} from '@shine/database';
-import {type ImdbEventImportStats} from '../imdb-event-award';
-import {type EnWikipediaAward} from './en-wikipedia-award';
 import {
   assertDatabaseEnvironment,
   buildEnvironment,
   loadEnvironmentFiles,
 } from './environment';
-import {integerAtLeast} from './cli-options';
+import {integerAtLeast, oneOf} from './cli-options';
 
-export type EnWikipediaAwardCliOptions = {
+export type AwardImportCliOptions<Award extends {category: string}> = {
   name: string;
   description: string[];
   firstYear: number;
-  awards: EnWikipediaAward[];
+  yearDescription?: string;
+  awards: Award[];
   importAwards: (options: {
     environment: Environment;
-    awards?: EnWikipediaAward[];
+    awards?: Award[];
     dryRun?: boolean;
     year?: number;
     throttleMs?: number;
-  }) => Promise<ImdbEventImportStats>;
+  }) => Promise<{failed: number}>;
 };
 
-export function createEnWikipediaAwardCommand({
+export function createAwardImportCommand<Award extends {category: string}>({
   name,
   description,
   firstYear,
+  yearDescription = '取り込む映画祭の開催年を1つに絞る',
   awards,
   importAwards,
-}: EnWikipediaAwardCliOptions): Command {
+}: AwardImportCliOptions<Award>): Command {
   const categories = awards.map(award => award.category);
-
-  const parseYear = (value: string): number => {
-    const parsed = Number(value);
-
-    if (!Number.isSafeInteger(parsed) || parsed < firstYear) {
-      throw new InvalidArgumentError(
-        `yearは${firstYear}以上の整数で指定してください。`,
-      );
-    }
-
-    return parsed;
-  };
-
-  const parseCategory = (value: string): string => {
-    if (!categories.includes(value)) {
-      throw new InvalidArgumentError(
-        `categoryは次のいずれかで指定してください: ${categories.join(' / ')}`,
-      );
-    }
-
-    return value;
-  };
 
   return new Command()
     .name(name)
     .description(description.join('\n'))
-    .option('--year <year>', '取り込む映画祭の開催年を1つに絞る', parseYear)
-    .option('--category <name>', '取り込む部門を1つに絞る', parseCategory)
+    .option('--year <year>', yearDescription, integerAtLeast(firstYear, 'year'))
+    .option(
+      '--category <name>',
+      '取り込む部門を1つに絞る',
+      oneOf(categories, 'category'),
+    )
     .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
     .option(
       '--throttle <ms>',
