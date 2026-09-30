@@ -24,9 +24,6 @@ importers:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.11.0(jiti@2.7.0))
-      '@redocly/cli':
-        specifier: ^2.54.3
-        version: 2.54.3
       '@testing-library/jest-dom':
         specifier: ^7.0.1
         version: 7.0.1(@testing-library/dom@10.4.0)(vitest@5.0.2)
@@ -115,9 +112,6 @@ importers:
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
-      yaml:
-        specifier: ^2.9.1
-        version: 2.9.1
 
   apps/front:
     dependencies:
@@ -1808,11 +1802,6 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
-
-  '@redocly/cli@2.54.3':
-    resolution: {integrity: sha512-tgjCjKm9NjcbN0N04dylwUw8eZzematq07JHm+dVyPkAfA/eZEN57En7jpUYrPvwOb53MJLfDB/0qJ5iz/4eHQ==}
-    engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
-    hasBin: true
 
   '@remix-run/node-fetch-server@0.14.1':
     resolution: {integrity: sha512-pKenF5ysIN5lDCnCyvoUxDhKP0tfnGagvGbZh01xxHG6DJXSIXWVC9NpLSDGjxcxd1CKdCOKuZFleXBF3pChIg==}
@@ -5138,8 +5127,6 @@ snapshots:
       react-router: 8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
     optionalDependencies:
       typescript: 5.9.3
-
-  '@redocly/cli@2.54.3': {}
 
   '@remix-run/node-fetch-server@0.14.1': {}
 

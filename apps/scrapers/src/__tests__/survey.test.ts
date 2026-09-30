@@ -44,7 +44,7 @@ describe('isSurveySourceFile', () => {
   });
 
   it('ts 以外を除く', () => {
-    expect(isSurveySourceFile('apps/api/openapi.yml')).toBe(false);
+    expect(isSurveySourceFile('apps/api/wrangler.jsonc')).toBe(false);
   });
 });
 
