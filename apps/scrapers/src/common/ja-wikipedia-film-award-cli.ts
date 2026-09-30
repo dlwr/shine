@@ -1,7 +1,7 @@
 /**
  * 日本語版Wikipediaの賞の記事から作品賞を取り込むCLIの共通実装
  */
-import {Command, InvalidArgumentError} from 'commander';
+import {Command} from 'commander';
 import {type Environment} from '@shine/database';
 import {type ImdbEventImportStats} from '../imdb-event-award';
 import {
@@ -32,18 +32,6 @@ export function createFilmAwardCommand({
   yearUnit = '年度',
   importAwards,
 }: FilmAwardCliOptions): Command {
-  const parseYear = (value: string): number => {
-    const parsed = Number(value);
-
-    if (!Number.isSafeInteger(parsed) || parsed < firstYear) {
-      throw new InvalidArgumentError(
-        `yearは${firstYear}以上の整数で指定してください。`,
-      );
-    }
-
-    return parsed;
-  };
-
   return new Command()
     .name(name)
     .description(
@@ -53,7 +41,11 @@ export function createFilmAwardCommand({
         'IMDb IDを持たない作品は取り込みません。',
       ].join('\n'),
     )
-    .option('--year <year>', `取り込む${yearUnit}を1つに絞る`, parseYear)
+    .option(
+      '--year <year>',
+      `取り込む${yearUnit}を1つに絞る`,
+      integerAtLeast(firstYear, 'year'),
+    )
     .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
     .option(
       '--throttle <ms>',
