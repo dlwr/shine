@@ -2,11 +2,11 @@
  * ヴェネツィア国際映画祭の作品系サブ賞（審査員大賞・審査員特別賞）取り込みのCLIエントリーポイント
  */
 import {type Command} from 'commander';
-import {createEnWikipediaAwardCommand} from './common/en-wikipedia-award-cli';
+import {createAwardImportCommand} from './common/award-import-cli';
 import {importVeniceJuryAwards, VENICE_JURY_AWARDS} from './venice-jury-awards';
 
 export function createCommand(): Command {
-  return createEnWikipediaAwardCommand({
+  return createAwardImportCommand({
     name: 'venice-jury-awards',
     description: [
       '英語版Wikipediaの「Grand Jury Prize (Venice Film Festival)」「Special Jury Prize (Venice Film Festival)」から',

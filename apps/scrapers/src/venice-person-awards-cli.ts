@@ -1,89 +1,23 @@
 /**
  * ヴェネツィア国際映画祭の個人賞取り込みのCLIエントリーポイント
  */
-import {Command} from 'commander';
+import {type Command} from 'commander';
 import {
   VENICE_PERSON_AWARDS,
   importVenicePersonAwards,
 } from './venice-person-awards';
-import {
-  assertDatabaseEnvironment,
-  buildEnvironment,
-  loadEnvironmentFiles,
-} from './common/environment';
-import {integerAtLeast, oneOf} from './common/cli-options';
-
-const CATEGORIES = VENICE_PERSON_AWARDS.map(award => award.category);
+import {createAwardImportCommand} from './common/award-import-cli';
 
 export function createCommand(): Command {
-  return new Command()
-    .name('venice-person-awards')
-    .description(
-      [
-        '英語版Wikipediaの「Silver Lion」「Volpi Cup for Best Actor」「Volpi Cup for Best Actress」から銀獅子賞（監督賞）・ヴォルピ杯（男優賞・女優賞）を取り込みます。',
-        '記事名からWikidataのIMDb ID (P345) を引いて映画を同定し、',
-        '受賞者はその映画のクレジットから人物を引き当てて1人1行で保存します。',
-      ].join('\n'),
-    )
-    .option(
-      '--year <year>',
-      '取り込む映画祭の開催年を1つに絞る',
-      integerAtLeast(1932, 'year'),
-    )
-    .option(
-      '--category <name>',
-      '取り込む部門を1つに絞る',
-      oneOf(CATEGORIES, 'category'),
-    )
-    .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
-    .option(
-      '--throttle <ms>',
-      'TMDb呼び出し間の待機ミリ秒',
-      integerAtLeast(0, 'throttle'),
-      300,
-    )
-    .addHelpText(
-      'after',
-      `
-部門:
-${CATEGORIES.map(category => `  ${category}`).join('\n')}
-
-例:
-  pnpm scrapers venice-person-awards --dry-run
-  pnpm scrapers venice-person-awards --year 2025
-  pnpm scrapers venice-person-awards --category "Silver Lion for Best Director"
-`,
-    )
-    .action(
-      async (options: {
-        year?: number;
-        category?: string;
-        dryRun: boolean;
-        throttle: number;
-      }) => {
-        loadEnvironmentFiles();
-        const environment = buildEnvironment(process.env);
-
-        if (!options.dryRun) {
-          assertDatabaseEnvironment(environment);
-        }
-
-        const stats = await importVenicePersonAwards({
-          environment,
-          awards:
-            options.category === undefined
-              ? undefined
-              : VENICE_PERSON_AWARDS.filter(
-                  award => award.category === options.category,
-                ),
-          dryRun: options.dryRun,
-          year: options.year,
-          throttleMs: options.throttle,
-        });
-
-        if (stats.failed > 0) {
-          process.exitCode = 1;
-        }
-      },
-    );
+  return createAwardImportCommand({
+    name: 'venice-person-awards',
+    description: [
+      '英語版Wikipediaの「Silver Lion」「Volpi Cup for Best Actor」「Volpi Cup for Best Actress」から銀獅子賞（監督賞）・ヴォルピ杯（男優賞・女優賞）を取り込みます。',
+      '記事名からWikidataのIMDb ID (P345) を引いて映画を同定し、',
+      '受賞者はその映画のクレジットから人物を引き当てて1人1行で保存します。',
+    ],
+    firstYear: 1932,
+    awards: VENICE_PERSON_AWARDS,
+    importAwards: importVenicePersonAwards,
+  });
 }

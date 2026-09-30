@@ -3,10 +3,10 @@
  */
 import {type Command} from 'commander';
 import {CANNES_JURY_AWARDS, importCannesJuryAwards} from './cannes-jury-awards';
-import {createEnWikipediaAwardCommand} from './common/en-wikipedia-award-cli';
+import {createAwardImportCommand} from './common/award-import-cli';
 
 export function createCommand(): Command {
-  return createEnWikipediaAwardCommand({
+  return createAwardImportCommand({
     name: 'cannes-jury-awards',
     description: [
       '英語版Wikipediaの「Grand Prix (Cannes Film Festival)」「Jury Prize (Cannes Film Festival)」から',
