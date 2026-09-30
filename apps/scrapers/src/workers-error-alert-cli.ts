@@ -3,26 +3,15 @@
  * --summary を付けると失敗が無くても件数を1行投稿する。
  */
 import process from 'node:process';
-import {Command, InvalidArgumentError} from 'commander';
+import {Command} from 'commander';
 import {sendDiscordNotification} from './availability/discord';
 import {loadEnvironmentFiles} from './common/environment';
 import {DEFAULT_CLOUDFLARE_ACCOUNT_ID} from './web-analytics';
 import {evaluateWorkerErrors, fetchWorkerInvocations} from './workers-errors';
+import {integerAtLeast} from './common/cli-options';
 
 const DEFAULT_WINDOW_HOURS = 6;
 const HOUR_MS = 3_600_000;
-
-function parseHours(value: string): number {
-  const hours = Number(value);
-
-  if (!Number.isSafeInteger(hours) || hours < 1) {
-    throw new InvalidArgumentError(
-      '--hours には 1 以上の整数を指定してください',
-    );
-  }
-
-  return hours;
-}
 
 async function main(options: {
   hours: number;
@@ -109,7 +98,7 @@ export function createCommand(): Command {
     .option(
       '--hours <N>',
       `さかのぼる時間 (default: ${DEFAULT_WINDOW_HOURS})`,
-      parseHours,
+      integerAtLeast(1, 'hours'),
       DEFAULT_WINDOW_HOURS,
     )
     .option('--summary', '失敗が無くても件数を Discord に投稿する', false)

@@ -1,7 +1,7 @@
 /**
  * TMDbから日本語のあらすじを取り込むCLI
  */
-import {Command, InvalidArgumentError} from 'commander';
+import {Command} from 'commander';
 import {
   assertDatabaseEnvironment,
   buildEnvironment,
@@ -9,16 +9,7 @@ import {
 } from './common/environment';
 import {getScrapeDatabase} from './common/dry-run';
 import {importMovieDescriptions} from './movie-descriptions';
-
-function parsePositiveInteger(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
-    throw new InvalidArgumentError('1以上の整数を指定してください。');
-  }
-
-  return parsed;
-}
+import {integerAtLeast} from './common/cli-options';
 
 export function createCommand(): Command {
   return new Command()
@@ -31,13 +22,18 @@ export function createCommand(): Command {
         'あらすじを取得済みの映画は既定でスキップします。',
       ].join('\n'),
     )
-    .option('--limit <n>', '処理する映画の件数上限', parsePositiveInteger)
+    .option('--limit <n>', '処理する映画の件数上限', integerAtLeast(1, 'limit'))
     .option('--force', '取得済みの映画も取り直す', false)
-    .option('--throttle <ms>', 'リクエスト間隔(ms)', parsePositiveInteger, 150)
+    .option(
+      '--throttle <ms>',
+      'リクエスト間隔(ms)',
+      integerAtLeast(1, 'throttle'),
+      150,
+    )
     .option(
       '--concurrency <n>',
       '同時に処理する映画の数',
-      parsePositiveInteger,
+      integerAtLeast(1, 'concurrency'),
       5,
     )
     .option('--dry-run', '書き込みは行わず、件数のみ集計', false)

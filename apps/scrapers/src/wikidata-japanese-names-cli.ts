@@ -1,24 +1,11 @@
-import {Command, InvalidArgumentError} from 'commander';
+import {Command} from 'commander';
 import {
   assertDatabaseEnvironment,
   buildEnvironment,
   loadEnvironmentFiles,
 } from './common/environment';
 import {importJapaneseNamesFromWikidata} from './wikidata-japanese-names';
-
-function parsePositiveInteger(label: string) {
-  return (value: string): number => {
-    const parsed = Number(value);
-
-    if (!Number.isSafeInteger(parsed) || parsed < 0) {
-      throw new InvalidArgumentError(
-        `${label}は0以上の整数で指定してください。`,
-      );
-    }
-
-    return parsed;
-  };
-}
+import {integerAtLeast} from './common/cli-options';
 
 export function createCommand(): Command {
   return new Command()
@@ -31,18 +18,18 @@ export function createCommand(): Command {
         '個人賞を持つ人物、クレジットの多い人物から順に処理します。',
       ].join('\n'),
     )
-    .option('--limit <count>', '処理件数の上限', parsePositiveInteger('limit'))
+    .option('--limit <count>', '処理件数の上限', integerAtLeast(0, 'limit'))
     .option(
       '--batch-size <count>',
       '1回のSPARQLで引くTMDb IDの数 (デフォルト: 50)',
-      parsePositiveInteger('batch-size'),
+      integerAtLeast(0, 'batch-size'),
       50,
     )
     .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
     .option(
       '--throttle <ms>',
       'バッチ間の待機ミリ秒 (デフォルト: 1000)',
-      parsePositiveInteger('throttle'),
+      integerAtLeast(0, 'throttle'),
       1000,
     )
     .addHelpText(

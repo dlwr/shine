@@ -8,7 +8,7 @@ import path from 'node:path';
 import process from 'node:process';
 import {fileURLToPath} from 'node:url';
 import {promisify} from 'node:util';
-import {Command, InvalidArgumentError} from 'commander';
+import {Command} from 'commander';
 import {getDatabase} from '@shine/database';
 import {parseOriginRules} from '@shine/utils';
 import {
@@ -46,6 +46,7 @@ import {
   leadingIndicatorReport,
   resolveWebAnalyticsCredentials,
 } from './web-analytics';
+import {integerAtLeast} from './common/cli-options';
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 86_400_000;
@@ -62,16 +63,6 @@ type SurveyOptions = {
   d1: boolean;
   northStar: boolean;
 };
-
-function parsePositiveInteger(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed < 1) {
-    throw new InvalidArgumentError('1 以上の整数を指定してください');
-  }
-
-  return parsed;
-}
 
 function siteUrl(): string {
   return process.env.SHINE_SITE_URL ?? 'https://shine-film.com';
@@ -295,13 +286,13 @@ export function createCommand(): Command {
     .option(
       '--rounds <N>',
       '本番ページを叩く回数 (default: 3)',
-      parsePositiveInteger,
+      integerAtLeast(1, 'rounds'),
       3,
     )
     .option(
       '--top <N>',
       '大きいソースファイルの件数 (default: 15)',
-      parsePositiveInteger,
+      integerAtLeast(1, 'top'),
       15,
     )
     .option('--no-network', '本番ページの計測を省く')

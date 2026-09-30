@@ -1,7 +1,7 @@
 /**
  * 原語がラテン文字でも日本語でもない人物に TMDb の英語表記を足すCLI
  */
-import {Command, InvalidArgumentError} from 'commander';
+import {Command} from 'commander';
 import {
   assertDatabaseEnvironment,
   buildEnvironment,
@@ -10,16 +10,7 @@ import {
 import {getScrapeDatabase} from './common/dry-run';
 import {fetchTMDBPerson} from '@shine/tmdb';
 import {backfillPersonEnglishNames} from './person-english-names';
-
-function parsePositiveInteger(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
-    throw new InvalidArgumentError('1以上の整数を指定してください。');
-  }
-
-  return parsed;
-}
+import {integerAtLeast} from './common/cli-options';
 
 export function createCommand(): Command {
   return new Command()
@@ -32,8 +23,13 @@ export function createCommand(): Command {
         'en の翻訳がある人物はスキップするので、何度流しても増えません。',
       ].join('\n'),
     )
-    .option('--limit <n>', '処理する人物の件数上限', parsePositiveInteger)
-    .option('--throttle <ms>', 'リクエスト間隔(ms)', parsePositiveInteger, 100)
+    .option('--limit <n>', '処理する人物の件数上限', integerAtLeast(1, 'limit'))
+    .option(
+      '--throttle <ms>',
+      'リクエスト間隔(ms)',
+      integerAtLeast(1, 'throttle'),
+      100,
+    )
     .option('--dry-run', '書き込みは行わず、対象のみ表示', false)
     .addHelpText(
       'after',

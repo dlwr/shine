@@ -1,4 +1,4 @@
-import {Command, InvalidArgumentError} from 'commander';
+import {Command} from 'commander';
 import {
   assertDatabaseEnvironment,
   buildEnvironment,
@@ -8,40 +8,11 @@ import {
   importMainichiPersonNominations,
   MAINICHI_NOMINATION_ARTICLES,
 } from './mainichi-person-nominations';
+import {integerAtLeast, oneOf} from './common/cli-options';
 
 const CATEGORIES = MAINICHI_NOMINATION_ARTICLES.map(
   article => article.category,
 );
-
-function parseCategory(value: string): string {
-  if (!CATEGORIES.includes(value)) {
-    throw new InvalidArgumentError(
-      `categoryは次のいずれかで指定してください: ${CATEGORIES.join(' / ')}`,
-    );
-  }
-
-  return value;
-}
-
-function parseYear(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed < 1946) {
-    throw new InvalidArgumentError('yearは1946以上の整数で指定してください。');
-  }
-
-  return parsed;
-}
-
-function parseThrottle(value: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    throw new InvalidArgumentError('throttleは0以上の整数で指定してください。');
-  }
-
-  return parsed;
-}
 
 export function createCommand(): Command {
   return new Command()
@@ -54,10 +25,23 @@ export function createCommand(): Command {
         'japan-person-awards と同じ経路です。',
       ].join('\n'),
     )
-    .option('--category <name>', '取り込む部門を1つに絞る', parseCategory)
-    .option('--year <year>', '取り込む年度を1つに絞る', parseYear)
+    .option(
+      '--category <name>',
+      '取り込む部門を1つに絞る',
+      oneOf(CATEGORIES, 'category'),
+    )
+    .option(
+      '--year <year>',
+      '取り込む年度を1つに絞る',
+      integerAtLeast(1946, 'year'),
+    )
     .option('--dry-run', '実際の書き込みは行わず、取得結果のみ表示', false)
-    .option('--throttle <ms>', 'TMDb呼び出し間の待機ミリ秒', parseThrottle, 300)
+    .option(
+      '--throttle <ms>',
+      'TMDb呼び出し間の待機ミリ秒',
+      integerAtLeast(0, 'throttle'),
+      300,
+    )
     .addHelpText(
       'after',
       `
