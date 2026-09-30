@@ -144,12 +144,12 @@ export default function Home({loaderData}: Route.ComponentProps) {
 
   return (
     <div className="m-0 w-full h-full">
-      {adminToken && (
-        <Suspense>
-          <AdminSessionBar locale={locale} />
-        </Suspense>
-      )}
       <div className="max-w-5xl mx-auto px-4 py-6">
+        {adminToken && (
+          <Suspense>
+            <AdminSessionBar locale={locale} />
+          </Suspense>
+        )}
         <Masthead locale={locale} showTagline={false} />
         <Movies
           movies={movies}
