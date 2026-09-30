@@ -21,10 +21,6 @@
     "database-proxy:deploy:prod": "pnpm wrangler deploy --config apps/api/wrangler.database-proxy.toml --minify",
     "scrapers": "pnpm --filter @shine/scrapers run cli",
     "db:generate": "drizzle-kit generate",
-    "docs:validate": "redocly lint apps/api/openapi.yml",
-    "docs:build": "redocly build-docs apps/api/openapi.yml --output docs/api.html",
-    "docs:serve": "redocly preview-docs apps/api/openapi.yml",
-    "docs:bundle": "redocly bundle apps/api/openapi.yml --output apps/api/openapi.json",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "pnpm exec eslint . --fix && pnpm run format:fix",
     "lint:front": "eslint apps/front/app --ext .ts,.tsx",
@@ -39,7 +35,6 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260818.1",
     "@eslint/js": "^10.0.1",
-    "@redocly/cli": "^2.54.3",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^26.6.3",
