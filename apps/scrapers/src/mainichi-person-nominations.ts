@@ -211,14 +211,13 @@ function mergeEditions(
 
 export async function importMainichiPersonNominations({
   environment,
-  category,
+  awards = MAINICHI_NOMINATION_ARTICLES,
   dryRun = false,
   year,
   throttleMs = 300,
 }: {
   environment: Environment;
-  /** DBの部門名で1つに絞る */
-  category?: string;
+  awards?: MainichiNominationArticle[];
   dryRun?: boolean;
   /** 年度（作品の公開年） */
   year?: number;
@@ -229,12 +228,8 @@ export async function importMainichiPersonNominations({
     throw new Error('毎日映画コンクールの設定が見つかりません');
   }
 
-  const articles = MAINICHI_NOMINATION_ARTICLES.filter(
-    article => category === undefined || article.category === category,
-  );
-
   const editions: ListPersonAwardEdition[] = [];
-  for (const article of articles) {
+  for (const article of awards) {
     const wikitext = await fetchWikitext(article.article, {language: 'ja'});
     const parsed = parseMainichiNominationWikitext(
       wikitext,
@@ -250,7 +245,7 @@ export async function importMainichiPersonNominations({
     environment,
     source,
     categories: source.categories.filter(definition =>
-      articles.some(article => article.category === definition.category),
+      awards.some(article => article.category === definition.category),
     ),
     editions: mergeEditions(editions),
     dryRun,
