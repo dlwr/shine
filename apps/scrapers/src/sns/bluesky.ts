@@ -82,15 +82,29 @@ type Session = {
   accessJwt: string;
 };
 
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 5000;
+
 async function requestJson<T>(path: string, init: RequestInit): Promise<T> {
-  const response = await fetch(`${SERVICE_URL}/xrpc/${path}`, init);
+  for (let attempt = 1; ; attempt++) {
+    const response = await fetch(`${SERVICE_URL}/xrpc/${path}`, init);
 
-  if (!response.ok) {
+    if (response.ok) {
+      return (await response.json()) as T;
+    }
+
     const body = await response.text();
-    throw new Error(`Bluesky API ${path} failed: ${response.status} ${body}`);
-  }
+    if (response.status < 500 || attempt >= MAX_ATTEMPTS) {
+      throw new Error(`Bluesky API ${path} failed: ${response.status} ${body}`);
+    }
 
-  return (await response.json()) as T;
+    console.warn(
+      `Bluesky API ${path}: ${response.status} のため ${RETRY_DELAY_MS}ms 後に再試行します`,
+    );
+    await new Promise(resolve => {
+      setTimeout(resolve, RETRY_DELAY_MS);
+    });
+  }
 }
 
 export async function createSession(
