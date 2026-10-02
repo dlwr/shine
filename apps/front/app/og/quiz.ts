@@ -10,6 +10,7 @@ import {
 import {upgradePosterForSharing} from '@/lib/meta';
 
 const CACHE_CONTROL = 'public, max-age=3600';
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 type QuizAnswer = {
   posterUrl: string;
@@ -19,8 +20,11 @@ type QuizAnswer = {
 
 type PosterCrop = {posterDataUri?: string; focalX?: number; focalY?: number};
 
-async function fetchTodaysPoster(
+type QuizDaily = {date: string; poolSize: number};
+
+async function fetchPoster(
   context: LoadContext,
+  date: string,
   signal: AbortSignal,
 ): Promise<PosterCrop> {
   const quizKey = resolveQuizKey(context);
@@ -28,10 +32,14 @@ async function fetchTodaysPoster(
     return {};
   }
 
-  const answer = await tryApiJson<QuizAnswer>(context, `/quiz/answer`, {
-    headers: {'X-Quiz-Key': quizKey},
-    signal,
-  });
+  const answer = await tryApiJson<QuizAnswer>(
+    context,
+    `/quiz/answer?date=${date}`,
+    {
+      headers: {'X-Quiz-Key': quizKey},
+      signal,
+    },
+  );
   if (!answer) {
     return {};
   }
@@ -45,15 +53,29 @@ async function fetchTodaysPoster(
   };
 }
 
-// クエリの date はキャッシュ回避用で、描画は必ずAPIが返す当日分を使う
+// 未来の日付は API が断るので当日分で描き、答えの先読みを防ぐ
+async function fetchDaily(
+  context: LoadContext,
+  date: string,
+  signal: AbortSignal,
+): Promise<QuizDaily | undefined> {
+  const dated = DATE_PATTERN.test(date)
+    ? await tryApiJson<QuizDaily>(context, `/quiz/daily?date=${date}`, {
+        signal,
+      })
+    : undefined;
+
+  return dated ?? tryApiJson<QuizDaily>(context, '/quiz/daily', {signal});
+}
+
 export async function renderQuizCard(
   request: Request,
   context: LoadContext,
 ): Promise<Response> {
-  const daily = await tryApiJson<{date: string; poolSize: number}>(
+  const daily = await fetchDaily(
     context,
-    `/quiz/daily`,
-    {signal: request.signal},
+    new URL(request.url).searchParams.get('date') ?? '',
+    request.signal,
   );
   if (!daily) {
     return new Response('Quiz unavailable', {status: 503});
@@ -61,7 +83,7 @@ export async function renderQuizCard(
 
   const {date, poolSize} = daily;
 
-  const crop = await fetchTodaysPoster(context, request.signal);
+  const crop = await fetchPoster(context, date, request.signal);
   const html = buildQuizCardHtml({date, poolSize, ...crop});
   const ogFont = await loadGoogleFont(OG_FONT_FAMILY, 700, html);
 
