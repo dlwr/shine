@@ -1,5 +1,5 @@
-import {describe, expect, it} from 'vitest';
-import {buildOAuth1Header, percentEncode} from './x';
+import {afterEach, describe, expect, it, vi} from 'vitest';
+import {buildOAuth1Header, percentEncode, postTweet} from './x';
 
 describe('percentEncode', () => {
   it('RFC 3986の未予約文字はそのまま残す', () => {
@@ -57,5 +57,89 @@ describe('buildOAuth1Header', () => {
     expect(header).toContain('oauth_signature_method="HMAC-SHA1"');
     expect(header).toContain('oauth_version="1.0"');
     expect(header).toContain('oauth_timestamp="1700000000"');
+  });
+});
+
+const nonceOf = (call: unknown[]) =>
+  /oauth_nonce="([^"]+)"/.exec(
+    (call[1] as {headers: Record<string, string>}).headers.Authorization,
+  )?.[1];
+
+describe('postTweet', () => {
+  const credentials = {
+    consumerKey: 'ck',
+    consumerSecret: 'cs',
+    accessToken: 'at',
+    accessTokenSecret: 'ats',
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  it('5xx が返ったら待って再試行する', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json({title: 'Service Unavailable'}, {status: 503}),
+      )
+      .mockResolvedValueOnce(Response.json({data: {id: '123'}}, {status: 201}));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = postTweet(credentials, '本文');
+    await vi.runAllTimersAsync();
+
+    await expect(result).resolves.toEqual({id: '123'});
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('再試行では署名の nonce を作り直す', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json({title: 'Service Unavailable'}, {status: 503}),
+      )
+      .mockResolvedValueOnce(Response.json({data: {id: '123'}}, {status: 201}));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = postTweet(credentials, '本文');
+    await vi.runAllTimersAsync();
+    await result;
+
+    expect(nonceOf(fetchMock.mock.calls[1])).not.toBe(
+      nonceOf(fetchMock.mock.calls[0]),
+    );
+  });
+
+  it('5xx が続けば 3 回目で諦めて本文つきで失敗する', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(async () =>
+        Response.json({title: 'Service Unavailable'}, {status: 503}),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = postTweet(credentials, '本文');
+    const assertion = expect(result).rejects.toThrow(
+      'X API /2/tweets failed: 503 {"title":"Service Unavailable"}',
+    );
+    await vi.runAllTimersAsync();
+
+    await assertion;
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('4xx は再試行しない', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json({title: 'Forbidden'}, {status: 403}));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(postTweet(credentials, '本文')).rejects.toThrow('403');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

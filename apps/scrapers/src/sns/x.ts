@@ -77,32 +77,46 @@ export function buildOAuth1Header({
   return `OAuth ${header}`;
 }
 
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 5000;
+
 export async function postTweet(
   credentials: XCredentials,
   text: string,
 ): Promise<{id: string}> {
-  const authorization = buildOAuth1Header({
-    ...credentials,
-    method: 'POST',
-    url: TWEETS_ENDPOINT,
-    nonce: randomBytes(16).toString('hex'),
-    timestamp: Math.floor(Date.now() / 1000),
-  });
+  for (let attempt = 1; ; attempt++) {
+    const authorization = buildOAuth1Header({
+      ...credentials,
+      method: 'POST',
+      url: TWEETS_ENDPOINT,
+      nonce: randomBytes(16).toString('hex'),
+      timestamp: Math.floor(Date.now() / 1000),
+    });
 
-  const response = await fetch(TWEETS_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      Authorization: authorization,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({text}),
-  });
+    const response = await fetch(TWEETS_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Authorization: authorization,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({text}),
+    });
 
-  if (!response.ok) {
+    if (response.ok) {
+      const result = (await response.json()) as {data: {id: string}};
+      return {id: result.data.id};
+    }
+
     const body = await response.text();
-    throw new Error(`X API /2/tweets failed: ${response.status} ${body}`);
-  }
+    if (response.status < 500 || attempt >= MAX_ATTEMPTS) {
+      throw new Error(`X API /2/tweets failed: ${response.status} ${body}`);
+    }
 
-  const result = (await response.json()) as {data: {id: string}};
-  return {id: result.data.id};
+    console.warn(
+      `X API /2/tweets: ${response.status} のため ${RETRY_DELAY_MS}ms 後に再試行します`,
+    );
+    await new Promise(resolve => {
+      setTimeout(resolve, RETRY_DELAY_MS);
+    });
+  }
 }
