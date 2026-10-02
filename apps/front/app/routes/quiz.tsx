@@ -35,20 +35,41 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   });
 }
 
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function pastPuzzleDate(request: Request): string | undefined {
+  const date = new URL(request.url).searchParams.get('d') ?? '';
+  const today = new Date().toISOString().slice(0, 10);
+
+  return DATE_PATTERN.test(date) && date < today ? date : undefined;
+}
+
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
   const apiUrl = resolveApiUrl(context);
   const transformImages = canTransformImages(context);
+  const pastDate = pastPuzzleDate(request);
 
   const [puzzle, monthly] = await Promise.all([
-    loadApiJson<QuizPuzzle>(context, '/quiz/daily', {
-      label: 'quiz',
-      signal: request.signal,
-    }),
+    loadApiJson<QuizPuzzle>(
+      context,
+      pastDate ? `/quiz/daily?date=${pastDate}` : '/quiz/daily',
+      {
+        label: 'quiz',
+        signal: request.signal,
+      },
+    ),
     fetchMonthlyPick(context, 'ja', request.signal),
   ]);
 
-  return {puzzle, apiUrl, locale, monthly, transformImages};
+  return {
+    puzzle,
+    apiUrl,
+    locale,
+    monthly,
+    transformImages,
+    isPastPuzzle: pastDate !== undefined,
+  };
 }
 
 function quizPosterUrl(date: string, stage: number, canTransform: boolean) {
@@ -59,12 +80,14 @@ function quizPosterUrl(date: string, stage: number, canTransform: boolean) {
 }
 
 export default function QuizPage({loaderData}: Route.ComponentProps) {
-  const {puzzle, apiUrl, monthly, transformImages} = loaderData as {
-    monthly?: MonthlyPick;
-    puzzle: QuizPuzzle;
-    apiUrl: string;
-    transformImages?: boolean;
-  };
+  const {puzzle, apiUrl, monthly, transformImages, isPastPuzzle} =
+    loaderData as {
+      monthly?: MonthlyPick;
+      puzzle: QuizPuzzle;
+      apiUrl: string;
+      transformImages?: boolean;
+      isPastPuzzle?: boolean;
+    };
   const locale = 'ja';
 
   const {
@@ -111,6 +134,14 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
             {puzzle.date}
           </span>
         </div>
+        {isPastPuzzle && (
+          <p className="font-label text-xs mb-2">
+            {puzzle.date} の問題です。{' '}
+            <a href="/quiz" className="text-ink underline">
+              今日の問題へ
+            </a>
+          </p>
+        )}
         <p className="font-label text-xs text-ink-muted mb-6">
           ポスターの一部と5つのヒントから、今日の1本を当てる（全
           {puzzle.poolSize.toLocaleString('ja-JP')}本）
@@ -123,6 +154,7 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
               game={game}
               maxAttempts={puzzle.maxAttempts}
               monthly={monthly}
+              isPastPuzzle={isPastPuzzle}
             />
           )}
 

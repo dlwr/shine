@@ -49,6 +49,29 @@ const createComponentProperties = (
     matches: [],
   });
 
+function dailyRequests(): string[] {
+  return vi
+    .mocked(fetch)
+    .mock.calls.map(([input]) => String(input))
+    .filter(url => url.includes('/quiz/daily'));
+}
+
+async function loadAt(url: string) {
+  vi.mocked(fetch).mockResolvedValue({
+    ok: true,
+    json: async () => PUZZLE,
+  } as Response);
+
+  return loader(
+    cast<Route.LoaderArgs>({
+      context: createMockContext(),
+      request: new Request(url),
+      params: {},
+      matches: [],
+    }),
+  );
+}
+
 describe('Quiz page', () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -240,6 +263,49 @@ describe('Quiz page', () => {
 
       expect(result.puzzle).toEqual(PUZZLE);
       expect(result.monthly).toBeUndefined();
+    });
+
+    describe('共有リンクの出題日', () => {
+      beforeEach(() => {
+        vi.useFakeTimers({toFake: ['Date']});
+        vi.setSystemTime(new Date('2026-08-17T03:00:00Z'));
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it('過去の日付が付いていればその日の出題を取る', async () => {
+        await loadAt('http://localhost:3000/quiz?d=2026-08-16');
+
+        expect(dailyRequests()).toEqual([
+          'http://localhost:8787/quiz/daily?date=2026-08-16',
+        ]);
+      });
+
+      it('過去の日付の出題には過去の問題の印を付ける', async () => {
+        const result = await loadAt('http://localhost:3000/quiz?d=2026-08-16');
+
+        expect(result.isPastPuzzle).toBe(true);
+      });
+
+      it('当日の日付なら当日の出題として取る', async () => {
+        const result = await loadAt('http://localhost:3000/quiz?d=2026-08-17');
+
+        expect(result.isPastPuzzle).toBe(false);
+      });
+
+      it('未来の日付は無視して当日の出題を取る', async () => {
+        await loadAt('http://localhost:3000/quiz?d=2026-08-18');
+
+        expect(dailyRequests()).toEqual(['http://localhost:8787/quiz/daily']);
+      });
+
+      it('日付の形でない値は無視して当日の出題を取る', async () => {
+        await loadAt('http://localhost:3000/quiz?d=yesterday');
+
+        expect(dailyRequests()).toEqual(['http://localhost:8787/quiz/daily']);
+      });
     });
 
     it('APIが失敗したら502を投げる', async () => {
@@ -633,6 +699,60 @@ describe('Quiz page', () => {
 
       expect(await screen.findByText('正解！')).toBeInTheDocument();
       expect(screen.queryByText(/今月の1本/)).not.toBeInTheDocument();
+    });
+
+    it('過去の問題には今日の問題への導線を出す', () => {
+      render(<QuizPage {...createComponentProperties({isPastPuzzle: true})} />);
+
+      expect(screen.getByRole('link', {name: /今日の問題へ/})).toHaveAttribute(
+        'href',
+        '/quiz',
+      );
+    });
+
+    it('過去の問題の結果には次の問題の案内を出さない', async () => {
+      localStorage.setItem(
+        QUIZ_STATE_KEY,
+        JSON.stringify({
+          date: PUZZLE.date,
+          guesses: [{title: '赤ひげ', correct: true}],
+          hints: [],
+          answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+          status: 'won',
+        }),
+      );
+
+      render(<QuizPage {...createComponentProperties({isPastPuzzle: true})} />);
+
+      expect(await screen.findByText('正解！')).toBeInTheDocument();
+      expect(screen.queryByText(/次の問題は明日/)).not.toBeInTheDocument();
+    });
+
+    it('今日の問題には今日の問題への導線を出さない', () => {
+      render(<QuizPage {...createComponentProperties()} />);
+
+      expect(
+        screen.queryByRole('link', {name: /今日の問題へ/}),
+      ).not.toBeInTheDocument();
+    });
+
+    it('過去の問題を開いても、より新しい日の進行を上書きしない', async () => {
+      const newer = {
+        date: '2026-08-17',
+        guesses: [{title: '東京物語', correct: false}],
+        hints: [{label: '製作年', value: '1965年'}],
+        status: 'playing',
+      };
+      localStorage.setItem(QUIZ_STATE_KEY, JSON.stringify(newer));
+
+      render(<QuizPage {...createComponentProperties({isPastPuzzle: true})} />);
+
+      await waitFor(() => {
+        expect(screen.getByAltText('ポスターの一部')).toBeInTheDocument();
+      });
+      expect(JSON.parse(localStorage.getItem(QUIZ_STATE_KEY) ?? '')).toEqual(
+        newer,
+      );
     });
 
     it('リロードしても進行を引き継ぐ', async () => {
