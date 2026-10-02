@@ -104,6 +104,20 @@ describe('root loader', () => {
     const data = await callLoader(request);
     expect(data.canonicalUrl).toBe('https://shine-film.com/movies/abc');
   });
+
+  it('canonical URLから末尾のスラッシュを取り除く', async () => {
+    const request = new Request('https://shine-film.com/awards/');
+
+    const data = await callLoader(request);
+    expect(data.canonicalUrl).toBe('https://shine-film.com/awards');
+  });
+
+  it('トップページのcanonical URLはスラッシュで終わる', async () => {
+    const request = new Request('https://shine-film.com/');
+
+    const data = await callLoader(request);
+    expect(data.canonicalUrl).toBe('https://shine-film.com/');
+  });
 });
 
 describe('root loader のアクセス解析', () => {

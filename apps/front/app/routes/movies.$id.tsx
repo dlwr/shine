@@ -1,5 +1,5 @@
 import {Suspense} from 'react';
-import {Await} from 'react-router';
+import {Await, data} from 'react-router';
 import type {Route} from './+types/movies.$id';
 import {ArticleLinksSection} from '@/components/editorial/article-links-section';
 import {AwardTree} from '@/components/editorial/award-tree';
@@ -33,12 +33,13 @@ export function meta({
   });
 }
 
-export async function loader({
-  context,
-  params,
-  request,
-}: Route.LoaderArgs): Promise<LoaderData> {
-  return loadMovieDetail(context, params.id, request);
+export async function loader({context, params, request}: Route.LoaderArgs) {
+  const result = await loadMovieDetail(context, params.id, request);
+  if (isLoaderError(result)) {
+    return data(result, {status: result.status ?? 500});
+  }
+
+  return result;
 }
 
 export async function action({context, params, request}: Route.ActionArgs) {
@@ -51,9 +52,9 @@ export default function MovieDetail({
   matches,
 }: Route.ComponentProps) {
   const isTestMode = useIsTestMode();
-  const data = loaderData as LoaderData;
+  const loaded = loaderData as LoaderData;
   const apiUrl =
-    ('apiUrl' in data ? data.apiUrl : undefined) ?? 'http://localhost:8787';
+    ('apiUrl' in loaded ? loaded.apiUrl : undefined) ?? 'http://localhost:8787';
   const {
     formData,
     handleInputChange,
@@ -62,20 +63,20 @@ export default function MovieDetail({
     submissionResult,
   } = useArticleLinkForm(isTestMode, actionData, apiUrl);
 
-  if (isLoaderError(data)) {
+  if (isLoaderError(loaded)) {
     return (
       <MovieDetailErrorView
-        error={data.error ?? '映画情報の取得に失敗しました'}
-        status={data.status}
+        error={loaded.error ?? '映画情報の取得に失敗しました'}
+        status={loaded.status}
       />
     );
   }
 
-  if (!isLoaderSuccess(data)) {
+  if (!isLoaderSuccess(loaded)) {
     return <MovieDetailErrorView error="映画情報が取得できませんでした" />;
   }
 
-  const {movieDetail, turnstileSiteKey, locale} = data;
+  const {movieDetail, turnstileSiteKey, locale} = loaded;
   const title = movieDetail.title || 'タイトル不明';
   const isThisMonthsPick = isMonthlyPick(matches, movieDetail.uid);
 
@@ -136,9 +137,9 @@ export default function MovieDetail({
             </section>
           )}
 
-        {data.relatedMovies && (
+        {loaded.relatedMovies && (
           <Suspense>
-            <Await resolve={data.relatedMovies}>
+            <Await resolve={loaded.relatedMovies}>
               {movies => <RelatedMovies movies={movies} />}
             </Await>
           </Suspense>

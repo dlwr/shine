@@ -292,6 +292,15 @@ describe('sitemap/awards.xml', () => {
     );
   });
 
+  it('トップページのURLを列挙する', async () => {
+    mockSearchResponse({awards: []});
+
+    const response = await sitemapAwardsLoader(createAwardsArguments());
+    const xml = await response.text();
+
+    expect(xml).toContain('<loc>https://shine-film.com/</loc>');
+  });
+
   it('年度制の最高賞には観た映画チェックのURLも列挙する', async () => {
     mockSearchResponse({
       awards: [
