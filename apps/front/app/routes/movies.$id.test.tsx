@@ -101,7 +101,7 @@ vi.stubGlobal('fetch', vi.fn());
 
 const cast = <T,>(value?: unknown): T => value as T;
 
-type LoaderResult = Awaited<ReturnType<typeof loader>>;
+type LoaderResult = Route.ComponentProps['loaderData'];
 type LoaderArguments = Route.LoaderArgs;
 type MetaArguments = Route.MetaArgs;
 type ComponentProperties = Route.ComponentProps;
@@ -347,10 +347,9 @@ describe('MovieDetail Component', () => {
         }),
       );
 
-      expect(result).toEqual({
-        error: '映画が見つかりませんでした',
-        status: 404,
-        locale: 'ja',
+      expect(result).toMatchObject({
+        data: {error: '映画が見つかりませんでした', status: 404, locale: 'ja'},
+        init: {status: 404},
       });
     });
 
@@ -370,10 +369,9 @@ describe('MovieDetail Component', () => {
         }),
       );
 
-      expect(result).toEqual({
-        error: 'APIへの接続に失敗しました',
-        status: 500,
-        locale: 'ja',
+      expect(result).toMatchObject({
+        data: {error: 'APIへの接続に失敗しました', status: 500, locale: 'ja'},
+        init: {status: 500},
       });
     });
   });
