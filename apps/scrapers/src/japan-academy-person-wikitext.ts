@@ -1,52 +1,13 @@
-import {buildUrl, fetchJsonWithRetry} from '@shine/utils/fetch';
 import {
   cellsOf,
   fillRow,
   type CarriedCell,
   type Cell,
 } from './common/wikitext-table';
-
-const WIKIPEDIA_API = 'https://ja.wikipedia.org/w/api.php';
-const USER_AGENT = 'shine-film.com movie database (https://shine-film.com)';
-
-type WikitextResponse = {parse?: {wikitext?: {'*'?: string}}};
-
-export async function fetchJapanAcademyPersonWikitext(
-  article: string,
-): Promise<string> {
-  const url = buildUrl(WIKIPEDIA_API, {
-    action: 'parse',
-    page: article,
-    prop: 'wikitext',
-    format: 'json',
-  });
-
-  const response = await fetchJsonWithRetry<WikitextResponse>(url, {
-    headers: {'User-Agent': USER_AGENT},
-  });
-
-  const wikitext = response.parse?.wikitext?.['*'];
-  if (!wikitext) {
-    throw new Error(`${article}の記事を取得できませんでした`);
-  }
-
-  return wikitext;
-}
-
-export type JapanAcademyPersonEntry = {
-  personName: string;
-  personPage: string | undefined;
-  filmPage: string | undefined;
-  filmTitle: string;
-  isWinner: boolean;
-};
-
-export type JapanAcademyPersonEdition = {
-  /** 対象作品の公開年。授賞式はこの翌年 */
-  year: number;
-  ceremonyNumber: number;
-  entries: JapanAcademyPersonEntry[];
-};
+import {
+  type ListPersonAwardEdition,
+  type ListPersonAwardEntry,
+} from './common/ja-wikipedia-person-award-wikitext';
 
 const AWARDS_SECTION = '== 受賞作品の一覧 ==';
 const NEXT_SECTION = /\n== /;
@@ -87,7 +48,8 @@ function columnLayout(header: Cell[]): ColumnLayout | undefined {
 function parseEntry(
   row: Cell[],
   layout: ColumnLayout,
-): JapanAcademyPersonEntry | undefined {
+  category: string,
+): ListPersonAwardEntry | undefined {
   const personCell = row[layout.personIndex];
   const filmCell = row[layout.filmIndex];
   if (!personCell || !filmCell) {
@@ -110,15 +72,19 @@ function parseEntry(
   }
 
   return {
-    personName,
-    personPage: personLink?.[1].trim(),
-    filmPage: filmLink[1].trim(),
-    filmTitle: (filmLink[2] ?? filmLink[1]).replaceAll("'''", '').trim(),
+    category,
+    people: [{name: personName, page: personLink?.[1].trim()}],
+    films: [
+      {
+        page: filmLink[1].trim(),
+        title: (filmLink[2] ?? filmLink[1]).replaceAll("'''", '').trim(),
+      },
+    ],
     isWinner: filmCell.attributes.includes(WINNER_BACKGROUND),
   };
 }
 
-function parseTable(table: string): JapanAcademyPersonEdition[] {
+function parseTable(table: string, category: string): ListPersonAwardEdition[] {
   const chunks = table.split(ROW_SEPARATOR);
   const headerIndex = chunks.findIndex(chunk =>
     chunk.split('\n').some(line => line.startsWith('!')),
@@ -132,7 +98,7 @@ function parseTable(table: string): JapanAcademyPersonEdition[] {
     return [];
   }
 
-  const editions: JapanAcademyPersonEdition[] = [];
+  const editions: ListPersonAwardEdition[] = [];
   const carried: CarriedCell[] = [];
 
   const dataChunks = chunks.slice(headerIndex + 1);
@@ -153,7 +119,7 @@ function parseTable(table: string): JapanAcademyPersonEdition[] {
       continue;
     }
 
-    const entry = parseEntry(row, layout);
+    const entry = parseEntry(row, layout, category);
     if (!entry) {
       continue;
     }
@@ -175,7 +141,8 @@ function parseTable(table: string): JapanAcademyPersonEdition[] {
 
 export function parseJapanAcademyPersonWikitext(
   wikitext: string,
-): JapanAcademyPersonEdition[] {
+  category: string,
+): ListPersonAwardEdition[] {
   const afterHeading = wikitext.split(AWARDS_SECTION)[1];
   if (!afterHeading) {
     return [];
@@ -189,5 +156,5 @@ export function parseJapanAcademyPersonWikitext(
   return body
     .split(TABLE_START)
     .slice(1)
-    .flatMap(table => parseTable(table.split(TABLE_END)[0]));
+    .flatMap(table => parseTable(table.split(TABLE_END)[0], category));
 }

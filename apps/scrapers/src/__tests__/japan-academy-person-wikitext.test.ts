@@ -69,21 +69,30 @@ const SUPPORTING_ACTOR_WIKITEXT = `
 
 describe('parseJapanAcademyPersonWikitext', () => {
   it('年と回次を取り出す', () => {
-    const editions = parseJapanAcademyPersonWikitext(DIRECTOR_WIKITEXT);
+    const editions = parseJapanAcademyPersonWikitext(
+      DIRECTOR_WIKITEXT,
+      '監督賞',
+    );
 
     expect(editions[0]).toMatchObject({year: 1977, ceremonyNumber: 1});
   });
 
   it('年のrowspanを次の行に引き継ぐ', () => {
-    const editions = parseJapanAcademyPersonWikitext(DIRECTOR_WIKITEXT);
+    const editions = parseJapanAcademyPersonWikitext(
+      DIRECTOR_WIKITEXT,
+      '監督賞',
+    );
 
     expect(editions[0].entries).toHaveLength(4);
   });
 
   it('人物のrowspanを次の行に引き継ぐ', () => {
-    const editions = parseJapanAcademyPersonWikitext(DIRECTOR_WIKITEXT);
+    const editions = parseJapanAcademyPersonWikitext(
+      DIRECTOR_WIKITEXT,
+      '監督賞',
+    );
 
-    expect(editions[0].entries.map(entry => entry.personPage)).toEqual([
+    expect(editions[0].entries.map(entry => entry.people[0].page)).toEqual([
       '山田洋次',
       '山田洋次',
       '市川崑',
@@ -92,22 +101,30 @@ describe('parseJapanAcademyPersonWikitext', () => {
   });
 
   it('作品のページ名と表示名を分けて返す', () => {
-    const editions = parseJapanAcademyPersonWikitext(DIRECTOR_WIKITEXT);
+    const editions = parseJapanAcademyPersonWikitext(
+      DIRECTOR_WIKITEXT,
+      '監督賞',
+    );
 
-    expect(editions[0].entries[2]).toMatchObject({
-      filmPage: '悪魔の手毬唄 (1977年の映画)',
-      filmTitle: '悪魔の手毬唄',
-    });
+    expect(editions[0].entries[2].films).toEqual([
+      {page: '悪魔の手毬唄 (1977年の映画)', title: '悪魔の手毬唄'},
+    ]);
   });
 
   it('作品ページの節指定を落とす', () => {
-    const editions = parseJapanAcademyPersonWikitext(SUPPORTING_ACTOR_WIKITEXT);
+    const editions = parseJapanAcademyPersonWikitext(
+      SUPPORTING_ACTOR_WIKITEXT,
+      '助演男優賞',
+    );
 
-    expect(editions[0].entries[0].filmPage).toBe('国宝 (小説)');
+    expect(editions[0].entries[0].films[0].page).toBe('国宝 (小説)');
   });
 
   it('最優秀賞の行を受賞として返す', () => {
-    const editions = parseJapanAcademyPersonWikitext(DIRECTOR_WIKITEXT);
+    const editions = parseJapanAcademyPersonWikitext(
+      DIRECTOR_WIKITEXT,
+      '監督賞',
+    );
 
     expect(editions[0].entries.map(entry => entry.isWinner)).toEqual([
       true,
@@ -118,36 +135,59 @@ describe('parseJapanAcademyPersonWikitext', () => {
   });
 
   it('複数の表を年ごとの版に分ける', () => {
-    const editions = parseJapanAcademyPersonWikitext(DIRECTOR_WIKITEXT);
+    const editions = parseJapanAcademyPersonWikitext(
+      DIRECTOR_WIKITEXT,
+      '監督賞',
+    );
 
     expect(editions.map(edition => edition.year)).toEqual([1977, 1980]);
   });
 
   it('役名の列がある表でも作品名の列を取り違えない', () => {
-    const editions = parseJapanAcademyPersonWikitext(SUPPORTING_ACTOR_WIKITEXT);
+    const editions = parseJapanAcademyPersonWikitext(
+      SUPPORTING_ACTOR_WIKITEXT,
+      '助演男優賞',
+    );
 
-    expect(editions[0].entries.map(entry => entry.filmTitle)).toEqual([
+    expect(editions[0].entries.map(entry => entry.films[0].title)).toEqual([
       '国宝',
       '国宝',
     ]);
   });
 
   it('同じ作品で複数の人物を返す', () => {
-    const editions = parseJapanAcademyPersonWikitext(SUPPORTING_ACTOR_WIKITEXT);
+    const editions = parseJapanAcademyPersonWikitext(
+      SUPPORTING_ACTOR_WIKITEXT,
+      '助演男優賞',
+    );
 
-    expect(editions[0].entries.map(entry => entry.personPage)).toEqual([
+    expect(editions[0].entries.map(entry => entry.people[0].page)).toEqual([
       '横浜流星',
       '渡辺謙',
     ]);
   });
 
   it('空の行区切りでrowspanを消費しない', () => {
-    const editions = parseJapanAcademyPersonWikitext(SUPPORTING_ACTOR_WIKITEXT);
+    const editions = parseJapanAcademyPersonWikitext(
+      SUPPORTING_ACTOR_WIKITEXT,
+      '助演男優賞',
+    );
 
     expect(editions[0].entries).toHaveLength(2);
   });
 
+  it('渡された部門名を各行の部門にする', () => {
+    const editions = parseJapanAcademyPersonWikitext(
+      DIRECTOR_WIKITEXT,
+      '監督賞',
+    );
+
+    expect(editions[0].entries[0].category).toBe('監督賞');
+  });
+
   it('受賞作品の一覧が無ければ空を返す', () => {
-    expect(parseJapanAcademyPersonWikitext('== 概要 ==\n本文')).toEqual([]);
+    expect(
+      parseJapanAcademyPersonWikitext('== 概要 ==\n本文', '監督賞'),
+    ).toEqual([]);
   });
 });
