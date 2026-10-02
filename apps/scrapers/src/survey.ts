@@ -182,7 +182,20 @@ function isFailedRun(run: WorkflowRun): boolean {
   return ['failure', 'timed_out', 'startup_failure'].includes(runOutcome(run));
 }
 
-export function formatWorkflowStatus(runs: WorkflowRun[]): string {
+const RUN_URL_PATTERN =
+  /https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/actions\/runs\/\d+/g;
+
+export function mentionedRunUrls(text: string): Set<string> {
+  return new Set(text.match(RUN_URL_PATTERN));
+}
+
+export function formatWorkflowStatus(
+  runs: WorkflowRun[],
+  addressedRunUrls: ReadonlySet<string> = new Set(),
+): string {
+  const requiresAttention = (run: WorkflowRun) =>
+    isFailedRun(run) && !addressedRunUrls.has(run.url);
+
   const latestByWorkflow = new Map<string, WorkflowRun>();
 
   for (const run of runs) {
@@ -201,7 +214,7 @@ export function formatWorkflowStatus(runs: WorkflowRun[]): string {
     .toArray()
     .toSorted(
       (a, b) =>
-        Number(isFailedRun(b)) - Number(isFailedRun(a)) ||
+        Number(requiresAttention(b)) - Number(requiresAttention(a)) ||
         a.workflowName.localeCompare(b.workflowName),
     );
 
@@ -216,13 +229,13 @@ export function formatWorkflowStatus(runs: WorkflowRun[]): string {
 
   return latestRuns
     .map(run => {
-      const isFailed = isFailedRun(run);
+      const isAttention = requiresAttention(run);
       const cells = [
-        `${isFailed ? '⚠️ ' : ''}${run.workflowName.padEnd(nameWidth)}`,
+        `${isAttention ? '⚠️ ' : ''}${run.workflowName.padEnd(nameWidth)}`,
         runOutcome(run).padEnd(outcomeWidth),
         `${run.createdAt.slice(0, 10)} ${run.createdAt.slice(11, 16)}Z`,
-        ...(isFailed ? [run.url] : []),
-      ];
+        isAttention ? run.url : isFailedRun(run) ? '手当て済み' : undefined,
+      ].filter(cell => cell !== undefined);
       return cells.join('  ');
     })
     .join('\n');

@@ -28,6 +28,7 @@ import {
   formatPageTimings,
   formatSurveyReport,
   formatWorkflowStatus,
+  mentionedRunUrls,
   largestSourceFiles,
   measurePages,
   settleSection,
@@ -218,15 +219,20 @@ async function workflowRuns(file: string): Promise<WorkflowRun[]> {
 
 async function workflowStatusSection(): Promise<SurveySection> {
   const files = await readdir(path.join(REPOSITORY_ROOT, '.github/workflows'));
-  const runs = await Promise.all(
-    files
-      .filter(file => /\.ya?ml$/.test(file))
-      .map(async file => workflowRuns(file)),
-  );
+  const [runs, {stdout: commitMessages}] = await Promise.all([
+    Promise.all(
+      files
+        .filter(file => /\.ya?ml$/.test(file))
+        .map(async file => workflowRuns(file)),
+    ),
+    execFileAsync('git', ['log', '-n', '100', '--format=%B', 'main'], {
+      cwd: REPOSITORY_ROOT,
+    }),
+  ]);
 
   return {
     title: 'main の GitHub Actions（workflow ごとの最新の run）',
-    body: formatWorkflowStatus(runs.flat()),
+    body: formatWorkflowStatus(runs.flat(), mentionedRunUrls(commitMessages)),
   };
 }
 

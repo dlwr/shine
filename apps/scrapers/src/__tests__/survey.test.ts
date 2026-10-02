@@ -5,6 +5,7 @@ import {
   formatWorkflowStatus,
   isSurveySourceFile,
   largestSourceFiles,
+  mentionedRunUrls,
   measurePages,
   settleSection,
   type WorkflowRun,
@@ -294,6 +295,27 @@ describe('formatWorkflowStatus', () => {
     ]);
   });
 
+  it('コミットで手当て済みの失敗は先頭に出さず、⚠️ と URL を付けない', () => {
+    const failedUrl = 'https://github.com/dlwr/shine/actions/runs/2';
+    const text = formatWorkflowStatus(
+      [
+        run({workflowName: 'CI'}),
+        run({
+          workflowName: 'A Monthly',
+          conclusion: 'failure',
+          createdAt: '2026-09-30T06:05:00Z',
+          url: failedUrl,
+        }),
+      ],
+      new Set([failedUrl]),
+    );
+
+    expect(text.split('\n')).toEqual([
+      'A Monthly  failure  2026-09-30 06:05Z  手当て済み',
+      'CI         success  2026-09-29 06:12Z',
+    ]);
+  });
+
   it('実行中の run は status を出す', () => {
     const text = formatWorkflowStatus([
       run({status: 'in_progress', conclusion: ''}),
@@ -304,5 +326,22 @@ describe('formatWorkflowStatus', () => {
 
   it('run が 1 つも無ければそう書く', () => {
     expect(formatWorkflowStatus([])).toBe('run なし');
+  });
+});
+
+describe('mentionedRunUrls', () => {
+  it('コミットメッセージに書かれた run の URL を拾う', () => {
+    const messages = [
+      '月末まとめの失敗 https://github.com/dlwr/shine/actions/runs/36676482929 の手当て',
+      'X も再試行する\n\nhttps://github.com/dlwr/shine/actions/runs/123/job/456 を参照',
+      '関係ないコミット',
+    ].join('\n');
+
+    expect(mentionedRunUrls(messages)).toEqual(
+      new Set([
+        'https://github.com/dlwr/shine/actions/runs/36676482929',
+        'https://github.com/dlwr/shine/actions/runs/123',
+      ]),
+    );
   });
 });
