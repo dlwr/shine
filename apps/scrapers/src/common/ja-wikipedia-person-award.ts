@@ -39,6 +39,8 @@ export type ListPersonAwardSource = {
   organizationName: string;
   establishedYear: number;
   ceremonyNumber: (year: number) => number | undefined;
+  /** 授賞式が年度の翌年なら 1。DB の授賞式の年はこれを足した年になる */
+  ceremonyYearOffset?: number;
   categories: ListPersonAwardCategory[];
   /** `年度:題名` → IMDb ID。記事名から引けない作品を直接指す */
   resolutionOverrides?: ReadonlyMap<string, string>;
@@ -186,7 +188,7 @@ export function toImdbEventData(
     source: `https://ja.wikipedia.org/wiki/${source.article}`,
     editions: editions
       .map(edition => ({
-        year: edition.year,
+        year: edition.year + (source.ceremonyYearOffset ?? 0),
         awardNames: [category.category],
         targetAward: [
           {
@@ -252,13 +254,15 @@ export async function importListPersonAward({
   source: ListPersonAwardSource;
   categories?: ListPersonAwardCategory[];
   dryRun?: boolean;
-  /** 年度（記事の見出しの年） */
+  /** 授賞式の年（ceremonyYearOffset が無ければ記事の見出しの年度） */
   year?: number;
   throttleMs?: number;
 }): Promise<ImdbEventImportStats> {
   const wikitext = await fetchWikitext(source.article, {language: 'ja'});
   const editions = parseListPersonAwardWikitext(wikitext, categories).filter(
-    edition => year === undefined || edition.year === year,
+    edition =>
+      year === undefined ||
+      edition.year + (source.ceremonyYearOffset ?? 0) === year,
   );
   console.log(
     `\n=== ${source.article}: parsed ${editions.length} editions from Wikipedia`,
