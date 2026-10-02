@@ -80,7 +80,12 @@ export function useQuizGame(puzzle: QuizPuzzle, apiUrl: string) {
   }, [puzzle.date]);
 
   useEffect(() => {
-    if (restored) {
+    if (!restored) {
+      return;
+    }
+
+    const saved = readStorage<QuizGameState>(QUIZ_STATE_KEY);
+    if (!saved || saved.date <= game.date) {
       writeStorage(QUIZ_STATE_KEY, game);
     }
   }, [game, restored]);

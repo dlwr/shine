@@ -17,9 +17,15 @@ type QuizResultProperties = {
   game: QuizGameState;
   maxAttempts: number;
   monthly: MonthlyPick | undefined;
+  isPastPuzzle?: boolean;
 };
 
-export function QuizResult({game, maxAttempts, monthly}: QuizResultProperties) {
+export function QuizResult({
+  game,
+  maxAttempts,
+  monthly,
+  isPastPuzzle,
+}: QuizResultProperties) {
   const [copied, setCopied] = useState(false);
   const text = shareText(game, maxAttempts);
   const shareUrls = buildShareUrls(text);
@@ -101,9 +107,17 @@ export function QuizResult({game, maxAttempts, monthly}: QuizResultProperties) {
           </span>
         </a>
       )}
-      <p className="font-label text-[10px] text-ink-muted mt-3">
-        次の問題は明日9時に出ます
-      </p>
+      {isPastPuzzle ? (
+        <a
+          href="/quiz"
+          className="mt-3 inline-block font-label text-xs text-ink underline">
+          今日の問題へ
+        </a>
+      ) : (
+        <p className="font-label text-[10px] text-ink-muted mt-3">
+          次の問題は明日9時に出ます
+        </p>
+      )}
     </div>
   );
 }
