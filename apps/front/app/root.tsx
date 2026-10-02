@@ -31,7 +31,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
 
   return {
     locale,
-    canonicalUrl: new URL(pathname, SITE_URL).href,
+    canonicalUrl: new URL(pathname.replace(/(?<=.)\/+$/, ''), SITE_URL).href,
     webAnalyticsToken: environment.PUBLIC_WEB_ANALYTICS_TOKEN || undefined,
     ...(monthly && {monthly}),
   };
