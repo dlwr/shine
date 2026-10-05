@@ -254,4 +254,22 @@ describe('syncJaPosters', () => {
 
     expect(await savedUrls()).toEqual([]);
   });
+  it('asks TMDb for the Japanese images only', async () => {
+    const candidates = await findJaPosterCandidates({
+      environment,
+      today: '2026-10-05',
+    });
+
+    await syncJaPosters({
+      environment,
+      candidates,
+      isDryRun: true,
+      throttleMs: 0,
+    });
+
+    const [[url]] = vi.mocked(fetch).mock.calls;
+    expect(
+      new URL(String(url)).searchParams.get('include_image_language'),
+    ).toBe('ja');
+  });
 });

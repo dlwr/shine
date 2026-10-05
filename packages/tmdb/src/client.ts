@@ -231,10 +231,12 @@ export async function fetchTMDBImages(
   tmdbId: number,
   mediaType: TMDBMediaType,
   tmdbApiKey: string,
+  imageLanguage?: string,
 ): Promise<TMDBMovieImages | undefined> {
   return tmdbGetUnlessNotFound<TMDBMovieImages>(
     `${mediaType}/${tmdbId}/images`,
     tmdbApiKey,
+    imageLanguage ? {include_image_language: imageLanguage} : {},
   );
 }
 
