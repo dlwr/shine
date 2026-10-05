@@ -11,6 +11,7 @@ import {
 import {awardPageDefinitions} from './award-definitions';
 import {BaseService} from './base-service';
 import type {YearDetail, YearMovie, YearSummary} from '../types/years';
+import {localizedPosterUrl} from './localized-poster-url';
 
 function compareYearMovies(a: YearMovie, b: YearMovie): number {
   return (
@@ -80,12 +81,7 @@ export class YearsService extends BaseService {
           ORDER BY translations.is_default DESC
           LIMIT 1
         )`.as('defaultTitle'),
-        posterUrl: sql<string | null>`(
-          SELECT url FROM poster_urls
-          WHERE poster_urls.movie_uid = movies.uid
-          ORDER BY poster_urls.is_primary DESC
-          LIMIT 1
-        )`.as('posterUrl'),
+        posterUrl: localizedPosterUrl('ja').as('posterUrl'),
       })
       .from(nominations)
       .innerJoin(

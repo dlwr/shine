@@ -23,6 +23,7 @@ import {
 import {awardPageDefinitions} from './award-definitions';
 import {joinAwardContext, localizedMovieTitle} from './people-query';
 import {personLocalizedName} from './person-name';
+import {localizedPosterUrl} from './localized-poster-url';
 
 type Database = ReturnType<typeof getDatabase>;
 
@@ -51,15 +52,7 @@ export async function loadPersonDetail(
       job: movieCredits.job,
       character: movieCredits.character,
       title: localizedMovieTitle(locale),
-      posterUrl: sql<string | null>`
-					(
-					  SELECT url
-					  FROM poster_urls
-					  WHERE poster_urls.movie_uid = movies.uid
-					  ORDER BY poster_urls.is_primary DESC
-					  LIMIT 1
-					)
-				`.as('poster_url'),
+      posterUrl: localizedPosterUrl(locale).as('poster_url'),
     })
     .from(movieCredits)
     .innerJoin(movies, eq(movies.uid, movieCredits.movieUid))

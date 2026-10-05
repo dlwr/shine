@@ -12,6 +12,7 @@ import type {
   UncrownedLoss,
   UncrownedMovie,
 } from '../types/uncrowned';
+import {localizedPosterUrl} from './localized-poster-url';
 
 const DEFAULT_MOVIE_LIMIT = 24;
 
@@ -140,12 +141,7 @@ export class UncrownedService extends BaseService {
           ORDER BY translations.is_default DESC
           LIMIT 1
         )`.as('defaultTitle'),
-        posterUrl: sql<string | null>`(
-          SELECT url FROM poster_urls
-          WHERE poster_urls.movie_uid = movies.uid
-          ORDER BY poster_urls.is_primary DESC
-          LIMIT 1
-        )`.as('posterUrl'),
+        posterUrl: localizedPosterUrl('ja').as('posterUrl'),
       })
       .from(movies)
       .where(inArray(movies.uid, movieUids));

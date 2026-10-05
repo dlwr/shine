@@ -1,4 +1,4 @@
-import {and, eq, inArray, isNull, sql} from '@shine/database';
+import {and, eq, inArray, isNull} from '@shine/database';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
@@ -21,14 +21,10 @@ import {
 } from './award-definitions';
 import {compareAwardMovies, flattenListAward} from './award-page-ordering';
 import {loadWatchableAvailabilityByMovie} from './watchable-availability';
+import {localizedPosterUrl} from './localized-poster-url';
 
 function posterUrlColumn() {
-  return sql<string | null>`(
-      SELECT url FROM poster_urls
-      WHERE poster_urls.movie_uid = movies.uid
-      ORDER BY poster_urls.is_primary DESC
-      LIMIT 1
-    )`.as('posterUrl');
+  return localizedPosterUrl('ja').as('posterUrl');
 }
 
 type AwardMovieRow = {
