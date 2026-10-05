@@ -20,6 +20,7 @@ import type {
   PersonCrossings,
 } from '../types/crossings';
 import {personLocalizedName} from './person-name';
+import {localizedPosterUrl} from './localized-poster-url';
 
 const DEFAULT_TOP_PERFORMANCE_LIMIT = 48;
 
@@ -227,12 +228,7 @@ export class PersonCrossingsService extends BaseService {
               (translations.language_code = 'en') DESC
             LIMIT 1
           )`.as('title'),
-          posterUrl: sql<string | null>`(
-            SELECT url FROM poster_urls
-            WHERE poster_urls.movie_uid = movies.uid
-            ORDER BY poster_urls.is_primary DESC
-            LIMIT 1
-          )`.as('posterUrl'),
+          posterUrl: localizedPosterUrl(locale).as('posterUrl'),
         })
         .from(movies)
         .where(

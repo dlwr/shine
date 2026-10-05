@@ -8,6 +8,7 @@ import {findTopAwardPageDefinition} from './award-definition-lookup';
 import {awardPageDefinitions} from './award-definitions';
 import {BaseService} from './base-service';
 import type {AwardCrossings, CrossingMovie} from '../types/crossings';
+import {localizedPosterUrl} from './localized-poster-url';
 
 const DEFAULT_TOP_MOVIE_LIMIT = 24;
 
@@ -152,12 +153,7 @@ export class CrossingsService extends BaseService {
           ORDER BY translations.is_default DESC
           LIMIT 1
         )`.as('defaultTitle'),
-        posterUrl: sql<string | null>`(
-          SELECT url FROM poster_urls
-          WHERE poster_urls.movie_uid = movies.uid
-          ORDER BY poster_urls.is_primary DESC
-          LIMIT 1
-        )`.as('posterUrl'),
+        posterUrl: localizedPosterUrl('ja').as('posterUrl'),
       })
       .from(movies)
       .where(inArray(movies.uid, movieUids));

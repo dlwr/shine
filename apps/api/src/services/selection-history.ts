@@ -2,6 +2,7 @@ import {and, eq, isNull, sql, type getDatabase} from '@shine/database';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import type {SelectionType} from './selection-dates';
+import {localizedPosterUrl} from './localized-poster-url';
 
 type Database = ReturnType<typeof getDatabase>;
 
@@ -41,12 +42,7 @@ export async function loadSelectionHistory(
           AND is_default = 1
         LIMIT 1
       )`,
-      posterUrl: sql<string | undefined>`(
-        SELECT url FROM poster_urls
-        WHERE poster_urls.movie_uid = movies.uid
-        ORDER BY poster_urls.is_primary DESC, poster_urls.created_at ASC
-        LIMIT 1
-      )`,
+      posterUrl: localizedPosterUrl(locale),
       articleLinkCount: sql<number>`(
         SELECT COUNT(*) FROM article_links
         WHERE article_links.movie_uid = movies.uid

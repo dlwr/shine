@@ -17,6 +17,7 @@ import {buildMovieSearchQueries} from './movie-search-query';
 import type {MovieSelection} from '../types/movies';
 import type {SearchOptions} from '../types/search';
 import {personLocalizedName} from './person-name';
+import {localizedPosterUrl} from './localized-poster-url';
 
 export class MoviesService extends BaseService {
   async suggestMovies(
@@ -145,15 +146,7 @@ export class MoviesService extends BaseService {
 					  LIMIT 1
 					)
 				`.as('description'),
-        posterUrl: sql`
-					(
-					  SELECT url
-					  FROM poster_urls
-					  WHERE poster_urls.movie_uid = movies.uid
-					  ORDER BY poster_urls.is_primary DESC, poster_urls.created_at ASC
-					  LIMIT 1
-					)
-				`.as('posterUrl'),
+        posterUrl: localizedPosterUrl(locale).as('posterUrl'),
       })
       .from(movies)
       .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))

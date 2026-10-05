@@ -9,6 +9,7 @@ import {
 } from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
+import {localizedPosterUrl} from './localized-poster-url';
 
 type Database = ReturnType<typeof getDatabase>;
 
@@ -72,12 +73,7 @@ export async function findRelatedMovies(
                 AND is_default = 1
               LIMIT 1
             )`,
-            posterUrl: sql<string | undefined>`(
-              SELECT url FROM poster_urls
-              WHERE movie_uid = movies.uid
-              ORDER BY is_primary DESC
-              LIMIT 1
-            )`,
+            posterUrl: localizedPosterUrl(locale),
           })
           .from(movies)
           .where(inArray(movies.uid, candidateUids))
