@@ -191,14 +191,18 @@ export async function savePosterUrls(
   let savedCount = 0;
 
   try {
+    const [movie] = await database
+      .select({originalLanguage: movies.originalLanguage})
+      .from(movies)
+      .where(eq(movies.uid, movieUid))
+      .limit(1);
     const existingPosters = await database
-      .select({url: posterUrls.url})
+      .select({url: posterUrls.url, isPrimary: posterUrls.isPrimary})
       .from(posterUrls)
       .where(eq(posterUrls.movieUid, movieUid));
 
-    const existingUrls = new Set(
-      existingPosters.map((poster: {url: string}) => poster.url),
-    );
+    const existingUrls = new Set(existingPosters.map(poster => poster.url));
+    let hasPrimary = existingPosters.some(poster => poster.isPrimary === 1);
 
     for (const poster of posters) {
       const url = `https://image.tmdb.org/t/p/original${poster.file_path}`;
@@ -207,13 +211,17 @@ export async function savePosterUrls(
         continue;
       }
 
+      const isPrimary =
+        !hasPrimary && poster.iso_639_1 === movie?.originalLanguage;
+      hasPrimary ||= isPrimary;
+
       const posterValues: typeof posterUrls.$inferInsert = {
         movieUid,
         url,
         width: poster.width,
         height: poster.height,
         sourceType: 'tmdb',
-        isPrimary: savedCount === 0 ? 1 : 0,
+        isPrimary: isPrimary ? 1 : 0,
       };
 
       if (poster.iso_639_1) {

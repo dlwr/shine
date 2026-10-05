@@ -1,7 +1,8 @@
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {eq, type Environment, type getDatabase} from '@shine/database';
+import {and, eq, type Environment, type getDatabase} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
+import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {createD1TestDatabase} from '@shine/database/testing';
 import {afterAll, afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
@@ -25,7 +26,10 @@ describe('syncTmdbData on D1', () => {
     const d1 = await createD1TestDatabase({migrationsFolder});
     ({database, dispose} = d1);
     environment = {DB: d1.binding, TMDB_API_KEY: 'test-key'};
-    await database.insert(movies).values({uid: 'many-languages', year: 2015});
+    await database.insert(movies).values([
+      {uid: 'many-languages', year: 2015},
+      {uid: 'french-film', year: 2015, originalLanguage: 'en'},
+    ]);
   }, 60_000);
 
   afterAll(async () => {
@@ -68,5 +72,53 @@ describe('syncTmdbData on D1', () => {
       .from(translations)
       .where(eq(translations.resourceUid, 'many-languages'));
     expect(rows).toHaveLength(30);
+  });
+  it('marks the poster in the original language from TMDb as primary', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string | URL) => {
+        const url = String(input);
+        const body = url.includes('/images')
+          ? {
+              id: 2,
+              posters: [
+                {
+                  file_path: '/en.jpg',
+                  width: 500,
+                  height: 750,
+                  iso_639_1: 'en',
+                },
+                {
+                  file_path: '/fr.jpg',
+                  width: 500,
+                  height: 750,
+                  iso_639_1: 'fr',
+                },
+              ],
+            }
+          : url.includes('/translations')
+            ? {id: 2, translations: []}
+            : {original_language: 'fr', original_title: 'Titre'};
+        return {
+          ok: true,
+          async text() {
+            return JSON.stringify(body);
+          },
+        };
+      }),
+    );
+
+    await syncTmdbData(database, 'french-film', 2, 'movie', environment);
+
+    const rows = await database
+      .select({url: posterUrls.url})
+      .from(posterUrls)
+      .where(
+        and(
+          eq(posterUrls.movieUid, 'french-film'),
+          eq(posterUrls.isPrimary, 1),
+        ),
+      );
+    expect(rows).toEqual([{url: 'https://image.tmdb.org/t/p/original/fr.jpg'}]);
   });
 });
