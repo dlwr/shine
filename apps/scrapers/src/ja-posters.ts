@@ -112,6 +112,7 @@ export async function syncJaPosters({
         candidate.tmdbId,
         candidate.mediaType,
         apiKey,
+        'ja',
       );
       const jaPosters = (images?.posters ?? []).filter(
         poster => poster.iso_639_1 === 'ja',
