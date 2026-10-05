@@ -1,4 +1,4 @@
-import {and, eq, inArray, isNull, sql} from '@shine/database';
+import {and, eq, inArray, isNull} from '@shine/database';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
