@@ -40,15 +40,6 @@ export async function syncTmdbData(
     translationsAdded: 0,
   };
 
-  const images = await fetchTMDBImages(tmdbId, mediaType, tmdbApiKey);
-  if (images?.posters && images.posters.length > 0) {
-    result.postersAdded = await savePosterUrls(
-      movieUid,
-      images.posters,
-      environment,
-    );
-  }
-
   const translationsData = await fetchTMDBMovieTranslations(
     tmdbId,
     tmdbApiKey,
@@ -70,6 +61,15 @@ export async function syncTmdbData(
         originalLanguage: movieData.original_language,
       })
       .where(eq(movies.uid, movieUid));
+  }
+
+  const images = await fetchTMDBImages(tmdbId, mediaType, tmdbApiKey);
+  if (images?.posters && images.posters.length > 0) {
+    result.postersAdded = await savePosterUrls(
+      movieUid,
+      images.posters,
+      environment,
+    );
   }
 
   if (translationsData?.translations) {

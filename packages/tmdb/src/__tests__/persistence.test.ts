@@ -21,6 +21,14 @@ const migrationsFolder = path.resolve(
   '../../../database/migrations',
 );
 
+const primaryUrls = async (environment: Environment) => {
+  const rows = await getDatabase(environment)
+    .select({url: posterUrls.url, isPrimary: posterUrls.isPrimary})
+    .from(posterUrls)
+    .where(eq(posterUrls.movieUid, 'movie-1'));
+  return rows.filter(row => row.isPrimary === 1).map(row => row.url);
+};
+
 describe('persistence save functions (libsql integration)', () => {
   let environment: Environment;
 
@@ -43,21 +51,48 @@ describe('persistence save functions (libsql integration)', () => {
       {file_path: '/b.jpg', width: 500, height: 750, iso_639_1: undefined},
     ];
 
-    it('saves posters with the first one marked primary', async () => {
+    it('saves every new poster', async () => {
       const savedCount = await savePosterUrls('movie-1', posters, environment);
 
       expect(savedCount).toBe(2);
+    });
 
-      const database = getDatabase(environment);
-      const rows = await database
-        .select()
-        .from(posterUrls)
-        .where(eq(posterUrls.movieUid, 'movie-1'));
+    it('marks the first poster in the original language as primary', async () => {
+      await savePosterUrls(
+        'movie-1',
+        [
+          {file_path: '/x.jpg', width: 500, height: 750, iso_639_1: 'ja'},
+          ...posters,
+        ],
+        environment,
+      );
 
-      expect(rows).toHaveLength(2);
-      const primary = rows.find(row => row.isPrimary === 1);
-      expect(primary?.url).toBe('https://image.tmdb.org/t/p/original/a.jpg');
-      expect(primary?.languageCode).toBe('en');
+      expect(await primaryUrls(environment)).toEqual([
+        'https://image.tmdb.org/t/p/original/a.jpg',
+      ]);
+    });
+
+    it('marks no poster as primary when none is in the original language', async () => {
+      await savePosterUrls(
+        'movie-1',
+        [{file_path: '/x.jpg', width: 500, height: 750, iso_639_1: 'ja'}],
+        environment,
+      );
+
+      expect(await primaryUrls(environment)).toEqual([]);
+    });
+
+    it('keeps the existing primary poster', async () => {
+      await savePosterUrls('movie-1', posters, environment);
+      await savePosterUrls(
+        'movie-1',
+        [{file_path: '/c.jpg', width: 780, height: 1170, iso_639_1: 'en'}],
+        environment,
+      );
+
+      expect(await primaryUrls(environment)).toEqual([
+        'https://image.tmdb.org/t/p/original/a.jpg',
+      ]);
     });
 
     it('skips posters whose URL already exists', async () => {
