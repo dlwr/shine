@@ -36,6 +36,7 @@ import {createCommand as indexNow} from './indexnow-cli';
 import {createCommand as japanAcademyAwards} from './japan-academy-awards-cli';
 import {createCommand as japanAcademyPersonAwards} from './japan-academy-person-awards-cli';
 import {createCommand as japanPersonAwards} from './japan-person-awards-cli';
+import {createCommand as jaPosterWorklist} from './ja-poster-worklist-cli';
 import {createCommand as japaneseTranslations} from './japanese-translations-cli';
 import {createCommand as kinemaJunpo} from './kinema-junpo-cli';
 import {createCommand as mainichiFilmConcours} from './mainichi-film-concours-cli';
@@ -48,6 +49,7 @@ import {createCommand as personEnglishNames} from './person-english-names-cli';
 import {createCommand as snsPost} from './sns-post-cli';
 import {createCommand as sql} from './sql-cli';
 import {createCommand as survey} from './survey-cli';
+import {createCommand as syncJaPosters} from './sync-ja-posters-cli';
 import {createCommand as tmdbJaWorklist} from './tmdb-ja-worklist-cli';
 import {createCommand as veniceFilmFestival} from './venice-film-festival-cli';
 import {createCommand as veniceJuryAwards} from './venice-jury-awards-cli';
@@ -103,6 +105,8 @@ const commandGroups: Array<{heading: string; factories: Array<() => Command>}> =
         personEnglishNames,
         cannesFillImdbIds,
         tmdbJaWorklist,
+        jaPosterWorklist,
+        syncJaPosters,
       ],
     },
     {
