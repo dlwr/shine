@@ -1,4 +1,11 @@
-import {and, eq, getDatabase, sql, type Environment} from '@shine/database';
+import {
+  and,
+  eq,
+  getDatabase,
+  runInChunks,
+  sql,
+  type Environment,
+} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {
@@ -110,13 +117,11 @@ export async function syncTmdbData(
       translationsAdded++;
     }
 
-    const rows = rowsByLanguage.values().toArray();
-    const chunkSize = 50;
     const now = Math.floor(Date.now() / 1000);
-    for (let index = 0; index < rows.length; index += chunkSize) {
-      await database
+    await runInChunks(rowsByLanguage.values().toArray(), chunk =>
+      database
         .insert(translations)
-        .values(rows.slice(index, index + chunkSize))
+        .values(chunk)
         .onConflictDoUpdate({
           target: [
             translations.resourceType,
@@ -128,8 +133,8 @@ export async function syncTmdbData(
             isDefault: sql`excluded.is_default`,
             updatedAt: now,
           },
-        });
-    }
+        }),
+    );
 
     result.translationsAdded = translationsAdded;
   }
