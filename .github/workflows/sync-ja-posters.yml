@@ -1,0 +1,52 @@
+name: Sync Japanese Posters
+
+on:
+  schedule:
+    - cron: '0 19 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '取り込まずに見つかった映画だけ表示'
+        type: boolean
+        default: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync Japanese posters from TMDb
+        working-directory: apps/scrapers
+        run: pnpm run cli sync-ja-posters ${{ inputs.dry_run && '--dry-run' || '' }}
+        env:
+          D1_PROXY_URL: ${{ secrets.D1_PROXY_URL }}
+          D1_PROXY_KEY: ${{ secrets.D1_PROXY_KEY }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
