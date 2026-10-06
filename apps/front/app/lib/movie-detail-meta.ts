@@ -138,5 +138,8 @@ export function buildMovieDetailMeta({
       largeImage: true,
     }),
     ...(movieDetail ? [{'script:ld+json': buildMovieJsonLd(movieDetail)}] : []),
+    ...(movieDetail?.worthIndexing === false
+      ? [{name: 'robots', content: 'noindex, follow'}]
+      : []),
   ];
 }

@@ -79,6 +79,7 @@ const mockMovieDetail = {
       description: '監督が語る製作秘話',
     },
   ],
+  worthIndexing: true,
 };
 
 const mockRelatedMovies = [

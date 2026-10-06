@@ -87,7 +87,7 @@
     "data.movies[].uid",
     "data.movies[].year"
   ],
-  "movies:uids:v1": [
+  "movies:uids:v2": [
     "cachedAt",
     "data.uids[]"
   ],

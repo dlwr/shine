@@ -4,6 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
+import {translations} from '@shine/database/schema/translations';
 import {migrate} from '@shine/database/testing';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {moviesRoutes} from '../routes/movies';
@@ -52,7 +53,23 @@ async function createTestEnvironment(): Promise<Environment> {
     {uid: 'movie-1985', year: 1985},
     {uid: 'movie-2001', year: 2001},
     {uid: 'movie-deleted', year: 1970, deletedAt: 1},
+    {uid: 'movie-without-japanese', year: 1995},
   ]);
+
+  await database.insert(translations).values(
+    [
+      'movie-b-1990',
+      'movie-a-1990',
+      'movie-1985',
+      'movie-2001',
+      'movie-deleted',
+    ].map(uid => ({
+      resourceType: 'movie_title' as const,
+      resourceUid: uid,
+      languageCode: 'ja',
+      content: uid,
+    })),
+  );
 
   return environment;
 }
@@ -70,7 +87,7 @@ describe('GET /movies/uids', () => {
     environment = await createTestEnvironment();
   });
 
-  it('論理削除を除いた全映画の uid を年・uid の順で返す', async () => {
+  it('論理削除と日本語の題もあらすじも無い映画を除いた uid を年・uid の順で返す', async () => {
     const {response, body} = await requestUids(environment);
 
     expect(response.status).toBe(200);

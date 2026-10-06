@@ -2,6 +2,7 @@ import {describe, expect, it} from 'vitest';
 import type {MovieDetailData} from './movie-detail';
 import {
   buildMetaDescription,
+  buildMovieDetailMeta,
   buildMovieJsonLd,
   summarizeOrganizations,
 } from './movie-detail-meta';
@@ -39,6 +40,7 @@ const movieDetail = (
   title: 'パラサイト',
   nominations: [],
   articleLinks: [],
+  worthIndexing: true,
   ...overrides,
 });
 
@@ -195,5 +197,25 @@ describe('buildMovieJsonLd', () => {
     expect(
       buildMovieJsonLd(movieDetail({nominations: [nomination()]})),
     ).not.toHaveProperty('award');
+  });
+});
+
+const robotsOf = (detail: MovieDetailData) =>
+  buildMovieDetailMeta({
+    payload: {movieDetail: detail, locale: 'ja'},
+    matches: [],
+    movieId: detail.uid,
+  }).find(descriptor => 'name' in descriptor && descriptor.name === 'robots');
+
+describe('buildMovieDetailMeta', () => {
+  it('邦題か日本語のあらすじがあれば robots を付けない', () => {
+    expect(robotsOf(movieDetail())).toBeUndefined();
+  });
+
+  it('邦題も日本語のあらすじも無ければ noindex, follow を付ける', () => {
+    expect(robotsOf(movieDetail({worthIndexing: false}))).toEqual({
+      name: 'robots',
+      content: 'noindex, follow',
+    });
   });
 });
