@@ -1,73 +1,39 @@
-import {setTimeout as sleep} from 'node:timers/promises';
 import {hasJapaneseText} from '@shine/availability';
 import {and, eq, sql} from 'drizzle-orm';
 import {getDatabase, type Environment} from '@shine/database';
 import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
 import {getScrapeDatabase} from './common/dry-run';
-import {fetchJsonWithRetry} from '@shine/utils/fetch';
+import {
+  articleTitleFromUrl,
+  buildJapaneseLabelQuery,
+  DEFAULT_BATCH_SIZE,
+  fetchSparql,
+  importJapaneseLabelsInBatches,
+  type JapaneseLabelBinding,
+  type WikidataJapaneseLabelImportStats,
+} from './common/wikidata-sparql';
 
-const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
-const USER_AGENT = 'shine-film.com movie database (https://shine-film.com)';
-const DEFAULT_BATCH_SIZE = 50;
-
-export type WikidataNameImportStats = {
-  candidates: number;
-  saved: number;
-  replaced: number;
-  notFound: number;
-  failed: number;
-};
+export type WikidataNameImportStats = WikidataJapaneseLabelImportStats;
 
 type SparqlResponse = {
   results?: {
-    bindings?: Array<{
-      tmdb?: {value?: string};
-      jaLabel?: {value?: string};
-      article?: {value?: string};
-    }>;
+    bindings?: Array<JapaneseLabelBinding & {tmdb?: {value?: string}}>;
   };
 };
 
 export function buildSparqlQuery(tmdbIds: number[]): string {
-  const values = tmdbIds
-    .filter(id => Number.isSafeInteger(id) && id > 0)
-    .map(id => `"${id}"`)
-    .join(' ');
-
-  return `SELECT ?tmdb ?jaLabel ?article WHERE {
-  VALUES ?tmdb { ${values} }
-  ?item wdt:P4985 ?tmdb.
-  OPTIONAL {
-    ?item rdfs:label ?jaLabel.
-    FILTER(LANG(?jaLabel) = "ja")
-  }
-  OPTIONAL {
-    ?article schema:about ?item;
-      schema:isPartOf <https://ja.wikipedia.org/>.
-  }
-}`;
+  return buildJapaneseLabelQuery({
+    variable: 'tmdb',
+    property: 'P4985',
+    values: tmdbIds
+      .filter(id => Number.isSafeInteger(id) && id > 0)
+      .map(String),
+  });
 }
 
 export function cleanPersonLabel(label: string): string {
   return label.replace(/\s*[（(][^（()）]*[）)]\s*$/, '').trim();
-}
-
-function articleTitleFromUrl(url: string | undefined): string | undefined {
-  if (!url) {
-    return undefined;
-  }
-
-  const encoded = url.split('/wiki/').pop();
-  if (!encoded) {
-    return undefined;
-  }
-
-  try {
-    return decodeURIComponent(encoded).replaceAll('_', ' ');
-  } catch {
-    return undefined;
-  }
 }
 
 function usableName(raw: string | undefined): string | undefined {
@@ -117,18 +83,9 @@ export function parseSparqlResponse(
 }
 
 async function fetchBatch(tmdbIds: number[]): Promise<Map<number, string>> {
-  const url = `${SPARQL_ENDPOINT}?format=json&query=${encodeURIComponent(
-    buildSparqlQuery(tmdbIds),
-  )}`;
-
-  const response = await fetchJsonWithRetry<SparqlResponse>(url, {
-    headers: {
-      'User-Agent': USER_AGENT,
-      Accept: 'application/sparql-results+json',
-    },
-  });
-
-  return parseSparqlResponse(response);
+  return parseSparqlResponse(
+    await fetchSparql<SparqlResponse>(buildSparqlQuery(tmdbIds)),
+  );
 }
 
 type Candidate = {
@@ -197,68 +154,23 @@ export async function importJapaneseNamesFromWikidata({
   batchSize?: number;
   throttleMs?: number;
 }): Promise<WikidataNameImportStats> {
-  const stats: WikidataNameImportStats = {
-    candidates: 0,
-    saved: 0,
-    replaced: 0,
-    notFound: 0,
-    failed: 0,
-  };
-
   const database = getScrapeDatabase({environment, isDryRun: dryRun});
   const allCandidates = await listCandidates(database);
   const candidates =
     limit === undefined ? allCandidates : allCandidates.slice(0, limit);
-  stats.candidates = candidates.length;
 
-  if (candidates.length === 0) {
-    console.log('No people need a Japanese name.');
-    return stats;
-  }
-
-  const batches = Math.ceil(candidates.length / batchSize);
-  console.log(
-    `${dryRun ? '[DRY RUN] ' : ''}Looking up ${candidates.length} people on Wikidata (${batches} batches)...`,
-  );
-
-  for (let index = 0; index < candidates.length; index += batchSize) {
-    const batch = candidates.slice(index, index + batchSize);
-    const batchNumber = Math.floor(index / batchSize) + 1;
-
-    let names: Map<number, string>;
-    try {
-      names = await fetchBatch(batch.map(candidate => candidate.tmdbId));
-    } catch (error) {
-      console.error(`  Batch ${batchNumber}/${batches} failed:`, error);
-      stats.failed += batch.length;
-      continue;
-    }
-
-    for (const candidate of batch) {
-      await applyCandidateName({
-        database,
-        candidate,
-        name: names.get(candidate.tmdbId),
-        dryRun,
-        stats,
-      });
-    }
-
-    console.log(`  Batch ${batchNumber}/${batches} done`);
-
-    if (throttleMs > 0 && index + batchSize < candidates.length) {
-      await sleep(throttleMs);
-    }
-  }
-
-  console.log('\nWikidata import summary:');
-  console.log(`  Candidates: ${stats.candidates}`);
-  console.log(`  Saved (new): ${stats.saved}`);
-  console.log(`  Replaced (was romanized): ${stats.replaced}`);
-  console.log(`  Not on Wikidata: ${stats.notFound}`);
-  console.log(`  Failed: ${stats.failed}`);
-
-  return stats;
+  return importJapaneseLabelsInBatches({
+    candidates,
+    subject: 'people',
+    emptyMessage: 'No people need a Japanese name.',
+    dryRun,
+    batchSize,
+    throttleMs,
+    keyOf: candidate => candidate.tmdbId,
+    fetchLabels: fetchBatch,
+    apply: async (candidate, name, stats) =>
+      applyCandidateName({database, candidate, name, dryRun, stats}),
+  });
 }
 
 async function applyCandidateName({
