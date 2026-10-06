@@ -21,7 +21,7 @@ export type MovieDetail = Pick<
   | 'nominations'
   | 'articleLinks'
   | 'credits'
->;
+> & {worthIndexing: boolean};
 
 type SearchedMovie = {
   uid: string;

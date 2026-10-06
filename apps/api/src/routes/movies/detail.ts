@@ -50,6 +50,7 @@ movieDetailRoutes.get('/:id', async c => {
       nominations: movieDetails.nominations,
       articleLinks: movieDetails.articleLinks,
       credits: movieDetails.credits,
+      worthIndexing: movieDetails.worthIndexing,
     };
 
     // Create ETag for the response

@@ -15,7 +15,7 @@ export const movieUidsRoutes = new Hono<{Bindings: Environment}>();
 movieUidsRoutes.get('/uids', async c => {
   const cache = new EdgeCache(c.env.CACHE_KV);
   const {data, status} = await readThroughCache<MovieUidsResponse>(c, cache, {
-    key: 'movies:uids:v1',
+    key: 'movies:uids:v2',
     ttl: getCacheTTL.movie.uids,
     edgeTtl: IMPORTED_DATA_EDGE_TTL,
     load: async () => ({uids: await new MoviesService(c.env).listMovieUids()}),

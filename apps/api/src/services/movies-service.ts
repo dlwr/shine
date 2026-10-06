@@ -19,6 +19,16 @@ import type {SearchOptions} from '../types/search';
 import {personLocalizedName} from './person-name';
 import {localizedPosterUrl} from './localized-poster-url';
 
+const hasJapaneseText = sql<number>`
+  EXISTS (
+    SELECT 1
+    FROM translations
+    WHERE translations.resource_type IN ('movie_title', 'movie_description')
+      AND translations.resource_uid = movies.uid
+      AND translations.language_code = 'ja'
+  )
+`;
+
 export class MoviesService extends BaseService {
   async suggestMovies(
     query: string,
@@ -104,7 +114,7 @@ export class MoviesService extends BaseService {
     const rows = await this.database
       .select({uid: movies.uid})
       .from(movies)
-      .where(isNull(movies.deletedAt))
+      .where(and(isNull(movies.deletedAt), hasJapaneseText))
       .orderBy(movies.year, movies.uid);
 
     return rows.map(row => row.uid);
@@ -113,7 +123,7 @@ export class MoviesService extends BaseService {
   async getMovieDetails(
     movieId: string,
     locale = 'ja',
-  ): Promise<MovieSelection> {
+  ): Promise<MovieSelection & {worthIndexing: boolean}> {
     // Get movie with title and description
     const movieQuery = this.database
       .select({
@@ -147,6 +157,7 @@ export class MoviesService extends BaseService {
 					)
 				`.as('description'),
         posterUrl: localizedPosterUrl(locale).as('posterUrl'),
+        worthIndexing: hasJapaneseText.as('worthIndexing'),
       })
       .from(movies)
       .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))
@@ -220,7 +231,7 @@ export class MoviesService extends BaseService {
 
     const movie = movieResult[0];
 
-    const movieDetails: MovieSelection = {
+    const movieDetails: MovieSelection & {worthIndexing: boolean} = {
       uid: movie.uid,
       year: movie.year ?? 0,
       originalLanguage: movie.originalLanguage,
@@ -277,6 +288,7 @@ export class MoviesService extends BaseService {
         description: article.description || undefined,
       })),
       credits,
+      worthIndexing: Boolean(movie.worthIndexing),
     };
 
     return movieDetails;
