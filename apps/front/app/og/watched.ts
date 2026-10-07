@@ -1,12 +1,12 @@
-import {createImageResponse} from '@/lib/og/image-response';
+import {createImageResponse} from '@/og/render/image-response';
 import {apiFetch, type LoadContext} from '@/lib/api';
-import {loadGoogleFont} from '@/lib/og/assets';
+import {loadGoogleFont} from '@/og/render/assets';
 import {
   OG_HEIGHT,
   OG_WIDTH,
   buildWatchedCardHtml,
   OG_FONT_FAMILY,
-} from '@/lib/og/template';
+} from '@/og/render/template';
 import {
   decodeWatched,
   isWatchedEncoding,

@@ -2,13 +2,13 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {renderQuizCard} from './quiz';
 import {createMockContext} from '@/lib/test-context';
 
-vi.mock('@/lib/og/image-response', () => ({
+vi.mock('@/og/render/image-response', () => ({
   createImageResponse: vi.fn(
     async () => new Response(new Uint8Array([1]), {status: 200}),
   ),
 }));
 
-vi.mock('@/lib/og/assets', () => ({
+vi.mock('@/og/render/assets', () => ({
   fetchPosterAsDataUri: vi.fn(async () => 'data:image/png;base64,AA=='),
   loadGoogleFont: vi.fn(async () => new ArrayBuffer(1)),
 }));

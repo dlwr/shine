@@ -22,7 +22,7 @@ const DARK = /\.dark\s*\{([^}]*)\}/;
 describe('brand 色の写し', () => {
   it('OG カードの赤が暗いテーマのトークンと同じ', () => {
     const brand = /brand:\s*'(#[\da-f]{6})'/i.exec(
-      read('apps/front/app/lib/og/template.ts'),
+      read('apps/front/app/og/render/template.ts'),
     )?.[1];
 
     expect(brand).toBe(tokenValue('brand', DARK));
@@ -30,7 +30,7 @@ describe('brand 色の写し', () => {
 
   it('OG カードの背景が暗いテーマのトークンと同じ', () => {
     const paper = /paper:\s*'(#[\da-f]{6})'/i.exec(
-      read('apps/front/app/lib/og/template.ts'),
+      read('apps/front/app/og/render/template.ts'),
     )?.[1];
 
     expect(paper).toBe(tokenValue('paper', DARK));

@@ -21,7 +21,7 @@ describe('front worker の読み込み', () => {
     const importers = Object.entries(frontSources)
       .filter(
         ([file, source]) =>
-          !file.startsWith('../og/') &&
+          !file.startsWith('./') &&
           !/\.test\.tsx?$/.test(file) &&
           OG_RENDERER_IMPORT.test(source),
       )
