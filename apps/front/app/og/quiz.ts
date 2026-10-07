@@ -1,12 +1,12 @@
-import {createImageResponse} from '@/lib/og/image-response';
+import {createImageResponse} from '@/og/render/image-response';
 import {tryApiJson, resolveQuizKey, type LoadContext} from '@/lib/api';
-import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
+import {fetchPosterAsDataUri, loadGoogleFont} from '@/og/render/assets';
 import {
   OG_HEIGHT,
   OG_WIDTH,
   buildQuizCardHtml,
   OG_FONT_FAMILY,
-} from '@/lib/og/template';
+} from '@/og/render/template';
 import {upgradePosterForSharing} from '@/lib/meta';
 
 const CACHE_CONTROL = 'public, max-age=3600';

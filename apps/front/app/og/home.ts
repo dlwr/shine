@@ -1,11 +1,11 @@
-import {createImageResponse} from '@/lib/og/image-response';
-import {loadGoogleFont} from '@/lib/og/assets';
+import {createImageResponse} from '@/og/render/image-response';
+import {loadGoogleFont} from '@/og/render/assets';
 import {
   OG_HEIGHT,
   OG_WIDTH,
   buildHomeCardHtml,
   OG_FONT_FAMILY,
-} from '@/lib/og/template';
+} from '@/og/render/template';
 
 const CACHE_CONTROL = 'public, max-age=604800';
 

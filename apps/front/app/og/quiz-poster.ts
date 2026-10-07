@@ -1,11 +1,11 @@
-import {createImageResponse} from '@/lib/og/image-response';
+import {createImageResponse} from '@/og/render/image-response';
 import {tryApiJson, resolveQuizKey, type LoadContext} from '@/lib/api';
-import {fetchPosterAsDataUri} from '@/lib/og/assets';
+import {fetchPosterAsDataUri} from '@/og/render/assets';
 import {
   buildQuizPosterHtml,
   QUIZ_POSTER_HEIGHT,
   QUIZ_POSTER_WIDTH,
-} from '@/lib/og/quiz-poster';
+} from '@/og/render/quiz-poster';
 import {upgradePosterForSharing} from '@/lib/meta';
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;

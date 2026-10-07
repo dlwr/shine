@@ -1,12 +1,12 @@
-import {createImageResponse} from '@/lib/og/image-response';
-import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
-import {pickRepresentativeTitles} from '@/lib/og/person-card';
+import {createImageResponse} from '@/og/render/image-response';
+import {fetchPosterAsDataUri, loadGoogleFont} from '@/og/render/assets';
+import {pickRepresentativeTitles} from '@/og/render/person-card';
 import {
   OG_HEIGHT,
   OG_WIDTH,
   buildPersonCardHtml,
   OG_FONT_FAMILY,
-} from '@/lib/og/template';
+} from '@/og/render/template';
 import {TAGLINE} from '@/lib/tagline';
 import {profileImageUrl} from '@/lib/profile-image';
 import {tryApiJson, type LoadContext} from '@/lib/api';

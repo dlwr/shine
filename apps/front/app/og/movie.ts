@@ -1,15 +1,15 @@
-import {createImageResponse} from '@/lib/og/image-response';
+import {createImageResponse} from '@/og/render/image-response';
 import {
   buildBadges,
   type AvailabilityInfo,
 } from '@/components/editorial/availability-badges';
-import {fetchPosterAsDataUri, loadGoogleFont} from '@/lib/og/assets';
+import {fetchPosterAsDataUri, loadGoogleFont} from '@/og/render/assets';
 import {
   OG_HEIGHT,
   OG_WIDTH,
   buildMovieCardHtml,
   OG_FONT_FAMILY,
-} from '@/lib/og/template';
+} from '@/og/render/template';
 import {TAGLINE} from '@/lib/tagline';
 import {upgradePosterForSharing} from '@/lib/meta';
 import {tryApiJson, type LoadContext} from '@/lib/api';
