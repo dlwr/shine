@@ -2,10 +2,10 @@ import type {Route} from './+types/monthly';
 import {
   buildArchiveMeta,
   loadSelectionArchive,
-  SelectionArchivePage,
   type SelectionArchiveConfig,
   type SelectionArchiveData,
 } from '@/lib/selection-archive';
+import {SelectionArchivePage} from '@/components/selection-archive/selection-archive-page';
 
 const CONFIG: SelectionArchiveConfig = {
   type: 'monthly',
