@@ -55,22 +55,22 @@ jobs:
         if: steps.token.outputs.available == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: pnpm run api:deploy:prod
+        run: scripts/retry.sh pnpm run api:deploy:prod
 
       - name: Deploy OG images (production)
         if: steps.token.outputs.available == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: pnpm run og:deploy:prod
+        run: scripts/retry.sh pnpm run og:deploy:prod
 
       - name: Deploy Frontend (production)
         if: steps.token.outputs.available == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: pnpm run front:deploy:prod
+        run: scripts/retry.sh pnpm run front:deploy:prod
 
       - name: Deploy database proxy (production)
         if: steps.token.outputs.available == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: pnpm run database-proxy:deploy:prod
+        run: scripts/retry.sh pnpm run database-proxy:deploy:prod
