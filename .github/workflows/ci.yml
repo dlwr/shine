@@ -28,8 +28,10 @@ jobs:
               pnpm run knip
               pnpm --filter @shine/api run build
               pnpm run front:build
-          - name: test
-            run: pnpm run test
+          - name: test-node
+            run: pnpm vitest run --project node
+          - name: test-jsdom
+            run: pnpm vitest run --project jsdom
 
     steps:
       - name: Checkout
