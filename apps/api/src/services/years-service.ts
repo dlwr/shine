@@ -9,6 +9,7 @@ import {
   findTopAwardPageDefinition,
 } from './award-definition-lookup';
 import {awardPageDefinitions} from './award-definitions';
+import {adjacentYears} from './adjacent-years';
 import {BaseService} from './base-service';
 import type {YearDetail, YearMovie, YearSummary} from '../types/years';
 import {localizedPosterUrl} from './localized-poster-url';
@@ -169,16 +170,11 @@ export class YearsService extends BaseService {
         organization: definition.organization,
       }));
 
-    const sortedYears = years.toSorted((a, b) => a - b);
-    const previousYear = sortedYears.findLast(value => value < year);
-    const nextYear = sortedYears.find(value => value > year);
-
     return {
       year,
       movies: movieEntries,
       awards,
-      previousYear,
-      nextYear,
+      ...adjacentYears(years, year),
     };
   }
 }

@@ -120,6 +120,48 @@ function createStubKv(): KVNamespace {
   } as unknown as KVNamespace;
 }
 
+describe('GET /awards/:slug/:year', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+    const database = getDatabase(environment);
+    await database.insert(awardCeremonies).values([
+      {uid: 'ceremony-2019', organizationUid: 'org-cannes', year: 2019},
+      {uid: 'ceremony-2021', organizationUid: 'org-cannes', year: 2021},
+    ]);
+    await database.insert(movies).values({uid: 'movie-b', year: 2019});
+    await database.insert(nominations).values({
+      movieUid: 'movie-b',
+      ceremonyUid: 'ceremony-2019',
+      categoryUid: 'cat-palme',
+      isWinner: 1,
+    });
+  });
+
+  it('ノミネートのある前の回の年を返す', async () => {
+    const response = await awardsRoutes.request(
+      '/palme-dor/2023',
+      {},
+      environment,
+    );
+    const body = (await response.json()) as {previousYear?: number};
+
+    expect(body.previousYear).toBe(2019);
+  });
+
+  it('最新の回では次の年を返さない', async () => {
+    const response = await awardsRoutes.request(
+      '/palme-dor/2023',
+      {},
+      environment,
+    );
+    const body = (await response.json()) as {nextYear?: number};
+
+    expect(body.nextYear).toBeUndefined();
+  });
+});
+
 describe('X-Cache-Status header', () => {
   it('returns MISS on first request and HIT on second', async () => {
     const environment = await createTestEnvironment();

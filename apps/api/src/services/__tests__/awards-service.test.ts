@@ -145,7 +145,11 @@ describe('AwardsService.getAwardYear ランキング', () => {
   });
 
   it('順位の昇順で並べる', async () => {
-    const result = await service.getAwardYear('kinema-junpo-japanese', 1956);
+    const result = await service.getAwardYear(
+      'kinema-junpo-japanese',
+      1956,
+      [],
+    );
 
     expect(result?.movies.map(movie => movie.uid)).toEqual([
       'movie-kj-1',
@@ -155,7 +159,11 @@ describe('AwardsService.getAwardYear ランキング', () => {
   });
 
   it('順位を返す', async () => {
-    const result = await service.getAwardYear('kinema-junpo-japanese', 1956);
+    const result = await service.getAwardYear(
+      'kinema-junpo-japanese',
+      1956,
+      [],
+    );
 
     expect(result?.movies.map(movie => movie.specialMention)).toEqual([
       '1位',
@@ -710,7 +718,7 @@ describe('AwardsService.getAwardYear', () => {
   it('returns the requested year with the winner first', async () => {
     await seedThreeCannesYears();
 
-    const result = await service.getAwardYear('palme-dor', 2021);
+    const result = await service.getAwardYear('palme-dor', 2021, []);
 
     expect(result).toMatchObject({
       slug: 'palme-dor',
@@ -741,7 +749,7 @@ describe('AwardsService.getAwardYear', () => {
       },
     ]);
 
-    const result = await service.getAwardYear('palme-dor', 2021);
+    const result = await service.getAwardYear('palme-dor', 2021, []);
 
     expect(result?.movies[0].availability).toEqual([
       {source: 'tmdb', detail: 'U-NEXT(見放題)', checkedAt: 1_700_000_100},
@@ -766,7 +774,7 @@ describe('AwardsService.getAwardYear', () => {
       },
     ]);
 
-    const result = await service.getAwardYear('palme-dor', 2021);
+    const result = await service.getAwardYear('palme-dor', 2021, []);
 
     expect(result?.movies[0].availability).toBeUndefined();
   });
@@ -780,7 +788,7 @@ describe('AwardsService.getAwardYear', () => {
       checkedAt: 1_700_000_000,
     });
 
-    const result = await service.getAwardYear('palme-dor', 2021);
+    const result = await service.getAwardYear('palme-dor', 2021, []);
 
     expect(result?.movies[1].availability).toBeUndefined();
   });
@@ -788,17 +796,41 @@ describe('AwardsService.getAwardYear', () => {
   it('returns the neighboring ceremony years across gaps', async () => {
     await seedThreeCannesYears();
 
-    const result = await service.getAwardYear('palme-dor', 2021);
+    const result = await service.getAwardYear(
+      'palme-dor',
+      2021,
+      [2019, 2021, 2023],
+    );
 
     expect(result?.previousYear).toBe(2019);
     expect(result?.nextYear).toBe(2023);
   });
 
+  it('前後の年は渡された年の一覧から決める', async () => {
+    await seedThreeCannesYears();
+
+    const result = await service.getAwardYear(
+      'palme-dor',
+      2021,
+      [2000, 2021, 2030],
+    );
+
+    expect(result?.previousYear).toBe(2000);
+  });
+
   it('leaves neighbors undefined at the range edges', async () => {
     await seedThreeCannesYears();
 
-    const oldest = await service.getAwardYear('palme-dor', 2019);
-    const newest = await service.getAwardYear('palme-dor', 2023);
+    const oldest = await service.getAwardYear(
+      'palme-dor',
+      2019,
+      [2019, 2021, 2023],
+    );
+    const newest = await service.getAwardYear(
+      'palme-dor',
+      2023,
+      [2019, 2021, 2023],
+    );
 
     expect(oldest?.previousYear).toBeUndefined();
     expect(oldest?.nextYear).toBe(2021);
@@ -809,18 +841,9 @@ describe('AwardsService.getAwardYear', () => {
   it('returns undefined for a year without a ceremony', async () => {
     await seedThreeCannesYears();
 
-    const result = await service.getAwardYear('palme-dor', 2020);
+    const result = await service.getAwardYear('palme-dor', 2020, []);
 
     expect(result).toBeUndefined();
-  });
-
-  it('skips ceremony years without nominations in the category', async () => {
-    await seedThreeCannesYears();
-    await seedCannesCeremony(database, 'ceremony-2022', 2022, 75);
-
-    const result = await service.getAwardYear('palme-dor', 2021);
-
-    expect(result?.nextYear).toBe(2023);
   });
 
   it('returns undefined for a list-grouping award', async () => {
@@ -845,7 +868,7 @@ describe('AwardsService.getAwardYear', () => {
       categoryUid: 'cat-1001',
     });
 
-    const result = await service.getAwardYear('1001-movies', 2021);
+    const result = await service.getAwardYear('1001-movies', 2021, []);
 
     expect(result).toBeUndefined();
   });
@@ -1064,6 +1087,7 @@ describe('PersonAwardsService.getPersonAwardBySlug', () => {
     const result = await new AwardsService(environment).getAwardYear(
       'japan-academy-director',
       1994,
+      [],
     );
 
     expect(result).toBeUndefined();

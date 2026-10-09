@@ -19,6 +19,7 @@ import {
   awardPageDefinitions,
   personAwardDefinitions,
 } from './award-definitions';
+import {adjacentYears} from './adjacent-years';
 import {compareAwardMovies, flattenListAward} from './award-page-ordering';
 import {loadWatchableAvailabilityByMovie} from './watchable-availability';
 import {localizedPosterUrl} from './localized-poster-url';
@@ -144,6 +145,7 @@ export class AwardsService extends BaseService {
   async getAwardYear(
     slug: string,
     year: number,
+    years: number[],
   ): Promise<AwardYearDetail | undefined> {
     const definition = awardPageDefinitions.find(entry => entry.slug === slug);
     if (!definition || definition.grouping !== 'year') {
@@ -204,24 +206,6 @@ export class AwardsService extends BaseService {
       movie.availability = availabilityByMovie.get(movie.uid);
     }
 
-    const yearRows = await this.database
-      .selectDistinct({year: awardCeremonies.year})
-      .from(nominations)
-      .innerJoin(
-        awardCeremonies,
-        eq(nominations.ceremonyUid, awardCeremonies.uid),
-      )
-      .innerJoin(movies, eq(nominations.movieUid, movies.uid))
-      .where(
-        and(
-          inArray(nominations.categoryUid, categoryUids),
-          isNull(movies.deletedAt),
-        ),
-      );
-
-    const years = yearRows.map(row => row.year).toSorted((a, b) => a - b);
-    const index = years.indexOf(year);
-
     return {
       slug: definition.slug,
       name: definition.name,
@@ -230,9 +214,7 @@ export class AwardsService extends BaseService {
       year,
       ceremonyNumber: rows[0].ceremonyNumber ?? undefined,
       movies: movieEntries,
-      // eslint-disable-next-line unicorn/no-useless-undefined -- 三項の分岐として省略できない
-      previousYear: index > 0 ? years[index - 1] : undefined,
-      nextYear: index < years.length - 1 ? years[index + 1] : undefined,
+      ...adjacentYears(years, year),
     };
   }
 

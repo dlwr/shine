@@ -223,7 +223,11 @@ const exercises: Exercise[] = [
   {
     name: '賞の年別ページ',
     run: environment =>
-      new AwardsService(environment).getAwardYear('academy-best-picture', 2000),
+      new AwardsService(environment).getAwardYear(
+        'academy-best-picture',
+        2000,
+        [1999, 2000, 2001],
+      ),
     indexOnly: true,
   },
   {
