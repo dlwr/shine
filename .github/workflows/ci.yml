@@ -22,10 +22,10 @@ jobs:
             run: |
               pnpm run lint
               pnpm run format
-              pnpm run knip
           - name: type-check
             run: |
               pnpm run type-check
+              pnpm run knip
               pnpm --filter @shine/api run build
               pnpm run front:build
           - name: test
