@@ -121,15 +121,31 @@ describe('YearsService', () => {
   it('賞ページのある映画を年別に返す', async () => {
     const service = new YearsService(environment);
 
-    const detail = await service.getYear(1980);
+    const detail = await service.getYear(1980, [1980]);
 
     expect(detail?.movies.map(movie => movie.uid)).toEqual(['movie-palme']);
+  });
+
+  it('前の年を渡された年の一覧から決める', async () => {
+    const service = new YearsService(environment);
+
+    const detail = await service.getYear(1980, [1970, 1980, 1990]);
+
+    expect(detail?.previousYear).toBe(1970);
+  });
+
+  it('次の年を渡された年の一覧から決める', async () => {
+    const service = new YearsService(environment);
+
+    const detail = await service.getYear(1980, [1970, 1980, 1990]);
+
+    expect(detail?.nextYear).toBe(1990);
   });
 
   it('賞ページのある映画に賞のタグを付ける', async () => {
     const service = new YearsService(environment);
 
-    const detail = await service.getYear(1980);
+    const detail = await service.getYear(1980, [1980]);
 
     expect(detail?.movies[0].awards).toEqual([
       {slug: 'palme-dor', isWinner: true},
@@ -139,7 +155,7 @@ describe('YearsService', () => {
   it('個人賞しか無い映画は年別ページに出さない', async () => {
     const service = new YearsService(environment);
 
-    const detail = await service.getYear(1985);
+    const detail = await service.getYear(1985, [1985]);
 
     expect(detail).toBeUndefined();
   });
@@ -155,7 +171,7 @@ describe('YearsService', () => {
   it('映画祭のサブ賞しか無い映画は年別ページに出さない', async () => {
     const service = new YearsService(environment);
 
-    const detail = await service.getYear(1981);
+    const detail = await service.getYear(1981, [1981]);
 
     expect(detail).toBeUndefined();
   });

@@ -1,5 +1,5 @@
 import type {Environment} from '@shine/database';
-import {Hono} from 'hono';
+import {type Context, Hono} from 'hono';
 import type {YearsListResponse} from '../types/responses';
 import {YearsService} from '../services/years-service';
 import {
@@ -15,18 +15,21 @@ export const yearsRoutes = new Hono<{Bindings: Environment}>();
 
 const YEARS_CACHE_TTL = 604_800;
 
+function readYearList(
+  c: Context<{Bindings: Environment}>,
+  cache: EdgeCache,
+): ReturnType<typeof readThroughCache<YearsListResponse>> {
+  return readThroughCache<YearsListResponse>(c, cache, {
+    key: 'years:list:v3',
+    ttl: YEARS_CACHE_TTL,
+    edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    load: async () => ({years: await new YearsService(c.env).listYears()}),
+  });
+}
+
 yearsRoutes.get('/', async c => {
   const cache = new EdgeCache(c.env.CACHE_KV);
-  const {data: result, status} = await readThroughCache<YearsListResponse>(
-    c,
-    cache,
-    {
-      key: 'years:list:v3',
-      ttl: YEARS_CACHE_TTL,
-      edgeTtl: IMPORTED_DATA_EDGE_TTL,
-      load: async () => ({years: await new YearsService(c.env).listYears()}),
-    },
-  );
+  const {data: result, status} = await readYearList(c, cache);
 
   const etag = createETag(result);
   if (shouldCheckETag(c.req, etag)) {
@@ -50,7 +53,13 @@ yearsRoutes.get('/:year', async c => {
     key: `years:${year}:v3`,
     ttl: YEARS_CACHE_TTL,
     edgeTtl: IMPORTED_DATA_EDGE_TTL,
-    load: async () => new YearsService(c.env).getYear(year),
+    async load() {
+      const {data: list} = await readYearList(c, cache);
+      return new YearsService(c.env).getYear(
+        year,
+        list?.years.map(summary => summary.year) ?? [],
+      );
+    },
   });
 
   if (!detail) {
