@@ -1,5 +1,5 @@
 import type {Environment} from '@shine/database';
-import {Hono} from 'hono';
+import {type Context, Hono} from 'hono';
 import type {AwardDetail, PersonAwardDetail} from '../types/awards';
 import type {AwardsListResponse} from '../types/responses';
 import {AwardsService, PersonAwardsService} from '../services';
@@ -41,6 +41,21 @@ awardsRoutes.get('/', async c => {
   });
 });
 
+function readAwardDetail(
+  c: Context<{Bindings: Environment}>,
+  cache: EdgeCache,
+  slug: string,
+): ReturnType<typeof readThroughCache<AwardDetail | PersonAwardDetail>> {
+  return readThroughCache<AwardDetail | PersonAwardDetail>(c, cache, {
+    key: `awards:${slug}:v7`,
+    ttl: AWARDS_CACHE_TTL,
+    edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    load: async () =>
+      (await new AwardsService(c.env).getAwardBySlug(slug)) ??
+      (await new PersonAwardsService(c.env).getPersonAwardBySlug(slug)),
+  });
+}
+
 awardsRoutes.get('/:slug', async c => {
   const cache = new EdgeCache(c.env.CACHE_KV);
   const slug = c.req.param('slug');
@@ -52,16 +67,7 @@ awardsRoutes.get('/:slug', async c => {
 
   // ページはキャッシュキーに含めない。利用者入力でキー空間が広がるのを避けるため、
   // 全件を1キーに載せて読み出し後に切り出す
-  const {data: full, status} = await readThroughCache<
-    AwardDetail | PersonAwardDetail
-  >(c, cache, {
-    key: `awards:${slug}:v7`,
-    ttl: AWARDS_CACHE_TTL,
-    edgeTtl: IMPORTED_DATA_EDGE_TTL,
-    load: async () =>
-      (await new AwardsService(c.env).getAwardBySlug(slug)) ??
-      (await new PersonAwardsService(c.env).getPersonAwardBySlug(slug)),
-  });
+  const {data: full, status} = await readAwardDetail(c, cache, slug);
 
   if (!full) {
     return c.json({error: 'Award not found'}, 404);
@@ -96,7 +102,18 @@ awardsRoutes.get('/:slug/:year', async c => {
     key: `awards:${slug}:${year}:v3`,
     ttl: AWARDS_CACHE_TTL,
     edgeTtl: IMPORTED_DATA_EDGE_TTL,
-    load: async () => new AwardsService(c.env).getAwardYear(slug, year),
+    async load() {
+      const {data: full} = await readAwardDetail(c, cache, slug);
+      if (full?.grouping !== 'year') {
+        return;
+      }
+
+      return new AwardsService(c.env).getAwardYear(
+        slug,
+        year,
+        full.years.map(group => group.year),
+      );
+    },
   });
 
   if (!award) {
