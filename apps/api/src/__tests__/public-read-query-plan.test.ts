@@ -239,7 +239,8 @@ const exercises: Exercise[] = [
   },
   {
     name: '年別ページ',
-    run: environment => new YearsService(environment).getYear(1999),
+    run: environment =>
+      new YearsService(environment).getYear(1999, [1998, 1999, 2000]),
   },
   {
     name: '賞の交差',

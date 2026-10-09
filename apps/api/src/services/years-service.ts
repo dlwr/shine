@@ -60,7 +60,10 @@ export class YearsService extends BaseService {
       .toSorted((a, b) => b.year - a.year);
   }
 
-  async getYear(year: number): Promise<YearDetail | undefined> {
+  async getYear(
+    year: number,
+    years: number[],
+  ): Promise<YearDetail | undefined> {
     const rows = await this.database
       .select({
         movieUid: movies.uid,
@@ -166,37 +169,16 @@ export class YearsService extends BaseService {
         organization: definition.organization,
       }));
 
-    const yearRows = await this.database
-      .selectDistinct({year: movies.year})
-      .from(movies)
-      .innerJoin(nominations, eq(nominations.movieUid, movies.uid))
-      .innerJoin(
-        awardCeremonies,
-        eq(awardCeremonies.uid, nominations.ceremonyUid),
-      )
-      .innerJoin(
-        awardOrganizations,
-        eq(awardOrganizations.uid, awardCeremonies.organizationUid),
-      )
-      .innerJoin(
-        awardCategories,
-        eq(awardCategories.uid, nominations.categoryUid),
-      )
-      .where(and(isNull(movies.deletedAt), awardPageNominations()));
-
-    const years = yearRows
-      .map(row => row.year)
-      .filter((value): value is number => typeof value === 'number')
-      .toSorted((a, b) => a - b);
-    const index = years.indexOf(year);
+    const sortedYears = years.toSorted((a, b) => a - b);
+    const previousYear = sortedYears.findLast(value => value < year);
+    const nextYear = sortedYears.find(value => value > year);
 
     return {
       year,
       movies: movieEntries,
       awards,
-      // eslint-disable-next-line unicorn/no-useless-undefined -- 三項の分岐として省略できない
-      previousYear: index > 0 ? years[index - 1] : undefined,
-      nextYear: index < years.length - 1 ? years[index + 1] : undefined,
+      previousYear,
+      nextYear,
     };
   }
 }
