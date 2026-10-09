@@ -10,8 +10,26 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  test:
+  check:
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: lint
+            run: |
+              pnpm run lint
+              pnpm run format
+          - name: type-check
+            run: |
+              pnpm run type-check
+              pnpm run knip
+              pnpm --filter @shine/api run build
+              pnpm run front:build
+          - name: test
+            run: pnpm run test
 
     steps:
       - name: Checkout
@@ -41,23 +59,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm run lint
-
-      - name: Format check
-        run: pnpm run format
-
-      - name: Type check
-        run: pnpm run type-check
-
-      - name: Unused code check
-        run: pnpm run knip
-
-      - name: Test
-        run: pnpm run test
-
-      - name: Build - API
-        run: pnpm --filter @shine/api run build
-
-      - name: Build - Frontend
-        run: pnpm run front:build
+      - name: Run ${{ matrix.name }}
+        run: ${{ matrix.run }}
