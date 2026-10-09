@@ -1255,7 +1255,7 @@ describe('MovieDetail Component', () => {
 
       expect(
         screen
-          .getByText('観られる場所')
+          .getByText(/を観る方法（配信・レンタル）/)
           .compareDocumentPosition(screen.getByText('あらすじ')) &
           Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();

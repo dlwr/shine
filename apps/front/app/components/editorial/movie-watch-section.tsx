@@ -22,7 +22,9 @@ export function MovieWatchSection({
 
   return (
     <section className="mb-8">
-      <p className="font-label text-xs text-ink-muted mb-3">観られる場所</p>
+      <h2 className="font-label text-xs text-ink-muted mb-3">
+        『{title}』を観る方法（配信・レンタル）
+      </h2>
       {checking ? (
         <p className="font-label text-xs text-ink-muted mb-3">
           配信状況を確認中…
