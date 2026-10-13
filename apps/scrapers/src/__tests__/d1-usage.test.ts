@@ -3,7 +3,9 @@ import {
   billingCycle,
   evaluateD1Usage,
   fetchD1Usage,
+  fetchTopD1Queries,
   formatRows,
+  formatTopD1Queries,
 } from '../d1-usage';
 
 const NOW = new Date('2026-10-02T01:00:00Z');
@@ -105,6 +107,75 @@ describe('fetchD1Usage', () => {
     await expect(
       fetchD1Usage({token: 't', account: 'a'}, 'db', NOW, NOW, failing),
     ).rejects.toThrow('not authorized');
+  });
+});
+
+describe('fetchTopD1Queries', () => {
+  it('読み取り行数の多い順に文ごとの読み取り・回数・所要時間を返す', async () => {
+    const groups = [
+      {
+        count: 10,
+        sum: {rowsRead: 500, queryDurationMs: 25},
+        dimensions: {query: 'select 1'},
+      },
+    ];
+    const fetchImpl = (async () =>
+      Response.json({
+        data: {viewer: {accounts: [{d1QueriesAdaptiveGroups: groups}]}},
+      })) as unknown as typeof fetch;
+
+    const queries = await fetchTopD1Queries(
+      {token: 't', account: 'a'},
+      'db',
+      NOW,
+      NOW,
+      5,
+      fetchImpl,
+    );
+
+    expect(queries).toEqual([
+      {query: 'select 1', rowsRead: 500, count: 10, durationMs: 25},
+    ]);
+  });
+
+  it('GraphQL のエラーを例外にする', async () => {
+    const failing = (async () =>
+      Response.json({
+        errors: [{message: 'not authorized'}],
+      })) as unknown as typeof fetch;
+
+    await expect(
+      fetchTopD1Queries({token: 't', account: 'a'}, 'db', NOW, NOW, 5, failing),
+    ).rejects.toThrow('not authorized');
+  });
+});
+
+describe('formatTopD1Queries', () => {
+  it('読み取り行数・全体に占める割合・回数・1 回あたりの行数・平均の所要時間と文の頭を 1 行に出す', () => {
+    const text = formatTopD1Queries(
+      [
+        {
+          query: 'select "uid"\n  from   movies',
+          rowsRead: 5_000_000,
+          count: 1000,
+          durationMs: 2000,
+        },
+      ],
+      20_000_000,
+    );
+
+    expect(text).toBe(
+      '5M（25%）  1000 回  5000 行/回  平均 2ms  select "uid" from movies',
+    );
+  });
+
+  it('長い文は 100 字で切る', () => {
+    const text = formatTopD1Queries(
+      [{query: 'x'.repeat(150), rowsRead: 1, count: 1, durationMs: 1}],
+      1,
+    );
+
+    expect(text.endsWith(`${'x'.repeat(100)}…`)).toBe(true);
   });
 });
 

@@ -44,6 +44,30 @@ export function billingCycle(now: Date): {start: Date; end: Date} {
   };
 }
 
+export type D1QueryStat = {
+  query: string;
+  rowsRead: number;
+  count: number;
+  durationMs: number;
+};
+
+type TopQueriesResponse = {
+  data?: {
+    viewer?: {
+      accounts?: Array<{
+        d1QueriesAdaptiveGroups?: Array<{
+          count: number;
+          sum: {rowsRead: number; queryDurationMs: number};
+          dimensions: {query: string};
+        }>;
+      }>;
+    };
+  };
+  errors?: Array<{message: string}>;
+};
+
+const QUERY_PREVIEW_LENGTH = 100;
+
 export function formatRows(rows: number): string {
   if (rows >= 1_000_000_000) {
     return `${(rows / 1_000_000_000).toFixed(1)}B`;
@@ -106,6 +130,33 @@ export function evaluateD1Usage(snapshot: D1UsageSnapshot): {
   return {alerts, summary};
 }
 
+async function queryGraphql<T extends {errors?: Array<{message: string}>}>(
+  credentials: CloudflareCredentials,
+  query: string,
+  fetchImpl: typeof fetch,
+): Promise<T> {
+  const response = await fetchImpl(GRAPHQL_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${credentials.token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({query}),
+    signal: AbortSignal.timeout(GRAPHQL_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Cloudflare GraphQL failed: ${response.status}`);
+  }
+
+  const body = (await response.json()) as T;
+  if (body.errors?.length) {
+    throw new Error(body.errors.map(error => error.message).join('; '));
+  }
+
+  return body;
+}
+
 export async function fetchD1Usage(
   credentials: CloudflareCredentials,
   databaseId: string,
@@ -129,29 +180,76 @@ export async function fetchD1Usage(
   }
 }`;
 
-  const response = await fetchImpl(GRAPHQL_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${credentials.token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({query}),
-    signal: AbortSignal.timeout(GRAPHQL_TIMEOUT_MS),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Cloudflare GraphQL failed: ${response.status}`);
-  }
-
-  const body = (await response.json()) as GraphqlResponse;
-  if (body.errors?.length) {
-    throw new Error(body.errors.map(error => error.message).join('; '));
-  }
-
+  const body = await queryGraphql<GraphqlResponse>(
+    credentials,
+    query,
+    fetchImpl,
+  );
   const [group] =
     body.data?.viewer?.accounts?.[0]?.d1AnalyticsAdaptiveGroups ?? [];
   return {
     rowsRead: group?.sum.rowsRead ?? 0,
     rowsWritten: group?.sum.rowsWritten ?? 0,
   };
+}
+
+export async function fetchTopD1Queries(
+  credentials: CloudflareCredentials,
+  databaseId: string,
+  from: Date,
+  to: Date,
+  limit: number,
+  fetchImpl: typeof fetch = fetch,
+): Promise<D1QueryStat[]> {
+  const query = `query {
+  viewer {
+    accounts(filter: {accountTag: "${credentials.account}"}) {
+      d1QueriesAdaptiveGroups(
+        limit: ${limit}
+        filter: {databaseId: "${databaseId}", datetimeHour_geq: "${from.toISOString()}", datetimeHour_lt: "${to.toISOString()}"}
+        orderBy: [sum_rowsRead_DESC]
+      ) {
+        count
+        sum {
+          rowsRead
+          queryDurationMs
+        }
+        dimensions {
+          query
+        }
+      }
+    }
+  }
+}`;
+
+  const body = await queryGraphql<TopQueriesResponse>(
+    credentials,
+    query,
+    fetchImpl,
+  );
+
+  return (body.data?.viewer?.accounts?.[0]?.d1QueriesAdaptiveGroups ?? []).map(
+    group => ({
+      query: group.dimensions.query,
+      rowsRead: group.sum.rowsRead,
+      count: group.count,
+      durationMs: group.sum.queryDurationMs,
+    }),
+  );
+}
+
+export function formatTopD1Queries(
+  queries: D1QueryStat[],
+  totalRowsRead: number,
+): string {
+  return queries
+    .map(({query, rowsRead, count, durationMs}) => {
+      const flattened = query.replaceAll(/\s+/g, ' ').trim();
+      const preview =
+        flattened.length > QUERY_PREVIEW_LENGTH
+          ? `${flattened.slice(0, QUERY_PREVIEW_LENGTH)}…`
+          : flattened;
+      return `${formatRows(rowsRead)}（${percentOf(rowsRead, totalRowsRead)}%）  ${count} 回  ${Math.round(rowsRead / count)} 行/回  平均 ${Math.round(durationMs / count)}ms  ${preview}`;
+    })
+    .join('\n');
 }
