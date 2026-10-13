@@ -1,6 +1,6 @@
 /**
  * 「なんかやろう」の前に毎回やっていた計測をまとめて流す。
- * 本番の TTFB・D1 の読み取り量・今月の北極星・main の GitHub Actions・大きいソースファイル・直近のコミット。
+ * 本番の TTFB・D1 の読み取り量と上位の文・今月の北極星・main の GitHub Actions・大きいソースファイル・直近のコミット。
  */
 import {execFile} from 'node:child_process';
 import {readdir} from 'node:fs/promises';
@@ -40,6 +40,8 @@ import {
   billingCycle,
   evaluateD1Usage,
   fetchD1Usage,
+  fetchTopD1Queries,
+  formatTopD1Queries,
   PRODUCTION_D1_DATABASE_ID,
 } from './d1-usage';
 import {
@@ -116,7 +118,7 @@ async function d1Section(): Promise<SurveySection> {
   const databaseId = process.env.D1_DATABASE_ID || PRODUCTION_D1_DATABASE_ID;
   const now = new Date();
   const {start} = billingCycle(now);
-  const [lastHour, last24h, monthToDate] = await Promise.all([
+  const [lastHour, last24h, monthToDate, topQueries] = await Promise.all([
     fetchD1Usage(
       credentials,
       databaseId,
@@ -130,6 +132,13 @@ async function d1Section(): Promise<SurveySection> {
       now,
     ),
     fetchD1Usage(credentials, databaseId, start, now),
+    fetchTopD1Queries(
+      credentials,
+      databaseId,
+      new Date(now.getTime() - DAY_MS),
+      now,
+      5,
+    ),
   ]);
   const {alerts, summary} = evaluateD1Usage({
     lastHourRowsRead: lastHour.rowsRead,
@@ -141,7 +150,12 @@ async function d1Section(): Promise<SurveySection> {
 
   return {
     title: 'D1 読み取り',
-    body: [summary, ...alerts.map(alert => `⚠️ ${alert}`)].join('\n'),
+    body: [
+      summary,
+      ...alerts.map(alert => `⚠️ ${alert}`),
+      '直近24h の読み取りの多い文:',
+      formatTopD1Queries(topQueries, last24h.rowsRead),
+    ].join('\n'),
   };
 }
 
@@ -286,7 +300,7 @@ export function createCommand(): Command {
     .description(
       [
         '「なんかやろう」の前の定点計測をまとめて流します。',
-        '本番の TTFB・D1 の読み取り量・北極星・先行指標・main の GitHub Actions・大きいソースファイル・直近のコミットを出します。',
+        '本番の TTFB・D1 の読み取り量と上位の文・北極星・先行指標・main の GitHub Actions・大きいソースファイル・直近のコミットを出します。',
       ].join('\n'),
     )
     .option(
