@@ -63,7 +63,7 @@ export async function backfillJapaneseTitlesByImdbId(
 
     const targets = rows.flatMap(row => {
       const title = row.imdbId ? titleByImdbId.get(row.imdbId) : undefined;
-      return title ? [{uid: row.uid, title}] : [];
+      return title ? {uid: row.uid, title} : [];
     });
 
     for (const {uid, title} of targets) {

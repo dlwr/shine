@@ -140,7 +140,7 @@ export async function fillCannesImdbIds({
 
   const resolvedEntries = entries.flatMap(entry => {
     const imdbId = resolved.get(entry.filmPage ?? entry.filmTitle)?.imdbId;
-    return imdbId ? [{title: entry.filmTitle, imdbId}] : [];
+    return imdbId ? {title: entry.filmTitle, imdbId} : [];
   });
 
   const matches = matchByTitle(resolvedEntries, rows);

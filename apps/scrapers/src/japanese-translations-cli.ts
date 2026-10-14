@@ -6,7 +6,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {
   getMoviesWithoutJapaneseTranslation,
   saveJapaneseTranslation,
-} from './japanese-translations/repo';
+} from './japanese-translations/repository';
 import {fetchJapaneseTitleFromTMDB} from '@shine/tmdb/persistence';
 import {isValidImdbId} from './japanese-translations/scrapers/imdb-id';
 import {scrapeJapaneseTitleFromWikipedia} from './japanese-translations/scrapers/wikipedia-scraper';

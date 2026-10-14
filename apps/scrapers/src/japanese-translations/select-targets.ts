@@ -1,5 +1,5 @@
 import {hasJapaneseText} from '@shine/availability';
-import {type Movie} from './repo';
+import {type Movie} from './repository';
 
 type ExistingJapaneseTitle = {
   movieUid: string;

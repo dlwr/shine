@@ -35,7 +35,7 @@ describe('normalizeTitle', () => {
   });
 
   it('converts full-width alphanumerics to half-width', () => {
-    expect(normalizeTitle('ゴッドファーザー　ＰＡＲＴ　ＩＩ')).toBe(
+    expect(normalizeTitle('ゴッドファーザー\u{3000}ＰＡＲＴ\u{3000}ＩＩ')).toBe(
       'ゴッドファーザー part ii',
     );
   });
@@ -144,7 +144,9 @@ describe('matchesTitle', () => {
 
   it('does not match a volume of a split release', () => {
     expect(
-      matchesTitle('愛と宿命の泉　１　フロレット家のジャン', ['愛と宿命の泉']),
+      matchesTitle('愛と宿命の泉\u{3000}１\u{3000}フロレット家のジャン', [
+        '愛と宿命の泉',
+      ]),
     ).toBe(false);
   });
 });
@@ -152,9 +154,10 @@ describe('matchesTitle', () => {
 describe('matchesTitleAsVolume', () => {
   it('matches a volume numbered with a full-width digit', () => {
     expect(
-      matchesTitleAsVolume('愛と宿命の泉　１　フロレット家のジャン', [
-        '愛と宿命の泉',
-      ]),
+      matchesTitleAsVolume(
+        '愛と宿命の泉\u{3000}１\u{3000}フロレット家のジャン',
+        ['愛と宿命の泉'],
+      ),
     ).toBe(true);
   });
 
@@ -194,7 +197,10 @@ describe('matchesTitleAsVolume', () => {
 
   it('ignores empty target titles', () => {
     expect(
-      matchesTitleAsVolume('愛と宿命の泉　１　フロレット家のジャン', ['', ' ']),
+      matchesTitleAsVolume(
+        '愛と宿命の泉\u{3000}１\u{3000}フロレット家のジャン',
+        ['', ' '],
+      ),
     ).toBe(false);
   });
 });
@@ -203,7 +209,7 @@ describe('matchesTitleAsCompilation', () => {
   it('matches a title listed after ／ on a double feature disc', () => {
     expect(
       matchesTitleAsCompilation(
-        '罪と罰　白夜のラスコーリニコフ／マッチ工場の少女',
+        '罪と罰\u{3000}白夜のラスコーリニコフ／マッチ工場の少女',
         ['マッチ工場の少女'],
       ),
     ).toBe(true);
@@ -212,7 +218,7 @@ describe('matchesTitleAsCompilation', () => {
   it('matches a title listed before ／', () => {
     expect(
       matchesTitleAsCompilation(
-        'マッチ工場の少女／罪と罰　白夜のラスコーリニコフ',
+        'マッチ工場の少女／罪と罰\u{3000}白夜のラスコーリニコフ',
         ['マッチ工場の少女'],
       ),
     ).toBe(true);
@@ -221,7 +227,7 @@ describe('matchesTitleAsCompilation', () => {
   it('matches a title inside a box set volume', () => {
     expect(
       matchesTitleAsCompilation(
-        'トータル　カウリスマキ　５　ハムレット・ゴーズ・ビジネス／マッチ工場の少女',
+        'トータル\u{3000}カウリスマキ\u{3000}５\u{3000}ハムレット・ゴーズ・ビジネス／マッチ工場の少女',
         ['マッチ工場の少女'],
       ),
     ).toBe(true);
