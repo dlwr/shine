@@ -80,12 +80,16 @@
     "data.topMovies[].uid",
     "data.topMovies[].year"
   ],
-  "movie:movie-beauty:related:ja:v3": [
+  "movie:movie-beauty:related:v4": [
     "cachedAt",
-    "data.movies[].posterUrl",
-    "data.movies[].title",
-    "data.movies[].uid",
-    "data.movies[].year"
+    "data.en[].posterUrl",
+    "data.en[].title",
+    "data.en[].uid",
+    "data.en[].year",
+    "data.ja[].posterUrl",
+    "data.ja[].title",
+    "data.ja[].uid",
+    "data.ja[].year"
   ],
   "movies:uids:v2": [
     "cachedAt",
