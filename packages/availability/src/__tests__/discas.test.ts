@@ -17,8 +17,8 @@ const compilationDetailBytes = readFixture('discas-detail-compilation.html');
 describe('parseDiscasTitles', () => {
   it('extracts titles from goodsDetail links, decoding character references', () => {
     expect(parseDiscasTitles(fixtureHtml)).toEqual([
-      'ゴッドファーザー　ＰＡＲＴ　Ｉ',
-      'ゴッドファーザー　ＰＡＲＴ　ＩＩ',
+      'ゴッドファーザー\u{3000}ＰＡＲＴ\u{3000}Ｉ',
+      'ゴッドファーザー\u{3000}ＰＡＲＴ\u{3000}ＩＩ',
       '東京ゴッドファーザーズ',
     ]);
   });
@@ -183,7 +183,9 @@ describe('checkDiscas', () => {
     const result = await checkDiscas(['愛と宿命の泉'], fetchSpy, {year: 1986});
 
     expect(result.status).toBe('ok');
-    expect(result.detail).toContain('愛と宿命の泉　１　フロレット家のジャン');
+    expect(result.detail).toContain(
+      '愛と宿命の泉\u{3000}１\u{3000}フロレット家のジャン',
+    );
   });
 
   it('returns ng when a split release volume matches but the production year differs', async () => {

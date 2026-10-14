@@ -76,9 +76,8 @@ export function useCeremonyForm({
       | FormEvent<HTMLTextAreaElement>
       | FormEvent<HTMLSelectElement>,
   ) => {
-    const target = event.target as
+    const {name, value} = event.target as
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-    const {name, value} = target;
 
     setFormState(current => ({
       ...current,

@@ -46,7 +46,7 @@ export class PeopleService extends BaseService {
         const name = names.get(row.uid);
         return name === undefined
           ? []
-          : [{uid: row.uid, name, movieCount: row.movieCount}];
+          : {uid: row.uid, name, movieCount: row.movieCount};
       }),
       pagination: {
         page,

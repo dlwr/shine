@@ -29,7 +29,7 @@ export default tseslint.config(
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  eslintPluginUnicorn.configs['flat/recommended'],
+  eslintPluginUnicorn.configs.recommended,
   {
     languageOptions: {
       globals: {
@@ -49,6 +49,10 @@ export default tseslint.config(
       'apps/api/src/index.ts',
       'apps/api/src/routes/**',
       'drizzle.config.ts',
+      'vitest*.config.ts',
+      'apps/front/vite.config.ts',
+      'apps/front/playwright.config.ts',
+      'apps/front/app/routes.ts',
     ],
     rules: {
       'unicorn/no-top-level-side-effects': 'off',
@@ -59,6 +63,9 @@ export default tseslint.config(
       'unicorn/prefer-ternary': 'off',
       'unicorn/prefer-combined-guards': 'off',
       'unicorn/no-immediate-mutation': 'off',
+      'unicorn/no-asterisk-prefix-in-documentation-comments': 'off',
+      'unicorn/no-unnecessary-parameters': 'off',
+      'unicorn/prefer-default-parameters': 'off',
       'unicorn/single-line-block-comment-style': ['error', 'single-line'],
       'unicorn/max-nested-calls': ['error', {max: 4}],
       'unicorn/consistent-boolean-name': [
