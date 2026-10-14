@@ -97,10 +97,8 @@ export const getCacheKeyForSelection = (
   locale: string,
 ): string => `selections:${type}:${date}:${locale}:v4`;
 
-export const getCacheKeyForRelatedMovies = (
-  movieId: string,
-  locale: string,
-): string => `movie:${movieId}:related:${locale}:v3`;
+export const getCacheKeyForRelatedMovies = (movieId: string): string =>
+  `movie:${movieId}:related:v4`;
 
 export const getCacheKeyForPerson = (
   personUid: string,

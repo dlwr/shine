@@ -20,12 +20,15 @@ export type RelatedMovie = {
   posterUrl: string | undefined;
 };
 
+type RelatedMovieLocale = 'ja' | 'en';
+
+export type RelatedMoviesByLocale = Record<RelatedMovieLocale, RelatedMovie[]>;
+
 export async function findRelatedMovies(
   database: Database,
   movieId: string,
-  locale: string,
   limit: number,
-): Promise<RelatedMovie[] | undefined> {
+): Promise<RelatedMoviesByLocale | undefined> {
   const target = await database
     .select({uid: movies.uid, year: movies.year})
     .from(movies)
@@ -59,13 +62,8 @@ export async function findRelatedMovies(
       ? await database
           .select({
             uid: movies.uid,
-            localeTitle: sql<string | undefined>`(
-              SELECT content FROM translations
-              WHERE resource_type = 'movie_title'
-                AND resource_uid = movies.uid
-                AND language_code = ${locale}
-              LIMIT 1
-            )`,
+            jaTitle: localeTitle('ja'),
+            enTitle: localeTitle('en'),
             defaultTitle: sql<string | undefined>`(
               SELECT content FROM translations
               WHERE resource_type = 'movie_title'
@@ -73,24 +71,40 @@ export async function findRelatedMovies(
                 AND is_default = 1
               LIMIT 1
             )`,
-            posterUrl: localizedPosterUrl(locale),
+            jaPosterUrl: localizedPosterUrl('ja'),
+            enPosterUrl: localizedPosterUrl('en'),
           })
           .from(movies)
           .where(inArray(movies.uid, candidateUids))
       : [];
 
   const rowsByUid = new Map(rows.map(row => [row.uid, row]));
-  const relatedMovies = candidates.map(candidate => {
-    const row = rowsByUid.get(candidate.uid);
-    return {
-      uid: candidate.uid,
-      title: row?.localeTitle ?? row?.defaultTitle ?? 'Unknown Title',
-      year: candidate.year ?? undefined,
-      posterUrl: row?.posterUrl ?? undefined,
-    };
-  });
+  const forLocale = (locale: RelatedMovieLocale): RelatedMovie[] =>
+    candidates.map(candidate => {
+      const row = rowsByUid.get(candidate.uid);
+      return {
+        uid: candidate.uid,
+        title:
+          (locale === 'ja' ? row?.jaTitle : row?.enTitle) ??
+          row?.defaultTitle ??
+          'Unknown Title',
+        year: candidate.year ?? undefined,
+        posterUrl:
+          (locale === 'ja' ? row?.jaPosterUrl : row?.enPosterUrl) ?? undefined,
+      };
+    });
 
-  return relatedMovies;
+  return {ja: forLocale('ja'), en: forLocale('en')};
+}
+
+function localeTitle(locale: RelatedMovieLocale) {
+  return sql<string | undefined>`(
+    SELECT content FROM translations
+    WHERE resource_type = 'movie_title'
+      AND resource_uid = movies.uid
+      AND language_code = ${locale}
+    LIMIT 1
+  )`;
 }
 
 async function findCandidates(

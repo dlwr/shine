@@ -4,7 +4,7 @@ import type {MovieDetail} from '../../types/responses';
 import {MoviesService} from '../../services';
 import {
   findRelatedMovies,
-  type RelatedMovie,
+  type RelatedMoviesByLocale,
 } from '../../services/related-movies';
 import {
   createCachedResponse,
@@ -90,12 +90,12 @@ movieDetailRoutes.get('/:id/related', async c => {
         : 6;
 
     const relatedCache = new EdgeCache(c.env.CACHE_KV);
-    const cacheKey = getCacheKeyForRelatedMovies(movieId, locale);
+    const cacheKey = getCacheKeyForRelatedMovies(movieId);
     const cached = await relatedCache.get(cacheKey, {
       edgeTtl: IMPORTED_DATA_EDGE_TTL,
     });
     if (cached) {
-      const {movies} = cached.data as {movies: RelatedMovie[]};
+      const movies = (cached.data as RelatedMoviesByLocale)[locale];
       return c.json({movies: movies.slice(0, limit)}, 200, {
         'X-Cache-Status': 'HIT',
       });
@@ -104,7 +104,6 @@ movieDetailRoutes.get('/:id/related', async c => {
     const relatedMovies = await findRelatedMovies(
       getDatabase(c.env),
       movieId,
-      locale,
       MAX_RELATED_MOVIES,
     );
 
@@ -114,15 +113,11 @@ movieDetailRoutes.get('/:id/related', async c => {
 
     await writeCacheAfterResponse(
       c,
-      relatedCache.set(
-        cacheKey,
-        {movies: relatedMovies},
-        getCacheTTL.movie.related,
-      ),
+      relatedCache.set(cacheKey, relatedMovies, getCacheTTL.movie.related),
     );
 
     return createCachedResponse(
-      {movies: relatedMovies.slice(0, limit)},
+      {movies: relatedMovies[locale].slice(0, limit)},
       getCacheTTL.movie.related,
       {'X-Cache-Status': 'MISS'},
     );

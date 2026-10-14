@@ -7,10 +7,7 @@ import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from '@shine/database/testing';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {
-  CACHEABLE_LOCALES,
-  getCacheKeyForRelatedMovies,
-} from '../../utils/cache';
+import {getCacheKeyForRelatedMovies} from '../../utils/cache';
 import {
   ConflictError,
   NotFoundError,
@@ -111,12 +108,10 @@ async function movieRow(uid: string) {
 }
 
 function seedCache(uid: string): void {
-  for (const locale of CACHEABLE_LOCALES) {
-    kvStore.set(
-      getCacheKeyForRelatedMovies(uid, locale),
-      JSON.stringify({data: {}, cachedAt: 0}),
-    );
-  }
+  kvStore.set(
+    getCacheKeyForRelatedMovies(uid),
+    JSON.stringify({data: {}, cachedAt: 0}),
+  );
 }
 
 afterEach(() => {

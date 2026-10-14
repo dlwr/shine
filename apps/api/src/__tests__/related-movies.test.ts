@@ -362,7 +362,7 @@ describe('GET /movies/:id/related のキャッシュ', () => {
     );
 
     expect(get).toHaveBeenCalledWith(
-      'movie:movie-target:related:ja:v3',
+      'movie:movie-target:related:v4',
       expect.objectContaining({type: 'json', cacheTtl: 600}),
     );
   });
@@ -387,6 +387,29 @@ describe('GET /movies/:id/related のキャッシュ', () => {
     expect(body.movies.map(movie => movie.uid)).toEqual([
       'movie-winner',
       'movie-nominee',
+    ]);
+  });
+
+  it('ja で引いた後の en は同じ鍵から en の題名で返す', async () => {
+    const environment = await createTestEnvironment();
+    environment.CACHE_KV = createMemoryKv();
+    await moviesRoutes.request(
+      '/movie-target/related?locale=ja',
+      {},
+      environment,
+    );
+
+    const response = await moviesRoutes.request(
+      '/movie-target/related?locale=en',
+      {},
+      environment,
+    );
+
+    const body = (await response.json()) as RelatedResponse;
+    expect(response.headers.get('X-Cache-Status')).toBe('HIT');
+    expect(body.movies.map(movie => movie.title)).toEqual([
+      'Winner Movie',
+      'Nominee Movie',
     ]);
   });
 
