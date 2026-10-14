@@ -33,7 +33,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Check Playwright version
-        run: test "$(node -p "require('./apps/front/node_modules/@playwright/test/package.json').version")" = 1.63.0 || { echo "container の image の版を @playwright/test に合わせる"; exit 1; }
+        run: test "$(node -p "require('./apps/front/node_modules/@playwright/test/package.json').version")" = 1.64.0 || { echo "container の image の版を @playwright/test に合わせる"; exit 1; }
 
       - name: VRT
         run: pnpm --filter @shine/front run vrt
