@@ -80,7 +80,7 @@ export function MonthlyPick({
       : undefined;
   const meta = [movie.year ? copy.year(movie.year) : undefined, standing]
     .filter(Boolean)
-    .join('　');
+    .join('\u{3000}');
   const links = movie.articleLinks ?? [];
   const isVertical = shouldSetVertically(title, locale);
 

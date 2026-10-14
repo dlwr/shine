@@ -7,7 +7,7 @@ describe('normalizePersonName', () => {
   });
 
   it('全角空白も落とす', () => {
-    expect(normalizePersonName('渡辺　謙')).toBe('渡辺謙');
+    expect(normalizePersonName('渡辺\u{3000}謙')).toBe('渡辺謙');
   });
 
   it('互換漢字の崎を新字体に寄せる', () => {

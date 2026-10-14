@@ -240,7 +240,7 @@ export const JAPAN_PERSON_AWARD_SOURCES: ListPersonAwardSource[] = [
       ['1993:眠らない街～新宿鮫～', 'tt0256956'],
       ['1993:病は気から 病院へ行こう2', 'tt0324610'],
       ['2005:SHINOBI-HEART UNDER BLADE-', 'tt0475723'],
-      ['1987:母娘監禁　牝〈めす〉', 'tt0285590'],
+      ['1987:母娘監禁\u{3000}牝〈めす〉', 'tt0285590'],
       ['1998:犬、走る DOG RACE', 'tt0416863'],
       ['2020:本気のしるし〈劇場版〉', 'tt13276326'],
       ['1992:未来の想い出 Last Christmas', 'tt0189741'],

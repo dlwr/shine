@@ -397,7 +397,7 @@ describe('root Layout のアイコン', () => {
 
 const linkHrefs = () =>
   links().flatMap(link =>
-    'href' in link ? [{href: String(link.href), as: link.as}] : [],
+    'href' in link ? {href: String(link.href), as: link.as} : [],
   );
 
 const fontHrefs = () =>
