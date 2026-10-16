@@ -1,6 +1,7 @@
 const GRAPHQL_ENDPOINT = 'https://api.cloudflare.com/client/v4/graphql';
 const GRAPHQL_TIMEOUT_MS = 30_000;
 const HOUR_MS = 3_600_000;
+const TRAFFIC_ROW_LIMIT = 1000;
 
 // 窓の始端が 7 日より前だと窓全体が 10 単位のサンプル推定に落ちるので、1 時間縮めて崖を踏まない
 const LEADING_INDICATOR_WINDOW_HOURS = 7 * 24 - 1;
@@ -49,7 +50,7 @@ type GraphqlResponse = {
         rumPageloadEventsAdaptiveGroups?: Array<{
           count: number;
           sum: {visits: number};
-          dimensions: {requestPath: string};
+          dimensions: {date: string; requestPath: string};
         }>;
       }>;
     };
@@ -73,7 +74,7 @@ function trafficQuery(
   viewer {
     accounts(filter: {accountTag: "${credentials.account}"}) {
       rumPageloadEventsAdaptiveGroups(
-        limit: 1000
+        limit: ${TRAFFIC_ROW_LIMIT}
         filter: {siteTag: "${credentials.siteTag}", countryName: "JP", bot: 0, datetime_geq: "${from.toISOString()}", datetime_leq: "${to.toISOString()}"}
       ) {
         count
@@ -81,6 +82,7 @@ function trafficQuery(
           visits
         }
         dimensions {
+          date
           requestPath
         }
       }
@@ -124,11 +126,22 @@ export async function fetchJapanPageTraffic(
     );
   }
 
-  return rows.map(row => ({
-    path: row.dimensions.requestPath,
-    pageviews: row.count,
-    visits: row.sum.visits,
-  }));
+  if (rows.length >= TRAFFIC_ROW_LIMIT) {
+    throw new Error(
+      `Cloudflare GraphQL の行数が上限 ${TRAFFIC_ROW_LIMIT} に達したので数え漏れがある`,
+    );
+  }
+
+  const byPath = new Map<string, PageTraffic>();
+  for (const row of rows) {
+    const path = row.dimensions.requestPath;
+    const page = byPath.get(path) ?? {path, pageviews: 0, visits: 0};
+    page.pageviews += row.count;
+    page.visits += row.sum.visits;
+    byPath.set(path, page);
+  }
+
+  return byPath.values().toArray();
 }
 
 function tokyoDateTime(date: Date): string {
