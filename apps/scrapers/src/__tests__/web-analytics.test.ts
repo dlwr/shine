@@ -65,6 +65,70 @@ describe('fetchJapanPageTraffic', () => {
     ]);
   });
 
+  it('日ごとに割った行をパスごとに足す', async () => {
+    const fetchImpl = vi.fn(async () =>
+      Response.json({
+        data: {
+          viewer: {
+            accounts: [
+              {
+                rumPageloadEventsAdaptiveGroups: [
+                  {
+                    count: 3,
+                    sum: {visits: 1},
+                    dimensions: {date: '2026-09-15', requestPath: '/'},
+                  },
+                  {
+                    count: 2,
+                    sum: {visits: 0},
+                    dimensions: {date: '2026-09-15', requestPath: '/quiz'},
+                  },
+                  {
+                    count: 4,
+                    sum: {visits: 2},
+                    dimensions: {date: '2026-09-16', requestPath: '/'},
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      }),
+    );
+
+    const result = await fetchJapanPageTraffic(
+      credentials,
+      new Date('2026-09-15T00:00:00.000Z'),
+      new Date('2026-09-22T00:00:00.000Z'),
+      fetchImpl,
+    );
+
+    expect(result).toStrictEqual([
+      {path: '/', pageviews: 7, visits: 3},
+      {path: '/quiz', pageviews: 2, visits: 0},
+    ]);
+  });
+
+  it('窓全体を 1 行に集めると 10 単位のサンプル推定に落ちるので、日で割って取る', async () => {
+    const fetchImpl = vi.fn(async () =>
+      trafficResponse([{path: '/', pageviews: 1, visits: 1}]),
+    );
+
+    await fetchJapanPageTraffic(
+      credentials,
+      new Date('2026-09-15T00:00:00.000Z'),
+      new Date('2026-09-22T00:00:00.000Z'),
+      fetchImpl,
+    );
+
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    const {query} = JSON.parse(init.body as string) as {query: string};
+    expect(query).toMatch(/dimensions\s*\{\s*date\s+requestPath\s*\}/);
+  });
+
   it('日本からの人の閲覧に絞り、窓を filter に入れる', async () => {
     const fetchImpl = vi.fn(async () =>
       trafficResponse([{path: '/', pageviews: 1, visits: 1}]),

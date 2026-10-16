@@ -49,7 +49,7 @@ type GraphqlResponse = {
         rumPageloadEventsAdaptiveGroups?: Array<{
           count: number;
           sum: {visits: number};
-          dimensions: {requestPath: string};
+          dimensions: {date: string; requestPath: string};
         }>;
       }>;
     };
@@ -81,6 +81,7 @@ function trafficQuery(
           visits
         }
         dimensions {
+          date
           requestPath
         }
       }
@@ -124,11 +125,16 @@ export async function fetchJapanPageTraffic(
     );
   }
 
-  return rows.map(row => ({
-    path: row.dimensions.requestPath,
-    pageviews: row.count,
-    visits: row.sum.visits,
-  }));
+  const byPath = new Map<string, PageTraffic>();
+  for (const row of rows) {
+    const path = row.dimensions.requestPath;
+    const page = byPath.get(path) ?? {path, pageviews: 0, visits: 0};
+    page.pageviews += row.count;
+    page.visits += row.sum.visits;
+    byPath.set(path, page);
+  }
+
+  return byPath.values().toArray();
 }
 
 function tokyoDateTime(date: Date): string {
