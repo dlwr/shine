@@ -36,6 +36,12 @@ export const posterUrls = sqliteTable(
   table => [
     index('poster_urls_movie_idx').on(table.movieUid),
     index('poster_urls_primary_idx').on(table.movieUid, table.isPrimary),
+    index('poster_urls_language_idx').on(
+      table.movieUid,
+      table.languageCode,
+      sql`${table.isPrimary} DESC`,
+      table.createdAt,
+    ),
     uniqueIndex('poster_urls_unique_idx').on(
       table.movieUid,
       table.width,
