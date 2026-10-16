@@ -8,6 +8,7 @@ import {QuizResult} from '@/components/quiz/quiz-result';
 import {useQuizGame, type QuizPuzzle} from '@/components/quiz/use-quiz-game';
 import {loadApiJson, resolveApiUrl, canTransformImages} from '@/lib/api';
 import {transformedImageUrl} from '@/lib/image-transformations';
+import {QuizPosterImage} from '@/components/quiz/quiz-poster-image';
 import {fetchMonthlyPick, type MonthlyPick} from '@/lib/monthly-pick';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
@@ -159,12 +160,15 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
           )}
 
           <div className="border border-ink bg-surface md:col-start-1 md:row-start-1 md:row-span-2">
-            <img
-              src={quizPosterUrl(puzzle.date, stage, transformImages ?? false)}
-              alt={isFinished ? game.answer?.title : 'ポスターの一部'}
-              width={480}
-              height={720}
-              className="block w-full h-auto"
+            <QuizPosterImage
+              key={stage}
+              transformedSrc={quizPosterUrl(
+                puzzle.date,
+                stage,
+                transformImages ?? false,
+              )}
+              originalSrc={quizPosterUrl(puzzle.date, stage, false)}
+              alt={isFinished ? (game.answer?.title ?? '') : 'ポスターの一部'}
             />
           </div>
 

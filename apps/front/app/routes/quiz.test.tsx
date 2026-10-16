@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import {render, screen, waitFor} from '@testing-library/react';
+import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import QuizPage, {loader, meta} from './quiz';
@@ -379,6 +379,52 @@ describe('Quiz page', () => {
         'src',
         '/cdn-cgi/image/format=auto,quality=80/quiz/poster.png?date=2026-08-16&stage=0',
       );
+    });
+
+    describe('ポスターの読み込みの失敗', () => {
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it('変換した画像が読めなければ、変換しない画像に切り替える', () => {
+        render(
+          <QuizPage {...createComponentProperties({transformImages: true})} />,
+        );
+
+        fireEvent.error(screen.getByAltText('ポスターの一部'));
+
+        expect(screen.getByAltText('ポスターの一部')).toHaveAttribute(
+          'src',
+          '/quiz/poster.png?date=2026-08-16&stage=0',
+        );
+      });
+
+      it('変換しない画像も読めなければ、少し待ってからもう一度だけ読む', () => {
+        vi.useFakeTimers();
+        render(<QuizPage {...createComponentProperties()} />);
+
+        fireEvent.error(screen.getByAltText('ポスターの一部'));
+        act(() => {
+          vi.advanceTimersByTime(3000);
+        });
+
+        expect(screen.getByAltText('ポスターの一部')).toHaveAttribute(
+          'src',
+          '/quiz/poster.png?date=2026-08-16&stage=0&retry=1',
+        );
+      });
+
+      it('再読み込みは待ってから行う', () => {
+        vi.useFakeTimers();
+        render(<QuizPage {...createComponentProperties()} />);
+
+        fireEvent.error(screen.getByAltText('ポスターの一部'));
+
+        expect(screen.getByAltText('ポスターの一部')).toHaveAttribute(
+          'src',
+          '/quiz/poster.png?date=2026-08-16&stage=0',
+        );
+      });
     });
 
     describe('ポスターの先読み', () => {
