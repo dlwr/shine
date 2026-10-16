@@ -1,0 +1,1 @@
+CREATE INDEX `poster_urls_language_idx` ON `poster_urls` (`movie_uid`,`language_code`,"is_primary" DESC,`created_at`);
