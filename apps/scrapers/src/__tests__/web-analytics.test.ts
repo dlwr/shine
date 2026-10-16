@@ -188,6 +188,27 @@ describe('fetchJapanPageTraffic', () => {
     ).rejects.toThrow('空応答');
   });
 
+  it('行数が上限に達した応答は数え漏れがあるので例外にする', async () => {
+    const fetchImpl = vi.fn(async () =>
+      trafficResponse(
+        Array.from({length: 1000}, (_, index) => ({
+          path: `/movies/${index}`,
+          pageviews: 1,
+          visits: 1,
+        })),
+      ),
+    );
+
+    await expect(
+      fetchJapanPageTraffic(
+        credentials,
+        new Date('2026-09-15T00:00:00.000Z'),
+        new Date('2026-09-22T00:00:00.000Z'),
+        fetchImpl,
+      ),
+    ).rejects.toThrow('上限');
+  });
+
   it('記録が 0 件の応答も空応答として例外にする', async () => {
     const fetchImpl = vi.fn(async () => trafficResponse([]));
 
