@@ -15,7 +15,8 @@ import {people} from '@shine/database/schema/people';
 import type {ProminentPerson, ProminentPersonMovie} from '../types/people';
 import {personAwardNominations} from './award-definition-lookup';
 import {personAwardDefinitions} from './award-definitions';
-import {joinAwardContext, localizedMovieTitle} from './people-query';
+import {localizedMovieTitle} from './movie-title-columns';
+import {joinAwardContext} from './people-query';
 import {personLocalizedName} from './person-name';
 import {personUidsMatchingName} from './search-terms';
 

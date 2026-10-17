@@ -13,6 +13,7 @@ import {adjacentYears} from './adjacent-years';
 import {BaseService} from './base-service';
 import type {YearDetail, YearMovie, YearSummary} from '../types/years';
 import {localizedPosterUrl} from './localized-poster-url';
+import {movieTitleColumns} from './movie-title-columns';
 
 function compareYearMovies(a: YearMovie, b: YearMovie): number {
   return (
@@ -71,20 +72,7 @@ export class YearsService extends BaseService {
         isWinner: nominations.isWinner,
         organizationName: awardOrganizations.name,
         categoryName: awardCategories.name,
-        jaTitle: sql<string | null>`(
-          SELECT content FROM translations
-          WHERE translations.resource_uid = movies.uid
-            AND translations.resource_type = 'movie_title'
-            AND translations.language_code = 'ja'
-          LIMIT 1
-        )`.as('jaTitle'),
-        defaultTitle: sql<string | null>`(
-          SELECT content FROM translations
-          WHERE translations.resource_uid = movies.uid
-            AND translations.resource_type = 'movie_title'
-          ORDER BY translations.is_default DESC
-          LIMIT 1
-        )`.as('defaultTitle'),
+        ...movieTitleColumns(),
         posterUrl: localizedPosterUrl('ja').as('posterUrl'),
       })
       .from(nominations)

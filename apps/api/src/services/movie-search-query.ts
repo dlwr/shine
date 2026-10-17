@@ -2,6 +2,7 @@ import {and, eq, isNull, sql} from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import type {getDatabase} from '@shine/database';
 import type {SearchOptions} from '../types/search';
+import {localizedMovieTitle} from './movie-title-columns';
 import {movieUidsMatchingTitle, personUidsMatchingName} from './search-terms';
 
 type Database = ReturnType<typeof getDatabase>;
@@ -71,18 +72,7 @@ export function buildMovieSearchQueries(
       year: movies.year,
       originalLanguage: movies.originalLanguage,
       imdbId: movies.imdbId,
-      title: sql<string | null>`
-				(
-				  SELECT content
-				  FROM translations
-				  WHERE translations.resource_uid = movies.uid
-				    AND translations.resource_type = 'movie_title'
-				  ORDER BY (translations.language_code = 'ja') DESC,
-				    translations.is_default DESC,
-				    (translations.language_code = 'en') DESC
-				  LIMIT 1
-				)
-			`.as('title'),
+      title: localizedMovieTitle('ja'),
       hasNominations: sql`
 				(
 				  SELECT COUNT(*) > 0

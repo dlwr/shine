@@ -9,6 +9,7 @@ import {awardPageDefinitions} from './award-definitions';
 import {BaseService} from './base-service';
 import type {AwardCrossings, CrossingMovie} from '../types/crossings';
 import {localizedPosterUrl} from './localized-poster-url';
+import {movieTitleColumns} from './movie-title-columns';
 
 const DEFAULT_TOP_MOVIE_LIMIT = 24;
 
@@ -139,20 +140,7 @@ export class CrossingsService extends BaseService {
       .select({
         uid: movies.uid,
         year: movies.year,
-        jaTitle: sql<string | null>`(
-          SELECT content FROM translations
-          WHERE translations.resource_uid = movies.uid
-            AND translations.resource_type = 'movie_title'
-            AND translations.language_code = 'ja'
-          LIMIT 1
-        )`.as('jaTitle'),
-        defaultTitle: sql<string | null>`(
-          SELECT content FROM translations
-          WHERE translations.resource_uid = movies.uid
-            AND translations.resource_type = 'movie_title'
-          ORDER BY translations.is_default DESC
-          LIMIT 1
-        )`.as('defaultTitle'),
+        ...movieTitleColumns(),
         posterUrl: localizedPosterUrl('ja').as('posterUrl'),
       })
       .from(movies)
