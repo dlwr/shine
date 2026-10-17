@@ -21,6 +21,7 @@ import type {
 } from '../types/crossings';
 import {personLocalizedName} from './person-name';
 import {localizedPosterUrl} from './localized-poster-url';
+import {localizedMovieTitle} from './movie-title-columns';
 
 const DEFAULT_TOP_PERFORMANCE_LIMIT = 48;
 
@@ -219,15 +220,7 @@ export class PersonCrossingsService extends BaseService {
       this.database
         .select({
           uid: movies.uid,
-          title: sql<string | null>`(
-            SELECT content FROM translations
-            WHERE translations.resource_uid = movies.uid
-              AND translations.resource_type = 'movie_title'
-            ORDER BY (translations.language_code = ${locale}) DESC,
-              translations.is_default DESC,
-              (translations.language_code = 'en') DESC
-            LIMIT 1
-          )`.as('title'),
+          title: localizedMovieTitle(locale),
           posterUrl: localizedPosterUrl(locale).as('posterUrl'),
         })
         .from(movies)
