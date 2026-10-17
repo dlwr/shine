@@ -21,7 +21,8 @@ import {
   japaneseAwardNames,
 } from './award-definition-lookup';
 import {awardPageDefinitions} from './award-definitions';
-import {joinAwardContext, localizedMovieTitle} from './people-query';
+import {localizedMovieTitle} from './movie-title-columns';
+import {joinAwardContext} from './people-query';
 import {personLocalizedName} from './person-name';
 import {localizedPosterUrl} from './localized-poster-url';
 

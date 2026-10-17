@@ -6,8 +6,9 @@ import {people} from '@shine/database/schema/people';
 import type {PersonAwardDetail, PersonAwardYearGroup} from '../types/awards';
 import {personAwardDefinitions} from './award-definitions';
 import {compareCodePoints, compareNominees} from './award-page-ordering';
-import {movieTitleColumns, resolveCategoryUids} from './award-category-queries';
+import {resolveCategoryUids} from './award-category-queries';
 import {BaseService} from './base-service';
+import {movieTitleColumns} from './movie-title-columns';
 import {personLocalizedName} from './person-name';
 
 export class PersonAwardsService extends BaseService {

@@ -9,11 +9,7 @@ import type {
   AwardYearDetail,
   AwardYearGroup,
 } from '../types/awards';
-import {
-  movieTitleColumns,
-  resolveCategoryUids,
-  summarizeAward,
-} from './award-category-queries';
+import {resolveCategoryUids, summarizeAward} from './award-category-queries';
 import {BaseService} from './base-service';
 import {
   awardPageDefinitions,
@@ -23,6 +19,7 @@ import {adjacentYears} from './adjacent-years';
 import {compareAwardMovies, flattenListAward} from './award-page-ordering';
 import {loadWatchableAvailabilityByMovie} from './watchable-availability';
 import {localizedPosterUrl} from './localized-poster-url';
+import {movieTitleColumns} from './movie-title-columns';
 
 function posterUrlColumn() {
   return localizedPosterUrl('ja').as('posterUrl');
