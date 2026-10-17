@@ -8,6 +8,8 @@ import {describeNomination} from './quiz-nomination';
 
 const MINIMUM_ORGANIZATIONS = 2;
 
+type Database = ReturnType<typeof getDatabase>;
+
 export type QuizPoolEntry = {
   uid: string;
   title: string;
@@ -18,19 +20,12 @@ export type QuizPoolEntry = {
   achievements: string[];
 };
 
-export async function queryQuizPool(
-  database: ReturnType<typeof getDatabase>,
-): Promise<QuizPoolEntry[]> {
-  const rows = await database
+async function queryEligibleMovies(database: Database) {
+  return database
     .select({
       uid: movies.uid,
       year: movies.year,
       originalLanguage: movies.originalLanguage,
-      isWinner: nominations.isWinner,
-      specialMention: nominations.specialMention,
-      ceremonyYear: awardCeremonies.year,
-      organizationName: awardOrganizations.name,
-      categoryName: awardCategories.name,
       title: sql<string>`(
         SELECT content FROM translations
         WHERE translations.resource_uid = movies.uid
@@ -49,20 +44,7 @@ export async function queryQuizPool(
         LIMIT 1
       )`.as('posterUrl'),
     })
-    .from(nominations)
-    .innerJoin(
-      awardCeremonies,
-      eq(nominations.ceremonyUid, awardCeremonies.uid),
-    )
-    .innerJoin(
-      awardOrganizations,
-      eq(awardCeremonies.organizationUid, awardOrganizations.uid),
-    )
-    .innerJoin(
-      awardCategories,
-      eq(nominations.categoryUid, awardCategories.uid),
-    )
-    .innerJoin(movies, eq(nominations.movieUid, movies.uid))
+    .from(movies)
     .where(
       and(
         isNull(movies.deletedAt),
@@ -77,9 +59,59 @@ export async function queryQuizPool(
         )`,
       ),
     );
+}
 
-  const entries = new Map<string, QuizPoolEntry>();
-  for (const row of rows) {
+async function queryNominationFacts(database: Database) {
+  return database
+    .select({
+      movieUid: nominations.movieUid,
+      isWinner: nominations.isWinner,
+      specialMention: nominations.specialMention,
+      ceremonyYear: awardCeremonies.year,
+      organizationName: awardOrganizations.name,
+      categoryName: awardCategories.name,
+    })
+    .from(nominations)
+    .innerJoin(
+      awardCeremonies,
+      eq(nominations.ceremonyUid, awardCeremonies.uid),
+    )
+    .innerJoin(
+      awardOrganizations,
+      eq(awardCeremonies.organizationUid, awardOrganizations.uid),
+    )
+    .innerJoin(
+      awardCategories,
+      eq(nominations.categoryUid, awardCategories.uid),
+    );
+}
+
+export async function queryQuizPool(
+  database: Database,
+): Promise<QuizPoolEntry[]> {
+  const eligible = await queryEligibleMovies(database);
+  const entries = new Map<string, QuizPoolEntry>(
+    eligible.map(movie => [
+      movie.uid,
+      {
+        uid: movie.uid,
+        title: movie.title,
+        year: movie.year ?? undefined,
+        posterUrl: movie.posterUrl,
+        originalLanguage: movie.originalLanguage,
+        organizations: [],
+        achievements: [],
+      },
+    ]),
+  );
+
+  const facts = await queryNominationFacts(database);
+  for (const row of facts) {
+    const entry = entries.get(row.movieUid);
+    if (!entry) {
+      continue;
+    }
+
     const {organization, achievement} = describeNomination({
       organizationName: row.organizationName,
       categoryName: row.categoryName,
@@ -87,20 +119,6 @@ export async function queryQuizPool(
       isWinner: row.isWinner === 1,
       specialMention: row.specialMention ?? undefined,
     });
-
-    let entry = entries.get(row.uid);
-    if (!entry) {
-      entry = {
-        uid: row.uid,
-        title: row.title,
-        year: row.year ?? undefined,
-        posterUrl: row.posterUrl,
-        originalLanguage: row.originalLanguage,
-        organizations: [],
-        achievements: [],
-      };
-      entries.set(row.uid, entry);
-    }
 
     if (!entry.organizations.includes(organization)) {
       entry.organizations.push(organization);
