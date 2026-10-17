@@ -383,6 +383,23 @@ describe('公開エンドポイントの実行計画', {timeout: 30_000}, () => 
     },
   );
 
+  it('クイズの出題候補は題名とポスターを映画ごとに引く', async () => {
+    const exercise = exercises.find(
+      current => current.name === 'クイズの出題候補',
+    );
+    const plans = await plansOf(exercise!);
+    for (const statement of plans.keys()) {
+      if (!statement.includes('poster_urls')) {
+        continue;
+      }
+
+      expect(
+        statement,
+        'ポスターをノミネーションの行ごとに引いている',
+      ).not.toContain('from "nominations"');
+    }
+  });
+
   it('関連映画は受賞作を部門と受賞の索引で引く', async () => {
     const exercise = exercises.find(current => current.name === '関連映画');
     const plans = await plansOf(exercise!);
