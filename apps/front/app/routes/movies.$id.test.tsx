@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import {render, screen} from '@testing-library/react';
+import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import MovieDetail, {action, loader, meta} from './movies.$id';
@@ -1110,14 +1110,14 @@ describe('MovieDetail Component', () => {
         />,
       );
 
-      expect(screen.queryByLabelText('タイトル')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/^タイトル/)).not.toBeInTheDocument();
 
       await user.type(
         screen.getByLabelText('URL（任意）'),
         'https://example.com/review',
       );
 
-      expect(screen.getByLabelText('タイトル')).toBeInTheDocument();
+      expect(screen.getByLabelText(/^タイトル/)).toBeInTheDocument();
     });
 
     it('何も書いていないと投稿できない', () => {
@@ -1369,9 +1369,11 @@ describe('MovieDetail Component', () => {
         'https://x.com/shine_film/status/1234567890',
       );
 
-      expect(await screen.findByLabelText('タイトル')).toHaveValue(
-        '@shine_film のポスト',
-      );
+      await waitFor(() => {
+        expect(screen.getByLabelText(/^タイトル/)).toHaveValue(
+          '@shine_film のポスト',
+        );
+      });
     });
 
     it('タイトルを取れないBlueskyのポストURLはハンドルからタイトルを埋める', async () => {
@@ -1394,9 +1396,11 @@ describe('MovieDetail Component', () => {
         'https://bsky.app/profile/shine-film.com/post/3kabc',
       );
 
-      expect(await screen.findByLabelText('タイトル')).toHaveValue(
-        '@shine-film.com のポスト',
-      );
+      await waitFor(() => {
+        expect(screen.getByLabelText(/^タイトル/)).toHaveValue(
+          '@shine-film.com のポスト',
+        );
+      });
     });
 
     it('タイトルを取れない他のURLはホスト名でタイトルを埋める', async () => {
@@ -1419,7 +1423,9 @@ describe('MovieDetail Component', () => {
         'https://note.com/someone/n/abcdef',
       );
 
-      expect(await screen.findByLabelText('タイトル')).toHaveValue('note.com');
+      await waitFor(() => {
+        expect(screen.getByLabelText(/^タイトル/)).toHaveValue('note.com');
+      });
     });
   });
 

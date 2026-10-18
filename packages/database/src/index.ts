@@ -93,6 +93,7 @@ export type Environment = {
   SUGGEST_RATE_LIMITER?: RateLimit;
   AVAILABILITY_RATE_LIMITER?: RateLimit;
   LOGIN_RATE_LIMITER?: RateLimit;
+  TITLE_RATE_LIMITER?: RateLimit;
 };
 
 export type Database = BaseSQLiteDatabase<'async', unknown, typeof schema>;

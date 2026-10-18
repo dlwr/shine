@@ -2,31 +2,14 @@ import {type Environment} from '@shine/database';
 import {Hono} from 'hono';
 import {AvailabilityService, buildOnDemandRunners} from '../../services';
 import {resolveClientIp} from '../../utils/client-ip';
+import {createInMemoryRateLimit} from '../../utils/request-rate-limit';
 
 export const movieAvailabilityRoutes = new Hono<{Bindings: Environment}>();
 
-const AVAILABILITY_RATE_LIMIT = 30;
-const AVAILABILITY_RATE_WINDOW_MS = 60 * 60 * 1000;
-const AVAILABILITY_RATE_LOG_MAX_ENTRIES = 10_000;
-const availabilityRequestLog = new Map<
-  string,
-  {windowStart: number; count: number}
->();
-
-function isAvailabilityRateLimited(ip: string, now = Date.now()): boolean {
-  if (availabilityRequestLog.size > AVAILABILITY_RATE_LOG_MAX_ENTRIES) {
-    availabilityRequestLog.clear();
-  }
-
-  const entry = availabilityRequestLog.get(ip);
-  if (!entry || now - entry.windowStart > AVAILABILITY_RATE_WINDOW_MS) {
-    availabilityRequestLog.set(ip, {windowStart: now, count: 1});
-    return false;
-  }
-
-  entry.count++;
-  return entry.count > AVAILABILITY_RATE_LIMIT;
-}
+const isAvailabilityRateLimited = createInMemoryRateLimit({
+  limit: 30,
+  windowMs: 60 * 60 * 1000,
+});
 
 movieAvailabilityRoutes.post('/:id/availability/check', async c => {
   const ip = resolveClientIp(c);

@@ -1,4 +1,12 @@
-import {useCallback, useState, type ChangeEvent} from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from 'react';
+
+export const TITLE_FETCH_DEBOUNCE_MS = 500;
 
 export type ArticleLinkFormState = {
   url: string;
@@ -43,6 +51,15 @@ export async function fetchUrlTitle(
     return data.title || undefined;
   } catch {
     return undefined;
+  }
+}
+
+function isAbsoluteUrl(url: string): boolean {
+  try {
+    void new URL(url);
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -92,26 +109,56 @@ export function useArticleLinkForm(
   });
   const [isLoadingTitle, setIsLoadingTitle] = useState(false);
   const submissionResult = actionData as SubmissionResult;
+  const latestUrl = useRef('');
+  const isTitleEdited = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(
+    () => () => {
+      clearTimeout(timer.current);
+    },
+    [],
+  );
 
   const fetchTitleFromUrl = useCallback(
     async (url: string) => {
-      if (!url) {
-        return;
-      }
-
-      try {
-        void new URL(url);
-      } catch {
-        return;
-      }
-
       setIsLoadingTitle(true);
       const title =
         (await fetchUrlTitle(apiUrl, url)) || fallbackTitleFromUrl(url);
-      setFormData(previous => ({...previous, title}));
+      if (latestUrl.current !== url) {
+        return;
+      }
+
       setIsLoadingTitle(false);
+      if (isTitleEdited.current) {
+        return;
+      }
+
+      setFormData(previous => ({...previous, title}));
     },
     [apiUrl],
+  );
+
+  const scheduleTitleFetch = useCallback(
+    (url: string) => {
+      latestUrl.current = url;
+      isTitleEdited.current = false;
+      clearTimeout(timer.current);
+
+      setIsLoadingTitle(false);
+      if (!isAbsoluteUrl(url)) {
+        return;
+      }
+
+      setFormData(previous => ({
+        ...previous,
+        title: fallbackTitleFromUrl(url),
+      }));
+      timer.current = setTimeout(() => {
+        void fetchTitleFromUrl(url);
+      }, TITLE_FETCH_DEBOUNCE_MS);
+    },
+    [fetchTitleFromUrl],
   );
 
   const handleInputChange = useCallback(
@@ -122,11 +169,13 @@ export function useArticleLinkForm(
         [name]: value,
       }));
 
-      if (name === 'url') {
-        void fetchTitleFromUrl(value);
+      if (name === 'title') {
+        isTitleEdited.current = true;
+      } else if (name === 'url') {
+        scheduleTitleFetch(value);
       }
     },
-    [fetchTitleFromUrl],
+    [scheduleTitleFetch],
   );
 
   const handleCaptchaTokenChange = useCallback((token: string) => {
