@@ -56,6 +56,11 @@ const exercises: Exercise[] = [
     routes: awardsRoutes,
     path: '/academy-best-picture/2000',
   },
+  {
+    name: '賞の観られない作品',
+    routes: awardsRoutes,
+    path: '/academy-best-picture/unavailable',
+  },
   {name: '個人賞ページ', routes: awardsRoutes, path: '/academy-director'},
   {name: '年一覧', routes: yearsRoutes, path: '/'},
   {name: '年別ページ', routes: yearsRoutes, path: '/1999'},

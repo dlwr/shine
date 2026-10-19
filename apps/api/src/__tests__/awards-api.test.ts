@@ -6,6 +6,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
+import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {translations} from '@shine/database/schema/translations';
@@ -159,6 +160,65 @@ describe('GET /awards/:slug/:year', () => {
     const body = (await response.json()) as {nextYear?: number};
 
     expect(body.nextYear).toBeUndefined();
+  });
+});
+
+describe('GET /awards/:slug/unavailable', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+    const database = getDatabase(environment);
+    await database.insert(movieAvailabilityChecks).values([
+      {movieUid: 'movie-a', source: 'unext', status: 'ng'},
+      {movieUid: 'movie-a', source: 'tmdb', status: 'ng'},
+    ]);
+  });
+
+  it('観られない作品の一覧を返す', async () => {
+    const response = await awardsRoutes.request(
+      '/palme-dor/unavailable',
+      {},
+      environment,
+    );
+
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      slug: string;
+      movies: Array<{uid: string}>;
+      availabilitySummary: {unwatchable: number};
+    };
+    expect(body.slug).toBe('palme-dor');
+    expect(body.movies.map(movie => movie.uid)).toEqual(['movie-a']);
+    expect(body.availabilitySummary.unwatchable).toBe(1);
+  });
+
+  it('未知の slug には 404 を返す', async () => {
+    const response = await awardsRoutes.request(
+      '/no-such-award/unavailable',
+      {},
+      environment,
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('KV に載せる', async () => {
+    environment.CACHE_KV = createStubKv();
+
+    const first = await awardsRoutes.request(
+      '/palme-dor/unavailable',
+      {},
+      environment,
+    );
+    const second = await awardsRoutes.request(
+      '/palme-dor/unavailable',
+      {},
+      environment,
+    );
+
+    expect(first.headers.get('X-Cache-Status')).toBe('MISS');
+    expect(second.headers.get('X-Cache-Status')).toBe('HIT');
   });
 });
 

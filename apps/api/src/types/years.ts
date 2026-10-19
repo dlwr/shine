@@ -1,3 +1,5 @@
+import type {JapanAvailabilityStatus, JapanAvailabilitySummary} from './common';
+
 export type YearSummary = {
   year: number;
   movieCount: number;
@@ -9,11 +11,13 @@ export type YearMovie = {
   title: string | undefined;
   posterUrl: string | undefined;
   isWinner: boolean;
+  availabilityStatus: JapanAvailabilityStatus;
   awards: Array<{slug: string; isWinner: boolean}>;
 };
 
 export type YearDetail = {
   year: number;
+  availabilitySummary: JapanAvailabilitySummary;
   movies: YearMovie[];
   awards: Array<{
     slug: string;

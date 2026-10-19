@@ -50,7 +50,7 @@ yearsRoutes.get('/:year', async c => {
 
   const cache = new EdgeCache(c.env.CACHE_KV);
   const {data: detail, status} = await readThroughCache(c, cache, {
-    key: `years:${year}:v3`,
+    key: `years:${year}:v4`,
     ttl: YEARS_CACHE_TTL,
     edgeTtl: IMPORTED_DATA_EDGE_TTL,
     async load() {

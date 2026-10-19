@@ -1,8 +1,14 @@
 {
-  "awards:academy-best-picture:2000:v3": [
+  "awards:academy-best-picture:2000:v4": [
     "cachedAt",
+    "data.availabilitySummary.rentalOnly",
+    "data.availabilitySummary.total",
+    "data.availabilitySummary.unchecked",
+    "data.availabilitySummary.unwatchable",
+    "data.availabilitySummary.watchable",
     "data.ceremonyNumber",
     "data.description",
+    "data.movies[].availabilityStatus",
     "data.movies[].availability[].checkedAt",
     "data.movies[].availability[].detail",
     "data.movies[].availability[].source",
@@ -17,8 +23,32 @@
     "data.slug",
     "data.year"
   ],
-  "awards:academy-best-picture:v7": [
+  "awards:academy-best-picture:unavailable:v1": [
     "cachedAt",
+    "data.availabilitySummary.rentalOnly",
+    "data.availabilitySummary.total",
+    "data.availabilitySummary.unchecked",
+    "data.availabilitySummary.unwatchable",
+    "data.availabilitySummary.watchable",
+    "data.description",
+    "data.grouping",
+    "data.movies[].ceremonyYears[]",
+    "data.movies[].isWinner",
+    "data.movies[].movieYear",
+    "data.movies[].posterUrl",
+    "data.movies[].title",
+    "data.movies[].uid",
+    "data.name",
+    "data.organization",
+    "data.slug"
+  ],
+  "awards:academy-best-picture:v8": [
+    "cachedAt",
+    "data.availabilitySummary.rentalOnly",
+    "data.availabilitySummary.total",
+    "data.availabilitySummary.unchecked",
+    "data.availabilitySummary.unwatchable",
+    "data.availabilitySummary.watchable",
     "data.description",
     "data.grouping",
     "data.name",
@@ -26,6 +56,7 @@
     "data.slug",
     "data.years[].ceremonyNumber",
     "data.years[].filmCount",
+    "data.years[].movies[].availabilityStatus",
     "data.years[].movies[].isWinner",
     "data.years[].movies[].movieYear",
     "data.years[].movies[].posterUrl",
@@ -33,7 +64,7 @@
     "data.years[].movies[].uid",
     "data.years[].year"
   ],
-  "awards:academy-director:v7": [
+  "awards:academy-director:v8": [
     "cachedAt",
     "data.description",
     "data.grouping",
@@ -406,12 +437,18 @@
     "data.lists[].slug",
     "data.lists[].uids[]"
   ],
-  "years:1999:v3": [
+  "years:1999:v4": [
     "cachedAt",
+    "data.availabilitySummary.rentalOnly",
+    "data.availabilitySummary.total",
+    "data.availabilitySummary.unchecked",
+    "data.availabilitySummary.unwatchable",
+    "data.availabilitySummary.watchable",
     "data.awards[].name",
     "data.awards[].organization",
     "data.awards[].shortLabel",
     "data.awards[].slug",
+    "data.movies[].availabilityStatus",
     "data.movies[].awards[].isWinner",
     "data.movies[].awards[].slug",
     "data.movies[].isWinner",
