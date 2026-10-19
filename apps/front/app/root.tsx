@@ -11,7 +11,11 @@ import {
 import type {Route} from './+types/root';
 import appCss from './app.css?inline';
 import {NO_FLASH_SCRIPT} from '@/lib/theme';
-import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
+import {
+  DEFAULT_LOCALE,
+  getLocaleFromRequest,
+  hasLocaleQuery,
+} from '@/lib/locale';
 import {resolveEnvironment} from '@/lib/api';
 import {SITE_URL} from '@/lib/meta';
 import {fetchMonthlyPick} from '@/lib/monthly-pick';
@@ -31,6 +35,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
 
   return {
     locale,
+    ...(hasLocaleQuery(request) && {noindex: true}),
     canonicalUrl: new URL(pathname.replace(/(?<=.)\/+$/, ''), SITE_URL).href,
     webAnalyticsToken: environment.PUBLIC_WEB_ANALYTICS_TOKEN || undefined,
     ...(monthly && {monthly}),
@@ -62,6 +67,7 @@ export function Layout({children}: {children: React.ReactNode}) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+        {rootData?.noindex && <meta name="robots" content="noindex, follow" />}
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link
           rel="icon"

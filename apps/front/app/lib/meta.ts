@@ -4,6 +4,11 @@ import type {Locale} from './locale';
 export const SITE_URL = 'https://shine-film.com';
 const SITE_NAME = 'SHINE';
 
+export const NOINDEX_FOLLOW: MetaDescriptor = {
+  name: 'robots',
+  content: 'noindex, follow',
+};
+
 const OPEN_GRAPH_LOCALES: Record<Locale, string> = {
   ja: 'ja_JP',
   en: 'en_US',

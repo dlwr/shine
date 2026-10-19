@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest';
-import {getLocaleFromRequest} from './locale';
+import {getLocaleFromRequest, hasLocaleQuery} from './locale';
 
 function createRequest(url: string, acceptLanguage?: string) {
   return new Request(
@@ -52,5 +52,25 @@ describe('getLocaleFromRequest', () => {
     const request = createRequest('https://shine-film.com/');
 
     expect(getLocaleFromRequest(request)).toBe('ja');
+  });
+});
+
+describe('hasLocaleQuery', () => {
+  test('localeクエリがあればtrueを返す', () => {
+    expect(
+      hasLocaleQuery(createRequest('https://shine-film.com/?locale=en')),
+    ).toBe(true);
+  });
+
+  test('対応していないlocaleクエリでもtrueを返す', () => {
+    expect(
+      hasLocaleQuery(createRequest('https://shine-film.com/?locale=fr')),
+    ).toBe(true);
+  });
+
+  test('localeクエリがなければfalseを返す', () => {
+    expect(
+      hasLocaleQuery(createRequest('https://shine-film.com/?page=2')),
+    ).toBe(false);
   });
 });

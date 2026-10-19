@@ -10,7 +10,7 @@ import {PersonPortrait} from '@/components/editorial/person-portrait';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
-import {SITE_URL, buildSocialMeta} from '@/lib/meta';
+import {NOINDEX_FOLLOW, SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {loadApiJson} from '@/lib/api';
 import type {PersonData} from '@/lib/api-types';
 
@@ -134,9 +134,7 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
     largeImage: true,
   });
 
-  return isWorthIndexing(person)
-    ? social
-    : [...social, {name: 'robots', content: 'noindex, follow'}];
+  return isWorthIndexing(person) ? social : [...social, NOINDEX_FOLLOW];
 }
 
 export async function loader({context, request, params}: Route.LoaderArgs) {
