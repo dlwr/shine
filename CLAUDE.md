@@ -41,6 +41,7 @@ Key design patterns:
 - 個人賞は `nominations.personUid` で人物に紐づく。人物の同定は「その映画のクレジット名との照合」で行い、旧字体・異体字は `common/japanese-name.ts` で寄せる
 - UUID primary keys; camelCase in schema mapped to snake_case in the database (`casing: 'snake_case'`)
 - Soft delete on movies via `deleted_at` — every movie lookup (API and scrapers) must filter or skip soft-deleted rows
+- 「日本で観られるか」の判定は `apps/api/src/services/japan-availability.ts` の 1 か所（source ごとの最新の確認で ok があれば観られる、DISCAS だけ ok は別作品の混入があるので「宅配レンタルのみ（要確認）」、ng があれば観られない、それ以外は未確認）。賞ページ・年別ページの `availabilitySummary` と `/awards/:slug/unavailable` はこれで数える
 
 ## Common Commands
 
