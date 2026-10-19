@@ -1,10 +1,6 @@
 import {selectionDateKeys} from './common/selection-dates';
 import {SITE_URL} from './sns/site';
 
-/** IndexNow の鍵は公開前提。apps/front/public/<鍵>.txt と同じ値でなければ検証に落ちる */
-export const INDEXNOW_KEY = 'b0391d9101c7ffce5d5f62eb7ea6e754';
-export const INDEXNOW_ENDPOINT = 'https://api.indexnow.org/indexnow';
-
 export type IndexNowSelections = {
   daily?: {uid: string};
   weekly?: {uid: string};
@@ -47,32 +43,4 @@ export function buildIndexNowUrls(
   }
 
   return urls;
-}
-
-export async function submitIndexNow(
-  urls: string[],
-  {
-    fetchImpl = fetch,
-  }: {fetchImpl?: (url: string, init: RequestInit) => Promise<Response>} = {},
-): Promise<void> {
-  if (urls.length === 0) {
-    return;
-  }
-
-  const response = await fetchImpl(INDEXNOW_ENDPOINT, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json; charset=utf-8'},
-    body: JSON.stringify({
-      host: new URL(SITE_URL).host,
-      key: INDEXNOW_KEY,
-      keyLocation: `${SITE_URL}/${INDEXNOW_KEY}.txt`,
-      urlList: urls,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `IndexNow への送信に失敗しました: HTTP ${response.status} ${await response.text()}`,
-    );
-  }
 }

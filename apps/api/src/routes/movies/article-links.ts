@@ -10,6 +10,7 @@ import {
 import {articleLinks} from '@shine/database/schema/article-links';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
+import {classifySubmission, parseOriginRules} from '@shine/utils';
 import {Hono} from 'hono';
 import {hasValidAdminToken} from '../../auth';
 import {sanitizeText, sanitizeUrl} from '../../middleware/sanitizer';
@@ -21,6 +22,7 @@ import {
   type ArticleLinkSubmission,
 } from '../../utils/article-link-notification';
 import {resolveClientIp} from '../../utils/client-ip';
+import {notifyIndexNowMovieChanged} from '../../utils/indexnow';
 import {dispatchMonthlyLinkPosted} from '../../utils/monthly-link-dispatch';
 import {verifyTurnstileToken} from '../../utils/turnstile';
 
@@ -217,6 +219,13 @@ movieArticleLinksRoutes.post('/:id/article-links', async c => {
 
     if (c.env.GITHUB_DISPATCH_TOKEN) {
       followUps.push(dispatchIfMonthlyPick(c.env, database, submission));
+    }
+
+    if (
+      c.env.INDEXNOW_KEY &&
+      classifySubmission(submission, parseOriginRules(c.env)) !== 'test'
+    ) {
+      followUps.push(notifyIndexNowMovieChanged(c.env.INDEXNOW_KEY, movieId));
     }
 
     for (const task of followUps) {

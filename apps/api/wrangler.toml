@@ -34,6 +34,9 @@ simple = { limit = 20, period = 60 }
 [env.production]
 name = "shine-api"
 
+[env.production.vars]
+INDEXNOW_KEY = "b0391d9101c7ffce5d5f62eb7ea6e754"
+
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "shine-main"

@@ -7,8 +7,9 @@
  */
 import process from 'node:process';
 import {Command} from 'commander';
+import {submitIndexNow} from '@shine/utils/indexnow';
 import {loadEnvironmentFiles} from './common/environment';
-import {buildIndexNowUrls, submitIndexNow} from './indexnow';
+import {buildIndexNowUrls} from './indexnow';
 import {fetchSelections} from './sns/api-client';
 
 async function main(options: {dryRun: boolean}): Promise<void> {
