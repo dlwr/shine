@@ -8,6 +8,7 @@ import {articleLinks} from '@shine/database/schema/article-links';
 import {movieSelections} from '@shine/database/schema/movie-selections';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
+import {INDEXNOW_ENDPOINT} from '@shine/utils/indexnow';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {createJWT} from '../auth';
 import {moviesRoutes} from '../routes/movies';
@@ -284,6 +285,80 @@ describe('投稿の Discord 通知', () => {
 
     expect(response.status).toBe(201);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+function indexNowCalls(fetchMock: ReturnType<typeof vi.fn>) {
+  return fetchMock.mock.calls.filter(([url]) => url === INDEXNOW_ENDPOINT);
+}
+
+describe('投稿後の IndexNow', () => {
+  beforeEach(() => {
+    environment.INDEXNOW_KEY = 'test-key';
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('投稿が付いた映画ページの URL を IndexNow へ送る', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ok: true} as Response);
+    vi.stubGlobal('fetch', fetchMock);
+
+    await submit({description: 'よかった'}, {'x-real-ip': '203.0.113.9'});
+
+    const calls = indexNowCalls(fetchMock);
+    expect(calls).toHaveLength(1);
+    const [, init] = calls[0] as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      key: 'test-key',
+      urlList: ['https://shine-film.com/movies/movie-1'],
+    });
+  });
+
+  it('本人の投稿でも送る', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ok: true} as Response);
+    vi.stubGlobal('fetch', fetchMock);
+    environment.JWT_SECRET = 'test-secret';
+    const token = await createJWT('test-secret');
+
+    await submit(
+      {description: 'よかった'},
+      {Authorization: `Bearer ${token}`, 'x-real-ip': '203.0.113.9'},
+    );
+
+    expect(indexNowCalls(fetchMock)).toHaveLength(1);
+  });
+
+  it('ループバックからのテスト投稿は送らない', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ok: true} as Response);
+    vi.stubGlobal('fetch', fetchMock);
+
+    await submit({description: 'よかった'}, {'x-real-ip': '127.0.0.1'});
+
+    expect(indexNowCalls(fetchMock)).toHaveLength(0);
+  });
+
+  it('鍵が設定されていなければ送らない', async () => {
+    delete environment.INDEXNOW_KEY;
+    const fetchMock = vi.fn().mockResolvedValue({ok: true} as Response);
+    vi.stubGlobal('fetch', fetchMock);
+
+    await submit({description: 'よかった'}, {'x-real-ip': '203.0.113.9'});
+
+    expect(indexNowCalls(fetchMock)).toHaveLength(0);
+  });
+
+  it('IndexNow が落ちていても投稿は受け付ける', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new TypeError('fetch failed'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await submit(
+      {description: 'よかった'},
+      {'x-real-ip': '203.0.113.9'},
+    );
+
+    expect(response.status).toBe(201);
   });
 });
 

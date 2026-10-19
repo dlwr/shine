@@ -84,6 +84,7 @@ export type Environment = {
   QUIZ_ANSWER_KEY?: string;
   DISCORD_WEBHOOK_URL?: string;
   GITHUB_DISPATCH_TOKEN?: string;
+  INDEXNOW_KEY?: string;
   NORTH_STAR_OWNER_URL_PREFIXES?: string;
   NORTH_STAR_OWNER_IPS?: string;
   CACHE_KV?: KVNamespace;
