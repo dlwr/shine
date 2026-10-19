@@ -15,9 +15,14 @@ import type {
 import type {
   AwardDetail,
   AwardSummary,
+  AwardUnavailableList,
   AwardYearDetail,
   PersonAwardDetail,
 } from '@shine/api/types/awards';
+import type {
+  JapanAvailabilityStatus,
+  JapanAvailabilitySummary,
+} from '@shine/api/types/common';
 import type {AwardCrossings, PersonCrossings} from '@shine/api/types/crossings';
 import type {
   PeopleSearchResult,
@@ -64,6 +69,11 @@ export type AwardYearGroupData = AwardDetailData['years'][number];
 export type AwardMovieEntryData = AwardYearGroupData['movies'][number];
 export type AwardPaginationData = NonNullable<AwardDetailData['pagination']>;
 export type AwardYearDetailData = Json<AwardYearDetail>;
+export type AwardUnavailableListData = Json<AwardUnavailableList>;
+export type AwardUnavailableMovieData =
+  AwardUnavailableListData['movies'][number];
+export type JapanAvailabilityStatusData = JapanAvailabilityStatus;
+export type JapanAvailabilitySummaryData = Json<JapanAvailabilitySummary>;
 export type PersonAwardDetailData = Json<PersonAwardDetail>;
 export type PersonAwardYearGroupData = PersonAwardDetailData['years'][number];
 export type AwardPageData = AwardDetailData | PersonAwardDetailData;

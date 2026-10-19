@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {getDatabase, type Environment} from '@shine/database';
+import {eq, getDatabase, type Environment} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
@@ -567,6 +567,13 @@ describe('AwardsService.getAwardBySlug リスト型のページ分割', () => {
       organization: 'y',
       description: 'z',
       grouping: 'year' as const,
+      availabilitySummary: {
+        total: 0,
+        watchable: 0,
+        rentalOnly: 0,
+        unwatchable: 0,
+        unchecked: 0,
+      },
       years: [{year: 2023, ceremonyNumber: 76, filmCount: 21, movies: []}],
     };
 
@@ -1333,6 +1340,218 @@ describe('日本の映画賞の個人賞ページ', () => {
     ).toMatchObject({
       slug: 'mainichi-lead-performance',
       role: 'actor',
+    });
+  });
+});
+
+describe('AwardsService 日本で観られるか', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+  let service: AwardsService;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+    service = new AwardsService(environment);
+    await seedCannes(database);
+    await seedCannesCeremony(database, 'ceremony-2019', 2019, 72);
+    await seedCannesCeremony(database, 'ceremony-2021', 2021, 74);
+    await seedCannesCeremony(database, 'ceremony-2023', 2023, 76);
+    await seedMovie(database, 'movie-watchable', 'Watchable Winner');
+    await seedMovie(database, 'movie-rental', 'Rental Only Nominee');
+    await seedMovie(database, 'movie-old', 'Old Unwatchable Winner', {
+      jaTitle: '古い観られない映画',
+    });
+    await seedMovie(database, 'movie-new', 'New Unwatchable Nominee');
+    await seedMovie(database, 'movie-unchecked', 'Unchecked Nominee');
+    await database.insert(nominations).values([
+      {
+        movieUid: 'movie-old',
+        ceremonyUid: 'ceremony-2019',
+        categoryUid: 'cat-palme',
+        isWinner: 1,
+      },
+      {
+        movieUid: 'movie-watchable',
+        ceremonyUid: 'ceremony-2021',
+        categoryUid: 'cat-palme',
+        isWinner: 1,
+      },
+      {
+        movieUid: 'movie-rental',
+        ceremonyUid: 'ceremony-2021',
+        categoryUid: 'cat-palme',
+      },
+      {
+        movieUid: 'movie-new',
+        ceremonyUid: 'ceremony-2023',
+        categoryUid: 'cat-palme',
+      },
+      {
+        movieUid: 'movie-unchecked',
+        ceremonyUid: 'ceremony-2023',
+        categoryUid: 'cat-palme',
+      },
+    ]);
+    await database.insert(movieAvailabilityChecks).values([
+      {
+        movieUid: 'movie-watchable',
+        source: 'unext',
+        status: 'ok',
+        checkedAt: 1_700_000_000,
+      },
+      {
+        movieUid: 'movie-rental',
+        source: 'unext',
+        status: 'ng',
+        checkedAt: 1_700_000_000,
+      },
+      {
+        movieUid: 'movie-rental',
+        source: 'discas',
+        status: 'ok',
+        checkedAt: 1_700_000_000,
+      },
+      {
+        movieUid: 'movie-old',
+        source: 'unext',
+        status: 'ok',
+        checkedAt: 1_700_000_000,
+      },
+      {
+        movieUid: 'movie-old',
+        source: 'unext',
+        status: 'ng',
+        checkedAt: 1_700_000_100,
+      },
+      {
+        movieUid: 'movie-old',
+        source: 'tmdb',
+        status: 'error',
+        checkedAt: 1_700_000_100,
+      },
+      {
+        movieUid: 'movie-new',
+        source: 'tmdb',
+        status: 'ng',
+        checkedAt: 1_700_000_000,
+      },
+      {
+        movieUid: 'movie-new',
+        source: 'discas',
+        status: 'ng',
+        checkedAt: 1_700_000_000,
+      },
+    ]);
+  });
+
+  describe('getAwardBySlug', () => {
+    it('ノミネート全体の判定を集計する', async () => {
+      const result = await service.getAwardBySlug('palme-dor');
+
+      expect(result?.availabilitySummary).toEqual({
+        total: 5,
+        watchable: 1,
+        rentalOnly: 1,
+        unwatchable: 2,
+        unchecked: 1,
+      });
+    });
+
+    it('受賞作の行に判定を付ける', async () => {
+      const result = await service.getAwardBySlug('palme-dor');
+
+      expect(
+        result?.years.map(group =>
+          group.movies.map(movie => [movie.uid, movie.availabilityStatus]),
+        ),
+      ).toEqual([
+        [],
+        [['movie-watchable', 'watchable']],
+        [['movie-old', 'unwatchable']],
+      ]);
+    });
+
+    it('受賞作の行には視聴手段の一覧は付けない', async () => {
+      const result = await service.getAwardBySlug('palme-dor');
+
+      expect(result?.years[1].movies[0].availability).toBeUndefined();
+    });
+  });
+
+  describe('getAwardYear', () => {
+    it('その年の判定を集計する', async () => {
+      const result = await service.getAwardYear('palme-dor', 2021, []);
+
+      expect(result?.availabilitySummary).toEqual({
+        total: 2,
+        watchable: 1,
+        rentalOnly: 1,
+        unwatchable: 0,
+        unchecked: 0,
+      });
+    });
+
+    it('作品ごとに判定を付ける', async () => {
+      const result = await service.getAwardYear('palme-dor', 2023, []);
+
+      expect(
+        result?.movies.map(movie => [movie.uid, movie.availabilityStatus]),
+      ).toEqual([
+        ['movie-new', 'unwatchable'],
+        ['movie-unchecked', 'unchecked'],
+      ]);
+    });
+  });
+
+  describe('getAwardUnavailable', () => {
+    it('観られない作品だけを授賞式の年の新しい順に返す', async () => {
+      const result = await service.getAwardUnavailable('palme-dor');
+
+      expect(result?.movies.map(movie => movie.uid)).toEqual([
+        'movie-new',
+        'movie-old',
+      ]);
+    });
+
+    it('作品に題名・受賞・授賞式の年を付ける', async () => {
+      const result = await service.getAwardUnavailable('palme-dor');
+
+      expect(result?.movies[1]).toEqual({
+        uid: 'movie-old',
+        title: '古い観られない映画',
+        movieYear: 2020,
+        posterUrl: undefined,
+        isWinner: true,
+        ceremonyYears: [2019],
+      });
+    });
+
+    it('賞の名前と集計を返す', async () => {
+      const result = await service.getAwardUnavailable('palme-dor');
+
+      expect(result).toMatchObject({
+        slug: 'palme-dor',
+        grouping: 'year',
+        availabilitySummary: {total: 5, unwatchable: 2},
+      });
+      expect(result?.name).toBeTruthy();
+    });
+
+    it('未知の slug は undefined', async () => {
+      expect(
+        await service.getAwardUnavailable('no-such-award'),
+      ).toBeUndefined();
+    });
+
+    it('削除済みの映画は除く', async () => {
+      await database
+        .update(movies)
+        .set({deletedAt: 1})
+        .where(eq(movies.uid, 'movie-new'));
+
+      const result = await service.getAwardUnavailable('palme-dor');
+
+      expect(result?.movies.map(movie => movie.uid)).toEqual(['movie-old']);
     });
   });
 });

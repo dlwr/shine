@@ -1,3 +1,4 @@
+import {AvailabilityStatusMark} from '@/components/editorial/availability-status-mark';
 import {AwardMovieRow} from '@/components/editorial/award-movie-row';
 import {PersonAwardYearSection} from '@/components/editorial/person-award-years';
 import {PosterFrame} from '@/components/editorial/poster-frame';
@@ -22,8 +23,11 @@ function ListRow({movie}: {movie: AwardMovieEntryData}) {
         className="w-9 shrink-0"
         displaySize="w185"
       />
-      <span className="flex-1 font-display font-extrabold text-sm leading-none">
-        {title}
+      <span className="flex-1 min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="font-display font-extrabold text-sm leading-none">
+          {title}
+        </span>
+        <AvailabilityStatusMark status={movie.availabilityStatus} />
       </span>
       {movie.movieYear && (
         <span className="font-label text-xs text-ink-muted shrink-0">

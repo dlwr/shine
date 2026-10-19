@@ -1,6 +1,10 @@
 import type {Environment} from '@shine/database';
 import {type Context, Hono} from 'hono';
-import type {AwardDetail, PersonAwardDetail} from '../types/awards';
+import type {
+  AwardDetail,
+  AwardUnavailableList,
+  PersonAwardDetail,
+} from '../types/awards';
 import type {AwardsListResponse} from '../types/responses';
 import {AwardsService, PersonAwardsService} from '../services';
 import {paginateAwardDetail} from '../services/award-page-ordering';
@@ -47,7 +51,7 @@ function readAwardDetail(
   slug: string,
 ): ReturnType<typeof readThroughCache<AwardDetail | PersonAwardDetail>> {
   return readThroughCache<AwardDetail | PersonAwardDetail>(c, cache, {
-    key: `awards:${slug}:v7`,
+    key: `awards:${slug}:v8`,
     ttl: AWARDS_CACHE_TTL,
     edgeTtl: IMPORTED_DATA_EDGE_TTL,
     load: async () =>
@@ -90,6 +94,35 @@ awardsRoutes.get('/:slug', async c => {
   });
 });
 
+awardsRoutes.get('/:slug/unavailable', async c => {
+  const cache = new EdgeCache(c.env.CACHE_KV);
+  const slug = c.req.param('slug');
+  const {data: list, status} = await readThroughCache<AwardUnavailableList>(
+    c,
+    cache,
+    {
+      key: `awards:${slug}:unavailable:v1`,
+      ttl: AWARDS_CACHE_TTL,
+      edgeTtl: IMPORTED_DATA_EDGE_TTL,
+      load: async () => new AwardsService(c.env).getAwardUnavailable(slug),
+    },
+  );
+
+  if (!list) {
+    return c.json({error: 'Award not found'}, 404);
+  }
+
+  const etag = createETag(list);
+  if (shouldCheckETag(c.req, etag)) {
+    return new Response(undefined, {status: 304, headers: {ETag: etag}});
+  }
+
+  return createCachedResponse(list, AWARDS_CACHE_TTL, {
+    ETag: etag,
+    'X-Cache-Status': status,
+  });
+});
+
 awardsRoutes.get('/:slug/:year', async c => {
   const cache = new EdgeCache(c.env.CACHE_KV);
   const year = Number(c.req.param('year'));
@@ -99,7 +132,7 @@ awardsRoutes.get('/:slug/:year', async c => {
 
   const slug = c.req.param('slug');
   const {data: award, status} = await readThroughCache(c, cache, {
-    key: `awards:${slug}:${year}:v3`,
+    key: `awards:${slug}:${year}:v4`,
     ttl: AWARDS_CACHE_TTL,
     edgeTtl: IMPORTED_DATA_EDGE_TTL,
     async load() {

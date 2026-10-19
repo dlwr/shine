@@ -40,6 +40,19 @@ async function fetchAwardDetail(
   }
 }
 
+function unavailableEntries(
+  award: AwardSummaryData,
+  detail: AwardPageData | undefined,
+): SitemapEntry[] {
+  if (detail?.grouping === 'person') {
+    return [];
+  }
+
+  return (detail?.availabilitySummary?.unwatchable ?? 0) > 0
+    ? [{path: `/awards/${award.slug}/unavailable`, changefreq: 'weekly'}]
+    : [];
+}
+
 function subPageEntries(
   award: AwardSummaryData,
   detail: AwardPageData | undefined,
@@ -49,18 +62,27 @@ function subPageEntries(
   }
 
   if (award.grouping === 'year') {
-    return (detail?.years ?? []).map(group => ({
-      path: `/awards/${award.slug}/${group.year}`,
-      changefreq: 'monthly',
-    }));
+    return [
+      ...(detail?.years ?? []).map((group): SitemapEntry => ({
+        path: `/awards/${award.slug}/${group.year}`,
+        changefreq: 'monthly',
+      })),
+      ...unavailableEntries(award, detail),
+    ];
   }
 
   const totalPages =
     detail && 'pagination' in detail ? (detail.pagination?.totalPages ?? 1) : 1;
-  return Array.from({length: Math.max(0, totalPages - 1)}, (_, index) => ({
-    path: `/awards/${award.slug}?page=${index + 2}`,
-    changefreq: 'weekly',
-  }));
+  return [
+    ...Array.from(
+      {length: Math.max(0, totalPages - 1)},
+      (_, index): SitemapEntry => ({
+        path: `/awards/${award.slug}?page=${index + 2}`,
+        changefreq: 'weekly',
+      }),
+    ),
+    ...unavailableEntries(award, detail),
+  ];
 }
 
 export async function loader({context, request}: Route.LoaderArgs) {

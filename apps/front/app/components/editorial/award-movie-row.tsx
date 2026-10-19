@@ -1,4 +1,5 @@
 import {AvailabilityBadges} from '@/components/editorial/availability-badges';
+import {AvailabilityStatusMark} from '@/components/editorial/availability-status-mark';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import type {AwardMovieEntryData} from '@/lib/award-page';
 
@@ -48,6 +49,10 @@ export function AwardMovieRow({movie}: {movie: AwardMovieEntryData}) {
             className="mt-1.5"
             showCheckedDate={false}
           />
+          <AvailabilityStatusMark
+            status={movie.availabilityStatus}
+            className="mt-1.5"
+          />
         </div>
         {!rank && (
           <span className="shrink-0 border border-brand px-1.5 py-0.5 font-display text-xs leading-none text-brand">
@@ -70,6 +75,10 @@ export function AwardMovieRow({movie}: {movie: AwardMovieEntryData}) {
           availability={movie.availability}
           className="mt-1"
           showCheckedDate={false}
+        />
+        <AvailabilityStatusMark
+          status={movie.availabilityStatus}
+          className="mt-1"
         />
       </div>
     </a>

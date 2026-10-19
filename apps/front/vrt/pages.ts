@@ -4,6 +4,7 @@ export const pages = [
   '/awards',
   '/awards/academy-best-picture',
   '/awards/academy-best-picture/2000',
+  '/awards/academy-best-picture/unavailable',
   '/people',
   '/people/11111111-1111-4111-8111-111111111111',
   '/people/44444444-4444-4444-8444-444444444444',

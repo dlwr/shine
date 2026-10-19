@@ -163,14 +163,17 @@ export async function seedPublicData(database: Database): Promise<void> {
       title: 'Review',
     },
   ]);
-  await database.insert(movieAvailabilityChecks).values(
-    ['movie-beauty', 'movie-green', 'movie-gladiator'].map(movieUid => ({
+  await database.insert(movieAvailabilityChecks).values([
+    ...['movie-beauty', 'movie-green'].map(movieUid => ({
       movieUid,
       source: 'unext' as const,
       status: 'ok' as const,
       detail: 'https://video.unext.jp/',
     })),
-  );
+    {movieUid: 'movie-gladiator', source: 'unext', status: 'ng'},
+    {movieUid: 'movie-gladiator', source: 'tmdb', status: 'ng'},
+    {movieUid: 'movie-gladiator', source: 'discas', status: 'ng'},
+  ]);
   await database.insert(people).values([
     {uid: seededPeopleUids.mendes, tmdbId: 1, name: 'Sam Mendes'},
     {uid: seededPeopleUids.spacey, tmdbId: 2, name: 'Kevin Spacey'},

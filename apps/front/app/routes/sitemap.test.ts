@@ -368,6 +368,53 @@ describe('sitemap/awards.xml', () => {
     expect(xml).not.toContain('?page=');
   });
 
+  it('観られない作品がある賞は一覧のURLを列挙する', async () => {
+    mockSearchResponse({
+      awards: [
+        {slug: 'palme-dor', grouping: 'year'},
+        {slug: '1001-movies', grouping: 'list'},
+        {slug: 'japan-academy-director', grouping: 'person'},
+      ],
+    });
+    mockSearchResponse({
+      grouping: 'year',
+      years: [{year: 2023}],
+      availabilitySummary: {unwatchable: 3},
+    });
+    mockSearchResponse({
+      grouping: 'list',
+      years: [{year: 2023}],
+      pagination: {totalPages: 1},
+      availabilitySummary: {unwatchable: 1},
+    });
+    mockSearchResponse({grouping: 'person', years: []});
+
+    const response = await sitemapAwardsLoader(createAwardsArguments());
+    const xml = await response.text();
+
+    expect(xml).toContain(
+      '<loc>https://shine-film.com/awards/palme-dor/unavailable</loc>',
+    );
+    expect(xml).toContain(
+      '<loc>https://shine-film.com/awards/1001-movies/unavailable</loc>',
+    );
+    expect(xml).not.toContain('/awards/japan-academy-director/unavailable');
+  });
+
+  it('観られない作品が無い賞は一覧のURLを列挙しない', async () => {
+    mockSearchResponse({awards: [{slug: 'palme-dor', grouping: 'year'}]});
+    mockSearchResponse({
+      grouping: 'year',
+      years: [{year: 2023}],
+      availabilitySummary: {unwatchable: 0},
+    });
+
+    const response = await sitemapAwardsLoader(createAwardsArguments());
+    const xml = await response.text();
+
+    expect(xml).not.toContain('/awards/palme-dor/unavailable');
+  });
+
   it('API取得に失敗しても200で/awardsのみのurlsetを返す', async () => {
     vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
 

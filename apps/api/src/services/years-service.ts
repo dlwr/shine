@@ -14,6 +14,11 @@ import {BaseService} from './base-service';
 import type {YearDetail, YearMovie, YearSummary} from '../types/years';
 import {localizedPosterUrl} from './localized-poster-url';
 import {movieTitleColumns} from './movie-title-columns';
+import {summarizeJapanAvailability} from './japan-availability';
+import {
+  availabilityStatusOf,
+  loadMovieAvailabilityByMovie,
+} from './watchable-availability';
 
 function compareYearMovies(a: YearMovie, b: YearMovie): number {
   return (
@@ -118,6 +123,7 @@ export class YearsService extends BaseService {
           title: row.jaTitle ?? row.defaultTitle ?? undefined,
           posterUrl: row.posterUrl ?? undefined,
           isWinner: false,
+          availabilityStatus: 'unchecked',
           awards: [],
         };
         byUid.set(row.movieUid, movie);
@@ -146,6 +152,17 @@ export class YearsService extends BaseService {
 
     movieEntries.sort(compareYearMovies);
 
+    const availabilityByMovie = await loadMovieAvailabilityByMovie(
+      this.database,
+      movieEntries.map(movie => movie.uid),
+    );
+    for (const movie of movieEntries) {
+      movie.availabilityStatus = availabilityStatusOf(
+        availabilityByMovie,
+        movie.uid,
+      );
+    }
+
     const presentSlugs = new Set(
       movieEntries.flatMap(movie => movie.awards.map(award => award.slug)),
     );
@@ -160,6 +177,9 @@ export class YearsService extends BaseService {
 
     return {
       year,
+      availabilitySummary: summarizeJapanAvailability(
+        movieEntries.map(movie => movie.availabilityStatus),
+      ),
       movies: movieEntries,
       awards,
       ...adjacentYears(years, year),

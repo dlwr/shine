@@ -231,6 +231,13 @@ const exercises: Exercise[] = [
     indexOnly: true,
   },
   {
+    name: '賞の観られない作品',
+    run: environment =>
+      new AwardsService(environment).getAwardUnavailable(
+        'academy-best-picture',
+      ),
+  },
+  {
     name: '個人賞ページ',
     run: environment =>
       new PersonAwardsService(environment).getPersonAwardBySlug(

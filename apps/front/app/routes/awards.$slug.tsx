@@ -1,4 +1,5 @@
 import type {Route} from './+types/awards.$slug';
+import {AvailabilitySummaryLine} from '@/components/editorial/availability-summary-line';
 import {AwardBody} from '@/components/editorial/award-body';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
@@ -68,6 +69,13 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
         <p className="font-label text-xs text-ink-muted mb-4">
           {awardSummaryLine(award)}
         </p>
+        {award.grouping !== 'person' && (
+          <AvailabilitySummaryLine
+            summary={award.availabilitySummary}
+            unavailableHref={`/awards/${award.slug}/unavailable`}
+            className="mb-4"
+          />
+        )}
 
         {award.grouping === 'year' && !award.subAward && (
           <a

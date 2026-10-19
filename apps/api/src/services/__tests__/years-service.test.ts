@@ -6,6 +6,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
+import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
@@ -174,5 +175,60 @@ describe('YearsService', () => {
     const detail = await service.getYear(1981, [1981]);
 
     expect(detail).toBeUndefined();
+  });
+});
+
+describe('YearsService 日本で観られるか', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+    const database: TestDatabase = getDatabase(environment);
+    await database
+      .insert(movies)
+      .values({uid: 'movie-unwatchable', year: 1980});
+    await database.insert(nominations).values({
+      movieUid: 'movie-unwatchable',
+      ceremonyUid: 'ceremony-cannes',
+      categoryUid: 'cat-palme',
+    });
+    await database.insert(movieAvailabilityChecks).values([
+      {
+        movieUid: 'movie-palme',
+        source: 'tmdb',
+        status: 'ok',
+        detail: 'U-NEXT(見放題)',
+        checkedAt: 1_700_000_000,
+      },
+      {
+        movieUid: 'movie-unwatchable',
+        source: 'unext',
+        status: 'ng',
+        checkedAt: 1_700_000_000,
+      },
+    ]);
+  });
+
+  it('その年の判定を集計する', async () => {
+    const detail = await new YearsService(environment).getYear(1980, [1980]);
+
+    expect(detail?.availabilitySummary).toEqual({
+      total: 2,
+      watchable: 1,
+      rentalOnly: 0,
+      unwatchable: 1,
+      unchecked: 0,
+    });
+  });
+
+  it('映画ごとに判定を付ける', async () => {
+    const detail = await new YearsService(environment).getYear(1980, [1980]);
+
+    expect(
+      detail?.movies.map(movie => [movie.uid, movie.availabilityStatus]),
+    ).toEqual([
+      ['movie-palme', 'watchable'],
+      ['movie-unwatchable', 'unwatchable'],
+    ]);
   });
 });
