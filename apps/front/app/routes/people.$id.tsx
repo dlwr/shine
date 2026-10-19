@@ -114,14 +114,9 @@ function personDescription(person: PersonData): string {
   return `${person.name}が関わった映画${person.credits.length}本（${jobs.values().toArray().join('・')}）。${record}SHINEに収録された映画賞の受賞作・ノミネート作から一覧できます。`;
 }
 
-const MIN_FILMS_TO_INDEX = 3;
-
-// API の人物一覧（sitemap の元）と同じ線: 3 本以上か、個人賞にノミネートされた人物
+// API の人物一覧（sitemap の元）と同じ線: 個人賞にノミネートされた人物
 function isWorthIndexing(person: PersonData): boolean {
-  return (
-    person.credits.length >= MIN_FILMS_TO_INDEX ||
-    person.credits.some(credit => credit.personAwards.length > 0)
-  );
+  return person.credits.some(credit => credit.personAwards.length > 0);
 }
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {

@@ -91,7 +91,7 @@
     "data.ja[].uid",
     "data.ja[].year"
   ],
-  "movies:uids:v2": [
+  "movies:uids:v3": [
     "cachedAt",
     "data.uids[]"
   ],
@@ -117,16 +117,16 @@
     "data.topPerformances[].person.name",
     "data.topPerformances[].person.uid"
   ],
-  "people:eligible:v3:chunk:0": [
+  "people:eligible:v4:chunk:0": [
     "cachedAt",
     "data[].movieCount",
     "data[].uid"
   ],
-  "people:eligible:v3:count": [
+  "people:eligible:v4:count": [
     "cachedAt",
     "data"
   ],
-  "people:list:1:10:v2": [
+  "people:list:1:10:v3": [
     "cachedAt",
     "data.pagination.page",
     "data.pagination.perPage",

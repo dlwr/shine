@@ -133,16 +133,16 @@ describe('PersonPage', () => {
   });
 
   describe('robots', () => {
-    it('2本以下で個人賞の無い人物は noindex にする', () => {
+    it('個人賞の無い人物は noindex にする', () => {
       expect(robotsOf([plainCredit('a'), plainCredit('b')])).toBe(
         'noindex, follow',
       );
     });
 
-    it('3本以上の人物は index させる', () => {
+    it('個人賞が無ければ3本以上でも noindex にする', () => {
       expect(
         robotsOf([plainCredit('a'), plainCredit('b'), plainCredit('c')]),
-      ).toBeUndefined();
+      ).toBe('noindex, follow');
     });
 
     it('個人賞のある人物は1本でも index させる', () => {

@@ -19,13 +19,22 @@ import type {SearchOptions} from '../types/search';
 import {personLocalizedName} from './person-name';
 import {localizedPosterUrl} from './localized-poster-url';
 
-const hasJapaneseText = sql<number>`
-  EXISTS (
-    SELECT 1
-    FROM translations
-    WHERE translations.resource_type IN ('movie_title', 'movie_description')
-      AND translations.resource_uid = movies.uid
-      AND translations.language_code = 'ja'
+const MIN_NOMINATIONS_TO_INDEX = 2;
+
+const worthIndexing = sql<number>`
+  (
+    EXISTS (
+      SELECT 1
+      FROM translations
+      WHERE translations.resource_type = 'movie_description'
+        AND translations.resource_uid = movies.uid
+        AND translations.language_code = 'ja'
+    )
+    OR (
+      SELECT COUNT(*)
+      FROM nominations
+      WHERE nominations.movie_uid = movies.uid
+    ) >= ${MIN_NOMINATIONS_TO_INDEX}
   )
 `;
 
@@ -114,7 +123,7 @@ export class MoviesService extends BaseService {
     const rows = await this.database
       .select({uid: movies.uid})
       .from(movies)
-      .where(and(isNull(movies.deletedAt), hasJapaneseText))
+      .where(and(isNull(movies.deletedAt), worthIndexing))
       .orderBy(movies.year, movies.uid);
 
     return rows.map(row => row.uid);
@@ -157,7 +166,7 @@ export class MoviesService extends BaseService {
 					)
 				`.as('description'),
         posterUrl: localizedPosterUrl(locale).as('posterUrl'),
-        worthIndexing: hasJapaneseText.as('worthIndexing'),
+        worthIndexing: worthIndexing.as('worthIndexing'),
       })
       .from(movies)
       .where(and(eq(movies.uid, movieId), isNull(movies.deletedAt)))

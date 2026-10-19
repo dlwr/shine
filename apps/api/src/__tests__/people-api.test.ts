@@ -115,7 +115,61 @@ describe('GET /people', () => {
     environment = await createTestEnvironment();
   });
 
-  it('人物の一覧と件数を返す', async () => {
+  it('個人賞にノミネートされた人物の一覧と件数を返す', async () => {
+    const database = getDatabase(environment);
+    await database.insert(movies).values([
+      {uid: 'movie-kagemusha', year: 1980},
+      {uid: 'movie-dreams', year: 1990},
+    ]);
+    await database.insert(movieCredits).values(
+      ['movie-kagemusha', 'movie-dreams'].map(movieUid => ({
+        movieUid,
+        personUid: '2c5d7e1a-6f3b-4a8c-9d0e-1f2a3b4c5d6e',
+        creditId: `c-${movieUid}`,
+        department: 'Directing',
+        job: 'Director',
+      })),
+    );
+    await database
+      .insert(awardOrganizations)
+      .values({uid: 'org-academy', name: 'Academy Awards'});
+    await database.insert(awardCategories).values({
+      uid: 'cat-director',
+      organizationUid: 'org-academy',
+      name: 'Academy Award for Best Director',
+    });
+    await database.insert(awardCeremonies).values({
+      uid: 'ceremony-1986',
+      organizationUid: 'org-academy',
+      year: 1986,
+      ceremonyNumber: 58,
+    });
+    await database.insert(nominations).values({
+      movieUid: 'movie-ran',
+      ceremonyUid: 'ceremony-1986',
+      categoryUid: 'cat-director',
+      personUid: '2c5d7e1a-6f3b-4a8c-9d0e-1f2a3b4c5d6e',
+      isWinner: 0,
+    });
+
+    const response = await peopleRoutes.request('/?limit=10', {}, environment);
+
+    const body = (await response.json()) as {
+      people: Array<{uid: string; name: string; movieCount: number}>;
+      pagination: {totalCount: number};
+    };
+    expect(response.status).toBe(200);
+    expect(body.people).toEqual([
+      {
+        uid: '2c5d7e1a-6f3b-4a8c-9d0e-1f2a3b4c5d6e',
+        name: '黒澤明',
+        movieCount: 3,
+      },
+    ]);
+    expect(body.pagination.totalCount).toBe(1);
+  });
+
+  it('個人賞の無い人物は何本に関わっていても一覧に入れない', async () => {
     const database = getDatabase(environment);
     await database.insert(movies).values([
       {uid: 'movie-kagemusha', year: 1980},
@@ -134,18 +188,11 @@ describe('GET /people', () => {
     const response = await peopleRoutes.request('/?limit=10', {}, environment);
 
     const body = (await response.json()) as {
-      people: Array<{uid: string; name: string; movieCount: number}>;
+      people: unknown[];
       pagination: {totalCount: number};
     };
-    expect(response.status).toBe(200);
-    expect(body.people).toEqual([
-      {
-        uid: '2c5d7e1a-6f3b-4a8c-9d0e-1f2a3b4c5d6e',
-        name: '黒澤明',
-        movieCount: 3,
-      },
-    ]);
-    expect(body.pagination.totalCount).toBe(1);
+    expect(body.people).toEqual([]);
+    expect(body.pagination.totalCount).toBe(0);
   });
 
   it('ページ番号が不正なら400を返す', async () => {

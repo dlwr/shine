@@ -53,7 +53,7 @@ async function createTestEnvironment(): Promise<Environment> {
     {uid: 'movie-1985', year: 1985},
     {uid: 'movie-2001', year: 2001},
     {uid: 'movie-deleted', year: 1970, deletedAt: 1},
-    {uid: 'movie-without-japanese', year: 1995},
+    {uid: 'movie-without-ja-description', year: 1995},
   ]);
 
   await database.insert(translations).values(
@@ -64,7 +64,7 @@ async function createTestEnvironment(): Promise<Environment> {
       'movie-2001',
       'movie-deleted',
     ].map(uid => ({
-      resourceType: 'movie_title' as const,
+      resourceType: 'movie_description' as const,
       resourceUid: uid,
       languageCode: 'ja',
       content: uid,
@@ -87,7 +87,7 @@ describe('GET /movies/uids', () => {
     environment = await createTestEnvironment();
   });
 
-  it('論理削除と日本語の題もあらすじも無い映画を除いた uid を年・uid の順で返す', async () => {
+  it('論理削除と薄い映画を除いた uid を年・uid の順で返す', async () => {
     const {response, body} = await requestUids(environment);
 
     expect(response.status).toBe(200);
