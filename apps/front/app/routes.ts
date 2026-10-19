@@ -17,6 +17,7 @@ export default [
   route('crossings', 'routes/crossings.tsx'),
   route('uncrowned', 'routes/uncrowned.tsx'),
   route('awards/:slug', 'routes/awards.$slug.tsx'),
+  route('awards/:slug/unavailable', 'routes/awards.$slug.unavailable.tsx'),
   route('awards/:slug/:year', 'routes/awards.$slug.$year.tsx'),
   route('years', 'routes/years.tsx'),
   route('years/:year', 'routes/years.$year.tsx'),
