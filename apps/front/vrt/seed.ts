@@ -1,4 +1,5 @@
 import type {getDatabase} from '@shine/database';
+import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
@@ -64,5 +65,10 @@ export async function seedLayoutStressData(database: Database) {
       personUid: longNamePersonUid,
       isWinner: 1,
     },
+  ]);
+  await database.insert(movieAvailabilityChecks).values([
+    {movieUid: longTitleMovieUid, source: 'unext', status: 'ng'},
+    {movieUid: longTitleMovieUid, source: 'tmdb', status: 'ng'},
+    {movieUid: longTitleMovieUid, source: 'discas', status: 'ng'},
   ]);
 }
