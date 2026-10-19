@@ -15,6 +15,7 @@ import {createEnvironmentContext} from '@/lib/api';
 let mockRootLoaderData:
   | {
       locale: string;
+      noindex?: boolean;
       canonicalUrl?: string;
       webAnalyticsToken?: string;
       monthly?: {uid: string; title: string; year?: number; awards: unknown[]};
@@ -103,6 +104,22 @@ describe('root loader', () => {
 
     const data = await callLoader(request);
     expect(data.canonicalUrl).toBe('https://shine-film.com/movies/abc');
+  });
+
+  it('localeクエリ付きのURLはnoindexにする', async () => {
+    const request = new Request('https://shine-film.com/movies/abc?locale=en');
+
+    const data = await callLoader(request);
+    expect(data.noindex).toBe(true);
+  });
+
+  it('localeクエリが無ければnoindexにしない', async () => {
+    const request = new Request('https://shine-film.com/movies/abc', {
+      headers: {'accept-language': 'en'},
+    });
+
+    const data = await callLoader(request);
+    expect(data.noindex).toBeUndefined();
   });
 
   it('canonical URLから末尾のスラッシュを取り除く', async () => {
@@ -299,6 +316,30 @@ describe('root Layout', () => {
     );
 
     expect(markup).not.toContain('rel="canonical"');
+  });
+
+  it('noindexならrobotsのmetaを出力する', () => {
+    mockRootLoaderData = {locale: 'en', noindex: true};
+
+    const markup = renderToStaticMarkup(
+      <Layout>
+        <div />
+      </Layout>,
+    );
+
+    expect(markup).toContain('<meta name="robots" content="noindex, follow"/>');
+  });
+
+  it('noindexでなければrobotsのmetaを出力しない', () => {
+    mockRootLoaderData = {locale: 'en', noindex: false};
+
+    const markup = renderToStaticMarkup(
+      <Layout>
+        <div />
+      </Layout>,
+    );
+
+    expect(markup).not.toContain('name="robots"');
   });
 
   it('トークンがあればWeb Analyticsのbeaconを読み込む', () => {

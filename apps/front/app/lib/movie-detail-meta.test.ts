@@ -208,11 +208,11 @@ const robotsOf = (detail: MovieDetailData) =>
   }).find(descriptor => 'name' in descriptor && descriptor.name === 'robots');
 
 describe('buildMovieDetailMeta', () => {
-  it('邦題か日本語のあらすじがあれば robots を付けない', () => {
+  it('API が載せると判定した映画には robots を付けない', () => {
     expect(robotsOf(movieDetail())).toBeUndefined();
   });
 
-  it('邦題も日本語のあらすじも無ければ noindex, follow を付ける', () => {
+  it('API が載せないと判定した映画には noindex, follow を付ける', () => {
     expect(robotsOf(movieDetail({worthIndexing: false}))).toEqual({
       name: 'robots',
       content: 'noindex, follow',

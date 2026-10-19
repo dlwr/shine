@@ -194,6 +194,7 @@ async function createTestEnvironment(): Promise<{
     },
     {uid: 'cat-1001', organizationUid: 'org-1001', name: 'Selected Films'},
     {uid: 'cat-director', organizationUid: 'org-japan', name: '監督賞'},
+    {uid: 'cat-actor', organizationUid: 'org-japan', name: '主演男優賞'},
   ]);
   await database.insert(awardCeremonies).values([
     {uid: 'ceremony-cannes', organizationUid: 'org-cannes', year: 1980},
@@ -239,6 +240,13 @@ async function createTestEnvironment(): Promise<{
       ceremonyUid: 'ceremony-japan',
       categoryUid: 'cat-director',
       personUid: 'person-multi',
+      isWinner: 0,
+    },
+    {
+      movieUid: 'movie-dreams',
+      ceremonyUid: 'ceremony-japan',
+      categoryUid: 'cat-actor',
+      personUid: 'person-prolific',
       isWinner: 0,
     },
   ]);
@@ -522,13 +530,34 @@ describe('PeopleService.listPeople', () => {
     ({environment, database} = await createTestEnvironment());
   });
 
-  it('3本以上に参加した人物を返す', async () => {
+  it('個人賞にノミネートされた人物を返す', async () => {
     const service = new PeopleService(environment);
 
     const result = await service.listPeople({page: 1, limit: 10});
 
     expect(result.people.map(person => person.uid)).toContain(
       'person-prolific',
+    );
+  });
+
+  it('3本以上に参加していても個人賞が無ければ返さない', async () => {
+    await database
+      .insert(people)
+      .values({uid: 'person-three-films', tmdbId: 2004, name: '三本の人'});
+    await database.insert(movieCredits).values(
+      ['movie-ran', 'movie-kagemusha', 'movie-dreams'].map(movieUid => ({
+        movieUid,
+        personUid: 'person-three-films',
+        creditId: `credit-three-films-${movieUid}`,
+        department: 'Acting',
+      })),
+    );
+    const service = new PeopleService(environment);
+
+    const result = await service.listPeople({page: 1, limit: 10});
+
+    expect(result.people.map(person => person.uid)).not.toContain(
+      'person-three-films',
     );
   });
 
@@ -708,6 +737,37 @@ async function insertDirectors(
       })),
     ),
   );
+  await database.insert(nominations).values(
+    uids.map(uid => ({
+      movieUid: 'movie-dreams',
+      ceremonyUid: 'ceremony-japan',
+      categoryUid: 'cat-director',
+      personUid: uid,
+      isWinner: 0,
+    })),
+  );
+}
+
+async function insertNominatedNewcomer(database: TestDatabase): Promise<void> {
+  await database
+    .insert(people)
+    .values({uid: 'person-new', tmdbId: 9999, name: '新人'});
+  await database.insert(movieCredits).values(
+    ['movie-ran', 'movie-kagemusha', 'movie-dreams'].map(movieUid => ({
+      movieUid,
+      personUid: 'person-new',
+      creditId: `credit-new-${movieUid}`,
+      department: 'Directing',
+      job: 'Director',
+    })),
+  );
+  await database.insert(nominations).values({
+    movieUid: 'movie-dreams',
+    ceremonyUid: 'ceremony-japan',
+    categoryUid: 'cat-director',
+    personUid: 'person-new',
+    isWinner: 0,
+  });
 }
 
 describe('PeopleService.listPeople の対象人物の並び', () => {
@@ -717,24 +777,13 @@ describe('PeopleService.listPeople の対象人物の並び', () => {
     environment.CACHE_KV = createKvStub(puts);
     const service = new PeopleService(environment);
     await service.listPeople({page: 1, limit: 1});
-    await database
-      .insert(people)
-      .values({uid: 'person-new', tmdbId: 9999, name: '新人'});
-    await database.insert(movieCredits).values(
-      ['movie-ran', 'movie-kagemusha', 'movie-dreams'].map(movieUid => ({
-        movieUid,
-        personUid: 'person-new',
-        creditId: `credit-new-${movieUid}`,
-        department: 'Directing',
-        job: 'Director',
-      })),
-    );
+    await insertNominatedNewcomer(database);
 
     const result = await service.listPeople({page: 2, limit: 1});
 
     expect(puts).toEqual([
-      'people:eligible:v3:count',
-      'people:eligible:v3:chunk:0',
+      'people:eligible:v4:count',
+      'people:eligible:v4:chunk:0',
     ]);
     expect(result.pagination.totalCount).toBe(3);
   });
@@ -751,8 +800,8 @@ describe('PeopleService.listPeople の対象人物の並び', () => {
     const result = await service.listPeople({page: 21, limit: 50});
 
     expect(gets).toEqual([
-      'people:eligible:v3:count',
-      'people:eligible:v3:chunk:2',
+      'people:eligible:v4:count',
+      'people:eligible:v4:chunk:2',
     ]);
     expect(result.people.map(person => person.uid)).toEqual([
       'director-1000',
@@ -787,25 +836,14 @@ describe('PeopleService.listPeople の対象人物の並び', () => {
 
     expect(result.people).toEqual([]);
     expect(result.pagination.totalCount).toBe(3);
-    expect(gets).toEqual(['people:eligible:v3:count']);
+    expect(gets).toEqual(['people:eligible:v4:count']);
   });
 
   it('KV が無ければ毎回集計する', async () => {
     const {environment, database} = await createTestEnvironment();
     const service = new PeopleService(environment);
     await service.listPeople({page: 1, limit: 1});
-    await database
-      .insert(people)
-      .values({uid: 'person-new', tmdbId: 9999, name: '新人'});
-    await database.insert(movieCredits).values(
-      ['movie-ran', 'movie-kagemusha', 'movie-dreams'].map(movieUid => ({
-        movieUid,
-        personUid: 'person-new',
-        creditId: `credit-new-${movieUid}`,
-        department: 'Directing',
-        job: 'Director',
-      })),
-    );
+    await insertNominatedNewcomer(database);
 
     const result = await service.listPeople({page: 2, limit: 1});
 

@@ -18,4 +18,12 @@ describe('LanguageSelector', () => {
     expect(screen.getByText('JA')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByText('EN')).not.toHaveAttribute('aria-current');
   });
+
+  it('切替リンクを検索エンジンに辿らせない', () => {
+    render(<LanguageSelector locale="ja" />);
+
+    for (const link of screen.getAllByRole('link')) {
+      expect(link).toHaveAttribute('rel', 'nofollow');
+    }
+  });
 });

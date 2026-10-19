@@ -1,6 +1,6 @@
 import type {MetaDescriptor} from 'react-router';
 import {DEFAULT_LOCALE} from './locale';
-import {SITE_URL, buildSocialMeta} from './meta';
+import {NOINDEX_FOLLOW, SITE_URL, buildSocialMeta} from './meta';
 import {monthlyPickLabel} from './monthly-pick';
 import {
   isLoaderError,
@@ -138,8 +138,6 @@ export function buildMovieDetailMeta({
       largeImage: true,
     }),
     ...(movieDetail ? [{'script:ld+json': buildMovieJsonLd(movieDetail)}] : []),
-    ...(movieDetail?.worthIndexing === false
-      ? [{name: 'robots', content: 'noindex, follow'}]
-      : []),
+    ...(movieDetail?.worthIndexing === false ? [NOINDEX_FOLLOW] : []),
   ];
 }

@@ -10,7 +10,7 @@ type RankedPerson = {uid: string; movieCount: number};
 
 type RankingSlice = {totalCount: number; rows: RankedPerson[]};
 
-const CACHE_PREFIX = 'people:eligible:v3';
+const CACHE_PREFIX = 'people:eligible:v4';
 const CACHE_TTL = 604_800;
 const CHUNK_SIZE = 500;
 
@@ -81,7 +81,7 @@ async function computeRanking(database: Database): Promise<RankedPerson[]> {
     .where(notInArray(movieCredits.movieUid, deletedMovies))
     .groupBy(movieCredits.personUid)
     .having(
-      sql`${movieCount} >= 3 OR EXISTS (SELECT 1 FROM ${nominations} WHERE ${nominations.personUid} = ${movieCredits.personUid})`,
+      sql`EXISTS (SELECT 1 FROM ${nominations} WHERE ${nominations.personUid} = ${movieCredits.personUid})`,
     )
     .as('eligible');
 

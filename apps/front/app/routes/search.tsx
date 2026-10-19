@@ -8,7 +8,7 @@ import {SearchRow} from '@/components/editorial/search-row';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {selectBestPoster} from '@/lib/poster';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
-import {buildSocialMeta} from '@/lib/meta';
+import {NOINDEX_FOLLOW, buildSocialMeta} from '@/lib/meta';
 import {tryApiJson, resolveApiUrl, type LoadContext} from '@/lib/api';
 
 type SearchMovieData = MovieSearchData['movies'][number];
@@ -37,7 +37,7 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
       path: '/search',
       locale: locale ?? DEFAULT_LOCALE,
     }),
-    {name: 'robots', content: 'noindex, follow'},
+    NOINDEX_FOLLOW,
   ];
 }
 

@@ -30,6 +30,7 @@ export function LanguageSelector({locale}: LanguageSelectorProperties) {
         <a
           key={lang.code}
           href={getCurrentUrl(lang.code)}
+          rel="nofollow"
           aria-label={`${lang.short} ${lang.name}`}
           aria-current={locale === lang.code ? 'page' : undefined}
           className={`font-label text-xs font-bold border border-ink px-2 py-1 no-underline ${

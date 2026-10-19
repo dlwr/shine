@@ -31,3 +31,7 @@ export function getLocaleFromRequest(request: Request): Locale {
 
   return DEFAULT_LOCALE;
 }
+
+export function hasLocaleQuery(request: Request): boolean {
+  return new URL(request.url).searchParams.has('locale');
+}
