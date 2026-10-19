@@ -204,6 +204,90 @@ describe('Award detail page', () => {
       expect(screen.queryByRole('link', {name: /何本観た/})).toBeNull();
     });
 
+    it('日本で観られる本数と観られない作品の一覧への導線を出す', () => {
+      render(
+        <AwardDetailPage
+          {...createComponentProperties(
+            cast<LoaderData>({
+              award: {
+                ...mockAwardDetail,
+                availabilitySummary: {
+                  total: 63,
+                  watchable: 40,
+                  rentalOnly: 3,
+                  unwatchable: 15,
+                  unchecked: 5,
+                },
+              },
+              locale: 'ja',
+            }),
+          )}
+        />,
+      );
+
+      expect(screen.getByText('日本で観られる 40 / 63 本')).toBeInTheDocument();
+      expect(
+        screen.getByRole('link', {name: '観られない 15 本'}),
+      ).toHaveAttribute('href', '/awards/palme-dor/unavailable');
+    });
+
+    it('観られない受賞作の行に印を付ける', () => {
+      render(
+        <AwardDetailPage
+          {...createComponentProperties(
+            cast<LoaderData>({
+              award: {
+                ...mockAwardDetail,
+                years: [
+                  {
+                    ...mockAwardDetail.years[0],
+                    movies: [
+                      {
+                        ...mockAwardDetail.years[0].movies[0],
+                        availabilityStatus: 'unwatchable',
+                      },
+                    ],
+                  },
+                ],
+              },
+              locale: 'ja',
+            }),
+          )}
+        />,
+      );
+
+      expect(screen.getByText('日本で観られない')).toBeInTheDocument();
+    });
+
+    it('リスト型の賞でも観られない作品の行に印を付ける', () => {
+      render(
+        <AwardDetailPage
+          {...createComponentProperties(
+            cast<LoaderData>({
+              award: {
+                ...mockAwardDetail,
+                grouping: 'list',
+                years: [
+                  {
+                    ...mockAwardDetail.years[0],
+                    movies: [
+                      {
+                        ...mockAwardDetail.years[0].movies[0],
+                        availabilityStatus: 'rental_only',
+                      },
+                    ],
+                  },
+                ],
+              },
+              locale: 'ja',
+            }),
+          )}
+        />,
+      );
+
+      expect(screen.getByText('宅配レンタルのみ・要確認')).toBeInTheDocument();
+    });
+
     it('年を降順で表示する', () => {
       render(
         <AwardDetailPage

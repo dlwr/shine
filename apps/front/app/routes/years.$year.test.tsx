@@ -199,6 +199,53 @@ describe('Year page', () => {
       ).toHaveLength(2);
     });
 
+    it('日本で観られる本数を本数の下に出す', () => {
+      render(
+        <YearPage
+          {...createComponentProperties(
+            cast<LoaderData>({
+              detail: {
+                ...mockYear,
+                availabilitySummary: {
+                  total: 3,
+                  watchable: 2,
+                  rentalOnly: 0,
+                  unwatchable: 1,
+                  unchecked: 0,
+                },
+              },
+              locale: 'ja',
+            }),
+          )}
+        />,
+      );
+
+      expect(screen.getByText('日本で観られる 2 / 3 本')).toBeInTheDocument();
+      expect(screen.getByText('観られない 1 本')).toBeInTheDocument();
+      expect(screen.queryByRole('link', {name: '観られない 1 本'})).toBeNull();
+    });
+
+    it('観られない映画の行に印を付ける', () => {
+      render(
+        <YearPage
+          {...createComponentProperties(
+            cast<LoaderData>({
+              detail: {
+                ...mockYear,
+                movies: [
+                  {...mockYear.movies[0], availabilityStatus: 'unwatchable'},
+                  {...mockYear.movies[2], availabilityStatus: 'unwatchable'},
+                ],
+              },
+              locale: 'ja',
+            }),
+          )}
+        />,
+      );
+
+      expect(screen.getAllByText('日本で観られない')).toHaveLength(2);
+    });
+
     it('前年へのリンクを表示し、次年がなければ出さない', () => {
       render(
         <YearPage

@@ -8,7 +8,20 @@ import {
   type PersonAwardDetailData,
 } from './award-page';
 
-const movie = (uid: string) => ({uid, title: uid, isWinner: true});
+const movie = (uid: string) => ({
+  uid,
+  title: uid,
+  isWinner: true,
+  availabilityStatus: 'watchable' as const,
+});
+
+const availabilitySummary = {
+  total: 0,
+  watchable: 0,
+  rentalOnly: 0,
+  unwatchable: 0,
+  unchecked: 0,
+};
 
 const yearAward: AwardDetailData = {
   slug: 'palme-dor',
@@ -16,6 +29,7 @@ const yearAward: AwardDetailData = {
   organization: 'カンヌ国際映画祭',
   description: '',
   grouping: 'year',
+  availabilitySummary,
   years: [
     {year: 2023, filmCount: 21, movies: [movie('m-2023')]},
     {year: 2022, filmCount: 18, movies: [movie('m-2022')]},
@@ -29,6 +43,7 @@ const listAward: AwardDetailData = {
   organization: 'POPEYE',
   description: '',
   grouping: 'list',
+  availabilitySummary,
   years: [
     {year: 2025, filmCount: 3, movies: [movie('a'), movie('b'), movie('c')]},
   ],

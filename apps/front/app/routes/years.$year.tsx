@@ -1,4 +1,9 @@
 import type {Route} from './+types/years.$year';
+import {AvailabilityStatusMark} from '@/components/editorial/availability-status-mark';
+import {
+  AvailabilitySummaryLine,
+  hasJudgedAvailability,
+} from '@/components/editorial/availability-summary-line';
 import {BigYear} from '@/components/editorial/big-year';
 import {AwardTags} from '@/components/editorial/award-tags';
 import {Masthead} from '@/components/editorial/masthead';
@@ -101,11 +106,15 @@ function MovieRow({
           className="w-16 shrink-0"
           displaySize="w185"
         />
-        <span className="flex-1 flex flex-col gap-1.5">
+        <span className="flex-1 min-w-0 flex flex-col gap-1.5">
           <span className="font-display font-extrabold text-base md:text-lg leading-tight">
             {title}
           </span>
           <AwardTags tags={movie.awards} legend={awards} />
+          <AvailabilityStatusMark
+            status={movie.availabilityStatus}
+            className="self-start"
+          />
         </span>
       </a>
     );
@@ -117,6 +126,7 @@ function MovieRow({
       className="flex flex-wrap items-center gap-x-4 gap-y-1 py-1.5 no-underline text-ink">
       <span className="font-label text-sm leading-tight">{title}</span>
       <AwardTags tags={movie.awards} legend={awards} />
+      <AvailabilityStatusMark status={movie.availabilityStatus} />
     </a>
   );
 }
@@ -124,6 +134,7 @@ function MovieRow({
 export default function YearPage({loaderData}: Route.ComponentProps) {
   const {detail} = loaderData as {detail: YearDetailData};
   const locale = 'ja';
+  const hasSummary = hasJudgedAvailability(detail.availabilitySummary);
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -139,9 +150,14 @@ export default function YearPage({loaderData}: Route.ComponentProps) {
         <h1 className="mb-2">
           <BigYear year={detail.year} className="text-6xl md:text-7xl" />
         </h1>
-        <p className="font-label text-xs text-ink-muted mb-8">
+        <p
+          className={`font-label text-xs text-ink-muted ${hasSummary ? 'mb-2' : 'mb-8'}`}>
           {detail.movies.length} 本
         </p>
+        <AvailabilitySummaryLine
+          summary={detail.availabilitySummary}
+          className="mb-8"
+        />
 
         <div className="border-t-[3px] border-ink">
           {detail.movies.map(movie => (

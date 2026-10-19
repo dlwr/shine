@@ -309,18 +309,49 @@ describe('Award year page', () => {
         expect(screen.queryByText(/時点/)).not.toBeInTheDocument();
       });
 
-      it('いま観られる本数を見出しの下に出す', () => {
-        renderPage(watchableAward);
+      it('日本で観られる本数を見出しの下に出す', () => {
+        renderPage({
+          ...watchableAward,
+          availabilitySummary: {
+            total: 3,
+            watchable: 1,
+            rentalOnly: 1,
+            unwatchable: 1,
+            unchecked: 0,
+          },
+        });
 
+        expect(screen.getByText('日本で観られる 1 / 3 本')).toBeInTheDocument();
         expect(
-          screen.getByText('3本のうち2本がいま観られます'),
-        ).toBeInTheDocument();
+          screen.getByRole('link', {name: '観られない 1 本'}),
+        ).toHaveAttribute('href', '/awards/palme-dor/unavailable');
       });
 
-      it('観られる作品が無ければ本数を出さない', () => {
-        renderPage(mockAwardYear);
+      it('判定された作品が無ければ本数を出さない', () => {
+        renderPage({
+          ...mockAwardYear,
+          availabilitySummary: {
+            total: 2,
+            watchable: 0,
+            rentalOnly: 0,
+            unwatchable: 0,
+            unchecked: 2,
+          },
+        });
 
-        expect(screen.queryByText(/いま観られます/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/日本で観られる/)).not.toBeInTheDocument();
+      });
+
+      it('観られない作品の行に印を付ける', () => {
+        renderPage({
+          ...watchableAward,
+          movies: [
+            ...watchableAward.movies.slice(0, 2),
+            {...watchableAward.movies[2], availabilityStatus: 'unwatchable'},
+          ],
+        });
+
+        expect(screen.getByText('日本で観られない')).toBeInTheDocument();
       });
     });
   });

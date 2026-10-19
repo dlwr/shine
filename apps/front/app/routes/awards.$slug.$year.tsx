@@ -1,4 +1,8 @@
 import type {Route} from './+types/awards.$slug.$year';
+import {
+  AvailabilitySummaryLine,
+  hasJudgedAvailability,
+} from '@/components/editorial/availability-summary-line';
 import {AwardMovieRow} from '@/components/editorial/award-movie-row';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
@@ -69,9 +73,7 @@ export default function AwardYearPage({loaderData}: Route.ComponentProps) {
   const {award} = loaderData as {award: AwardYearDetailData};
   const locale = 'ja';
   const heading = awardHeading(award);
-  const watchableCount = award.movies.filter(
-    movie => (movie.availability?.length ?? 0) > 0,
-  ).length;
+  const hasSummary = hasJudgedAvailability(award.availabilitySummary);
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -99,14 +101,14 @@ export default function AwardYearPage({loaderData}: Route.ComponentProps) {
           )}
         </div>
         <p
-          className={`font-label text-xs text-ink-muted ${watchableCount > 0 ? 'mb-2' : 'mb-8'}`}>
+          className={`font-label text-xs text-ink-muted ${hasSummary ? 'mb-2' : 'mb-8'}`}>
           {heading} 全 {award.movies.length} 本
         </p>
-        {watchableCount > 0 && (
-          <p className="text-sm mb-8">
-            {award.movies.length}本のうち{watchableCount}本がいま観られます
-          </p>
-        )}
+        <AvailabilitySummaryLine
+          summary={award.availabilitySummary}
+          unavailableHref={`/awards/${award.slug}/unavailable`}
+          className="mb-8"
+        />
 
         <div className="border-t-[3px] border-ink">
           {award.movies.map(movie => (
