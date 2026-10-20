@@ -180,14 +180,14 @@ describe('formatTopD1Queries', () => {
   });
 });
 
-describe('recurringTopQueries', () => {
-  const stat = (query: string, count: number) => ({
-    query,
-    rowsRead: 100,
-    count,
-    durationMs: 1,
-  });
+const stat = (query: string, count: number) => ({
+  query,
+  rowsRead: 100,
+  count,
+  durationMs: 1,
+});
 
+describe('recurringTopQueries', () => {
   it('1 回しか走っていない文を除いて上から指定の本数を返す', () => {
     const result = recurringTopQueries(
       [stat('a', 3), stat('adhoc', 1), stat('b', 2), stat('c', 5)],
