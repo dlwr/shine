@@ -23,8 +23,13 @@ export type MonthlyLinkCount = {
   watched: number;
 };
 
-function monthStart(month: string): Date {
-  return new Date(`${month}-01T00:00:00+09:00`);
+function countingStart(month: string): Date {
+  const [year, monthNumber] = month.split('-').map(Number);
+  const previous =
+    monthNumber === 1
+      ? `${year - 1}-12`
+      : `${year}-${String(monthNumber - 1).padStart(2, '0')}`;
+  return new Date(`${previous}-20T00:00:00+09:00`);
 }
 
 function tokyoDate(now: Date): string {
@@ -132,7 +137,7 @@ export async function collectMonthlyLinkCounts(
 
   return selections.map(selection => {
     const month = selection.selectionDate.slice(0, 7);
-    const since = monthStart(month);
+    const since = countingStart(month);
     const count: MonthlyLinkCount = {
       month,
       movieUid: selection.movieUid,
@@ -266,7 +271,7 @@ export async function findUnannouncedMonthlyLinks(
         isNull(articleLinks.announcedAt),
         eq(articleLinks.isSpam, false),
         eq(articleLinks.isFlagged, false),
-        gte(articleLinks.submittedAt, monthStart(month)),
+        gte(articleLinks.submittedAt, countingStart(month)),
       ),
     );
 

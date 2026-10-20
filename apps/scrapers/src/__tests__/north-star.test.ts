@@ -108,7 +108,7 @@ describe('collectMonthlyLinkCounts', () => {
     ]);
   });
 
-  it('選出月に付いた本人以外の「観た」を数える', async () => {
+  it('前月20日の予告以降に付いた本人以外の「観た」を数える', async () => {
     const database = await createTestDatabase();
     await seedMonthlySelection(database, {
       movieUid: 'movie-1',
@@ -135,7 +135,7 @@ describe('collectMonthlyLinkCounts', () => {
       {
         movieUid: 'movie-1',
         submitterIp: '203.0.113.4',
-        markedAt: new Date('2026-08-20T00:00:00+09:00'),
+        markedAt: new Date('2026-08-19T23:59:00+09:00'),
       },
     ]);
 
@@ -165,7 +165,7 @@ describe('collectMonthlyLinkCounts', () => {
     expect(counts[0]?.owner).toBe(1);
   });
 
-  it('選出月より前に投稿されたリンクは数えない', async () => {
+  it('前月20日の予告より前に投稿されたリンクは数えない', async () => {
     const database = await createTestDatabase();
     await seedMonthlySelection(database, {
       movieUid: 'movie-1',
@@ -175,13 +175,53 @@ describe('collectMonthlyLinkCounts', () => {
     await database.insert(articleLinks).values({
       movieUid: 'movie-1',
       url: 'https://example.com/older',
-      title: '前月の感想',
-      submittedAt: new Date('2026-08-31T23:00:00+09:00'),
+      title: '予告より前の感想',
+      submittedAt: new Date('2026-08-19T23:59:00+09:00'),
     });
 
     const counts = await collectMonthlyLinkCounts(database, defaultRules);
 
     expect(counts[0]?.other).toBe(0);
+  });
+
+  it('前月20日の予告以降に投稿されたリンクは数える', async () => {
+    const database = await createTestDatabase();
+    await seedMonthlySelection(database, {
+      movieUid: 'movie-1',
+      month: '2026-09',
+      title: 'ある映画',
+    });
+    await database.insert(articleLinks).values({
+      movieUid: 'movie-1',
+      url: 'https://example.com/preview',
+      title: '予告を見て書いた感想',
+      submittedAt: new Date('2026-08-20T00:00:00+09:00'),
+    });
+
+    const counts = await collectMonthlyLinkCounts(database, defaultRules);
+
+    expect(counts[0]?.other).toBe(1);
+  });
+
+  it('1月の1本は前年12月20日から数える', async () => {
+    const database = await createTestDatabase();
+    await seedMonthlySelection(database, {
+      movieUid: 'movie-1',
+      month: '2027-01',
+      title: 'ある映画',
+    });
+    await database.insert(articleLinks).values({
+      movieUid: 'movie-1',
+      url: 'https://example.com/december',
+      title: '年末に書いた感想',
+      submittedAt: new Date('2026-12-20T00:00:00+09:00'),
+    });
+
+    const counts = await collectMonthlyLinkCounts(database, defaultRules, {
+      now: new Date('2027-01-05T12:00:00+09:00'),
+    });
+
+    expect(counts[0]?.other).toBe(1);
   });
 
   it('スパムとフラグ付きのリンクは数えない', async () => {
@@ -358,7 +398,7 @@ describe('findUnannouncedMonthlyLinks', () => {
     ).toBeUndefined();
   });
 
-  it('選出された月より前に貼られたリンクは返さない', async () => {
+  it('前月20日の予告より前に貼られたリンクは返さない', async () => {
     const database = await createTestDatabase();
     await seedMonthlySelection(database, {
       movieUid: 'movie-1',
@@ -370,12 +410,36 @@ describe('findUnannouncedMonthlyLinks', () => {
       movieUid: 'movie-1',
       url: 'https://example.com/review',
       submitterIp: '203.0.113.9',
-      submittedAt: new Date('2026-08-30T00:00:00+09:00'),
+      submittedAt: new Date('2026-08-19T23:59:00+09:00'),
     });
 
     expect(
       await findUnannouncedMonthlyLinks(database, defaultRules, {now}),
     ).toBeUndefined();
+  });
+
+  it('前月20日の予告以降に貼られたリンクは返す', async () => {
+    const database = await createTestDatabase();
+    await seedMonthlySelection(database, {
+      movieUid: 'movie-1',
+      month: '2026-09',
+      title: 'ある映画',
+    });
+    await database.insert(articleLinks).values({
+      uid: 'link-preview',
+      movieUid: 'movie-1',
+      url: 'https://example.com/review',
+      submitterIp: '203.0.113.9',
+      submittedAt: new Date('2026-08-20T00:00:00+09:00'),
+    });
+
+    const announcement = await findUnannouncedMonthlyLinks(
+      database,
+      defaultRules,
+      {now},
+    );
+
+    expect(announcement?.linkUids).toEqual(['link-preview']);
   });
 
   it('今月の月替わりが無ければ何も返さない', async () => {
