@@ -238,6 +238,16 @@ export async function fetchTopD1Queries(
   );
 }
 
+export function recurringTopQueries(
+  queries: D1QueryStat[],
+  limit: number,
+): {recurring: D1QueryStat[]; oneOff: D1QueryStat[]} {
+  return {
+    recurring: queries.filter(({count}) => count > 1).slice(0, limit),
+    oneOff: queries.filter(({count}) => count === 1),
+  };
+}
+
 export function formatTopD1Queries(
   queries: D1QueryStat[],
   totalRowsRead: number,
