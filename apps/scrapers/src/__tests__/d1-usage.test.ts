@@ -6,6 +6,7 @@ import {
   fetchTopD1Queries,
   formatRows,
   formatTopD1Queries,
+  recurringTopQueries,
 } from '../d1-usage';
 
 const NOW = new Date('2026-10-02T01:00:00Z');
@@ -176,6 +177,33 @@ describe('formatTopD1Queries', () => {
     );
 
     expect(text.endsWith(`${'x'.repeat(100)}…`)).toBe(true);
+  });
+});
+
+describe('recurringTopQueries', () => {
+  const stat = (query: string, count: number) => ({
+    query,
+    rowsRead: 100,
+    count,
+    durationMs: 1,
+  });
+
+  it('1 回しか走っていない文を除いて上から指定の本数を返す', () => {
+    const result = recurringTopQueries(
+      [stat('a', 3), stat('adhoc', 1), stat('b', 2), stat('c', 5)],
+      2,
+    );
+
+    expect(result.recurring.map(({query}) => query)).toEqual(['a', 'b']);
+  });
+
+  it('除いた 1 回きりの文を返す', () => {
+    const result = recurringTopQueries(
+      [stat('a', 3), stat('adhoc', 1), stat('b', 2), stat('c', 5)],
+      2,
+    );
+
+    expect(result.oneOff.map(({query}) => query)).toEqual(['adhoc']);
   });
 });
 
