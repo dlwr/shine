@@ -41,8 +41,10 @@ import {
   evaluateD1Usage,
   fetchD1Usage,
   fetchTopD1Queries,
+  formatRows,
   formatTopD1Queries,
   PRODUCTION_D1_DATABASE_ID,
+  recurringTopQueries,
 } from './d1-usage';
 import {
   DEFAULT_CLOUDFLARE_ACCOUNT_ID,
@@ -137,7 +139,7 @@ async function d1Section(): Promise<SurveySection> {
       databaseId,
       new Date(now.getTime() - DAY_MS),
       now,
-      5,
+      20,
     ),
   ]);
   const {alerts, summary} = evaluateD1Usage({
@@ -147,14 +149,20 @@ async function d1Section(): Promise<SurveySection> {
     monthToDateRowsWritten: monthToDate.rowsWritten,
     now,
   });
+  const {recurring, oneOff} = recurringTopQueries(topQueries, 5);
 
   return {
     title: 'D1 読み取り',
     body: [
       summary,
       ...alerts.map(alert => `⚠️ ${alert}`),
-      '直近24h の読み取りの多い文:',
-      formatTopD1Queries(topQueries, last24h.rowsRead),
+      '直近24h の読み取りの多い文（1 回きりの文を除く）:',
+      formatTopD1Queries(recurring, last24h.rowsRead),
+      ...(oneOff.length > 0
+        ? [
+            `除いた 1 回きりの文: ${oneOff.length} 本、計 ${formatRows(oneOff.reduce((sum, {rowsRead}) => sum + rowsRead, 0))} 行`,
+          ]
+        : []),
     ].join('\n'),
   };
 }
