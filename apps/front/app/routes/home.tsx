@@ -4,18 +4,28 @@ import type {Route} from './+types/home';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {useAdminToken} from '@/hooks/use-admin-token';
-import {DEFAULT_LOCALE, getLocaleFromRequest} from '@/lib/locale';
+import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {FilmCard} from '@/components/editorial/film-card';
 import {MonthlyPick} from '@/components/editorial/monthly-pick';
-import {apiFetch, canTransformImages, resolveApiUrl} from '@/lib/api';
+import {
+  apiFetch,
+  canTransformImages,
+  resolveApiUrl,
+  type LoadContext,
+} from '@/lib/api';
 import {
   buildSelectionPath,
   fetchHighlightedMovies,
+  isNextMonthlyAnnounced,
   selectionRequestHeaders,
   type HighlightedMovies,
   type PeriodType,
 } from '@/lib/home';
+import {
+  loadNextSelection,
+  type SelectionHistoryItem,
+} from '@/lib/selection-archive';
 
 const AdminSessionBar = lazy(async () => {
   const module_ = await import('@/components/admin/admin-session-bar');
@@ -56,10 +66,27 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   });
 }
 
+async function loadAnnouncedNextMonthly(
+  locale: Locale,
+  context: LoadContext,
+  request: Request,
+): Promise<SelectionHistoryItem | undefined> {
+  if (!isNextMonthlyAnnounced(new Date())) {
+    return undefined;
+  }
+
+  try {
+    return await loadNextSelection('monthly', locale, context, request);
+  } catch {
+    return undefined;
+  }
+}
+
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
   const apiUrl = resolveApiUrl(context);
   const transformImages = canTransformImages(context);
+  const nextMonthlyRequest = loadAnnouncedNextMonthly(locale, context, request);
 
   try {
     const response = await apiFetch(context, buildSelectionPath(locale), {
@@ -74,6 +101,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
     const movies = (await response.json()) as HighlightedMovies;
     return {
       movies,
+      nextMonthly: await nextMonthlyRequest,
       error: undefined,
       locale,
       apiUrl,
@@ -97,6 +125,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
 export default function Home({loaderData}: Route.ComponentProps) {
   const {
     movies: initialMovies,
+    nextMonthly,
     error: initialError,
     locale,
     apiUrl,
@@ -104,6 +133,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
     shouldFetchOnClient,
   } = loaderData as {
     movies: HighlightedMovies | undefined;
+    nextMonthly?: SelectionHistoryItem;
     error: string | undefined;
     locale: string;
     apiUrl: string;
@@ -153,6 +183,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
         <Masthead locale={locale} showTagline={false} />
         <Movies
           movies={movies}
+          nextMonthly={nextMonthly}
           error={error}
           locale={locale}
           apiUrl={apiUrl}
@@ -170,6 +201,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
 
 function Movies({
   movies,
+  nextMonthly,
   error,
   locale,
   apiUrl,
@@ -180,6 +212,7 @@ function Movies({
   onError,
 }: {
   movies: HighlightedMovies | undefined;
+  nextMonthly?: SelectionHistoryItem;
   error: string | undefined;
   locale: string;
   apiUrl: string;
@@ -250,6 +283,7 @@ function Movies({
         ) : (
           <p className="text-sm text-ink/50 font-label">{noMovieLabel}</p>
         )}
+        {nextMonthly && <NextMonthlyPick movie={nextMonthly} locale={locale} />}
         {renderAdminControls('monthly')}
       </div>
 
@@ -279,5 +313,35 @@ function Movies({
         })}
       </div>
     </section>
+  );
+}
+
+function NextMonthlyPick({
+  movie,
+  locale,
+}: {
+  movie: SelectionHistoryItem;
+  locale: string;
+}) {
+  const [, month, day] = movie.selectionDate.split('-').map(Number);
+  const isJapanese = locale === 'ja';
+
+  return (
+    <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 font-display text-base">
+      <span className="font-bold">
+        {isJapanese ? '来月の1本' : 'Next month'}
+      </span>
+      <span className="text-ink-muted">
+        {isJapanese ? `${month}月${day}日から` : `from ${month}/${day}`}
+      </span>
+      <a href={`/movies/${movie.uid}`} className="text-ink underline">
+        {isJapanese ? `『${movie.title}』` : movie.title}
+        {movie.year
+          ? isJapanese
+            ? `（${movie.year}年）`
+            : ` (${movie.year})`
+          : ''}
+      </a>
+    </p>
   );
 }

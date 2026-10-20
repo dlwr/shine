@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from 'vitest';
+import {afterEach, describe, it, expect, vi, beforeEach} from 'vitest';
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import homeSource from './home.tsx?raw';
@@ -81,6 +81,7 @@ const createLoaderData = (
   overrides: Partial<LoaderSuccess> = {},
 ): LoaderSuccess => ({
   movies: mockMovies,
+  nextMonthly: undefined,
   error: undefined,
   locale: 'ja',
   apiUrl: 'http://localhost:8787',
@@ -132,12 +133,91 @@ const createActionData = (): ComponentProperties['actionData'] =>
 const createMetaArguments = (locale: 'ja' | 'en'): Route.MetaArgs =>
   cast<Route.MetaArgs>({loaderData: {locale}});
 
+const mockNextPreview = {
+  type: 'monthly',
+  date: '2026-11-01',
+  movie: {uid: 'movie-next', title: '来月の映画', year: 1962},
+};
+
+const stubSelectionsAndNext = (next: () => Promise<Response>) => {
+  vi.mocked(fetch).mockImplementation(async input =>
+    String(input).includes('/selections/monthly/next')
+      ? next()
+      : ({ok: true, json: async () => mockMovies} as Response),
+  );
+};
+
 describe('Home Component', () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
   describe('loader', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({toFake: ['Date']});
+      vi.setSystemTime(new Date('2026-10-15T12:00:00+09:00'));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('20 日以降は来月の1本を取って返す', async () => {
+      vi.setSystemTime(new Date('2026-10-20T00:00:00+09:00'));
+      stubSelectionsAndNext(
+        async () => ({ok: true, json: async () => mockNextPreview}) as Response,
+      );
+
+      const result = await loader(
+        createLoaderArguments(
+          createMockContext(),
+          new Request('http://localhost:3000/'),
+        ),
+      );
+
+      expect(result.nextMonthly).toEqual({
+        uid: 'movie-next',
+        title: '来月の映画',
+        year: 1962,
+        selectionDate: '2026-11-01',
+        posterUrl: undefined,
+      });
+    });
+
+    it('19 日までは来月の1本を取りに行かない', async () => {
+      stubSelectionsAndNext(
+        async () => ({ok: true, json: async () => mockNextPreview}) as Response,
+      );
+
+      await loader(
+        createLoaderArguments(
+          createMockContext(),
+          new Request('http://localhost:3000/'),
+        ),
+      );
+
+      expect(vi.mocked(fetch)).not.toHaveBeenCalledWith(
+        expect.stringContaining('/selections/monthly/next'),
+        expect.anything(),
+      );
+    });
+
+    it('来月の1本が取れなくても今月の1本は返す', async () => {
+      vi.setSystemTime(new Date('2026-10-20T00:00:00+09:00'));
+      stubSelectionsAndNext(async () => {
+        throw new Error('Network error');
+      });
+
+      const result = await loader(
+        createLoaderArguments(
+          createMockContext(),
+          new Request('http://localhost:3000/'),
+        ),
+      );
+
+      expect(result.movies).toEqual(mockMovies);
+    });
+
     it('APIから映画選択データを正常に取得する', async () => {
       const mockFetch = vi.mocked(fetch);
       mockFetch.mockResolvedValueOnce({
@@ -300,6 +380,73 @@ describe('Home Component', () => {
         monthly.compareDocumentPosition(daily) &
           Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
+    });
+
+    it('来月の1本が分かっていれば今月の1本の下にリンクで出す', () => {
+      const loaderData = cast<ComponentProperties['loaderData']>(
+        createLoaderData({
+          nextMonthly: {
+            uid: 'movie-next',
+            title: '来月の映画',
+            year: 1962,
+            selectionDate: '2026-11-01',
+          },
+        }),
+      );
+
+      render(
+        <Home
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={createParameters()}
+          matches={createMatches(loaderData)}
+        />,
+      );
+
+      expect(screen.getByRole('link', {name: /来月の映画/})).toHaveAttribute(
+        'href',
+        '/movies/movie-next',
+      );
+    });
+
+    it('来月の1本の初日を出す', () => {
+      const loaderData = cast<ComponentProperties['loaderData']>(
+        createLoaderData({
+          nextMonthly: {
+            uid: 'movie-next',
+            title: '来月の映画',
+            year: 1962,
+            selectionDate: '2026-11-01',
+          },
+        }),
+      );
+
+      render(
+        <Home
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={createParameters()}
+          matches={createMatches(loaderData)}
+        />,
+      );
+
+      expect(screen.getByText(/11月1日から/)).toBeInTheDocument();
+    });
+
+    it('来月の1本が無ければ何も出さない', () => {
+      const loaderData =
+        cast<ComponentProperties['loaderData']>(createLoaderData());
+
+      render(
+        <Home
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={createParameters()}
+          matches={createMatches(loaderData)}
+        />,
+      );
+
+      expect(screen.queryByText('来月の1本')).not.toBeInTheDocument();
     });
 
     it('第一画面で「毎月1本、みんなで同じ映画を観る」と伝える', () => {
