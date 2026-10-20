@@ -4,6 +4,7 @@ import {
   createSelectionCacheKey,
   fetchHighlightedMovies,
   getLocalizedMovieTitle,
+  isNextMonthlyAnnounced,
   selectionRequestHeaders,
 } from './home';
 
@@ -137,5 +138,31 @@ describe('fetchHighlightedMovies', () => {
     await expect(
       fetchHighlightedMovies('http://localhost:8787', 'en'),
     ).rejects.toThrow('API request failed: 503');
+  });
+});
+
+describe('isNextMonthlyAnnounced', () => {
+  it('19 日の終わり（JST）までは来月の1本を出さない', () => {
+    expect(isNextMonthlyAnnounced(new Date('2026-10-19T23:59:59+09:00'))).toBe(
+      false,
+    );
+  });
+
+  it('20 日の 0 時（JST）から来月の1本を出す', () => {
+    expect(isNextMonthlyAnnounced(new Date('2026-10-20T00:00:00+09:00'))).toBe(
+      true,
+    );
+  });
+
+  it('月末の終わり（JST）まで来月の1本を出す', () => {
+    expect(isNextMonthlyAnnounced(new Date('2026-10-31T23:59:59+09:00'))).toBe(
+      true,
+    );
+  });
+
+  it('翌月 1 日の 0 時（JST）からは出さない', () => {
+    expect(isNextMonthlyAnnounced(new Date('2026-11-01T00:00:00+09:00'))).toBe(
+      false,
+    );
   });
 });

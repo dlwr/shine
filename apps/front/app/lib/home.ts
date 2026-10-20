@@ -36,6 +36,16 @@ export function createSelectionCacheKey() {
   return `${year}-${month}-${day}`;
 }
 
+const NEXT_MONTHLY_ANNOUNCE_DAY = 20;
+const JST_OFFSET_MS = 9 * 3_600_000;
+
+export function isNextMonthlyAnnounced(now: Date): boolean {
+  return (
+    new Date(now.getTime() + JST_OFFSET_MS).getUTCDate() >=
+    NEXT_MONTHLY_ANNOUNCE_DAY
+  );
+}
+
 export function getLocalizedMovieTitle(movie: SearchMovie, locale: string) {
   return resolveMovieTitle(movie, {
     locale,
