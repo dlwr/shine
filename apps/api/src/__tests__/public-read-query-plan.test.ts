@@ -256,8 +256,7 @@ const exercises: Exercise[] = [
   },
   {
     name: 'この日に初公開された映画',
-    run: environment =>
-      new OnThisDayService(environment).getOnThisDay('09-15'),
+    run: environment => new OnThisDayService(environment).getOnThisDay('09-15'),
   },
   {
     name: '賞の交差',

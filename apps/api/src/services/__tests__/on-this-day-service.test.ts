@@ -169,7 +169,10 @@ describe('OnThisDayService.getOnThisDay', () => {
       deleted: true,
     });
     await seedMovie(database, 'movie-unnominated', {releaseDate: '1970-09-15'});
-    await nominate(database, 'movie-1999', [{award: 0}, {award: 1, isWinner: true}]);
+    await nominate(database, 'movie-1999', [
+      {award: 0},
+      {award: 1, isWinner: true},
+    ]);
     await nominate(database, 'movie-1962', [{award: 0}]);
     await nominate(database, 'movie-2010', [{award: 1}]);
     await nominate(database, 'movie-other-day', [{award: 0}]);
@@ -247,10 +250,9 @@ describe('OnThisDayService.getOnThisDay', () => {
   it('載っている賞の凡例を返す', async () => {
     const {awards} = await service.getOnThisDay('09-15');
 
-    expect(awards.map(award => award.slug).toSorted()).toEqual([
-      'academy-best-picture',
-      'palme-dor',
-    ]);
+    expect(
+      awards.map(award => award.slug).toSorted((a, b) => a.localeCompare(b)),
+    ).toEqual(['academy-best-picture', 'palme-dor']);
   });
 
   it('該当が無い日は空の一覧を返す', async () => {
