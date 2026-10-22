@@ -3,7 +3,7 @@ import {AvailabilityStatusMark} from '@/components/editorial/availability-status
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import type {AwardMovieEntryData} from '@/lib/award-page';
 
-function RankLabel({rank}: {rank: string}) {
+export function RankLabel({rank}: {rank: string}) {
   return (
     <span className="font-label text-[10px] text-ink-muted w-7 shrink-0 tabular-nums">
       {rank}

@@ -1,5 +1,5 @@
 import {AvailabilityStatusMark} from '@/components/editorial/availability-status-mark';
-import {AwardMovieRow} from '@/components/editorial/award-movie-row';
+import {AwardMovieRow, RankLabel} from '@/components/editorial/award-movie-row';
 import {PersonAwardYearSection} from '@/components/editorial/person-award-years';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import type {
@@ -12,11 +12,15 @@ import type {
 
 function ListRow({movie}: {movie: AwardMovieEntryData}) {
   const title = movie.title ?? 'Unknown Title';
+  const rank = /^\d+位$/.test(movie.specialMention ?? '')
+    ? movie.specialMention
+    : undefined;
 
   return (
     <a
       href={`/movies/${movie.uid}`}
       className="flex items-center gap-3 py-2 border-t-2 border-ink no-underline text-ink">
+      {rank && <RankLabel rank={rank} />}
       <PosterFrame
         posterUrl={movie.posterUrl}
         alt={`${title} poster`}
