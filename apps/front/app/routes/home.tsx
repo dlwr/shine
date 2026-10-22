@@ -84,9 +84,9 @@ async function loadAnnouncedNextMonthly(
 
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
-  const apiUrl = resolveApiUrl(context);
-  const transformImages = canTransformImages(context);
   const nextMonthlyRequest = loadAnnouncedNextMonthly(locale, context, request);
+  let movies: HighlightedMovies | undefined;
+  let error: string | undefined;
 
   try {
     const response = await apiFetch(context, buildSelectionPath(locale), {
@@ -98,28 +98,21 @@ export async function loader({context, request}: Route.LoaderArgs) {
       throw new Error(`API request failed: ${response.status}`);
     }
 
-    const movies = (await response.json()) as HighlightedMovies;
-    return {
-      movies,
-      nextMonthly: await nextMonthlyRequest,
-      error: undefined,
-      locale,
-      apiUrl,
-      transformImages,
-    };
-  } catch (error) {
-    console.error('SSR fetch error:', error);
-
-    // フォールバック：エラー時はクライアントサイドで再試行
-    return {
-      movies: undefined,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-      locale,
-      apiUrl,
-      transformImages,
-      shouldFetchOnClient: true,
-    };
+    movies = (await response.json()) as HighlightedMovies;
+  } catch (error_) {
+    console.error('SSR fetch error:', error_);
+    error = error_ instanceof Error ? error_.message : 'Unknown error occurred';
   }
+
+  return {
+    movies,
+    nextMonthly: await nextMonthlyRequest,
+    error,
+    locale,
+    apiUrl: resolveApiUrl(context),
+    transformImages: canTransformImages(context),
+    shouldFetchOnClient: movies === undefined,
+  };
 }
 
 export default function Home({loaderData}: Route.ComponentProps) {
@@ -131,15 +124,7 @@ export default function Home({loaderData}: Route.ComponentProps) {
     apiUrl,
     transformImages,
     shouldFetchOnClient,
-  } = loaderData as {
-    movies: HighlightedMovies | undefined;
-    nextMonthly?: SelectionHistoryItem;
-    error: string | undefined;
-    locale: string;
-    apiUrl: string;
-    transformImages?: boolean;
-    shouldFetchOnClient?: boolean;
-  };
+  } = loaderData;
 
   const [movies, setMovies] = useState<HighlightedMovies | undefined>(
     initialMovies,
