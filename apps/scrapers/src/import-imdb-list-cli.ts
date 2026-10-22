@@ -37,6 +37,8 @@ export function createCommand(): Command {
       'Award category name (default: "Selected Films")',
     )
     .option('--ceremony <name>', 'Ceremony description / name')
+    .option('--year <number>', 'Ceremony year (default: current year)', Number)
+    .option('--ranked', 'Store the CSV Position column as rank', false)
     .action(async (csvFile: string, options: Record<string, unknown>) => {
       try {
         loadEnvironmentFiles();
@@ -47,6 +49,8 @@ export function createCommand(): Command {
         const organizationName = optionalString(options.organization);
         const categoryName = optionalString(options.category);
         const ceremonyName = optionalString(options.ceremony);
+        const year = finiteNumber(options.year);
+        const isRanked = Boolean(options.ranked);
 
         assertDatabaseEnvironment(buildEnvironment(process.env));
         if (!process.env.TMDB_API_KEY) {
@@ -65,6 +69,8 @@ export function createCommand(): Command {
             organizationName,
             categoryName,
             ceremonyName,
+            year,
+            isRanked,
           });
         } catch (error) {
           throw new Error(`Import failed: ${String(error)}`, {cause: error});

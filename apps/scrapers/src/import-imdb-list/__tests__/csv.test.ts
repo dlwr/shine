@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {afterEach, describe, expect, it} from 'vitest';
-import {readUniqueCsvRecords} from '../csv';
+import {rankMentionOf, readUniqueCsvRecords} from '../csv';
 
 let temporaryDirectories: string[] = [];
 
@@ -66,5 +66,19 @@ describe('readUniqueCsvRecords', () => {
     expect(readUniqueCsvRecords(filePath)).toEqual([
       {Const: 'tt0000001', Title: 'Film'},
     ]);
+  });
+});
+
+describe('rankMentionOf', () => {
+  it('順位付きの取り込みでは Position を順位にする', () => {
+    expect(rankMentionOf({Const: 'tt0000001', Position: '7'}, true)).toBe(
+      '7位',
+    );
+  });
+
+  it('順位付きでなければ順位を付けない', () => {
+    expect(
+      rankMentionOf({Const: 'tt0000001', Position: '7'}, false),
+    ).toBeUndefined();
   });
 });

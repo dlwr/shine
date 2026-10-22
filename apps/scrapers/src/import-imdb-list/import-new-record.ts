@@ -3,6 +3,7 @@ import {
   insertMovieFromCsvRecord,
   insertMovieWithTranslations,
 } from './insert-movie';
+import {rankMentionOf} from './csv';
 import {didCreateNomination} from './nomination';
 import {fetchMovieByImdbId, searchMovieByTitle} from './tmdb-lookup';
 import {
@@ -70,13 +71,19 @@ export async function importNewRecord(
     stats.imported++;
     stats.nominationsCreated++;
   } else {
-    await insertFromTmdb(context, imdbId, tmdbMovie, {
-      jaTitle,
-      originalTitle,
-      csvYear,
-      csvReleaseDate,
-      csvDescription,
-    });
+    await insertFromTmdb(
+      context,
+      imdbId,
+      tmdbMovie,
+      {
+        jaTitle,
+        originalTitle,
+        csvYear,
+        csvReleaseDate,
+        csvDescription,
+      },
+      rankMentionOf(record, context.isRanked),
+    );
   }
 
   if (throttleMs > 0) {
@@ -104,7 +111,11 @@ async function insertFromCsv(
       imdbId,
     });
 
-    await ensureNominationForInserted(context, movieUid);
+    await ensureNominationForInserted(
+      context,
+      movieUid,
+      rankMentionOf(record, context.isRanked),
+    );
   } catch (error) {
     console.error('  Failed to insert movie from CSV metadata:', error);
     stats.failed++;
@@ -122,6 +133,7 @@ async function insertFromTmdb(
     csvReleaseDate?: string;
     csvDescription?: string;
   },
+  specialMention: string | undefined,
 ): Promise<void> {
   const {database, tmdbConfig, stats, existingByImdbId} = context;
   try {
@@ -148,7 +160,7 @@ async function insertFromTmdb(
       });
     }
 
-    await ensureNominationForInserted(context, movieUid);
+    await ensureNominationForInserted(context, movieUid, specialMention);
   } catch (error) {
     console.error('  Failed to import movie:', error);
     stats.failed++;
@@ -158,6 +170,7 @@ async function insertFromTmdb(
 async function ensureNominationForInserted(
   context: ImportRunContext,
   movieUid: string,
+  specialMention: string | undefined,
 ): Promise<void> {
   const {database, awardContext, dryRun, stats, nominatedMovieUids} = context;
   const nominationCreated = await didCreateNomination({
@@ -167,6 +180,7 @@ async function ensureNominationForInserted(
     ceremonyUid: awardContext.ceremonyUid,
     dryRun,
     skipLookup: true,
+    specialMention,
   });
   if (!nominationCreated) {
     return;

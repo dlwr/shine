@@ -288,6 +288,35 @@ describe('Award detail page', () => {
       expect(screen.getByText('宅配レンタルのみ・要確認')).toBeInTheDocument();
     });
 
+    it('リスト型の賞で順位の付いた作品に順位を出す', () => {
+      render(
+        <AwardDetailPage
+          {...createComponentProperties(
+            cast<LoaderData>({
+              award: {
+                ...mockAwardDetail,
+                grouping: 'list',
+                years: [
+                  {
+                    ...mockAwardDetail.years[0],
+                    movies: [
+                      {
+                        ...mockAwardDetail.years[0].movies[0],
+                        specialMention: '1位',
+                      },
+                    ],
+                  },
+                ],
+              },
+              locale: 'ja',
+            }),
+          )}
+        />,
+      );
+
+      expect(screen.getByText('1位')).toBeInTheDocument();
+    });
+
     it('年を降順で表示する', () => {
       render(
         <AwardDetailPage

@@ -65,7 +65,10 @@ export function flattenListAward(years: AwardYearGroup[]): AwardYearGroup[] {
     .toArray()
     .toSorted(
       (a, b) =>
-        (b.movieYear ?? 0) - (a.movieYear ?? 0) || (a.uid < b.uid ? -1 : 1),
+        rankOf(a) - rankOf(b) ||
+        0 ||
+        (b.movieYear ?? 0) - (a.movieYear ?? 0) ||
+        (a.uid < b.uid ? -1 : 1),
     );
 
   return [

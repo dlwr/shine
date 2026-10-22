@@ -547,6 +547,26 @@ describe('AwardsService.getAwardBySlug リスト型のページ分割', () => {
     expect(years).toEqual(years.toSorted((a, b) => (b ?? 0) - (a ?? 0)));
   });
 
+  it('順位の付いた作品は順位の昇順で先頭に並べる', async () => {
+    for (const [movieUid, rank] of [
+      ['movie-010', '2位'],
+      ['movie-140', '3位'],
+      ['movie-000', '1位'],
+    ] as const) {
+      await database
+        .update(nominations)
+        .set({specialMention: rank})
+        .where(eq(nominations.movieUid, movieUid));
+    }
+
+    const full = await service.getAwardBySlug('1001-movies');
+    const uids = (full?.years[0]?.movies ?? [])
+      .slice(0, 4)
+      .map(movie => movie.uid);
+
+    expect(uids).toEqual(['movie-000', 'movie-010', 'movie-140', 'movie-149']);
+  });
+
   it('範囲外のページはundefinedを返す', async () => {
     const full = await service.getAwardBySlug('1001-movies');
 

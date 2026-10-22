@@ -2,6 +2,14 @@ import {readFileSync} from 'node:fs';
 import {parse} from 'csv-parse/sync';
 import {type CsvMovieRow} from './types';
 
+export function rankMentionOf(
+  record: CsvMovieRow,
+  isRanked: boolean,
+): string | undefined {
+  const position = record.Position?.trim();
+  return isRanked && position ? `${position}位` : undefined;
+}
+
 export function readUniqueCsvRecords(filePath: string): CsvMovieRow[] {
   const fileContent = readFileSync(filePath, 'utf8');
   const records = parse(fileContent, {

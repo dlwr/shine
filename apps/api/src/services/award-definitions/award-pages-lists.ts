@@ -47,6 +47,17 @@ export const listAwardPageDefinitions: AwardPageDefinition[] = [
     grouping: 'list',
   },
   {
+    slug: 'nyt-21st-century',
+    shortLabel: 'NYT',
+    organizationName: 'The New York Times',
+    categoryNames: ['The 100 Best Movies of the 21st Century'],
+    name: 'The 100 Best Movies of the 21st Century',
+    organization: 'The New York Times',
+    description:
+      'ニューヨーク・タイムズ紙が500人以上の映画監督・俳優らの投票で選んだ「21世紀の映画ベスト100」（2025年）。',
+    grouping: 'list',
+  },
+  {
     slug: 'time-underappreciated',
     shortLabel: 'TIME',
     organizationName: 'TIME',
