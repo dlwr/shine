@@ -59,8 +59,6 @@ vi.stubGlobal('fetch', vi.fn());
 const cast = <T,>(value?: unknown): T => value as T;
 
 type LoaderResult = Awaited<ReturnType<typeof loader>>;
-type LoaderSuccess = Extract<LoaderResult, {error: undefined}>;
-type LoaderFailure = Extract<LoaderResult, {error: string}>;
 type LoaderArguments = Route.LoaderArgs;
 type ComponentProperties = Route.ComponentProps;
 
@@ -78,22 +76,23 @@ const createLoaderArguments = (
   });
 
 const createLoaderData = (
-  overrides: Partial<LoaderSuccess> = {},
-): LoaderSuccess => ({
+  overrides: Partial<LoaderResult> = {},
+): LoaderResult => ({
   movies: mockMovies,
   nextMonthly: undefined,
   error: undefined,
   locale: 'ja',
   apiUrl: 'http://localhost:8787',
   transformImages: false,
-  shouldFetchOnClient: undefined,
+  shouldFetchOnClient: false,
   ...overrides,
 });
 
 const createErrorLoaderData = (
-  overrides: Partial<LoaderFailure> = {},
-): LoaderFailure => ({
+  overrides: Partial<LoaderResult> = {},
+): LoaderResult => ({
   movies: undefined,
+  nextMonthly: undefined,
   error: 'API request failed',
   locale: 'ja',
   apiUrl: 'http://localhost:8787',
@@ -246,6 +245,7 @@ describe('Home Component', () => {
         locale: 'ja',
         apiUrl: 'http://localhost:8787',
         transformImages: false,
+        shouldFetchOnClient: false,
       });
     });
 
