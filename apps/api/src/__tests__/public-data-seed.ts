@@ -72,7 +72,12 @@ export async function seedPublicData(database: Database): Promise<void> {
     },
   ]);
   await database.insert(movies).values([
-    {uid: 'movie-beauty', year: 1999, originalLanguage: 'en'},
+    {
+      uid: 'movie-beauty',
+      year: 1999,
+      originalLanguage: 'en',
+      releaseDate: '1999-09-15',
+    },
     {uid: 'movie-green', year: 1999, originalLanguage: 'en'},
     {uid: 'movie-gladiator', year: 2000, originalLanguage: 'en'},
     {
