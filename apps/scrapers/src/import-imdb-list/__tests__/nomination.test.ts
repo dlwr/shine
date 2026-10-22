@@ -87,6 +87,23 @@ describe('didCreateNomination', () => {
     });
   });
 
+  it('順位を specialMention に入れる', async () => {
+    const {database, movieUid, categoryUid, ceremonyUid} =
+      await createTestDatabase();
+
+    await didCreateNomination({
+      database,
+      movieUid,
+      categoryUid,
+      ceremonyUid,
+      dryRun: false,
+      specialMention: '3位',
+    });
+
+    const [row] = await database.select().from(nominations);
+    expect(row.specialMention).toBe('3位');
+  });
+
   it('既にあれば作らず false を返す', async () => {
     const {database, movieUid, categoryUid, ceremonyUid} =
       await createTestDatabase();

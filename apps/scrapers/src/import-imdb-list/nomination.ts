@@ -10,6 +10,7 @@ export async function didCreateNomination({
   dryRun,
   skipLookup = false,
   verbose = true,
+  specialMention,
 }: {
   database: DatabaseClient;
   movieUid: string;
@@ -18,6 +19,7 @@ export async function didCreateNomination({
   dryRun: boolean;
   skipLookup?: boolean;
   verbose?: boolean;
+  specialMention?: string;
 }): Promise<boolean> {
   if (!skipLookup) {
     const existing = await database
@@ -54,6 +56,7 @@ export async function didCreateNomination({
       categoryUid,
       ceremonyUid,
       isWinner: 0,
+      specialMention,
     })
     .onConflictDoNothing();
   if (verbose) {

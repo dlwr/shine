@@ -1,4 +1,4 @@
-import {desc, eq} from 'drizzle-orm';
+import {and, desc, eq} from 'drizzle-orm';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {
   ensureAwardCategory,
@@ -10,8 +10,9 @@ async function findOrCreateCeremony(
   database: DatabaseClient,
   organizationUid: string,
   description: string,
+  requestedYear?: number,
 ): Promise<string> {
-  const year = new Date().getFullYear();
+  const year = requestedYear ?? new Date().getFullYear();
 
   await database
     .insert(awardCeremonies)
@@ -21,7 +22,14 @@ async function findOrCreateCeremony(
   const [row] = await database
     .select({uid: awardCeremonies.uid})
     .from(awardCeremonies)
-    .where(eq(awardCeremonies.organizationUid, organizationUid))
+    .where(
+      and(
+        eq(awardCeremonies.organizationUid, organizationUid),
+        requestedYear === undefined
+          ? undefined
+          : eq(awardCeremonies.year, requestedYear),
+      ),
+    )
     .orderBy(desc(awardCeremonies.year))
     .limit(1);
 
@@ -40,6 +48,7 @@ export async function getAwardContext(
     organizationName?: string;
     categoryName?: string;
     ceremonyName?: string;
+    year?: number;
   },
 ): Promise<AwardContext> {
   const orgName =
@@ -62,6 +71,7 @@ export async function getAwardContext(
     database,
     organizationUid,
     ceremonyDescription,
+    options?.year,
   );
 
   console.log(

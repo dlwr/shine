@@ -10,6 +10,7 @@ export type CsvMovieRow = {
   Year?: string;
   'Release Date'?: string;
   Description?: string;
+  Position?: string;
 };
 
 export type TmdbMovieDetails = {
@@ -43,6 +44,8 @@ export type ImportOptions = {
   organizationName?: string;
   categoryName?: string;
   ceremonyName?: string;
+  year?: number;
+  isRanked?: boolean;
 };
 
 export type AwardContext = {
@@ -67,4 +70,5 @@ export type ImportRunContext = {
   stats: ImportStats;
   existingByImdbId: Map<string, ExistingMovieRecord>;
   nominatedMovieUids: Set<string>;
+  isRanked: boolean;
 };

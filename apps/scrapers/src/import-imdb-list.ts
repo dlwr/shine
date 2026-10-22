@@ -3,7 +3,7 @@ import {getDatabase} from '@shine/database';
 import {nominations} from '@shine/database/schema/nominations';
 import {fetchTMDBConfig} from '@shine/tmdb';
 import {getAwardContext} from './import-imdb-list/award-context';
-import {readUniqueCsvRecords} from './import-imdb-list/csv';
+import {rankMentionOf, readUniqueCsvRecords} from './import-imdb-list/csv';
 import {loadExistingMovies} from './import-imdb-list/existing-movies';
 import {importNewRecord} from './import-imdb-list/import-new-record';
 import {didCreateNomination} from './import-imdb-list/nomination';
@@ -23,6 +23,8 @@ export async function importMoviesFromCsv({
   organizationName,
   categoryName,
   ceremonyName,
+  year,
+  isRanked = false,
 }: ImportOptions): Promise<ImportStats> {
   const tmdbApiKey = environment.TMDB_API_KEY ?? '';
   if (!tmdbApiKey) {
@@ -36,6 +38,7 @@ export async function importMoviesFromCsv({
     organizationName,
     categoryName,
     ceremonyName,
+    year,
   });
   const imdbIds = uniqueRecords.map(record => record.Const.trim());
   const {existingByImdbId, softDeletedImdbIds} = await loadExistingMovies(
@@ -124,6 +127,7 @@ export async function importMoviesFromCsv({
       dryRun,
       skipLookup: true,
       verbose: false,
+      specialMention: rankMentionOf(record, isRanked),
     });
     if (!nominationCreated) {
       continue;
@@ -158,6 +162,7 @@ export async function importMoviesFromCsv({
     stats,
     existingByImdbId,
     nominatedMovieUids,
+    isRanked,
   };
   for (const record of targetNewRecords) {
     processedCount++;
