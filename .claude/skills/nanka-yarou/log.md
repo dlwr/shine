@@ -100,10 +100,11 @@
 - **TTFB は必ずブラウザの UA で測る**。curl・node fetch・短い UA は isbot でボット扱いになり、entry.server が allReady まで待つ経路を測ってしまう
 - `gh pr merge` は `gh pr checks --watch` が "no checks reported" を返しても通ってしまう。push 直後はチェックが登録されるのを待ってから watch する
 - zsh は変数を単語分割しない（ファイル一覧は `${=F}`）。`localeCompare('ja')` はヴ を う の位置に置く
+- **mac の `vrt:update`（Docker）が miniflare の D1 の migrate で `SocketError: other side closed` になって撮れないことがある**（基準の PNG を消してから落ちるので `git checkout -- apps/front/vrt/__screenshots__` で戻す）。そのときは push して CI の VRT を落とし、artifact の `vrt-report` の index.html に埋め込まれた zip の JSON から `*-actual.png` の path を引いて基準にする
 - VRT の映画ページのはみ出し検査は `networkidle` 待ちで揺れることがある（流し直しで通る）
 
 ## 残っている候補
 
-- 作って面白い: 「この日に初公開された映画」（作品賞のノミネート作を月日で引く。noindex・sitemap 外。設計を出して合意待ち）、言語で辿る `/languages/:code`、上映時間の列を足して「今夜 90 分の 1 本」
+- 作って面白い: `/on-this-day` の対象を増やす（公開日の無い 3,959 本を TMDb から埋める）、言語で辿る `/languages/:code`、上映時間の列を足して「今夜 90 分の 1 本」
 - 北極星: X の月替わり 4 枠（1・15・20 日・月末）をリンク入り（カード付き）にする（月 +$0.74）、Web Share Target
 - 日付待ち: 11 月中旬に Search Console の表示回数を再確認、2026-12 末に北極星の判断

@@ -15,6 +15,7 @@ import {QuizService} from '../services/quiz-service';
 import {SelectionsService} from '../services/selections-service';
 import {UncrownedService} from '../services/uncrowned-service';
 import {WatchedService} from '../services/watched-service';
+import {OnThisDayService} from '../services/on-this-day-service';
 import {YearsService} from '../services/years-service';
 import {seededPeopleUids, seedPublicData} from './public-data-seed';
 
@@ -252,6 +253,10 @@ const exercises: Exercise[] = [
     name: '年別ページ',
     run: environment =>
       new YearsService(environment).getYear(1999, [1998, 1999, 2000]),
+  },
+  {
+    name: 'この日に初公開された映画',
+    run: environment => new OnThisDayService(environment).getOnThisDay('09-15'),
   },
   {
     name: '賞の交差',

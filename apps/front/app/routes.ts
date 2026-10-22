@@ -21,6 +21,7 @@ export default [
   route('awards/:slug/:year', 'routes/awards.$slug.$year.tsx'),
   route('years', 'routes/years.tsx'),
   route('years/:year', 'routes/years.$year.tsx'),
+  route('on-this-day', 'routes/on-this-day.tsx'),
   route('robots.txt', 'routes/robots.tsx'),
   route('feed.xml', 'routes/feed.tsx'),
   route('sitemap.xml', 'routes/sitemap-index.tsx'),

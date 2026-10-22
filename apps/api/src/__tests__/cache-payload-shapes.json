@@ -126,6 +126,21 @@
     "cachedAt",
     "data.uids[]"
   ],
+  "on-this-day:09-15:v1": [
+    "cachedAt",
+    "data.awards[].name",
+    "data.awards[].organization",
+    "data.awards[].shortLabel",
+    "data.awards[].slug",
+    "data.monthDay",
+    "data.movies[].awards[].isWinner",
+    "data.movies[].awards[].slug",
+    "data.movies[].isWinner",
+    "data.movies[].posterUrl",
+    "data.movies[].releaseDate",
+    "data.movies[].title",
+    "data.movies[].uid"
+  ],
   "people:crossings:ja:v5": [
     "cachedAt",
     "data.distribution[].organizationCount",

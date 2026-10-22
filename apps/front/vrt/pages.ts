@@ -14,6 +14,7 @@ export const pages = [
   '/uncrowned',
   '/years',
   '/years/2000',
+  '/on-this-day',
   '/daily',
   '/weekly',
   '/monthly',

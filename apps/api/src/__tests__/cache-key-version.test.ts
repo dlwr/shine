@@ -9,6 +9,7 @@ import {afterAll, beforeAll, describe, expect, it} from 'vitest';
 import {awardsRoutes} from '../routes/awards';
 import {crossingsRoutes} from '../routes/crossings';
 import {moviesRoutes} from '../routes/movies';
+import {onThisDayRoutes} from '../routes/on-this-day';
 import {peopleRoutes} from '../routes/people';
 import {quizRoutes} from '../routes/quiz';
 import {searchRoutes} from '../routes/search';
@@ -64,6 +65,7 @@ const exercises: Exercise[] = [
   {name: '個人賞ページ', routes: awardsRoutes, path: '/academy-director'},
   {name: '年一覧', routes: yearsRoutes, path: '/'},
   {name: '年別ページ', routes: yearsRoutes, path: '/1999'},
+  {name: 'この日に初公開された映画', routes: onThisDayRoutes, path: '/09-15'},
   {name: '賞の交差', routes: crossingsRoutes, path: '/'},
   {name: '無冠の映画', routes: uncrownedRoutes, path: '/'},
   {name: '観た映画チェックのリスト', routes: watchedRoutes, path: '/lists'},
