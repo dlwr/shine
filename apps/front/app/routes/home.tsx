@@ -297,6 +297,13 @@ function Movies({
           );
         })}
       </div>
+      {locale === 'ja' && (
+        <p className="mt-6 font-display text-base">
+          <a href="/on-this-day" className="text-ink underline">
+            今日初公開された映画
+          </a>
+        </p>
+      )}
     </section>
   );
 }
