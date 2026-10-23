@@ -7,13 +7,19 @@ import {NOINDEX_FOLLOW, buildSocialMeta, SITE_URL} from '@/lib/meta';
 import {loadApiJson} from '@/lib/api';
 import type {TonightPickData} from '@/lib/api-types';
 
+const RUNTIME_CHOICES = [60, 90, 120];
+const DEFAULT_RUNTIME = 90;
+
+function tonightPath(minutes: number): string {
+  return minutes === DEFAULT_RUNTIME ? '/tonight' : `/tonight?m=${minutes}`;
+}
+
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   return [
     ...buildSocialMeta({
-      title: '今夜90分の1本 | SHINE',
-      description:
-        '映画賞・映画リストに選ばれた映画から、90分以内で観られる1本を選ぶ。',
-      path: '/tonight',
+      title: `今夜${loaderData.pick.maxRuntime}分の1本 | SHINE`,
+      description: `映画賞・映画リストに選ばれた映画から、${loaderData.pick.maxRuntime}分以内で観られる1本を選ぶ。`,
+      path: tonightPath(loaderData.pick.maxRuntime),
       locale: loaderData.locale,
       imageUrl: `${SITE_URL}/og/home.png`,
       largeImage: true,
@@ -23,10 +29,18 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
 }
 
 export async function loader({context, request}: Route.LoaderArgs) {
-  const pick = await loadApiJson<TonightPickData>(context, '/tonight', {
-    label: 'tonight',
-    signal: request.signal,
-  });
+  const minutes = Number(
+    new URL(request.url).searchParams.get('m') ?? DEFAULT_RUNTIME,
+  );
+  if (!RUNTIME_CHOICES.includes(minutes)) {
+    throw new Response('Not Found', {status: 404});
+  }
+
+  const pick = await loadApiJson<TonightPickData>(
+    context,
+    `/tonight?max=${minutes}`,
+    {label: 'tonight', signal: request.signal},
+  );
   return {pick, locale: getLocaleFromRequest(request)};
 }
 
@@ -41,11 +55,23 @@ export default function TonightPage({loaderData}: Route.ComponentProps) {
         <Masthead locale={locale} />
 
         <h1 className="font-display font-extrabold text-3xl md:text-4xl mb-2">
-          今夜90分の1本
+          今夜{pick.maxRuntime}分の1本
         </h1>
-        <p className="font-label text-xs text-ink-muted mb-8">
-          映画賞・映画リストに選ばれた90分以内の{pick.poolSize}本から
+        <p className="font-label text-xs text-ink-muted mb-4">
+          映画賞・映画リストに選ばれた{pick.maxRuntime}分以内の{pick.poolSize}
+          本から
         </p>
+        <nav className="flex flex-wrap gap-3 mb-8">
+          {RUNTIME_CHOICES.map(minutes => (
+            <a
+              key={minutes}
+              href={tonightPath(minutes)}
+              aria-current={minutes === pick.maxRuntime ? 'page' : undefined}
+              className={`font-label text-xs ${minutes === pick.maxRuntime ? 'text-ink font-bold no-underline' : 'text-ink-muted'}`}>
+              {minutes}分
+            </a>
+          ))}
+        </nav>
 
         <div className="border-t-[3px] border-ink">
           <AwardTaggedMovieRow
@@ -57,7 +83,7 @@ export default function TonightPage({loaderData}: Route.ComponentProps) {
 
         <p className="border-t-2 border-ink mt-8 pt-3">
           <a
-            href="/tonight"
+            href={tonightPath(pick.maxRuntime)}
             className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold no-underline text-ink">
             別の1本を引く
           </a>
