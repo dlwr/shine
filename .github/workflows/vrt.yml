@@ -24,7 +24,8 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Install CJK fonts
-        run: apt-get update -qq && apt-get install -y -qq fonts-noto-cjk
+        timeout-minutes: 10
+        run: scripts/retry.sh timeout 180 sh -c 'apt-get update -qq && apt-get install -y -qq fonts-noto-cjk'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
