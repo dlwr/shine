@@ -100,9 +100,10 @@ export function useArticleLinkForm(
   isTestMode: boolean,
   actionData: unknown,
   apiUrl: string,
+  initialUrl = '',
 ): ArticleLinkFormReturn {
   const [formData, setFormData] = useState<ArticleLinkFormState>({
-    url: '',
+    url: initialUrl,
     title: '',
     description: '',
     captchaToken: isTestMode ? 'test-token' : '',
@@ -160,6 +161,12 @@ export function useArticleLinkForm(
     },
     [fetchTitleFromUrl],
   );
+
+  useEffect(() => {
+    if (initialUrl) {
+      scheduleTitleFetch(initialUrl);
+    }
+  }, [initialUrl, scheduleTitleFetch]);
 
   const handleInputChange = useCallback(
     (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

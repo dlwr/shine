@@ -80,6 +80,7 @@ export function Layout({children}: {children: React.ReactNode}) {
           sizes="180x180"
           href="/apple-touch-icon.png"
         />
+        <link rel="manifest" href="/manifest.webmanifest" />
         <style href="app.css" precedence="default">
           {import.meta.env.SSR ? appCss : ''}
         </style>

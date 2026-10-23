@@ -235,6 +235,23 @@ describe('MovieDetail Component', () => {
   });
 
   describe('loader', () => {
+    it('共有で渡された ?link= の URL を返す', async () => {
+      const mockFetch = vi.mocked(fetch);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => mockMovieDetail,
+      } as Response);
+      const request = new Request(
+        'http://localhost:3000/movies/movie-123?link=https%3A%2F%2Fexample.com%2Fpost',
+      );
+
+      const result = await loader(
+        createLoaderArguments(createMockContext(), request, {id: 'movie-123'}),
+      );
+
+      expect(result).toMatchObject({sharedLink: 'https://example.com/post'});
+    });
+
     it('指定されたIDの映画詳細データを正常に取得する', async () => {
       const mockFetch = vi.mocked(fetch);
       mockFetch.mockResolvedValueOnce({
@@ -646,6 +663,27 @@ describe('MovieDetail Component', () => {
       const link = await screen.findByRole('link', {name: /関連映画A/});
       expect(link).toHaveAttribute('href', '/movies/related-1');
       expect(screen.getByText('関連映画')).toBeInTheDocument();
+    });
+
+    it('共有で渡された URL を投稿欄に入れておく', () => {
+      const loaderData = createLoaderData({
+        relatedMovies: Promise.resolve([]),
+        sharedLink: 'https://example.com/post',
+      });
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.getByLabelText('URL（任意）')).toHaveValue(
+        'https://example.com/post',
+      );
     });
 
     it('上映時間を表示する', () => {

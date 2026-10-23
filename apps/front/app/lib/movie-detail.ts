@@ -6,6 +6,7 @@ import {
   type LoadContext,
 } from './api';
 import {getLocaleFromRequest, type Locale} from './locale';
+import {httpUrl} from './share-target';
 
 export type {
   MovieDetailData,
@@ -28,6 +29,7 @@ export type LoaderSuccessResponse = {
   turnstileSiteKey?: string;
   locale: Locale;
   apiUrl?: string;
+  sharedLink?: string;
 };
 
 export type LoaderData = LoaderErrorResponse | LoaderSuccessResponse;
@@ -99,7 +101,17 @@ export async function loadMovieDetail(
 
     const movieDetail = (await response.json()) as MovieDetailData;
     const turnstileSiteKey = environment.PUBLIC_TURNSTILE_SITE_KEY;
-    return {movieDetail, relatedMovies, turnstileSiteKey, locale, apiUrl};
+    const sharedLink = httpUrl(
+      new URL(request.url).searchParams.get('link') ?? undefined,
+    );
+    return {
+      movieDetail,
+      relatedMovies,
+      turnstileSiteKey,
+      locale,
+      apiUrl,
+      sharedLink,
+    };
   } catch {
     return {
       error: 'APIへの接続に失敗しました',
