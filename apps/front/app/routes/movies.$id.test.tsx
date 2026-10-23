@@ -17,6 +17,7 @@ const mockMovieDetail = {
   originalLanguage: 'ja',
   imdbId: 'tt1234567',
   tmdbId: 123_456,
+  runtime: 129,
   imdbUrl: 'https://www.imdb.com/title/tt1234567/',
   posterUrl: 'https://example.com/poster-large.jpg',
   title: 'パルム・ドール受賞作品',
@@ -645,6 +646,22 @@ describe('MovieDetail Component', () => {
       const link = await screen.findByRole('link', {name: /関連映画A/});
       expect(link).toHaveAttribute('href', '/movies/related-1');
       expect(screen.getByText('関連映画')).toBeInTheDocument();
+    });
+
+    it('上映時間を表示する', () => {
+      const loaderData = createLoaderData({relatedMovies: Promise.resolve([])});
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.getByText(/· 129分/)).toBeInTheDocument();
     });
 
     it('「観た」トグルを表示する', () => {
