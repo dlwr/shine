@@ -10,6 +10,7 @@ export type TMDBMovieData = {
   original_language?: string;
   overview?: string;
   release_date: string;
+  runtime?: number;
   imdb_id?: string;
   poster_path?: string;
   translations?: {

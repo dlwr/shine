@@ -67,6 +67,7 @@ export async function createMovie(
       originalLanguage: details?.original_language ?? 'en',
       year: Number.isFinite(releaseYear) ? releaseYear : editionYear,
       releaseDate: details?.release_date || undefined,
+      runtime: details?.runtime || undefined,
     })
     .returning();
 

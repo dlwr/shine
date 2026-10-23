@@ -12,6 +12,7 @@ import {Command} from 'commander';
 import {createCommand as academyAwards} from './academy-awards-cli';
 import {createCommand as academyPersonAwards} from './academy-person-awards-cli';
 import {createCommand as availabilityCheck} from './availability-check-cli';
+import {createCommand as backfillMovieDetails} from './backfill-movie-details-cli';
 import {createCommand as backfillPosters} from './backfill-posters-cli';
 import {createCommand as baftaAwards} from './bafta-awards-cli';
 import {createCommand as berlinFilmFestival} from './berlin-film-festival-cli';
@@ -99,6 +100,7 @@ const commandGroups: Array<{heading: string; factories: Array<() => Command>}> =
         movieCredits,
         movieDescriptions,
         backfillPosters,
+        backfillMovieDetails,
         japaneseTranslations,
         wikidataJapaneseTitles,
         wikidataJapaneseNames,

@@ -15,6 +15,7 @@ const MOVIES_DDL = `CREATE TABLE movies (
   tmdb_id integer UNIQUE,
   media_type text NOT NULL DEFAULT 'movie',
   release_date text,
+  runtime integer,
   created_at integer NOT NULL DEFAULT (unixepoch()),
   updated_at integer NOT NULL DEFAULT (unixepoch()),
   deleted_at integer

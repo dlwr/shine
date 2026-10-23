@@ -64,6 +64,7 @@ async function createMovie(
       originalLanguage: details?.original_language ?? 'ja',
       year: entry.correctYear,
       releaseDate: details?.release_date || undefined,
+      runtime: details?.runtime || undefined,
     })
     .returning();
 
