@@ -58,7 +58,7 @@ jobs:
           BACKUP_RECIPIENT: age1pvxt57nupmcu5xjhux33z2x0jv0s0ceder0mqyrp5pl79nm6s4sqg3p2m8
 
       - name: Upload backup
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: shine-db-${{ env.BACKUP_DATE }}
           path: ${{ runner.temp }}/shine.db.gz.age
