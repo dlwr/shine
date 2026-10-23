@@ -1,6 +1,6 @@
 # 「なんかやろう」のログ
 
-65 回目（2026-10-23）まで。回ごとの経過は書かない。回が終わったら下の 4 節を更新するだけにする。200 行以内に保つ。
+66 回目（2026-10-23）まで。回ごとの経過は書かない。回が終わったら下の 4 節を更新するだけにする。200 行以内に保つ。
 
 ## もう出さない候補（理由つき）
 
@@ -15,6 +15,7 @@
 - bot の月後半の文言（3 回選ばれず）、賞の速報カレンダーを Discord のリマインダに（3 回選ばれず）
 - 入口の上位（人物・`/quiz`）から今月の1本への導線強化（外部の入口が週数件で母数が無い。外部の入口が増えるまで出さない）、`/quiz` に今月の1本を 1 問（4 回選ばれず）
 - 北極星の数え始め（2026-10-20 に前月 20 日の予告起点にした。即時紹介と「観た」も同じ起点）
+- X の月替わり 4 枠のカード付き化（#739）、Web Share Target（#743。Android の Chrome でホーム画面に追加した人だけ。iOS は非対応）
 - 投稿欄の文言、`/fetch-url-title` の文字参照、`/monthly` の先頭に今月の1本と投稿導線、観たボタンを今月の1本なら「ひとこと残す ↓」に、ホームの今月の1本の下に 20 日〜月末だけ来月の1本（どれも実装済み）
 
 ### 流入・SEO
@@ -78,7 +79,7 @@
 - squash のコミット本文はコミットメッセージから作られ PR 本文は入らない。survey の Actions 欄はマージ済み PR の本文も見て「手当て済み」を判定する
 - knip は front の型生成（type-check が作る `+types`）に依存するので型検査より後に流す
 - テストの DB: ローカル D1 は 1 クエリ約 6.6ms・起動＋migrate 約 1.7 秒、libsql は API 1175 件で 10.6 秒。全面移行は割に合わず、D1 に寄せるのは D1 固有の制約の経路と実行計画のテストだけ。scrapers は本番が proxy なので binding のテストにしても意味がない
-- 公開日（`movies.release_date`、TMDb の primary か IMDb の CSV。映画祭の初上映が混じる）と上映時間（`movies.runtime`）は `backfill-movie-details` で埋めた（2026-10-23）。公開日 10,123 / 10,165 本、上映時間 10,063 本、うち 90 分以内 1,508 本。TMDb にも無いのは 60 本。新しい映画は賞の取り込みで runtime も入るが、`import-imdb-list` は入らないので取り込んだら流し直す
+- 公開日（`movies.release_date`、TMDb の primary か IMDb の CSV。映画祭の初上映が混じる）と上映時間（`movies.runtime`）は `backfill-movie-details` で埋めた（2026-10-23）。公開日 10,123 / 10,165 本、上映時間 10,063 本、うち 90 分以内 1,508 本。TMDb にも無いのは 60 本。新しい映画は賞の取り込みと `import-imdb-list` で runtime も入る。映画ページに上映時間、`/tonight` は 60・90・120 分（60 分以内は 71 本しかない）
 - 10/20 に D1 の 24h 上位だった賞ページ全ノミネート（7,643 行×147 回）は 10/22 には消えた（#717 の鍵替えの後の作り直しの山だった）。10/22 の 1 位は関連映画の候補 1,048 行×1,689 回で、合計しても月の上限の 1%
 - ホームの loader は成功・失敗で同じ形を返す（#730）。fetch を lib に出すのは割に合わない
 - 修復 CLI の `fix-misattributed-nominations`・`fix-default-translations`・`fix-original-languages`・`backfill-posters` は再利用する運用ツールなので消さない
@@ -87,6 +88,8 @@
 ## 踏んだ罠（作業手順）
 
 - **テスト用の表を手書きの DDL で作っているファイルがある**（`packages/tmdb/src/__tests__/persistence-soft-delete.test.ts`）。列を足したら `grep -rn "release_date text"` のように探して足す。`test:scrapers` だけ流すと見落とす
+- **`gh pr checks <n> | awk ... && gh pr merge` と繋ぐと、落ちたチェックがあってもマージされる**（#739 で test-node が赤のまま main に入った。Deploy は CI の失敗で止まる）。待つときは目当てのチェックが出て pending が無くなるまで回し、結果を見てからマージする。sns の文面を変えたら `sns-post-cli.test.ts` のインラインスナップショットも直す（`apps/scrapers/src/sns` だけ流すと見落とす）
+- VRT のコンテナの apt は `azure.archive.ubuntu.com` に向けている（#742）。`archive.ubuntu.com` は runner から詰まることがある
 - 本番で数千件書く CLI は proxy の一時エラーで数件落ちる。NULL だけ埋める形にしておけば流し直すだけで済む
 - **`Write` は既存ファイルを黙って上書きする。テストを書く前に `ls <dir> | grep <name>` と `__tests__/` を見る**。「無い」と判断する前に場所違いを疑う（knip の "Unused files" が教えてくれる）
 - `git add -A` は使わずパスを明示する。`git add <消えたパス> <他>` は全体が失敗するので `git status --short` を見てから。コミットを分けるだけなら stash を積まず `git add <パス>` → commit を繰り返す。`git stash` は untracked を退避しない
@@ -109,6 +112,5 @@
 
 ## 残っている候補
 
-- 作って面白い: 上映時間の軸の続き（`/tonight` の分数を選べるように、映画ページに上映時間を出す）。`/languages` と `/tonight` の訪問を 11 月に RUM で見てから
-- 北極星: X の月替わり 4 枠（1・15・20 日・月末）をリンク入り（カード付き）にする（月 +$0.74）、Web Share Target
+- 測る: 11 月に `/languages`・`/tonight` の訪問と、カード付きにした X の月替わり 4 枠（11/1 の告知から）からの今月の1本への訪問を RUM で見る
 - 日付待ち: 11 月中旬に Search Console の表示回数を再確認、2026-12 末に北極星の判断
