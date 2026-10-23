@@ -438,13 +438,13 @@ describe('buildMonthlyPostText', () => {
     expect(buildMonthlyPostText(base)).toMatch(/#青空映画部$/);
   });
 
-  it('X の本文は裸の URL で終わる', () => {
+  it('X の本文はカードが付くよう https から始まる URL で終わる', () => {
     const text = buildMonthlyXPostText({
       ...base,
       url: 'https://shine-film.com/movies/abc',
     });
 
-    expect(text).toMatch(/shine-film\.com\/movies\/abc$/);
+    expect(text).toMatch(/\nhttps:\/\/shine-film\.com\/movies\/abc$/);
     expect(text).not.toContain('#青空映画部');
   });
 });
@@ -494,13 +494,13 @@ describe('buildMonthlyReminderPostText', () => {
     expect(text).not.toContain('▶');
   });
 
-  it('X の本文は裸の URL で終わる', () => {
+  it('X の本文はカードが付くよう https から始まる URL で終わる', () => {
     const text = buildMonthlyReminderXPostText({
       ...reminder,
       url: 'https://shine-film.com/movies/abc',
     });
 
-    expect(text).toMatch(/shine-film\.com\/movies\/abc$/);
+    expect(text).toMatch(/\nhttps:\/\/shine-film\.com\/movies\/abc$/);
   });
 });
 
@@ -546,13 +546,13 @@ describe('buildMonthlyRoundupPostText', () => {
     expect(text).not.toContain('来月の1本');
   });
 
-  it('X の本文は裸の URL で終わる', () => {
+  it('X の本文はカードが付くよう https から始まる URL で終わる', () => {
     const text = buildMonthlyRoundupXPostText({
       ...roundup,
       url: 'https://shine-film.com/movies/abc',
     });
 
-    expect(text).toMatch(/shine-film\.com\/movies\/abc$/);
+    expect(text).toMatch(/\nhttps:\/\/shine-film\.com\/movies\/abc$/);
   });
 });
 
@@ -578,6 +578,7 @@ describe('buildMonthlyLinksPostText', () => {
     });
 
     expect(text).toContain('shine-film.com/movies/movie-1');
+    expect(text).not.toContain('https://');
     expect(text).not.toContain('#青空映画部');
   });
 });
@@ -615,13 +616,13 @@ describe('buildMonthlyPreviewPostText', () => {
     expect(buildMonthlyPreviewPostText(preview)).toMatch(/#青空映画部$/);
   });
 
-  it('X の本文は裸の URL で終わる', () => {
+  it('X の本文はカードが付くよう https から始まる URL で終わる', () => {
     const text = buildMonthlyPreviewXPostText({
       ...preview,
       url: 'https://shine-film.com/movies/abc',
     });
 
-    expect(text).toMatch(/shine-film\.com\/movies\/abc$/);
+    expect(text).toMatch(/\nhttps:\/\/shine-film\.com\/movies\/abc$/);
     expect(text).not.toContain('#青空映画部');
   });
 });

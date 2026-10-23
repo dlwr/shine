@@ -32,7 +32,22 @@ export function xWeightedLength(text: string): number {
 }
 
 export function withBareUrl(body: string, url: string): string {
-  const urlWeight = Math.max(X_URL_WEIGHT, xWeightedLength(bareUrl(url)));
+  return withTrailingUrl(
+    body,
+    bareUrl(url),
+    Math.max(X_URL_WEIGHT, xWeightedLength(bareUrl(url))),
+  );
+}
+
+export function withLinkUrl(body: string, url: string): string {
+  return withTrailingUrl(body, url, X_URL_WEIGHT);
+}
+
+function withTrailingUrl(
+  body: string,
+  urlText: string,
+  urlWeight: number,
+): string {
   const maxBodyWeight = X_MAX_WEIGHTED_LENGTH - urlWeight - 1;
 
   let truncatedBody = body;
@@ -53,5 +68,5 @@ export function withBareUrl(body: string, url: string): string {
     truncatedBody = characters.slice(0, endIndex).join('') + '…';
   }
 
-  return `${truncatedBody}\n${bareUrl(url)}`;
+  return `${truncatedBody}\n${urlText}`;
 }
