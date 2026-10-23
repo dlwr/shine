@@ -142,7 +142,7 @@
     "cachedAt",
     "data.uids[]"
   ],
-  "on-this-day:09-15:v1": [
+  "on-this-day:09-15:v2": [
     "cachedAt",
     "data.awards[].name",
     "data.awards[].organization",
