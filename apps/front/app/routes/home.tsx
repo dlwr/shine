@@ -304,6 +304,13 @@ function Movies({
           </a>
         </p>
       )}
+      {locale === 'ja' && (
+        <p className="mt-2 font-display text-base">
+          <a href="/tonight" className="text-ink underline">
+            今夜90分で観られる1本
+          </a>
+        </p>
+      )}
     </section>
   );
 }

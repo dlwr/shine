@@ -375,6 +375,23 @@ describe('Home Component', () => {
       ).toHaveAttribute('href', '/on-this-day');
     });
 
+    it('今夜90分の1本のページへのリンクを出す', () => {
+      const loaderData =
+        cast<ComponentProperties['loaderData']>(createLoaderData());
+      render(
+        <Home
+          loaderData={loaderData}
+          params={createParameters()}
+          matches={createMatches(loaderData)}
+          actionData={createActionData()}
+        />,
+      );
+
+      expect(
+        screen.getByRole('link', {name: '今夜90分で観られる1本'}),
+      ).toHaveAttribute('href', '/tonight');
+    });
+
     it('月替わりを「今月の1本」として日替わりより先に出す', () => {
       const loaderData =
         cast<ComponentProperties['loaderData']>(createLoaderData());
