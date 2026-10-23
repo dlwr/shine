@@ -111,6 +111,22 @@
     "data.topMovies[].uid",
     "data.topMovies[].year"
   ],
+  "languages:en:v1": [
+    "cachedAt",
+    "data[].awards[].isWinner",
+    "data[].awards[].slug",
+    "data[].isWinner",
+    "data[].posterUrl",
+    "data[].releaseDate",
+    "data[].title",
+    "data[].uid",
+    "data[].year"
+  ],
+  "languages:v1": [
+    "cachedAt",
+    "data[].code",
+    "data[].movieCount"
+  ],
   "movie:movie-beauty:related:v4": [
     "cachedAt",
     "data.en[].posterUrl",
