@@ -225,6 +225,13 @@
       "when": 1792111386662,
       "tag": "0031_tidy_jack_murdock",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1792718395800,
+      "tag": "0032_yielding_king_cobra",
+      "breakpoints": true
     }
   ]
 }

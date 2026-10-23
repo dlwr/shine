@@ -20,6 +20,7 @@ export const movies = sqliteTable(
     tmdbId: integer(),
     mediaType: text().notNull().default('movie'),
     releaseDate: text('release_date'),
+    runtime: integer(),
     createdAt: integer()
       .notNull()
       .default(sql`(unixepoch())`),
