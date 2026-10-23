@@ -278,7 +278,7 @@ describe('sns-post --dry-run', () => {
       POPEYE 選出
       ▶ U-NEXT 見放題 / 宅配レンタル
       今月はみんなでこれを観る。観たら感想や記事のリンクを映画ページに貼ってください。
-      shine-film.com/movies/monthly-uid
+      https://shine-film.com/movies/monthly-uid
 
       (dry-run: 投稿していません)"
     `);
@@ -301,7 +301,7 @@ describe('sns-post --dry-run', () => {
       今月の1本『ぬいぐるみとしゃべる人はやさしい』(2023)、もう観た？
       今月は残り半分。▶ U-NEXT 見放題 / 宅配レンタル
       観た人の記事・ポストが3件集まっています。観たら映画ページにリンクを貼ってください。
-      shine-film.com/movies/monthly-uid
+      https://shine-film.com/movies/monthly-uid
 
       (dry-run: 投稿していません)"
     `);
@@ -326,7 +326,7 @@ describe('sns-post --dry-run', () => {
       今月の1本『ぬいぐるみとしゃべる人はやさしい』(2023)、観た人の記事・ポストは3件。
       映画ページから読めます。
       来月の1本は『さざなみ』。明日から。
-      shine-film.com/movies/monthly-uid
+      https://shine-film.com/movies/monthly-uid
 
       (dry-run: 投稿していません)"
     `);
@@ -389,7 +389,7 @@ describe('sns-post --dry-run', () => {
       --- X投稿内容 ---
       今月の1本『ぬいぐるみとしゃべる人はやさしい』(2023)、観た人の記事・ポストは3件。
       映画ページから読めます。
-      shine-film.com/movies/monthly-uid
+      https://shine-film.com/movies/monthly-uid
 
       (dry-run: 投稿していません)"
     `);
@@ -414,7 +414,7 @@ describe('sns-post --dry-run', () => {
       --- X投稿内容 ---
       今月の1本『ぬいぐるみとしゃべる人はやさしい』(2023)、観た人の記事・ポストは3件。
       映画ページから読めます。
-      shine-film.com/movies/monthly-uid
+      https://shine-film.com/movies/monthly-uid
 
       (dry-run: 投稿していません)"
     `);
