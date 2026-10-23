@@ -73,7 +73,7 @@ describe('TonightService.listPool', () => {
     await seedMovie(database, 'movie-90', 90);
     await seedMovie(database, 'movie-91', 91);
 
-    const pool = await service.listPool();
+    const pool = await service.listPool(90);
 
     expect(pool.map(movie => movie.uid)).toEqual(['movie-90']);
   });
@@ -82,7 +82,7 @@ describe('TonightService.listPool', () => {
     await seedMovie(database, 'movie-unknown', undefined);
     await seedMovie(database, 'movie-zero', 0);
 
-    const pool = await service.listPool();
+    const pool = await service.listPool(90);
 
     expect(pool).toEqual([]);
   });

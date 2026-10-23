@@ -26,15 +26,16 @@ const mockPick = {
     },
   ],
   poolSize: 1508,
+  maxRuntime: 90,
 };
 
 const cast = <T,>(value?: unknown): T => value as T;
 
-const runLoader = async () =>
+const runLoader = async (url = 'http://localhost/tonight') =>
   loader(
     cast<Route.LoaderArgs>({
       context: createMockContext(),
-      request: new Request('http://localhost/tonight'),
+      request: new Request(url),
       params: {},
       matches: [],
     }),
@@ -77,6 +78,41 @@ describe('tonight', () => {
     expect(screen.getByRole('link', {name: '別の1本を引く'})).toHaveAttribute(
       'href',
       '/tonight',
+    );
+  });
+
+  it('?m= の分数で引く', async () => {
+    await runLoader('http://localhost/tonight?m=60');
+
+    expect(vi.mocked(fetch).mock.calls[0][0]).toMatch(/\/tonight\?max=60$/);
+  });
+
+  it('選べない分数は 404 にする', async () => {
+    await expect(
+      runLoader('http://localhost/tonight?m=45'),
+    ).rejects.toMatchObject({status: 404});
+  });
+
+  it('ほかの分数へのリンクを出す', async () => {
+    renderPage(await runLoader());
+
+    expect(screen.getByRole('link', {name: '60分'})).toHaveAttribute(
+      'href',
+      '/tonight?m=60',
+    );
+  });
+
+  it('別の1本は同じ分数で引き直す', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({...mockPick, maxRuntime: 120}),
+    } as Response);
+    renderPage(await runLoader('http://localhost/tonight?m=120'));
+
+    expect(screen.getByRole('link', {name: '別の1本を引く'})).toHaveAttribute(
+      'href',
+      '/tonight?m=120',
     );
   });
 

@@ -80,6 +80,49 @@ describe('GET /tonight', () => {
     expect(response.headers.get('Cache-Control')).toBe('no-store');
   });
 
+  it('?max= の分数以内から選ぶ', async () => {
+    await database.insert(movies).values([
+      {uid: 'movie-58', runtime: 58},
+      {uid: 'movie-85', runtime: 85},
+    ]);
+    await database.insert(nominations).values(
+      ['movie-58', 'movie-85'].map(movieUid => ({
+        movieUid,
+        ceremonyUid: 'ceremony-cannes',
+        categoryUid: 'cat-palme',
+      })),
+    );
+
+    const response = await tonightRoutes.request('/?max=60', {}, environment);
+    const body: TonightPick = await response.json();
+
+    expect(body.movie.uid).toBe('movie-58');
+  });
+
+  it('選んだ分数を返す', async () => {
+    await database.insert(movies).values({uid: 'movie-58', runtime: 58});
+    await database.insert(nominations).values({
+      movieUid: 'movie-58',
+      ceremonyUid: 'ceremony-cannes',
+      categoryUid: 'cat-palme',
+    });
+
+    const response = await tonightRoutes.request('/?max=60', {}, environment);
+    const body: TonightPick = await response.json();
+
+    expect(body.maxRuntime).toBe(60);
+  });
+
+  it.each(['45', '100', 'abc'])('max=%s は 404 を返す', async max => {
+    const response = await tonightRoutes.request(
+      `/?max=${max}`,
+      {},
+      environment,
+    );
+
+    expect(response.status).toBe(404);
+  });
+
   it('候補が無ければ 404 を返す', async () => {
     const response = await tonightRoutes.request('/', {}, environment);
 

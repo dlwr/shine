@@ -8,15 +8,22 @@ import {readThroughCache} from '../utils/read-through-cache';
 
 export const tonightRoutes = new Hono<{Bindings: Environment}>();
 
+const MAX_RUNTIME_CHOICES = new Set([60, 90, 120]);
+
 tonightRoutes.get('/', async c => {
+  const maxRuntime = Number(c.req.query('max') ?? '90');
+  if (!MAX_RUNTIME_CHOICES.has(maxRuntime)) {
+    return c.json({error: 'Runtime not found'}, 404);
+  }
+
   const {data: pool = []} = await readThroughCache(
     c,
     new EdgeCache(c.env.CACHE_KV),
     {
-      key: 'tonight:pool:v1',
+      key: `tonight:pool:${maxRuntime}:v1`,
       ttl: 604_800,
       edgeTtl: IMPORTED_DATA_EDGE_TTL,
-      load: async () => new TonightService(c.env).listPool(),
+      load: async () => new TonightService(c.env).listPool(maxRuntime),
     },
   );
   const movie = pool[Math.floor(Math.random() * pool.length)];
@@ -27,6 +34,7 @@ tonightRoutes.get('/', async c => {
   const body: TonightPick = {
     movie,
     awards: awardLegend([movie]),
+    maxRuntime,
     poolSize: pool.length,
   };
   return c.json(body, 200, {'Cache-Control': 'no-store'});
