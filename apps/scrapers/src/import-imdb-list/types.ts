@@ -19,6 +19,7 @@ export type TmdbMovieDetails = {
   original_title: string;
   original_language?: string;
   release_date?: string;
+  runtime?: number;
   poster_path?: string;
   imdb_id?: string;
   overview?: string;

@@ -62,6 +62,7 @@ export async function insertMovieWithTranslations({
     mediaType,
     ...(tmdbId !== undefined && {tmdbId}),
     ...(releaseDate !== undefined && {releaseDate}),
+    ...(tmdbMovie.runtime && {runtime: tmdbMovie.runtime}),
   };
 
   await database.insert(movies).values(movieValues);

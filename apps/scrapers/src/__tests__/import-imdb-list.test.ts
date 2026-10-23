@@ -8,7 +8,10 @@ import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from '@shine/database/testing';
 import {afterEach, describe, expect, it} from 'vitest';
-import {insertTranslations} from '../import-imdb-list/insert-movie';
+import {
+  insertMovieWithTranslations,
+  insertTranslations,
+} from '../import-imdb-list/insert-movie';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -134,5 +137,30 @@ describe('insertTranslations', () => {
 
     const flags = await titleFlags(database, movieUid);
     expect(flags.get('ja')).toBe(0);
+  });
+});
+
+describe('insertMovieWithTranslations', () => {
+  it('TMDb の上映時間を保存する', async () => {
+    const {database} = await createTestDatabase('ja');
+
+    await insertMovieWithTranslations({
+      database,
+      tmdbConfig: undefined,
+      imdbId: 'tt0000001',
+      tmdbMovie: {
+        id: 1,
+        title: 'Kokuho',
+        original_title: 'Kokuho',
+        original_language: 'ja',
+        runtime: 175,
+      },
+    });
+
+    const [movie] = await database
+      .select()
+      .from(movies)
+      .where(eq(movies.imdbId, 'tt0000001'));
+    expect(movie.runtime).toBe(175);
   });
 });
