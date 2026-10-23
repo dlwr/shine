@@ -61,7 +61,12 @@ export default function MovieDetail({
     handleCaptchaTokenChange,
     isLoadingTitle,
     submissionResult,
-  } = useArticleLinkForm(isTestMode, actionData, apiUrl);
+  } = useArticleLinkForm(
+    isTestMode,
+    actionData,
+    apiUrl,
+    'sharedLink' in loaded ? loaded.sharedLink : undefined,
+  );
 
   if (isLoaderError(loaded)) {
     return (
