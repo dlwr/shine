@@ -25,7 +25,9 @@ jobs:
 
       - name: Install CJK fonts
         timeout-minutes: 10
-        run: scripts/retry.sh timeout 180 sh -c 'apt-get update -qq && apt-get install -y -qq fonts-noto-cjk'
+        run: |
+          sed -i -e 's|http://archive.ubuntu.com|http://azure.archive.ubuntu.com|g' -e 's|http://security.ubuntu.com|http://azure.archive.ubuntu.com|g' /etc/apt/sources.list.d/ubuntu.sources
+          scripts/retry.sh timeout 180 sh -c 'apt-get update -qq && apt-get install -y -qq fonts-noto-cjk'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
