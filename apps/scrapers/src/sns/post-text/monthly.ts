@@ -1,4 +1,4 @@
-import {formatTitle, withBareUrl, withHashtag} from './framing';
+import {formatTitle, withBareUrl, withHashtag, withLinkUrl} from './framing';
 import {buildSelectionLines, type SelectionPostInput} from './selection';
 
 function buildMonthlyBody(input: SelectionPostInput): string {
@@ -15,7 +15,7 @@ export function buildMonthlyPostText(input: SelectionPostInput): string {
 export function buildMonthlyXPostText(
   input: SelectionPostInput & {url: string},
 ): string {
-  return withBareUrl(buildMonthlyBody(input), input.url);
+  return withLinkUrl(buildMonthlyBody(input), input.url);
 }
 
 type MonthlyPreviewInput = SelectionPostInput & {startDate: string};
@@ -41,7 +41,7 @@ export function buildMonthlyPreviewPostText(
 export function buildMonthlyPreviewXPostText(
   input: MonthlyPreviewInput & {url: string},
 ): string {
-  return withBareUrl(buildMonthlyPreviewBody(input), input.url);
+  return withLinkUrl(buildMonthlyPreviewBody(input), input.url);
 }
 
 type MonthlyReminderInput = {
@@ -80,7 +80,7 @@ export function buildMonthlyReminderPostText(
 export function buildMonthlyReminderXPostText(
   input: MonthlyReminderInput & {url: string},
 ): string {
-  return withBareUrl(buildMonthlyReminderBody(input), input.url);
+  return withLinkUrl(buildMonthlyReminderBody(input), input.url);
 }
 
 type MonthlyLinksInput = {
@@ -149,5 +149,5 @@ export function buildMonthlyRoundupPostText(
 export function buildMonthlyRoundupXPostText(
   input: MonthlyRoundupInput & {url: string},
 ): string {
-  return withBareUrl(buildMonthlyRoundupBody(input), input.url);
+  return withLinkUrl(buildMonthlyRoundupBody(input), input.url);
 }
