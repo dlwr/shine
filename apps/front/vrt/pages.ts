@@ -17,6 +17,7 @@ export const pages = [
   '/on-this-day',
   '/languages',
   '/languages/en',
+  '/tonight',
   '/daily',
   '/weekly',
   '/monthly',

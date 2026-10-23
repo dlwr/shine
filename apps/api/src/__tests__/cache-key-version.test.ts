@@ -15,6 +15,7 @@ import {peopleRoutes} from '../routes/people';
 import {quizRoutes} from '../routes/quiz';
 import {searchRoutes} from '../routes/search';
 import {selectionsRoutes} from '../routes/selections';
+import {tonightRoutes} from '../routes/tonight';
 import {uncrownedRoutes} from '../routes/uncrowned';
 import {watchedRoutes} from '../routes/watched';
 import {yearsRoutes} from '../routes/years';
@@ -69,6 +70,7 @@ const exercises: Exercise[] = [
   {name: 'この日に初公開された映画', routes: onThisDayRoutes, path: '/09-15'},
   {name: '言語の一覧', routes: languagesRoutes, path: '/'},
   {name: '言語別の映画', routes: languagesRoutes, path: '/en'},
+  {name: '今夜 90 分の 1 本', routes: tonightRoutes, path: '/'},
   {name: '賞の交差', routes: crossingsRoutes, path: '/'},
   {name: '無冠の映画', routes: uncrownedRoutes, path: '/'},
   {name: '観た映画チェックのリスト', routes: watchedRoutes, path: '/lists'},

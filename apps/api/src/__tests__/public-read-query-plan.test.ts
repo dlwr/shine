@@ -13,6 +13,7 @@ import {PersonCrossingsService} from '../services/person-crossings-service';
 import {PersonUncrownedService} from '../services/person-uncrowned-service';
 import {QuizService} from '../services/quiz-service';
 import {SelectionsService} from '../services/selections-service';
+import {TonightService} from '../services/tonight-service';
 import {UncrownedService} from '../services/uncrowned-service';
 import {WatchedService} from '../services/watched-service';
 import {LanguagesService} from '../services/languages-service';
@@ -258,6 +259,10 @@ const exercises: Exercise[] = [
   {
     name: 'この日に初公開された映画',
     run: environment => new OnThisDayService(environment).getOnThisDay('09-15'),
+  },
+  {
+    name: '今夜 90 分の 1 本の候補',
+    run: environment => new TonightService(environment).listPool(),
   },
   {
     name: '言語の一覧',
