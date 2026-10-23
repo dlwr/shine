@@ -9,6 +9,7 @@ export default [
   route('monthly', 'routes/monthly.tsx'),
   route('monthly.ics', 'routes/monthly-ics.tsx'),
   route('now', 'routes/now.tsx'),
+  route('share', 'routes/share.tsx'),
   route('people', 'routes/people.tsx'),
   route('people/crossings', 'routes/people.crossings.tsx'),
   route('people/uncrowned', 'routes/people.uncrowned.tsx'),
