@@ -24,6 +24,10 @@ export function MovieHero({
     metaItems.push(movieDetail.originalLanguage.toUpperCase());
   }
 
+  if (movieDetail.runtime) {
+    metaItems.push(`${movieDetail.runtime}分`);
+  }
+
   return (
     <div className="flex gap-5 mb-8 pb-8 border-b-2 border-ink">
       <PosterFrame
