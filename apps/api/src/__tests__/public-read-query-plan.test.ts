@@ -15,6 +15,7 @@ import {QuizService} from '../services/quiz-service';
 import {SelectionsService} from '../services/selections-service';
 import {UncrownedService} from '../services/uncrowned-service';
 import {WatchedService} from '../services/watched-service';
+import {LanguagesService} from '../services/languages-service';
 import {OnThisDayService} from '../services/on-this-day-service';
 import {YearsService} from '../services/years-service';
 import {seededPeopleUids, seedPublicData} from './public-data-seed';
@@ -257,6 +258,15 @@ const exercises: Exercise[] = [
   {
     name: 'この日に初公開された映画',
     run: environment => new OnThisDayService(environment).getOnThisDay('09-15'),
+  },
+  {
+    name: '言語の一覧',
+    run: environment => new LanguagesService(environment).listLanguages(),
+  },
+  {
+    name: '言語別の映画',
+    run: environment =>
+      new LanguagesService(environment).getLanguageMovies('en'),
   },
   {
     name: '賞の交差',

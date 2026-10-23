@@ -1,7 +1,6 @@
 import type {Route} from './+types/on-this-day';
-import {AwardTags} from '@/components/editorial/award-tags';
+import {AwardTaggedMovieRow} from '@/components/editorial/award-tagged-movie-row';
 import {Masthead} from '@/components/editorial/masthead';
-import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {getLocaleFromRequest} from '@/lib/locale';
 import {NOINDEX_FOLLOW, buildSocialMeta, SITE_URL} from '@/lib/meta';
@@ -14,8 +13,6 @@ import {
   shiftMonthDay,
   yearInJapan,
 } from '@/lib/on-this-day';
-
-type OnThisDayMovieData = OnThisDayData['movies'][number];
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {detail, locale} = loaderData;
@@ -54,39 +51,9 @@ export async function loader({context, request}: Route.LoaderArgs) {
   };
 }
 
-function MovieRow({
-  movie,
-  awards,
-  currentYear,
-}: {
-  movie: OnThisDayMovieData;
-  awards: OnThisDayData['awards'];
-  currentYear: number;
-}) {
-  const title = movie.title ?? 'Unknown Title';
-  const year = Number(movie.releaseDate.slice(0, 4));
-
-  return (
-    <a
-      href={`/movies/${movie.uid}`}
-      className="flex items-center gap-4 py-3 no-underline text-ink">
-      <PosterFrame
-        posterUrl={movie.posterUrl}
-        alt={`${title} poster`}
-        className="w-16 shrink-0"
-        displaySize="w185"
-      />
-      <span className="flex-1 min-w-0 flex flex-col gap-1.5">
-        <span className="font-display font-extrabold text-base md:text-lg leading-tight">
-          {title}
-        </span>
-        <span className="font-label text-xs text-ink-muted">
-          {`${year}年・公開から${currentYear - year}年`}
-        </span>
-        <AwardTags tags={movie.awards} legend={awards} />
-      </span>
-    </a>
-  );
+function yearsSinceRelease(releaseDate: string, currentYear: number): string {
+  const year = Number(releaseDate.slice(0, 4));
+  return `${year}年・公開から${currentYear - year}年`;
 }
 
 function DayLink({monthDay, label}: {monthDay: string; label: string}) {
@@ -124,11 +91,11 @@ export default function OnThisDayPage({loaderData}: Route.ComponentProps) {
         ) : (
           <div className="border-t-[3px] border-ink divide-y divide-rule">
             {detail.movies.map(movie => (
-              <MovieRow
+              <AwardTaggedMovieRow
                 key={movie.uid}
                 movie={movie}
-                awards={detail.awards}
-                currentYear={currentYear}
+                subtitle={yearsSinceRelease(movie.releaseDate, currentYear)}
+                legend={detail.awards}
               />
             ))}
           </div>

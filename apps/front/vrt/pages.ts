@@ -15,6 +15,8 @@ export const pages = [
   '/years',
   '/years/2000',
   '/on-this-day',
+  '/languages',
+  '/languages/en',
   '/daily',
   '/weekly',
   '/monthly',
