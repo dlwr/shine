@@ -85,6 +85,11 @@ export default function AwardsIndex({loaderData}: Route.ComponentProps) {
             無冠の映画を見る
           </a>
           <a
+            href="/languages"
+            className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold no-underline text-ink">
+            言語で探す
+          </a>
+          <a
             href="/watched"
             className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold no-underline text-ink">
             観た映画チェック

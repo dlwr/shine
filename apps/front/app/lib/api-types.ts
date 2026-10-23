@@ -40,6 +40,7 @@ import type {
   YearsListResponse,
 } from '@shine/api/types/responses';
 import type {PersonUncrowned, Uncrowned} from '@shine/api/types/uncrowned';
+import type {LanguagePage, LanguageSummary} from '@shine/api/types/languages';
 import type {OnThisDay} from '@shine/api/types/on-this-day';
 import type {YearDetail, YearSummary} from '@shine/api/types/years';
 
@@ -84,6 +85,8 @@ export type YearSummaryData = Json<YearSummary>;
 export type YearsListData = Json<YearsListResponse>;
 export type YearDetailData = Json<YearDetail>;
 export type OnThisDayData = Json<OnThisDay>;
+export type LanguageSummaryData = Json<LanguageSummary>;
+export type LanguagePageData = Json<LanguagePage>;
 
 export type CrossingsData = Json<AwardCrossings>;
 export type UncrownedData = Json<Uncrowned>;
