@@ -130,6 +130,42 @@ describe('useArticleLinkForm', () => {
     vi.unstubAllGlobals();
   });
 
+  it('共有で受け取った URL を最初から入れておく', () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({})));
+
+    const {result} = renderHook(() =>
+      useArticleLinkForm(
+        false,
+        undefined,
+        'https://api.example',
+        'https://example.com/post',
+      ),
+    );
+
+    expect(result.current.formData.url).toBe('https://example.com/post');
+  });
+
+  it('共有で受け取った URL の題名を取りに行く', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json({title: '記事のタイトル'}));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const {result} = renderHook(() =>
+      useArticleLinkForm(
+        false,
+        undefined,
+        'https://api.example',
+        'https://example.com/post',
+      ),
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(TITLE_FETCH_DEBOUNCE_MS);
+    });
+
+    expect(result.current.formData.title).toBe('記事のタイトル');
+  });
+
   it('URL の入力ごとではなく、入力が止まってから 1 回だけ題名を取りに行く', async () => {
     const fetchMock = vi
       .fn()
