@@ -262,7 +262,7 @@ const exercises: Exercise[] = [
   },
   {
     name: '今夜 90 分の 1 本の候補',
-    run: environment => new TonightService(environment).listPool(),
+    run: environment => new TonightService(environment).listPool(90),
   },
   {
     name: '言語の一覧',

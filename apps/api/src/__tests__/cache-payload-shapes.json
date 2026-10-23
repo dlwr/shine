@@ -442,7 +442,7 @@
     "data.watchedCount",
     "data.year"
   ],
-  "tonight:pool:v1": [
+  "tonight:pool:90:v1": [
     "cachedAt",
     "data[].awards[].isWinner",
     "data[].awards[].slug",

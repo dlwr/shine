@@ -4,4 +4,5 @@ export type TonightPick = {
   movie: AwardTaggedMovie;
   awards: AwardLegend[];
   poolSize: number;
+  maxRuntime: number;
 };
