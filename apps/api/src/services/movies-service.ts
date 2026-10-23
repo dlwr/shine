@@ -132,7 +132,9 @@ export class MoviesService extends BaseService {
   async getMovieDetails(
     movieId: string,
     locale = 'ja',
-  ): Promise<MovieSelection & {worthIndexing: boolean}> {
+  ): Promise<
+    MovieSelection & {worthIndexing: boolean; runtime: number | undefined}
+  > {
     // Get movie with title and description
     const movieQuery = this.database
       .select({
@@ -142,6 +144,7 @@ export class MoviesService extends BaseService {
         imdbId: movies.imdbId,
         tmdbId: movies.tmdbId,
         mediaType: movies.mediaType,
+        runtime: movies.runtime,
         title: sql<string | null>`
 					(
 					  SELECT content
@@ -240,9 +243,13 @@ export class MoviesService extends BaseService {
 
     const movie = movieResult[0];
 
-    const movieDetails: MovieSelection & {worthIndexing: boolean} = {
+    const movieDetails: MovieSelection & {
+      worthIndexing: boolean;
+      runtime: number | undefined;
+    } = {
       uid: movie.uid,
       year: movie.year ?? 0,
+      runtime: movie.runtime ?? undefined,
       originalLanguage: movie.originalLanguage,
       imdbId: movie.imdbId ?? undefined,
       tmdbId: movie.tmdbId ?? undefined,

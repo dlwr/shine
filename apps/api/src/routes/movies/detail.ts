@@ -40,6 +40,7 @@ movieDetailRoutes.get('/:id', async c => {
     const result: MovieDetail = {
       uid: movieDetails.uid,
       year: movieDetails.year,
+      runtime: movieDetails.runtime,
       originalLanguage: movieDetails.originalLanguage,
       imdbId: movieDetails.imdbId,
       tmdbId: movieDetails.tmdbId,
