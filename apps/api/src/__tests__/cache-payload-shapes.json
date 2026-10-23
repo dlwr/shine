@@ -118,6 +118,7 @@
     "data[].isWinner",
     "data[].posterUrl",
     "data[].releaseDate",
+    "data[].runtime",
     "data[].title",
     "data[].uid",
     "data[].year"
@@ -440,6 +441,17 @@
     "data.uid",
     "data.watchedCount",
     "data.year"
+  ],
+  "tonight:pool:v1": [
+    "cachedAt",
+    "data[].awards[].isWinner",
+    "data[].awards[].slug",
+    "data[].isWinner",
+    "data[].posterUrl",
+    "data[].runtime",
+    "data[].title",
+    "data[].uid",
+    "data[].year"
   ],
   "uncrowned:v12": [
     "cachedAt",

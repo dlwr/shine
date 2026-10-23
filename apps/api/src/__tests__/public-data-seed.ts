@@ -78,7 +78,7 @@ export async function seedPublicData(database: Database): Promise<void> {
       originalLanguage: 'en',
       releaseDate: '1999-09-15',
     },
-    {uid: 'movie-green', year: 1999, originalLanguage: 'en'},
+    {uid: 'movie-green', year: 1999, originalLanguage: 'en', runtime: 89},
     {uid: 'movie-gladiator', year: 2000, originalLanguage: 'en'},
     {
       uid: 'movie-deleted',

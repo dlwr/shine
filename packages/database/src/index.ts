@@ -10,6 +10,7 @@ import * as schema from './schema/index';
 // Re-export drizzle-orm utilities
 export {
   and,
+  between,
   desc,
   eq,
   gt,
