@@ -45,7 +45,7 @@ jobs:
 
       - name: Upload report
         if: failure()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: vrt-report
           path: apps/front/playwright-report
@@ -57,7 +57,7 @@ jobs:
 
       - name: Upload snapshots
         if: failure() && steps.vrt.outcome == 'failure'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: vrt-snapshots
           path: apps/front/vrt/__screenshots__
