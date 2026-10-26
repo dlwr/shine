@@ -27,7 +27,8 @@ jobs:
         timeout-minutes: 10
         run: |
           sed -i -e 's|http://archive.ubuntu.com|http://azure.archive.ubuntu.com|g' -e 's|http://security.ubuntu.com|http://azure.archive.ubuntu.com|g' /etc/apt/sources.list.d/ubuntu.sources
-          scripts/retry.sh timeout 180 sh -c 'apt-get update -qq && apt-get install -y -qq fonts-noto-cjk'
+          printf 'Acquire::ForceIPv4 "true";\nAcquire::http::Timeout "20";\nAcquire::Retries "3";\n' > /etc/apt/apt.conf.d/99ci
+          scripts/retry.sh timeout 180 sh -c 'apt-get update && apt-get install -y -qq fonts-noto-cjk'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
