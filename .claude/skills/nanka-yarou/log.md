@@ -107,7 +107,7 @@
 - **TTFB は必ずブラウザの UA で測る**。curl・node fetch・短い UA は isbot でボット扱いになり、entry.server が allReady まで待つ経路を測ってしまう
 - `gh pr merge` は `gh pr checks --watch` が "no checks reported" を返しても通ってしまう。push 直後はチェックが登録されるのを待ってから watch する
 - zsh は変数を単語分割しない（ファイル一覧は `${=F}`）。`localeCompare('ja')` はヴ を う の位置に置く
-- **mac の `vrt:update`（Docker）が miniflare の D1 の migrate で `SocketError: other side closed` になって撮れないことがある**（基準の PNG を消してから落ちるので `git checkout -- apps/front/vrt/__screenshots__` で戻す）。そのときは push して CI の VRT を落とし、artifact の `vrt-report` の index.html に埋め込まれた zip の JSON から `*-actual.png` の path を引いて基準にする
+- **mac の `vrt:update`（Docker）が miniflare の D1 の migrate で `SocketError: other side closed` になって撮れないことがある**（基準の PNG を消してから落ちるので `git checkout -- apps/front/vrt/__screenshots__` で戻す）。基準は push して CI の VRT を落とし、`vrt:pull` で取ってくる（#745）
 - VRT の映画ページのはみ出し検査は `networkidle` 待ちで揺れることがある（流し直しで通る）
 
 ## 残っている候補
