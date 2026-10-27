@@ -5,7 +5,13 @@ import {MovieExits} from './movie-exits';
 
 describe('MovieExits', () => {
   it('同じ言語の映画へリンクする', () => {
-    render(<MovieExits originalLanguage="fr" releaseDate={undefined} />);
+    render(
+      <MovieExits
+        movieUid="movie-1"
+        originalLanguage="fr"
+        releaseDate={undefined}
+      />,
+    );
 
     expect(
       screen.getByRole('link', {name: 'フランス語の映画'}),
@@ -13,7 +19,13 @@ describe('MovieExits', () => {
   });
 
   it('同じ日に初公開された映画へリンクする', () => {
-    render(<MovieExits originalLanguage="fr" releaseDate="1999-09-05" />);
+    render(
+      <MovieExits
+        movieUid="movie-1"
+        originalLanguage="fr"
+        releaseDate="1999-09-05"
+      />,
+    );
 
     expect(
       screen.getByRole('link', {name: '9月5日に初公開された映画'}),
@@ -21,17 +33,43 @@ describe('MovieExits', () => {
   });
 
   it('公開日が分からなければ初公開の日へのリンクを出さない', () => {
-    render(<MovieExits originalLanguage="fr" releaseDate={undefined} />);
+    render(
+      <MovieExits
+        movieUid="movie-1"
+        originalLanguage="fr"
+        releaseDate={undefined}
+      />,
+    );
 
     expect(screen.queryByRole('link', {name: /初公開/})).toBeNull();
   });
 
   it('今日の二本立てへリンクする', () => {
-    render(<MovieExits originalLanguage="fr" releaseDate={undefined} />);
+    render(
+      <MovieExits
+        movieUid="movie-1"
+        originalLanguage="fr"
+        releaseDate={undefined}
+      />,
+    );
 
     expect(screen.getByRole('link', {name: '今日の二本立て'})).toHaveAttribute(
       'href',
       '/double-feature',
     );
+  });
+
+  it('この映画から別の映画への距離へリンクする', () => {
+    render(
+      <MovieExits
+        movieUid="movie-1"
+        originalLanguage="fr"
+        releaseDate={undefined}
+      />,
+    );
+
+    expect(
+      screen.getByRole('link', {name: 'この映画から別の映画への距離'}),
+    ).toHaveAttribute('href', '/connect?from=movie-1');
   });
 });

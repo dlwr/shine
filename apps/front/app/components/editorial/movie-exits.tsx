@@ -1,6 +1,7 @@
 import {languageName} from '@/lib/languages';
 
 function exitLinks(
+  movieUid: string,
   originalLanguage: string,
   releaseDate: string | undefined,
 ): Array<{href: string; label: string}> {
@@ -23,14 +24,20 @@ function exitLinks(
   links.push(
     {href: '/double-feature', label: '今日の二本立て'},
     {href: '/tonight', label: '今夜90分の1本'},
+    {
+      href: `/connect?from=${movieUid}`,
+      label: 'この映画から別の映画への距離',
+    },
   );
   return links;
 }
 
 export function MovieExits({
+  movieUid,
   originalLanguage,
   releaseDate,
 }: {
+  movieUid: string;
   originalLanguage: string;
   releaseDate: string | undefined;
 }) {
@@ -38,7 +45,7 @@ export function MovieExits({
     <section className="mb-8">
       <p className="mb-3 font-label text-xs text-ink-muted">この映画から辿る</p>
       <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
-        {exitLinks(originalLanguage, releaseDate).map(link => (
+        {exitLinks(movieUid, originalLanguage, releaseDate).map(link => (
           <li key={link.href}>
             <a
               href={link.href}
