@@ -72,6 +72,14 @@ const person: PersonData = {
       grouping: 'list',
     },
   ],
+  collaborators: [
+    {
+      uid: 'person-nakadai',
+      name: '仲代達矢',
+      sharedMovieCount: 11,
+      sampleMovieTitle: '乱',
+    },
+  ],
 };
 
 const loaderData = {person, locale: 'ja' as const};
@@ -365,5 +373,44 @@ describe('PersonPage', () => {
     renderPage();
 
     expect(screen.getByText('受賞歴')).toBeInTheDocument();
+  });
+
+  it('よく組む人を人物ページへリンクする', () => {
+    renderPage();
+
+    expect(screen.getByRole('link', {name: /仲代達矢/})).toHaveAttribute(
+      'href',
+      '/people/person-nakadai',
+    );
+  });
+
+  it('よく組む人に共通作品の本数を出す', () => {
+    renderPage();
+
+    expect(screen.getByRole('link', {name: /仲代達矢/})).toHaveTextContent(
+      '11本',
+    );
+  });
+
+  it('よく組む人に代表の共通作品の題名を出す', () => {
+    renderPage();
+
+    expect(screen.getByRole('link', {name: /仲代達矢/})).toHaveTextContent(
+      '『乱』',
+    );
+  });
+
+  it('よく組む人がいなければ見出しを出さない', () => {
+    renderPage({collaborators: []});
+
+    expect(screen.queryByRole('heading', {name: 'よく組む人'})).toBeNull();
+  });
+
+  it('よく組む人がいれば見出しを出す', () => {
+    renderPage();
+
+    expect(
+      screen.getByRole('heading', {name: 'よく組む人'}),
+    ).toBeInTheDocument();
   });
 });
