@@ -18,6 +18,7 @@ export const pages = [
   '/languages',
   '/languages/en',
   '/tonight',
+  '/double-feature',
   '/daily',
   '/weekly',
   '/monthly',
