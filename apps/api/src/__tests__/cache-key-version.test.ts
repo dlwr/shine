@@ -9,6 +9,7 @@ import {afterAll, beforeAll, describe, expect, it} from 'vitest';
 import {awardsRoutes} from '../routes/awards';
 import {connectRoutes} from '../routes/connect';
 import {crossingsRoutes} from '../routes/crossings';
+import {shiritoriRoutes} from '../routes/shiritori';
 import {doubleFeatureRoutes} from '../routes/double-feature';
 import {languagesRoutes} from '../routes/languages';
 import {moviesRoutes} from '../routes/movies';
@@ -80,6 +81,7 @@ const exercises: Exercise[] = [
     routes: connectRoutes,
     path: '/?from=movie-green&to=movie-gladiator',
   },
+  {name: '映画しりとり', routes: shiritoriRoutes, path: '/'},
   {name: '賞の交差', routes: crossingsRoutes, path: '/'},
   {name: '無冠の映画', routes: uncrownedRoutes, path: '/'},
   {name: '観た映画チェックのリスト', routes: watchedRoutes, path: '/lists'},
