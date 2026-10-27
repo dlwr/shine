@@ -8,6 +8,15 @@ on:
       - 'packages/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/vrt.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/front/**'
+      - 'apps/api/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/vrt.yml'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -23,7 +32,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      # runner によってはミラーからの取得が細って止まるので、.deb を cache に置いて apt を通さない
+      # runner によってはミラーからの取得が細って止まるので、.deb を cache に置いて apt を通さない。PR で保存した cache は他の PR から読めないので main の push でも走らせる
       - name: Restore CJK font packages
         id: font-cache
         uses: actions/cache/restore@v6
