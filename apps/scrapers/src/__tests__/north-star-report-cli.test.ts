@@ -85,10 +85,10 @@ describe('north-star-report', () => {
     );
   });
 
-  it('北極星の後ろに先行指標を続けて送る', async () => {
+  it('北極星と先行指標の後ろに今月の1本のリンクを続けて送る', async () => {
     await runCli();
 
-    expect(sentContent()).toMatch(/はてブ 4\n\n先行指標: PV 10$/);
+    expect(sentContent()).toMatch(/^先行指標: PV 10\n\n補助指標/);
   });
 
   it('先行指標は今月の1本の映画ページを渡して取る', async () => {
@@ -99,7 +99,7 @@ describe('north-star-report', () => {
     ]);
   });
 
-  it('先行指標の取得に失敗しても北極星は送る', async () => {
+  it('先行指標の取得に失敗しても今月の1本のリンクは送る', async () => {
     vi.mocked(leadingIndicatorReport).mockRejectedValue(new Error('timeout'));
 
     await runCli();

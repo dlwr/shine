@@ -46,7 +46,7 @@ async function main(options: {months: number; dryRun: boolean}): Promise<void> {
           now,
         )
       : 'CLOUDFLARE_API_TOKEN 未設定のため先行指標をスキップ';
-    const content = `${northStar.content}\n\n${leadingIndicator}`;
+    const content = `${leadingIndicator}\n\n${northStar.content}`;
 
     console.log(content);
 
@@ -83,7 +83,7 @@ export function createCommand(): Command {
   return new Command()
     .name('north-star-report')
     .description(
-      '月替わりの映画に他人が付けた関連リンクの数と、直近 7 日の先行指標（日本からの訪問）を Discord に投稿します',
+      '直近 7 日の北極星（サイト内から次のページを開いた回数）と先行指標、月替わりの映画に他人が付けた関連リンクの数を Discord に投稿します',
     )
     .option(
       '--months <N>',

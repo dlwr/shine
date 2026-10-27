@@ -10,7 +10,12 @@ import {
 const credentials = {token: 'token', account: 'account', siteTag: 'site'};
 
 function trafficResponse(
-  rows: Array<{path: string; pageviews: number; visits: number}>,
+  rows: Array<{
+    path: string;
+    pageviews: number;
+    visits: number;
+    refererHost?: string;
+  }>,
 ): Response {
   return Response.json(
     {
@@ -21,7 +26,10 @@ function trafficResponse(
               rumPageloadEventsAdaptiveGroups: rows.map(row => ({
                 count: row.pageviews,
                 sum: {visits: row.visits},
-                dimensions: {requestPath: row.path},
+                dimensions: {
+                  requestPath: row.path,
+                  refererHost: row.refererHost ?? '',
+                },
               })),
             },
           ],
@@ -60,8 +68,38 @@ describe('fetchJapanPageTraffic', () => {
     );
 
     expect(result).toStrictEqual([
-      {path: '/', pageviews: 60, visits: 20},
-      {path: '/quiz', pageviews: 40, visits: 10},
+      {path: '/', pageviews: 60, visits: 20, onwardPageviews: 0},
+      {path: '/quiz', pageviews: 40, visits: 10, onwardPageviews: 0},
+    ]);
+  });
+
+  it('サイト内から開いた PV をパスごとに数える', async () => {
+    const fetchImpl = vi.fn(async () =>
+      trafficResponse([
+        {
+          path: '/movies/a',
+          pageviews: 2,
+          visits: 2,
+          refererHost: 'www.bing.com',
+        },
+        {
+          path: '/movies/a',
+          pageviews: 3,
+          visits: 0,
+          refererHost: 'shine-film.com',
+        },
+      ]),
+    );
+
+    const result = await fetchJapanPageTraffic(
+      credentials,
+      new Date('2026-09-15T00:00:00.000Z'),
+      new Date('2026-09-22T00:00:00.000Z'),
+      fetchImpl,
+    );
+
+    expect(result).toStrictEqual([
+      {path: '/movies/a', pageviews: 5, visits: 2, onwardPageviews: 3},
     ]);
   });
 
@@ -104,8 +142,8 @@ describe('fetchJapanPageTraffic', () => {
     );
 
     expect(result).toStrictEqual([
-      {path: '/', pageviews: 7, visits: 3},
-      {path: '/quiz', pageviews: 2, visits: 0},
+      {path: '/', pageviews: 7, visits: 3, onwardPageviews: 0},
+      {path: '/quiz', pageviews: 2, visits: 0, onwardPageviews: 0},
     ]);
   });
 
@@ -126,7 +164,9 @@ describe('fetchJapanPageTraffic', () => {
       RequestInit,
     ];
     const {query} = JSON.parse(init.body as string) as {query: string};
-    expect(query).toMatch(/dimensions\s*\{\s*date\s+requestPath\s*\}/);
+    expect(query).toMatch(
+      /dimensions\s*\{\s*date\s+requestPath\s+refererHost\s*\}/,
+    );
   });
 
   it('日本からの人の閲覧に絞り、窓を filter に入れる', async () => {
@@ -270,11 +310,16 @@ describe('leadingIndicatorReport', () => {
 
 describe('formatLeadingIndicator', () => {
   const traffic: PageTraffic[] = [
-    {path: '/', pageviews: 60, visits: 20},
-    {path: '/quiz', pageviews: 40, visits: 10},
-    {path: '/admin/movies/selections', pageviews: 14, visits: 3},
-    {path: '/movies/sep', pageviews: 9, visits: 1},
-    {path: '/people', pageviews: 5, visits: 2},
+    {path: '/', pageviews: 60, visits: 20, onwardPageviews: 0},
+    {path: '/quiz', pageviews: 40, visits: 10, onwardPageviews: 4},
+    {
+      path: '/admin/movies/selections',
+      pageviews: 14,
+      visits: 3,
+      onwardPageviews: 11,
+    },
+    {path: '/movies/sep', pageviews: 9, visits: 1, onwardPageviews: 8},
+    {path: '/people', pageviews: 5, visits: 2, onwardPageviews: 3},
   ];
   const window = {
     from: new Date('2026-09-15T10:00:00.000Z'),
@@ -292,7 +337,13 @@ describe('formatLeadingIndicator', () => {
     );
 
     expect(heading).toBe(
-      '先行指標（国=Japan・bot と /admin 除外、2026-09-15 19:00 〜 2026-09-22 18:00 JST）',
+      '北極星と先行指標（国=Japan・bot と /admin 除外、2026-09-15 19:00 〜 2026-09-22 18:00 JST）',
+    );
+  });
+
+  it('北極星としてサイト内から開いた PV を /admin を除いて足す', () => {
+    expect(formatLeadingIndicator(traffic, picks, window)).toContain(
+      '北極星（サイト内から次のページを開いた回数）: 15',
     );
   });
 
@@ -331,8 +382,8 @@ describe('formatLeadingIndicator', () => {
 
   it('値が全部 10 の倍数ならサンプル値だと注記する', () => {
     const sampled: PageTraffic[] = [
-      {path: '/', pageviews: 60, visits: 20},
-      {path: '/quiz', pageviews: 40, visits: 10},
+      {path: '/', pageviews: 60, visits: 20, onwardPageviews: 0},
+      {path: '/quiz', pageviews: 40, visits: 10, onwardPageviews: 10},
     ];
 
     expect(formatLeadingIndicator(sampled, picks, window)).toContain(

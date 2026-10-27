@@ -202,7 +202,7 @@ export function formatNorthStarReport(
 ): {content: string; hasOutsideLink: boolean} {
   const monthsWithOutsideLink = counts.filter(count => count.other > 0);
   const lines = [
-    `北極星（今月の1本に他人が付けたリンク）: ${tokyoDate(now)} 時点`,
+    `補助指標（今月の1本に他人が付けたリンク）: ${tokyoDate(now)} 時点`,
     `他人のリンクが付いた月: ${monthsWithOutsideLink.length} / ${counts.length}`,
     ...counts.map(
       count =>

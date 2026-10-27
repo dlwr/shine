@@ -2,8 +2,8 @@ name: North Star Report
 
 on:
   schedule:
-    # 毎月1日 00:30 UTC (09:30 JST)
-    - cron: '30 0 1 * *'
+    # 毎週月曜 00:30 UTC (09:30 JST)
+    - cron: '30 0 * * 1'
   workflow_dispatch:
     inputs:
       dry_run:
