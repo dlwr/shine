@@ -318,6 +318,13 @@ function Movies({
           </a>
         </p>
       )}
+      {locale === 'ja' && (
+        <p className="mt-2 font-display text-base">
+          <a href="/shiritori" className="text-ink underline">
+            今日の映画しりとり
+          </a>
+        </p>
+      )}
     </section>
   );
 }

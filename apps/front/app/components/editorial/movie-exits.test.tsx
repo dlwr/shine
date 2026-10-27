@@ -44,6 +44,20 @@ describe('MovieExits', () => {
     expect(screen.queryByRole('link', {name: /初公開/})).toBeNull();
   });
 
+  it('今日の映画しりとりへリンクする', () => {
+    render(
+      <MovieExits
+        movieUid="movie-1"
+        originalLanguage="fr"
+        releaseDate={undefined}
+      />,
+    );
+
+    expect(
+      screen.getByRole('link', {name: '今日の映画しりとり'}),
+    ).toHaveAttribute('href', '/shiritori');
+  });
+
   it('今日の二本立てへリンクする', () => {
     render(
       <MovieExits
