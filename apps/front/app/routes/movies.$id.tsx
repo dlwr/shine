@@ -144,6 +144,7 @@ export default function MovieDetail({
           )}
 
         <MovieExits
+          movieUid={movieDetail.uid}
           originalLanguage={movieDetail.originalLanguage}
           releaseDate={movieDetail.releaseDate}
         />

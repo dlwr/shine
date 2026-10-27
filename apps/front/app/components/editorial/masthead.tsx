@@ -24,6 +24,7 @@ const NAV_LINKS = [
     en: 'On this day',
     ariaLabel: 'On this day',
   },
+  {href: '/connect', ja: '映画の距離', en: 'Connect', ariaLabel: 'Connect'},
   {href: '/languages', ja: '言語', en: 'Languages', ariaLabel: 'Languages'},
   {href: '/awards', ja: '映画賞', en: 'Awards', ariaLabel: 'Awards'},
   {href: '/people', ja: '人物', en: 'People', ariaLabel: 'People'},
