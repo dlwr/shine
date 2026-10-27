@@ -21,7 +21,11 @@ export type MovieDetail = Pick<
   | 'nominations'
   | 'articleLinks'
   | 'credits'
-> & {worthIndexing: boolean; runtime: number | undefined};
+> & {
+  worthIndexing: boolean;
+  runtime: number | undefined;
+  releaseDate: string | undefined;
+};
 
 type SearchedMovie = {
   uid: string;

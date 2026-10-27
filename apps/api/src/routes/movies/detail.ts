@@ -41,6 +41,7 @@ movieDetailRoutes.get('/:id', async c => {
       uid: movieDetails.uid,
       year: movieDetails.year,
       runtime: movieDetails.runtime,
+      releaseDate: movieDetails.releaseDate,
       originalLanguage: movieDetails.originalLanguage,
       imdbId: movieDetails.imdbId,
       tmdbId: movieDetails.tmdbId,
