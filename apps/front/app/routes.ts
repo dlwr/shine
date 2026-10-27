@@ -28,6 +28,7 @@ export default [
   route('tonight', 'routes/tonight.tsx'),
   route('double-feature', 'routes/double-feature.tsx'),
   route('connect', 'routes/connect.tsx'),
+  route('shiritori', 'routes/shiritori.tsx'),
   route('robots.txt', 'routes/robots.tsx'),
   route('feed.xml', 'routes/feed.tsx'),
   route('sitemap.xml', 'routes/sitemap-index.tsx'),
