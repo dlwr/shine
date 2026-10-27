@@ -93,6 +93,12 @@
     "data.awards[].personCount",
     "data.awards[].slug"
   ],
+  "connect-pick:{date}:v1": [
+    "cachedAt",
+    "data.date",
+    "data.from",
+    "data.to"
+  ],
   "crossings:v12": [
     "cachedAt",
     "data.awards[].filmCount",

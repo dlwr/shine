@@ -5,6 +5,7 @@ import {createD1TestDatabase} from '@shine/database/testing';
 import {afterAll, beforeAll, beforeEach, describe, expect, it} from 'vitest';
 import {moviesRoutes} from '../routes/movies';
 import {AwardsService} from '../services/awards-service';
+import {ConnectService} from '../services/connect-service';
 import {CrossingsService} from '../services/crossings-service';
 import {DoubleFeatureService} from '../services/double-feature-service';
 import {MoviesService} from '../services/movies-service';
@@ -269,6 +270,15 @@ const exercises: Exercise[] = [
     name: '今日の二本立て',
     run: environment =>
       new DoubleFeatureService(environment).getDoubleFeature('2026-09-15'),
+  },
+  {
+    name: '映画の距離',
+    run: environment =>
+      new ConnectService(environment).connect('movie-green', 'movie-gladiator'),
+  },
+  {
+    name: '映画の距離のおまかせ',
+    run: environment => new ConnectService(environment).pick('2026-09-15'),
   },
   {
     name: '言語の一覧',
