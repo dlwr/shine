@@ -311,6 +311,13 @@ function Movies({
           </a>
         </p>
       )}
+      {locale === 'ja' && (
+        <p className="mt-2 font-display text-base">
+          <a href="/double-feature" className="text-ink underline">
+            今日の二本立て
+          </a>
+        </p>
+      )}
     </section>
   );
 }

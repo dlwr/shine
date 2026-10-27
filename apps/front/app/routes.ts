@@ -26,6 +26,7 @@ export default [
   route('languages', 'routes/languages.tsx'),
   route('languages/:code', 'routes/languages.$code.tsx'),
   route('tonight', 'routes/tonight.tsx'),
+  route('double-feature', 'routes/double-feature.tsx'),
   route('robots.txt', 'routes/robots.tsx'),
   route('feed.xml', 'routes/feed.tsx'),
   route('sitemap.xml', 'routes/sitemap-index.tsx'),

@@ -6,6 +6,7 @@ import {afterAll, beforeAll, beforeEach, describe, expect, it} from 'vitest';
 import {moviesRoutes} from '../routes/movies';
 import {AwardsService} from '../services/awards-service';
 import {CrossingsService} from '../services/crossings-service';
+import {DoubleFeatureService} from '../services/double-feature-service';
 import {MoviesService} from '../services/movies-service';
 import {PeopleService} from '../services/people-service';
 import {PersonAwardsService} from '../services/person-awards-service';
@@ -263,6 +264,11 @@ const exercises: Exercise[] = [
   {
     name: '今夜 90 分の 1 本の候補',
     run: environment => new TonightService(environment).listPool(90),
+  },
+  {
+    name: '今日の二本立て',
+    run: environment =>
+      new DoubleFeatureService(environment).getDoubleFeature('2026-09-15'),
   },
   {
     name: '言語の一覧',
