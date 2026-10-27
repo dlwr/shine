@@ -1,12 +1,15 @@
 import {
   and,
+  desc,
   eq,
   inArray,
   inChunks,
   isNull,
+  ne,
   sql,
   type getDatabase,
 } from '@shine/database';
+import {alias} from 'drizzle-orm/sqlite-core';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
@@ -31,6 +34,10 @@ import {
 } from './watchable-availability';
 
 type Database = ReturnType<typeof getDatabase>;
+
+const MIN_SHARED_MOVIES = 2;
+const MAX_COLLABORATORS = 5;
+const otherCredits = alias(movieCredits, 'other_credits');
 
 type Credit = PersonDetail['credits'][number];
 
@@ -64,9 +71,35 @@ export async function loadPersonDetail(
     .where(and(eq(movieCredits.personUid, personUid), isNull(movies.deletedAt)))
     .orderBy(sql`${movies.year} DESC`);
 
-  const [personRows, creditRows] = await Promise.all([
+  const sharedMovieCount = sql<number>`count(DISTINCT ${otherCredits.movieUid})`;
+  const collaboratorsQuery = database
+    .select({
+      uid: people.uid,
+      name: people.name,
+      localizedName: personLocalizedName(locale),
+      sharedMovieCount,
+      sharedMovieUids: sql<string>`group_concat(DISTINCT ${otherCredits.movieUid})`,
+    })
+    .from(movieCredits)
+    .innerJoin(movies, eq(movies.uid, movieCredits.movieUid))
+    .innerJoin(otherCredits, eq(otherCredits.movieUid, movieCredits.movieUid))
+    .innerJoin(people, eq(people.uid, otherCredits.personUid))
+    .where(
+      and(
+        eq(movieCredits.personUid, personUid),
+        isNull(movies.deletedAt),
+        ne(otherCredits.personUid, personUid),
+      ),
+    )
+    .groupBy(otherCredits.personUid)
+    .having(sql`${sharedMovieCount} >= ${MIN_SHARED_MOVIES}`)
+    .orderBy(desc(sharedMovieCount), people.name, people.uid)
+    .limit(MAX_COLLABORATORS);
+
+  const [personRows, creditRows, collaboratorRows] = await Promise.all([
     personQuery,
     creditsQuery,
+    collaboratorsQuery,
   ]);
 
   const person = personRows[0];
@@ -123,6 +156,17 @@ export async function loadPersonDetail(
         organization: definition.organization,
         grouping: definition.grouping,
       })),
+    collaborators: collaboratorRows.map(row => {
+      const shared = new Set(row.sharedMovieUids.split(','));
+      return {
+        uid: row.uid,
+        name: row.localizedName ?? row.name,
+        sharedMovieCount: row.sharedMovieCount,
+        sampleMovieTitle: byMovie
+          .values()
+          .find(credit => shared.has(credit.movieUid))?.title,
+      };
+    }),
   };
 }
 

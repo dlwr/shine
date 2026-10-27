@@ -298,6 +298,34 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
           </section>
         )}
 
+        {person.collaborators.length > 0 && (
+          <section className="mb-8">
+            <h2 className="mb-1 font-label text-xs text-ink-muted">
+              よく組む人
+            </h2>
+            {person.collaborators.map(collaborator => (
+              <a
+                key={collaborator.uid}
+                href={`/people/${collaborator.uid}`}
+                className="flex items-baseline gap-3 py-2 border-t-2 border-ink no-underline text-ink">
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="font-display font-extrabold text-sm leading-none">
+                    {collaborator.name}
+                  </span>
+                  {collaborator.sampleMovieTitle && (
+                    <span className="font-label text-[10px] text-ink-muted break-words">
+                      『{collaborator.sampleMovieTitle}』ほか
+                    </span>
+                  )}
+                </span>
+                <span className="font-label text-xs text-ink-muted shrink-0 tabular-nums">
+                  {collaborator.sharedMovieCount}本
+                </span>
+              </a>
+            ))}
+          </section>
+        )}
+
         <div>
           {person.credits.map(credit => (
             <CreditRow
