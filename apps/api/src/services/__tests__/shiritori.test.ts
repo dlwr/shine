@@ -6,9 +6,9 @@ function entry(
   uid: string,
   first: string,
   last: string,
-  watchable = false,
+  isWatchable = false,
 ): ShiritoriEntry {
-  return {uid, title: uid, year: 2000, first, last, watchable};
+  return {uid, title: uid, year: 2000, first, last, watchable: isWatchable};
 }
 
 describe('shiritoriEnds', () => {

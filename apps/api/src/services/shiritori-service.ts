@@ -26,7 +26,7 @@ export class ShiritoriService extends BaseService {
       .orderBy(movies.uid);
     const candidates = rows.flatMap(row => {
       const ends = shiritoriEnds(row.title);
-      return ends ? [{...row, ...ends}] : [];
+      return ends ? {...row, ...ends} : [];
     });
     const availability = await loadMovieAvailabilityByMovie(
       this.database,
