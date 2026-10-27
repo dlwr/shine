@@ -304,6 +304,38 @@ describe('PersonPage', () => {
     expect(screen.queryByText(/監督賞/)).not.toBeInTheDocument();
   });
 
+  it('タイトルを役割つきの映画一覧にする', () => {
+    const descriptors = meta({
+      loaderData,
+    } as Route.MetaArgs) as Array<{title?: string}>;
+
+    expect(descriptors[0].title).toBe(
+      '黒澤明の監督・出演映画一覧（全2本） | SHINE',
+    );
+  });
+
+  it('出演だけの人物は出演映画一覧にする', () => {
+    const credits: PersonData['credits'] = [
+      {...plainCredit('a'), jobs: [], character: 'Extra'},
+    ];
+    const descriptors = meta({
+      loaderData: {person: {...person, credits}, locale: 'ja'},
+    } as Route.MetaArgs) as Array<{title?: string}>;
+
+    expect(descriptors[0].title).toBe('黒澤明の出演映画一覧（全1本） | SHINE');
+  });
+
+  it('説明文に受賞の重い順で代表作を出す', () => {
+    const descriptors = meta({
+      loaderData,
+    } as Route.MetaArgs) as Array<{name?: string; content?: string}>;
+
+    expect(
+      descriptors.find(descriptor => descriptor.name === 'description')
+        ?.content,
+    ).toContain('代表作に『乱』（1985）、『影武者』（1980）');
+  });
+
   it('説明文に受賞作の本数を含む', () => {
     const descriptors = meta({
       loaderData,

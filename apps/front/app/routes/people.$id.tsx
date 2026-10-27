@@ -107,13 +107,52 @@ function roleLabel(credit: PersonCreditData): string {
   return labels.length > 0 ? labels.join('・') : '出演';
 }
 
-function personDescription(person: PersonData): string {
-  const jobs = new Set(
-    person.credits.map(credit => roleLabel(credit).split(' — ', 1)[0]),
+function filmographyLabel(person: PersonData): string {
+  const directed = person.credits.some(credit =>
+    credit.jobs.includes('Director'),
   );
+  const acted = person.credits.some(credit => credit.character !== undefined);
+
+  if (directed && acted) {
+    return '監督・出演映画一覧';
+  }
+
+  if (directed) {
+    return '監督映画一覧';
+  }
+
+  return acted ? '出演映画一覧' : '映画一覧';
+}
+
+function creditWeight(credit: PersonCreditData): number {
+  if (credit.personAwards.some(award => award.isWinner)) {
+    return 3;
+  }
+
+  if (credit.awards.some(award => award.isWinner)) {
+    return 2;
+  }
+
+  return credit.personAwards.length > 0 || credit.awards.length > 0 ? 1 : 0;
+}
+
+function signatureTitles(person: PersonData): string {
+  const picks = person.credits
+    .filter(credit => credit.title !== undefined)
+    .toSorted((a, b) => creditWeight(b) - creditWeight(a))
+    .slice(0, 3)
+    .map(credit =>
+      credit.year === undefined
+        ? `『${credit.title}』`
+        : `『${credit.title}』（${credit.year}）`,
+    );
+  return picks.length > 0 ? `代表作に${picks.join('、')}。` : '';
+}
+
+function personDescription(person: PersonData): string {
   const {won} = awardRecord(person);
   const record = won > 0 ? `うち${won}本が受賞。` : '';
-  return `${person.name}が関わった映画${person.credits.length}本（${jobs.values().toArray().join('・')}）。${record}SHINEに収録された映画賞の受賞作・ノミネート作から一覧できます。`;
+  return `${person.name}の${filmographyLabel(person)}（全${person.credits.length}本）。${signatureTitles(person)}${record}`;
 }
 
 // API の人物一覧（sitemap の元）と同じ線: 個人賞にノミネートされた人物
@@ -128,7 +167,7 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   };
 
   const social = buildSocialMeta({
-    title: `${person.name}の映画 全${person.credits.length}本 | SHINE`,
+    title: `${person.name}の${filmographyLabel(person)}（全${person.credits.length}本） | SHINE`,
     description: personDescription(person),
     path: `/people/${person.uid}`,
     locale: locale ?? DEFAULT_LOCALE,
