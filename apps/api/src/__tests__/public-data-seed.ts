@@ -184,8 +184,8 @@ export async function seedPublicData(database: Database): Promise<void> {
     {uid: seededPeopleUids.spacey, tmdbId: 2, name: 'Kevin Spacey'},
     {uid: seededPeopleUids.hanks, tmdbId: 3, name: 'Tom Hanks'},
     {
-      uid: '44444444-4444-4444-8444-444444444444',
-      tmdbId: 4,
+      uid: '55555555-5555-4555-8555-555555555555',
+      tmdbId: 5,
       name: 'Thomas Newman',
     },
   ]);
@@ -223,14 +223,14 @@ export async function seedPublicData(database: Database): Promise<void> {
     },
     {
       movieUid: 'movie-green',
-      personUid: '44444444-4444-4444-8444-444444444444',
+      personUid: '55555555-5555-4555-8555-555555555555',
       creditId: 'credit-5',
       department: 'Sound',
       job: 'Original Music Composer',
     },
     {
       movieUid: 'movie-gladiator',
-      personUid: '44444444-4444-4444-8444-444444444444',
+      personUid: '55555555-5555-4555-8555-555555555555',
       creditId: 'credit-6',
       department: 'Sound',
       job: 'Original Music Composer',
