@@ -18,6 +18,14 @@ const mockResponse = (body: unknown, status = 200) => {
   } as Response);
 };
 
+const recommendation = (uid: string, reason: string) => ({
+  uid,
+  title: `${uid}の題名`,
+  year: 2000,
+  posterUrl: `https://example.com/${uid}.jpg`,
+  reason,
+});
+
 const LISTS = [
   {
     slug: 'palme-dor',
@@ -45,7 +53,7 @@ const createLoaderArguments = () =>
 
 const createComponentProperties = (): Route.ComponentProps =>
   cast<Route.ComponentProps>({
-    loaderData: {lists: LISTS, locale: 'ja'},
+    loaderData: {lists: LISTS, locale: 'ja', apiUrl: 'http://api.test'},
     params: {},
     matches: [],
   });
@@ -111,6 +119,14 @@ describe('Watched index page', () => {
       ]);
     });
 
+    it('ブラウザから推薦を取りに行く API の URL を返す', async () => {
+      mockResponse({lists: []});
+
+      const result = await loader(createLoaderArguments());
+
+      expect(result.apiUrl).toBe('http://localhost:8787');
+    });
+
     it('リストの取得に失敗したら502にする', async () => {
       mockResponse({}, 500);
 
@@ -167,6 +183,70 @@ describe('Watched index page', () => {
       expect(screen.getByRole('link', {name: /キネマ旬報/})).toHaveTextContent(
         '1 / 2',
       );
+    });
+    it('チェックが無ければ次の1本を取りに行かず、欄も出さない', () => {
+      render(<WatchedIndexPage {...createComponentProperties()} />);
+
+      expect(fetch).not.toHaveBeenCalled();
+      expect(
+        screen.queryByRole('heading', {name: '観た映画から次の1本'}),
+      ).not.toBeInTheDocument();
+    });
+
+    it('最新の 20 本のチェックを送って次の1本を頼む', async () => {
+      const uids = Array.from({length: 25}, (_, index) => `uid-${index}`);
+      localStorage.setItem(WATCHED_STORAGE_KEY, JSON.stringify({uids}));
+      mockResponse({movies: []});
+      render(<WatchedIndexPage {...createComponentProperties()} />);
+
+      await waitFor(() => {
+        expect(fetch).toHaveBeenCalledWith(
+          `http://api.test/watched/recommendations?uids=${uids.slice(5).join(',')}`,
+          expect.anything(),
+        );
+      });
+    });
+
+    it('次の1本を理由と一緒に出す', async () => {
+      localStorage.setItem(
+        WATCHED_STORAGE_KEY,
+        JSON.stringify({uids: ['uid-a']}),
+      );
+      mockResponse({
+        movies: [recommendation('uid-next', '『A』と同じ監督（小津安二郎）')],
+      });
+      render(<WatchedIndexPage {...createComponentProperties()} />);
+
+      expect(
+        await screen.findByText('『A』と同じ監督（小津安二郎）'),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('link', {name: /uid-nextの題名/}),
+      ).toHaveAttribute('href', '/movies/uid-next');
+    });
+
+    it('観た映画を除いて 5 本まで出す', async () => {
+      localStorage.setItem(
+        WATCHED_STORAGE_KEY,
+        JSON.stringify({uids: ['uid-a', 'uid-seen']}),
+      );
+      mockResponse({
+        movies: [
+          'uid-seen',
+          'uid-1',
+          'uid-2',
+          'uid-3',
+          'uid-4',
+          'uid-5',
+          'uid-6',
+        ].map(uid => recommendation(uid, `${uid}の理由`)),
+      });
+      render(<WatchedIndexPage {...createComponentProperties()} />);
+
+      await screen.findByText('uid-1の理由');
+      expect(screen.queryByText('uid-seenの理由')).not.toBeInTheDocument();
+      expect(screen.getByText('uid-5の理由')).toBeInTheDocument();
+      expect(screen.queryByText('uid-6の理由')).not.toBeInTheDocument();
     });
   });
 });

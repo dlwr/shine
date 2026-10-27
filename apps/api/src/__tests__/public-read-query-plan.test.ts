@@ -17,6 +17,7 @@ import {QuizService} from '../services/quiz-service';
 import {SelectionsService} from '../services/selections-service';
 import {TonightService} from '../services/tonight-service';
 import {UncrownedService} from '../services/uncrowned-service';
+import {WatchedRecommendationsService} from '../services/watched-recommendations-service';
 import {WatchedService} from '../services/watched-service';
 import {LanguagesService} from '../services/languages-service';
 import {OnThisDayService} from '../services/on-this-day-service';
@@ -327,6 +328,15 @@ const exercises: Exercise[] = [
     run: environment => new WatchedService(environment).listWatchedLists(),
   },
   {
+    name: '観た映画から次の1本',
+    run: environment =>
+      new WatchedRecommendationsService(environment).recommend([
+        'movie-beauty',
+        'movie-green',
+      ]),
+    indexOnly: true,
+  },
+  {
     name: '日替わり選出',
     run: environment =>
       new SelectionsService(environment).getDateSeededSelections({
@@ -455,6 +465,21 @@ describe('公開エンドポイントの実行計画', {timeout: 30_000}, () => 
       expect.stringMatching(
         /^SEARCH nominations USING (?:COVERING )?INDEX nominations_category_winner_idx \(category_uid=\? AND is_winner=\?\)$/,
       ),
+    );
+  });
+
+  it('観た映画から次の1本はノミネーションを人物の索引で引かない', async () => {
+    const exercise = exercises.find(
+      current => current.name === '観た映画から次の1本',
+    );
+    const plans = await plansOf(exercise!);
+    const details = plans
+      .values()
+      .toArray()
+      .flat()
+      .map(row => row.detail);
+    expect(details).not.toContainEqual(
+      expect.stringContaining('nominations_person_idx'),
     );
   });
 
