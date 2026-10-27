@@ -1,4 +1,4 @@
-import type {Pagination} from './common';
+import type {JapanAvailabilityStatus, Pagination} from './common';
 
 type PersonAwardTag = {
   slug: string;
@@ -36,6 +36,7 @@ export type PersonDetail = {
     character: string | undefined;
     awards: PersonAwardTag[];
     personAwards: PersonalAward[];
+    availabilityStatus: JapanAvailabilityStatus;
   }>;
   awards: PersonAwardLegend[];
 };

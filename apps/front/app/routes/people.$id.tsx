@@ -5,6 +5,7 @@ import {
   type PersonalAward,
 } from '@/components/editorial/award-tags';
 import {Masthead} from '@/components/editorial/masthead';
+import {FirstPickSection} from '@/components/editorial/first-pick-section';
 import {PersonAwardHistory} from '@/components/editorial/person-award-history';
 import {PersonPortrait} from '@/components/editorial/person-portrait';
 import {PosterFrame} from '@/components/editorial/poster-frame';
@@ -13,6 +14,7 @@ import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {NOINDEX_FOLLOW, SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {loadApiJson} from '@/lib/api';
 import type {PersonData} from '@/lib/api-types';
+import {personFirstPick} from '@/lib/first-pick';
 
 export type PersonCreditData = PersonData['credits'][number];
 export type PersonAwardData = PersonData['awards'][number];
@@ -191,6 +193,7 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
   const locale = 'ja';
   const {won, nominated} = awardRecord(person);
   const personalRecords = personalAwardRecords(person);
+  const firstPick = personFirstPick(person.credits);
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -246,6 +249,8 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
             ))}
           </div>
         </div>
+
+        {firstPick && <FirstPickSection pick={firstPick} />}
 
         {personalRecords.length > 0 && (
           <section className="mb-8">

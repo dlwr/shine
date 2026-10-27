@@ -6,6 +6,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
+import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
@@ -392,6 +393,30 @@ describe('PeopleService.getPerson', () => {
       person?.credits.find(credit => credit.movieUid === 'movie-dreams')
         ?.awards,
     ).toEqual([]);
+  });
+
+  it('参加作ごとに日本で観られるかを返す', async () => {
+    const {environment, database} = await createTestEnvironment();
+    await database
+      .insert(movieAvailabilityChecks)
+      .values([
+        {movieUid: 'movie-ran', source: 'unext', status: 'ok', checkedAt: 1},
+      ]);
+    const service = new PeopleService(environment);
+
+    const person = await service.getPerson('person-kurosawa', 'ja');
+
+    expect(
+      Object.fromEntries(
+        person?.credits.map(credit => [
+          credit.movieUid,
+          credit.availabilityStatus,
+        ]) ?? [],
+      ),
+    ).toEqual({
+      'movie-ran': 'watchable',
+      'movie-kagemusha': 'unchecked',
+    });
   });
 
   it('参加作に付いた賞の凡例を返す', async () => {

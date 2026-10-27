@@ -28,6 +28,7 @@ const person: PersonData = {
           isWinner: true,
         },
       ],
+      availabilityStatus: 'unchecked',
     },
     {
       movieUid: 'movie-taxi',
@@ -45,6 +46,7 @@ const person: PersonData = {
           isWinner: false,
         },
       ],
+      availabilityStatus: 'watchable',
     },
   ],
   awards: [
@@ -81,6 +83,7 @@ const plainCredit = (movieUid: string) => ({
   jobs: ['Director'],
   awards: [],
   personAwards: [],
+  availabilityStatus: 'unchecked' as const,
 });
 
 const robotsOf = (credits: PersonData['credits']) =>
@@ -101,6 +104,24 @@ function renderPage(overrides: Partial<PersonData> = {}) {
 }
 
 describe('PersonPage', () => {
+  it('日本で観られる参加作を「まず観るなら」に出す', () => {
+    renderPage();
+
+    const section = screen
+      .getByRole('heading', {name: /まず観るなら/})
+      .closest('section');
+    expect(section?.querySelector('a')).toHaveAttribute(
+      'href',
+      '/movies/movie-taxi',
+    );
+  });
+
+  it('日本で観られる参加作が無ければ「まず観るなら」を出さない', () => {
+    renderPage({credits: [plainCredit('movie-a')]});
+
+    expect(screen.queryByRole('heading', {name: /まず観るなら/})).toBeNull();
+  });
+
   it('人物名を見出しに出す', () => {
     renderPage();
 
@@ -208,6 +229,7 @@ describe('PersonPage', () => {
           jobs: ['Director'],
           awards: [{slug: '1001-movies', isWinner: true}],
           personAwards: [],
+          availabilityStatus: 'unchecked',
         },
       ],
     });
@@ -274,6 +296,7 @@ describe('PersonPage', () => {
           jobs: ['Director'],
           awards: [],
           personAwards: [],
+          availabilityStatus: 'unchecked',
         },
       ],
     });

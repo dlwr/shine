@@ -103,7 +103,7 @@ export const getCacheKeyForRelatedMovies = (movieId: string): string =>
 export const getCacheKeyForPerson = (
   personUid: string,
   locale: string,
-): string => `person:${personUid}:${locale}:v6`;
+): string => `person:${personUid}:${locale}:v7`;
 
 export const getCacheKeyForSearch = (
   query: string,

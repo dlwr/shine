@@ -25,6 +25,10 @@ import {localizedMovieTitle} from './movie-title-columns';
 import {joinAwardContext} from './people-query';
 import {personLocalizedName} from './person-name';
 import {localizedPosterUrl} from './localized-poster-url';
+import {
+  availabilityStatusOf,
+  loadMovieAvailabilityByMovie,
+} from './watchable-availability';
 
 type Database = ReturnType<typeof getDatabase>;
 
@@ -81,6 +85,7 @@ export async function loadPersonDetail(
       character: undefined,
       awards: [],
       personAwards: [],
+      availabilityStatus: 'unchecked',
     };
 
     if (row.job && !credit.jobs.includes(row.job)) {
@@ -91,10 +96,17 @@ export async function loadPersonDetail(
     byMovie.set(row.movieUid, credit);
   }
 
-  const [legendSlugs] = await Promise.all([
+  const [legendSlugs, , availabilityByMovie] = await Promise.all([
     attachCreditAwards(database, byMovie),
     attachPersonAwards(database, byMovie, personUid),
+    loadMovieAvailabilityByMovie(database, byMovie.keys().toArray()),
   ]);
+  for (const credit of byMovie.values()) {
+    credit.availabilityStatus = availabilityStatusOf(
+      availabilityByMovie,
+      credit.movieUid,
+    );
+  }
 
   return {
     uid: person.uid,

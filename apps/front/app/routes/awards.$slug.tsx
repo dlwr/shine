@@ -1,6 +1,7 @@
 import type {Route} from './+types/awards.$slug';
 import {AvailabilitySummaryLine} from '@/components/editorial/availability-summary-line';
 import {AwardBody} from '@/components/editorial/award-body';
+import {FirstPickSection} from '@/components/editorial/first-pick-section';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
@@ -14,6 +15,7 @@ import {
   type AwardPageData,
 } from '@/lib/award-page';
 import {loadApiJson} from '@/lib/api';
+import {awardFirstPick} from '@/lib/first-pick';
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {award, locale} = loaderData as {
@@ -51,6 +53,8 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
   const {award} = loaderData as {award: AwardPageData};
   const locale = 'ja';
   const heading = awardHeading(award);
+  const firstPick =
+    award.grouping === 'person' ? undefined : awardFirstPick(award);
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -84,6 +88,8 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
             受賞作、何本観た？
           </a>
         )}
+
+        {firstPick && <FirstPickSection pick={firstPick} />}
 
         <AwardBody award={award} />
 
