@@ -2,7 +2,8 @@ import {useEffect, useState} from 'react';
 import type {Route} from './+types/watched';
 import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
-import {loadApiJson} from '@/lib/api';
+import {WatchedRecommendations} from '@/components/watched/watched-recommendations';
+import {loadApiJson, resolveApiUrl} from '@/lib/api';
 import type {WatchedListsData} from '@/lib/api-types';
 import {awardHeading} from '@/lib/awards';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
@@ -20,6 +21,7 @@ export type WatchedListSummary = {
 export type WatchedIndexData = {
   lists: WatchedListSummary[];
   locale: Locale;
+  apiUrl: string;
 };
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
@@ -54,6 +56,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
       uids: list.uids,
     })),
     locale,
+    apiUrl: resolveApiUrl(context),
   } satisfies WatchedIndexData;
 }
 
@@ -101,7 +104,7 @@ function ListRow({
 }
 
 export default function WatchedIndexPage({loaderData}: Route.ComponentProps) {
-  const {lists} = loaderData as WatchedIndexData;
+  const {lists, apiUrl} = loaderData as WatchedIndexData;
   const locale = 'ja';
   const [watched, setWatched] = useState<Set<string>>(() => new Set());
 
@@ -154,6 +157,8 @@ export default function WatchedIndexPage({loaderData}: Route.ComponentProps) {
             />
           </div>
         </section>
+
+        <WatchedRecommendations apiUrl={apiUrl} watched={watched} />
 
         <div>
           {lists.map(list => (

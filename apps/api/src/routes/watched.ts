@@ -1,7 +1,9 @@
 import type {Environment} from '@shine/database';
 import {Hono} from 'hono';
 import type {WatchedListsResponse} from '../types/responses';
+import {WatchedRecommendationsService} from '../services/watched-recommendations-service';
 import {WatchedService} from '../services/watched-service';
+import type {WatchedRecommendationsResponse} from '../types/watched-recommendations';
 import {
   createCachedResponse,
   createETag,
@@ -10,11 +12,13 @@ import {
   shouldCheckETag,
 } from '../utils/cache';
 import {readThroughCache} from '../utils/read-through-cache';
+import {isUid} from '../utils/uid';
 
 export const watchedRoutes = new Hono<{Bindings: Environment}>();
 
 const WATCHED_LISTS_CACHE_TTL = 604_800;
 const WATCHED_LISTS_CACHE_KEY = 'watched:lists:v1';
+const MAX_RECOMMENDATION_SOURCES = 20;
 
 watchedRoutes.get('/lists', async c => {
   const cache = new EdgeCache(c.env.CACHE_KV);
@@ -39,5 +43,22 @@ watchedRoutes.get('/lists', async c => {
   return createCachedResponse(result, WATCHED_LISTS_CACHE_TTL, {
     ETag: etag,
     'X-Cache-Status': status,
+  });
+});
+
+watchedRoutes.get('/recommendations', async c => {
+  const uids = [
+    ...new Set((c.req.query('uids') ?? '').split(',').filter(Boolean)),
+  ];
+  if (
+    uids.length === 0 ||
+    uids.length > MAX_RECOMMENDATION_SOURCES ||
+    uids.some(uid => !isUid(uid))
+  ) {
+    return c.json({error: 'Invalid uids'}, 400);
+  }
+
+  return c.json<WatchedRecommendationsResponse>({
+    movies: await new WatchedRecommendationsService(c.env).recommend(uids),
   });
 });
