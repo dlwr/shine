@@ -95,6 +95,17 @@ const createComponentProperties = (
     matches: [],
   });
 
+const summary = (slug: string, organization: string) => ({
+  slug,
+  name: slug,
+  organization,
+  description: '',
+  grouping: 'year',
+  movieCount: 1,
+  firstYear: 2000,
+  lastYear: 2026,
+});
+
 describe('Award detail page', () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -103,11 +114,15 @@ describe('Award detail page', () => {
   describe('loader', () => {
     it('APIから賞の詳細を取得する', async () => {
       const mockFetch = vi.mocked(fetch);
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => mockAwardDetail,
-      } as Response);
+      mockFetch.mockImplementation(async input =>
+        String(input).endsWith('/awards')
+          ? ({ok: false, status: 500} as Response)
+          : ({
+              ok: true,
+              status: 200,
+              json: async () => mockAwardDetail,
+            } as Response),
+      );
 
       const request = new Request('http://localhost:3000/awards/palme-dor');
       const result = await loader(
@@ -120,7 +135,44 @@ describe('Award detail page', () => {
         'http://localhost:8787/awards/palme-dor?page=1',
         {signal: request.signal},
       );
-      expect(result).toEqual({award: mockAwardDetail, locale: 'ja'});
+      expect(result).toEqual({
+        award: mockAwardDetail,
+        locale: 'ja',
+        nextAwards: {sameOrganization: [], otherOrganizations: []},
+      });
+    });
+
+    it('賞の一覧から次に見る賞を選ぶ', async () => {
+      vi.mocked(fetch).mockImplementation(async input =>
+        String(input).endsWith('/awards')
+          ? ({
+              ok: true,
+              status: 200,
+              json: async () => ({
+                awards: [
+                  summary('palme-dor', 'カンヌ国際映画祭'),
+                  summary('academy-best-picture', 'アカデミー賞'),
+                ],
+              }),
+            } as Response)
+          : ({
+              ok: true,
+              status: 200,
+              json: async () => mockAwardDetail,
+            } as Response),
+      );
+
+      const result = await loader(
+        createLoaderArguments(
+          createMockContext(),
+          new Request('http://localhost:3000/awards/palme-dor'),
+          {slug: 'palme-dor'},
+        ),
+      );
+
+      expect(
+        result.nextAwards.otherOrganizations.map(award => award.slug),
+      ).toEqual(['academy-best-picture']);
     });
 
     it('APIが404を返したら404 Responseをthrowする', async () => {
@@ -185,6 +237,38 @@ describe('Award detail page', () => {
   });
 
   describe('component', () => {
+    it('次に見る賞を賞ページへリンクする', () => {
+      render(
+        <AwardDetailPage
+          {...createComponentProperties(
+            cast<LoaderData>({
+              award: mockAwardDetail,
+              locale: 'ja',
+              nextAwards: {
+                sameOrganization: [],
+                otherOrganizations: [
+                  {
+                    slug: 'academy-best-picture',
+                    name: '作品賞',
+                    organization: 'アカデミー賞',
+                    description: '',
+                    grouping: 'year',
+                    movieCount: 1,
+                    firstYear: 2000,
+                    lastYear: 2026,
+                  },
+                ],
+              },
+            }),
+          )}
+        />,
+      );
+
+      expect(
+        screen.getByRole('link', {name: 'アカデミー賞 作品賞'}),
+      ).toHaveAttribute('href', '/awards/academy-best-picture');
+    });
+
     it('最新の受賞作を書いた導入文を出す', () => {
       render(
         <AwardDetailPage

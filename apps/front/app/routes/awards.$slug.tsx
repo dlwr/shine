@@ -15,7 +15,10 @@ import {
   buildAwardItemList,
   type AwardPageData,
 } from '@/lib/award-page';
-import {loadApiJson} from '@/lib/api';
+import {loadApiJson, tryApiJson} from '@/lib/api';
+import type {AwardsListData} from '@/lib/api-types';
+import {nextAwards, type NextAwards} from '@/lib/next-awards';
+import {NextAwardsSection} from '@/components/editorial/next-awards-section';
 import {awardFirstPick} from '@/lib/first-pick';
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
@@ -44,16 +47,26 @@ export async function loader({context, request, params}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
 
   const page = new URL(request.url).searchParams.get('page') ?? '1';
-  const award = await loadApiJson<AwardPageData>(
-    context,
-    `/awards/${params.slug}?page=${encodeURIComponent(page)}`,
-    {label: 'award', signal: request.signal},
-  );
-  return {award, locale};
+  const [award, list] = await Promise.all([
+    loadApiJson<AwardPageData>(
+      context,
+      `/awards/${params.slug}?page=${encodeURIComponent(page)}`,
+      {label: 'award', signal: request.signal},
+    ),
+    tryApiJson<AwardsListData>(context, '/awards', {signal: request.signal}),
+  ]);
+  return {
+    award,
+    locale,
+    nextAwards: nextAwards(params.slug, list?.awards ?? []),
+  };
 }
 
 export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
-  const {award} = loaderData as {award: AwardPageData};
+  const {award, nextAwards: next} = loaderData as {
+    award: AwardPageData;
+    nextAwards?: NextAwards;
+  };
   const locale = 'ja';
   const heading = awardHeading(award);
   const leadText = awardLeadText(award);
@@ -97,6 +110,8 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
         {firstPick && <FirstPickSection pick={firstPick} />}
 
         <AwardBody award={award} />
+
+        {next && <NextAwardsSection next={next} />}
 
         <SiteFooter locale={locale} />
       </div>
