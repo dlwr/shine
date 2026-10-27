@@ -1,4 +1,5 @@
 import type {AdminMovieDetailData} from '@/lib/api-types';
+import {markOwnerDevice} from '@/lib/web-analytics';
 
 const tokenKey = 'adminToken';
 
@@ -8,6 +9,7 @@ export function getAdminToken(): string | undefined {
 
 export function setAdminToken(token: string): void {
   globalThis.localStorage?.setItem(tokenKey, token);
+  markOwnerDevice();
   dispatchEvent(new Event('adminLogin'));
 }
 

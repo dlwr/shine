@@ -8,6 +8,7 @@ const LEADING_INDICATOR_WINDOW_HOURS = 7 * 24 - 1;
 
 export const DEFAULT_CLOUDFLARE_ACCOUNT_ID = '2097531fd91db13e3e83de98d54962f1';
 const DEFAULT_WEB_ANALYTICS_SITE_TAG = '9602f73a32304a60b7a170124731564a';
+const SITE_HOST = 'shine-film.com';
 
 export type WebAnalyticsCredentials = {
   token: string;
@@ -35,6 +36,7 @@ export type PageTraffic = {
   path: string;
   pageviews: number;
   visits: number;
+  onwardPageviews: number;
 };
 
 export type MonthlyPickPage = {
@@ -50,7 +52,7 @@ type GraphqlResponse = {
         rumPageloadEventsAdaptiveGroups?: Array<{
           count: number;
           sum: {visits: number};
-          dimensions: {date: string; requestPath: string};
+          dimensions: {date: string; requestPath: string; refererHost: string};
         }>;
       }>;
     };
@@ -84,6 +86,7 @@ function trafficQuery(
         dimensions {
           date
           requestPath
+          refererHost
         }
       }
     }
@@ -135,9 +138,17 @@ export async function fetchJapanPageTraffic(
   const byPath = new Map<string, PageTraffic>();
   for (const row of rows) {
     const path = row.dimensions.requestPath;
-    const page = byPath.get(path) ?? {path, pageviews: 0, visits: 0};
+    const page = byPath.get(path) ?? {
+      path,
+      pageviews: 0,
+      visits: 0,
+      onwardPageviews: 0,
+    };
     page.pageviews += row.count;
     page.visits += row.sum.visits;
+    if (row.dimensions.refererHost === SITE_HOST) {
+      page.onwardPageviews += row.count;
+    }
     byPath.set(path, page);
   }
 
@@ -193,10 +204,11 @@ export function formatLeadingIndicator(
   topPaths = 5,
 ): string {
   const traffic = allTraffic.filter(page => isVisitorPath(page.path));
-  const total = {pageviews: 0, visits: 0};
+  const total = {pageviews: 0, visits: 0, onwardPageviews: 0};
   for (const page of traffic) {
     total.pageviews += page.pageviews;
     total.visits += page.visits;
+    total.onwardPageviews += page.onwardPageviews;
   }
   const byPath = new Map(traffic.map(page => [page.path, page]));
   const top = traffic
@@ -206,7 +218,8 @@ export function formatLeadingIndicator(
     .join('、');
 
   return [
-    `先行指標（国=Japan・bot と /admin 除外、${tokyoDateTime(window.from)} 〜 ${tokyoDateTime(window.to)} JST）${isSampled(traffic) ? '（値が全部 10 の倍数なのでサンプル推定の可能性がある）' : ''}`,
+    `北極星と先行指標（国=Japan・bot と /admin 除外、${tokyoDateTime(window.from)} 〜 ${tokyoDateTime(window.to)} JST）${isSampled(traffic) ? '（値が全部 10 の倍数なのでサンプル推定の可能性がある）' : ''}`,
+    `北極星（サイト内から次のページを開いた回数）: ${total.onwardPageviews}`,
     `全体: PV ${total.pageviews} / 訪問 ${total.visits}`,
     ...monthlyPicks.map(pick => {
       const page = byPath.get(pick.path);

@@ -183,13 +183,13 @@ async function northStarSection(): Promise<SurveySection> {
   );
 
   return {
-    title: '北極星（直近 3 か月）',
+    title: '今月の1本のリンク（直近 3 か月）',
     body: formatNorthStarReport(counts, new Date(), bookmarkCounts).content,
   };
 }
 
 async function leadingIndicatorSection(): Promise<SurveySection> {
-  const title = '先行指標（直近 7 日）';
+  const title = '北極星と先行指標（直近 7 日）';
   const credentials = resolveWebAnalyticsCredentials(process.env);
 
   if (!credentials) {
@@ -308,8 +308,11 @@ async function main(options: SurveyOptions): Promise<void> {
 
   if (options.northStar) {
     sections.push(
-      await settleSection('北極星（直近 3 か月）', northStarSection),
-      await settleSection('先行指標（直近 7 日）', leadingIndicatorSection),
+      await settleSection(
+        '北極星と先行指標（直近 7 日）',
+        leadingIndicatorSection,
+      ),
+      await settleSection('今月の1本のリンク（直近 3 か月）', northStarSection),
     );
   }
 

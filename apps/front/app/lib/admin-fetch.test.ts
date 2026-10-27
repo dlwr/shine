@@ -49,6 +49,13 @@ describe('setAdminToken', () => {
     expect(listener).toHaveBeenCalledTimes(1);
     removeEventListener('adminLogin', listener);
   });
+
+  it('ログアウトしても計測から外れるよう、本人の端末だと覚える', () => {
+    setAdminToken('token-abc');
+    clearAdminToken();
+
+    expect(localStorage.getItem('shine-owner-device')).toBe('1');
+  });
 });
 
 describe('clearAdminToken', () => {
