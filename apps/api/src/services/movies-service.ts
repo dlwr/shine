@@ -133,7 +133,11 @@ export class MoviesService extends BaseService {
     movieId: string,
     locale = 'ja',
   ): Promise<
-    MovieSelection & {worthIndexing: boolean; runtime: number | undefined}
+    MovieSelection & {
+      worthIndexing: boolean;
+      runtime: number | undefined;
+      releaseDate: string | undefined;
+    }
   > {
     // Get movie with title and description
     const movieQuery = this.database
@@ -145,6 +149,7 @@ export class MoviesService extends BaseService {
         tmdbId: movies.tmdbId,
         mediaType: movies.mediaType,
         runtime: movies.runtime,
+        releaseDate: movies.releaseDate,
         title: sql<string | null>`
 					(
 					  SELECT content
@@ -246,10 +251,12 @@ export class MoviesService extends BaseService {
     const movieDetails: MovieSelection & {
       worthIndexing: boolean;
       runtime: number | undefined;
+      releaseDate: string | undefined;
     } = {
       uid: movie.uid,
       year: movie.year ?? 0,
       runtime: movie.runtime ?? undefined,
+      releaseDate: movie.releaseDate ?? undefined,
       originalLanguage: movie.originalLanguage,
       imdbId: movie.imdbId ?? undefined,
       tmdbId: movie.tmdbId ?? undefined,

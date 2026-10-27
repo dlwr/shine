@@ -7,6 +7,7 @@ import {CreditsList} from '@/components/editorial/credits-list';
 import {Masthead} from '@/components/editorial/masthead';
 import {MovieDetailErrorView} from '@/components/editorial/movie-detail-error-view';
 import {MovieHero} from '@/components/editorial/movie-hero';
+import {MovieExits} from '@/components/editorial/movie-exits';
 import {MovieSynopsis} from '@/components/editorial/movie-synopsis';
 import {MovieWatchSection} from '@/components/editorial/movie-watch-section';
 import {RelatedMovies} from '@/components/editorial/related-movies';
@@ -141,6 +142,11 @@ export default function MovieDetail({
               <CreditsList credits={movieDetail.credits} />
             </section>
           )}
+
+        <MovieExits
+          originalLanguage={movieDetail.originalLanguage}
+          releaseDate={movieDetail.releaseDate}
+        />
 
         {loaded.relatedMovies && (
           <Suspense>
