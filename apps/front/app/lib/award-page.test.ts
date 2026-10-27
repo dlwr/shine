@@ -186,21 +186,6 @@ describe('awardLeadText', () => {
     );
   });
 
-  it('日本で観られる本数を出す', () => {
-    const award = {
-      ...yearAward,
-      availabilitySummary: {...availabilitySummary, total: 63, watchable: 20},
-    };
-
-    expect(awardLeadText(award)).toContain(
-      '候補作を含む63本のうち20本が日本で観られます。',
-    );
-  });
-
-  it('観られるかの確認が1本も無ければ本数を出さない', () => {
-    expect(awardLeadText(yearAward)).not.toContain('日本で観られます');
-  });
-
   it('個人賞は最新の受賞者を出す', () => {
     expect(awardLeadText(personAward)).toContain(
       '最新の受賞者は1991年の監督A。',

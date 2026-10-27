@@ -163,10 +163,5 @@ export function awardLeadText(award: AwardPageData): string | undefined {
   const latestText = latest
     ? `最新の受賞作は${ceremonyLabel(latest)}の『${latestTitle}』。`
     : '';
-  const {total, unchecked, watchable} = award.availabilitySummary;
-  const availabilityText =
-    total > unchecked
-      ? `候補作を含む${total}本のうち${watchable}本が日本で観られます。`
-      : '';
-  return `${latestText}${first}年から${last}年までの受賞作${countWinners(award)}本を収録。${availabilityText}`;
+  return `${latestText}${first}年から${last}年までの受賞作${countWinners(award)}本を収録。`;
 }
