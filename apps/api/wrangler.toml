@@ -31,6 +31,11 @@ name = "TITLE_RATE_LIMITER"
 namespace_id = "1004"
 simple = { limit = 20, period = 60 }
 
+[[env.development.ratelimits]]
+name = "CONNECT_RATE_LIMITER"
+namespace_id = "1005"
+simple = { limit = 30, period = 60 }
+
 [env.production]
 name = "shine-api"
 
@@ -65,6 +70,11 @@ simple = { limit = 5, period = 60 }
 name = "TITLE_RATE_LIMITER"
 namespace_id = "1004"
 simple = { limit = 20, period = 60 }
+
+[[env.production.ratelimits]]
+name = "CONNECT_RATE_LIMITER"
+namespace_id = "1005"
+simple = { limit = 30, period = 60 }
 # wrangler.toml (wrangler v3.88.0^)
 [observability.logs]
 enabled = true
