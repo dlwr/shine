@@ -111,7 +111,7 @@
 - zsh は変数を単語分割しない（ファイル一覧は `${=F}`）。`localeCompare('ja')` はヴ を う の位置に置く
 - **mac の `vrt:update`（Docker）が miniflare の D1 の migrate で `SocketError: other side closed` になって撮れないことがある**（基準の PNG を消してから落ちるので `git checkout -- apps/front/vrt/__screenshots__` で戻す）。基準は push して CI の VRT を落とし、`vrt:pull` で取ってくる（#745）
 - VRT の映画ページのはみ出し検査は `networkidle` 待ちで揺れることがある（流し直しで通る）
-- VRT の CJK フォントの apt が `Reading package lists...` で 3 回とも止まって 10 分で落ちることがある（`gh run rerun <id> --failed` で通る）
+- VRT の CJK フォントは #750 から actions/cache の .deb を dpkg で入れる（apt の取得が runner によって細って止まっていた）。フォントの版を上げるときは cache の鍵 `fonts-noto-cjk-noble-v1` を上げて基準を撮り直す
 - Bing Webmaster の built-in browser のセッションは切れることがある（about に飛ぶ）。本人のログインが要る
 
 ## 残っている候補
