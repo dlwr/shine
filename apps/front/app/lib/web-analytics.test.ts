@@ -18,10 +18,8 @@ describe('webAnalyticsLoader', () => {
   it('beacon をトークン付きで読み込む', () => {
     runLoader('token-abc');
 
-    const script = document.querySelector(beaconSelector);
-    expect(script?.getAttribute('data-cf-beacon')).toBe(
-      JSON.stringify({token: 'token-abc'}),
-    );
+    const script = document.querySelector<HTMLScriptElement>(beaconSelector);
+    expect(script?.dataset.cfBeacon).toBe(JSON.stringify({token: 'token-abc'}));
   });
 
   it('本人の端末では beacon を読み込まない', () => {
