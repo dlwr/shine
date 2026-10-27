@@ -44,6 +44,7 @@ import type {LanguagePage, LanguageSummary} from '@shine/api/types/languages';
 import type {OnThisDay} from '@shine/api/types/on-this-day';
 import type {TonightPick} from '@shine/api/types/tonight';
 import type {DoubleFeature} from '@shine/api/types/double-feature';
+import type {ConnectPick, MovieConnection} from '@shine/api/types/connect';
 import type {YearDetail, YearSummary} from '@shine/api/types/years';
 
 type UndefinableKeys<T> = {
@@ -91,6 +92,8 @@ export type LanguageSummaryData = Json<LanguageSummary>;
 export type LanguagePageData = Json<LanguagePage>;
 export type TonightPickData = Json<TonightPick>;
 export type DoubleFeatureData = Json<DoubleFeature>;
+export type MovieConnectionData = Json<MovieConnection>;
+export type ConnectPickData = Json<ConnectPick>;
 
 export type CrossingsData = Json<AwardCrossings>;
 export type UncrownedData = Json<Uncrowned>;
