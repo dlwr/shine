@@ -40,6 +40,7 @@ const mockAwardDetail = {
           movieYear: 2022,
           posterUrl: undefined,
           isWinner: true,
+          availabilityStatus: 'watchable',
         },
       ],
     },
@@ -162,6 +163,24 @@ describe('Award detail page', () => {
   });
 
   describe('component', () => {
+    it('日本で観られる一番新しい受賞作を「まず観るなら」に出す', () => {
+      render(
+        <AwardDetailPage
+          {...createComponentProperties(
+            cast<LoaderData>({award: mockAwardDetail, locale: 'ja'}),
+          )}
+        />,
+      );
+
+      const section = screen
+        .getByRole('heading', {name: /まず観るなら/})
+        .closest('section');
+      expect(section?.querySelector('a')).toHaveAttribute(
+        'href',
+        '/movies/movie-2022',
+      );
+    });
+
     it('年度制の賞は観た映画チェックへの導線を出す', () => {
       render(
         <AwardDetailPage
