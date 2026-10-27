@@ -130,3 +130,38 @@ export function awardSummaryLine(award: AwardPageData): string {
 
   return `全 ${countMovies(award)} 本`;
 }
+
+function ceremonyLabel(group: {year: number; ceremonyNumber?: number}): string {
+  return group.ceremonyNumber === undefined
+    ? `${group.year}年`
+    : `第${group.ceremonyNumber}回（${group.year}年）`;
+}
+
+export function awardLeadText(award: AwardPageData): string | undefined {
+  const {first, last} = yearRange(award);
+
+  if (award.grouping === 'person') {
+    const latest = award.years.find(group =>
+      group.nominees.some(nominee => nominee.isWinner),
+    );
+    const winner = latest?.nominees.find(nominee => nominee.isWinner);
+    const latestText =
+      latest && winner
+        ? `最新の受賞者は${ceremonyLabel(latest)}の${winner.name}。`
+        : '';
+    return `${latestText}${first}年から${last}年までの受賞者${countPersonWinners(award)}人とノミネート${countNominees(award)}人を収録。`;
+  }
+
+  if (award.grouping !== 'year') {
+    return undefined;
+  }
+
+  const latest = award.years.find(group =>
+    group.movies.some(movie => movie.title),
+  );
+  const latestTitle = latest?.movies.find(movie => movie.title)?.title;
+  const latestText = latest
+    ? `最新の受賞作は${ceremonyLabel(latest)}の『${latestTitle}』。`
+    : '';
+  return `${latestText}${first}年から${last}年までの受賞作${countWinners(award)}本を収録。`;
+}

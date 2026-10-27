@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {
+  awardLeadText,
   awardPagePath,
   awardPageTitle,
   awardSummaryLine,
@@ -145,5 +146,59 @@ describe('buildAwardItemList', () => {
       'https://shine-film.com/people/p-1',
       'https://shine-film.com/people/p-3',
     ]);
+  });
+});
+
+describe('awardLeadText', () => {
+  it('年度制は最新の受賞作を回次つきで出す', () => {
+    const award = {
+      ...yearAward,
+      years: [
+        {year: 2024, ceremonyNumber: 77, filmCount: 22, movies: []},
+        ...yearAward.years,
+      ],
+    };
+
+    expect(awardLeadText(award)).toContain(
+      '最新の受賞作は2023年の『m-2023』。',
+    );
+  });
+
+  it('回次があれば添える', () => {
+    const award = {
+      ...yearAward,
+      years: [
+        {
+          year: 2023,
+          ceremonyNumber: 76,
+          filmCount: 21,
+          movies: [movie('m-2023')],
+        },
+      ],
+    };
+
+    expect(awardLeadText(award)).toContain('第76回（2023年）の『m-2023』');
+  });
+
+  it('年度制は収録範囲と受賞作の本数を出す', () => {
+    expect(awardLeadText(yearAward)).toContain(
+      '2021年から2023年までの受賞作2本を収録。',
+    );
+  });
+
+  it('個人賞は最新の受賞者を出す', () => {
+    expect(awardLeadText(personAward)).toContain(
+      '最新の受賞者は1991年の監督A。',
+    );
+  });
+
+  it('個人賞は受賞者とノミネートの人数を出す', () => {
+    expect(awardLeadText(personAward)).toContain(
+      '1990年から1991年までの受賞者2人とノミネート3人を収録。',
+    );
+  });
+
+  it('リスト型は出さない', () => {
+    expect(awardLeadText(listAward)).toBeUndefined();
   });
 });
