@@ -7,6 +7,7 @@ import {tryApiJson, type LoadContext} from '@/lib/api';
 import type {
   ConnectPickData,
   MovieConnectionData,
+  MovieDetailData,
   MovieSearchData,
 } from '@/lib/api-types';
 
@@ -77,20 +78,31 @@ export async function loader({context, request}: Route.LoaderArgs) {
     tq: parameters.get('tq') ?? '',
   };
   const {signal} = request;
-  const [connection, fromCandidates, toCandidates, pick] = await Promise.all([
-    state.from && state.to
-      ? tryApiJson<MovieConnectionData>(
-          context,
-          `/connect?from=${encodeURIComponent(state.from)}&to=${encodeURIComponent(state.to)}`,
-          {signal},
-        )
-      : undefined,
-    searchMovies(context, state.fq, signal),
-    searchMovies(context, state.tq, signal),
-    tryApiJson<ConnectPickData>(context, '/connect/pick', {signal}),
-  ]);
+  const [connection, searchedFromCandidates, toCandidates, pick, fromMovie] =
+    await Promise.all([
+      state.from && state.to
+        ? tryApiJson<MovieConnectionData>(
+            context,
+            `/connect?from=${encodeURIComponent(state.from)}&to=${encodeURIComponent(state.to)}`,
+            {signal},
+          )
+        : undefined,
+      searchMovies(context, state.fq, signal),
+      searchMovies(context, state.tq, signal),
+      tryApiJson<ConnectPickData>(context, '/connect/pick', {signal}),
+      state.from && !state.to && !state.fq
+        ? tryApiJson<MovieDetailData>(
+            context,
+            `/movies/${encodeURIComponent(state.from)}`,
+            {signal},
+          )
+        : undefined,
+    ]);
+  const fromCandidates = fromMovie
+    ? [{uid: fromMovie.uid, title: fromMovie.title, year: fromMovie.year}]
+    : searchedFromCandidates;
   return {
-    state,
+    state: fromMovie ? {...state, fq: fromMovie.title} : state,
     connection,
     fromCandidates,
     toCandidates,

@@ -31,6 +31,7 @@ const connection = {
 const responses: Record<string, unknown> = {
   '/connect/pick': {date: '2026-09-15', from: 'movie-tokyo', to: 'movie-sanma'},
   '/connect': connection,
+  '/movies/movie-tokyo': {...tokyo, posterUrl: undefined, credits: []},
   '/movies/search': {
     movies: [
       {...banshun, posterUrls: [], hasNominations: true},
@@ -63,9 +64,10 @@ describe('connect', () => {
     vi.mocked(fetch).mockReset();
     vi.mocked(fetch).mockImplementation(async input => {
       const {pathname} = new URL(String(input));
+      const isOk = responses[pathname] !== undefined;
       return {
-        ok: true,
-        status: 200,
+        ok: isOk,
+        status: isOk ? 200 : 404,
         json: async () => responses[pathname],
       } as Response;
     });
@@ -119,6 +121,37 @@ describe('connect', () => {
       'href',
       `/connect?from=movie-banshun&to=movie-sanma&fq=${encodeURIComponent('晩春')}`,
     );
+  });
+
+  it('1 本目だけ渡されたら、その題名を入力欄に入れる', async () => {
+    renderPage(await runLoader('?from=movie-tokyo'));
+
+    expect(screen.getByLabelText('1本目')).toHaveValue('東京物語');
+  });
+
+  it('1 本目だけ渡されたら、その映画を選んだ状態にする', async () => {
+    renderPage(await runLoader('?from=movie-tokyo'));
+
+    expect(screen.getByRole('link', {name: /東京物語/})).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
+  });
+
+  it('2 本目を探すと、1 本目の選択を残す', async () => {
+    renderPage(await runLoader('?from=movie-tokyo'));
+
+    expect(
+      screen
+        .getAllByDisplayValue('movie-tokyo')
+        .map(input => input.getAttribute('name')),
+    ).toEqual(['from']);
+  });
+
+  it('存在しない 1 本目は入力欄を空のままにする', async () => {
+    renderPage(await runLoader('?from=movie-missing'));
+
+    expect(screen.getByLabelText('1本目')).toHaveValue('');
   });
 
   it('noindex にする', async () => {
