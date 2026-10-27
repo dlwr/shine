@@ -8,6 +8,7 @@ import {migrate} from '@shine/database/testing';
 import {afterAll, beforeAll, describe, expect, it} from 'vitest';
 import {awardsRoutes} from '../routes/awards';
 import {crossingsRoutes} from '../routes/crossings';
+import {doubleFeatureRoutes} from '../routes/double-feature';
 import {languagesRoutes} from '../routes/languages';
 import {moviesRoutes} from '../routes/movies';
 import {onThisDayRoutes} from '../routes/on-this-day';
@@ -71,6 +72,7 @@ const exercises: Exercise[] = [
   {name: '言語の一覧', routes: languagesRoutes, path: '/'},
   {name: '言語別の映画', routes: languagesRoutes, path: '/en'},
   {name: '今夜 90 分の 1 本', routes: tonightRoutes, path: '/'},
+  {name: '今日の二本立て', routes: doubleFeatureRoutes, path: '/'},
   {name: '賞の交差', routes: crossingsRoutes, path: '/'},
   {name: '無冠の映画', routes: uncrownedRoutes, path: '/'},
   {name: '観た映画チェックのリスト', routes: watchedRoutes, path: '/lists'},
