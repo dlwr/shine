@@ -99,6 +99,21 @@
     "data.from",
     "data.to"
   ],
+  "connect:movie-green:movie-gladiator:v1": [
+    "cachedAt",
+    "data.from.title",
+    "data.from.uid",
+    "data.from.year",
+    "data.links[].movie.title",
+    "data.links[].movie.uid",
+    "data.links[].movie.year",
+    "data.links[].person.name",
+    "data.links[].person.uid",
+    "data.links[].role",
+    "data.to.title",
+    "data.to.uid",
+    "data.to.year"
+  ],
   "crossings:v12": [
     "cachedAt",
     "data.awards[].filmCount",

@@ -75,6 +75,71 @@ describe('GET /connect', () => {
 
     expect(response.status).toBe(404);
   });
+
+  it('レート制限を超えたら 429 を返す', async () => {
+    environment.CONNECT_RATE_LIMITER = {
+      async limit() {
+        return {success: false};
+      },
+    };
+
+    const response = await connectRoutes.request(
+      '/?from=movie-green&to=movie-gladiator',
+      {},
+      environment,
+    );
+
+    expect(response.status).toBe(429);
+  });
+
+  it('クライアント IP をレート制限の鍵にする', async () => {
+    const keys: string[] = [];
+    environment.CONNECT_RATE_LIMITER = {
+      async limit({key}) {
+        keys.push(key);
+        return {success: true};
+      },
+    };
+
+    await connectRoutes.request(
+      '/?from=movie-green&to=movie-gladiator',
+      {headers: {'cf-connecting-ip': '203.0.113.1'}},
+      environment,
+    );
+
+    expect(keys).toEqual(['203.0.113.1']);
+  });
+
+  it('キャッシュに載った組はレート制限を数えずに返す', async () => {
+    const store = new Map<string, string>();
+    environment.CACHE_KV = {
+      async get(key: string) {
+        const value = store.get(key);
+        return value ? (JSON.parse(value) as unknown) : null;
+      },
+      async put(key: string, value: string) {
+        store.set(key, value);
+      },
+    } as unknown as KVNamespace;
+    await connectRoutes.request(
+      '/?from=movie-green&to=movie-gladiator',
+      {},
+      environment,
+    );
+    environment.CONNECT_RATE_LIMITER = {
+      async limit() {
+        return {success: false};
+      },
+    };
+
+    const response = await connectRoutes.request(
+      '/?from=movie-green&to=movie-gladiator',
+      {},
+      environment,
+    );
+
+    expect(response.status).toBe(200);
+  });
 });
 
 describe('GET /connect/pick', () => {

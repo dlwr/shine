@@ -75,6 +75,11 @@ const exercises: Exercise[] = [
   {name: '今夜 90 分の 1 本', routes: tonightRoutes, path: '/'},
   {name: '今日の二本立て', routes: doubleFeatureRoutes, path: '/'},
   {name: '映画の距離のおまかせ', routes: connectRoutes, path: '/pick'},
+  {
+    name: '映画の距離',
+    routes: connectRoutes,
+    path: '/?from=movie-green&to=movie-gladiator',
+  },
   {name: '賞の交差', routes: crossingsRoutes, path: '/'},
   {name: '無冠の映画', routes: uncrownedRoutes, path: '/'},
   {name: '観た映画チェックのリスト', routes: watchedRoutes, path: '/lists'},

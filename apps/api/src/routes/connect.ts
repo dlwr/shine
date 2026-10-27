@@ -4,8 +4,12 @@ import {ConnectService} from '../services/connect-service';
 import {getSelectionDate} from '../services/selection-dates';
 import {EdgeCache, IMPORTED_DATA_EDGE_TTL} from '../utils/cache';
 import {readThroughCache} from '../utils/read-through-cache';
+import {resolveClientIp} from '../utils/client-ip';
+import type {MovieConnection} from '../types/connect';
 
 export const connectRoutes = new Hono<{Bindings: Environment}>();
+
+const CONNECTION_TTL = 3600;
 
 connectRoutes.get('/', async c => {
   const from = c.req.query('from');
@@ -14,11 +18,26 @@ connectRoutes.get('/', async c => {
     return c.json({error: 'Two different movies are required'}, 400);
   }
 
+  const cache = new EdgeCache(c.env.CACHE_KV);
+  const cacheKey = `connect:${from}:${to}:v1`;
+  const cached = await cache.get(cacheKey);
+  if (cached) {
+    return c.json(cached.data as MovieConnection);
+  }
+
+  const attempt = await c.env.CONNECT_RATE_LIMITER?.limit({
+    key: resolveClientIp(c),
+  });
+  if (attempt?.success === false) {
+    return c.json({error: 'Too Many Requests'}, 429, {'Retry-After': '60'});
+  }
+
   const connection = await new ConnectService(c.env).connect(from, to);
   if (!connection) {
     return c.json({error: 'Movie not found'}, 404);
   }
 
+  await cache.set(cacheKey, connection, CONNECTION_TTL);
   return c.json(connection);
 });
 

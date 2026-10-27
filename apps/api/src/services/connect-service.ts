@@ -19,6 +19,7 @@ import {pickNominatedMovieUid} from './selection-pick';
 
 const MAX_PEOPLE = 3;
 const MAX_PICK_ATTEMPTS = 10;
+export const MAX_NEIGHBOR_MOVIES = 300;
 
 type Credit = {movieUid: string; personUid: string; isDirector: boolean};
 
@@ -82,7 +83,9 @@ function shortestPath(
   for (let depth = 0; depth < MAX_PEOPLE && frontier.length > 0; depth++) {
     const next: string[] = [];
     for (const movieUid of frontier) {
-      const personUids = [...(peopleByMovie.get(movieUid) ?? [])].toSorted(byUid);
+      const personUids = [...(peopleByMovie.get(movieUid) ?? [])].toSorted(
+        byUid,
+      );
       for (const personUid of personUids) {
         const movieUids = [...(moviesByPerson.get(personUid) ?? [])].toSorted(
           byUid,
@@ -184,7 +187,7 @@ export class ConnectService extends BaseService {
       .from(seedCredits)
       .where(and(eq(seedCredits.movieUid, movieUid), linkingRole(seedCredits)));
     const neighborMovieUids = this.database
-      .select({movieUid: sharedPeopleCredits.movieUid})
+      .selectDistinct({movieUid: sharedPeopleCredits.movieUid})
       .from(sharedPeopleCredits)
       .innerJoin(movies, eq(movies.uid, sharedPeopleCredits.movieUid))
       .where(
@@ -193,7 +196,9 @@ export class ConnectService extends BaseService {
           linkingRole(sharedPeopleCredits),
           inArray(sharedPeopleCredits.personUid, seedPersonUids),
         ),
-      );
+      )
+      .orderBy(sharedPeopleCredits.movieUid)
+      .limit(MAX_NEIGHBOR_MOVIES);
     const rows = await this.database
       .select({
         movieUid: movieCredits.movieUid,

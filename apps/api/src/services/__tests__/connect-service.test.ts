@@ -13,7 +13,7 @@ import {people} from '@shine/database/schema/people';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from '@shine/database/testing';
 import {beforeEach, describe, expect, it} from 'vitest';
-import {ConnectService} from '../connect-service';
+import {ConnectService, MAX_NEIGHBOR_MOVIES} from '../connect-service';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
@@ -232,6 +232,32 @@ describe('ConnectService.connect', () => {
     );
 
     expect(connection?.links?.[0].person.uid).toBe('p1');
+  });
+
+  it('近傍の映画は上限の本数までしか探さない', async () => {
+    const uids = Array.from(
+      {length: MAX_NEIGHBOR_MOVIES + 1},
+      (_, index) => `n${String(index).padStart(4, '0')}`,
+    );
+    await database
+      .insert(movies)
+      .values(['m0', ...uids].map(uid => ({uid, year: 2000})));
+    await seedPerson(database, 'p1');
+    await database.insert(movieCredits).values(
+      ['m0', ...uids].map(movieUid => ({
+        movieUid,
+        personUid: 'p1',
+        creditId: `credit-${movieUid}`,
+        department: 'Acting',
+      })),
+    );
+
+    const connection = await new ConnectService(environment).connect(
+      'm0',
+      uids.at(-1)!,
+    );
+
+    expect(connection?.links).toBeUndefined();
   });
 
   it('削除された映画を選ぶと何も返さない', async () => {
