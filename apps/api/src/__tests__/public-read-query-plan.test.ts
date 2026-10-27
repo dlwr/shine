@@ -7,6 +7,7 @@ import {moviesRoutes} from '../routes/movies';
 import {AwardsService} from '../services/awards-service';
 import {ConnectService} from '../services/connect-service';
 import {CrossingsService} from '../services/crossings-service';
+import {ShiritoriService} from '../services/shiritori-service';
 import {DoubleFeatureService} from '../services/double-feature-service';
 import {MoviesService} from '../services/movies-service';
 import {PeopleService} from '../services/people-service';
@@ -280,6 +281,10 @@ const exercises: Exercise[] = [
   {
     name: '映画の距離のおまかせ',
     run: environment => new ConnectService(environment).pick('2026-09-15'),
+  },
+  {
+    name: '映画しりとりの候補',
+    run: environment => new ShiritoriService(environment).loadIndex(),
   },
   {
     name: '言語の一覧',

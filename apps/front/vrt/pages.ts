@@ -20,6 +20,7 @@ export const pages = [
   '/tonight',
   '/double-feature',
   '/connect?from=movie-green&to=movie-gladiator&fq=グリーン',
+  '/shiritori',
   '/daily',
   '/weekly',
   '/monthly',

@@ -28,6 +28,7 @@ function exitLinks(
       href: `/connect?from=${movieUid}`,
       label: 'この映画から別の映画への距離',
     },
+    {href: '/shiritori', label: '今日の映画しりとり'},
   );
   return links;
 }
