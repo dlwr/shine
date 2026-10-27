@@ -19,6 +19,7 @@ export const pages = [
   '/languages/en',
   '/tonight',
   '/double-feature',
+  '/connect?from=movie-green&to=movie-gladiator&fq=グリーン',
   '/daily',
   '/weekly',
   '/monthly',
