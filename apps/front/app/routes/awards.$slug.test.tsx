@@ -14,6 +14,13 @@ const mockAwardDetail = {
   description:
     'カンヌ国際映画祭の最高賞パルム・ドールの歴代受賞作と公式出品作の一覧。',
   grouping: 'year' as const,
+  availabilitySummary: {
+    total: 0,
+    watchable: 0,
+    rentalOnly: 0,
+    unwatchable: 0,
+    unchecked: 0,
+  },
   years: [
     {
       year: 2023,
@@ -160,9 +167,38 @@ describe('Award detail page', () => {
         'カンヌ国際映画祭 パルム・ドール 歴代受賞作一覧（2021–2023） | SHINE',
       );
     });
+
+    it('説明文の後ろに導入文を続ける', () => {
+      const descriptors = meta(
+        cast<Route.MetaArgs>({
+          loaderData: {award: mockAwardDetail, locale: 'ja'},
+        }),
+      );
+      const description = descriptors.find(
+        descriptor => 'name' in descriptor && descriptor.name === 'description',
+      ) as {content: string};
+
+      expect(description.content).toBe(
+        `${mockAwardDetail.description}最新の受賞作は第76回（2023年）の『落下の解剖学』。2021年から2023年までの受賞作3本を収録。`,
+      );
+    });
   });
 
   describe('component', () => {
+    it('最新の受賞作を書いた導入文を出す', () => {
+      render(
+        <AwardDetailPage
+          {...createComponentProperties(
+            cast<LoaderData>({award: mockAwardDetail, locale: 'ja'}),
+          )}
+        />,
+      );
+
+      expect(
+        screen.getByText(/最新の受賞作は第76回（2023年）の『落下の解剖学』/),
+      ).toBeInTheDocument();
+    });
+
     it('日本で観られる一番新しい受賞作を「まず観るなら」に出す', () => {
       render(
         <AwardDetailPage

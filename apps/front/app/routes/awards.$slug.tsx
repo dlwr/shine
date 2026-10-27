@@ -8,6 +8,7 @@ import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {awardHeading} from '@/lib/awards';
 import {
+  awardLeadText,
   awardPagePath,
   awardPageTitle,
   awardSummaryLine,
@@ -27,7 +28,9 @@ export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   return [
     ...buildSocialMeta({
       title,
-      description: award.description,
+      description: [award.description, awardLeadText(award)]
+        .filter(Boolean)
+        .join(''),
       path: awardPagePath(award),
       locale: locale ?? DEFAULT_LOCALE,
       imageUrl: `${SITE_URL}/og/home.png`,
@@ -53,6 +56,7 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
   const {award} = loaderData as {award: AwardPageData};
   const locale = 'ja';
   const heading = awardHeading(award);
+  const leadText = awardLeadText(award);
   const firstPick =
     award.grouping === 'person' ? undefined : awardFirstPick(award);
 
@@ -73,6 +77,7 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
         <p className="font-label text-xs text-ink-muted mb-4">
           {awardSummaryLine(award)}
         </p>
+        {leadText && <p className="mb-4 text-sm leading-relaxed">{leadText}</p>}
         {award.grouping !== 'person' && (
           <AvailabilitySummaryLine
             summary={award.availabilitySummary}
