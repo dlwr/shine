@@ -111,6 +111,16 @@
     "data.topMovies[].uid",
     "data.topMovies[].year"
   ],
+  "double-feature:{date}:v1": [
+    "cachedAt",
+    "data.connection.kind",
+    "data.connection.label",
+    "data.date",
+    "data.movies[].posterUrl",
+    "data.movies[].title",
+    "data.movies[].uid",
+    "data.movies[].year"
+  ],
   "languages:en:v1": [
     "cachedAt",
     "data[].awards[].isWinner",
