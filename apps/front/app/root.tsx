@@ -11,6 +11,7 @@ import {
 import type {Route} from './+types/root';
 import appCss from './app.css?inline';
 import {NO_FLASH_SCRIPT} from '@/lib/theme';
+import {webAnalyticsLoader} from '@/lib/web-analytics';
 import {
   DEFAULT_LOCALE,
   getLocaleFromRequest,
@@ -94,9 +95,9 @@ export function Layout({children}: {children: React.ReactNode}) {
         <Scripts />
         {webAnalyticsToken && (
           <script
-            defer
-            src="https://static.cloudflareinsights.com/beacon.min.js"
-            data-cf-beacon={JSON.stringify({token: webAnalyticsToken})}
+            dangerouslySetInnerHTML={{
+              __html: webAnalyticsLoader(webAnalyticsToken),
+            }}
           />
         )}
       </body>
