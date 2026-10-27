@@ -39,6 +39,12 @@ export type PersonDetail = {
     availabilityStatus: JapanAvailabilityStatus;
   }>;
   awards: PersonAwardLegend[];
+  collaborators: Array<{
+    uid: string;
+    name: string;
+    sharedMovieCount: number;
+    sampleMovieTitle: string | undefined;
+  }>;
 };
 
 type PersonSummary = {

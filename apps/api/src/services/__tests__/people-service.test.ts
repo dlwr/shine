@@ -547,6 +547,135 @@ describe('PeopleService.getPerson', () => {
   });
 });
 
+describe('PeopleService.getPerson のよく組む人', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+  });
+
+  async function collaboratorsOf(personUid: string) {
+    const person = await new PeopleService(environment).getPerson(
+      personUid,
+      'ja',
+    );
+    return person?.collaborators ?? [];
+  }
+
+  async function creditBoth(personUid: string, creditIdPrefix: string) {
+    await database.insert(movieCredits).values([
+      {
+        movieUid: 'movie-ran',
+        personUid,
+        creditId: `${creditIdPrefix}-ran`,
+        department: 'Acting',
+      },
+      {
+        movieUid: 'movie-kagemusha',
+        personUid,
+        creditId: `${creditIdPrefix}-kagemusha`,
+        department: 'Acting',
+      },
+    ]);
+  }
+
+  it('共通作品が2本以上の人を共通作品数つきで返す', async () => {
+    const collaborators = await collaboratorsOf('person-kurosawa');
+
+    expect(collaborators).toEqual([
+      expect.objectContaining({
+        uid: 'person-prolific',
+        name: '仲代達矢',
+        sharedMovieCount: 2,
+      }),
+    ]);
+  });
+
+  it('同じ映画に複数のクレジットがあっても1本と数える', async () => {
+    const collaborators = await collaboratorsOf('person-kurosawa');
+
+    expect(collaborators.map(person => person.uid)).not.toContain(
+      'person-multi',
+    );
+  });
+
+  it('本人を含めない', async () => {
+    const collaborators = await collaboratorsOf('person-prolific');
+
+    expect(collaborators.map(person => person.uid)).toEqual([
+      'person-kurosawa',
+    ]);
+  });
+
+  it('論理削除された映画は共通作品に数えない', async () => {
+    await database.insert(movieCredits).values({
+      movieUid: 'movie-deleted',
+      personUid: 'person-single',
+      creditId: 'c-single-deleted',
+      department: 'Acting',
+    });
+
+    const collaborators = await collaboratorsOf('person-kurosawa');
+
+    expect(collaborators.map(person => person.uid)).not.toContain(
+      'person-single',
+    );
+  });
+
+  it('代表の共通作品として最も新しい共通作品の題名を返す', async () => {
+    const collaborators = await collaboratorsOf('person-kurosawa');
+
+    expect(collaborators[0]?.sampleMovieTitle).toBe('乱');
+  });
+
+  it('日本語名があれば日本語名を返す', async () => {
+    await creditBoth('person-scorsese', 'c-scorsese');
+
+    const collaborators = await collaboratorsOf('person-kurosawa');
+
+    expect(
+      collaborators.find(person => person.uid === 'person-scorsese')?.name,
+    ).toBe('マーティン・スコセッシ');
+  });
+
+  it('共通作品の多い順、同数なら名前順に並べる', async () => {
+    await database.insert(movieCredits).values({
+      movieUid: 'movie-dreams',
+      personUid: 'person-kurosawa',
+      creditId: 'c-kurosawa-dreams',
+      department: 'Directing',
+      job: 'Director',
+    });
+    await creditBoth('person-szor', 'c-szor');
+    await creditBoth('person-scorsese', 'c-scorsese');
+
+    const collaborators = await collaboratorsOf('person-kurosawa');
+
+    expect(collaborators.map(person => person.uid)).toEqual([
+      'person-prolific',
+      'person-scorsese',
+      'person-szor',
+    ]);
+  });
+
+  it('最大5人まで返す', async () => {
+    const extraPeople = Array.from({length: 6}, (_, index) => ({
+      uid: `person-extra-${index}`,
+      tmdbId: 9000 + index,
+      name: `Extra ${index}`,
+    }));
+    await database.insert(people).values(extraPeople);
+    for (const person of extraPeople) {
+      await creditBoth(person.uid, `c-${person.uid}`);
+    }
+
+    const collaborators = await collaboratorsOf('person-kurosawa');
+
+    expect(collaborators).toHaveLength(5);
+  });
+});
+
 describe('PeopleService.listPeople', () => {
   let environment: Environment;
   let database: TestDatabase;
