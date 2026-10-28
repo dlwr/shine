@@ -6,6 +6,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
+import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {posterUrls} from '@shine/database/schema/poster-urls';
@@ -439,7 +440,7 @@ describe('POST /quiz/guess', () => {
     return response.json() as Promise<{
       correct: boolean;
       hint?: {label: string; value: string};
-      answer?: {uid: string; title: string};
+      answer?: {uid: string; title: string; availabilityStatus?: string};
     }>;
   }
 
@@ -492,5 +493,21 @@ describe('POST /quiz/guess', () => {
     const result = await guess({movieUid: undefined, attempt: 6});
 
     expect(result.answer?.title).toBe(answer.title);
+  });
+
+  it('tells whether the answer is watchable in Japan once revealed', async () => {
+    const answer = await fetchAnswer(environment);
+    await getDatabase(environment)
+      .insert(movieAvailabilityChecks)
+      .values({movieUid: answer.uid, source: 'tmdb', status: 'ng'});
+    const result = await guess({movieUid: answer.uid, attempt: 1});
+
+    expect(result.answer?.availabilityStatus).toBe('unwatchable');
+  });
+
+  it('marks an unchecked answer as unchecked', async () => {
+    const result = await guess({movieUid: undefined, attempt: 6});
+
+    expect(result.answer?.availabilityStatus).toBe('unchecked');
   });
 });

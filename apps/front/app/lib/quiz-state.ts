@@ -1,3 +1,4 @@
+import type {JapanAvailabilityStatusData} from '@/lib/api-types';
 export type QuizHint = {label: string; value: string};
 
 export type QuizCandidate = {uid: string; title: string; year?: number};
@@ -6,6 +7,7 @@ export type QuizAnswer = {
   uid: string;
   title: string;
   year?: number;
+  availabilityStatus?: JapanAvailabilityStatusData;
 };
 
 export type QuizGuess = {

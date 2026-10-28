@@ -75,14 +75,21 @@ type GuessBody = {
   attempt?: number;
 };
 
-function guessResult(
+async function guessResult(
+  service: QuizService,
   entry: QuizPoolEntry,
   date: string,
   {movieUid, attempt}: {movieUid?: string; attempt: number},
-): QuizGuessResult {
+): Promise<QuizGuessResult> {
   const isCorrect = movieUid === entry.uid;
   if (isCorrect || attempt >= QUIZ_MAX_ATTEMPTS) {
-    return {correct: isCorrect, answer: toQuizAnswer(entry, date)};
+    return {
+      correct: isCorrect,
+      answer: {
+        ...toQuizAnswer(entry, date),
+        availabilityStatus: await service.getAvailabilityStatus(entry.uid),
+      },
+    };
   }
 
   return {correct: isCorrect, hint: buildQuizHints(entry)[attempt - 1]};
@@ -102,13 +109,17 @@ quizRoutes.post('/guess', async c => {
     return c.json({error: 'Invalid request'}, 400);
   }
 
-  const entry = await new QuizService(c.env, c).getEntry(date);
+  const service = new QuizService(c.env, c);
+  const entry = await service.getEntry(date);
   if (!entry) {
     return c.json({error: 'Quiz unavailable'}, 503);
   }
 
   return c.json(
-    guessResult(entry, date, {movieUid: body.movieUid, attempt}),
+    await guessResult(service, entry, date, {
+      movieUid: body.movieUid,
+      attempt,
+    }),
     200,
     {'Cache-Control': 'no-store'},
   );

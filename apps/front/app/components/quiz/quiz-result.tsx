@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import {AvailabilityStatusMark} from '@/components/editorial/availability-status-mark';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import type {MonthlyPick} from '@/lib/monthly-pick';
 import {shareText, type QuizGameState} from '@/lib/quiz-state';
@@ -58,6 +59,16 @@ export function QuizResult({
           </span>
         ) : undefined}
       </p>
+      {game.answer && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <a
+            href={`/movies/${game.answer.uid}`}
+            className="font-label text-xs font-bold bg-brand text-brand-on px-3 py-1.5 border border-ink">
+            この映画のページへ
+          </a>
+          <AvailabilityStatusMark status={game.answer.availabilityStatus} />
+        </div>
+      )}
       <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"

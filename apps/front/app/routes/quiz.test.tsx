@@ -618,6 +618,43 @@ describe('Quiz page', () => {
       expect(await screen.findByText('正解！')).toBeInTheDocument();
     });
 
+    it('答えが出たらその映画のページへのボタンを出す', async () => {
+      stubApi({
+        correct: true,
+        answer: {uid: 'movie-a', title: '赤ひげ', year: 1965},
+      });
+
+      render(<QuizPage {...createComponentProperties()} />);
+      await userEvent.type(screen.getByLabelText(/邦題で回答/), '赤ひげ');
+      await userEvent.click(
+        await screen.findByRole('button', {name: /赤ひげ/}),
+      );
+
+      expect(
+        await screen.findByRole('link', {name: 'この映画のページへ'}),
+      ).toHaveAttribute('href', '/movies/movie-a');
+    });
+
+    it('答えの映画が日本で観られないときはそう示す', async () => {
+      stubApi({
+        correct: true,
+        answer: {
+          uid: 'movie-a',
+          title: '赤ひげ',
+          year: 1965,
+          availabilityStatus: 'unwatchable',
+        },
+      });
+
+      render(<QuizPage {...createComponentProperties()} />);
+      await userEvent.type(screen.getByLabelText(/邦題で回答/), '赤ひげ');
+      await userEvent.click(
+        await screen.findByRole('button', {name: /赤ひげ/}),
+      );
+
+      expect(await screen.findByText('日本で観られない')).toBeInTheDocument();
+    });
+
     it('答えが出たら今月の1本へ誘う', async () => {
       stubApi({
         correct: true,
