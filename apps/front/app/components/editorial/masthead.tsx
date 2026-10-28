@@ -10,7 +10,6 @@ const TAGLINES = {
 const NAV_LINKS = [
   {href: '/quiz', ja: 'クイズ', en: 'Quiz', ariaLabel: 'Quiz'},
   {href: '/watched', ja: '観た映画', en: 'Watched', ariaLabel: 'Watched films'},
-  {href: '/daily', ja: '日替わり', en: 'Daily', ariaLabel: 'Daily picks'},
   {href: '/tonight', ja: '今夜の1本', en: 'Tonight', ariaLabel: 'Tonight'},
   {
     href: '/double-feature',
@@ -25,7 +24,6 @@ const NAV_LINKS = [
     ariaLabel: 'On this day',
   },
   {href: '/connect', ja: '映画の距離', en: 'Connect', ariaLabel: 'Connect'},
-  {href: '/languages', ja: '言語', en: 'Languages', ariaLabel: 'Languages'},
   {href: '/awards', ja: '映画賞', en: 'Awards', ariaLabel: 'Awards'},
   {href: '/people', ja: '人物', en: 'People', ariaLabel: 'People'},
   {href: '/years', ja: '年代', en: 'Years', ariaLabel: 'Years'},

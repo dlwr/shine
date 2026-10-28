@@ -8,11 +8,6 @@ import type {
   SelectionArchiveData,
 } from '@/lib/selection-archive';
 
-const ARCHIVE_LINKS = [
-  {label: 'DAILY', path: '/daily'},
-  {label: 'WEEKLY', path: '/weekly'},
-  {label: 'MONTHLY', path: '/monthly'},
-] as const;
 function CalendarLinks({calendarPath}: {calendarPath: string}) {
   const webcalUrl = `${SITE_URL.replace(/^https:/, 'webcal:')}${calendarPath}`;
   const googleUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`;
@@ -71,25 +66,6 @@ export function SelectionArchivePage({
         {config.calendarPath && (
           <CalendarLinks calendarPath={config.calendarPath} />
         )}
-
-        <nav className="flex gap-2 mb-8">
-          {ARCHIVE_LINKS.map(link =>
-            link.path === config.path ? (
-              <span
-                key={link.path}
-                className="font-label text-xs font-bold px-2.5 py-1 border border-ink bg-brand text-brand-on">
-                {link.label}
-              </span>
-            ) : (
-              <a
-                key={link.path}
-                href={link.path}
-                className="font-label text-xs font-bold px-2.5 py-1 border border-ink text-ink no-underline">
-                {link.label}
-              </a>
-            ),
-          )}
-        </nav>
 
         {current && (
           <CurrentMonthlyPick

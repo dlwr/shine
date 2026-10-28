@@ -77,11 +77,15 @@ describe('Award year page', () => {
   describe('loader', () => {
     it('APIから年別の賞データを取得する', async () => {
       const mockFetch = vi.mocked(fetch);
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => mockAwardYear,
-      } as Response);
+      mockFetch.mockImplementation(async input =>
+        String(input).endsWith('/awards')
+          ? ({ok: false, status: 500} as Response)
+          : ({
+              ok: true,
+              status: 200,
+              json: async () => mockAwardYear,
+            } as Response),
+      );
 
       const request = new Request(
         'http://localhost:3000/awards/palme-dor/2023',
@@ -100,13 +104,85 @@ describe('Award year page', () => {
       expect(result.award.year).toBe(2023);
     });
 
+    it('賞の一覧が取れなければ次に見る賞は空にする', async () => {
+      vi.mocked(fetch).mockImplementation(async input =>
+        String(input).endsWith('/awards')
+          ? ({ok: false, status: 500} as Response)
+          : ({
+              ok: true,
+              status: 200,
+              json: async () => mockAwardYear,
+            } as Response),
+      );
+
+      const result = await loader(
+        createLoaderArguments(
+          createMockContext(),
+          new Request('http://localhost:3000/awards/palme-dor/2023'),
+          {slug: 'palme-dor', year: '2023'},
+        ),
+      );
+
+      expect(result.nextAwards).toEqual({
+        sameOrganization: [],
+        otherOrganizations: [],
+      });
+    });
+
+    it('賞の一覧から次に見る賞を選ぶ', async () => {
+      vi.mocked(fetch).mockImplementation(async input =>
+        String(input).endsWith('/awards')
+          ? ({
+              ok: true,
+              status: 200,
+              json: async () => ({
+                awards: [
+                  {
+                    slug: 'palme-dor',
+                    name: 'パルム・ドール',
+                    organization: 'カンヌ国際映画祭',
+                    grouping: 'festival',
+                  },
+                  {
+                    slug: 'golden-lion',
+                    name: '金獅子賞',
+                    organization: 'ヴェネツィア国際映画祭',
+                    grouping: 'festival',
+                  },
+                ],
+              }),
+            } as Response)
+          : ({
+              ok: true,
+              status: 200,
+              json: async () => mockAwardYear,
+            } as Response),
+      );
+
+      const result = await loader(
+        createLoaderArguments(
+          createMockContext(),
+          new Request('http://localhost:3000/awards/palme-dor/2023'),
+          {slug: 'palme-dor', year: '2023'},
+        ),
+      );
+
+      expect(
+        result.nextAwards.otherOrganizations.map(award => award.slug),
+      ).toEqual(['golden-lion']);
+    });
+
     it('APIが404を返したら404 Responseをthrowする', async () => {
       const mockFetch = vi.mocked(fetch);
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-        json: async () => ({error: 'Award not found'}),
-      } as Response);
+      mockFetch.mockImplementation(async input =>
+        String(input).endsWith('/awards')
+          ? ({ok: false, status: 500} as Response)
+          : ({
+              ok: false,
+              status: 404,
+              json: async () => ({error: 'Award not found'}),
+            } as Response),
+      );
 
       const request = new Request(
         'http://localhost:3000/awards/palme-dor/1800',
@@ -257,6 +333,56 @@ describe('Award year page', () => {
         '/awards/palme-dor/2022',
       );
       expect(screen.queryByText(/2024 →/)).not.toBeInTheDocument();
+    });
+
+    it('次に見る賞を出す', () => {
+      render(
+        <AwardYearPage
+          {...createComponentProperties(
+            cast<LoaderData>({
+              award: mockAwardYear,
+              locale: 'ja',
+              nextAwards: {
+                sameOrganization: [],
+                otherOrganizations: [
+                  {
+                    slug: 'golden-lion',
+                    name: '金獅子賞',
+                    organization: 'ヴェネツィア国際映画祭',
+                  },
+                ],
+              },
+            }),
+          )}
+        />,
+      );
+
+      expect(
+        screen.getByRole('link', {name: 'ヴェネツィア国際映画祭 金獅子賞'}),
+      ).toHaveAttribute('href', '/awards/golden-lion');
+    });
+
+    it('受賞作の製作年の映画一覧へのリンクを出す', () => {
+      renderPage({
+        ...mockAwardYear,
+        year: 2000,
+        movies: [{...mockAwardYear.movies[0], movieYear: 1999}],
+      });
+
+      expect(
+        screen.getByRole('link', {name: '1999年の映画をまとめて見る'}),
+      ).toHaveAttribute('href', '/years/1999');
+    });
+
+    it('受賞作の製作年が無ければ授賞年の映画一覧へ向ける', () => {
+      renderPage({
+        ...mockAwardYear,
+        movies: [{...mockAwardYear.movies[0], movieYear: undefined}],
+      });
+
+      expect(
+        screen.getByRole('link', {name: '2023年の映画をまとめて見る'}),
+      ).toHaveAttribute('href', '/years/2023');
     });
 
     describe('視聴手段', () => {

@@ -10,11 +10,10 @@ const selections = {
 };
 
 describe('buildIndexNowUrls', () => {
-  it('毎日ホームと日替わり一覧を出す', () => {
+  it('毎日ホームを出す', () => {
     const urls = buildIndexNowUrls(selections, '2026-09-17');
 
     expect(urls).toContain('https://shine-film.com/');
-    expect(urls).toContain('https://shine-film.com/daily');
   });
 
   it('毎日その日の日替わりの映画ページを出す', () => {
@@ -61,10 +60,7 @@ describe('buildIndexNowUrls', () => {
   it('選出が取れていない枠は飛ばす', () => {
     const urls = buildIndexNowUrls({}, '2026-10-01');
 
-    expect(urls).toStrictEqual([
-      'https://shine-film.com/',
-      'https://shine-film.com/daily',
-    ]);
+    expect(urls).toStrictEqual(['https://shine-film.com/']);
   });
 });
 

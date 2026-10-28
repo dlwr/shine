@@ -12,7 +12,6 @@ export const SURVEY_PAGES = [
   '/awards',
   '/people',
   '/years',
-  '/daily',
   '/watched',
 ];
 

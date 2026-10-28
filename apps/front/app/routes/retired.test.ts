@@ -15,6 +15,10 @@ describe('取り下げたページ', () => {
     ['/uncrowned', '/awards'],
     ['/people/crossings', '/people'],
     ['/people/uncrowned', '/people'],
+    ['/daily', '/monthly'],
+    ['/weekly', '/monthly'],
+    ['/languages', '/awards'],
+    ['/languages/fr', '/awards'],
   ])('%s を %s へ転送する', (path, destination) => {
     expect(locationFor(path)).toBe(destination);
   });
