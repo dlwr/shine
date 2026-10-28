@@ -699,7 +699,103 @@ describe('MovieDetail Component', () => {
         />,
       );
 
-      expect(screen.getByText(/· 129分/)).toBeInTheDocument();
+      expect(screen.getByText('129分')).toBeInTheDocument();
+    });
+
+    it('公開日を年月日で表示する', () => {
+      const loaderData = createLoaderData({
+        movieDetail: {...mockMovieDetail, releaseDate: '2023-05-07'},
+        relatedMovies: Promise.resolve([]),
+      });
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.getByText('2023年5月7日')).toBeInTheDocument();
+    });
+
+    it('公開日が無ければ公開の行を出さない', () => {
+      const loaderData = createLoaderData({relatedMovies: Promise.resolve([])});
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.queryByText('公開')).not.toBeInTheDocument();
+    });
+
+    it('上映時間が無ければ上映の行を出さない', () => {
+      const loaderData = createLoaderData({
+        movieDetail: {...mockMovieDetail, runtime: undefined},
+        relatedMovies: Promise.resolve([]),
+      });
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.queryByText('上映')).not.toBeInTheDocument();
+    });
+
+    it('受賞とノミネートの数を団体名と並べて賞の一覧へつなぐ', () => {
+      const loaderData = createLoaderData({relatedMovies: Promise.resolve([])});
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(
+        screen.getByRole('link', {
+          name: 'カンヌ国際映画祭・アカデミー賞\u{3000}受賞 1・ノミネート 1',
+        }),
+      ).toHaveAttribute('href', '#awards');
+    });
+
+    it('配信が見つからなければ情報なしと書く', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({available: false, availability: []}),
+      } as Response);
+      const loaderData = createLoaderData({relatedMovies: Promise.resolve([])});
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(
+        await screen.findByText('配信・宅配レンタルの情報なし'),
+      ).toBeInTheDocument();
     });
 
     it('「観た」トグルを表示する', () => {
