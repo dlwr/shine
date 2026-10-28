@@ -238,13 +238,16 @@ export async function fetchTopD1Queries(
   );
 }
 
+const isIssuedByApp = ({query, count}: D1QueryStat) =>
+  count > 1 && /^(select|insert|update|delete|with) /.test(query);
+
 export function recurringTopQueries(
   queries: D1QueryStat[],
   limit: number,
-): {recurring: D1QueryStat[]; oneOff: D1QueryStat[]} {
+): {recurring: D1QueryStat[]; excluded: D1QueryStat[]} {
   return {
-    recurring: queries.filter(({count}) => count > 1).slice(0, limit),
-    oneOff: queries.filter(({count}) => count === 1),
+    recurring: queries.filter(query => isIssuedByApp(query)).slice(0, limit),
+    excluded: queries.filter(query => !isIssuedByApp(query)),
   };
 }
 
