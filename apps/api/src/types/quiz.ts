@@ -1,3 +1,5 @@
+import type {JapanAvailabilityStatus} from './common';
+
 export type QuizHint = {
   label: string;
   value: string;
@@ -22,5 +24,5 @@ export type QuizAnswer = {
 export type QuizGuessResult = {
   correct: boolean;
   hint?: QuizHint;
-  answer?: QuizAnswer;
+  answer?: QuizAnswer & {availabilityStatus: JapanAvailabilityStatus};
 };

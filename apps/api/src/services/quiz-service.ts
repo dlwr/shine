@@ -1,5 +1,6 @@
 import {eq} from '@shine/database';
 import {quizSelections} from '@shine/database/schema/quiz-selections';
+import type {JapanAvailabilityStatus} from '../types/common';
 import type {QuizCandidate} from '../types/quiz';
 import {
   EdgeCache,
@@ -11,6 +12,10 @@ import {readThroughCache, STALE_RETENTION} from '../utils/read-through-cache';
 import type {Environment} from '@shine/database';
 import {BaseService} from './base-service';
 import {queryQuizPool, type QuizPoolEntry} from './quiz-pool-query';
+import {
+  availabilityStatusOf,
+  loadMovieAvailabilityByMovie,
+} from './watchable-availability';
 
 export const QUIZ_MAX_ATTEMPTS = 6;
 
@@ -82,6 +87,16 @@ export class QuizService extends BaseService {
       title: entry.title,
       year: entry.year,
     }));
+  }
+
+  async getAvailabilityStatus(
+    movieUid: string,
+  ): Promise<JapanAvailabilityStatus> {
+    const availability = await loadMovieAvailabilityByMovie(this.database, [
+      movieUid,
+    ]);
+
+    return availabilityStatusOf(availability, movieUid);
   }
 
   async getEntry(date: string): Promise<QuizPoolEntry | undefined> {

@@ -329,6 +329,12 @@ const exercises: Exercise[] = [
       ),
   },
   {
+    name: 'クイズの答えが日本で観られるか',
+    run: environment =>
+      new QuizService(environment).getAvailabilityStatus('movie-beauty'),
+    indexOnly: true,
+  },
+  {
     name: '観た映画チェックのリスト',
     run: environment => new WatchedService(environment).listWatchedLists(),
   },
