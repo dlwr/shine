@@ -162,7 +162,7 @@
     "data.ja[].year"
   ],
   "movies:uids:v3": ["cachedAt", "data.uids[]"],
-  "on-this-day:09-15:v2": [
+  "on-this-day:09-15:v3": [
     "cachedAt",
     "data.awards[].name",
     "data.awards[].organization",
@@ -175,7 +175,10 @@
     "data.movies[].posterUrl",
     "data.movies[].releaseDate",
     "data.movies[].title",
-    "data.movies[].uid"
+    "data.movies[].uid",
+    "data.people[].birthYear",
+    "data.people[].name",
+    "data.people[].uid"
   ],
   "people:crossings:ja:v5": [
     "cachedAt",

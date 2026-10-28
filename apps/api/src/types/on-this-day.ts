@@ -16,4 +16,5 @@ export type OnThisDay = {
     name: string;
     organization: string;
   }>;
+  people: Array<{uid: string; name: string; birthYear: number}>;
 };

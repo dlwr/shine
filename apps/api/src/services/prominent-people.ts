@@ -8,6 +8,7 @@ import {
   sql,
   stringLiteral,
   type getDatabase,
+  type SQL,
 } from '@shine/database';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
@@ -102,19 +103,7 @@ function awardedCountOf(aggregate: ReturnType<typeof sql>) {
 		)`;
 }
 
-export async function searchPeopleByName(
-  database: Database,
-  query: string,
-  locale: string,
-  limit: number,
-): Promise<ProminentPerson[]> {
-  const wonCount = awardedCountOf(
-    sql`COUNT(DISTINCT CASE WHEN nominations.is_winner = 1 THEN nominations.ceremony_uid || ':' || nominations.category_uid END)`,
-  );
-  const nominatedCount = awardedCountOf(
-    sql`COUNT(DISTINCT nominations.ceremony_uid || ':' || nominations.category_uid)`,
-  );
-  const creditCount = sql<number>`(
+const creditCount = sql<number>`(
 			SELECT COUNT(*)
 			FROM movie_credits
 			JOIN movies ON movies.uid = movie_credits.movie_uid
@@ -122,17 +111,31 @@ export async function searchPeopleByName(
 			WHERE movie_credits.person_uid = people.uid
 		)`;
 
-  const rows = await database
+async function rankPeopleWhere(
+  database: Database,
+  condition: SQL,
+  locale: string,
+  limit: number,
+) {
+  const wonCount = awardedCountOf(
+    sql`COUNT(DISTINCT CASE WHEN nominations.is_winner = 1 THEN nominations.ceremony_uid || ':' || nominations.category_uid END)`,
+  );
+  const nominatedCount = awardedCountOf(
+    sql`COUNT(DISTINCT nominations.ceremony_uid || ':' || nominations.category_uid)`,
+  );
+
+  return database
     .select({
       uid: people.uid,
       name: people.name,
       profilePath: people.profilePath,
+      birthday: people.birthday,
       localizedName: personLocalizedName(locale),
       wonCount: wonCount.as('won_count'),
       nominatedCount: nominatedCount.as('nominated_count'),
     })
     .from(people)
-    .where(sql`${people.uid} IN (${personUidsMatchingName(query)})`)
+    .where(condition)
     .orderBy(
       sql`won_count DESC`,
       sql`nominated_count DESC`,
@@ -140,6 +143,20 @@ export async function searchPeopleByName(
       people.uid,
     )
     .limit(limit);
+}
+
+export async function searchPeopleByName(
+  database: Database,
+  query: string,
+  locale: string,
+  limit: number,
+): Promise<ProminentPerson[]> {
+  const rows = await rankPeopleWhere(
+    database,
+    sql`${people.uid} IN (${personUidsMatchingName(query)})`,
+    locale,
+    limit,
+  );
 
   const topMovies = await loadTopMovies(
     database,
@@ -156,6 +173,29 @@ export async function searchPeopleByName(
     wonCount: row.wonCount,
     nominatedCount: row.nominatedCount,
     topMovies: topMovies.get(row.uid) ?? [],
+  }));
+}
+
+const MINIMUM_CREDITS = 3;
+
+export async function rankPeopleBornOn(
+  database: Database,
+  monthDay: string,
+  locale: string,
+  limit: number,
+): Promise<Array<{uid: string; name: string; birthYear: number}>> {
+  const rows = await rankPeopleWhere(
+    database,
+    sql`substr(${people.birthday}, 6, 5) = ${monthDay}
+      AND (nominated_count > 0 OR ${creditCount} >= ${MINIMUM_CREDITS})`,
+    locale,
+    limit,
+  );
+
+  return rows.map(row => ({
+    uid: row.uid,
+    name: row.localizedName ?? row.name,
+    birthYear: Number(row.birthday?.slice(0, 4)),
   }));
 }
 

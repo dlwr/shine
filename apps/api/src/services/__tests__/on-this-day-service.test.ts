@@ -6,8 +6,10 @@ import {getDatabase, type Environment} from '@shine/database';
 import {awardCategories} from '@shine/database/schema/award-categories';
 import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {awardOrganizations} from '@shine/database/schema/award-organizations';
+import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
+import {people} from '@shine/database/schema/people';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from '@shine/database/testing';
@@ -259,5 +261,126 @@ describe('OnThisDayService.getOnThisDay', () => {
     const {movies: result} = await service.getOnThisDay('02-29');
 
     expect(result).toEqual([]);
+  });
+});
+
+describe('OnThisDayService.getOnThisDay の誕生日の映画人', () => {
+  let service: OnThisDayService;
+  let database: TestDatabase;
+
+  async function seedPerson(
+    uid: string,
+    birthday: string,
+    options: {credits?: number; jaName?: string} = {},
+  ): Promise<void> {
+    await database.insert(people).values({
+      uid,
+      tmdbId: Number(uid.replaceAll(/\D/g, '')),
+      name: `${uid} name`,
+      birthday,
+    });
+    if (options.jaName) {
+      await database.insert(translations).values({
+        resourceType: 'person_name',
+        resourceUid: uid,
+        languageCode: 'ja',
+        content: options.jaName,
+      });
+    }
+
+    const creditCount = options.credits ?? 0;
+    if (creditCount > 0) {
+      await database.insert(movieCredits).values(
+        Array.from({length: creditCount}, (_, index) => ({
+          movieUid: `movie-credit-${index}`,
+          personUid: uid,
+          creditId: `${uid}-${index}`,
+          department: 'Acting',
+          job: 'Actor',
+        })),
+      );
+    }
+  }
+
+  async function nominatePerson(
+    personUid: string,
+    isWinner: boolean,
+  ): Promise<void> {
+    await database.insert(nominations).values({
+      movieUid: 'movie-credit-0',
+      ceremonyUid: 'ceremony-academy',
+      categoryUid: 'cat-best-director',
+      personUid,
+      isWinner: isWinner ? 1 : 0,
+    });
+  }
+
+  beforeEach(async () => {
+    const created = await createTestEnvironment();
+    database = created.database;
+    service = new OnThisDayService(created.environment);
+    await seedAwards(database);
+    await database.insert(awardCategories).values({
+      uid: 'cat-best-director',
+      organizationUid: 'org-academy',
+      name: 'Academy Award for Best Director',
+    });
+    await database
+      .insert(movies)
+      .values(
+        Array.from({length: 3}, (_, index) => ({uid: `movie-credit-${index}`})),
+      );
+    await seedPerson('person-1', '1970-09-15', {credits: 3});
+    await seedPerson('person-2', '1960-09-15', {jaName: '二番目の監督'});
+    await seedPerson('person-3', '1950-09-15');
+    await seedPerson('person-4', '1980-09-15', {credits: 2});
+    await seedPerson('person-5', '1950-09-16');
+    await nominatePerson('person-2', false);
+    await nominatePerson('person-3', true);
+    await nominatePerson('person-5', true);
+  });
+
+  it('その月日が誕生日で、個人賞の候補か参加作が 3 本以上の人物を、受賞・候補・参加作の多い順に返す', async () => {
+    const {people: result} = await service.getOnThisDay('09-15');
+
+    expect(result.map(person => person.uid)).toEqual([
+      'person-3',
+      'person-2',
+      'person-1',
+    ]);
+  });
+
+  it('日本語名があれば日本語名で返す', async () => {
+    const {people: result} = await service.getOnThisDay('09-15');
+
+    expect(result.find(person => person.uid === 'person-2')?.name).toBe(
+      '二番目の監督',
+    );
+  });
+
+  it('日本語名が無ければ people.name で返す', async () => {
+    const {people: result} = await service.getOnThisDay('09-15');
+
+    expect(result.find(person => person.uid === 'person-1')?.name).toBe(
+      'person-1 name',
+    );
+  });
+
+  it('生まれ年を返す', async () => {
+    const {people: result} = await service.getOnThisDay('09-15');
+
+    expect(result.find(person => person.uid === 'person-3')?.birthYear).toBe(
+      1950,
+    );
+  });
+
+  it('8 人までに絞る', async () => {
+    for (let index = 10; index < 16; index++) {
+      await seedPerson(`person-${index}`, '1990-09-15', {credits: 3});
+    }
+
+    const {people: result} = await service.getOnThisDay('09-15');
+
+    expect(result).toHaveLength(8);
   });
 });

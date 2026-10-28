@@ -34,7 +34,7 @@ onThisDayRoutes.get('/:monthDay', async c => {
 
   const cache = new EdgeCache(c.env.CACHE_KV);
   const {data: result, status} = await readThroughCache(c, cache, {
-    key: `on-this-day:${monthDay}:v2`,
+    key: `on-this-day:${monthDay}:v3`,
     ttl: ON_THIS_DAY_CACHE_TTL,
     edgeTtl: IMPORTED_DATA_EDGE_TTL,
     load: async () => new OnThisDayService(c.env).getOnThisDay(monthDay),
