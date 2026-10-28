@@ -484,6 +484,28 @@ describe('公開エンドポイントの実行計画', {timeout: 30_000}, () => 
     }
   });
 
+  it('この日に初公開された映画は公開日の月日の索引で引く', async () => {
+    const exercise = exercises.find(
+      current => current.name === 'この日に初公開された映画',
+    );
+    const plans = await plansOf(exercise!);
+    const releaseDatePlans = plans
+      .entries()
+      .filter(([statement]) => statement.includes('"release_date", 6, 5)'))
+      .toArray();
+    expect(releaseDatePlans).toHaveLength(1);
+    for (const [statement, plan] of releaseDatePlans) {
+      expect(
+        plan.map(row => row.detail),
+        statement,
+      ).toContainEqual(
+        expect.stringMatching(
+          /^SEARCH movies USING INDEX movies_release_month_day_idx /,
+        ),
+      );
+    }
+  });
+
   it.each(exercises.filter(exercise => exercise.indexOnly))(
     '$name は索引だけで引く',
     async exercise => {

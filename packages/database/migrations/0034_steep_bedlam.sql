@@ -1,0 +1,1 @@
+CREATE INDEX `movies_release_month_day_idx` ON `movies` (substr(`release_date`, 6, 5));
