@@ -1,3 +1,4 @@
+import type {QuizOrderMovie} from '@shine/api/types/quiz';
 import type {RelatedMovie} from '@shine/api/services/related-movies';
 import type {SelectionHistoryItem} from '@shine/api/services/selection-history';
 import type {PeriodPreview} from '@shine/api/services/selections-service';
@@ -126,3 +127,4 @@ export type AdminCeremonyDetailData = Json<AdminCeremonyDetail>;
 export type AdminAwardsReferenceData = Json<AdminAwardsReference>;
 export type ExternalIdSearchData = Json<ExternalIdSearchResponse>;
 export type QuizDailyData = Json<QuizDailyResponse>;
+export type QuizOrderData = {date: string; movies: Array<Json<QuizOrderMovie>>};

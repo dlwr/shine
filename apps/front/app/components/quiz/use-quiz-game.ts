@@ -18,7 +18,7 @@ const SUGGESTION_LIMIT = 8;
 
 export type QuizPuzzle = QuizDailyData;
 
-function readStorage<T>(key: string): T | undefined {
+export function readStorage<T>(key: string): T | undefined {
   try {
     const raw = globalThis.localStorage?.getItem(key);
     return raw ? (JSON.parse(raw) as T) : undefined;
@@ -27,7 +27,7 @@ function readStorage<T>(key: string): T | undefined {
   }
 }
 
-function writeStorage(key: string, value: unknown): void {
+export function writeStorage(key: string, value: unknown): void {
   try {
     globalThis.localStorage?.setItem(key, JSON.stringify(value));
   } catch {
