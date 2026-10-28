@@ -75,16 +75,6 @@ export default function AwardsIndex({loaderData}: Route.ComponentProps) {
 
         <div className="mb-8 flex flex-wrap gap-3">
           <a
-            href="/crossings"
-            className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold no-underline text-ink">
-            賞の交差を見る
-          </a>
-          <a
-            href="/uncrowned"
-            className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold no-underline text-ink">
-            無冠の映画を見る
-          </a>
-          <a
             href="/languages"
             className="inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold no-underline text-ink">
             言語で探す

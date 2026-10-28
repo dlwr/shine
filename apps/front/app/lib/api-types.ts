@@ -24,7 +24,6 @@ import type {
   JapanAvailabilityStatus,
   JapanAvailabilitySummary,
 } from '@shine/api/types/common';
-import type {AwardCrossings, PersonCrossings} from '@shine/api/types/crossings';
 import type {
   PeopleSearchResult,
   PersonDetail,
@@ -40,7 +39,6 @@ import type {
   WatchedListsResponse,
   YearsListResponse,
 } from '@shine/api/types/responses';
-import type {PersonUncrowned, Uncrowned} from '@shine/api/types/uncrowned';
 import type {LanguagePage, LanguageSummary} from '@shine/api/types/languages';
 import type {OnThisDay} from '@shine/api/types/on-this-day';
 import type {TonightPick} from '@shine/api/types/tonight';
@@ -99,11 +97,6 @@ export type MovieConnectionData = Json<MovieConnection>;
 export type ConnectPickData = Json<ConnectPick>;
 export type ShiritoriChainData = Json<ShiritoriChain>;
 export type WatchedRecommendationsData = Json<WatchedRecommendationsResponse>;
-
-export type CrossingsData = Json<AwardCrossings>;
-export type UncrownedData = Json<Uncrowned>;
-export type PersonCrossingsData = Json<PersonCrossings>;
-export type PersonUncrownedData = Json<PersonUncrowned>;
 
 export type ProminentPersonData = Json<ProminentPerson>;
 export type ProminentPeopleData = Json<ProminentPeople>;

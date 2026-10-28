@@ -97,10 +97,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
   const entries: SitemapEntry[] = [
     {path: '/', changefreq: 'daily'},
     {path: '/awards', changefreq: 'weekly'},
-    {path: '/crossings', changefreq: 'weekly'},
-    {path: '/uncrowned', changefreq: 'weekly'},
     {path: '/people', changefreq: 'weekly'},
-    {path: '/people/crossings', changefreq: 'weekly'},
     {path: '/quiz', changefreq: 'daily'},
     {path: '/watched', changefreq: 'weekly'},
     {path: '/daily', changefreq: 'daily'},
