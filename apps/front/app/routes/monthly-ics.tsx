@@ -11,7 +11,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
       '/selections/monthly/history?locale=ja&limit=12',
       {label: 'calendar', signal: request.signal},
     ),
-    loadNextSelection('monthly', 'ja', context, request),
+    loadNextSelection('ja', context, request),
   ]);
 
   return new Response(buildMonthlyCalendar(next ? [next, ...items] : items), {

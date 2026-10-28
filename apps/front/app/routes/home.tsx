@@ -76,7 +76,7 @@ async function loadAnnouncedNextMonthly(
   }
 
   try {
-    return await loadNextSelection('monthly', locale, context, request);
+    return await loadNextSelection(locale, context, request);
   } catch {
     return undefined;
   }
