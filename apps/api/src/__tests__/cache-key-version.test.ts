@@ -10,7 +10,6 @@ import {awardsRoutes} from '../routes/awards';
 import {connectRoutes} from '../routes/connect';
 import {shiritoriRoutes} from '../routes/shiritori';
 import {doubleFeatureRoutes} from '../routes/double-feature';
-import {languagesRoutes} from '../routes/languages';
 import {moviesRoutes} from '../routes/movies';
 import {onThisDayRoutes} from '../routes/on-this-day';
 import {peopleRoutes} from '../routes/people';
@@ -69,8 +68,6 @@ const exercises: Exercise[] = [
   {name: '年一覧', routes: yearsRoutes, path: '/'},
   {name: '年別ページ', routes: yearsRoutes, path: '/1999'},
   {name: 'この日に初公開された映画', routes: onThisDayRoutes, path: '/09-15'},
-  {name: '言語の一覧', routes: languagesRoutes, path: '/'},
-  {name: '言語別の映画', routes: languagesRoutes, path: '/en'},
   {name: '今夜 90 分の 1 本', routes: tonightRoutes, path: '/'},
   {name: '今日の二本立て', routes: doubleFeatureRoutes, path: '/'},
   {name: '映画の距離のおまかせ', routes: connectRoutes, path: '/pick'},

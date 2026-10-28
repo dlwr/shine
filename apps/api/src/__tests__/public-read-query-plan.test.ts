@@ -16,7 +16,6 @@ import {SelectionsService} from '../services/selections-service';
 import {TonightService} from '../services/tonight-service';
 import {WatchedRecommendationsService} from '../services/watched-recommendations-service';
 import {WatchedService} from '../services/watched-service';
-import {LanguagesService} from '../services/languages-service';
 import {OnThisDayService} from '../services/on-this-day-service';
 import {YearsService} from '../services/years-service';
 import {seededPeopleUids, seedPublicData} from './public-data-seed';
@@ -281,15 +280,6 @@ const exercises: Exercise[] = [
   {
     name: '映画しりとりの候補',
     run: environment => new ShiritoriService(environment).loadIndex(),
-  },
-  {
-    name: '言語の一覧',
-    run: environment => new LanguagesService(environment).listLanguages(),
-  },
-  {
-    name: '言語別の映画',
-    run: environment =>
-      new LanguagesService(environment).getLanguageMovies('en'),
   },
   {
     name: 'クイズの出題候補',

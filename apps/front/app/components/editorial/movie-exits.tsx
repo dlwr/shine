@@ -1,18 +1,8 @@
-import {languageName} from '@/lib/languages';
-
 function exitLinks(
   movieUid: string,
-  originalLanguage: string,
   releaseDate: string | undefined,
 ): Array<{href: string; label: string}> {
   const links = [];
-  if (originalLanguage) {
-    links.push({
-      href: `/languages/${originalLanguage}`,
-      label: `${languageName(originalLanguage)}の映画`,
-    });
-  }
-
   const monthDay = /^\d{4}-(\d{2})-(\d{2})$/.exec(releaseDate ?? '');
   if (monthDay) {
     links.push({
@@ -35,18 +25,16 @@ function exitLinks(
 
 export function MovieExits({
   movieUid,
-  originalLanguage,
   releaseDate,
 }: {
   movieUid: string;
-  originalLanguage: string;
   releaseDate: string | undefined;
 }) {
   return (
     <section className="mb-8">
       <p className="mb-3 font-label text-xs text-ink-muted">この映画から辿る</p>
       <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
-        {exitLinks(movieUid, originalLanguage, releaseDate).map(link => (
+        {exitLinks(movieUid, releaseDate).map(link => (
           <li key={link.href}>
             <a
               href={link.href}
