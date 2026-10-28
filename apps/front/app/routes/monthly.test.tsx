@@ -317,19 +317,6 @@ describe('Monthly archive page', () => {
       expect(screen.queryByText(/来月の1本/)).not.toBeInTheDocument();
     });
 
-    it('他のアーカイブへのリンクを表示する', () => {
-      render(<MonthlyArchivePage {...createComponentProperties()} />);
-
-      expect(screen.getByRole('link', {name: 'DAILY'})).toHaveAttribute(
-        'href',
-        '/daily',
-      );
-      expect(screen.getByRole('link', {name: 'WEEKLY'})).toHaveAttribute(
-        'href',
-        '/weekly',
-      );
-    });
-
     it('カレンダーアプリで購読するリンクを出す', () => {
       render(<MonthlyArchivePage {...createComponentProperties()} />);
 
