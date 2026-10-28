@@ -7,6 +7,7 @@ import {
 import {Masthead} from '@/components/editorial/masthead';
 import {FirstPickSection} from '@/components/editorial/first-pick-section';
 import {PersonAwardHistory} from '@/components/editorial/person-award-history';
+import {PersonTimeline} from '@/components/editorial/person-timeline';
 import {PersonPortrait} from '@/components/editorial/person-portrait';
 import {AvailabilityStatusMark} from '@/components/editorial/availability-status-mark';
 import {PosterFrame} from '@/components/editorial/poster-frame';
@@ -20,12 +21,16 @@ import {personFirstPick} from '@/lib/first-pick';
 export type PersonCreditData = PersonData['credits'][number];
 export type PersonAwardData = PersonData['awards'][number];
 
-function awardRecord(person: PersonData): {won: number; nominated: number} {
-  const yearGrouped = new Set(
+function yearGroupedSlugs(person: PersonData): Set<string> {
+  return new Set(
     person.awards
       .filter(award => award.grouping === 'year')
       .map(award => award.slug),
   );
+}
+
+function awardRecord(person: PersonData): {won: number; nominated: number} {
+  const yearGrouped = yearGroupedSlugs(person);
   const contested = person.credits.filter(credit =>
     credit.awards.some(award => yearGrouped.has(award.slug)),
   );
@@ -330,6 +335,11 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
             ))}
           </section>
         )}
+
+        <PersonTimeline
+          credits={person.credits}
+          yearGroupedSlugs={yearGroupedSlugs(person)}
+        />
 
         <div>
           {person.credits.map(credit => (
