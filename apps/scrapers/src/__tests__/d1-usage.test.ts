@@ -190,20 +190,42 @@ const stat = (query: string, count: number) => ({
 describe('recurringTopQueries', () => {
   it('1 回しか走っていない文を除いて上から指定の本数を返す', () => {
     const result = recurringTopQueries(
-      [stat('a', 3), stat('adhoc', 1), stat('b', 2), stat('c', 5)],
+      [
+        stat('select a', 3),
+        stat('select adhoc', 1),
+        stat('select b', 2),
+        stat('select c', 5),
+      ],
       2,
     );
 
-    expect(result.recurring.map(({query}) => query)).toEqual(['a', 'b']);
+    expect(result.recurring.map(({query}) => query)).toEqual([
+      'select a',
+      'select b',
+    ]);
   });
 
   it('除いた 1 回きりの文を返す', () => {
     const result = recurringTopQueries(
-      [stat('a', 3), stat('adhoc', 1), stat('b', 2), stat('c', 5)],
+      [stat('select a', 3), stat('select adhoc', 1)],
       2,
     );
 
-    expect(result.oneOff.map(({query}) => query)).toEqual(['adhoc']);
+    expect(result.excluded.map(({query}) => query)).toEqual(['select adhoc']);
+  });
+
+  it('drizzle の出す小文字で始まらない文は手で流した文として除く', () => {
+    const result = recurringTopQueries(
+      [
+        stat('SELECT mc.person_uid FROM movie_credits mc', 4),
+        stat('select "uid" from "movies"', 3),
+      ],
+      5,
+    );
+
+    expect(result.excluded.map(({query}) => query)).toEqual([
+      'SELECT mc.person_uid FROM movie_credits mc',
+    ]);
   });
 });
 
