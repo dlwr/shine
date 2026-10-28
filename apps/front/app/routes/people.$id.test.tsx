@@ -130,6 +130,14 @@ describe('PersonPage', () => {
     expect(screen.queryByRole('heading', {name: /まず観るなら/})).toBeNull();
   });
 
+  it('日本で観られない参加作に印を出す', () => {
+    renderPage({
+      credits: [{...plainCredit('movie-a'), availabilityStatus: 'unwatchable'}],
+    });
+
+    expect(screen.getByText('日本で観られない')).toBeInTheDocument();
+  });
+
   it('人物名を見出しに出す', () => {
     renderPage();
 

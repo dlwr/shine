@@ -8,6 +8,7 @@ import {Masthead} from '@/components/editorial/masthead';
 import {FirstPickSection} from '@/components/editorial/first-pick-section';
 import {PersonAwardHistory} from '@/components/editorial/person-award-history';
 import {PersonPortrait} from '@/components/editorial/person-portrait';
+import {AvailabilityStatusMark} from '@/components/editorial/availability-status-mark';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
@@ -212,6 +213,10 @@ function CreditRow({
         <span className="font-display font-extrabold text-sm leading-none">
           {title}
         </span>
+        <AvailabilityStatusMark
+          status={credit.availabilityStatus}
+          className="self-start"
+        />
         <PersonalAwardTags awards={credit.personAwards} />
         <AwardTags tags={credit.awards} legend={legend} />
       </span>
