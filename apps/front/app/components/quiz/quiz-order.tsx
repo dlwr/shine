@@ -1,15 +1,28 @@
 import {useEffect, useState} from 'react';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import type {QuizOrderData} from '@/lib/api-types';
+import {
+  EMPTY_ORDER_STREAK,
+  type OrderStreak,
+  previousDay,
+  recordOrderAnswer,
+} from './order-streak';
 import {readStorage, writeStorage} from './use-quiz-game';
 
 const STORAGE_KEY = 'shine-quiz-order-v1';
+const STREAK_KEY = 'shine-quiz-order-streak-v1';
 
 type Result = {
   date: string;
   pickedUid: string;
   releaseDates: Record<string, string>;
 };
+
+function isPickedFirst(movieUids: string[], result: Result): boolean {
+  return movieUids.every(
+    uid => result.releaseDates[result.pickedUid] <= result.releaseDates[uid],
+  );
+}
 
 function formatReleaseDate(value: string): string {
   const [year, month, day] = value.split('-').map(Number);
@@ -25,10 +38,13 @@ export function QuizOrder({
 }) {
   const [result, setResult] = useState<Result>();
   const [pending, setPending] = useState(false);
+  const [streak, setStreak] = useState<OrderStreak>();
+  const movieUids = order.movies.map(movie => movie.uid);
 
   useEffect(() => {
     const saved = readStorage<Result>(STORAGE_KEY);
     setResult(saved?.date === order.date ? saved : undefined);
+    setStreak(readStorage<OrderStreak>(STREAK_KEY));
   }, [order.date]);
 
   async function pick(pickedUid: string) {
@@ -41,7 +57,7 @@ export function QuizOrder({
       const response = await fetch(`${apiUrl}/quiz/order/answer`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({movieUids: order.movies.map(movie => movie.uid)}),
+        body: JSON.stringify({movieUids}),
       });
       if (!response.ok) {
         return;
@@ -59,17 +75,19 @@ export function QuizOrder({
       };
       setResult(next);
       writeStorage(STORAGE_KEY, next);
+      const nextStreak = recordOrderAnswer(
+        readStorage<OrderStreak>(STREAK_KEY) ?? EMPTY_ORDER_STREAK,
+        order.date,
+        isPickedFirst(movieUids, next),
+      );
+      writeStorage(STREAK_KEY, nextStreak);
+      setStreak(readStorage<OrderStreak>(STREAK_KEY));
     } finally {
       setPending(false);
     }
   }
 
-  const isCorrect =
-    result !== undefined &&
-    order.movies.every(
-      movie =>
-        result.releaseDates[result.pickedUid] <= result.releaseDates[movie.uid],
-    );
+  const isCorrect = result !== undefined && isPickedFirst(movieUids, result);
 
   return (
     <section className="mt-10 border-t border-ink pt-6">
@@ -128,6 +146,20 @@ export function QuizOrder({
           );
         })}
       </div>
+      {result && (
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          {streak && (
+            <p className="font-display font-bold text-base">
+              今 {streak.current} 問連続正解（最高 {streak.best}）
+            </p>
+          )}
+          <a
+            href={`/quiz?d=${previousDay(order.date)}`}
+            className="font-label text-xs font-bold bg-brand text-brand-on px-3 py-1.5 border border-ink">
+            もう1問（前の日の問題）
+          </a>
+        </div>
+      )}
     </section>
   );
 }

@@ -109,4 +109,60 @@ describe('QuizOrder', () => {
 
     expect(await screen.findByText('残念！')).toBeInTheDocument();
   });
+
+  it('正解すると連続正解数と最高記録を出す', async () => {
+    stubAnswer();
+    localStorage.setItem(
+      'shine-quiz-order-streak-v1',
+      JSON.stringify({current: 4, best: 8, answeredDates: []}),
+    );
+    render(<QuizOrder order={ORDER} apiUrl="http://api" />);
+
+    await userEvent.click(screen.getByRole('button', {name: /東京物語/}));
+
+    expect(
+      await screen.findByText('今 5 問連続正解（最高 8）'),
+    ).toBeInTheDocument();
+  });
+
+  it('不正解だと連続正解数を 0 に戻す', async () => {
+    stubAnswer();
+    localStorage.setItem(
+      'shine-quiz-order-streak-v1',
+      JSON.stringify({current: 4, best: 8, answeredDates: []}),
+    );
+    render(<QuizOrder order={ORDER} apiUrl="http://api" />);
+
+    await userEvent.click(screen.getByRole('button', {name: /赤ひげ/}));
+
+    expect(
+      await screen.findByText('今 0 問連続正解（最高 8）'),
+    ).toBeInTheDocument();
+  });
+
+  it('答えたら前の日の問題へのリンクを出す', async () => {
+    stubAnswer();
+    render(<QuizOrder order={ORDER} apiUrl="http://api" />);
+
+    await userEvent.click(screen.getByRole('button', {name: /赤ひげ/}));
+
+    expect(await screen.findByRole('link', {name: /もう1問/})).toHaveAttribute(
+      'href',
+      '/quiz?d=2026-08-15',
+    );
+  });
+
+  it('保存できない環境では記録を出さずに答え合わせする', async () => {
+    stubAnswer();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota');
+    });
+    render(<QuizOrder order={ORDER} apiUrl="http://api" />);
+
+    await userEvent.click(screen.getByRole('button', {name: /東京物語/}));
+
+    expect(await screen.findByText('正解！')).toBeInTheDocument();
+    expect(screen.queryByText(/連続正解/)).not.toBeInTheDocument();
+    vi.restoreAllMocks();
+  });
 });
