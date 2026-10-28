@@ -35,6 +35,7 @@ const mockDay = {
       organization: 'キネマ旬報',
     },
   ],
+  people: [{uid: 'person-mendes', name: 'サム・メンデス', birthYear: 1965}],
 };
 
 const cast = <T,>(value?: unknown): T => value as T;
@@ -136,5 +137,29 @@ describe('on-this-day', () => {
     expect(
       screen.getByText(/この日に初公開された映画はまだありません/),
     ).toBeInTheDocument();
+  });
+
+  it('この日が誕生日の映画人を人物ページへのリンクで出す', async () => {
+    renderPage(await runLoader('http://localhost/on-this-day'));
+
+    expect(screen.getByRole('link', {name: /サム・メンデス/})).toHaveAttribute(
+      'href',
+      '/people/person-mendes',
+    );
+  });
+
+  it('映画人の生まれ年を出す', async () => {
+    renderPage(await runLoader('http://localhost/on-this-day'));
+
+    expect(screen.getByText('1965年生まれ')).toBeInTheDocument();
+  });
+
+  it('誕生日の映画人がいなければ欄を出さない', async () => {
+    respondWith({...mockDay, people: []});
+    renderPage(await runLoader('http://localhost/on-this-day'));
+
+    expect(
+      screen.queryByRole('heading', {name: /誕生日/}),
+    ).not.toBeInTheDocument();
   });
 });
