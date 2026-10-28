@@ -151,7 +151,7 @@ quizRoutes.post('/order/answer', async c => {
   if (
     !Array.isArray(movieUids) ||
     movieUids.length !== 2 ||
-    !movieUids.every(uid => typeof uid === 'string')
+    movieUids.some(uid => typeof uid !== 'string')
   ) {
     return c.json({error: 'Invalid request'}, 400);
   }

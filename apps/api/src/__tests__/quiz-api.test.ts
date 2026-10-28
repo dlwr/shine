@@ -525,34 +525,34 @@ describe('GET /quiz/order', () => {
     environment = await createTestEnvironment();
   });
 
-  async function fetchPair() {
+  async function fetchPairText() {
     const response = await quizRoutes.request(
       `/order?date=${DATE}`,
       {},
       environment,
     );
-    return response;
+    return response.text();
   }
 
   it('2本の映画を題名とポスターで出す', async () => {
-    const body = (await (await fetchPair()).json()) as {
+    const body = JSON.parse(await fetchPairText()) as {
       movies: Array<{uid: string; title: string; posterUrl: string}>;
     };
 
-    expect(body.movies.map(movie => Boolean(movie.title && movie.posterUrl))).toEqual(
-      [true, true],
-    );
+    expect(
+      body.movies.map(movie => Boolean(movie.title && movie.posterUrl)),
+    ).toEqual([true, true]);
   });
 
   it('今日のクイズの答えは出さない', async () => {
     const answer = await fetchAnswer(environment);
-    const raw = await (await fetchPair()).text();
+    const raw = await fetchPairText();
 
     expect(raw).not.toContain(answer.uid);
   });
 
   it('答えを出さない', async () => {
-    const raw = await (await fetchPair()).text();
+    const raw = await fetchPairText();
 
     expect(raw).not.toMatch(/releaseDate|year|1965|1953|1950/);
   });

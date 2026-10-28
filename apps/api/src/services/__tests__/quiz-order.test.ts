@@ -19,7 +19,9 @@ const FEBRUARY = Array.from(
 );
 
 function uidsOf(pair: Array<{uid: string}> | undefined): string[] {
-  return (pair ?? []).map(movie => movie.uid).toSorted();
+  return (pair ?? [])
+    .map(movie => movie.uid)
+    .toSorted((a, b) => a.localeCompare(b));
 }
 
 describe('pickOrderPair', () => {

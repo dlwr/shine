@@ -120,7 +120,7 @@ export class QuizService extends BaseService {
     const dated = movieUids.map(uid =>
       pool.find(entry => entry.uid === uid && entry.releaseDate),
     );
-    if (dated.some(entry => entry === undefined)) {
+    if (dated.includes(undefined)) {
       return undefined;
     }
 
