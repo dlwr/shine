@@ -126,6 +126,6 @@
 
 - 測る: 毎週月曜の north-star-report で北極星（基準 週約 10、12 月末に週 30）。11 月に `/double-feature`・`/tonight`・「まず観るなら」経由の映画ページへの内部遷移と、X の月替わり 4 枠からの訪問を RUM で見る
 - 11 月中旬に Bing で人物ページの CTR（#756 の題の変更の効果）を見る
-- ページの取り下げ（オーナーの判断待ち）: 30 日訪問 0 の `/crossings`・`/uncrowned`・`/people/crossings`・`/people/uncrowned`（front 約 830 行と API の service 4 本）、`/now`。`/daily`・`/weekly` は bot や今月の1本の帯から張られているか確かめてから
+- `/daily`・`/weekly`・`/monthly`・`/languages` の取り下げ（30 日訪問 0。メニューと選出の一覧から張っているので導線ごと見直す）。`/now` は転送なので RUM に載らず、訪問 0 は判断材料にならない
 - 12 月に、10 月に足した切り口（`/tonight`・`/double-feature`・`/connect`・`/shiritori`・「どっちが先」）の訪問を測り、0 のものは取り下げる
 - 日付待ち: 11 月中旬に Search Console の表示回数を再確認、2026-12 末に北極星の判断
