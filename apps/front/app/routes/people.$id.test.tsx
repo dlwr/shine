@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import {render, screen} from '@testing-library/react';
+import {render, screen, within} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
 import PersonPage, {meta, type PersonData} from './people.$id';
 import type {Route} from './+types/people.$id';
@@ -100,6 +100,9 @@ const robotsOf = (credits: PersonData['credits']) =>
       loaderData: {person: {...person, credits}, locale: 'ja'},
     } as Route.MetaArgs) as Array<{name?: string; content?: string}>
   ).find(descriptor => descriptor.name === 'robots')?.content;
+
+const timelineOf = () =>
+  screen.getByRole('heading', {name: /年表/}).closest('section')!;
 
 function renderPage(overrides: Partial<PersonData> = {}) {
   render(
@@ -420,5 +423,40 @@ describe('PersonPage', () => {
     expect(
       screen.getByRole('heading', {name: 'よく組む人'}),
     ).toBeInTheDocument();
+  });
+
+  describe('年表', () => {
+    const threeCredits = [
+      ...person.credits,
+      {...plainCredit('movie-dodeskaden'), title: 'どですかでん', year: 1970},
+    ];
+
+    it('参加作が2本以下なら出さない', () => {
+      renderPage();
+
+      expect(screen.queryByRole('heading', {name: /年表/})).toBeNull();
+    });
+
+    it('参加作を10年ごとの帯に並べる', () => {
+      renderPage({credits: threeCredits});
+
+      expect(timelineOf()).toHaveTextContent('1970年代1本');
+    });
+
+    it('参加作を映画ページへリンクする', () => {
+      renderPage({credits: threeCredits});
+
+      expect(
+        within(timelineOf()).getByRole('link', {name: /どですかでん/}),
+      ).toHaveAttribute('href', '/movies/movie-dodeskaden');
+    });
+
+    it('受賞作に受賞の印を付ける', () => {
+      renderPage({credits: threeCredits});
+
+      expect(
+        within(timelineOf()).getByRole('link', {name: '1985 乱 受賞'}),
+      ).toBeInTheDocument();
+    });
   });
 });

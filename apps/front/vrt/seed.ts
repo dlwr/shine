@@ -44,13 +44,29 @@ export async function seedLayoutStressData(database: Database) {
     tmdbId: 4,
     name: 'Friedrich Wilhelm Maximilian von Hohenzollern-Sigmaringen',
   });
-  await database.insert(movieCredits).values({
-    movieUid: longTitleMovieUid,
-    personUid: longNamePersonUid,
-    creditId: 'credit-vrt-1',
-    department: 'Directing',
-    job: 'Director',
-  });
+  await database.insert(movieCredits).values([
+    {
+      movieUid: longTitleMovieUid,
+      personUid: longNamePersonUid,
+      creditId: 'credit-vrt-1',
+      department: 'Directing',
+      job: 'Director',
+    },
+    {
+      movieUid: 'movie-beauty',
+      personUid: longNamePersonUid,
+      creditId: 'credit-vrt-2',
+      department: 'Writing',
+      job: 'Screenplay',
+    },
+    {
+      movieUid: 'movie-green',
+      personUid: longNamePersonUid,
+      creditId: 'credit-vrt-3',
+      department: 'Writing',
+      job: 'Screenplay',
+    },
+  ]);
   await database.insert(nominations).values([
     {
       movieUid: longTitleMovieUid,
