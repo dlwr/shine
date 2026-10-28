@@ -238,7 +238,7 @@ export async function fetchTopD1Queries(
   );
 }
 
-const issuedByApp = ({query, count}: D1QueryStat) =>
+const isIssuedByApp = ({query, count}: D1QueryStat) =>
   count > 1 && /^(select|insert|update|delete|with) /.test(query);
 
 export function recurringTopQueries(
@@ -246,8 +246,8 @@ export function recurringTopQueries(
   limit: number,
 ): {recurring: D1QueryStat[]; excluded: D1QueryStat[]} {
   return {
-    recurring: queries.filter(issuedByApp).slice(0, limit),
-    excluded: queries.filter(query => !issuedByApp(query)),
+    recurring: queries.filter(query => isIssuedByApp(query)).slice(0, limit),
+    excluded: queries.filter(query => !isIssuedByApp(query)),
   };
 }
 
