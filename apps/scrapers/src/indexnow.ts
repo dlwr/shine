@@ -23,7 +23,7 @@ export function buildIndexNowUrls(
 ): string[] {
   const today = selectionDateKeys(date);
   const yesterday = selectionDateKeys(previousDay(date));
-  const urls = [`${SITE_URL}/`, `${SITE_URL}/daily`];
+  const urls = [`${SITE_URL}/`];
 
   const rotated: Array<keyof IndexNowSelections> = [
     'daily',
