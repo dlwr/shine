@@ -1,7 +1,7 @@
 import {eq} from '@shine/database';
 import {quizSelections} from '@shine/database/schema/quiz-selections';
 import type {JapanAvailabilityStatus} from '../types/common';
-import type {QuizCandidate} from '../types/quiz';
+import type {QuizCandidate, QuizOrderMovie} from '../types/quiz';
 import {
   EdgeCache,
   IMPORTED_DATA_EDGE_TTL,
@@ -11,6 +11,7 @@ import {simpleHash} from '../utils/hash';
 import {readThroughCache, STALE_RETENTION} from '../utils/read-through-cache';
 import type {Environment} from '@shine/database';
 import {BaseService} from './base-service';
+import {pickOrderPair} from './quiz-order';
 import {queryQuizPool, type QuizPoolEntry} from './quiz-pool-query';
 import {
   availabilityStatusOf,
@@ -19,7 +20,7 @@ import {
 
 export const QUIZ_MAX_ATTEMPTS = 6;
 
-const POOL_CACHE_KEY = 'quiz:pool:v3';
+const POOL_CACHE_KEY = 'quiz:pool:v4';
 const POOL_SIZE_CACHE_KEY = `${POOL_CACHE_KEY}:size`;
 const POOL_CACHE_TTL = 604_800;
 
@@ -97,6 +98,36 @@ export class QuizService extends BaseService {
     ]);
 
     return availabilityStatusOf(availability, movieUid);
+  }
+
+  async getOrderPair(date: string): Promise<QuizOrderMovie[] | undefined> {
+    const [pool, entry] = await Promise.all([
+      this.getPool(),
+      this.getEntry(date),
+    ]);
+
+    return pickOrderPair(pool, date, entry?.uid)?.map(movie => ({
+      uid: movie.uid,
+      title: movie.title,
+      posterUrl: movie.posterUrl,
+    }));
+  }
+
+  async getReleaseDates(
+    movieUids: string[],
+  ): Promise<Array<{uid: string; releaseDate: string}> | undefined> {
+    const pool = await this.getPool();
+    const dated = movieUids.map(uid =>
+      pool.find(entry => entry.uid === uid && entry.releaseDate),
+    );
+    if (dated.includes(undefined)) {
+      return undefined;
+    }
+
+    return dated.map(entry => ({
+      uid: entry!.uid,
+      releaseDate: entry!.releaseDate!,
+    }));
   }
 
   async getEntry(date: string): Promise<QuizPoolEntry | undefined> {

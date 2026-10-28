@@ -37,6 +37,7 @@ type SeedOptions = {
   posters?: SeedPoster[];
   organizations: Array<'cannes' | 'kinema'>;
   deleted?: boolean;
+  releaseDate?: string;
 };
 
 async function seedMovie(
@@ -48,11 +49,13 @@ async function seedMovie(
     posters,
     organizations,
     deleted = false,
+    releaseDate,
   }: SeedOptions,
 ) {
   await database.insert(movies).values({
     uid,
     year: 1965,
+    releaseDate,
     originalLanguage: 'ja',
     deletedAt: deleted ? 1 : undefined,
   });
@@ -123,11 +126,13 @@ async function createTestEnvironment(): Promise<Environment> {
   await seedMovie(database, {
     uid: 'movie-in-pool',
     title: '赤ひげ',
+    releaseDate: '1965-04-03',
     organizations: ['cannes', 'kinema'],
   });
   await seedMovie(database, {
     uid: 'movie-also-in-pool',
     title: '東京物語',
+    releaseDate: '1953-11-03',
     organizations: ['cannes', 'kinema'],
   });
   await seedMovie(database, {
@@ -154,6 +159,7 @@ async function createTestEnvironment(): Promise<Environment> {
   await seedMovie(database, {
     uid: 'movie-with-japanese-poster',
     title: '羅生門',
+    releaseDate: '1950-08-26',
     organizations: ['cannes', 'kinema'],
     posters: [
       {
@@ -295,7 +301,7 @@ describe('GET /quiz/daily の KV 読み取り', () => {
     recording.readKeys.length = 0;
 
     expect(await fetchPoolSize()).toBe(3);
-    expect(recording.readKeys).toEqual(['quiz:pool:v3:size']);
+    expect(recording.readKeys).toEqual(['quiz:pool:v4:size']);
   });
 
   it('出題数は colo に 10 分置く', async () => {
@@ -309,19 +315,19 @@ describe('GET /quiz/daily の KV 読み取り', () => {
     await fetchPoolSize();
 
     expect(get).toHaveBeenCalledWith(
-      'quiz:pool:v3:size',
+      'quiz:pool:v4:size',
       expect.objectContaining({type: 'json', cacheTtl: 600}),
     );
   });
 
   it('出題数が無ければプールから数えて残す', async () => {
     await quizRoutes.request('/candidates', {}, environment);
-    recording.store.delete('quiz:pool:v3:size');
+    recording.store.delete('quiz:pool:v4:size');
     await fetchPoolSize();
     recording.readKeys.length = 0;
 
     expect(await fetchPoolSize()).toBe(3);
-    expect(recording.readKeys).toEqual(['quiz:pool:v3:size']);
+    expect(recording.readKeys).toEqual(['quiz:pool:v4:size']);
   });
 });
 
@@ -509,5 +515,99 @@ describe('POST /quiz/guess', () => {
     const result = await guess({movieUid: undefined, attempt: 6});
 
     expect(result.answer?.availabilityStatus).toBe('unchecked');
+  });
+});
+
+describe('GET /quiz/order', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+  });
+
+  async function fetchPairText() {
+    const response = await quizRoutes.request(
+      `/order?date=${DATE}`,
+      {},
+      environment,
+    );
+    return response.text();
+  }
+
+  it('2本の映画を題名とポスターで出す', async () => {
+    const body = JSON.parse(await fetchPairText()) as {
+      movies: Array<{uid: string; title: string; posterUrl: string}>;
+    };
+
+    expect(
+      body.movies.map(movie => Boolean(movie.title && movie.posterUrl)),
+    ).toEqual([true, true]);
+  });
+
+  it('今日のクイズの答えは出さない', async () => {
+    const answer = await fetchAnswer(environment);
+    const raw = await fetchPairText();
+
+    expect(raw).not.toContain(answer.uid);
+  });
+
+  it('答えを出さない', async () => {
+    const raw = await fetchPairText();
+
+    expect(raw).not.toMatch(/releaseDate|year|1965|1953|1950/);
+  });
+
+  it('未来の日付は断る', async () => {
+    const response = await quizRoutes.request(
+      '/order?date=2999-01-01',
+      {},
+      environment,
+    );
+
+    expect(response.status).toBe(400);
+  });
+});
+
+describe('POST /quiz/order/answer', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+  });
+
+  async function answer(movieUids: unknown) {
+    return quizRoutes.request(
+      '/order/answer',
+      {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({movieUids}),
+      },
+      environment,
+    );
+  }
+
+  it('2本の公開日を返す', async () => {
+    const response = await answer(['movie-in-pool', 'movie-also-in-pool']);
+    const body = (await response.json()) as {
+      movies: Array<{uid: string; releaseDate: string}>;
+    };
+
+    expect(body.movies).toEqual([
+      {uid: 'movie-in-pool', releaseDate: '1965-04-03'},
+      {uid: 'movie-also-in-pool', releaseDate: '1953-11-03'},
+    ]);
+  });
+
+  it('出題の候補にない映画は断る', async () => {
+    const response = await answer(['movie-in-pool', 'movie-single-org']);
+
+    expect(response.status).toBe(400);
+  });
+
+  it('2本でなければ断る', async () => {
+    const response = await answer(['movie-in-pool']);
+
+    expect(response.status).toBe(400);
   });
 });

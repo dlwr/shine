@@ -107,6 +107,55 @@ describe('Quiz page', () => {
       expect(vi.mocked(fetch)).not.toHaveBeenCalled();
     });
 
+    it('どっちが先のクイズも取得する', async () => {
+      const order = {
+        date: PUZZLE.date,
+        movies: [
+          {uid: 'movie-a', title: '赤ひげ', posterUrl: 'a.jpg'},
+          {uid: 'movie-b', title: '東京物語', posterUrl: 'b.jpg'},
+        ],
+      };
+      vi.mocked(fetch).mockImplementation(async (input: RequestInfo | URL) =>
+        cast<Response>({
+          ok: true,
+          json: async () =>
+            String(input).includes('/quiz/order') ? order : PUZZLE,
+        }),
+      );
+
+      const result = await loader(
+        cast<Route.LoaderArgs>({
+          context: createMockContext(),
+          request: new Request('http://localhost:3000/quiz'),
+          params: {},
+          matches: [],
+        }),
+      );
+
+      expect(result.order).toEqual(order);
+    });
+
+    it('どっちが先のクイズが取れなくても出題は出す', async () => {
+      vi.mocked(fetch).mockImplementation(async (input: RequestInfo | URL) =>
+        cast<Response>(
+          String(input).includes('/quiz/order')
+            ? {ok: false, status: 503}
+            : {ok: true, json: async () => PUZZLE},
+        ),
+      );
+
+      const result = await loader(
+        cast<Route.LoaderArgs>({
+          context: createMockContext(),
+          request: new Request('http://localhost:3000/quiz'),
+          params: {},
+          matches: [],
+        }),
+      );
+
+      expect(result.order).toBeUndefined();
+    });
+
     it('本番では Image Transformations を使う印を載せる', async () => {
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
@@ -361,6 +410,34 @@ describe('Quiz page', () => {
   });
 
   describe('プレイ', () => {
+    it('どっちが先のクイズを同じページで出す', () => {
+      render(
+        <QuizPage
+          {...createComponentProperties({
+            order: {
+              date: PUZZLE.date,
+              movies: [
+                {uid: 'movie-a', title: '赤ひげ', posterUrl: 'a.jpg'},
+                {uid: 'movie-b', title: '東京物語', posterUrl: 'b.jpg'},
+              ],
+            },
+          })}
+        />,
+      );
+
+      expect(
+        screen.getByRole('heading', {name: 'どっちが先に公開された？'}),
+      ).toBeInTheDocument();
+    });
+
+    it('どっちが先のクイズが無ければ出さない', () => {
+      render(<QuizPage {...createComponentProperties()} />);
+
+      expect(
+        screen.queryByRole('heading', {name: 'どっちが先に公開された？'}),
+      ).not.toBeInTheDocument();
+    });
+
     it('最初はズームしたポスターを出す', () => {
       render(<QuizPage {...createComponentProperties()} />);
 

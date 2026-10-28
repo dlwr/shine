@@ -14,6 +14,7 @@ export type QuizPoolEntry = {
   uid: string;
   title: string;
   year: number | undefined;
+  releaseDate: string | undefined;
   posterUrl: string;
   originalLanguage: string;
   organizations: string[];
@@ -25,6 +26,7 @@ async function queryEligibleMovies(database: Database) {
     .select({
       uid: movies.uid,
       year: movies.year,
+      releaseDate: movies.releaseDate,
       originalLanguage: movies.originalLanguage,
       title: sql<string>`(
         SELECT content FROM translations
@@ -97,6 +99,7 @@ export async function queryQuizPool(
         uid: movie.uid,
         title: movie.title,
         year: movie.year ?? undefined,
+        releaseDate: movie.releaseDate ?? undefined,
         posterUrl: movie.posterUrl,
         originalLanguage: movie.originalLanguage,
         organizations: [],

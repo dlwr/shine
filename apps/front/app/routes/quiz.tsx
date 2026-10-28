@@ -4,9 +4,16 @@ import {Masthead} from '@/components/editorial/masthead';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {QuizClues} from '@/components/quiz/quiz-clues';
 import {QuizGuessForm} from '@/components/quiz/quiz-guess-form';
+import {QuizOrder} from '@/components/quiz/quiz-order';
 import {QuizResult} from '@/components/quiz/quiz-result';
 import {useQuizGame, type QuizPuzzle} from '@/components/quiz/use-quiz-game';
-import {loadApiJson, resolveApiUrl, canTransformImages} from '@/lib/api';
+import {
+  loadApiJson,
+  resolveApiUrl,
+  canTransformImages,
+  tryApiJson,
+} from '@/lib/api';
+import type {QuizOrderData} from '@/lib/api-types';
 import {transformedImageUrl} from '@/lib/image-transformations';
 import {QuizPosterImage} from '@/components/quiz/quiz-poster-image';
 import {fetchMonthlyPick, type MonthlyPick} from '@/lib/monthly-pick';
@@ -45,13 +52,29 @@ function pastPuzzleDate(request: Request): string | undefined {
   return DATE_PATTERN.test(date) && date < today ? date : undefined;
 }
 
+async function loadOrder(
+  context: Route.LoaderArgs['context'],
+  pastDate: string | undefined,
+  signal: AbortSignal,
+): Promise<QuizOrderData | undefined> {
+  try {
+    return await tryApiJson<QuizOrderData>(
+      context,
+      pastDate ? `/quiz/order?date=${pastDate}` : '/quiz/order',
+      {signal},
+    );
+  } catch {
+    return undefined;
+  }
+}
+
 export async function loader({context, request}: Route.LoaderArgs) {
   const locale = getLocaleFromRequest(request);
   const apiUrl = resolveApiUrl(context);
   const transformImages = canTransformImages(context);
   const pastDate = pastPuzzleDate(request);
 
-  const [puzzle, monthly] = await Promise.all([
+  const [puzzle, monthly, order] = await Promise.all([
     loadApiJson<QuizPuzzle>(
       context,
       pastDate ? `/quiz/daily?date=${pastDate}` : '/quiz/daily',
@@ -61,6 +84,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
       },
     ),
     fetchMonthlyPick(context, 'ja', request.signal),
+    loadOrder(context, pastDate, request.signal),
   ]);
 
   return {
@@ -68,6 +92,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
     apiUrl,
     locale,
     monthly,
+    order,
     transformImages,
     isPastPuzzle: pastDate !== undefined,
   };
@@ -81,9 +106,10 @@ function quizPosterUrl(date: string, stage: number, canTransform: boolean) {
 }
 
 export default function QuizPage({loaderData}: Route.ComponentProps) {
-  const {puzzle, apiUrl, monthly, transformImages, isPastPuzzle} =
+  const {puzzle, apiUrl, monthly, order, transformImages, isPastPuzzle} =
     loaderData as {
       monthly?: MonthlyPick;
+      order?: QuizOrderData;
       puzzle: QuizPuzzle;
       apiUrl: string;
       transformImages?: boolean;
@@ -192,6 +218,8 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
             )}
           </div>
         </div>
+
+        {order && <QuizOrder order={order} apiUrl={apiUrl} />}
 
         <SiteFooter locale={locale} />
       </div>
