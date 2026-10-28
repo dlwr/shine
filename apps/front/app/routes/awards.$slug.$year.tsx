@@ -10,8 +10,10 @@ import {YearNavLink} from '@/components/editorial/year-nav-link';
 import {DEFAULT_LOCALE, getLocaleFromRequest, type Locale} from '@/lib/locale';
 import {SITE_URL, buildSocialMeta} from '@/lib/meta';
 import {awardHeading} from '@/lib/awards';
-import type {AwardYearDetailData} from '@/lib/api-types';
-import {loadApiJson} from '@/lib/api';
+import type {AwardYearDetailData, AwardsListData} from '@/lib/api-types';
+import {loadApiJson, tryApiJson} from '@/lib/api';
+import {nextAwards, type NextAwards} from '@/lib/next-awards';
+import {NextAwardsSection} from '@/components/editorial/next-awards-section';
 
 function buildItemList(award: AwardYearDetailData): Record<string, unknown> {
   return {
@@ -61,19 +63,31 @@ export async function loader({context, request, params}: Route.LoaderArgs) {
 
   const locale = getLocaleFromRequest(request);
 
-  const award = await loadApiJson<AwardYearDetailData>(
-    context,
-    `/awards/${params.slug}/${params.year}`,
-    {label: 'award year', signal: request.signal},
-  );
-  return {award, locale};
+  const [award, list] = await Promise.all([
+    loadApiJson<AwardYearDetailData>(
+      context,
+      `/awards/${params.slug}/${params.year}`,
+      {label: 'award year', signal: request.signal},
+    ),
+    tryApiJson<AwardsListData>(context, '/awards', {signal: request.signal}),
+  ]);
+  return {
+    award,
+    locale,
+    nextAwards: nextAwards(params.slug, list?.awards ?? []),
+  };
 }
 
 export default function AwardYearPage({loaderData}: Route.ComponentProps) {
-  const {award} = loaderData as {award: AwardYearDetailData};
+  const {award, nextAwards: next} = loaderData as {
+    award: AwardYearDetailData;
+    nextAwards?: NextAwards;
+  };
   const locale = 'ja';
   const heading = awardHeading(award);
   const hasSummary = hasJudgedAvailability(award.availabilitySummary);
+  const filmYear =
+    award.movies.find(movie => movie.isWinner)?.movieYear ?? award.year;
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -133,6 +147,14 @@ export default function AwardYearPage({loaderData}: Route.ComponentProps) {
             label="NEXT"
           />
         </div>
+
+        <a
+          href={`/years/${filmYear}`}
+          className="mt-6 inline-block border border-ink px-3 py-1.5 font-label text-xs font-bold no-underline text-ink">
+          {filmYear}年の映画をまとめて見る
+        </a>
+
+        {next && <NextAwardsSection next={next} />}
 
         <SiteFooter locale={locale} />
       </div>
