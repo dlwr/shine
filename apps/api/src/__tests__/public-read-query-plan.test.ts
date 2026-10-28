@@ -6,18 +6,14 @@ import {afterAll, beforeAll, beforeEach, describe, expect, it} from 'vitest';
 import {moviesRoutes} from '../routes/movies';
 import {AwardsService} from '../services/awards-service';
 import {ConnectService} from '../services/connect-service';
-import {CrossingsService} from '../services/crossings-service';
 import {ShiritoriService} from '../services/shiritori-service';
 import {DoubleFeatureService} from '../services/double-feature-service';
 import {MoviesService} from '../services/movies-service';
 import {PeopleService} from '../services/people-service';
 import {PersonAwardsService} from '../services/person-awards-service';
-import {PersonCrossingsService} from '../services/person-crossings-service';
-import {PersonUncrownedService} from '../services/person-uncrowned-service';
 import {QuizService} from '../services/quiz-service';
 import {SelectionsService} from '../services/selections-service';
 import {TonightService} from '../services/tonight-service';
-import {UncrownedService} from '../services/uncrowned-service';
 import {WatchedRecommendationsService} from '../services/watched-recommendations-service';
 import {WatchedService} from '../services/watched-service';
 import {LanguagesService} from '../services/languages-service';
@@ -294,28 +290,6 @@ const exercises: Exercise[] = [
     name: '言語別の映画',
     run: environment =>
       new LanguagesService(environment).getLanguageMovies('en'),
-  },
-  {
-    name: '賞の交差',
-    run: environment => new CrossingsService(environment).getCrossings(),
-  },
-  {
-    name: '無冠の映画',
-    run: environment => new UncrownedService(environment).getUncrowned(),
-  },
-  {
-    name: '人物の交差',
-    run: environment =>
-      new PersonCrossingsService(environment).getPersonCrossings({
-        locale: 'ja',
-      }),
-  },
-  {
-    name: '無冠の人物',
-    run: environment =>
-      new PersonUncrownedService(environment).getPersonUncrowned({
-        locale: 'ja',
-      }),
   },
   {
     name: 'クイズの出題候補',

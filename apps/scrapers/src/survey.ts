@@ -13,7 +13,6 @@ export const SURVEY_PAGES = [
   '/people',
   '/years',
   '/daily',
-  '/people/crossings',
   '/watched',
 ];
 
