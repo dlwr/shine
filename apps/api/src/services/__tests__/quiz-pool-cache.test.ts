@@ -4,8 +4,8 @@ import {STALE_RETENTION} from '../../utils/read-through-cache';
 import {QuizService} from '../quiz-service';
 import {createEnvironment} from './quiz-pool-fixture';
 
-const POOL_KEY = 'quiz:pool:v3';
-const SIZE_KEY = 'quiz:pool:v3:size';
+const POOL_KEY = 'quiz:pool:v4';
+const SIZE_KEY = 'quiz:pool:v4:size';
 const TTL = 604_800;
 const OLD_POOL = [{uid: 'old-movie', title: '古いプールの映画'}];
 

@@ -319,17 +319,21 @@
     "data.originalName",
     "data.uid"
   ],
-  "quiz:pool:v3": [
+  "quiz:pool:v4": [
     "cachedAt",
     "data[].achievements[]",
     "data[].organizations[]",
     "data[].originalLanguage",
     "data[].posterUrl",
+    "data[].releaseDate",
     "data[].title",
     "data[].uid",
     "data[].year"
   ],
-  "quiz:pool:v3:size": ["cachedAt", "data"],
+  "quiz:pool:v4:size": [
+    "cachedAt",
+    "data"
+  ],
   "search:Beauty:1:20:query:Beauty:v1": [
     "cachedAt",
     "data.filters.query",
