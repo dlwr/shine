@@ -101,6 +101,26 @@ export default function OnThisDayPage({loaderData}: Route.ComponentProps) {
           </div>
         )}
 
+        {detail.people.length > 0 && (
+          <section className="mt-10">
+            <h2 className="font-display font-bold text-xl mb-3">
+              この日が誕生日の映画人
+            </h2>
+            <ul className="list-none p-0 flex flex-wrap gap-x-6 gap-y-2 border-t-2 border-ink pt-3">
+              {detail.people.map(person => (
+                <li key={person.uid}>
+                  <a href={`/people/${person.uid}`} className="text-ink">
+                    {person.name}
+                  </a>
+                  <span className="ml-2 font-label text-xs text-ink-muted">
+                    {person.birthYear}年生まれ
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <div className="flex items-center justify-between border-t-2 border-ink mt-8 pt-3">
           <DayLink
             monthDay={previous}

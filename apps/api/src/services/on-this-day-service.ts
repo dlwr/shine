@@ -4,6 +4,9 @@ import {BaseService} from './base-service';
 import type {AwardTaggedMovie} from '../types/award-tagged-movies';
 import type {OnThisDay, OnThisDayMovie} from '../types/on-this-day';
 import {loadAwardTaggedMovies} from './award-tagged-movies';
+import {rankPeopleBornOn} from './prominent-people';
+
+const PEOPLE_LIMIT = 8;
 
 function compareMovies(a: OnThisDayMovie, b: OnThisDayMovie): number {
   return (
@@ -35,6 +38,12 @@ export class OnThisDayService extends BaseService {
         }))
         .toSorted(compareMovies),
       awards,
+      people: await rankPeopleBornOn(
+        this.database,
+        monthDay,
+        'ja',
+        PEOPLE_LIMIT,
+      ),
     };
   }
 }

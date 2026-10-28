@@ -280,9 +280,9 @@ describe('検索索引のバックフィル', () => {
 
   beforeEach(async () => {
     database = await createTestDatabase(await migrationsBeforeSearchIndex());
-    await database
-      .insert(people)
-      .values({uid: 'person-kurosawa', tmdbId: 1, name: '黒澤明'});
+    await database.run(
+      sql`INSERT INTO people (uid, tmdb_id, name) VALUES ('person-kurosawa', 1, '黒澤明')`,
+    );
     await database
       .insert(translations)
       .values([

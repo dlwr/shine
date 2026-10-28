@@ -11,6 +11,7 @@ export const people = sqliteTable(
     tmdbId: integer().notNull().unique(),
     name: text().notNull(),
     profilePath: text(),
+    birthday: text(),
     createdAt: integer()
       .notNull()
       .default(sql`(unixepoch())`),
@@ -19,5 +20,10 @@ export const people = sqliteTable(
       .default(sql`(unixepoch())`)
       .$onUpdate(() => Math.floor(Date.now() / 1000)),
   },
-  table => [index('people_name_idx').on(table.name)],
+  table => [
+    index('people_name_idx').on(table.name),
+    index('people_birthday_month_day_idx').on(
+      sql`substr(${table.birthday}, 6, 5)`,
+    ),
+  ],
 );

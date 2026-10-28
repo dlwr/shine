@@ -139,6 +139,7 @@ export type TMDBPersonData = {
   id: number;
   name: string;
   profile_path?: string | null;
+  birthday?: string | null;
 };
 
 export type TMDBExternalIds = {

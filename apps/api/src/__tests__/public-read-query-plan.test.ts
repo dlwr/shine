@@ -494,6 +494,32 @@ describe('公開エンドポイントの実行計画', {timeout: 30_000}, () => 
     );
   });
 
+  it('この日が誕生日の人物は月日の索引で引く', async () => {
+    const exercise = exercises.find(
+      current => current.name === 'この日に初公開された映画',
+    );
+    const plans = await plansOf(exercise!);
+    const birthdayPlans = plans
+      .entries()
+      .filter(([statement]) => statement.includes('"birthday"'))
+      .toArray();
+    expect(birthdayPlans).toHaveLength(1);
+    for (const [statement, plan] of birthdayPlans) {
+      expect(
+        plan.map(row => row.detail),
+        statement,
+      ).toContainEqual(
+        expect.stringMatching(
+          /^SEARCH people USING INDEX people_birthday_month_day_idx /,
+        ),
+      );
+      expect(
+        fullScans(plan).filter(detail => detail.startsWith('SCAN people')),
+        statement,
+      ).toEqual([]);
+    }
+  });
+
   it.each(exercises.filter(exercise => exercise.indexOnly))(
     '$name は索引だけで引く',
     async exercise => {

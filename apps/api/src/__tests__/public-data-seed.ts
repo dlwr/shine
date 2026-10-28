@@ -180,7 +180,12 @@ export async function seedPublicData(database: Database): Promise<void> {
     {movieUid: 'movie-gladiator', source: 'discas', status: 'ng'},
   ]);
   await database.insert(people).values([
-    {uid: seededPeopleUids.mendes, tmdbId: 1, name: 'Sam Mendes'},
+    {
+      uid: seededPeopleUids.mendes,
+      tmdbId: 1,
+      name: 'Sam Mendes',
+      birthday: '1965-09-15',
+    },
     {uid: seededPeopleUids.spacey, tmdbId: 2, name: 'Kevin Spacey'},
     {uid: seededPeopleUids.hanks, tmdbId: 3, name: 'Tom Hanks'},
     {
