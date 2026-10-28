@@ -101,7 +101,6 @@ export default function MovieDetail({
         <MovieWatchSection
           movieDetail={movieDetail}
           title={title}
-          apiUrl={apiUrl}
           locale={locale}
         />
 
@@ -110,7 +109,7 @@ export default function MovieDetail({
         )}
 
         {movieDetail.nominations && movieDetail.nominations.length > 0 && (
-          <section className="mb-8">
+          <section id="awards" className="mb-8">
             <p className="font-label text-xs text-ink-muted mb-3">
               受賞・ノミネート
             </p>
