@@ -26,3 +26,9 @@ export type QuizGuessResult = {
   hint?: QuizHint;
   answer?: QuizAnswer & {availabilityStatus: JapanAvailabilityStatus};
 };
+
+export type QuizOrderMovie = {
+  uid: string;
+  title: string;
+  posterUrl: string;
+};

@@ -124,3 +124,42 @@ quizRoutes.post('/guess', async c => {
     {'Cache-Control': 'no-store'},
   );
 });
+
+quizRoutes.get('/order', async c => {
+  const date = resolveDate(c.req.query('date'));
+  if (!date) {
+    return c.json({error: 'Invalid date'}, 400);
+  }
+
+  const movies = await new QuizService(c.env, c).getOrderPair(date);
+  if (!movies) {
+    return c.json({error: 'Quiz unavailable'}, 503);
+  }
+
+  return createCachedResponse({date, movies}, DAILY_TTL);
+});
+
+quizRoutes.post('/order/answer', async c => {
+  let body: {movieUids?: unknown};
+  try {
+    body = await c.req.json<{movieUids?: unknown}>();
+  } catch {
+    body = {};
+  }
+
+  const {movieUids} = body;
+  if (
+    !Array.isArray(movieUids) ||
+    movieUids.length !== 2 ||
+    !movieUids.every(uid => typeof uid === 'string')
+  ) {
+    return c.json({error: 'Invalid request'}, 400);
+  }
+
+  const movies = await new QuizService(c.env, c).getReleaseDates(movieUids);
+  if (!movies) {
+    return c.json({error: 'Invalid request'}, 400);
+  }
+
+  return c.json({movies}, 200, {'Cache-Control': 'no-store'});
+});
