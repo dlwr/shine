@@ -46,6 +46,7 @@ import {createCommand as movieCredits} from './movie-credits-cli';
 import {createCommand as movieDescriptions} from './movie-descriptions-cli';
 import {createCommand as nikkanSportsFilmAwards} from './nikkan-sports-film-awards-cli';
 import {createCommand as northStarReport} from './north-star-report-cli';
+import {createCommand as personBirthdays} from './person-birthdays-cli';
 import {createCommand as personEnglishNames} from './person-english-names-cli';
 import {createCommand as snsPost} from './sns-post-cli';
 import {createCommand as sql} from './sql-cli';
@@ -105,6 +106,7 @@ const commandGroups: Array<{heading: string; factories: Array<() => Command>}> =
         wikidataJapaneseTitles,
         wikidataJapaneseNames,
         personEnglishNames,
+        personBirthdays,
         cannesFillImdbIds,
         tmdbJaWorklist,
         jaPosterWorklist,
