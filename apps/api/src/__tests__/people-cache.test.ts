@@ -56,8 +56,6 @@ describe('people ルートのキャッシュ', () => {
     ['/?page=1&limit=10', 'people:list:1:10:v3', ['people:eligible:v4:count']],
     ['/prominent?locale=ja&limit=5', 'people:prominent:ja:5:v13', []],
     ['/search?q=%E9%BB%92%E6%BE%A4&locale=ja', 'people:search:ja:黒澤:v1', []],
-    ['/crossings?locale=ja', 'people:crossings:ja:v5', []],
-    ['/uncrowned?locale=ja', 'people:uncrowned:ja:v3', []],
   ])(
     '%s は KV への書き込みが終わる前に応答を返す',
     async (path, key, putsBeforeResponse) => {

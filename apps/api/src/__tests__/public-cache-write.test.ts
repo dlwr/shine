@@ -6,10 +6,8 @@ import {getDatabase, type Environment} from '@shine/database';
 import {migrate} from '@shine/database/testing';
 import {describe, expect, it} from 'vitest';
 import {awardsRoutes} from '../routes/awards';
-import {crossingsRoutes} from '../routes/crossings';
 import {moviesRoutes} from '../routes/movies';
 import {searchRoutes} from '../routes/search';
-import {uncrownedRoutes} from '../routes/uncrowned';
 import {watchedRoutes} from '../routes/watched';
 import {yearsRoutes} from '../routes/years';
 
@@ -54,8 +52,6 @@ describe('公開ルートのキャッシュ書き込み', () => {
   it.each([
     ['awards', '/', awardsRoutes],
     ['years', '/', yearsRoutes],
-    ['crossings', '/', crossingsRoutes],
-    ['uncrowned', '/', uncrownedRoutes],
     ['watched', '/lists', watchedRoutes],
     ['search', '/suggest?q=%E9%BB%92%E6%BE%A4&locale=ja', searchRoutes],
     ['movies', '/search?q=kurosawa', moviesRoutes],

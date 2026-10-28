@@ -25,7 +25,7 @@ export function findAwardPageDefinition(
     : candidates.find(entry => entry.categoryNames.includes(categoryName));
 }
 
-/** 作品を横断して数える集計（/years・crossings・uncrowned）に使う最高賞の賞ページ */
+/** 作品を横断して数える集計（/years）に使う最高賞の賞ページ */
 export function findTopAwardPageDefinition(
   organizationName: string,
   categoryName: string,

@@ -60,39 +60,7 @@ const createLoaderArguments = (
     matches: [],
   });
 
-describe('Awards crossings link', () => {
-  it('賞の交差ページへの導線を置く', () => {
-    render(
-      <AwardsIndexPage
-        loaderData={cast<LoaderData>({...mockAwards, locale: 'ja'})}
-        actionData={undefined}
-        params={cast<ComponentProperties['params']>({})}
-        matches={cast<ComponentProperties['matches']>([])}
-      />,
-    );
-
-    expect(screen.getByRole('link', {name: /賞の交差/})).toHaveAttribute(
-      'href',
-      '/crossings',
-    );
-  });
-
-  it('無冠の映画ページへの導線を置く', () => {
-    render(
-      <AwardsIndexPage
-        loaderData={cast<LoaderData>({...mockAwards, locale: 'ja'})}
-        actionData={undefined}
-        params={cast<ComponentProperties['params']>({})}
-        matches={cast<ComponentProperties['matches']>([])}
-      />,
-    );
-
-    expect(screen.getByRole('link', {name: /無冠の映画/})).toHaveAttribute(
-      'href',
-      '/uncrowned',
-    );
-  });
-
+describe('Awards links', () => {
   it('観た映画チェックへの導線を置く', () => {
     render(
       <AwardsIndexPage
