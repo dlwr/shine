@@ -5,7 +5,7 @@ import process from 'node:process';
 import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
 import {migrate} from '@shine/database/testing';
-import {afterAll, beforeAll, describe, expect, it} from 'vitest';
+import {afterAll, beforeAll, describe, expect, it, vi} from 'vitest';
 import {awardsRoutes} from '../routes/awards';
 import {connectRoutes} from '../routes/connect';
 import {shiritoriRoutes} from '../routes/shiritori';
@@ -171,6 +171,7 @@ describe('キャッシュ鍵の版', () => {
   let recorded: Record<string, string[]>;
 
   beforeAll(async () => {
+    vi.useFakeTimers({now: new Date('2026-10-28T03:00:00Z'), toFake: ['Date']});
     seededEnvironment = await createSeededEnvironment();
     recorded = await readRecord();
     const background: Array<Promise<unknown>> = [];
@@ -189,6 +190,7 @@ describe('キャッシュ鍵の版', () => {
   });
 
   afterAll(async () => {
+    vi.useRealTimers();
     if (!isUpdating) {
       return;
     }
