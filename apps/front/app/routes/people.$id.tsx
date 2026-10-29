@@ -103,6 +103,24 @@ const JOB_LABELS: Record<string, string> = {
   'Original Music Composer': '音楽',
 };
 
+function PersonalRecordLine({record}: {record: PersonalAwardRecord}) {
+  return (
+    <p className="mt-1 font-label text-xs text-ink-muted">
+      {record.slug ? (
+        <a href={`/awards/${record.slug}`} className="text-ink-muted">
+          {record.organization} {record.category}
+        </a>
+      ) : (
+        `${record.organization} ${record.category}`
+      )}{' '}
+      <span className="whitespace-nowrap">
+        <span className="font-bold text-brand">{record.won}</span>受賞
+      </span>{' '}
+      / <span className="whitespace-nowrap">{record.nominated}ノミネート</span>
+    </p>
+  );
+}
+
 function roleLabel(credit: PersonCreditData): string {
   const labels = credit.jobs.map(job => JOB_LABELS[job] ?? job);
 
@@ -276,26 +294,25 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
                 </span>
               </p>
             )}
-            {personalRecords.map(record => (
-              <p
+            {personalRecords.slice(0, 3).map(record => (
+              <PersonalRecordLine
                 key={`${record.organization} ${record.category}`}
-                className="mt-1 font-label text-xs text-ink-muted">
-                {record.slug ? (
-                  <a href={`/awards/${record.slug}`} className="text-ink-muted">
-                    {record.organization} {record.category}
-                  </a>
-                ) : (
-                  `${record.organization} ${record.category}`
-                )}{' '}
-                <span className="whitespace-nowrap">
-                  <span className="font-bold text-brand">{record.won}</span>受賞
-                </span>{' '}
-                /{' '}
-                <span className="whitespace-nowrap">
-                  {record.nominated}ノミネート
-                </span>
-              </p>
+                record={record}
+              />
             ))}
+            {personalRecords.length > 3 && (
+              <details className="mt-1">
+                <summary className="cursor-pointer font-label text-xs text-ink-muted">
+                  ほか{personalRecords.length - 3}部門
+                </summary>
+                {personalRecords.slice(3).map(record => (
+                  <PersonalRecordLine
+                    key={`${record.organization} ${record.category}`}
+                    record={record}
+                  />
+                ))}
+              </details>
+            )}
           </div>
         </div>
 
