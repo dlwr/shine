@@ -32,6 +32,7 @@ export default defineConfig({
   },
   test: {
     exclude: ['node_modules/**'],
+    globalSetup: ['./vitest.global-setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
