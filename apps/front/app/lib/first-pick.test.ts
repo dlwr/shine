@@ -132,13 +132,26 @@ describe('awardFirstPick', () => {
     ).toBe('c');
   });
 
+  it('一覧の先頭の回の受賞作は選ばず、次の回から選ぶ', () => {
+    expect(
+      awardFirstPick(
+        award([
+          {year: 2025, movies: [movie({uid: 'a'})]},
+          {year: 2024, movies: [movie({uid: 'b'})]},
+          {year: 2023, movies: [movie({uid: 'c'})]},
+        ]),
+      )?.movie.uid,
+    ).toBe('b');
+  });
+
   it('観られる受賞作が無ければ選ばない', () => {
     expect(
       awardFirstPick(
         award([
+          {year: 2025, movies: [movie({uid: 'a'})]},
           {
-            year: 2025,
-            movies: [movie({uid: 'a', availabilityStatus: 'unwatchable'})],
+            year: 2024,
+            movies: [movie({uid: 'b', availabilityStatus: 'unwatchable'})],
           },
         ]),
       ),
@@ -147,7 +160,12 @@ describe('awardFirstPick', () => {
 
   it('授賞式の年をラベルにする', () => {
     expect(
-      awardFirstPick(award([{year: 2024, movies: [movie({uid: 'a'})]}]))?.label,
+      awardFirstPick(
+        award([
+          {year: 2025, movies: [movie({uid: 'a'})]},
+          {year: 2024, movies: [movie({uid: 'b'})]},
+        ]),
+      )?.label,
     ).toBe('2024');
   });
 });

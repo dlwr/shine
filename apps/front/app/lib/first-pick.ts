@@ -47,7 +47,7 @@ export function personFirstPick(credits: Credit[]): FirstPick | undefined {
 }
 
 export function awardFirstPick(award: AwardDetailData): FirstPick | undefined {
-  for (const group of award.years) {
+  for (const group of award.years.slice(1)) {
     const movie = group.movies.find(
       candidate =>
         candidate.isWinner && candidate.availabilityStatus === 'watchable',
