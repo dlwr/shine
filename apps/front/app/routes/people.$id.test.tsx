@@ -274,6 +274,40 @@ describe('PersonPage', () => {
     ).toBeInTheDocument();
   });
 
+  it('個人賞の通算成績は上位 3 部門まで出し、残りは畳む', () => {
+    const categories = ['監督賞', '脚本賞', '撮影賞', '編集賞'];
+    renderPage({
+      credits: [
+        {
+          movieUid: 'movie-ran',
+          title: '乱',
+          year: 1985,
+          jobs: ['Director'],
+          awards: [],
+          personAwards: categories.map((category, index) => ({
+            slug: undefined,
+            organization: '毎日映画コンクール',
+            category,
+            year: 1985,
+            isWinner: index < 3,
+          })),
+          availabilityStatus: 'unchecked',
+        },
+      ],
+    });
+
+    expect(
+      screen
+        .getByText(
+          (_, element) =>
+            element?.tagName === 'P' &&
+            element.textContent ===
+              '毎日映画コンクール 編集賞 0受賞 / 1ノミネート',
+        )
+        .closest('details'),
+    ).toHaveTextContent('ほか1部門');
+  });
+
   it('個人賞の受賞数は語の途中で折り返さない', () => {
     renderPage();
 
