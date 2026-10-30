@@ -280,8 +280,8 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
             </h1>
             <p className="font-label text-xs text-ink-muted">
               {person.name === person.originalName
-                ? `出演・監督 ${person.credits.length} 本`
-                : `${person.originalName} 出演・監督 ${person.credits.length} 本`}
+                ? `参加作 ${person.credits.length} 本`
+                : `${person.originalName} 参加作 ${person.credits.length} 本`}
             </p>
             {nominated > 0 && (
               <p className="mt-1 font-label text-xs text-ink-muted">
