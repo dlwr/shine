@@ -127,6 +127,26 @@ describe('POST /:id/translations', () => {
     ]);
   });
 
+  it('あらすじを渡すとあらすじも保存する', async () => {
+    await postTranslation({
+      languageCode: 'ja',
+      content: '邦題',
+      description: 'あらすじ',
+    });
+
+    const rows = await database
+      .select({content: translations.content})
+      .from(translations)
+      .where(
+        and(
+          eq(translations.resourceUid, 'movie-1'),
+          eq(translations.resourceType, 'movie_description'),
+          eq(translations.languageCode, 'ja'),
+        ),
+      );
+    expect(rows).toStrictEqual([{content: 'あらすじ'}]);
+  });
+
   it('タグを含む題名は除去して保存する', async () => {
     await postTranslation({
       languageCode: 'ja',
