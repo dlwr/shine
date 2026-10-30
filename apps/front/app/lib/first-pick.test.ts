@@ -88,12 +88,14 @@ function movie(overrides: Partial<AwardMovie> & {uid: string}): AwardMovie {
   };
 }
 
-function award(years: Array<{year: number; movies: AwardMovie[]}>) {
+function award(
+  years: Array<{year: number; ceremonyNumber?: number; movies: AwardMovie[]}>,
+) {
   return {
     grouping: 'year',
     years: years.map(group => ({
-      ...group,
       ceremonyNumber: undefined,
+      ...group,
       filmCount: group.movies.length,
     })),
   } as unknown as AwardDetailData;
@@ -158,7 +160,18 @@ describe('awardFirstPick', () => {
     ).toBeUndefined();
   });
 
-  it('授賞式の年をラベルにする', () => {
+  it('回次があれば第N回をラベルにする', () => {
+    expect(
+      awardFirstPick(
+        award([
+          {year: 2025, ceremonyNumber: 49, movies: [movie({uid: 'a'})]},
+          {year: 2024, ceremonyNumber: 48, movies: [movie({uid: 'b'})]},
+        ]),
+      )?.label,
+    ).toBe('第48回');
+  });
+
+  it('回次が無ければ授賞式の年をラベルにする', () => {
     expect(
       awardFirstPick(
         award([

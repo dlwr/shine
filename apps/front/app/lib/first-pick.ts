@@ -54,7 +54,9 @@ export function awardFirstPick(award: AwardDetailData): FirstPick | undefined {
     );
     if (movie) {
       return {
-        label: String(group.year),
+        label: group.ceremonyNumber
+          ? `第${group.ceremonyNumber}回`
+          : String(group.year),
         movie: {
           uid: movie.uid,
           title: movie.title,
