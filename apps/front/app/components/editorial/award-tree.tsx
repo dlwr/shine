@@ -76,8 +76,8 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
             {items.map(nomination => (
               <div
                 key={nomination.uid}
-                className="flex items-center justify-between border-b border-ink/20 px-3 py-1.5 text-sm last:border-b-0">
-                <span>
+                className="flex items-center justify-between gap-3 border-b border-ink/20 px-3 py-1.5 text-sm last:border-b-0">
+                <span className="min-w-0">
                   {nomination.category.displayName ?? nomination.category.name}
                   {nomination.person && (
                     <a
@@ -93,11 +93,11 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
                   )}
                 </span>
                 {nomination.isWinner ? (
-                  <span className="border border-brand px-1.5 py-0.5 font-display text-xs leading-none text-brand">
+                  <span className="shrink-0 whitespace-nowrap border border-brand px-1.5 py-0.5 font-display text-xs leading-none text-brand">
                     受賞
                   </span>
                 ) : (
-                  <span className="border border-ink-muted px-1.5 py-0.5 font-display text-xs leading-none text-ink-muted">
+                  <span className="shrink-0 whitespace-nowrap border border-ink-muted px-1.5 py-0.5 font-display text-xs leading-none text-ink-muted">
                     ノミネート
                   </span>
                 )}
