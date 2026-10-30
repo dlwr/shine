@@ -1,5 +1,6 @@
 import {AvailabilityStatusMark} from '@/components/editorial/availability-status-mark';
 import {AwardMovieRow, RankLabel} from '@/components/editorial/award-movie-row';
+import {AwardYearFrame} from '@/components/editorial/award-year-frame';
 import {PersonAwardYearSection} from '@/components/editorial/person-award-years';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import type {
@@ -52,36 +53,28 @@ function YearSection({
   const yearHref = `/awards/${award.slug}/${group.year}`;
 
   return (
-    <section>
-      <div className="flex items-baseline gap-3 border-t-[3px] border-ink pt-2 mb-2">
-        <h2 className="font-display font-bold text-3xl md:text-4xl leading-none">
-          <a href={yearHref} className="text-ink no-underline">
-            {group.year}
-          </a>
-        </h2>
-        {group.ceremonyNumber && (
-          <span className="font-label text-[10px] text-ink-muted">
-            第{group.ceremonyNumber}回
-          </span>
-        )}
-        {group.filmCount > group.movies.length && (
+    <AwardYearFrame
+      year={group.year}
+      ceremonyNumber={group.ceremonyNumber}
+      href={yearHref}
+      aside={
+        group.filmCount > group.movies.length && (
           <a
             href={yearHref}
-            className="ml-auto font-label text-[10px] text-ink-muted no-underline shrink-0">
-            出品作{group.filmCount}本を見る
+            aria-label={`${group.year}年の出品作${group.filmCount}本を見る`}
+            className="mt-2 block font-label text-[10px] leading-snug text-ink-muted">
+            全{group.filmCount}本
           </a>
-        )}
-      </div>
-      <div>
-        {group.movies.length > 0 ? (
-          group.movies.map(movie => (
-            <AwardMovieRow key={movie.uid} movie={movie} />
-          ))
-        ) : (
-          <p className="font-label text-xs text-ink-muted py-3">受賞作なし</p>
-        )}
-      </div>
-    </section>
+        )
+      }>
+      {group.movies.length > 0 ? (
+        group.movies.map(movie => (
+          <AwardMovieRow key={movie.uid} movie={movie} isCompact />
+        ))
+      ) : (
+        <p className="font-label text-xs text-ink-muted py-2">受賞作なし</p>
+      )}
+    </AwardYearFrame>
   );
 }
 
@@ -125,7 +118,7 @@ function Pagination({
 export function AwardBody({award}: {award: AwardPageData}) {
   if (award.grouping === 'person') {
     return (
-      <div className="space-y-10">
+      <div className="space-y-3">
         {award.years.map(group => (
           <PersonAwardYearSection key={group.year} group={group} />
         ))}
@@ -135,7 +128,7 @@ export function AwardBody({award}: {award: AwardPageData}) {
 
   if (award.grouping === 'year') {
     return (
-      <div className="space-y-10">
+      <div className="space-y-3">
         {award.years.map(group => (
           <YearSection key={group.year} award={award} group={group} />
         ))}
