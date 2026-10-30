@@ -248,7 +248,7 @@ export function buildPersonCardHtml({
 
   return cardFrame(
     `<div style="display:flex;flex-direction:column;">
-      <div style="display:flex;font-size:34px;font-weight:700;color:${COLORS.inkMuted};">出演・監督 ${filmCount} 本</div>
+      <div style="display:flex;font-size:34px;font-weight:700;color:${COLORS.inkMuted};">参加作 ${filmCount} 本</div>
       <div style="display:flex;font-size:${titleFontSize(name)}px;font-weight:700;line-height:1.25;color:${COLORS.ink};margin-top:16px;">${escapeHtml(name)}</div>
       ${originalHtml}
     </div>

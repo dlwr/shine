@@ -161,7 +161,7 @@ describe('PersonPage', () => {
   it('作品数を出す', () => {
     renderPage();
 
-    expect(screen.getByText(/出演・監督 2 本/)).toBeInTheDocument();
+    expect(screen.getByText(/参加作 2 本/)).toBeInTheDocument();
   });
 
   it('タイトルに人物名を含む', () => {

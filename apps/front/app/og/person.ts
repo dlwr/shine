@@ -25,7 +25,7 @@ type PersonDetail = {
 
 const CACHE_CONTROL = 'public, max-age=86400';
 /** Satoriへ渡すフォントに最低限含める文字 */
-const BASE_TEXT = `SHINE出演・監督本0123456789${TAGLINE} `;
+const BASE_TEXT = `SHINE参加作本0123456789${TAGLINE} `;
 
 export async function renderPersonCard(
   request: Request,

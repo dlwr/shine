@@ -223,7 +223,7 @@ describe('buildPersonCardHtml', () => {
   });
 
   it('作品数を日本語の見出しで出す', () => {
-    expect(buildPersonCardHtml(baseProperties)).toContain('出演・監督 21 本');
+    expect(buildPersonCardHtml(baseProperties)).toContain('参加作 21 本');
   });
 
   it('代表作を含む', () => {
