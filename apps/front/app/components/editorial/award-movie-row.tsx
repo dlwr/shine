@@ -21,7 +21,13 @@ function Note({text}: {text: string}) {
 
 const RANK_PATTERN = /^(\d+位|次点)$/;
 
-export function AwardMovieRow({movie}: {movie: AwardMovieEntryData}) {
+export function AwardMovieRow({
+  movie,
+  isCompact = false,
+}: {
+  movie: AwardMovieEntryData;
+  isCompact?: boolean;
+}) {
   const title = movie.title ?? 'Unknown Title';
   const isRanked = RANK_PATTERN.test(movie.specialMention ?? '');
   const rank = isRanked ? movie.specialMention : undefined;
@@ -31,12 +37,12 @@ export function AwardMovieRow({movie}: {movie: AwardMovieEntryData}) {
     return (
       <a
         href={`/movies/${movie.uid}`}
-        className="flex items-center gap-4 py-3 no-underline text-ink">
+        className={`flex items-center gap-4 no-underline text-ink ${isCompact ? 'py-2' : 'py-3'}`}>
         {rank && <RankLabel rank={rank} />}
         <PosterFrame
           posterUrl={movie.posterUrl}
           alt={`${title} poster`}
-          className="w-16 shrink-0"
+          className={`shrink-0 ${isCompact ? 'w-12' : 'w-16'}`}
           displaySize="w185"
         />
         <div className="flex-1 min-w-0">

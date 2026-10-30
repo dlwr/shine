@@ -1,3 +1,4 @@
+import {AwardYearFrame} from './award-year-frame';
 import {PersonPortrait} from './person-portrait';
 import type {PersonAwardYearGroupData} from '@/lib/api-types';
 
@@ -72,22 +73,10 @@ export function PersonAwardYearSection({
   group: PersonAwardYearGroupData;
 }) {
   return (
-    <section>
-      <div className="mb-2 flex items-baseline gap-3 border-t-[3px] border-ink pt-2">
-        <h2 className="font-display text-3xl font-bold leading-none md:text-4xl">
-          {group.year}
-        </h2>
-        {group.ceremonyNumber && (
-          <span className="font-label text-[10px] text-ink-muted">
-            第{group.ceremonyNumber}回
-          </span>
-        )}
-      </div>
-      <div>
-        {group.nominees.map(nominee => (
-          <NomineeRow key={nominee.uid} nominee={nominee} />
-        ))}
-      </div>
-    </section>
+    <AwardYearFrame year={group.year} ceremonyNumber={group.ceremonyNumber}>
+      {group.nominees.map(nominee => (
+        <NomineeRow key={nominee.uid} nominee={nominee} />
+      ))}
+    </AwardYearFrame>
   );
 }
