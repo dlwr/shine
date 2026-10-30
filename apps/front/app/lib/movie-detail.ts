@@ -13,6 +13,7 @@ export type {
   RelatedMovieData as RelatedMovie,
 } from './api-types';
 import type {
+  ConnectHopsData,
   MovieDetailData,
   RelatedMovieData as RelatedMovie,
 } from './api-types';
@@ -26,6 +27,7 @@ export type LoaderErrorResponse = {
 export type LoaderSuccessResponse = {
   movieDetail: MovieDetailData;
   relatedMovies?: Promise<RelatedMovie[]>;
+  hops?: Promise<ConnectHopsData['hops']>;
   turnstileSiteKey?: string;
   locale: Locale;
   apiUrl?: string;
@@ -62,6 +64,23 @@ export async function fetchRelatedMovies(
   }
 }
 
+async function fetchHops(
+  context: LoadContext,
+  movieId: string,
+  signal?: AbortSignal,
+): Promise<ConnectHopsData['hops']> {
+  try {
+    const body = await tryApiJson<ConnectHopsData>(
+      context,
+      `/connect/hops?from=${encodeURIComponent(movieId)}`,
+      {signal},
+    );
+    return body?.hops ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export async function loadMovieDetail(
   context: LoadContext,
   movieId: string,
@@ -81,6 +100,7 @@ export async function loadMovieDetail(
       locale,
       request.signal,
     );
+    const hops = fetchHops(context, movieId, request.signal);
     const response = await detailResponse;
 
     if (response.status === 404) {
@@ -107,6 +127,7 @@ export async function loadMovieDetail(
     return {
       movieDetail,
       relatedMovies,
+      hops,
       turnstileSiteKey,
       locale,
       apiUrl,

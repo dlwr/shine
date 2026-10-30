@@ -72,6 +72,11 @@ const exercises: Exercise[] = [
   {name: '今日の二本立て', routes: doubleFeatureRoutes, path: '/'},
   {name: '映画の距離のおまかせ', routes: connectRoutes, path: '/pick'},
   {
+    name: '2 手先の映画',
+    routes: connectRoutes,
+    path: '/hops?from=movie-green',
+  },
+  {
     name: '映画の距離',
     routes: connectRoutes,
     path: '/?from=movie-green&to=movie-gladiator',

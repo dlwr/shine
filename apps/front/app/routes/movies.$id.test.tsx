@@ -298,6 +298,34 @@ describe('MovieDetail Component', () => {
       ).resolves.toEqual(mockRelatedMovies);
     });
 
+    it('2 手先の映画を取りに行く', async () => {
+      const mockFetch = vi.mocked(fetch);
+      mockFetch.mockImplementation(async input =>
+        String(input).includes('/connect/hops')
+          ? ({
+              ok: true,
+              json: async () => ({hops: [{posterUrl: 'x', links: []}]}),
+            } as Response)
+          : ({ok: true, json: async () => mockMovieDetail} as Response),
+      );
+
+      const context = createMockContext();
+      const parameters = {id: 'movie-123'};
+      const request = new Request('http://localhost:3000/movies/movie-123');
+      const result = await loader(
+        createLoaderArguments(context, request, parameters, {
+          matches: createMatches(
+            createLoaderData(),
+            createParameters(parameters.id),
+          ),
+        }),
+      );
+
+      await expect((result as {hops: Promise<unknown>}).hops).resolves.toEqual([
+        {posterUrl: 'x', links: []},
+      ]);
+    });
+
     it('関連映画の応答を待たずに返す', async () => {
       const mockFetch = vi.mocked(fetch);
       mockFetch.mockImplementation(async input =>

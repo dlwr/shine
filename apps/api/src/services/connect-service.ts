@@ -2,9 +2,10 @@ import {and, eq, inArray, isNull, or} from '@shine/database';
 import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
 import {people} from '@shine/database/schema/people';
-import type {Column} from 'drizzle-orm';
+import type {Column, SQLWrapper} from 'drizzle-orm';
 import {alias} from 'drizzle-orm/sqlite-core';
 import type {
+  ConnectHops,
   ConnectLink,
   ConnectMovie,
   ConnectPick,
@@ -13,6 +14,7 @@ import type {
 } from '../types/connect';
 import {simpleHash} from '../utils/hash';
 import {BaseService} from './base-service';
+import {loadShowableMovies} from './movie-connections';
 import {localizedMovieTitle} from './movie-title-columns';
 import {personLocalizedName} from './person-name';
 import {pickNominatedMovieUid} from './selection-pick';
@@ -20,6 +22,8 @@ import {pickNominatedMovieUid} from './selection-pick';
 const MAX_PEOPLE = 3;
 const MAX_PICK_ATTEMPTS = 10;
 export const MAX_NEIGHBOR_MOVIES = 300;
+const HOP_DEPTH = 2;
+const MAX_HOPS = 12;
 
 type Credit = {movieUid: string; personUid: string; isDirector: boolean};
 
@@ -60,11 +64,7 @@ function roleBetween(
   return 'director-and-cast';
 }
 
-function shortestPath(
-  credits: Credit[],
-  fromUid: string,
-  toUid: string,
-): Step[] | undefined {
+function explore(credits: Credit[], fromUid: string, maxDepth: number) {
   const peopleByMovie = new Map<string, Set<string>>();
   const moviesByPerson = new Map<string, Set<string>>();
   for (const {movieUid, personUid} of credits) {
@@ -79,8 +79,9 @@ function shortestPath(
   }
 
   const reachedBy = new Map<string, Step | undefined>([[fromUid, undefined]]);
+  const levels: string[][] = [];
   let frontier = [fromUid];
-  for (let depth = 0; depth < MAX_PEOPLE && frontier.length > 0; depth++) {
+  for (let depth = 0; depth < maxDepth && frontier.length > 0; depth++) {
     const next: string[] = [];
     for (const movieUid of frontier) {
       const personUids = [...(peopleByMovie.get(movieUid) ?? [])].toSorted(
@@ -101,23 +102,50 @@ function shortestPath(
       }
     }
 
-    if (reachedBy.has(toUid)) {
-      const steps: Step[] = [];
-      for (
-        let step = reachedBy.get(toUid);
-        step;
-        step = reachedBy.get(step.previousMovieUid)
-      ) {
-        steps.unshift(step);
-      }
-
-      return steps;
-    }
-
+    levels.push(next);
     frontier = next;
   }
 
-  return undefined;
+  return {reachedBy, levels};
+}
+
+function pathTo(
+  reachedBy: Map<string, Step | undefined>,
+  movieUid: string,
+): Step[] {
+  const steps: Step[] = [];
+  for (
+    let step = reachedBy.get(movieUid);
+    step;
+    step = reachedBy.get(step.previousMovieUid)
+  ) {
+    steps.unshift(step);
+  }
+
+  return steps;
+}
+
+function alternateByYearDistance<T extends {year: number | undefined}>(
+  items: T[],
+  year: number | undefined,
+): T[] {
+  if (year === undefined) {
+    return items;
+  }
+
+  const farthestFirst = (a: T, b: T) =>
+    Math.abs(b.year! - year) - Math.abs(a.year! - year);
+  const older = items
+    .filter(item => item.year !== undefined && item.year <= year)
+    .toSorted(farthestFirst);
+  const newer = items
+    .filter(item => item.year !== undefined && item.year > year)
+    .toSorted(farthestFirst);
+  return Array.from(
+    {length: Math.max(older.length, newer.length)},
+    (_, index) =>
+      [older[index], newer[index]].filter(item => item !== undefined),
+  ).flat();
 }
 
 export class ConnectService extends BaseService {
@@ -136,23 +164,44 @@ export class ConnectService extends BaseService {
       ...(await this.loadNeighborhood(fromUid)),
       ...(await this.loadNeighborhood(toUid)),
     ];
-    const steps = shortestPath(credits, fromUid, toUid);
-    if (!steps) {
+    const {reachedBy} = explore(credits, fromUid, MAX_PEOPLE);
+    if (!reachedBy.has(toUid)) {
       return {from, to, links: undefined};
     }
 
-    const movieUids = [...steps.map(step => step.previousMovieUid), toUid];
-    const pathMovies = await this.loadMovies(movieUids);
-    const names = await this.loadPersonNames(steps.map(step => step.personUid));
-    const links: ConnectLink[] = steps.map((step, index) => ({
-      person: {uid: step.personUid, name: names.get(step.personUid)!},
-      role: roleBetween(credits, step.personUid, [
-        step.previousMovieUid,
-        movieUids[index + 1],
-      ]),
-      movie: pathMovies.get(movieUids[index + 1])!,
-    }));
+    const [links] = await this.describePaths(credits, [
+      {steps: pathTo(reachedBy, toUid), toUid},
+    ]);
     return {from, to, links};
+  }
+
+  async hops(fromUid: string): Promise<ConnectHops | undefined> {
+    const endpoints = await this.loadMovies([fromUid]);
+    const from = endpoints.get(fromUid);
+    if (!from) {
+      return undefined;
+    }
+
+    const credits = await this.loadNeighborhood(fromUid, HOP_DEPTH);
+    const {reachedBy, levels} = explore(credits, fromUid, HOP_DEPTH);
+    const destinations = alternateByYearDistance(
+      await loadShowableMovies(this.database, levels[HOP_DEPTH - 1] ?? []),
+      from.year,
+    ).slice(0, MAX_HOPS);
+    const linkLists = await this.describePaths(
+      credits,
+      destinations.map(movie => ({
+        steps: pathTo(reachedBy, movie.uid),
+        toUid: movie.uid,
+      })),
+    );
+    return {
+      from,
+      hops: destinations.map((movie, index) => ({
+        posterUrl: movie.posterUrl,
+        links: linkLists[index],
+      })),
+    };
   }
 
   async pick(date: string): Promise<ConnectPick | undefined> {
@@ -181,24 +230,68 @@ export class ConnectService extends BaseService {
     return undefined;
   }
 
-  private async loadNeighborhood(movieUid: string): Promise<Credit[]> {
-    const seedPersonUids = this.database
+  private async describePaths(
+    credits: Credit[],
+    paths: Array<{steps: Step[]; toUid: string}>,
+  ): Promise<ConnectLink[][]> {
+    const movieUidLists = paths.map(({steps, toUid}) => [
+      ...steps.map(step => step.previousMovieUid),
+      toUid,
+    ]);
+    const pathMovies = await this.loadMovies([
+      ...new Set(movieUidLists.flat()),
+    ]);
+    const names = await this.loadPersonNames([
+      ...new Set(paths.flatMap(({steps}) => steps.map(step => step.personUid))),
+    ]);
+    return paths.map(({steps}, pathIndex) => {
+      const movieUids = movieUidLists[pathIndex];
+      return steps.map((step, index) => ({
+        person: {uid: step.personUid, name: names.get(step.personUid)!},
+        role: roleBetween(credits, step.personUid, [
+          step.previousMovieUid,
+          movieUids[index + 1],
+        ]),
+        movie: pathMovies.get(movieUids[index + 1])!,
+      }));
+    });
+  }
+
+  private async loadNeighborhood(
+    movieUid: string,
+    depth = 1,
+  ): Promise<Credit[]> {
+    let personUids: SQLWrapper = this.database
       .select({personUid: seedCredits.personUid})
       .from(seedCredits)
       .where(and(eq(seedCredits.movieUid, movieUid), linkingRole(seedCredits)));
-    const neighborMovieUids = this.database
-      .selectDistinct({movieUid: sharedPeopleCredits.movieUid})
-      .from(sharedPeopleCredits)
-      .innerJoin(movies, eq(movies.uid, sharedPeopleCredits.movieUid))
-      .where(
-        and(
-          isNull(movies.deletedAt),
-          linkingRole(sharedPeopleCredits),
-          inArray(sharedPeopleCredits.personUid, seedPersonUids),
-        ),
-      )
-      .orderBy(sharedPeopleCredits.movieUid)
-      .limit(MAX_NEIGHBOR_MOVIES);
+    const neighborMovieUidLists: SQLWrapper[] = [];
+    for (let hop = 0; hop < depth; hop++) {
+      const neighborMovieUids = this.database
+        .selectDistinct({movieUid: sharedPeopleCredits.movieUid})
+        .from(sharedPeopleCredits)
+        .innerJoin(movies, eq(movies.uid, sharedPeopleCredits.movieUid))
+        .where(
+          and(
+            isNull(movies.deletedAt),
+            linkingRole(sharedPeopleCredits),
+            inArray(sharedPeopleCredits.personUid, personUids),
+          ),
+        )
+        .orderBy(sharedPeopleCredits.movieUid)
+        .limit(MAX_NEIGHBOR_MOVIES);
+      neighborMovieUidLists.push(neighborMovieUids);
+      personUids = this.database
+        .select({personUid: movieCredits.personUid})
+        .from(movieCredits)
+        .where(
+          and(
+            inArray(movieCredits.movieUid, neighborMovieUids),
+            linkingRole(movieCredits),
+          ),
+        );
+    }
+
     const rows = await this.database
       .select({
         movieUid: movieCredits.movieUid,
@@ -208,7 +301,11 @@ export class ConnectService extends BaseService {
       .from(movieCredits)
       .where(
         and(
-          inArray(movieCredits.movieUid, neighborMovieUids),
+          or(
+            ...neighborMovieUidLists.map(neighborMovieUids =>
+              inArray(movieCredits.movieUid, neighborMovieUids),
+            ),
+          ),
           linkingRole(movieCredits),
         ),
       );

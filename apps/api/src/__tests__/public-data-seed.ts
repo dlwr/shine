@@ -227,6 +227,14 @@ export async function seedPublicData(database: Database): Promise<void> {
       castOrder: 1,
     },
     {
+      movieUid: 'movie-gladiator',
+      personUid: seededPeopleUids.spacey,
+      creditId: 'credit-7',
+      department: 'Acting',
+      character: 'Senator',
+      castOrder: 2,
+    },
+    {
       movieUid: 'movie-green',
       personUid: '55555555-5555-4555-8555-555555555555',
       creditId: 'credit-5',
