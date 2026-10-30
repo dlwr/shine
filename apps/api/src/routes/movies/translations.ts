@@ -21,6 +21,7 @@ movieTranslationsRoutes.post('/:id/translations', authMiddleware, async c => {
       languageCode,
       content: rawContent,
       isDefault: rawIsDefault,
+      description: rawDescription,
     } = await c.req.json();
 
     if (!languageCode || !rawContent) {
@@ -41,6 +42,7 @@ movieTranslationsRoutes.post('/:id/translations', authMiddleware, async c => {
       languageCode,
       content,
       isDefault,
+      rawDescription ? sanitizeText(rawDescription) : undefined,
     );
 
     await invalidateMovieCaches(c.env, movieId);
