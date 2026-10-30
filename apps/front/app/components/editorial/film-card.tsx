@@ -54,8 +54,10 @@ export function FilmCard({
     return (
       <a
         href={`/movies/${movie.uid}`}
-        className="grid grid-cols-[3.5em_4rem_minmax(0,1fr)] items-start gap-3 border-b border-rule py-3 text-ink no-underline">
-        <span className="pt-0.5 font-display text-sm font-bold">{label}</span>
+        className="grid grid-cols-[minmax(3.5em,auto)_4rem_minmax(0,1fr)] items-start gap-3 border-b border-rule py-3 text-ink no-underline">
+        <span className="whitespace-nowrap pt-0.5 font-display text-sm font-bold">
+          {label}
+        </span>
         <PosterFrame
           posterUrl={posterUrl}
           alt={`${title} poster`}
