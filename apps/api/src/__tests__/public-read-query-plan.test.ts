@@ -274,6 +274,10 @@ const exercises: Exercise[] = [
       new ConnectService(environment).connect('movie-green', 'movie-gladiator'),
   },
   {
+    name: '2 手先の映画',
+    run: environment => new ConnectService(environment).hops('movie-green'),
+  },
+  {
     name: '映画の距離のおまかせ',
     run: environment => new ConnectService(environment).pick('2026-09-15'),
   },

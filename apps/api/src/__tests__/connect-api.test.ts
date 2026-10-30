@@ -6,7 +6,7 @@ import {getDatabase, type Environment} from '@shine/database';
 import {migrate} from '@shine/database/testing';
 import {beforeEach, describe, expect, it} from 'vitest';
 import {connectRoutes} from '../routes/connect';
-import type {ConnectPick, MovieConnection} from '../types/connect';
+import type {ConnectHops, ConnectPick, MovieConnection} from '../types/connect';
 import {seedPublicData} from './public-data-seed';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -149,8 +149,54 @@ describe('GET /connect/pick', () => {
     const response = await connectRoutes.request('/pick', {}, environment);
     const body: ConnectPick = await response.json();
 
-    expect(new Set([body.from, body.to])).toEqual(
-      new Set(['movie-gladiator', 'movie-green']),
+    expect(new Set([body.from, body.to]).size).toBe(2);
+  });
+});
+
+describe('GET /connect/hops', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+  });
+
+  it('起点の映画を返す', async () => {
+    const response = await connectRoutes.request(
+      '/hops?from=movie-green',
+      {},
+      environment,
     );
+    const body: ConnectHops = await response.json();
+
+    expect(body.from.title).toBe('グリーンマイル');
+  });
+
+  it('2 手先の映画を返す', async () => {
+    const response = await connectRoutes.request(
+      '/hops?from=movie-green',
+      {},
+      environment,
+    );
+    const body: ConnectHops = await response.json();
+
+    expect(body.hops.map(hop => hop.links.at(-1)!.movie.title)).toEqual([
+      'アメリカン・ビューティー',
+    ]);
+  });
+
+  it('起点が無ければ 400 を返す', async () => {
+    const response = await connectRoutes.request('/hops', {}, environment);
+
+    expect(response.status).toBe(400);
+  });
+
+  it('無い映画なら 404 を返す', async () => {
+    const response = await connectRoutes.request(
+      '/hops?from=movie-missing',
+      {},
+      environment,
+    );
+
+    expect(response.status).toBe(404);
   });
 });

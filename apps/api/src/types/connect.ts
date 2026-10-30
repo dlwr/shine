@@ -23,3 +23,13 @@ export type ConnectPick = {
   from: string;
   to: string;
 };
+
+type ConnectHop = {
+  posterUrl: string;
+  links: ConnectLink[];
+};
+
+export type ConnectHops = {
+  from: ConnectMovie;
+  hops: ConnectHop[];
+};

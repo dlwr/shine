@@ -59,3 +59,26 @@ connectRoutes.get('/pick', async c => {
 
   return c.json(data, 200, {'X-Cache-Status': status});
 });
+
+connectRoutes.get('/hops', async c => {
+  const from = c.req.query('from');
+  if (!from) {
+    return c.json({error: 'A movie is required'}, 400);
+  }
+
+  const {data, status} = await readThroughCache(
+    c,
+    new EdgeCache(c.env.CACHE_KV),
+    {
+      key: `connect-hops:${from}:v1`,
+      ttl: 604_800,
+      edgeTtl: IMPORTED_DATA_EDGE_TTL,
+      load: async () => new ConnectService(c.env).hops(from),
+    },
+  );
+  if (!data) {
+    return c.json({error: 'Movie not found'}, 404);
+  }
+
+  return c.json(data, 200, {'X-Cache-Status': status});
+});

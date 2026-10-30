@@ -93,6 +93,19 @@
     "data.awards[].personCount",
     "data.awards[].slug"
   ],
+  "connect-hops:movie-green:v1": [
+    "cachedAt",
+    "data.from.title",
+    "data.from.uid",
+    "data.from.year",
+    "data.hops[].links[].movie.title",
+    "data.hops[].links[].movie.uid",
+    "data.hops[].links[].movie.year",
+    "data.hops[].links[].person.name",
+    "data.hops[].links[].person.uid",
+    "data.hops[].links[].role",
+    "data.hops[].posterUrl"
+  ],
   "connect-pick:{date}:v1": [
     "cachedAt",
     "data.date",

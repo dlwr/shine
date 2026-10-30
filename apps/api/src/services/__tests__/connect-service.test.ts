@@ -10,6 +10,7 @@ import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
+import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from '@shine/database/testing';
 import {beforeEach, describe, expect, it} from 'vitest';
@@ -39,11 +40,26 @@ async function createTestEnvironment(): Promise<{
 async function seedMovie(
   database: TestDatabase,
   uid: string,
-  options: {deletedAt?: number; withoutJaTitle?: boolean} = {},
+  options: {
+    deletedAt?: number;
+    withoutJaTitle?: boolean;
+    year?: number;
+    withPoster?: boolean;
+  } = {},
 ) {
-  await database
-    .insert(movies)
-    .values({uid, year: 2000, deletedAt: options.deletedAt});
+  await database.insert(movies).values({
+    uid,
+    year: options.year ?? 2000,
+    deletedAt: options.deletedAt,
+  });
+  if (options.withPoster) {
+    await database.insert(posterUrls).values({
+      movieUid: uid,
+      url: `https://example.com/${uid}.jpg`,
+      isPrimary: 1,
+    });
+  }
+
   await database.insert(translations).values({
     resourceType: 'movie_title',
     resourceUid: uid,
@@ -320,5 +336,103 @@ describe('ConnectService.pick', () => {
     const pick = await new ConnectService(environment).pick('2026-09-15');
 
     expect(pick).toBeUndefined();
+  });
+});
+
+describe('ConnectService.hops', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+  });
+
+  async function seedHops(years: Record<string, number>) {
+    await seedMovie(database, 'm0', {withPoster: true});
+    await seedMovie(database, 'm1', {withPoster: true});
+    await seedPerson(database, 'p1');
+    await credit(database, 'm0', 'p1', 'Acting');
+    await credit(database, 'm1', 'p1', 'Acting');
+    await seedPerson(database, 'p2');
+    await credit(database, 'm1', 'p2', 'Directing');
+    for (const [uid, year] of Object.entries(years)) {
+      await seedMovie(database, uid, {year, withPoster: true});
+      await credit(database, uid, 'p2', 'Directing');
+    }
+  }
+
+  it('2 手先の映画を、間の 2 人と一緒に返す', async () => {
+    await seedHops({far: 1950});
+
+    const hops = await new ConnectService(environment).hops('m0');
+
+    expect(hops?.hops[0].links.map(link => link.person.uid)).toEqual([
+      'p1',
+      'p2',
+    ]);
+  });
+
+  it('1 手でつながる映画は出さない', async () => {
+    await seedHops({far: 1950});
+
+    const hops = await new ConnectService(environment).hops('m0');
+
+    expect(hops?.hops.map(hop => hop.links.at(-1)!.movie.uid)).toEqual(['far']);
+  });
+
+  it('年の離れた映画から、古い方と新しい方を交互に並べる', async () => {
+    await seedHops({
+      old1960: 1960,
+      new2020: 2020,
+      old1930: 1930,
+      new2010: 2010,
+      old1990: 1990,
+    });
+
+    const hops = await new ConnectService(environment).hops('m0');
+
+    expect(hops?.hops.map(hop => hop.links.at(-1)!.movie.uid)).toEqual([
+      'old1930',
+      'new2020',
+      'old1960',
+      'new2010',
+      'old1990',
+    ]);
+  });
+
+  it('ポスターの無い映画は出さない', async () => {
+    await seedHops({far: 1950});
+    await seedMovie(database, 'bare', {year: 1940});
+    await credit(database, 'bare', 'p2', 'Directing');
+
+    const hops = await new ConnectService(environment).hops('m0');
+
+    expect(hops?.hops.map(hop => hop.links.at(-1)!.movie.uid)).toEqual(['far']);
+  });
+
+  it('削除された映画は出さない', async () => {
+    await seedHops({far: 1950, gone: 1940});
+    await database
+      .update(movies)
+      .set({deletedAt: 1})
+      .where(eq(movies.uid, 'gone'));
+
+    const hops = await new ConnectService(environment).hops('m0');
+
+    expect(hops?.hops.map(hop => hop.links.at(-1)!.movie.uid)).toEqual(['far']);
+  });
+
+  it('行き先のポスターを返す', async () => {
+    await seedHops({far: 1950});
+
+    const hops = await new ConnectService(environment).hops('m0');
+
+    expect(hops?.hops[0].posterUrl).toBe('https://example.com/far.jpg');
+  });
+
+  it('無い映画なら何も返さない', async () => {
+    const hops = await new ConnectService(environment).hops('missing');
+
+    expect(hops).toBeUndefined();
   });
 });
