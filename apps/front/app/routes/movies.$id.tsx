@@ -8,6 +8,7 @@ import {Masthead} from '@/components/editorial/masthead';
 import {MovieDetailErrorView} from '@/components/editorial/movie-detail-error-view';
 import {MovieHero} from '@/components/editorial/movie-hero';
 import {MovieExits} from '@/components/editorial/movie-exits';
+import {MovieHops} from '@/components/editorial/movie-hops';
 import {MovieSynopsis} from '@/components/editorial/movie-synopsis';
 import {MovieWatchSection} from '@/components/editorial/movie-watch-section';
 import {RelatedMovies} from '@/components/editorial/related-movies';
@@ -141,6 +142,14 @@ export default function MovieDetail({
               <CreditsList credits={movieDetail.credits} />
             </section>
           )}
+
+        {loaded.hops && (
+          <Suspense>
+            <Await resolve={loaded.hops}>
+              {hops => <MovieHops hops={hops} />}
+            </Await>
+          </Suspense>
+        )}
 
         <MovieExits
           movieUid={movieDetail.uid}

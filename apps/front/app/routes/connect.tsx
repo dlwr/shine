@@ -1,5 +1,6 @@
 import type {Route} from './+types/connect';
 import {Masthead} from '@/components/editorial/masthead';
+import {ROLE_LABELS} from '@/components/editorial/movie-hops';
 import {SiteFooter} from '@/components/editorial/site-footer';
 import {getLocaleFromRequest} from '@/lib/locale';
 import {NOINDEX_FOLLOW, buildSocialMeta, SITE_URL} from '@/lib/meta';
@@ -14,14 +15,6 @@ import type {
 type ConnectState = {from: string; to: string; fq: string; tq: string};
 
 type Candidate = {uid: string; title: string; year?: number};
-
-type Link = NonNullable<MovieConnectionData['links']>[number];
-
-const ROLE_LABELS: Record<Link['role'], string> = {
-  director: '監督',
-  cast: '出演',
-  'director-and-cast': '監督と出演',
-};
 
 function connectHref(state: Partial<ConnectState>): string {
   const parameters = new URLSearchParams(
