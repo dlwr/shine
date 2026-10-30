@@ -23,6 +23,8 @@ export const QUIZ_MAX_ATTEMPTS = 6;
 const POOL_CACHE_KEY = 'quiz:pool:v4';
 const POOL_SIZE_CACHE_KEY = `${POOL_CACHE_KEY}:size`;
 const POOL_CACHE_TTL = 604_800;
+const ORDER_CACHE_KEY_PREFIX = 'quiz:order';
+const ORDER_CACHE_TTL = 86_400;
 
 function utcToday(): string {
   return new Date().toISOString().slice(0, 10);
@@ -101,16 +103,22 @@ export class QuizService extends BaseService {
   }
 
   async getOrderPair(date: string): Promise<QuizOrderMovie[] | undefined> {
-    const [pool, entry] = await Promise.all([
-      this.getPool(),
-      this.getEntry(date),
-    ]);
+    if (date !== utcToday()) {
+      return this.loadOrderPair(date);
+    }
 
-    return pickOrderPair(pool, date, entry?.uid)?.map(movie => ({
-      uid: movie.uid,
-      title: movie.title,
-      posterUrl: movie.posterUrl,
-    }));
+    const {data} = await readThroughCache(
+      this.requestContext,
+      new EdgeCache(this.env.CACHE_KV),
+      {
+        key: `${ORDER_CACHE_KEY_PREFIX}:${date}:v1`,
+        ttl: ORDER_CACHE_TTL,
+        edgeTtl: IMPORTED_DATA_EDGE_TTL,
+        load: async () => this.loadOrderPair(date),
+      },
+    );
+
+    return data;
   }
 
   async getReleaseDates(
@@ -148,6 +156,21 @@ export class QuizService extends BaseService {
     }
 
     return (await this.persistSelection(date, picked.uid, storedUid)) ?? picked;
+  }
+
+  private async loadOrderPair(
+    date: string,
+  ): Promise<QuizOrderMovie[] | undefined> {
+    const [pool, entry] = await Promise.all([
+      this.getPool(),
+      this.getEntry(date),
+    ]);
+
+    return pickOrderPair(pool, date, entry?.uid)?.map(movie => ({
+      uid: movie.uid,
+      title: movie.title,
+      posterUrl: movie.posterUrl,
+    }));
   }
 
   private async findSelectedUid(date: string): Promise<string | undefined> {

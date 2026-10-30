@@ -12,7 +12,7 @@ import {nominations} from '@shine/database/schema/nominations';
 import {posterUrls} from '@shine/database/schema/poster-urls';
 import {translations} from '@shine/database/schema/translations';
 import {migrate} from '@shine/database/testing';
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {quizRoutes} from '../routes/quiz';
 import {QuizService} from '../services/quiz-service';
 
@@ -565,6 +565,48 @@ describe('GET /quiz/order', () => {
     );
 
     expect(response.status).toBe(400);
+  });
+});
+
+describe('GET /quiz/order の KV', () => {
+  let environment: Environment;
+  let recording: ReturnType<typeof createRecordingKv>;
+
+  beforeEach(async () => {
+    vi.useFakeTimers({toFake: ['Date']});
+    vi.setSystemTime(new Date(`${DATE}T12:00:00Z`));
+    environment = await createTestEnvironment();
+    recording = createRecordingKv();
+    environment.CACHE_KV = recording.kv;
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  async function fetchTodayPairText() {
+    const response = await quizRoutes.request('/order', {}, environment);
+    return response.text();
+  }
+
+  it('今日の組は KV に残し、次からはそれだけを読む', async () => {
+    const first = await fetchTodayPairText();
+    recording.readKeys.length = 0;
+    const second = await fetchTodayPairText();
+
+    expect(second).toBe(first);
+    expect(recording.readKeys).toEqual([`quiz:order:${DATE}:v1`]);
+  });
+
+  it('過去の日付の組は KV に残さない', async () => {
+    await quizRoutes.request('/order?date=2026-01-10', {}, environment);
+
+    expect(
+      recording.store
+        .keys()
+        .filter(key => key.startsWith('quiz:order'))
+        .toArray(),
+    ).toEqual([]);
   });
 });
 
