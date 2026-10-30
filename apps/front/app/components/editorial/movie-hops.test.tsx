@@ -41,7 +41,7 @@ describe('MovieHops', () => {
     render(<MovieHops hops={[hops[0]]} />);
 
     expect(screen.getByRole('listitem')).toHaveTextContent(
-      'トム・ハンクスが出演『グリーンマイル』黒澤明が監督',
+      'トム・ハンクスが出演 → 『グリーンマイル』 → 黒澤明が監督',
     );
   });
 

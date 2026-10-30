@@ -17,7 +17,7 @@ function HopPath({links}: {links: Hop['links']}) {
     <p className="font-label text-xs text-ink-muted mt-1 break-words">
       {links.map((link, index) => (
         <span key={link.person.uid}>
-          {index > 0 && `『${links[index - 1].movie.title}』`}
+          {index > 0 && ` → 『${links[index - 1].movie.title}』 → `}
           <a href={`/people/${link.person.uid}`} className="text-ink-muted">
             {link.person.name}
           </a>
