@@ -79,18 +79,21 @@ describe('PersonAwardHistory', () => {
   it('行の見出しから映画ページへリンクする', () => {
     render(<PersonAwardHistory credits={credits} />);
 
-    expect(screen.getByRole('link', {name: 'PERFECT DAYS'})).toHaveAttribute(
-      'href',
-      '/movies/movie-perfect-days',
-    );
+    expect(
+      within(screen.getByRole('table')).getByRole('link', {
+        name: 'PERFECT DAYS',
+      }),
+    ).toHaveAttribute('href', '/movies/movie-perfect-days');
   });
 
   it('長いタイトルは切り詰めずに折り返す', () => {
     render(<PersonAwardHistory credits={credits} />);
 
-    expect(screen.getByRole('link', {name: 'PERFECT DAYS'})).not.toHaveClass(
-      'truncate',
-    );
+    expect(
+      within(screen.getByRole('table')).getByRole('link', {
+        name: 'PERFECT DAYS',
+      }),
+    ).not.toHaveClass('truncate');
   });
 
   it('行の見出しは折り返しを許す', () => {
@@ -282,6 +285,35 @@ describe('PersonAwardHistory', () => {
     );
 
     expect(within(rowOf(/映画/)).getByRole('cell')).toHaveTextContent(label);
+  });
+
+  it('狭い画面向けの一覧では作品ごとに団体名つきで全部の賞を並べる', () => {
+    render(<PersonAwardHistory credits={credits} />);
+
+    const list = screen.getByRole('list', {name: '作品ごとの受賞歴'});
+    const item = within(list).getByText('PERFECT DAYS').closest('li')!;
+
+    expect(
+      within(item)
+        .getAllByTitle(/年/)
+        .map(chip => chip.textContent),
+    ).toEqual(['カンヌ 男優', '日本アカデミー 主演']);
+    expect(within(item).getByRole('link')).toHaveAttribute(
+      'href',
+      '/movies/movie-perfect-days',
+    );
+  });
+
+  it('狭い画面では一覧を、広い画面では表を出す', () => {
+    render(<PersonAwardHistory credits={credits} />);
+
+    expect(screen.getByRole('list', {name: '作品ごとの受賞歴'})).toHaveClass(
+      'md:hidden',
+    );
+    expect(screen.getByRole('table').parentElement).toHaveClass(
+      'hidden',
+      'md:block',
+    );
   });
 
   it('個人賞がひとつも無ければ何も描画しない', () => {

@@ -47,6 +47,10 @@ function HeaderLabel({label}: {label: string}) {
   ));
 }
 
+function shortLabelOf(organization: string): string {
+  return ORGANIZATION_SHORT_LABELS.get(organization) ?? organization;
+}
+
 function organizationRank(organization: string): number {
   const rank = ORGANIZATION_SHORT_LABELS.keys().toArray().indexOf(organization);
   return rank === -1 ? Infinity : rank;
@@ -65,7 +69,7 @@ function columnsOf(credits: AwardHistoryCredit[]): Column[] {
     .toSorted((a, b) => organizationRank(a) - organizationRank(b))
     .map(organization => ({
       organization,
-      shortLabel: ORGANIZATION_SHORT_LABELS.get(organization) ?? organization,
+      shortLabel: shortLabelOf(organization),
     }));
 }
 
@@ -78,7 +82,69 @@ export function PersonAwardHistory({credits}: {credits: AwardHistoryCredit[]}) {
   const columns = columnsOf(rows);
 
   return (
-    <div className="overflow-x-auto border border-ink">
+    <>
+      <AwardHistoryList rows={rows} />
+      <AwardHistoryTable rows={rows} columns={columns} />
+    </>
+  );
+}
+
+function awardTitle(award: PersonalAward): string {
+  return `${award.organization} ${award.category} ${award.year}年 ${award.isWinner ? '受賞' : 'ノミネート'}`;
+}
+
+function AwardHistoryList({rows}: {rows: AwardHistoryCredit[]}) {
+  return (
+    <ul
+      aria-label="作品ごとの受賞歴"
+      className="border-t border-ink font-label text-xs md:hidden">
+      {rows.map(credit => (
+        <li
+          key={credit.movieUid}
+          className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-rule py-1.5">
+          <span className="leading-snug">
+            {credit.year && (
+              <span className="mr-1.5 text-ink-muted tabular-nums">
+                {credit.year}
+              </span>
+            )}
+            <a
+              href={`/movies/${credit.movieUid}`}
+              className="text-ink no-underline">
+              {credit.title ?? 'Unknown Title'}
+            </a>
+          </span>
+          <span className="flex flex-wrap gap-1">
+            {credit.personAwards
+              .toSorted(
+                (a, b) =>
+                  organizationRank(a.organization) -
+                  organizationRank(b.organization),
+              )
+              .map(award => (
+                <Chip
+                  key={`${award.organization} ${award.category} ${award.year}`}
+                  label={`${shortLabelOf(award.organization).replace(' ', '')} ${categoryLabel(award.category)}`}
+                  title={awardTitle(award)}
+                  isWinner={award.isWinner}
+                />
+              ))}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function AwardHistoryTable({
+  rows,
+  columns,
+}: {
+  rows: AwardHistoryCredit[];
+  columns: Column[];
+}) {
+  return (
+    <div className="hidden overflow-x-auto border border-ink md:block">
       <table className="w-full border-separate border-spacing-0 font-label text-[10px]">
         <thead>
           <tr>
@@ -121,7 +187,7 @@ export function PersonAwardHistory({credits}: {credits: AwardHistoryCredit[]}) {
                         <Chip
                           key={`${award.category} ${award.year}`}
                           label={categoryLabel(award.category)}
-                          title={`${award.organization} ${award.category} ${award.year}年 ${award.isWinner ? '受賞' : 'ノミネート'}`}
+                          title={awardTitle(award)}
                           isWinner={award.isWinner}
                         />
                       ))}
