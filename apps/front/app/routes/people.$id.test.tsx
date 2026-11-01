@@ -256,6 +256,34 @@ describe('PersonPage', () => {
     expect(screen.queryByText(/作受賞/)).not.toBeInTheDocument();
   });
 
+  it('受賞が無ければノミネートの数だけを出す', () => {
+    renderPage({
+      credits: [
+        {
+          movieUid: 'movie-taxi',
+          title: '影武者',
+          year: 1980,
+          jobs: [],
+          awards: [{slug: 'palme-dor', isWinner: false}],
+          personAwards: [
+            {
+              slug: 'japan-academy-director',
+              organization: '日本アカデミー賞',
+              category: '監督賞',
+              year: 1981,
+              isWinner: false,
+            },
+          ],
+          availabilityStatus: 'unchecked',
+        },
+      ],
+    });
+
+    expect(screen.getByText('1作ノミネート')).toBeInTheDocument();
+    expect(screen.getByText('1ノミネート')).toBeInTheDocument();
+    expect(screen.queryByText(/\d作?受賞/)).not.toBeInTheDocument();
+  });
+
   it('個人賞の部門名を出す', () => {
     renderPage();
 
@@ -301,8 +329,7 @@ describe('PersonPage', () => {
         .getByText(
           (_, element) =>
             element?.tagName === 'P' &&
-            element.textContent ===
-              '毎日映画コンクール 編集賞 0受賞 / 1ノミネート',
+            element.textContent === '毎日映画コンクール 編集賞 1ノミネート',
         )
         .closest('details'),
     ).toHaveTextContent('ほか1部門');

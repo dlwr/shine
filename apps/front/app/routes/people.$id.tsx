@@ -113,10 +113,15 @@ function PersonalRecordLine({record}: {record: PersonalAwardRecord}) {
       ) : (
         `${record.organization} ${record.category}`
       )}{' '}
-      <span className="whitespace-nowrap">
-        <span className="font-bold text-brand">{record.won}</span>受賞
-      </span>{' '}
-      / <span className="whitespace-nowrap">{record.nominated}ノミネート</span>
+      {record.won > 0 && (
+        <>
+          <span className="whitespace-nowrap">
+            <span className="font-bold text-brand">{record.won}</span>受賞
+          </span>{' '}
+          /{' '}
+        </>
+      )}
+      <span className="whitespace-nowrap">{record.nominated}ノミネート</span>
     </p>
   );
 }
@@ -285,10 +290,14 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
             </p>
             {nominated > 0 && (
               <p className="mt-1 font-label text-xs text-ink-muted">
-                <span className="whitespace-nowrap">
-                  <span className="font-bold text-brand">{won}</span>作受賞
-                </span>{' '}
-                /{' '}
+                {won > 0 && (
+                  <>
+                    <span className="whitespace-nowrap">
+                      <span className="font-bold text-brand">{won}</span>作受賞
+                    </span>{' '}
+                    /{' '}
+                  </>
+                )}
                 <span className="whitespace-nowrap">
                   {nominated}作ノミネート
                 </span>
