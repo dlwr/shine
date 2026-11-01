@@ -57,6 +57,11 @@ function NomineeItem({nominee}: {nominee: PersonAwardNomineeData}) {
         className="shrink-0 font-label text-sm leading-tight text-ink no-underline">
         {nominee.name}
       </a>
+      {nominee.originalName !== nominee.name && (
+        <span className="shrink-0 font-label text-[10px] text-ink-muted">
+          {nominee.originalName}
+        </span>
+      )}
       <MovieLinks movies={nominee.movies} />
     </li>
   );
