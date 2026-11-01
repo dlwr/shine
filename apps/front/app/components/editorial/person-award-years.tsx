@@ -51,7 +51,7 @@ function WinnerRow({nominee}: {nominee: PersonAwardNomineeData}) {
 
 function NomineeItem({nominee}: {nominee: PersonAwardNomineeData}) {
   return (
-    <li className="flex max-w-full items-baseline gap-x-2">
+    <li className="flex max-w-full flex-wrap items-baseline gap-x-2">
       <a
         href={`/people/${nominee.uid}`}
         className="shrink-0 font-label text-sm leading-tight text-ink no-underline">
