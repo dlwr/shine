@@ -184,6 +184,39 @@ describe('GET /connect/hops', () => {
     ]);
   });
 
+  it('20 日前に作った 2 手先はそのまま返す', async () => {
+    const store = new Map<string, string>();
+    const cachedEnvironment: Environment = {
+      ...environment,
+      CACHE_KV: {
+        async get(key: string) {
+          const raw = store.get(key);
+          return raw === undefined ? null : JSON.parse(raw);
+        },
+        async put(key: string, value: string) {
+          store.set(key, value);
+        },
+      } as unknown as KVNamespace,
+    };
+    store.set(
+      'connect-hops:movie-green:v1',
+      JSON.stringify({
+        data: {from: {uid: 'movie-green', title: '保存済み'}, hops: []},
+        cachedAt: Date.now() - 20 * 86_400_000,
+      }),
+    );
+
+    const response = await connectRoutes.request(
+      '/hops?from=movie-green',
+      {},
+      cachedEnvironment,
+    );
+    const body: ConnectHops = await response.json();
+
+    expect(response.headers.get('X-Cache-Status')).toBe('HIT');
+    expect(body.from.title).toBe('保存済み');
+  });
+
   it('起点が無ければ 400 を返す', async () => {
     const response = await connectRoutes.request('/hops', {}, environment);
 

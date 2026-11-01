@@ -10,6 +10,7 @@ import type {MovieConnection} from '../types/connect';
 export const connectRoutes = new Hono<{Bindings: Environment}>();
 
 const CONNECTION_TTL = 3600;
+const HOPS_TTL = 2_592_000;
 
 connectRoutes.get('/', async c => {
   const from = c.req.query('from');
@@ -71,7 +72,7 @@ connectRoutes.get('/hops', async c => {
     new EdgeCache(c.env.CACHE_KV),
     {
       key: `connect-hops:${from}:v1`,
-      ttl: 604_800,
+      ttl: HOPS_TTL,
       edgeTtl: IMPORTED_DATA_EDGE_TTL,
       load: async () => new ConnectService(c.env).hops(from),
     },
