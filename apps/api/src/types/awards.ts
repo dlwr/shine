@@ -115,6 +115,19 @@ export type PersonAwardYearGroup = {
   nominees: PersonAwardNominee[];
 };
 
+/** 最新の回を除いて新しい順に、日本で観られる受賞作を 1 本 */
+export type PersonAwardFirstPick = {
+  year: number;
+  ceremonyNumber: number | undefined;
+  personName: string;
+  movie: {
+    uid: string;
+    title: string | undefined;
+    movieYear: number | undefined;
+    posterUrl: string | undefined;
+  };
+};
+
 export type PersonAwardDetail = {
   slug: string;
   name: string;
@@ -122,4 +135,5 @@ export type PersonAwardDetail = {
   description: string;
   grouping: 'person';
   years: PersonAwardYearGroup[];
+  firstPick?: PersonAwardFirstPick;
 };

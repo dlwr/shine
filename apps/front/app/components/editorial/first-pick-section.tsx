@@ -12,6 +12,7 @@ export function FirstPickSection({pick}: {pick: FirstPick}) {
         variant="compact"
         locale="ja"
         label={pick.label}
+        note={pick.note}
       />
     </section>
   );

@@ -51,7 +51,7 @@ function readAwardDetail(
   slug: string,
 ): ReturnType<typeof readThroughCache<AwardDetail | PersonAwardDetail>> {
   return readThroughCache<AwardDetail | PersonAwardDetail>(c, cache, {
-    key: `awards:${slug}:v8`,
+    key: `awards:${slug}:v9`,
     ttl: AWARDS_CACHE_TTL,
     edgeTtl: IMPORTED_DATA_EDGE_TTL,
     load: async () =>

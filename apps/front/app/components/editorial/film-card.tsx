@@ -32,6 +32,7 @@ export function FilmCard({
   variant,
   locale = 'en',
   label,
+  note,
   index,
   priority = false,
   transformImages = false,
@@ -40,6 +41,7 @@ export function FilmCard({
   variant: 'hero' | 'compact';
   locale?: string;
   label?: string;
+  note?: string;
   index?: string;
   priority?: boolean;
   transformImages?: boolean;
@@ -73,6 +75,11 @@ export function FilmCard({
           {movie.year ? (
             <span className="mt-1 block font-display text-sm text-ink-muted tabular-nums">
               {movie.year}
+            </span>
+          ) : undefined}
+          {note ? (
+            <span className="mt-1 block font-label text-xs text-ink-muted">
+              {note}
             </span>
           ) : undefined}
         </span>

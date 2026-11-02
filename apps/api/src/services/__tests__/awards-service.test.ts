@@ -1110,6 +1110,38 @@ describe('PersonAwardsService.getPersonAwardBySlug', () => {
     expect(result?.years[0]?.nominees).toHaveLength(3);
   });
 
+  it('まず観るなら は最新の回を除いた受賞作から日本で観られるものを選ぶ', async () => {
+    await database.insert(movieAvailabilityChecks).values([
+      {movieUid: 'movie-d', source: 'unext', status: 'ok', checkedAt: 1},
+      {movieUid: 'movie-a', source: 'unext', status: 'ng', checkedAt: 1},
+      {movieUid: 'movie-b', source: 'unext', status: 'ok', checkedAt: 1},
+    ]);
+    await database.insert(posterUrls).values({
+      movieUid: 'movie-b',
+      url: 'https://example.com/b.jpg',
+      isPrimary: 1,
+    });
+
+    const result = await service.getPersonAwardBySlug('japan-academy-director');
+
+    expect(result?.firstPick).toEqual({
+      year: 1990,
+      ceremonyNumber: 13,
+      personName: '巨匠',
+      movie: {
+        uid: 'movie-b',
+        title: '映画B',
+        movieYear: 1989,
+        posterUrl: 'https://example.com/b.jpg',
+      },
+    });
+  });
+
+  it('観られる受賞作が無ければ まず観るなら を返さない', async () => {
+    const result = await service.getPersonAwardBySlug('japan-academy-director');
+    expect(result).not.toHaveProperty('firstPick');
+  });
+
   it('年ページは持たない', async () => {
     const result = await new AwardsService(environment).getAwardYear(
       'japan-academy-director',

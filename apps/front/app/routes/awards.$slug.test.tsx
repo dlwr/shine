@@ -740,6 +740,43 @@ describe('Person award page', () => {
     expect(screen.queryByText(/を見る →/)).not.toBeInTheDocument();
   });
 
+  it('まず観るなら が無ければ節を出さない', () => {
+    renderPersonAward();
+
+    expect(
+      screen.queryByRole('heading', {name: /まず観るなら/}),
+    ).not.toBeInTheDocument();
+  });
+
+  it('日本で観られる受賞作を受賞者の名前と一緒に「まず観るなら」に出す', () => {
+    render(
+      <AwardDetailPage
+        {...createComponentProperties(
+          cast<LoaderData>({
+            award: {
+              ...mockPersonAward,
+              firstPick: {
+                year: 1990,
+                ceremonyNumber: 13,
+                personName: '巨匠',
+                movie: {uid: 'movie-b', title: '映画B', movieYear: 1989},
+              },
+            },
+            locale: 'ja',
+          }),
+        )}
+      />,
+    );
+
+    const section = screen
+      .getByRole('heading', {name: /まず観るなら/})
+      .closest('section');
+    const link = section?.querySelector('a');
+    expect(link).toHaveAttribute('href', '/movies/movie-b');
+    expect(link).toHaveTextContent('第13回');
+    expect(link).toHaveTextContent('巨匠');
+  });
+
   it('受賞者数を出す', () => {
     renderPersonAward();
 
