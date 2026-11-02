@@ -3,13 +3,22 @@ import {awardCeremonies} from '@shine/database/schema/award-ceremonies';
 import {movies} from '@shine/database/schema/movies';
 import {nominations} from '@shine/database/schema/nominations';
 import {people} from '@shine/database/schema/people';
-import type {PersonAwardDetail, PersonAwardYearGroup} from '../types/awards';
+import type {
+  PersonAwardDetail,
+  PersonAwardFirstPick,
+  PersonAwardYearGroup,
+} from '../types/awards';
 import {personAwardDefinitions} from './award-definitions';
 import {compareCodePoints, compareNominees} from './award-page-ordering';
 import {resolveCategoryUids} from './award-category-queries';
 import {BaseService} from './base-service';
 import {movieTitleColumns} from './movie-title-columns';
 import {personLocalizedName} from './person-name';
+import {localizedPosterUrl} from './localized-poster-url';
+import {
+  availabilityStatusOf,
+  loadMovieAvailabilityByMovie,
+} from './watchable-availability';
 
 export class PersonAwardsService extends BaseService {
   async getPersonAwardBySlug(
@@ -106,6 +115,8 @@ export class PersonAwardsService extends BaseService {
       }
     }
 
+    const firstPick = await this.findFirstPick(years);
+
     return {
       slug: definition.slug,
       name: definition.name,
@@ -113,6 +124,49 @@ export class PersonAwardsService extends BaseService {
       description: definition.description,
       grouping: 'person',
       years,
+      ...(firstPick && {firstPick}),
+    };
+  }
+
+  private async findFirstPick(
+    years: PersonAwardYearGroup[],
+  ): Promise<PersonAwardFirstPick | undefined> {
+    const candidates = years
+      .slice(1)
+      .flatMap(group =>
+        group.nominees
+          .filter(nominee => nominee.isWinner)
+          .flatMap(nominee =>
+            nominee.movies.map(movie => ({group, nominee, movie})),
+          ),
+      );
+    if (candidates.length === 0) {
+      return undefined;
+    }
+
+    const availabilityByMovie = await loadMovieAvailabilityByMovie(
+      this.database,
+      [...new Set(candidates.map(candidate => candidate.movie.uid))],
+    );
+    const pick = candidates.find(
+      candidate =>
+        availabilityStatusOf(availabilityByMovie, candidate.movie.uid) ===
+        'watchable',
+    );
+    if (!pick) {
+      return undefined;
+    }
+
+    const [poster] = await this.database
+      .select({posterUrl: localizedPosterUrl('ja')})
+      .from(movies)
+      .where(eq(movies.uid, pick.movie.uid));
+
+    return {
+      year: pick.group.year,
+      ceremonyNumber: pick.group.ceremonyNumber,
+      personName: pick.nominee.name,
+      movie: {...pick.movie, posterUrl: poster?.posterUrl ?? undefined},
     };
   }
 }

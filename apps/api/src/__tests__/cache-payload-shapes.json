@@ -42,7 +42,7 @@
     "data.organization",
     "data.slug"
   ],
-  "awards:academy-best-picture:v8": [
+  "awards:academy-best-picture:v9": [
     "cachedAt",
     "data.availabilitySummary.rentalOnly",
     "data.availabilitySummary.total",
@@ -64,7 +64,7 @@
     "data.years[].movies[].uid",
     "data.years[].year"
   ],
-  "awards:academy-director:v8": [
+  "awards:academy-director:v9": [
     "cachedAt",
     "data.description",
     "data.grouping",
