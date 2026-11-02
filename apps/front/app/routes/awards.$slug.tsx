@@ -19,7 +19,7 @@ import {loadApiJson, tryApiJson} from '@/lib/api';
 import type {AwardsListData} from '@/lib/api-types';
 import {nextAwards, type NextAwards} from '@/lib/next-awards';
 import {NextAwardsSection} from '@/components/editorial/next-awards-section';
-import {awardFirstPick} from '@/lib/first-pick';
+import {awardFirstPick, personAwardFirstPick} from '@/lib/first-pick';
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {award, locale} = loaderData as {
@@ -71,7 +71,9 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
   const heading = awardHeading(award);
   const leadText = awardLeadText(award);
   const firstPick =
-    award.grouping === 'person' ? undefined : awardFirstPick(award);
+    award.grouping === 'person'
+      ? personAwardFirstPick(award)
+      : awardFirstPick(award);
 
   return (
     <div className="min-h-screen bg-paper text-ink">

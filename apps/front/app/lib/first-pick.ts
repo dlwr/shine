@@ -1,7 +1,12 @@
-import type {AwardDetailData, PersonData} from './api-types';
+import type {
+  AwardDetailData,
+  PersonAwardDetailData,
+  PersonData,
+} from './api-types';
 
 export type FirstPick = {
   label: string;
+  note?: string;
   movie: {uid: string; title?: string; year?: number; posterUrl?: string};
 };
 
@@ -68,4 +73,26 @@ export function awardFirstPick(award: AwardDetailData): FirstPick | undefined {
   }
 
   return undefined;
+}
+
+export function personAwardFirstPick(
+  award: PersonAwardDetailData,
+): FirstPick | undefined {
+  const pick = award.firstPick;
+  if (!pick) {
+    return undefined;
+  }
+
+  return {
+    label: pick.ceremonyNumber
+      ? `第${pick.ceremonyNumber}回`
+      : String(pick.year),
+    note: pick.personName,
+    movie: {
+      uid: pick.movie.uid,
+      title: pick.movie.title,
+      year: pick.movie.movieYear,
+      posterUrl: pick.movie.posterUrl,
+    },
+  };
 }
