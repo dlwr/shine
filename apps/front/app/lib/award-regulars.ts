@@ -32,8 +32,10 @@ export function awardRegulars(
     }
   }
 
-  const regulars = [...byPerson.values()]
+  const regulars = byPerson
+    .values()
     .filter(regular => regular.nominations >= MIN_NOMINATIONS)
+    .toArray()
     .toSorted(
       (a, b) =>
         b.wins - a.wins ||

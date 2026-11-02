@@ -20,6 +20,8 @@ import type {AwardsListData} from '@/lib/api-types';
 import {nextAwards, type NextAwards} from '@/lib/next-awards';
 import {NextAwardsSection} from '@/components/editorial/next-awards-section';
 import {awardFirstPick, personAwardFirstPick} from '@/lib/first-pick';
+import {awardRegulars} from '@/lib/award-regulars';
+import {AwardRegularsSection} from '@/components/editorial/award-regulars-section';
 
 export function meta({loaderData}: Route.MetaArgs): Route.MetaDescriptors {
   const {award, locale} = loaderData as {
@@ -110,6 +112,10 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
         )}
 
         {firstPick && <FirstPickSection pick={firstPick} />}
+
+        {award.grouping === 'person' && (
+          <AwardRegularsSection regulars={awardRegulars(award)} />
+        )}
 
         <AwardBody award={award} />
 
