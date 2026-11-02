@@ -777,6 +777,50 @@ describe('Person award page', () => {
     expect(link).toHaveTextContent('巨匠');
   });
 
+  it('この部門に 2 回以上ノミネートされた人が 3 人に満たなければ常連の節を出さない', () => {
+    renderPersonAward();
+
+    expect(screen.queryByText('この部門の常連')).not.toBeInTheDocument();
+  });
+
+  it('この部門の常連を人物ページへリンクする', () => {
+    const repeat = {
+      ...mockPersonAward,
+      years: [
+        ...mockPersonAward.years,
+        {
+          year: 1988,
+          ceremonyNumber: 11,
+          nominees: mockPersonAward.years[0].nominees,
+        },
+        {
+          year: 1986,
+          ceremonyNumber: 9,
+          nominees: mockPersonAward.years[1].nominees,
+        },
+      ],
+    };
+    render(
+      <AwardDetailPage
+        {...createComponentProperties(
+          cast<LoaderData>({award: repeat, locale: 'ja'}),
+        )}
+      />,
+    );
+
+    const section = screen
+      .getByRole('heading', {name: 'この部門の常連'})
+      .closest('section');
+    const links = [...(section?.querySelectorAll('a') ?? [])];
+    expect(links.map(link => link.getAttribute('href'))).toEqual([
+      '/people/person-master',
+      '/people/person-young',
+      '/people/person-foreign',
+    ]);
+    expect(links[0]).toHaveTextContent('受賞 2');
+    expect(links[2]).toHaveTextContent('ノミネート 2');
+  });
+
   it('受賞者数を出す', () => {
     renderPersonAward();
 
