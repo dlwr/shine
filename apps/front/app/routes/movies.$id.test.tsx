@@ -714,6 +714,29 @@ describe('MovieDetail Component', () => {
       );
     });
 
+    it('今月の1本でなければ記事・ポストの欄は関連映画の後に出る', async () => {
+      const loaderData = createLoaderData({
+        relatedMovies: Promise.resolve(mockRelatedMovies),
+      });
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      const related = await screen.findByText('関連映画');
+      expect(
+        related.compareDocumentPosition(
+          screen.getByText('観た人の記事・ポスト'),
+        ) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
     it('上映時間を表示する', () => {
       const loaderData = createLoaderData({relatedMovies: Promise.resolve([])});
       const parameters = createParameters('movie-123');
@@ -1396,7 +1419,7 @@ describe('MovieDetail Component', () => {
       expect(section).toHaveTextContent('観た人の記事・ポスト');
     });
 
-    it('記事・ポストの欄は関連映画より前に出る', async () => {
+    it('今月の1本なら記事・ポストの欄は関連映画より前に出る', async () => {
       const loaderData = createLoaderData({
         relatedMovies: Promise.resolve(mockRelatedMovies),
       });
@@ -1407,7 +1430,7 @@ describe('MovieDetail Component', () => {
           loaderData={loaderData}
           actionData={createActionData()}
           params={parameters}
-          matches={createMatches(loaderData, parameters)}
+          matches={createMatches(loaderData, parameters, 'movie-123')}
         />,
       );
 
@@ -1440,7 +1463,7 @@ describe('MovieDetail Component', () => {
       ).toBeTruthy();
     });
 
-    it('記事・ポストの欄はキャストより前に出る', () => {
+    it('今月の1本なら記事・ポストの欄はキャストより前に出る', () => {
       const loaderData = createLoaderData({
         movieDetail: {
           ...mockMovieDetail,
@@ -1457,7 +1480,7 @@ describe('MovieDetail Component', () => {
           loaderData={loaderData}
           actionData={createActionData()}
           params={parameters}
-          matches={createMatches(loaderData, parameters)}
+          matches={createMatches(loaderData, parameters, 'movie-123')}
         />,
       );
 
