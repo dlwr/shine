@@ -86,6 +86,21 @@ export default function MovieDetail({
   const {movieDetail, turnstileSiteKey, locale} = loaded;
   const title = movieDetail.title || 'タイトル不明';
   const isThisMonthsPick = isMonthlyPick(matches, movieDetail.uid);
+  const articleLinksSection = (
+    <ArticleLinksSection
+      articleLinks={movieDetail.articleLinks}
+      movieUid={movieDetail.uid}
+      movieTitle={movieDetail.title}
+      isTestMode={isTestMode}
+      formData={formData}
+      handleInputChange={handleInputChange}
+      handleCaptchaTokenChange={handleCaptchaTokenChange}
+      isLoadingTitle={isLoadingTitle}
+      submissionResult={submissionResult}
+      turnstileSiteKey={turnstileSiteKey}
+      isMonthlyPick={isThisMonthsPick}
+    />
+  );
 
   return (
     <div className="min-h-screen bg-paper">
@@ -118,19 +133,7 @@ export default function MovieDetail({
           </section>
         )}
 
-        <ArticleLinksSection
-          articleLinks={movieDetail.articleLinks}
-          movieUid={movieDetail.uid}
-          movieTitle={movieDetail.title}
-          isTestMode={isTestMode}
-          formData={formData}
-          handleInputChange={handleInputChange}
-          handleCaptchaTokenChange={handleCaptchaTokenChange}
-          isLoadingTitle={isLoadingTitle}
-          submissionResult={submissionResult}
-          turnstileSiteKey={turnstileSiteKey}
-          isMonthlyPick={isThisMonthsPick}
-        />
+        {isThisMonthsPick && articleLinksSection}
 
         {movieDetail.credits &&
           (movieDetail.credits.cast.length > 0 ||
@@ -163,6 +166,8 @@ export default function MovieDetail({
             </Await>
           </Suspense>
         )}
+
+        {!isThisMonthsPick && articleLinksSection}
 
         <SiteFooter locale={locale} />
       </div>
