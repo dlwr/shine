@@ -40,7 +40,7 @@ function groupCrewByJob(crew: MovieCredits['crew']) {
 
 function PersonLink({person}: {person: CreditPerson}) {
   return (
-    <a href={`/people/${person.uid}`} className="text-ink">
+    <a href={`/people/${person.uid}`} className="text-ink underline">
       {person.name}
     </a>
   );
