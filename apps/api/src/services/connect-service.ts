@@ -148,6 +148,21 @@ function alternateByYearDistance<T extends {year: number | undefined}>(
   ).flat();
 }
 
+function preferDistinctRoutes<T extends {steps: Step[]}>(items: T[]): T[] {
+  const seenRoutes = new Set<string>();
+  const distinct: T[] = [];
+  const repeated: T[] = [];
+  for (const item of items) {
+    const route = item.steps
+      .map(step => `${step.previousMovieUid}:${step.personUid}`)
+      .join('>');
+    (seenRoutes.has(route) ? repeated : distinct).push(item);
+    seenRoutes.add(route);
+  }
+
+  return [...distinct, ...repeated];
+}
+
 export class ConnectService extends BaseService {
   async connect(
     fromUid: string,
@@ -184,20 +199,19 @@ export class ConnectService extends BaseService {
 
     const credits = await this.loadNeighborhood(fromUid, HOP_DEPTH);
     const {reachedBy, levels} = explore(credits, fromUid, HOP_DEPTH);
-    const destinations = alternateByYearDistance(
-      await loadShowableMovies(this.database, levels[HOP_DEPTH - 1] ?? []),
-      from.year,
+    const destinations = preferDistinctRoutes(
+      alternateByYearDistance(
+        await loadShowableMovies(this.database, levels[HOP_DEPTH - 1] ?? []),
+        from.year,
+      ).map(movie => ({movie, steps: pathTo(reachedBy, movie.uid)})),
     ).slice(0, MAX_HOPS);
     const linkLists = await this.describePaths(
       credits,
-      destinations.map(movie => ({
-        steps: pathTo(reachedBy, movie.uid),
-        toUid: movie.uid,
-      })),
+      destinations.map(({movie, steps}) => ({steps, toUid: movie.uid})),
     );
     return {
       from,
-      hops: destinations.map((movie, index) => ({
+      hops: destinations.map(({movie}, index) => ({
         posterUrl: movie.posterUrl,
         links: linkLists[index],
       })),

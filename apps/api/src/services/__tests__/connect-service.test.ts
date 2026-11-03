@@ -400,6 +400,25 @@ describe('ConnectService.hops', () => {
     ]);
   });
 
+  it('同じ道を通る映画より、別の道を通る映画を先に並べる', async () => {
+    await seedHops({old1930: 1930, old1940: 1940, new2020: 2020});
+    await seedMovie(database, 'm2', {withPoster: true});
+    await credit(database, 'm2', 'p1', 'Acting');
+    await seedPerson(database, 'p3');
+    await credit(database, 'm2', 'p3', 'Directing');
+    await seedMovie(database, 'other1990', {year: 1990, withPoster: true});
+    await credit(database, 'other1990', 'p3', 'Directing');
+
+    const hops = await new ConnectService(environment).hops('m0');
+
+    expect(hops?.hops.map(hop => hop.links.at(-1)!.movie.uid)).toEqual([
+      'old1930',
+      'other1990',
+      'new2020',
+      'old1940',
+    ]);
+  });
+
   it('ポスターの無い映画は出さない', async () => {
     await seedHops({far: 1950});
     await seedMovie(database, 'bare', {year: 1940});
