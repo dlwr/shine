@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@marsidev/react-turnstile": "^1.6.1",
-    "@radix-ui/react-label": "^2.1.16",
+    "@radix-ui/react-label": "^2.1.17",
     "@radix-ui/react-slot": "^1.4.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
