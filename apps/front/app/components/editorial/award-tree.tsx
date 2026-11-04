@@ -78,7 +78,18 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
                 key={nomination.uid}
                 className="flex items-center justify-between gap-3 border-b border-ink/20 px-3 py-1.5 text-sm last:border-b-0">
                 <span className="min-w-0">
-                  {nomination.category.displayName ?? nomination.category.name}
+                  {nomination.organization.slug &&
+                  nomination.organization.hasYearPages ? (
+                    <a
+                      href={`/awards/${nomination.organization.slug}`}
+                      className="text-ink underline">
+                      {nomination.category.displayName ??
+                        nomination.category.name}
+                    </a>
+                  ) : (
+                    (nomination.category.displayName ??
+                    nomination.category.name)
+                  )}
                   {nomination.person && (
                     <a
                       href={`/people/${nomination.person.uid}`}

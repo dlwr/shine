@@ -75,6 +75,38 @@ describe('AwardTree', () => {
     );
   });
 
+  it('年別ページを持つ賞の部門名は、その部門の賞ページへリンクする', () => {
+    render(<AwardTree nominations={noms} />);
+    expect(screen.getByRole('link', {name: 'Best Actor'})).toHaveAttribute(
+      'href',
+      '/awards/some-new-award',
+    );
+  });
+
+  it('年別ページがない賞の部門名はリンクしない（ヘッダが同じ賞ページへリンクする）', () => {
+    render(
+      <AwardTree
+        nominations={[
+          {
+            uid: 'n4',
+            isWinner: false,
+            category: {name: 'Top 100'},
+            ceremony: {uid: 'c3', year: 2022},
+            organization: {
+              uid: 'o3',
+              name: 'Variety',
+              slug: 'variety-top-100',
+              hasYearPages: false,
+            },
+          },
+        ]}
+      />,
+    );
+    expect(
+      screen.queryByRole('link', {name: 'Top 100'}),
+    ).not.toBeInTheDocument();
+  });
+
   it('年別ページがない組織のヘッダは /awards/:slug へリンクする', () => {
     render(
       <AwardTree
