@@ -30,12 +30,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
 
       # runner によってはミラーからの取得が細って止まるので、.deb を cache に置いて apt を通さない。PR で保存した cache は他の PR から読めないので main の push でも走らせる
       - name: Restore CJK font packages
         id: font-cache
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@v6.1.0
         with:
           path: /tmp/font-debs
           key: fonts-noto-cjk-noble-v1
@@ -52,7 +52,7 @@ jobs:
 
       - name: Save CJK font packages
         if: steps.font-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@v6.1.0
         with:
           path: /tmp/font-debs
           key: fonts-noto-cjk-noble-v1
@@ -61,7 +61,7 @@ jobs:
         run: dpkg -i /tmp/font-debs/*.deb
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@v6.1.0
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -75,7 +75,7 @@ jobs:
 
       - name: Upload report
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: vrt-report
           path: apps/front/playwright-report
@@ -87,7 +87,7 @@ jobs:
 
       - name: Upload snapshots
         if: failure() && steps.vrt.outcome == 'failure'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: vrt-snapshots
           path: apps/front/vrt/__screenshots__

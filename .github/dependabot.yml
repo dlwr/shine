@@ -23,6 +23,8 @@ updates:
       day: 'monday'
       time: '09:00'
     open-pull-requests-limit: 3
+    cooldown:
+      default-days: 3
     commit-message:
       prefix: 'ci'
       include: 'scope'
