@@ -65,7 +65,9 @@ export function buildOnDemandRunners(
     },
     async unext(movie) {
       const {checkUnext} = await loadAvailability();
-      return checkUnext(await titlesForSearch(movie), fetchImpl);
+      return checkUnext(await titlesForSearch(movie), fetchImpl, {
+        year: movie.year,
+      });
     },
     async discas(movie) {
       const {checkDiscas} = await loadAvailability();

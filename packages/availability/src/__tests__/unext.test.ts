@@ -10,6 +10,21 @@ const fixtureJson = fs.readFileSync(
   'utf8',
 );
 
+function fetchWithProductionYear(productionYear: string | null) {
+  return vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(
+    async url =>
+      url.includes('cosmo_getVideoTitle')
+        ? Response.json({
+            data: {
+              webfront_title_stage: {id: 'SID0002596', productionYear},
+            },
+          })
+        : new Response(fixtureJson, {
+            headers: {'Content-Type': 'application/json'},
+          }),
+  );
+}
+
 describe('parseUnextTitles', () => {
   it('extracts title names from the search response', () => {
     const titles = parseUnextTitles(JSON.parse(fixtureJson));
@@ -109,5 +124,72 @@ describe('checkUnext', () => {
     const result = await checkUnext(['ゴッドファーザー'], failingFetch);
 
     expect(result.status).toBe('error');
+  });
+
+  describe('with year', () => {
+    it('returns ok when the production year is close to the movie year', async () => {
+      const fetchSpy = fetchWithProductionYear('1972');
+
+      const result = await checkUnext(['ゴッドファーザー'], fetchSpy, {
+        year: 1973,
+      });
+
+      expect(result).toEqual({
+        source: 'unext',
+        status: 'ok',
+        detail: 'Matched: ゴッドファーザー (1972)',
+      });
+      const detailUrl = new URL(fetchSpy.mock.calls[1]?.[0] ?? '');
+      expect(JSON.parse(detailUrl.searchParams.get('variables') ?? '')).toEqual(
+        {code: 'SID0002596'},
+      );
+    });
+
+    it('returns ng when the same-titled work is from a different year', async () => {
+      const result = await checkUnext(
+        ['ゴッドファーザー'],
+        fetchWithProductionYear('1948'),
+        {year: 1955},
+      );
+
+      expect(result).toEqual({
+        source: 'unext',
+        status: 'ng',
+        detail: 'Title matched but year differs: ゴッドファーザー (1948)',
+      });
+    });
+
+    it('returns ok when U-NEXT has no production year', async () => {
+      const result = await checkUnext(
+        ['ゴッドファーザー'],
+        fetchWithProductionYear(null),
+        {year: 1955},
+      );
+
+      expect(result.status).toBe('ok');
+    });
+
+    it('returns error when the title lookup fails', async () => {
+      const fetchSpy = vi.fn(async (url: string) =>
+        url.includes('cosmo_getVideoTitle')
+          ? Response.json({errors: [{message: 'PersistedQueryNotFound'}]})
+          : new Response(fixtureJson),
+      );
+
+      const result = await checkUnext(['ゴッドファーザー'], fetchSpy, {
+        year: 1972,
+      });
+
+      expect(result.status).toBe('error');
+      expect(result.detail).toContain('PersistedQueryNotFound');
+    });
+
+    it('does not look up titles when nothing matches', async () => {
+      const fetchSpy = fetchWithProductionYear('1972');
+
+      await checkUnext(['存在しない映画XYZ'], fetchSpy, {year: 1972});
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    });
   });
 });
