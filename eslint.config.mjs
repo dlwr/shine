@@ -66,6 +66,7 @@ export default tseslint.config(
       'unicorn/no-asterisk-prefix-in-documentation-comments': 'off',
       'unicorn/no-unnecessary-parameters': 'off',
       'unicorn/prefer-default-parameters': 'off',
+      'unicorn/prefer-smaller-scope': 'off',
       'unicorn/single-line-block-comment-style': ['error', 'single-line'],
       'unicorn/max-nested-calls': ['error', {max: 4}],
       'unicorn/consistent-boolean-name': [

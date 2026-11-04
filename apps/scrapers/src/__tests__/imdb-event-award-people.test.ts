@@ -405,13 +405,13 @@ describe('importImdbEventAward の個人賞 英語名フォールバック', () 
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
-        const english = url.includes('language=en-US');
+        const isEnglish = url.includes('language=en-US');
         return Response.json({
           cast: [
             {
               id: 9002,
               credit_id: 'tmdb-credit-kikuchi',
-              name: english ? 'Rinko Kikuchi' : '菊地凛子',
+              name: isEnglish ? 'Rinko Kikuchi' : '菊地凛子',
               original_name: '菊地凛子',
               character: 'Chieko',
               order: 3,
@@ -422,7 +422,7 @@ describe('importImdbEventAward の個人賞 英語名フォールバック', () 
             {
               id: 9003,
               credit_id: 'tmdb-credit-kurosawa',
-              name: english ? 'Akira Kurosawa' : '黒澤明',
+              name: isEnglish ? 'Akira Kurosawa' : '黒澤明',
               original_name: '黒澤明',
               department: 'Directing',
               job: 'Director',
@@ -523,13 +523,11 @@ describe('importImdbEventAward の個人賞 人物 override', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async (input: string | URL | Request) =>
-        String(input).includes('/person/9002')
-          ? Response.json({
-              id: 9002,
-              name: '役所広司',
-              profile_path: '/yakusho.jpg',
-            })
-          : Response.json({cast: [], crew: []}),
+        Response.json(
+          String(input).includes('/person/9002')
+            ? {id: 9002, name: '役所広司', profile_path: '/yakusho.jpg'}
+            : {cast: [], crew: []},
+        ),
       ),
     );
   });
@@ -644,11 +642,11 @@ describe('importImdbEventAward の個人賞 人物 override', () => {
       tmdbId: 4343,
       year: 2006,
     });
-    vi.mocked(fetch).mockImplementation(
-      async (input: string | URL | Request) =>
+    vi.mocked(fetch).mockImplementation(async (input: string | URL | Request) =>
+      Response.json(
         String(input).includes('/person/9002')
-          ? Response.json({id: 9002, name: '役所広司', profile_path: null})
-          : Response.json({
+          ? {id: 9002, name: '役所広司', profile_path: null}
+          : {
               cast: [
                 {
                   id: 9003,
@@ -659,7 +657,8 @@ describe('importImdbEventAward の個人賞 人物 override', () => {
                 },
               ],
               crew: [],
-            }),
+            },
+      ),
     );
 
     await importImdbEventAward({

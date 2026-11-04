@@ -112,7 +112,7 @@ export const getCacheKeyForSearch = (
   filters: Record<string, unknown>,
 ): string => {
   const entries = Object.entries(filters).filter(
-    ([, value]) => value !== undefined && value !== null && value !== '',
+    ([, value]) => !([undefined, null, ''] as unknown[]).includes(value),
   );
   const sortedEntries: Array<[string, unknown]> = [];
   for (const entry of entries) {
