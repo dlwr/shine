@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {awardFirstPick, personFirstPick} from './first-pick';
+import {awardFirstPicks, personFirstPick} from './first-pick';
 import type {AwardDetailData, PersonData} from './api-types';
 
 type Credit = PersonData['credits'][number];
@@ -101,10 +101,10 @@ function award(
   } as unknown as AwardDetailData;
 }
 
-describe('awardFirstPick', () => {
+describe('awardFirstPicks', () => {
   it('日本で観られる受賞作のうち一番新しい回のものを選ぶ', () => {
     expect(
-      awardFirstPick(
+      awardFirstPicks(
         award([
           {
             year: 2025,
@@ -113,13 +113,13 @@ describe('awardFirstPick', () => {
           {year: 2024, movies: [movie({uid: 'b'})]},
           {year: 2023, movies: [movie({uid: 'c'})]},
         ]),
-      )?.movie.uid,
+      )[0]?.movie.uid,
     ).toBe('b');
   });
 
   it('ノミネート止まりの作品より受賞作を選ぶ', () => {
     expect(
-      awardFirstPick(
+      awardFirstPicks(
         award([
           {
             year: 2025,
@@ -130,25 +130,25 @@ describe('awardFirstPick', () => {
           },
           {year: 2024, movies: [movie({uid: 'c'})]},
         ]),
-      )?.movie.uid,
+      )[0]?.movie.uid,
     ).toBe('c');
   });
 
   it('一覧の先頭の回の受賞作は選ばず、次の回から選ぶ', () => {
     expect(
-      awardFirstPick(
+      awardFirstPicks(
         award([
           {year: 2025, movies: [movie({uid: 'a'})]},
           {year: 2024, movies: [movie({uid: 'b'})]},
           {year: 2023, movies: [movie({uid: 'c'})]},
         ]),
-      )?.movie.uid,
+      )[0]?.movie.uid,
     ).toBe('b');
   });
 
   it('観られる受賞作が無ければ選ばない', () => {
     expect(
-      awardFirstPick(
+      awardFirstPicks(
         award([
           {year: 2025, movies: [movie({uid: 'a'})]},
           {
@@ -157,28 +157,41 @@ describe('awardFirstPick', () => {
           },
         ]),
       ),
-    ).toBeUndefined();
+    ).toEqual([]);
   });
 
   it('回次があれば第N回をラベルにする', () => {
     expect(
-      awardFirstPick(
+      awardFirstPicks(
         award([
           {year: 2025, ceremonyNumber: 49, movies: [movie({uid: 'a'})]},
           {year: 2024, ceremonyNumber: 48, movies: [movie({uid: 'b'})]},
         ]),
-      )?.label,
+      )[0]?.label,
     ).toBe('第48回');
   });
 
   it('回次が無ければ授賞式の年をラベルにする', () => {
     expect(
-      awardFirstPick(
+      awardFirstPicks(
         award([
           {year: 2025, movies: [movie({uid: 'a'})]},
           {year: 2024, movies: [movie({uid: 'b'})]},
         ]),
-      )?.label,
+      )[0]?.label,
     ).toBe('2024');
+  });
+
+  it('観られる受賞作が 4 本以上あれば、新しい回・中ほどの回・古い回から 1 本ずつ選ぶ', () => {
+    expect(
+      awardFirstPicks(
+        award(
+          [2025, 2024, 2023, 2022, 2021, 2020].map(year => ({
+            year,
+            movies: [movie({uid: String(year)})],
+          })),
+        ),
+      ).map(pick => pick.movie.uid),
+    ).toEqual(['2024', '2022', '2020']);
   });
 });

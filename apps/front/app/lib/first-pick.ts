@@ -51,14 +51,17 @@ export function personFirstPick(credits: Credit[]): FirstPick | undefined {
   return undefined;
 }
 
-export function awardFirstPick(award: AwardDetailData): FirstPick | undefined {
+const AWARD_FIRST_PICK_COUNT = 3;
+
+export function awardFirstPicks(award: AwardDetailData): FirstPick[] {
+  const candidates: FirstPick[] = [];
   for (const group of award.years.slice(1)) {
     const movie = group.movies.find(
       candidate =>
         candidate.isWinner && candidate.availabilityStatus === 'watchable',
     );
     if (movie) {
-      return {
+      candidates.push({
         label: group.ceremonyNumber
           ? `第${group.ceremonyNumber}回`
           : String(group.year),
@@ -68,11 +71,20 @@ export function awardFirstPick(award: AwardDetailData): FirstPick | undefined {
           year: movie.movieYear,
           posterUrl: movie.posterUrl,
         },
-      };
+      });
     }
   }
 
-  return undefined;
+  if (candidates.length <= AWARD_FIRST_PICK_COUNT) {
+    return candidates;
+  }
+
+  const last = candidates.length - 1;
+  return Array.from(
+    {length: AWARD_FIRST_PICK_COUNT},
+    (_, index) =>
+      candidates[Math.round((index * last) / (AWARD_FIRST_PICK_COUNT - 1))],
+  );
 }
 
 export function personAwardFirstPick(

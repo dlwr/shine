@@ -19,7 +19,7 @@ import {loadApiJson, tryApiJson} from '@/lib/api';
 import type {AwardsListData} from '@/lib/api-types';
 import {nextAwards, type NextAwards} from '@/lib/next-awards';
 import {NextAwardsSection} from '@/components/editorial/next-awards-section';
-import {awardFirstPick, personAwardFirstPick} from '@/lib/first-pick';
+import {awardFirstPicks, personAwardFirstPick} from '@/lib/first-pick';
 import {awardRegulars} from '@/lib/award-regulars';
 import {AwardRegularsSection} from '@/components/editorial/award-regulars-section';
 
@@ -72,10 +72,14 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
   const locale = 'ja';
   const heading = awardHeading(award);
   const leadText = awardLeadText(award);
-  const firstPick =
+  const personPick =
+    award.grouping === 'person' ? personAwardFirstPick(award) : undefined;
+  const firstPicks =
     award.grouping === 'person'
-      ? personAwardFirstPick(award)
-      : awardFirstPick(award);
+      ? personPick
+        ? [personPick]
+        : []
+      : awardFirstPicks(award);
 
   return (
     <div className="min-h-screen bg-paper text-ink">
@@ -111,7 +115,7 @@ export default function AwardDetailPage({loaderData}: Route.ComponentProps) {
           </a>
         )}
 
-        {firstPick && <FirstPickSection pick={firstPick} />}
+        {firstPicks.length > 0 && <FirstPickSection picks={firstPicks} />}
 
         {award.grouping === 'person' && (
           <AwardRegularsSection regulars={awardRegulars(award)} />
