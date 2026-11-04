@@ -325,7 +325,7 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
           </div>
         </div>
 
-        {firstPick && <FirstPickSection pick={firstPick} />}
+        {firstPick && <FirstPickSection picks={[firstPick]} />}
 
         {personalRecords.length > 0 && (
           <section className="mb-8">
