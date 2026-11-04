@@ -85,7 +85,9 @@ export function buildSourceRunners(options: {
     },
     async unext(movie) {
       await sleep(waitMs);
-      return checkUnext(await titlesForSearch(movie), fetchImpl);
+      return checkUnext(await titlesForSearch(movie), fetchImpl, {
+        year: movie.year,
+      });
     },
     async discas(movie) {
       await sleep(waitMs);

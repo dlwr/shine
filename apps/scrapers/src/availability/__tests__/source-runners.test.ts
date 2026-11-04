@@ -21,7 +21,7 @@ const buildAlternativeTitleFetchStub = () =>
     return Response.json({
       data: {
         webfront_videoFreewordSearch: {
-          titles: [{titleName: 'エレクション 黒社会'}],
+          titles: [{id: 'SID0000001', titleName: 'エレクション 黒社会'}],
         },
       },
     });
