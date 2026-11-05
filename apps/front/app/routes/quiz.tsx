@@ -155,7 +155,7 @@ export default function QuizPage({loaderData}: Route.ComponentProps) {
 
         <div className="flex items-baseline justify-between gap-3 mb-2">
           <h1 className="font-display font-bold text-2xl md:text-3xl">
-            TODAY&apos;S QUIZ
+            今日の映画クイズ
           </h1>
           <span className="font-label text-xs text-ink-muted">
             {puzzle.date}

@@ -121,7 +121,7 @@ export default function WatchedIndexPage({loaderData}: Route.ComponentProps) {
         <Masthead locale={locale} />
 
         <h1 className="font-display font-bold text-2xl md:text-3xl mb-2">
-          WATCHED
+          観た映画チェック
         </h1>
         <p className="font-label text-xs text-ink-muted mb-6">
           映画賞の歴代受賞作、何本観た？

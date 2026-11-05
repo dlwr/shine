@@ -7,8 +7,8 @@ export function PeopleStrip({people}: {people: ProminentPerson[]}) {
   }
 
   return (
-    <section aria-label="People" className="mb-8">
-      <h3 className="font-display text-xl font-bold">PEOPLE</h3>
+    <section aria-label="人物" className="mb-8">
+      <h3 className="font-display text-xl font-bold">人物</h3>
       <ul className="list-none border-b-2 border-ink p-0">
         {people.map(person => (
           <li

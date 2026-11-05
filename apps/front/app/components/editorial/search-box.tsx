@@ -16,7 +16,7 @@ type SuggestionItem = {
   href: string;
   primary: string;
   secondary?: string;
-  group: 'PEOPLE' | 'MOVIES';
+  group: '人物' | '映画';
 };
 
 const EMPTY: Suggestions = {movies: [], people: []};
@@ -37,13 +37,13 @@ function toItems({people, movies}: Suggestions): SuggestionItem[] {
       href: `/people/${person.uid}`,
       primary: person.name,
       secondary: personSecondary(person),
-      group: 'PEOPLE' as const,
+      group: '人物' as const,
     })),
     ...movies.map(movie => ({
       href: `/movies/${movie.uid}`,
       primary: movie.title,
       secondary: movie.year ? String(movie.year) : undefined,
-      group: 'MOVIES' as const,
+      group: '映画' as const,
     })),
   ];
 }

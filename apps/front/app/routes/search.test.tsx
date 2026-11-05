@@ -373,7 +373,7 @@ describe('Search Component', () => {
         />,
       );
 
-      const people = screen.getByRole('region', {name: 'People'});
+      const people = screen.getByRole('region', {name: '人物'});
       expect(
         within(people).getByRole('link', {name: '役所広司'}),
       ).toHaveAttribute('href', '/people/person-yakusho');
@@ -383,7 +383,7 @@ describe('Search Component', () => {
       ).toBeTruthy();
     });
 
-    it('一致した人物が居なければ PEOPLE を出さない', () => {
+    it('一致した人物が居なければ人物の欄を出さない', () => {
       const loaderData = cast<LoaderData>({
         searchQuery: 'test',
         searchResults: mockSearchResults,
@@ -400,7 +400,7 @@ describe('Search Component', () => {
       );
 
       expect(
-        screen.queryByRole('region', {name: 'People'}),
+        screen.queryByRole('region', {name: '人物'}),
       ).not.toBeInTheDocument();
     });
 
