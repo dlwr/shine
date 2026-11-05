@@ -24,7 +24,7 @@ function AwardRow({award}: {award: AwardSummaryData}) {
       </span>
       <span className="font-label text-xs text-ink-muted shrink-0">
         {award.grouping === 'person'
-          ? `${award.personCount} PEOPLE`
+          ? `${award.personCount} 人`
           : `${award.movieCount} 本`}
       </span>
     </a>

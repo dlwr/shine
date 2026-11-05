@@ -91,7 +91,7 @@ export default function WatchedListPage({loaderData}: Route.ComponentProps) {
 
         <nav className="font-label text-[10px] text-ink-muted mb-4">
           <a href="/watched" className="text-ink-muted">
-            WATCHED
+            観た映画チェック
           </a>
         </nav>
 

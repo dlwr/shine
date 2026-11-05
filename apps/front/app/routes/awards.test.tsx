@@ -167,7 +167,7 @@ describe('Awards index page', () => {
 
       const link = screen.getByRole('link', {name: /最優秀監督賞/});
       expect(link).toHaveAttribute('href', '/awards/japan-academy-director');
-      expect(link).toHaveTextContent('108 PEOPLE');
+      expect(link).toHaveTextContent('108 人');
     });
 
     it('個人賞は別の見出しの下に並べる', () => {
