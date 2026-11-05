@@ -4,6 +4,7 @@ const ROBOTS_TXT = `User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /search
+Disallow: /connect
 Disallow: /__manifest
 
 Sitemap: ${SITE_URL}/sitemap.xml
