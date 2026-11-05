@@ -28,6 +28,10 @@ describe('robots.txt', () => {
     expect(await robotsBody()).toContain('Disallow: /search');
   });
 
+  it('映画の距離のページをクロール対象から除外する', async () => {
+    expect(await robotsBody()).toContain('Disallow: /connect');
+  });
+
   it('React Routerのマニフェストをクロール対象から除外する', async () => {
     expect(await robotsBody()).toContain('Disallow: /__manifest');
   });
