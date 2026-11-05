@@ -95,7 +95,7 @@
 - 「2手先の映画」は 12 件のうち異なる経路が 5〜11 で、同じ経路の文が並んでいた。#805 で経路が既出の行き先を後ろに回した（鍵の版は上げず、期限切れの作り直しで入れ替わる）
 - **賞ページはサイト内から開かれていなかった**（10/5〜11/4 の 30 日。30 日のうち 8 日が空応答）: 賞ページは PV 33 がすべて外からの着地で内部遷移 0。映画は PV 89（内部 62）、人物 54（内部 13）、`/quiz` 42（内部 30）。直近 7 日で外から着いた賞ページ 12 件（日本アカデミー賞の作品賞 8・金熊賞 2 ほか）のうち先へ進んだのは 1 セッション。作品賞の「まず観るなら」は直下の一覧の 2 行目と同じ映画だった
 - 2026-11-05 の北極星（10/29〜11/05 の 7 日）は 23（PV 49・訪問 26）。D1 は 24h 20M 行・月累計 64M
-- **1 文字の検索は LIKE で `translations` の題名 2.8 万行・`people` 6.5 万行・人名 2.7 万行を全部読む**（1 回 約 12 万行。11/5 の 24h は 69 回・8.4M 行で上位 1 位 41%）。`/search`・`/connect` は直近 6 日の RUM で人の表示 0 なので、JS を動かさないクローラ（robots の Disallow を無視）の分。FTS の前方一致 `"X"*` に寄せると末尾の 1 文字だけで当たる分が落ちる（「海」76→64、「愛」226→210、「x」271→221）。欠けなく直すには FTS の terms に末尾の 1 文字を足して張り直す一括の書き換えが要る。月で込みの約 1% なので保留
+- **1 文字の検索は LIKE で `translations` の題名 2.8 万行・`people` 6.5 万行・人名 2.7 万行を全部読む**（1 回 約 12 万行。11/5 の 24h は 69 回・8.4M 行で上位 1 位 41%）。Workers Logs で見ると全部 `limit=5`、つまり `/connect?fq=…` の SSR が引いた分で、UA の分かる `/connect` の 8 割が ClaudeBot（`/connect` は robots で許可していた）。#823 で robots に `Disallow: /connect` を足した。FTS の前方一致 `"X"*` に寄せると末尾の 1 文字だけで当たる分が落ちる（「海」76→64、「愛」226→210、「x」271→221）。欠けなく直すには FTS の terms に末尾の 1 文字を足して張り直す一括の書き換えが要る。月で込みの約 1% なので保留。12 月に survey の D1 上位から消えたか見る
 - 英大文字の見出し・ラベル（`/quiz` の TODAY'S QUIZ・`/watched` の WATCHED・検索の PEOPLE・賞一覧の N PEOPLE）は #821 で日本語にした。375px の本番スクショは `/`・`/quiz`・`/watched`・`/years`・`/awards`・`/people`・`/years/2010` ではみ出し 0（11/5）
 - 2026-11-04 の北極星（10/28〜11/04 の 7 日）は 24（PV 53・訪問 29）。D1 は 24h 11M 行・月累計 43M で、上位 1 位は 2手先の credits 読み（54%、1 回 約 1.2 万行×522 回）
 - 2026-11-03 の北極星（10/27〜11/03 の 7 日）は 29（PV 65・訪問 36）。D1 は 24h 14M 行・月累計 31M（込みの 0.1% 未満）で、上位 1 位は 2手先の credits 読み（39%）
@@ -144,7 +144,7 @@
 - VRT の映画ページのはみ出し検査は `networkidle` 待ちで揺れることがある（流し直しで通る）
 - VRT の CJK フォントは #750 から actions/cache の .deb を dpkg で入れる（apt の取得が runner によって細って止まっていた）。フォントの版を上げるときは cache の鍵 `fonts-noto-cjk-noble-v1` を上げて基準を撮り直す
 - **PR の実行で保存した actions/cache は他の PR から読めない**（#750 のフォントの cache が毎回外れていた）。共有したい cache は main の push で作る。#761 から VRT は main の push でも走る
-- クラウドのセッションの token は Workers の observability（ログ）・zone の HTTP 分析にも権限が無い（403・zone 0 件）。survey の D1 上位の文の全文は `fetchTopD1Queries`（`d1-usage.ts`）を scratchpad の `.mts` から呼ぶと取れる
+- 11/5 からクラウドのセッションの token で Workers Logs（`POST accounts/<id>/workers/observability/telemetry/query`、`$workers.event.request.url` で絞る。UA は front の `shine-front` の event の headers）と zone の分析が読める。API の `/movies/search` の event は `search.q`・`limit` を持ち、`limit=5` は `/connect`、20 は `/search`。survey の D1 上位の文の全文は `fetchTopD1Queries`（`d1-usage.ts`）を scratchpad の `.mts` から呼ぶと取れる
 - **クラウドのセッションの `CLOUDFLARE_API_TOKEN` は D1 に権限が無く、`wrangler d1 execute` で `rows_read` を測れない**（RUM の GraphQL は通る）。実行計画は `pnpm scrapers sql "EXPLAIN QUERY PLAN ..."` で proxy 越しに見られる。クラウドの新しい clone では `pnpm check` の前に `pnpm typegen` が要る。`gh api` でブランチは消せない（proxy が 403）
 - スクショを撮る node のスクリプトはリポジトリの外（scratchpad）で動かす。中で `require('playwright')` するとプロジェクトの版を読んでブラウザが無いと落ちる。本番の映画ページは Turnstile の通信が止まるので `networkidle` でなく `load` で待つ。手元の front を本番 API に向けるには `apps/front/.dev.vars` に `PUBLIC_API_URL=https://shine-api.yuta25.workers.dev`
 - 本番のスクショで `loading="lazy"` のポスター・顔写真は fullPage でも空枠に写る（崩れと誤認しない。`naturalWidth` で確かめる）。クラウドのセッションでも `vrt:pull` は動く
@@ -162,5 +162,5 @@
 - 12 月に、映画ページの受賞歴の部門名（#811）から賞ページへの内部遷移（入れる前の 30 日は 0）と、作品賞の「まず観るなら」の 3 本（#810）からの遷移を測る
 - 12 月に、賞ページの「次に見る賞」（#795 で国内寄せ）・`/years` への導線（#770）と人物ページの年表（#771）からの内部遷移を測る
 - 12 月に、10 月に足した切り口（`/tonight`・`/double-feature`・`/connect`・`/shiritori`・「どっちが先」）の訪問を測り、0 のものは取り下げる
-- D1 の 1 文字検索（上の前提）が月の込みの数 % に膨らんだら、FTS の terms に末尾の 1 文字を足すマイグレーションで LIKE をやめる
+- 12 月に survey の D1 上位から 1 文字検索と `/connect` の文が消えたかを見る。robots で引かなければ、`/connect` の候補リンクに `rel="nofollow"` を付ける。それでも 1 文字検索が月の込みの数 % に膨らんだら、FTS の terms に末尾の 1 文字を足すマイグレーションで LIKE をやめる
 - 日付待ち: 11 月中旬に Search Console の表示回数を再確認、2026-12 末に北極星の判断
