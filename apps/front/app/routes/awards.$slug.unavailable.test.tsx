@@ -1,7 +1,11 @@
 import '@testing-library/jest-dom';
 import {render, screen} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import AwardUnavailablePage, {loader, meta} from './awards.$slug.unavailable';
+import AwardUnavailablePage, {
+  loader,
+  meta,
+  unavailableRowYears,
+} from './awards.$slug.unavailable';
 import type {Route} from './+types/awards.$slug.unavailable';
 import {createMockContext} from '@/lib/test-context';
 
@@ -209,7 +213,15 @@ describe('Award unavailable page', () => {
     it('授賞式の年を出す', () => {
       renderPage(mockList);
 
-      expect(screen.getByText('1981 / 1980・1980年')).toBeInTheDocument();
+      expect(screen.getByText('1981 / 1980年の回')).toBeInTheDocument();
+      expect(screen.getByText('2023年の回')).toBeInTheDocument();
+    });
+
+    it('映画の年が回の年と違うときだけ映画の年を添える', () => {
+      expect(
+        unavailableRowYears({...mockList.movies[0], ceremonyYears: [2024]}),
+      ).toBe('2024年の回・2023年の映画');
+      expect(unavailableRowYears(mockList.movies[0])).toBe('2023年の回');
     });
 
     it('受賞作に受賞の印を付ける', () => {
