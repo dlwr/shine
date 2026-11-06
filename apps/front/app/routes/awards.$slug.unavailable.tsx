@@ -73,6 +73,15 @@ export async function loader({context, request, params}: Route.LoaderArgs) {
   return {list, locale};
 }
 
+export function unavailableRowYears(movie: AwardUnavailableMovieData): string {
+  const ceremony = `${movie.ceremonyYears.join(' / ')}年の回`;
+  if (!movie.movieYear || movie.ceremonyYears.includes(movie.movieYear)) {
+    return ceremony;
+  }
+
+  return `${ceremony}・${movie.movieYear}年の映画`;
+}
+
 function UnavailableRow({movie}: {movie: AwardUnavailableMovieData}) {
   const title = movie.title ?? 'Unknown Title';
 
@@ -91,8 +100,7 @@ function UnavailableRow({movie}: {movie: AwardUnavailableMovieData}) {
           {title}
         </span>
         <span className="block font-label text-[10px] text-ink-muted mt-1">
-          {movie.ceremonyYears.join(' / ')}
-          {movie.movieYear ? `・${movie.movieYear}年` : ''}
+          {unavailableRowYears(movie)}
         </span>
       </span>
       {movie.isWinner && (
