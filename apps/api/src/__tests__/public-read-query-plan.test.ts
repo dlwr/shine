@@ -510,6 +510,30 @@ describe('公開エンドポイントの実行計画', {timeout: 30_000}, () => 
     }
   });
 
+  it('ノミネーションからの抽選は uid の索引を種の位置から引き、全件を数えない', async () => {
+    const plans = await plansOf({
+      name: '二本立ての抽選',
+      run: environment =>
+        new DoubleFeatureService(environment).getDoubleFeature('2026-01-01'),
+    });
+    const picks = [...plans].filter(([statement]) =>
+      statement.includes('from "nominations" inner join "movies"'),
+    );
+    expect(picks.length).toBeGreaterThan(0);
+    for (const [statement, plan] of picks) {
+      expect(statement).not.toContain('count(');
+      const details = plan.map(row => row.detail);
+      expect(details, statement).not.toContainEqual(
+        expect.stringContaining('TEMP B-TREE'),
+      );
+      expect(details, statement).toContainEqual(
+        expect.stringMatching(
+          / nominations USING INDEX sqlite_autoindex_nominations_1/,
+        ),
+      );
+    }
+  });
+
   it.each(exercises.filter(exercise => exercise.indexOnly))(
     '$name は索引だけで引く',
     async exercise => {

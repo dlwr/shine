@@ -69,12 +69,14 @@ export async function seedLayoutStressData(database: Database) {
   ]);
   await database.insert(nominations).values([
     {
+      uid: '58000000-0000-4000-8000-000000000001',
       movieUid: longTitleMovieUid,
       ceremonyUid: 'ceremony-2001',
       categoryUid: 'cat-picture',
       isWinner: 0,
     },
     {
+      uid: 'd8000000-0000-4000-8000-000000000001',
       movieUid: longTitleMovieUid,
       ceremonyUid: 'ceremony-2001',
       categoryUid: 'cat-director',
