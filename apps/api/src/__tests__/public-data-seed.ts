@@ -251,18 +251,21 @@ export async function seedPublicData(database: Database): Promise<void> {
   ]);
   await database.insert(nominations).values([
     {
+      uid: '0ba2e8ba-0000-4000-8000-000000000000',
       movieUid: 'movie-beauty',
       ceremonyUid: 'ceremony-2000',
       categoryUid: 'cat-picture',
       isWinner: 1,
     },
     {
+      uid: '22e8ba2e-0000-4000-8000-000000000000',
       movieUid: 'movie-green',
       ceremonyUid: 'ceremony-2000',
       categoryUid: 'cat-picture',
       isWinner: 0,
     },
     {
+      uid: '3a2e8ba2-0000-4000-8000-000000000000',
       movieUid: 'movie-beauty',
       ceremonyUid: 'ceremony-2000',
       categoryUid: 'cat-director',
@@ -270,6 +273,7 @@ export async function seedPublicData(database: Database): Promise<void> {
       isWinner: 1,
     },
     {
+      uid: '51745d17-0000-4000-8000-000000000000',
       movieUid: 'movie-beauty',
       ceremonyUid: 'ceremony-2000',
       categoryUid: 'cat-actor',
@@ -277,6 +281,7 @@ export async function seedPublicData(database: Database): Promise<void> {
       isWinner: 1,
     },
     {
+      uid: '68ba2e8b-0000-4000-8000-000000000000',
       movieUid: 'movie-green',
       ceremonyUid: 'ceremony-2000',
       categoryUid: 'cat-actor',
@@ -284,12 +289,14 @@ export async function seedPublicData(database: Database): Promise<void> {
       isWinner: 0,
     },
     {
+      uid: '80000000-0000-4000-8000-000000000000',
       movieUid: 'movie-gladiator',
       ceremonyUid: 'ceremony-2001',
       categoryUid: 'cat-picture',
       isWinner: 1,
     },
     {
+      uid: '9745d174-0000-4000-8000-000000000000',
       movieUid: 'movie-gladiator',
       ceremonyUid: 'ceremony-2001',
       categoryUid: 'cat-actor',
@@ -297,18 +304,21 @@ export async function seedPublicData(database: Database): Promise<void> {
       isWinner: 0,
     },
     {
+      uid: 'ae8ba2e8-0000-4000-8000-000000000000',
       movieUid: 'movie-beauty',
       ceremonyUid: 'ceremony-globe-2000',
       categoryUid: 'cat-globe-drama',
       isWinner: 1,
     },
     {
+      uid: 'c5d1745d-0000-4000-8000-000000000000',
       movieUid: 'movie-green',
       ceremonyUid: 'ceremony-globe-2000',
       categoryUid: 'cat-globe-drama',
       isWinner: 0,
     },
     {
+      uid: 'dd1745d1-0000-4000-8000-000000000000',
       movieUid: 'movie-beauty',
       ceremonyUid: 'ceremony-globe-2000',
       categoryUid: 'cat-globe-director',
@@ -316,6 +326,7 @@ export async function seedPublicData(database: Database): Promise<void> {
       isWinner: 1,
     },
     {
+      uid: 'f45d1745-0000-4000-8000-000000000000',
       movieUid: 'movie-green',
       ceremonyUid: 'ceremony-globe-2000',
       categoryUid: 'cat-globe-director',

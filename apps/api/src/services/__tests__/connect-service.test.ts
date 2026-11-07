@@ -302,7 +302,10 @@ async function nominate(database: TestDatabase, movieUids: string[]) {
     .insert(awardCeremonies)
     .values({uid: 'ceremony', organizationUid: 'org', year: 2000});
   await database.insert(nominations).values(
-    movieUids.map(movieUid => ({
+    movieUids.map((movieUid, index) => ({
+      uid: `${Math.floor(((index + 0.5) * 0x1_00_00_00_00) / movieUids.length)
+        .toString(16)
+        .padStart(8, '0')}-0000-4000-8000-000000000000`,
       movieUid,
       ceremonyUid: 'ceremony',
       categoryUid: 'cat',
