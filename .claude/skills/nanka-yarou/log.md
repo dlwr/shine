@@ -1,6 +1,6 @@
 # 「なんかやろう」のログ
 
-83 回目（2026-11-07 の自走）まで。回ごとの経過は書かない。回が終わったら下の 4 節を更新するだけにする。200 行以内に保つ。
+84 回目（2026-11-08 の自走）まで。回ごとの経過は書かない。回が終わったら下の 4 節を更新するだけにする。200 行以内に保つ。
 
 ## もう出さない候補（理由つき）
 
@@ -96,6 +96,9 @@
 - **賞ページはサイト内から開かれていなかった**（10/5〜11/4 の 30 日。30 日のうち 8 日が空応答）: 賞ページは PV 33 がすべて外からの着地で内部遷移 0。映画は PV 89（内部 62）、人物 54（内部 13）、`/quiz` 42（内部 30）。直近 7 日で外から着いた賞ページ 12 件（日本アカデミー賞の作品賞 8・金熊賞 2 ほか）のうち先へ進んだのは 1 セッション。作品賞の「まず観るなら」は直下の一覧の 2 行目と同じ映画だった
 - 2026-11-05 の北極星（10/29〜11/05 の 7 日）は 23（PV 49・訪問 26）。D1 は 24h 20M 行・月累計 64M
 - 2026-11-06 の北極星（10/30〜11/06 の 7 日）は 25（PV 47・訪問 22）。D1 は 24h 11M 行・月累計 75M。24h 上位は 1 文字検索の COUNT（18 回×12 万行、#823 の翌日なのでまだ判断しない）・「よく組む人」2 文（計 約 1.9 万回×約 170 行）・日替わり選出の `pickNominatedMovieUid` の `offset`（26 回×5.8 万行）
+- 2026-11-08 の北極星（11/01〜11/08 の 7 日）は 21（PV 40・訪問 19）。D1 は 24h 13M 行・月累計 106M。24h 上位 1 位は関連映画の候補（5,139 回×813 行、33%）で、#826 の抽選の文は上位 5 から消えた
+- **zone の分析の 504 はほぼ全部 Cloudflare の Early Hints の内部の要求**（UA が `nginx-ssl early hints`・`fl2 early hints`、originResponseStatus 0、国は UZ・CN・US）。11/7 07〜13 UTC に UZ・CN のボットの山で 1 時間 5 千件に跳ねたが、Workers の分析では shine-front・shine-api ともエラー 0。日本からの UA のある 504 は無い。`/css2` の PUT 413 も OG の Google Fonts の取得で利用者向けではない
+- **OG 画像（shine-og）は CDN に載らず毎回描画していた**（11/7 の 24h: `/og/*` 7,093 件すべて cacheStatus `none`、person 6,599・movie 473。CPU 中央値 253ms で API・TMDb・Google Fonts も毎回引く。引くのは Chrome/104 を名乗る Mac・Amazonbot・PerplexityBot・AhrefsBot）。#828 で front の worker が Cache API（`caches.open('og')`、colo ごと）に置くようにした。本番で同じ人物の画像を続けて引くと 1.8 秒 → 0.3〜0.6 秒
 - 2026-11-07 の北極星（10/31〜11/07 の 7 日）は 26（PV 48・訪問 22）。D1 は 24h 17M 行・月累計 93M。24h 上位 1〜3 位はノミネーションからの抽選（`pickNominatedMovieUid` の offset 92 回×5.8 万行と count 2 文 計 102 回×3.9 万行、全体の 56%）で、全部 00:00 UTC の 1 時間（daily の日付は UTC で替わる）。`/connect/pick`（最大 10 回試す）と `/double-feature`（最大 5 回）の作り直しが重なった分。#826 で uid（UUID v4）の索引を種の位置から 1 件引く形にした。1 文字検索の LIKE は 24h の上位 200 文から消えた（#823 の robots が効いた）
 - RUM を 1 日ずつ 30 日（10/7〜11/6）取ると 6 日が空応答で、値は大半が 10 の倍数のサンプル。ページ別の 30 日訪問はこの粒度では取り下げの根拠にならない
 - 375px の本番で人物・賞（金熊賞・日本アカデミー主演男優賞）・検索・`/tonight`・`/double-feature`・`/shiritori`・`/connect`・`/on-this-day`・`/monthly`・映画ページのはみ出しは 0（11/6）。`/awards/:slug/unavailable` は 1 行ずつ縦に積むので金熊賞で 1,062 本・77,385px（足して 9 日なので畳むかは 12 月に訪問を見てから）。行の年が「2026・2026年」だったのは #824 で「2026年の回」にした
@@ -149,6 +152,7 @@
 - VRT の映画ページのはみ出し検査は `networkidle` 待ちで揺れることがある（流し直しで通る）
 - VRT の CJK フォントは #750 から actions/cache の .deb を dpkg で入れる（apt の取得が runner によって細って止まっていた）。フォントの版を上げるときは cache の鍵 `fonts-noto-cjk-noble-v1` を上げて基準を撮り直す
 - **PR の実行で保存した actions/cache は他の PR から読めない**（#750 のフォントの cache が毎回外れていた）。共有したい cache は main の push で作る。#761 から VRT は main の push でも走る
+- zone の GraphQL（`httpRequestsAdaptiveGroups`）は `clientRequestQuery`・`clientASNDescription` が権限外。Workers Logs も URL のクエリと `/people/<id>` の id を `REDACTED` にするので、OG 画像の id ごとの重複は数えられない（人物ページのパスの重複で代わりに見た）。front の tsconfig では `caches.default` の型が無いので `caches.open(name)` を使う
 - 11/5 からクラウドのセッションの token で Workers Logs（`POST accounts/<id>/workers/observability/telemetry/query`、`$workers.event.request.url` で絞る。UA は front の `shine-front` の event の headers）と zone の分析が読める。API の `/movies/search` の event は `search.q`・`limit` を持ち、`limit=5` は `/connect`、20 は `/search`。survey の D1 上位の文の全文は `fetchTopD1Queries`（`d1-usage.ts`）を scratchpad の `.mts` から呼ぶと取れる
 - **クラウドのセッションの `CLOUDFLARE_API_TOKEN` は D1 に権限が無く、`wrangler d1 execute` で `rows_read` を測れない**（RUM の GraphQL は通る）。実行計画は `pnpm scrapers sql "EXPLAIN QUERY PLAN ..."` で proxy 越しに見られる。クラウドの新しい clone では `pnpm check` の前に `pnpm typegen` が要る。`gh api` でブランチは消せない（proxy が 403）
 - スクショを撮る node のスクリプトはリポジトリの外（scratchpad）で動かす。中で `require('playwright')` するとプロジェクトの版を読んでブラウザが無いと落ちる。本番の映画ページは Turnstile の通信が止まるので `networkidle` でなく `load` で待つ。手元の front を本番 API に向けるには `apps/front/.dev.vars` に `PUBLIC_API_URL=https://shine-api.yuta25.workers.dev`
@@ -171,4 +175,5 @@
 - 12 月に、10 月に足した切り口（`/tonight`・`/double-feature`・`/connect`・`/shiritori`・「どっちが先」）の訪問を測り、0 のものは取り下げる
 - 12 月に survey の D1 上位から 1 文字検索と `/connect` の文が消えたかを見る。robots で引かなければ、`/connect` の候補リンクに `rel="nofollow"` を付ける。それでも 1 文字検索が月の込みの数 % に膨らんだら、FTS の terms に末尾の 1 文字を足すマイグレーションで LIKE をやめる
 - 12 月に survey の D1 上位からノミネーションの抽選の文（count と offset）が消えたかを見る（#826）
+- 11 月中旬に、#828 の後の shine-og の 1 日の呼び出し回数（前は 24h 約 7,100 回）を Workers の分析（`workersInvocationsAdaptive` の scriptName）で見る。colo ごとのキャッシュで減らなければ、R2 か KV に PNG を置く形を考える
 - 日付待ち: 11 月中旬に Search Console の表示回数を再確認、2026-12 末に北極星の判断
