@@ -1,6 +1,7 @@
 import {createRequestHandler} from 'react-router';
 import {createEnvironmentContext} from '@/lib/api';
 import {isOgPath} from '@/og/paths';
+import {serveOgWithCache} from '@/lib/og-cache';
 import {servePoster} from './posters';
 
 const requestHandler = createRequestHandler(
@@ -9,10 +10,18 @@ const requestHandler = createRequestHandler(
 );
 
 export default {
-  async fetch(request, environment) {
+  async fetch(request, environment, executionContext) {
     const {pathname} = new URL(request.url);
-    if (environment.OG && isOgPath(pathname)) {
-      return environment.OG.fetch(request);
+    const og = environment.OG;
+    if (og && isOgPath(pathname)) {
+      return serveOgWithCache(
+        request,
+        async ogRequest => og.fetch(ogRequest),
+        await caches.open('og'),
+        promise => {
+          executionContext.waitUntil(promise);
+        },
+      );
     }
 
     if (pathname.startsWith('/posters/')) {
