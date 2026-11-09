@@ -10,13 +10,20 @@ const fixtureJson = fs.readFileSync(
   'utf8',
 );
 
-function fetchWithProductionYear(productionYear: string | null) {
+function fetchWithProductionYear(
+  productionYear: string | null,
+  mainGenreId = 'YOUGA',
+) {
   return vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(
     async url =>
       url.includes('cosmo_getVideoTitle')
         ? Response.json({
             data: {
-              webfront_title_stage: {id: 'SID0002596', productionYear},
+              webfront_title_stage: {
+                id: 'SID0002596',
+                productionYear,
+                mainGenreId,
+              },
             },
           })
         : new Response(fixtureJson, {
@@ -167,6 +174,16 @@ describe('checkUnext', () => {
       );
 
       expect(result.status).toBe('ok');
+    });
+
+    it('音楽ジャンルの同名作品は映画として数えない', async () => {
+      const result = await checkUnext(
+        ['ゴッドファーザー'],
+        fetchWithProductionYear(null, 'MUSIC_IDOL'),
+        {year: 1972},
+      );
+
+      expect(result.status).toBe('ng');
     });
 
     it('returns error when the title lookup fails', async () => {

@@ -36,7 +36,10 @@ type UnextSearchResponse = {
 type UnextTitleResponse = {
   errors?: Array<{message?: string}>;
   data?: {
-    webfront_title_stage?: {productionYear?: string | null} | null;
+    webfront_title_stage?: {
+      productionYear?: string | null;
+      mainGenreId?: string | null;
+    } | null;
   };
 };
 
@@ -60,10 +63,10 @@ function parseUnextTitleEntries(response: unknown): UnextTitle[] {
     .map(title => ({id: title.id ?? '', titleName: title.titleName ?? ''}));
 }
 
-async function fetchProductionYear(
+async function fetchTitleStage(
   titleId: string,
   fetchImpl: FetchLike,
-): Promise<number | undefined> {
+): Promise<{productionYear: number | undefined; isMusic: boolean}> {
   const parameters = new URLSearchParams({
     operationName: 'cosmo_getVideoTitle',
     variables: JSON.stringify({code: titleId}),
@@ -84,9 +87,15 @@ async function fetchProductionYear(
     throw new Error(`HTTP ${response.status}`);
   }
 
-  const productionYear = body.data?.webfront_title_stage?.productionYear;
-  const year = Math.trunc(Number(productionYear));
-  return productionYear && Number.isFinite(year) && year > 0 ? year : undefined;
+  const stage = body.data?.webfront_title_stage;
+  const year = Math.trunc(Number(stage?.productionYear));
+  return {
+    productionYear:
+      stage?.productionYear && Number.isFinite(year) && year > 0
+        ? year
+        : undefined,
+    isMusic: stage?.mainGenreId === 'MUSIC_IDOL',
+  };
 }
 
 async function verifyYear(
@@ -96,10 +105,14 @@ async function verifyYear(
 ): Promise<SourceCheckResult> {
   const mismatches: string[] = [];
   for (const candidate of candidates.slice(0, MAX_DETAIL_LOOKUPS)) {
-    const productionYear = await fetchProductionYear(candidate.id, fetchImpl);
+    const {productionYear, isMusic} = await fetchTitleStage(
+      candidate.id,
+      fetchImpl,
+    );
     if (
-      productionYear === undefined ||
-      Math.abs(productionYear - year) <= YEAR_TOLERANCE
+      !isMusic &&
+      (productionYear === undefined ||
+        Math.abs(productionYear - year) <= YEAR_TOLERANCE)
     ) {
       return {
         source: 'unext',
