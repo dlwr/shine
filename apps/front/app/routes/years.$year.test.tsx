@@ -255,11 +255,11 @@ describe('Year page', () => {
         />,
       );
 
-      expect(screen.getByRole('link', {name: '← 1996'})).toHaveAttribute(
+      expect(screen.getByRole('link', {name: '前の年 1996'})).toHaveAttribute(
         'href',
         '/years/1996',
       );
-      expect(screen.queryByText(/1998 →/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/次の年 1998/)).not.toBeInTheDocument();
     });
 
     it('年一覧へのリンクを置く', () => {
@@ -271,7 +271,7 @@ describe('Year page', () => {
         />,
       );
 
-      expect(screen.getByRole('link', {name: 'ALL YEARS'})).toHaveAttribute(
+      expect(screen.getByRole('link', {name: '年の一覧'})).toHaveAttribute(
         'href',
         '/years',
       );

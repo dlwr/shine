@@ -139,7 +139,7 @@ export default function AwardYearPage({loaderData}: Route.ComponentProps) {
           <a
             href={`/awards/${award.slug}`}
             className="font-label text-[10px] text-ink-muted no-underline">
-            ALL YEARS
+            年の一覧
           </a>
           <YearNavLink
             href={`/awards/${award.slug}/${award.nextYear}`}
