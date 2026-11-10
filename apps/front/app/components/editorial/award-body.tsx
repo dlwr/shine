@@ -96,7 +96,7 @@ function Pagination({
     <nav className="flex items-center justify-between gap-4 border-t-2 border-ink pt-4 mt-6 font-label text-xs">
       {pagination.page > 1 ? (
         <a href={pageHref(pagination.page - 1)} className="text-ink">
-          ← 前の{pagination.perPage}件
+          前の{pagination.perPage}件
         </a>
       ) : (
         <span />
@@ -106,7 +106,7 @@ function Pagination({
       </span>
       {pagination.page < pagination.totalPages ? (
         <a href={pageHref(pagination.page + 1)} className="text-ink">
-          次の{pagination.perPage}件 →
+          次の{pagination.perPage}件
         </a>
       ) : (
         <span />

@@ -124,9 +124,9 @@ export default function OnThisDayPage({loaderData}: Route.ComponentProps) {
         <div className="flex items-center justify-between border-t-2 border-ink mt-8 pt-3">
           <DayLink
             monthDay={previous}
-            label={`← ${formatMonthDay(previous)}`}
+            label={`前の日 ${formatMonthDay(previous)}`}
           />
-          <DayLink monthDay={next} label={`${formatMonthDay(next)} →`} />
+          <DayLink monthDay={next} label={`次の日 ${formatMonthDay(next)}`} />
         </div>
 
         <SiteFooter locale={locale} />

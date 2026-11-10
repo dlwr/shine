@@ -11,7 +11,7 @@ export function YearNavLink({
     return <span className="w-24" />;
   }
 
-  const text = label === 'PREV' ? `← ${year}` : `${year} →`;
+  const text = label === 'PREV' ? `前の年 ${year}` : `次の年 ${year}`;
   return (
     <a
       href={href}

@@ -328,11 +328,11 @@ describe('Award year page', () => {
         />,
       );
 
-      expect(screen.getByRole('link', {name: '← 2022'})).toHaveAttribute(
+      expect(screen.getByRole('link', {name: '前の年 2022'})).toHaveAttribute(
         'href',
         '/awards/palme-dor/2022',
       );
-      expect(screen.queryByText(/2024 →/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/次の年 2024/)).not.toBeInTheDocument();
     });
 
     it('次に見る賞を出す', () => {
