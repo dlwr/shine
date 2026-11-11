@@ -155,7 +155,7 @@ export function QuizOrder({
           )}
           <a
             href={`/quiz?d=${previousDay(order.date)}`}
-            className="font-label text-xs font-bold bg-brand text-brand-on px-3 py-1.5 border border-ink">
+            className="font-label text-xs font-bold bg-ink text-paper px-3 py-1.5 border border-ink">
             もう1問（前の日の問題）
           </a>
         </div>

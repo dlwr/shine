@@ -1,7 +1,7 @@
 import type {WatchedFilm, WatchedStats} from '@/lib/watched';
 
 const PRIMARY_BUTTON =
-  'font-label text-xs font-bold bg-brand text-brand-on px-3 py-1.5 border border-ink';
+  'font-label text-xs font-bold bg-ink text-paper px-3 py-1.5 border border-ink';
 const SECONDARY_BUTTON =
   'font-label text-xs font-bold px-3 py-1.5 border border-ink text-ink no-underline';
 
@@ -19,7 +19,7 @@ function WatchedGrid({
           key={film.uid}
           title={`${film.year} ${film.title}`}
           className={`block w-3 h-3 border border-ink ${
-            watched.has(film.uid) ? 'bg-brand' : 'bg-surface'
+            watched.has(film.uid) ? 'bg-ink' : 'bg-surface'
           }`}
         />
       ))}
@@ -76,7 +76,7 @@ export function WatchedScore({
         aria-valuemin={0}
         aria-valuemax={stats.total}
         aria-valuenow={stats.count}>
-        <div className="h-full bg-brand" style={{width: `${stats.percent}%`}} />
+        <div className="h-full bg-ink" style={{width: `${stats.percent}%`}} />
       </div>
       <WatchedGrid films={films} watched={displayed} />
       <div className="flex flex-wrap gap-2 mt-4">

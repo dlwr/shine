@@ -63,7 +63,7 @@ export function QuizResult({
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <a
             href={`/movies/${game.answer.uid}`}
-            className="font-label text-xs font-bold bg-brand text-brand-on px-3 py-1.5 border border-ink">
+            className="font-label text-xs font-bold bg-ink text-paper px-3 py-1.5 border border-ink">
             この映画のページへ
           </a>
           <AvailabilityStatusMark status={game.answer.availabilityStatus} />
@@ -73,7 +73,7 @@ export function QuizResult({
         <button
           type="button"
           onClick={copyShareText}
-          className="font-label text-xs font-bold bg-brand text-brand-on px-3 py-1.5 border border-ink">
+          className="font-label text-xs font-bold bg-ink text-paper px-3 py-1.5 border border-ink">
           {copied ? 'コピーしました' : '結果をコピー'}
         </button>
         <a
@@ -112,7 +112,7 @@ export function QuizResult({
               </span>
             </span>
             <span className="font-label text-[10px]">{TAGLINE}</span>
-            <span className="mt-1 self-start font-label text-xs font-bold bg-brand text-brand-on px-3 py-1 border border-ink">
+            <span className="mt-1 self-start font-label text-xs font-bold bg-ink text-paper px-3 py-1 border border-ink">
               映画ページへ
             </span>
           </span>

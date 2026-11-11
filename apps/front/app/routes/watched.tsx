@@ -95,7 +95,7 @@ function ListRow({
       </span>
       <span className="block h-1.5 border border-ink mt-2">
         <span
-          className="block h-full bg-brand"
+          className="block h-full bg-ink"
           style={{width: `${stats.percent}%`}}
         />
       </span>
@@ -152,7 +152,7 @@ export default function WatchedIndexPage({loaderData}: Route.ComponentProps) {
             aria-valuemax={overall.total}
             aria-valuenow={overall.count}>
             <div
-              className="h-full bg-brand"
+              className="h-full bg-ink"
               style={{width: `${overall.percent}%`}}
             />
           </div>
