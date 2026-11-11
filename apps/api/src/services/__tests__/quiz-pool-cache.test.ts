@@ -1,6 +1,9 @@
 import {type Environment} from '@shine/database';
 import {beforeEach, describe, expect, it} from 'vitest';
-import {STALE_RETENTION} from '../../utils/read-through-cache';
+import {
+  clearRevalidationHistory,
+  STALE_RETENTION,
+} from '../../utils/read-through-cache';
 import {QuizService} from '../quiz-service';
 import {createEnvironment} from './quiz-pool-fixture';
 
@@ -64,6 +67,7 @@ describe('出題プールのキャッシュ', () => {
   let store: Map<string, StoredEntry>;
 
   beforeEach(async () => {
+    clearRevalidationHistory();
     ({environment} = await createEnvironment(3));
     const created = createKv();
     environment.CACHE_KV = created.kv;

@@ -7,6 +7,29 @@ import {logErrorWithCause} from './log-error';
 
 export const STALE_RETENTION = 2_592_000;
 
+const KV_MINIMUM_CACHE_TTL = 60;
+
+const revalidationStartedAt = new Map<string, number>();
+
+export function clearRevalidationHistory(): void {
+  revalidationStartedAt.clear();
+}
+
+function canStartRevalidation(
+  key: string,
+  edgeTtl: number | undefined,
+): boolean {
+  const now = Date.now();
+  const startedAt = revalidationStartedAt.get(key);
+  const window = Math.max(edgeTtl ?? 0, KV_MINIMUM_CACHE_TTL) * 1000;
+  if (startedAt !== undefined && now - startedAt < window) {
+    return false;
+  }
+
+  revalidationStartedAt.set(key, now);
+  return true;
+}
+
 export type ReadThroughStatus = 'HIT' | 'STALE' | 'MISS';
 
 type ReadThroughOptions<T> = {
@@ -38,6 +61,7 @@ async function revalidate<T>(
       ? cache.delete(key)
       : cache.set(key, data, ttl, {staleRetention: STALE_RETENTION}));
   } catch (error) {
+    revalidationStartedAt.delete(key);
     logErrorWithCause(`Cache revalidation failed for ${key}:`, error);
   }
 }
@@ -52,7 +76,7 @@ export async function readThroughCache<T>(
 
   if (cached) {
     const isExpired = Date.now() - cached.cachedAt > ttl * 1000;
-    if (isExpired) {
+    if (isExpired && canStartRevalidation(key, edgeTtl)) {
       await writeCacheAfterResponse(context, revalidate(cache, options));
     }
 
