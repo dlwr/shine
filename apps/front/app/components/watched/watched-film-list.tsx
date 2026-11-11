@@ -23,7 +23,7 @@ function FilmRow({
           onChange={() => {
             onToggle(film.uid);
           }}
-          className="w-5 h-5 shrink-0 accent-brand"
+          className="w-5 h-5 shrink-0 accent-ink"
         />
         <PosterFrame
           posterUrl={film.posterUrl}
