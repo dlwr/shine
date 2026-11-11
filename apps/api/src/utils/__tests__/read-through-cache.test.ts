@@ -1,6 +1,10 @@
-import {describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {EdgeCache} from '../cache';
-import {readThroughCache, STALE_RETENTION} from '../read-through-cache';
+import {
+  clearRevalidationHistory,
+  readThroughCache,
+  STALE_RETENTION,
+} from '../read-through-cache';
 
 const TTL = 600;
 const KEY = 'years:list:v3';
@@ -56,6 +60,10 @@ function storedData(store: Map<string, StoredEntry>): unknown {
   const entry = store.get(KEY);
   return entry ? (JSON.parse(entry.value) as {data: unknown}).data : undefined;
 }
+
+beforeEach(() => {
+  clearRevalidationHistory();
+});
 
 describe('readThroughCache: キャッシュに無いとき', () => {
   it('読み込んだ値を返す', async () => {
@@ -360,5 +368,88 @@ describe('readThroughCache: 期限を過ぎた値があるとき', () => {
     await settle();
 
     expect(store.has(KEY)).toBe(false);
+  });
+});
+
+function createStaleColoKv() {
+  const stale = {
+    data: {years: [1999]},
+    cachedAt: Date.now() - (TTL + 1) * 1000,
+  };
+  const put = vi.fn(async () => {});
+  const kv = {
+    get: async () => stale,
+    put,
+    delete: async () => {},
+  } as unknown as KVNamespace;
+  return {kv, put};
+}
+
+async function readExpired(
+  kv: KVNamespace,
+  load: () => Promise<unknown>,
+  key = KEY,
+): Promise<void> {
+  const {context, settle} = createContext();
+  await readThroughCache(context, new EdgeCache(kv), {
+    key,
+    ttl: TTL,
+    edgeTtl: 600,
+    load,
+  });
+  await settle();
+}
+
+describe('readThroughCache: 期限を過ぎた値が colo に残っているとき', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('colo が古い値を持っている間は、作り直しを 1 回にする', async () => {
+    const {kv} = createStaleColoKv();
+    const load = vi.fn(async () => ({years: [2024]}));
+
+    await readExpired(kv, load);
+    await readExpired(kv, load);
+
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it('colo の保持が切れた後に古い値を読んだら、もう一度作り直す', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-11T00:00:00Z'));
+    const {kv} = createStaleColoKv();
+    const load = vi.fn(async () => ({years: [2024]}));
+
+    await readExpired(kv, load);
+    vi.setSystemTime(new Date('2026-11-11T00:10:00Z'));
+    await readExpired(kv, load);
+
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it('作り直しに失敗したら、次の読み取りでやり直す', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const {kv, put} = createStaleColoKv();
+    const load = vi
+      .fn<() => Promise<{years: number[]}>>()
+      .mockRejectedValueOnce(new Error('database is down'))
+      .mockRejectedValueOnce(new Error('database is down'))
+      .mockResolvedValue({years: [2024]});
+
+    await readExpired(kv, load);
+    await readExpired(kv, load);
+
+    expect(put).toHaveBeenCalledTimes(1);
+  });
+
+  it('鍵が違えば、それぞれ作り直す', async () => {
+    const {kv} = createStaleColoKv();
+    const load = vi.fn(async () => ({years: [2024]}));
+
+    await readExpired(kv, load, KEY);
+    await readExpired(kv, load, 'years:other:v1');
+
+    expect(load).toHaveBeenCalledTimes(2);
   });
 });
