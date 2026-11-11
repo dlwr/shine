@@ -44,7 +44,7 @@ export function WatchedToggle({
         onClick={toggle}
         className={
           watched
-            ? 'font-label text-xs font-bold bg-brand text-brand-on px-2.5 py-1 border border-ink'
+            ? 'font-label text-xs font-bold bg-ink text-paper px-2.5 py-1 border border-ink'
             : 'font-label text-xs font-bold px-2.5 py-1 border border-ink text-ink'
         }>
         {watched ? '✓ 観た' : '観た'}
