@@ -53,6 +53,8 @@ function watchHref(target: WatchTarget, service?: string): string | undefined {
   return `https://www.justwatch.com/jp/検索?q=${encodeURIComponent(target.movieTitle)}`;
 }
 
+const AD_TIER_SUFFIX = / (?:Standard )?with Ads$/;
+
 // tmdbソースのdetail形式: "U-NEXT(見放題), Amazon Video(レンタル), ..."
 function parseTmdbOfferings(detail: string): Array<{
   service: string;
@@ -65,7 +67,7 @@ function parseTmdbOfferings(detail: string): Array<{
     )
     .filter(match => match !== null)
     .map(match => ({
-      service: match.groups!.service,
+      service: match.groups!.service.replace(AD_TIER_SUFFIX, ''),
       kind: match.groups!.kind,
     }));
 }
