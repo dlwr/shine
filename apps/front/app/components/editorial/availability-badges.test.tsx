@@ -25,6 +25,25 @@ describe('AvailabilityBadges', () => {
     expect(screen.queryByText(/Amazon Video/)).not.toBeInTheDocument();
   });
 
+  it('広告つきプランは元のサービスと同じバッジにまとめる', () => {
+    render(
+      <AvailabilityBadges
+        availability={[
+          {
+            source: 'tmdb',
+            detail:
+              'Amazon Prime Video(見放題), Amazon Prime Video with Ads(見放題), Netflix Standard with Ads(見放題)',
+            checkedAt,
+          },
+        ]}
+      />,
+    );
+
+    expect(
+      screen.getAllByText(/見放題$/).map(badge => badge.textContent),
+    ).toEqual(['Amazon Prime Video 見放題', 'Netflix 見放題']);
+  });
+
   it('見放題がない場合はレンタル配信ありバッジを出し、一覧をtitleに入れる', () => {
     render(
       <AvailabilityBadges
