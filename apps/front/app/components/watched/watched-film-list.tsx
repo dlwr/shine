@@ -1,3 +1,4 @@
+import {AwardYearFrame} from '@/components/editorial/award-year-frame';
 import {PosterFrame} from '@/components/editorial/poster-frame';
 import {groupWatchedByYear, type WatchedFilm} from '@/lib/watched';
 
@@ -13,7 +14,7 @@ function FilmRow({
   onToggle: (uid: string) => void;
 }) {
   return (
-    <div className="flex items-center gap-3 py-2 border-t-2 border-ink">
+    <div className="flex items-center gap-3 py-1.5 border-t border-rule first:border-t-0">
       <label className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer">
         <input
           type="checkbox"
@@ -59,12 +60,9 @@ export function WatchedFilmList({
   onToggle: (uid: string) => void;
 }) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-3">
       {groupWatchedByYear(films).map(group => (
-        <section key={group.year}>
-          <h2 className="font-display font-bold text-3xl md:text-4xl leading-none mb-2">
-            {group.year}
-          </h2>
+        <AwardYearFrame key={group.year} year={group.year}>
           {group.films.map(film => (
             <FilmRow
               key={film.uid}
@@ -74,7 +72,7 @@ export function WatchedFilmList({
               onToggle={onToggle}
             />
           ))}
-        </section>
+        </AwardYearFrame>
       ))}
     </div>
   );
