@@ -167,6 +167,14 @@ async function createTestEnvironment(): Promise<Environment> {
         languageCode: 'ja',
         isPrimary: 1,
       },
+      {
+        url: 'https://image.tmdb.org/t/p/original/a-he.jpg',
+        languageCode: 'he',
+      },
+      {
+        url: 'https://image.tmdb.org/t/p/original/b-en.jpg',
+        languageCode: 'en',
+      },
       {url: 'https://image.tmdb.org/t/p/original/intl.jpg'},
     ],
   });
@@ -380,7 +388,7 @@ describe('出題ポスター', () => {
     environment = await createTestEnvironment();
   });
 
-  it('邦題が刷られたポスターを避ける', async () => {
+  it('邦題が刷られたポスターを避け、言語なしを他の言語より先に選ぶ', async () => {
     const pool = await new QuizService(environment).getPool();
     const entry = pool.find(item => item.uid === 'movie-with-japanese-poster');
 
