@@ -42,6 +42,11 @@ async function queryEligibleMovies(database: Database) {
         ORDER BY
           CASE WHEN poster_urls.language_code = 'ja' THEN 1 ELSE 0 END ASC,
           poster_urls.is_primary DESC,
+          CASE
+            WHEN poster_urls.language_code IS NULL THEN 0
+            WHEN poster_urls.language_code = 'en' THEN 1
+            ELSE 2
+          END ASC,
           poster_urls.url ASC
         LIMIT 1
       )`.as('posterUrl'),
