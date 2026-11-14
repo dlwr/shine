@@ -170,6 +170,42 @@ describe('Awards index page', () => {
       expect(link).toHaveTextContent('108 人');
     });
 
+    it('同じ団体の部門は団体名の見出しの下に 1 段で並べる', () => {
+      const awards = [
+        ...mockAwards.awards,
+        {
+          slug: 'japan-academy-lead-actor',
+          name: '最優秀主演男優賞',
+          organization: '日本アカデミー賞',
+          description: '日本アカデミー賞 最優秀主演男優賞の一覧。',
+          grouping: 'person' as const,
+          movieCount: 286,
+          personCount: 111,
+          firstYear: 1978,
+          lastYear: 2026,
+        },
+      ];
+      render(
+        <AwardsIndexPage
+          {...cast<ComponentProperties>({
+            loaderData: cast<LoaderData>({awards, locale: 'ja'}),
+            params: {},
+            matches: [],
+          })}
+        />,
+      );
+
+      const heading = screen.getByRole('heading', {name: /日本アカデミー賞/});
+      expect(heading).toHaveTextContent('1978–2026');
+      expect(screen.getByRole('link', {name: /最優秀監督賞/})).toHaveAttribute(
+        'href',
+        '/awards/japan-academy-director',
+      );
+      expect(
+        screen.getByRole('link', {name: /最優秀主演男優賞/}),
+      ).toHaveTextContent('111 人');
+    });
+
     it('個人賞は別の見出しの下に並べる', () => {
       render(
         <AwardsIndexPage
