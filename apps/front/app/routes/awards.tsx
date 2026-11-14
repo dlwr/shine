@@ -7,6 +7,32 @@ import {loadApiJson} from '@/lib/api';
 import type {AwardsListData, AwardSummaryData} from '@/lib/api-types';
 import {awardHeading} from '@/lib/awards';
 
+function yearRange(firstYear: number, lastYear: number): string {
+  return firstYear === lastYear
+    ? String(firstYear)
+    : `${firstYear}–${lastYear}`;
+}
+
+function awardCount(award: AwardSummaryData): string {
+  return award.grouping === 'person'
+    ? `${award.personCount} 人`
+    : `${award.movieCount} 本`;
+}
+
+function groupByOrganization(awards: AwardSummaryData[]): AwardSummaryData[][] {
+  const groups = new Map<string, AwardSummaryData[]>();
+  for (const award of awards) {
+    const group = groups.get(award.organization);
+    if (group) {
+      group.push(award);
+    } else {
+      groups.set(award.organization, [award]);
+    }
+  }
+
+  return groups.values().toArray();
+}
+
 function AwardRow({award}: {award: AwardSummaryData}) {
   return (
     <a
@@ -17,17 +43,59 @@ function AwardRow({award}: {award: AwardSummaryData}) {
           {awardHeading(award)}
         </span>
         <span className="block font-label text-[10px] text-ink-muted mt-1">
-          {award.firstYear === award.lastYear
-            ? award.firstYear
-            : `${award.firstYear}–${award.lastYear}`}
+          {yearRange(award.firstYear, award.lastYear)}
         </span>
       </span>
       <span className="font-label text-xs text-ink-muted shrink-0">
-        {award.grouping === 'person'
-          ? `${award.personCount} 人`
-          : `${award.movieCount} 本`}
+        {awardCount(award)}
       </span>
     </a>
+  );
+}
+
+function OrganizationRow({awards}: {awards: AwardSummaryData[]}) {
+  const firstYear = Math.min(...awards.map(award => award.firstYear));
+  const lastYear = Math.max(...awards.map(award => award.lastYear));
+
+  return (
+    <div className="py-3 border-t-2 border-ink">
+      <h3 className="flex items-baseline gap-3">
+        <span className="flex-1 font-display font-extrabold text-base md:text-lg leading-tight">
+          {awards[0].organization}
+        </span>
+        <span className="font-label text-[10px] text-ink-muted shrink-0">
+          {yearRange(firstYear, lastYear)}
+        </span>
+      </h3>
+      <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
+        {awards.map(award => (
+          <li key={award.slug}>
+            <a
+              href={`/awards/${award.slug}`}
+              className="font-display text-sm text-ink no-underline">
+              <span className="underline">{award.name}</span>
+              <span className="ml-1 font-label text-[10px] text-ink-muted">
+                {awardCount(award)}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function OrganizationList({awards}: {awards: AwardSummaryData[]}) {
+  return (
+    <div>
+      {groupByOrganization(awards).map(group =>
+        group.length === 1 ? (
+          <AwardRow key={group[0].slug} award={group[0]} />
+        ) : (
+          <OrganizationRow key={group[0].organization} awards={group} />
+        ),
+      )}
+    </div>
   );
 }
 
@@ -81,11 +149,7 @@ export default function AwardsIndex({loaderData}: Route.ComponentProps) {
           </a>
         </div>
 
-        <div>
-          {filmAwards.map(award => (
-            <AwardRow key={award.slug} award={award} />
-          ))}
-        </div>
+        <OrganizationList awards={filmAwards} />
 
         {personAwards.length > 0 && (
           <section className="mt-10">
@@ -93,11 +157,7 @@ export default function AwardsIndex({loaderData}: Route.ComponentProps) {
             <p className="font-label text-xs text-ink-muted mb-4">
               監督賞・演技賞から映画人を探す
             </p>
-            <div>
-              {personAwards.map(award => (
-                <AwardRow key={award.slug} award={award} />
-              ))}
-            </div>
+            <OrganizationList awards={personAwards} />
           </section>
         )}
 
