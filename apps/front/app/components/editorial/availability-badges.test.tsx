@@ -25,6 +25,24 @@ describe('AvailabilityBadges', () => {
     expect(screen.queryByText(/Amazon Video/)).not.toBeInTheDocument();
   });
 
+  it('HBO Max on U-Next は U-NEXT の見放題にまとめる', () => {
+    render(
+      <AvailabilityBadges
+        availability={[
+          {
+            source: 'tmdb',
+            detail: 'U-NEXT(見放題), HBO Max on U-Next(見放題), Hulu(見放題)',
+            checkedAt,
+          },
+        ]}
+      />,
+    );
+
+    expect(
+      screen.getAllByText(/見放題$/).map(badge => badge.textContent),
+    ).toEqual(['U-NEXT 見放題', 'Hulu 見放題']);
+  });
+
   it('広告つきプランは元のサービスと同じバッジにまとめる', () => {
     render(
       <AvailabilityBadges

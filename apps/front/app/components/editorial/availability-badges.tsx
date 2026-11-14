@@ -55,6 +55,15 @@ function watchHref(target: WatchTarget, service?: string): string | undefined {
 
 const AD_TIER_SUFFIX = / (?:Standard )?with Ads$/;
 
+const SERVICE_ALIASES: Record<string, string> = {
+  'HBO Max on U-Next': 'U-NEXT',
+};
+
+function serviceName(name: string): string {
+  const service = name.replace(AD_TIER_SUFFIX, '');
+  return SERVICE_ALIASES[service] ?? service;
+}
+
 // tmdbソースのdetail形式: "U-NEXT(見放題), Amazon Video(レンタル), ..."
 function parseTmdbOfferings(detail: string): Array<{
   service: string;
@@ -67,7 +76,7 @@ function parseTmdbOfferings(detail: string): Array<{
     )
     .filter(match => match !== null)
     .map(match => ({
-      service: match.groups!.service.replace(AD_TIER_SUFFIX, ''),
+      service: serviceName(match.groups!.service),
       kind: match.groups!.kind,
     }));
 }
