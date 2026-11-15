@@ -10,6 +10,7 @@ type AvailabilityBadgesProperties = {
   movieTitle?: string;
   tmdbId?: number | string;
   showCheckedDate?: boolean;
+  isRentalOnly?: boolean;
 };
 
 export type WatchTarget = {
@@ -84,6 +85,7 @@ function parseTmdbOfferings(detail: string): Array<{
 export function buildBadges(
   availability: AvailabilityInfo[],
   target: WatchTarget = {},
+  isRentalOnly = false,
 ): Badge[] {
   const badges: Badge[] = [];
 
@@ -136,7 +138,7 @@ export function buildBadges(
   if (rentalLabels.length > 0) {
     const rentalForm = hasDiscas ? RENTAL_FORMS.discas : RENTAL_FORMS.geo;
     badges.push({
-      label: '宅配レンタル',
+      label: isRentalOnly ? '宅配レンタルのみ・要確認' : '宅配レンタル',
       title: rentalLabels.join(' / '),
       form: target.movieTitle
         ? {...rentalForm, value: target.movieTitle}
@@ -164,12 +166,13 @@ export function AvailabilityBadges({
   movieTitle,
   tmdbId,
   showCheckedDate = true,
+  isRentalOnly = false,
 }: AvailabilityBadgesProperties) {
   if (!availability || availability.length === 0) {
     return;
   }
 
-  const badges = buildBadges(availability, {movieTitle, tmdbId});
+  const badges = buildBadges(availability, {movieTitle, tmdbId}, isRentalOnly);
   if (badges.length === 0) {
     return;
   }
