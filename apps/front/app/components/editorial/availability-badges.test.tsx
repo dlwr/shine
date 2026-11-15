@@ -152,6 +152,18 @@ describe('AvailabilityBadges', () => {
     );
   });
 
+  it('宅配レンタルのみの作品は宅配レンタルバッジに要確認を添える', () => {
+    render(
+      <AvailabilityBadges
+        isRentalOnly
+        availability={[{source: 'discas', detail: 'Matched: 映画X', checkedAt}]}
+      />,
+    );
+
+    expect(screen.getByText('宅配レンタルのみ・要確認')).toBeInTheDocument();
+    expect(screen.queryByText('宅配レンタル')).not.toBeInTheDocument();
+  });
+
   it('U-NEXTの見放題バッジはU-NEXTの検索に飛ばす', () => {
     render(
       <AvailabilityBadges
