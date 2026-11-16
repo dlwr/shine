@@ -9,6 +9,16 @@ export function hasJudgedAvailability(
   );
 }
 
+export function isMostlyUnwatchable(
+  summary: JapanAvailabilitySummaryData | undefined,
+): boolean {
+  return (
+    summary !== undefined &&
+    summary.unchecked === 0 &&
+    summary.unwatchable * 2 > summary.total
+  );
+}
+
 export function AvailabilitySummaryLine({
   summary,
   unavailableHref,

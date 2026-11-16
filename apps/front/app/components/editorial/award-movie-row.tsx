@@ -24,15 +24,21 @@ const RANK_PATTERN = /^(\d+位|次点)$/;
 export function AwardMovieRow({
   movie,
   isCompact = false,
+  showUnwatchableMark = true,
 }: {
   movie: AwardMovieEntryData;
   isCompact?: boolean;
+  showUnwatchableMark?: boolean;
 }) {
   const title = movie.title ?? 'Unknown Title';
   const isRanked = RANK_PATTERN.test(movie.specialMention ?? '');
   const rank = isRanked ? movie.specialMention : undefined;
   const note = isRanked ? undefined : movie.specialMention;
   const isRentalOnly = movie.availabilityStatus === 'rental_only';
+  const markStatus =
+    !showUnwatchableMark && movie.availabilityStatus === 'unwatchable'
+      ? undefined
+      : movie.availabilityStatus;
 
   if (movie.isWinner) {
     return (
@@ -58,10 +64,7 @@ export function AwardMovieRow({
             isRentalOnly={isRentalOnly}
           />
           {!isRentalOnly && (
-            <AvailabilityStatusMark
-              status={movie.availabilityStatus}
-              className="mt-1.5"
-            />
+            <AvailabilityStatusMark status={markStatus} className="mt-1.5" />
           )}
         </div>
         {!rank && (
@@ -88,10 +91,7 @@ export function AwardMovieRow({
           isRentalOnly={isRentalOnly}
         />
         {!isRentalOnly && (
-          <AvailabilityStatusMark
-            status={movie.availabilityStatus}
-            className="mt-1"
-          />
+          <AvailabilityStatusMark status={markStatus} className="mt-1" />
         )}
       </div>
     </a>
