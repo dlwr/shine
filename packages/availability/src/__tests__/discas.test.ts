@@ -260,6 +260,41 @@ describe('checkDiscas', () => {
     ).toBe(false);
   });
 
+  it('returns ok when an exact title matches and the production year is within two years', async () => {
+    const fetchSpy = createSessionFetch(fixtureBytes, detailBytes);
+
+    const result = await checkDiscas(['ゴッドファーザー PART I'], fetchSpy, {
+      year: 1988,
+    });
+
+    expect(result.status).toBe('ok');
+  });
+
+  it('returns ng when an exact title matches but the production year is far off', async () => {
+    const fetchSpy = createSessionFetch(fixtureBytes, detailBytes);
+
+    const result = await checkDiscas(['ゴッドファーザー PART I'], fetchSpy, {
+      year: 1972,
+    });
+
+    expect(result).toEqual({
+      source: 'discas',
+      status: 'ng',
+      detail:
+        'Title matched but year differs: ゴッドファーザー\u{3000}ＰＡＲＴ\u{3000}Ｉ (1986)',
+    });
+  });
+
+  it('returns ok for an exact title match when the detail page cannot be fetched', async () => {
+    const fetchSpy = createSessionFetch(fixtureBytes);
+
+    const result = await checkDiscas(['ゴッドファーザー PART I'], fetchSpy, {
+      year: 1972,
+    });
+
+    expect(result.status).toBe('ok');
+  });
+
   it('returns error when the search request fails', async () => {
     const failingFetch = vi.fn(async () => {
       throw new Error('connection reset');

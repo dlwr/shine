@@ -109,6 +109,56 @@ export function containsYear(html: string, year: number): boolean {
 }
 
 const MAX_DETAIL_LOOKUPS = 3;
+// 制作年と日本公開年・授賞式年のずれを許す幅。同名の別作品（リメイク・旧作）は概ねこれより離れている
+const YEAR_TOLERANCE = 2;
+
+function parseProductionYear(html: string): number | undefined {
+  const text = cheerio
+    .load(html)('table.c_table_product')
+    .text()
+    .normalize('NFKC');
+  const year = /製作年:\s*(\d{4})\s*年/.exec(text)?.[1];
+  return year ? Number(year) : undefined;
+}
+
+async function findExactMatch(
+  results: DiscasSearchResult[],
+  targetTitles: string[],
+  year: number | undefined,
+  jar: CookieJar,
+  fetchImpl: FetchLike,
+): Promise<{matched?: DiscasSearchResult; mismatches: string[]}> {
+  const candidates = results.filter(result =>
+    matchesTitle(result.title, targetTitles),
+  );
+  if (year === undefined) {
+    return {matched: candidates[0], mismatches: []};
+  }
+
+  const mismatches: string[] = [];
+  for (const candidate of candidates.slice(0, MAX_DETAIL_LOOKUPS)) {
+    const response = await fetchWithSession(
+      candidate.detailUrl,
+      jar,
+      fetchImpl,
+    );
+    const productionYear = response.ok
+      ? parseProductionYear(
+          new TextDecoder('shift_jis').decode(await response.arrayBuffer()),
+        )
+      : undefined;
+    if (
+      productionYear === undefined ||
+      Math.abs(productionYear - year) <= YEAR_TOLERANCE
+    ) {
+      return {matched: candidate, mismatches};
+    }
+
+    mismatches.push(`${candidate.title} (${productionYear})`);
+  }
+
+  return {mismatches};
+}
 
 async function findMatchingRelease(
   results: DiscasSearchResult[],
@@ -192,8 +242,12 @@ export async function checkDiscas(
       await response.arrayBuffer(),
     );
     const results = parseDiscasResults(html);
-    const matched = results.find(result =>
-      matchesTitle(result.title, targetTitles),
+    const {matched, mismatches} = await findExactMatch(
+      results,
+      targetTitles,
+      options.year,
+      jar,
+      fetchImpl,
     );
     if (matched) {
       return {
@@ -220,7 +274,10 @@ export async function checkDiscas(
       : {
           source: 'discas',
           status: 'ng',
-          detail: `No match in ${results.length} results`,
+          detail:
+            mismatches.length > 0
+              ? `Title matched but year differs: ${mismatches.join(', ')}`
+              : `No match in ${results.length} results`,
         };
   } catch (error) {
     return {
