@@ -2,6 +2,7 @@ import type {Route} from './+types/awards.$slug.$year';
 import {
   AvailabilitySummaryLine,
   hasJudgedAvailability,
+  isMostlyUnwatchable,
 } from '@/components/editorial/availability-summary-line';
 import {AwardMovieRow} from '@/components/editorial/award-movie-row';
 import {Masthead} from '@/components/editorial/masthead';
@@ -86,6 +87,7 @@ export default function AwardYearPage({loaderData}: Route.ComponentProps) {
   const locale = 'ja';
   const heading = awardHeading(award);
   const hasSummary = hasJudgedAvailability(award.availabilitySummary);
+  const hidesUnwatchableMarks = isMostlyUnwatchable(award.availabilitySummary);
   const filmYear =
     award.movies.find(movie => movie.isWinner)?.movieYear ?? award.year;
 
@@ -121,12 +123,21 @@ export default function AwardYearPage({loaderData}: Route.ComponentProps) {
         <AvailabilitySummaryLine
           summary={award.availabilitySummary}
           unavailableHref={`/awards/${award.slug}/unavailable`}
-          className="mb-8"
+          className={hidesUnwatchableMarks ? 'mb-1' : 'mb-8'}
         />
+        {hidesUnwatchableMarks && (
+          <p className="font-label text-xs text-ink-muted mb-8">
+            札の無い作品は日本で観られない
+          </p>
+        )}
 
         <div className="border-t-[3px] border-ink">
           {award.movies.map(movie => (
-            <AwardMovieRow key={movie.uid} movie={movie} />
+            <AwardMovieRow
+              key={movie.uid}
+              movie={movie}
+              showUnwatchableMark={!hidesUnwatchableMarks}
+            />
           ))}
         </div>
 

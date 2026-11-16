@@ -479,6 +479,50 @@ describe('Award year page', () => {
 
         expect(screen.getByText('日本で観られない')).toBeInTheDocument();
       });
+
+      it('観られない作品が過半なら行ごとの印を省いて一言にまとめる', () => {
+        renderPage({
+          ...mockAwardYear,
+          movies: mockAwardYear.movies.map(movie => ({
+            ...movie,
+            availabilityStatus: 'unwatchable',
+          })),
+          availabilitySummary: {
+            total: 2,
+            watchable: 0,
+            rentalOnly: 0,
+            unwatchable: 2,
+            unchecked: 0,
+          },
+        });
+
+        expect(screen.queryByText('日本で観られない')).not.toBeInTheDocument();
+        expect(
+          screen.getByText('札の無い作品は日本で観られない'),
+        ).toBeInTheDocument();
+      });
+
+      it('未確認の作品があれば観られない作品が過半でも印を残す', () => {
+        renderPage({
+          ...mockAwardYear,
+          movies: [
+            {...mockAwardYear.movies[0], availabilityStatus: 'unwatchable'},
+            mockAwardYear.movies[1],
+          ],
+          availabilitySummary: {
+            total: 3,
+            watchable: 0,
+            rentalOnly: 0,
+            unwatchable: 2,
+            unchecked: 1,
+          },
+        });
+
+        expect(screen.getByText('日本で観られない')).toBeInTheDocument();
+        expect(
+          screen.queryByText('札の無い作品は日本で観られない'),
+        ).not.toBeInTheDocument();
+      });
     });
   });
 });
