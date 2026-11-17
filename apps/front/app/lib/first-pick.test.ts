@@ -69,9 +69,17 @@ describe('personFirstPick', () => {
 
   it('個人賞の受賞作には「受賞」と付ける', () => {
     expect(
-      personFirstPick([credit({movieUid: 'a', personAwards: [personalWin]})])
-        ?.label,
+      personFirstPick([
+        credit({movieUid: 'a', personAwards: [personalWin]}),
+        credit({movieUid: 'b'}),
+      ])?.label,
     ).toBe('受賞');
+  });
+
+  it('参加作が 1 本だけなら下の一覧と同じになるので選ばない', () => {
+    expect(
+      personFirstPick([credit({movieUid: 'a', personAwards: [personalWin]})]),
+    ).toBeUndefined();
   });
 });
 
