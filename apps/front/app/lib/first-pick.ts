@@ -29,6 +29,10 @@ const CREDIT_RANKS: Array<{
 ];
 
 export function personFirstPick(credits: Credit[]): FirstPick | undefined {
+  if (credits.length < 2) {
+    return undefined;
+  }
+
   const watchable = credits.filter(
     credit => credit.availabilityStatus === 'watchable',
   );
