@@ -10,17 +10,18 @@ export function useOnDemandAvailability(options: {
   movieUid: string;
   apiUrl: string;
   initial?: AvailabilityInfo[];
+  needsCheck?: boolean;
 }): {availability: AvailabilityInfo[]; checking: boolean} {
   const {movieUid, apiUrl, initial} = options;
   const hasInitial = Boolean(initial && initial.length > 0);
-  const isSkip = hasInitial || movieUid === '';
+  const shouldCheck = movieUid !== '' && (options.needsCheck ?? !hasInitial);
   const [availability, setAvailability] = useState<AvailabilityInfo[]>(
     initial ?? [],
   );
-  const [checking, setChecking] = useState(!isSkip);
+  const [checking, setChecking] = useState(shouldCheck && !hasInitial);
 
   useEffect(() => {
-    if (isSkip) {
+    if (!shouldCheck) {
       return;
     }
 
@@ -52,7 +53,7 @@ export function useOnDemandAvailability(options: {
     return () => {
       isCancelled = true;
     };
-  }, [movieUid, apiUrl, isSkip]);
+  }, [movieUid, apiUrl, shouldCheck]);
 
   return {availability, checking};
 }

@@ -68,6 +68,8 @@ export function MovieHero({
   const {availability, checking} = useOnDemandAvailability({
     movieUid: movieDetail.uid,
     apiUrl,
+    initial: movieDetail.knownAvailability.availability,
+    needsCheck: movieDetail.knownAvailability.needsCheck,
   });
 
   const metaItems: string[] = [];

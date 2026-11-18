@@ -81,6 +81,7 @@ const mockMovieDetail = {
     },
   ],
   worthIndexing: true,
+  knownAvailability: {availability: [], needsCheck: true},
 };
 
 const mockRelatedMovies = [
@@ -1031,6 +1032,38 @@ describe('MovieDetail Component', () => {
 
       expect(await screen.findByText('U-NEXT 見放題')).toBeInTheDocument();
       expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:8787/movies/movie-123/availability/check',
+        {method: 'POST'},
+      );
+    });
+
+    it('確認済みの視聴可否があればチェックを待たずに最初から表示する', () => {
+      const mockFetch = vi.mocked(fetch);
+      const loaderData = createLoaderData({
+        movieDetail: {
+          ...mockMovieDetail,
+          knownAvailability: {
+            availability: [
+              {source: 'tmdb', detail: 'U-NEXT(見放題)', checkedAt: 1},
+            ],
+            needsCheck: false,
+          },
+        },
+      });
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(screen.queryByText('配信状況を確認中…')).not.toBeInTheDocument();
+      expect(screen.getByText('U-NEXT 見放題')).toBeInTheDocument();
+      expect(mockFetch).not.toHaveBeenCalledWith(
         'http://localhost:8787/movies/movie-123/availability/check',
         {method: 'POST'},
       );

@@ -59,6 +59,53 @@ describe('useOnDemandAvailability', () => {
     expect(result.current.availability[0]?.source).toBe('tmdb');
   });
 
+  it('初期データがあっても確認を求められたら、初期データを見せたまま裏でPOSTする', async () => {
+    const mockFetch = vi.mocked(fetch);
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        available: true,
+        availability: [
+          {source: 'tmdb', detail: 'Netflix(見放題)', checkedAt: 2},
+        ],
+      }),
+    } as Response);
+
+    const {result} = renderHook(() =>
+      useOnDemandAvailability({
+        movieUid: 'movie-a',
+        apiUrl: 'http://localhost:8787',
+        initial: [{source: 'tmdb', detail: 'U-NEXT(見放題)', checkedAt: 1}],
+        needsCheck: true,
+      }),
+    );
+
+    expect(result.current.checking).toBe(false);
+    expect(result.current.availability[0]?.detail).toBe('U-NEXT(見放題)');
+
+    await waitFor(() => {
+      expect(result.current.availability[0]?.detail).toBe('Netflix(見放題)');
+    });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('確認済みで観られる手段が無ければAPIを呼ばずchecking=falseになる', () => {
+    const mockFetch = vi.mocked(fetch);
+
+    const {result} = renderHook(() =>
+      useOnDemandAvailability({
+        movieUid: 'movie-a',
+        apiUrl: 'http://localhost:8787',
+        initial: [],
+        needsCheck: false,
+      }),
+    );
+
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(result.current.checking).toBe(false);
+    expect(result.current.availability).toHaveLength(0);
+  });
+
   it('movieUidが空ならAPIを呼ばずchecking=falseになる', () => {
     const mockFetch = vi.mocked(fetch);
 

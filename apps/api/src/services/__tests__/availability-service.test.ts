@@ -238,3 +238,92 @@ describe('AvailabilityService.checkMovie', () => {
     expect(result?.availability[0]?.detail).toBe('Matched again');
   });
 });
+
+describe('AvailabilityService.loadKnown', () => {
+  let environment: Environment;
+  let database: TestDatabase;
+
+  beforeEach(async () => {
+    ({environment, database} = await createTestEnvironment());
+    await seedMovie(database);
+  });
+
+  it('一度も確認していなければ空で確認を求める', async () => {
+    const service = new AvailabilityService(environment);
+
+    expect(await service.loadKnown('movie-a')).toEqual({
+      availability: [],
+      needsCheck: true,
+    });
+  });
+
+  it('新鮮な結果だけなら source ごとの最新の ok を返し確認を求めない', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    await database.insert(movieAvailabilityChecks).values([
+      {
+        movieUid: 'movie-a',
+        source: 'tmdb',
+        status: 'ng',
+        detail: 'old',
+        checkedAt: now - 120,
+      },
+      {
+        movieUid: 'movie-a',
+        source: 'tmdb',
+        status: 'ok',
+        detail: 'U-NEXT(見放題)',
+        checkedAt: now - 60,
+      },
+      {
+        movieUid: 'movie-a',
+        source: 'discas',
+        status: 'ng',
+        detail: 'Not found',
+        checkedAt: now - 60,
+      },
+    ]);
+    const service = new AvailabilityService(environment);
+
+    expect(await service.loadKnown('movie-a')).toEqual({
+      availability: [
+        {source: 'tmdb', detail: 'U-NEXT(見放題)', checkedAt: now - 60},
+      ],
+      needsCheck: false,
+    });
+  });
+
+  it('古い結果があれば結果を返したうえで確認を求める', async () => {
+    const staleEpoch = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
+    await database.insert(movieAvailabilityChecks).values({
+      movieUid: 'movie-a',
+      source: 'unext',
+      status: 'ok',
+      detail: 'Matched (stale)',
+      checkedAt: staleEpoch,
+    });
+    const service = new AvailabilityService(environment);
+
+    expect(await service.loadKnown('movie-a')).toEqual({
+      availability: [
+        {source: 'unext', detail: 'Matched (stale)', checkedAt: staleEpoch},
+      ],
+      needsCheck: true,
+    });
+  });
+
+  it('オンデマンドで確認しない source の結果は含めない', async () => {
+    await database.insert(movieAvailabilityChecks).values({
+      movieUid: 'movie-a',
+      source: 'geo',
+      status: 'ok',
+      detail: 'Matched',
+      checkedAt: Math.floor(Date.now() / 1000) - 60,
+    });
+    const service = new AvailabilityService(environment);
+
+    expect(await service.loadKnown('movie-a')).toEqual({
+      availability: [],
+      needsCheck: true,
+    });
+  });
+});

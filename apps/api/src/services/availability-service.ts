@@ -5,6 +5,10 @@ import type {
   SourceRunners,
 } from '@shine/availability';
 import {and, eq, isNull, type Environment} from '@shine/database';
+import {
+  loadLatestResults,
+  type LatestSourceResult,
+} from '@shine/availability/checker';
 import {movies} from '@shine/database/schema/movies';
 import {translations} from '@shine/database/schema/translations';
 import {BaseService} from './base-service';
@@ -21,6 +25,31 @@ export type AvailabilityCheckResult = {
     checkedAt: number;
   }>;
 };
+
+export type KnownAvailability = Pick<
+  AvailabilityCheckResult,
+  'availability'
+> & {
+  needsCheck: boolean;
+};
+
+const ON_DEMAND_SOURCES: AvailabilitySource[] = ['tmdb', 'unext', 'discas'];
+
+function okResults(
+  known: LatestSourceResult[],
+): AvailabilityCheckResult['availability'] {
+  return known
+    .filter(result => result.status === 'ok')
+    .map(result => ({
+      source: result.source,
+      detail: result.detail,
+      checkedAt: result.checkedAt,
+    }));
+}
+
+function shouldRefresh(known: LatestSourceResult[]): boolean {
+  return known.length === 0 || known.some(result => !result.isFresh);
+}
 
 export function buildOnDemandRunners(
   environment: Environment,
@@ -87,6 +116,17 @@ async function refreshQuietly(check: () => Promise<unknown>): Promise<void> {
 }
 
 export class AvailabilityService extends BaseService {
+  async loadKnown(movieUid: string): Promise<KnownAvailability> {
+    const known = await loadLatestResults(
+      this.database,
+      movieUid,
+      ON_DEMAND_SOURCES,
+      Math.floor(Date.now() / 1000),
+    );
+
+    return {availability: okResults(known), needsCheck: shouldRefresh(known)};
+  }
+
   async checkMovie(
     movieUid: string,
     runners: SourceRunners,
@@ -97,8 +137,7 @@ export class AvailabilityService extends BaseService {
       return undefined;
     }
 
-    const {checkMovieAvailability, loadLatestResults} =
-      await loadAvailability();
+    const {checkMovieAvailability} = await loadAvailability();
     const nowEpoch = Math.floor(Date.now() / 1000);
     const check = () =>
       checkMovieAvailability(this.database, movie, {
@@ -114,19 +153,13 @@ export class AvailabilityService extends BaseService {
         nowEpoch,
       );
       if (known.length > 0) {
-        if (known.some(result => !result.isFresh)) {
+        if (shouldRefresh(known)) {
           options.defer(refreshQuietly(check));
         }
 
         return {
           available: known.some(result => result.status === 'ok'),
-          availability: known
-            .filter(result => result.status === 'ok')
-            .map(result => ({
-              source: result.source,
-              detail: result.detail,
-              checkedAt: result.checkedAt,
-            })),
+          availability: okResults(known),
         };
       }
     }
