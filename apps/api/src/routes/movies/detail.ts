@@ -1,7 +1,7 @@
 import {getDatabase, type Environment} from '@shine/database';
 import {Hono} from 'hono';
 import type {MovieDetail} from '../../types/responses';
-import {MoviesService} from '../../services';
+import {AvailabilityService, MoviesService} from '../../services';
 import {
   findRelatedMovies,
   type RelatedMoviesByLocale,
@@ -31,7 +31,10 @@ movieDetailRoutes.get('/:id', async c => {
     }
 
     const locale = c.req.query('locale') || 'ja';
-    const movieDetails = await moviesService.getMovieDetails(movieId, locale);
+    const [movieDetails, knownAvailability] = await Promise.all([
+      moviesService.getMovieDetails(movieId, locale),
+      new AvailabilityService(c.env).loadKnown(movieId),
+    ]);
 
     const imdbUrl = movieDetails.imdbId
       ? `https://www.imdb.com/title/${movieDetails.imdbId}/`
@@ -53,6 +56,7 @@ movieDetailRoutes.get('/:id', async c => {
       articleLinks: movieDetails.articleLinks,
       credits: movieDetails.credits,
       worthIndexing: movieDetails.worthIndexing,
+      knownAvailability,
     };
 
     // Create ETag for the response

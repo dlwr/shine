@@ -41,6 +41,7 @@ const movieDetail = (
   nominations: [],
   articleLinks: [],
   worthIndexing: true,
+  knownAvailability: {availability: [], needsCheck: true},
   ...overrides,
 });
 

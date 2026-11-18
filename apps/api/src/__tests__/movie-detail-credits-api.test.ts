@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {getDatabase, type Environment} from '@shine/database';
+import {movieAvailabilityChecks} from '@shine/database/schema/movie-availability-checks';
 import {movieCredits} from '@shine/database/schema/movie-credits';
 import {movies} from '@shine/database/schema/movies';
 import {people} from '@shine/database/schema/people';
@@ -66,5 +67,42 @@ describe('GET /movies/:id credits', () => {
 
     const body = (await response.json()) as CreditsResponse;
     expect(body.credits?.crew.map(member => member.name)).toEqual(['濱口竜介']);
+  });
+});
+
+describe('GET /movies/:id knownAvailability', () => {
+  let environment: Environment;
+
+  beforeEach(async () => {
+    environment = await createTestEnvironment();
+  });
+
+  it('確認したことのない映画は確認を求める', async () => {
+    const response = await moviesRoutes.request('/movie-a', {}, environment);
+
+    const body = (await response.json()) as {knownAvailability: unknown};
+    expect(body.knownAvailability).toEqual({
+      availability: [],
+      needsCheck: true,
+    });
+  });
+
+  it('新鮮な確認結果があれば観る手段を返し確認を求めない', async () => {
+    const checkedAt = Math.floor(Date.now() / 1000) - 60;
+    await getDatabase(environment).insert(movieAvailabilityChecks).values({
+      movieUid: 'movie-a',
+      source: 'tmdb',
+      status: 'ok',
+      detail: 'U-NEXT(見放題)',
+      checkedAt,
+    });
+
+    const response = await moviesRoutes.request('/movie-a', {}, environment);
+
+    const body = (await response.json()) as {knownAvailability: unknown};
+    expect(body.knownAvailability).toEqual({
+      availability: [{source: 'tmdb', detail: 'U-NEXT(見放題)', checkedAt}],
+      needsCheck: false,
+    });
   });
 });

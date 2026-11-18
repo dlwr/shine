@@ -1,3 +1,4 @@
+import type {KnownAvailability} from '../services/availability-service';
 import type {AwardSummary, WatchedList} from './awards';
 import type {MovieSelection} from './movies';
 import type {YearSummary} from './years';
@@ -25,6 +26,7 @@ export type MovieDetail = Pick<
   worthIndexing: boolean;
   runtime: number | undefined;
   releaseDate: string | undefined;
+  knownAvailability: KnownAvailability;
 };
 
 type SearchedMovie = {
