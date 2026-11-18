@@ -284,10 +284,14 @@ describe('PersonPage', () => {
     expect(screen.queryByText(/\d作?受賞/)).not.toBeInTheDocument();
   });
 
-  it('個人賞の部門名を出す', () => {
+  it('参加作の行に個人賞を団体の略称と部門で出す', () => {
     renderPage();
 
-    expect(screen.getAllByText('監督賞')).toHaveLength(2);
+    expect(
+      screen
+        .getAllByText('日本アカデミー 監督')
+        .filter(element => element.closest('a')),
+    ).toHaveLength(2);
   });
 
   it('個人賞の通算成績を出す', () => {
