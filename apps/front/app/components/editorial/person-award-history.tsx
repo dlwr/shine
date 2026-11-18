@@ -1,5 +1,12 @@
 import {Fragment} from 'react';
 import {Chip, type PersonalAward} from './award-tags';
+import {
+  byOrganizationRank,
+  categoryLabel,
+  organizationRank,
+  organizationShortLabel,
+  personAwardLabel,
+} from '@/lib/person-award-labels';
 
 export type AwardHistoryCredit = {
   movieUid: string;
@@ -7,31 +14,6 @@ export type AwardHistoryCredit = {
   year?: number;
   personAwards: PersonalAward[];
 };
-
-const ORGANIZATION_SHORT_LABELS = new Map([
-  ['アカデミー賞', 'アカデミー'],
-  ['英国アカデミー賞', 'BAFTA'],
-  ['ゴールデングローブ賞', 'GG'],
-  ['カンヌ国際映画祭', 'カンヌ'],
-  ['ヴェネツィア国際映画祭', 'ヴェネツィア'],
-  ['ベルリン国際映画祭', 'ベルリン'],
-  ['日本アカデミー賞', '日本 アカデミー'],
-  ['キネマ旬報', 'キネ旬'],
-  ['毎日映画コンクール', '毎日'],
-  ['ブルーリボン賞', 'ブルーリボン'],
-  ['報知映画賞', '報知'],
-  ['ヨコハマ映画祭', 'ヨコハマ'],
-  ['日刊スポーツ映画大賞', '日刊'],
-]);
-
-const CATEGORY_LABELS = ['助演', '主演', '監督', '男優', '女優'];
-
-function categoryLabel(category: string): string {
-  return (
-    CATEGORY_LABELS.find(label => category.includes(label)) ??
-    category.replace(/（.*）/, '').replace(/賞$/, '')
-  );
-}
 
 type Column = {
   organization: string;
@@ -47,15 +29,6 @@ function HeaderLabel({label}: {label: string}) {
   ));
 }
 
-function shortLabelOf(organization: string): string {
-  return ORGANIZATION_SHORT_LABELS.get(organization) ?? organization;
-}
-
-function organizationRank(organization: string): number {
-  const rank = ORGANIZATION_SHORT_LABELS.keys().toArray().indexOf(organization);
-  return rank === -1 ? Infinity : rank;
-}
-
 function columnsOf(credits: AwardHistoryCredit[]): Column[] {
   const organizations = new Set(
     credits.flatMap(credit =>
@@ -69,7 +42,7 @@ function columnsOf(credits: AwardHistoryCredit[]): Column[] {
     .toSorted((a, b) => organizationRank(a) - organizationRank(b))
     .map(organization => ({
       organization,
-      shortLabel: shortLabelOf(organization),
+      shortLabel: organizationShortLabel(organization),
     }));
 }
 
@@ -115,20 +88,14 @@ function AwardHistoryList({rows}: {rows: AwardHistoryCredit[]}) {
             </a>
           </span>
           <span className="flex flex-wrap gap-1">
-            {credit.personAwards
-              .toSorted(
-                (a, b) =>
-                  organizationRank(a.organization) -
-                  organizationRank(b.organization),
-              )
-              .map(award => (
-                <Chip
-                  key={`${award.organization} ${award.category} ${award.year}`}
-                  label={`${shortLabelOf(award.organization).replace(' ', '')} ${categoryLabel(award.category)}`}
-                  title={awardTitle(award)}
-                  isWinner={award.isWinner}
-                />
-              ))}
+            {credit.personAwards.toSorted(byOrganizationRank).map(award => (
+              <Chip
+                key={`${award.organization} ${award.category} ${award.year}`}
+                label={personAwardLabel(award)}
+                title={awardTitle(award)}
+                isWinner={award.isWinner}
+              />
+            ))}
           </span>
         </li>
       ))}

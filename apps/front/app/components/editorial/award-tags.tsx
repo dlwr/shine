@@ -1,4 +1,5 @@
 import {awardHeading} from '@/lib/awards';
+import {byOrganizationRank, personAwardLabel} from '@/lib/person-award-labels';
 
 export type AwardTag = {
   slug: string;
@@ -81,10 +82,10 @@ export function PersonalAwardTags({awards}: {awards: PersonalAward[]}) {
 
   return (
     <span className="flex flex-wrap gap-1">
-      {awards.map(award => (
+      {awards.toSorted(byOrganizationRank).map(award => (
         <Chip
           key={`${award.organization} ${award.category}`}
-          label={award.category}
+          label={personAwardLabel(award)}
           title={`${award.organization} ${award.category} ${award.year}年 ${award.isWinner ? '受賞' : 'ノミネート'}`}
           isWinner={award.isWinner}
         />

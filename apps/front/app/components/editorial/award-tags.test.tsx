@@ -69,7 +69,7 @@ describe('AwardTags', () => {
 });
 
 describe('PersonalAwardTags', () => {
-  it('部門名を描画する', () => {
+  it('団体の略称と部門を描画する', () => {
     render(
       <PersonalAwardTags
         awards={[
@@ -82,7 +82,37 @@ describe('PersonalAwardTags', () => {
         ]}
       />,
     );
-    expect(screen.getByText('監督賞')).toBeInTheDocument();
+    expect(screen.getByText('日本アカデミー 監督')).toBeInTheDocument();
+  });
+
+  it('同じ映画で複数の団体の同じ部門を受けても団体ごとに見分けられる', () => {
+    render(
+      <PersonalAwardTags
+        awards={[
+          {
+            organization: 'ヨコハマ映画祭',
+            category: '主演女優賞',
+            year: 2023,
+            isWinner: true,
+          },
+          {
+            organization: 'キネマ旬報',
+            category: '主演女優賞',
+            year: 2023,
+            isWinner: true,
+          },
+          {
+            organization: '日本アカデミー賞',
+            category: '最優秀主演女優賞',
+            year: 2023,
+            isWinner: true,
+          },
+        ]}
+      />,
+    );
+    expect(
+      screen.getAllByText(/ 主演$/).map(element => element.textContent),
+    ).toEqual(['日本アカデミー 主演', 'キネ旬 主演', 'ヨコハマ 主演']);
   });
 
   it('受賞なら組織名と受賞を説明に付ける', () => {
@@ -98,7 +128,7 @@ describe('PersonalAwardTags', () => {
         ]}
       />,
     );
-    expect(screen.getByText('監督賞')).toHaveAttribute(
+    expect(screen.getByText('日本アカデミー 監督')).toHaveAttribute(
       'title',
       '日本アカデミー賞 監督賞 2026年 受賞',
     );
@@ -117,7 +147,7 @@ describe('PersonalAwardTags', () => {
         ]}
       />,
     );
-    expect(screen.getByText('主演男優賞')).toHaveAttribute(
+    expect(screen.getByText('日本アカデミー 主演')).toHaveAttribute(
       'title',
       '日本アカデミー賞 主演男優賞 2026年 ノミネート',
     );
