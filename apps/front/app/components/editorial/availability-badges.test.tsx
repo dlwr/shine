@@ -296,6 +296,37 @@ describe('AvailabilityBadges', () => {
     expect(screen.getByText(/2026-07-15\s*時点/)).toBeInTheDocument();
   });
 
+  it('TMDb の配信情報から出した札には JustWatch の提供と添える', () => {
+    render(
+      <AvailabilityBadges
+        availability={[{source: 'tmdb', detail: 'U-NEXT(見放題)', checkedAt}]}
+      />,
+    );
+
+    expect(screen.getByText(/配信情報の提供 JustWatch/)).toBeInTheDocument();
+  });
+
+  it('TMDb の配信情報を使っていなければ JustWatch とは添えない', () => {
+    render(
+      <AvailabilityBadges
+        availability={[{source: 'geo', detail: 'Matched', checkedAt}]}
+      />,
+    );
+
+    expect(screen.queryByText(/JustWatch/)).not.toBeInTheDocument();
+  });
+
+  it('チェック日時を出さない場所では JustWatch とも添えない', () => {
+    render(
+      <AvailabilityBadges
+        availability={[{source: 'tmdb', detail: 'U-NEXT(見放題)', checkedAt}]}
+        showCheckedDate={false}
+      />,
+    );
+
+    expect(screen.queryByText(/JustWatch/)).not.toBeInTheDocument();
+  });
+
   it('availabilityが空なら何も描画しない', () => {
     const {container} = render(<AvailabilityBadges availability={[]} />);
 
