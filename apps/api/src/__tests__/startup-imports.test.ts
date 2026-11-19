@@ -3,7 +3,12 @@ import {fileURLToPath} from 'node:url';
 import {build, type Metafile} from 'esbuild';
 import {describe, expect, it} from 'vitest';
 
-const HEAVY_PACKAGES = ['iconv-lite', 'cheerio'];
+const HEAVY_PACKAGES = [
+  'iconv-lite',
+  'cheerio',
+  '@modelcontextprotocol/server',
+  'zod',
+];
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const apiDirectory = path.resolve(currentDirectory, '../..');
