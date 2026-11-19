@@ -225,6 +225,8 @@ export function AvailabilityBadges({
       {showCheckedDate && (
         <span className="font-label text-[10px] text-ink-muted">
           {formatCheckedDate(latestCheckedAt)} 時点
+          {availability.some(entry => entry.source === 'tmdb') &&
+            '・配信情報の提供 JustWatch'}
         </span>
       )}
     </div>
