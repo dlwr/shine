@@ -3,6 +3,7 @@ import {type Context, Hono} from 'hono';
 import type {
   AwardDetail,
   AwardUnavailableList,
+  AwardYearDetail,
   PersonAwardDetail,
 } from '../types/awards';
 import type {AwardsListResponse} from '../types/responses';
@@ -21,18 +22,23 @@ export const awardsRoutes = new Hono<{Bindings: Environment}>();
 
 const AWARDS_CACHE_TTL = 604_800;
 
+type AwardsContext = Context<{Bindings: Environment}>;
+
+export function readAwardList(
+  c: AwardsContext,
+  cache: EdgeCache,
+): ReturnType<typeof readThroughCache<AwardsListResponse>> {
+  return readThroughCache<AwardsListResponse>(c, cache, {
+    key: 'awards:list:v20',
+    ttl: AWARDS_CACHE_TTL,
+    edgeTtl: IMPORTED_DATA_EDGE_TTL,
+    load: async () => ({awards: await new AwardsService(c.env).listAwards()}),
+  });
+}
+
 awardsRoutes.get('/', async c => {
   const cache = new EdgeCache(c.env.CACHE_KV);
-  const {data: result, status} = await readThroughCache<AwardsListResponse>(
-    c,
-    cache,
-    {
-      key: 'awards:list:v20',
-      ttl: AWARDS_CACHE_TTL,
-      edgeTtl: IMPORTED_DATA_EDGE_TTL,
-      load: async () => ({awards: await new AwardsService(c.env).listAwards()}),
-    },
-  );
+  const {data: result, status} = await readAwardList(c, cache);
 
   const etag = createETag(result);
   if (shouldCheckETag(c.req, etag)) {
@@ -46,7 +52,7 @@ awardsRoutes.get('/', async c => {
 });
 
 function readAwardDetail(
-  c: Context<{Bindings: Environment}>,
+  c: AwardsContext,
   cache: EdgeCache,
   slug: string,
 ): ReturnType<typeof readThroughCache<AwardDetail | PersonAwardDetail>> {
@@ -123,15 +129,13 @@ awardsRoutes.get('/:slug/unavailable', async c => {
   });
 });
 
-awardsRoutes.get('/:slug/:year', async c => {
-  const cache = new EdgeCache(c.env.CACHE_KV);
-  const year = Number(c.req.param('year'));
-  if (!Number.isSafeInteger(year)) {
-    return c.json({error: 'Award not found'}, 404);
-  }
-
-  const slug = c.req.param('slug');
-  const {data: award, status} = await readThroughCache(c, cache, {
+export function readAwardYear(
+  c: AwardsContext,
+  cache: EdgeCache,
+  slug: string,
+  year: number,
+): ReturnType<typeof readThroughCache<AwardYearDetail>> {
+  return readThroughCache<AwardYearDetail>(c, cache, {
     key: `awards:${slug}:${year}:v4`,
     ttl: AWARDS_CACHE_TTL,
     edgeTtl: IMPORTED_DATA_EDGE_TTL,
@@ -148,6 +152,21 @@ awardsRoutes.get('/:slug/:year', async c => {
       );
     },
   });
+}
+
+awardsRoutes.get('/:slug/:year', async c => {
+  const cache = new EdgeCache(c.env.CACHE_KV);
+  const year = Number(c.req.param('year'));
+  if (!Number.isSafeInteger(year)) {
+    return c.json({error: 'Award not found'}, 404);
+  }
+
+  const {data: award, status} = await readAwardYear(
+    c,
+    cache,
+    c.req.param('slug'),
+    year,
+  );
 
   if (!award) {
     return c.json({error: 'Award not found'}, 404);
