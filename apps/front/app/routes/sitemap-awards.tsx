@@ -101,6 +101,7 @@ export async function loader({context, request}: Route.LoaderArgs) {
     {path: '/quiz', changefreq: 'daily'},
     {path: '/watched', changefreq: 'weekly'},
     {path: '/monthly', changefreq: 'monthly'},
+    {path: '/developers', changefreq: 'monthly'},
     ...awards.map(award => ({
       path: `/awards/${award.slug}`,
       changefreq: 'weekly' as const,

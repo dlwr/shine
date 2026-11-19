@@ -67,4 +67,13 @@ describe('SiteFooter', () => {
       '/search',
     );
   });
+
+  it('開発者向けの案内ページへ導線を置く', () => {
+    render(<SiteFooter locale="ja" />);
+
+    expect(screen.getByRole('link', {name: /開発者/})).toHaveAttribute(
+      'href',
+      '/developers',
+    );
+  });
 });

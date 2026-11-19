@@ -18,6 +18,7 @@ export const pages = [
   '/shiritori',
   '/monthly',
   '/watched',
+  '/developers',
   '/search?q=グリーン',
   '/movies/movie-beauty',
   '/movies/movie-vrt-long-title',

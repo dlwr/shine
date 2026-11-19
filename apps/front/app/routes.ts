@@ -30,6 +30,7 @@ export default [
   route('connect', 'routes/connect.tsx'),
   route('shiritori', 'routes/shiritori.tsx'),
   route('robots.txt', 'routes/robots.tsx'),
+  route('developers', 'routes/developers.tsx'),
   route('feed.xml', 'routes/feed.tsx'),
   route('sitemap.xml', 'routes/sitemap-index.tsx'),
   route('sitemap/movies.xml', 'routes/sitemap-movies.tsx'),
