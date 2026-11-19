@@ -7,13 +7,15 @@
     "build": "wrangler deploy --dry-run"
   },
   "dependencies": {
+    "@modelcontextprotocol/server": "^2.4.0",
     "@shine/availability": "workspace:*",
     "@shine/database": "workspace:*",
     "@shine/tmdb": "workspace:*",
     "@shine/utils": "workspace:*",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13",
-    "jose": "^6.2.12"
+    "jose": "^6.2.12",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "esbuild": "^0.28.2"
