@@ -10,6 +10,7 @@ import {awardsRoutes} from '../routes/awards';
 import {connectRoutes} from '../routes/connect';
 import {shiritoriRoutes} from '../routes/shiritori';
 import {doubleFeatureRoutes} from '../routes/double-feature';
+import {mcpRoutes} from '../routes/mcp';
 import {moviesRoutes} from '../routes/movies';
 import {onThisDayRoutes} from '../routes/on-this-day';
 import {peopleRoutes} from '../routes/people';
@@ -49,6 +50,7 @@ type Exercise = {
   name: string;
   routes: Routes;
   path: string;
+  init?: RequestInit;
 };
 
 const exercises: Exercise[] = [
@@ -129,6 +131,26 @@ const exercises: Exercise[] = [
     path: '/selections/monthly/next?locale=ja',
   },
   {name: 'クイズの出題', routes: quizRoutes, path: '/daily'},
+  {
+    name: 'MCP の映画検索',
+    routes: mcpRoutes,
+    path: '/',
+    init: {
+      method: 'POST',
+      headers: {
+        host: 'shine-film.com',
+        accept: 'application/json, text/event-stream',
+        'content-type': 'application/json',
+        'mcp-protocol-version': '2025-06-18',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
+        params: {name: 'search_movies', arguments: {query: 'Beauty'}},
+      }),
+    },
+  },
 ];
 
 type Puts = Array<{key: string; value: string}>;
@@ -240,10 +262,11 @@ describe('キャッシュ鍵の版', () => {
 
     const response = await exercise.routes.request(
       exercise.path,
-      {},
+      exercise.init ?? {},
       environment,
       executionContext,
     );
+    await response.arrayBuffer();
     await Promise.all(background);
 
     expect(response.status).toBe(200);
