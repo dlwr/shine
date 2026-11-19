@@ -31,6 +31,26 @@ export default [
   route('shiritori', 'routes/shiritori.tsx'),
   route('robots.txt', 'routes/robots.tsx'),
   route('developers', 'routes/developers.tsx'),
+  route('mcp/server-card', 'routes/agent-discovery.ts', {
+    id: 'mcp-server-card',
+  }),
+  route('.well-known/mcp/server-card.json', 'routes/agent-discovery.ts', {
+    id: 'well-known-mcp-server-card',
+  }),
+  route('.well-known/ai-catalog.json', 'routes/agent-discovery.ts', {
+    id: 'ai-catalog',
+  }),
+  route('.well-known/api-catalog', 'routes/agent-discovery.ts', {
+    id: 'api-catalog',
+  }),
+  route('.well-known/agent-skills/index.json', 'routes/agent-discovery.ts', {
+    id: 'agent-skills-index',
+  }),
+  route(
+    '.well-known/agent-skills/shine-film-mcp/SKILL.md',
+    'routes/agent-discovery.ts',
+    {id: 'agent-skill-shine-film-mcp'},
+  ),
   route('feed.xml', 'routes/feed.tsx'),
   route('sitemap.xml', 'routes/sitemap-index.tsx'),
   route('sitemap/movies.xml', 'routes/sitemap-movies.tsx'),
