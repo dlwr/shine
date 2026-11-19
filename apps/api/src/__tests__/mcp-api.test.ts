@@ -297,6 +297,33 @@ describe('POST /mcp', () => {
     expect(response.status).toBe(403);
   });
 
+  it('配列の body は 400 になり、ツールは 1 つも実行されない', async () => {
+    const puts: string[] = [];
+    const kv = {
+      async get() {
+        return null;
+      },
+      async put(key: string) {
+        puts.push(key);
+      },
+      async delete() {},
+    } as unknown as KVNamespace;
+    const batch = Array.from({length: 3}, (_, index) => ({
+      jsonrpc: '2.0',
+      id: index,
+      method: 'tools/call',
+      params: {name: 'search_movies', arguments: {query: `Gladiator${index}`}},
+    }));
+
+    const response = await post(createEnvironment({CACHE_KV: kv}), batch, {
+      'cf-connecting-ip': '192.0.2.9',
+    });
+    await response.text();
+
+    expect(response.status).toBe(400);
+    expect(puts).toEqual([]);
+  });
+
   it('同じ IP からの呼び出しが多すぎると 429 を返す', async () => {
     const headers = {'cf-connecting-ip': '192.0.2.1'};
     const statuses: number[] = [];

@@ -10,6 +10,14 @@ const isMcpRateLimited = createInMemoryRateLimit({
   windowMs: 60 * 1000,
 });
 
+async function isBatchBody(request: Request): Promise<boolean> {
+  try {
+    return Array.isArray(await request.clone().json());
+  } catch {
+    return false;
+  }
+}
+
 mcpRoutes.all('/', async c => {
   if (c.env.MCP_DISABLED === 'true') {
     return c.json({error: 'MCP server is disabled'}, 503);
@@ -17,6 +25,10 @@ mcpRoutes.all('/', async c => {
 
   if (isMcpRateLimited(resolveClientIp(c))) {
     return c.json({error: 'Too Many Requests'}, 429, {'Retry-After': '60'});
+  }
+
+  if (c.req.method === 'POST' && (await isBatchBody(c.req.raw))) {
+    return c.json({error: 'JSON-RPC batch is not supported'}, 400);
   }
 
   const {serveMcp} = await import('./mcp-server');
