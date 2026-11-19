@@ -22,21 +22,19 @@ function yearRange(award: AwardPageData): {first?: number; last?: number} {
 }
 
 function countNominees(award: PersonAwardDetailData): number {
-  let count = 0;
-  for (const group of award.years) {
-    count += group.nominees.length;
-  }
-
-  return count;
+  return new Set(
+    award.years.flatMap(group => group.nominees.map(nominee => nominee.uid)),
+  ).size;
 }
 
 function countPersonWinners(award: PersonAwardDetailData): number {
-  let count = 0;
-  for (const group of award.years) {
-    count += group.nominees.filter(nominee => nominee.isWinner).length;
-  }
-
-  return count;
+  return new Set(
+    award.years.flatMap(group =>
+      group.nominees
+        .filter(nominee => nominee.isWinner)
+        .map(nominee => nominee.uid),
+    ),
+  ).size;
 }
 
 function countMovies(award: AwardDetailData): number {

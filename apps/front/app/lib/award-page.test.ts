@@ -124,6 +124,28 @@ describe('awardSummaryLine', () => {
       '1990–1991 受賞 2 人・ノミネート 3 人',
     );
   });
+
+  it('個人賞は同じ人の重ねての受賞・ノミネートを 1 人と数える', () => {
+    const [latest, earlier] = personAward.years;
+    const repeated: PersonAwardDetailData = {
+      ...personAward,
+      years: [
+        latest,
+        {
+          ...earlier,
+          nominees: [
+            ...earlier.nominees,
+            {...latest.nominees[0], isWinner: false},
+          ],
+        },
+        {year: 1989, nominees: [{...latest.nominees[0], isWinner: true}]},
+      ],
+    };
+
+    expect(awardSummaryLine(repeated)).toBe(
+      '1989–1991 受賞 2 人・ノミネート 3 人',
+    );
+  });
 });
 
 describe('buildAwardItemList', () => {
