@@ -88,6 +88,7 @@ export type Environment = {
   INDEXNOW_KEY?: string;
   NORTH_STAR_OWNER_URL_PREFIXES?: string;
   NORTH_STAR_OWNER_IPS?: string;
+  MCP_DISABLED?: string;
   CACHE_KV?: KVNamespace;
   DB?: D1Database;
   D1_PROXY_URL?: string;
