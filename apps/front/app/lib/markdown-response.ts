@@ -46,9 +46,15 @@ export function withMarkdownAlternate(
   }
 
   const result = withVaryAccept(response);
+  const {origin} = new URL(request.url);
   result.headers.append(
     'Link',
     `<${request.url}>; rel="alternate"; type="text/markdown"`,
+  );
+  result.headers.append('Link', `<${origin}/developers>; rel="service-doc"`);
+  result.headers.append(
+    'Link',
+    `<${origin}/.well-known/api-catalog>; rel="api-catalog"`,
   );
   return result;
 }

@@ -40,6 +40,7 @@ import type {
   YearsListResponse,
 } from '@shine/api/types/responses';
 import type {OnThisDay} from '@shine/api/types/on-this-day';
+import type {MCP_SERVER_VERSION} from '@shine/api/routes/mcp-server';
 import type {TonightPick} from '@shine/api/types/tonight';
 import type {DoubleFeature} from '@shine/api/types/double-feature';
 import type {
@@ -123,3 +124,4 @@ export type AdminAwardsReferenceData = Json<AdminAwardsReference>;
 export type ExternalIdSearchData = Json<ExternalIdSearchResponse>;
 export type QuizDailyData = Json<QuizDailyResponse>;
 export type QuizOrderData = {date: string; movies: Array<Json<QuizOrderMovie>>};
+export type McpServerVersion = typeof MCP_SERVER_VERSION;

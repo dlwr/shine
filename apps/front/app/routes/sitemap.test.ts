@@ -301,6 +301,15 @@ describe('sitemap/awards.xml', () => {
     expect(xml).toContain('<loc>https://shine-film.com/</loc>');
   });
 
+  it('開発者向けの案内ページのURLを列挙する', async () => {
+    mockSearchResponse({awards: []});
+
+    const response = await sitemapAwardsLoader(createAwardsArguments());
+    const xml = await response.text();
+
+    expect(xml).toContain('<loc>https://shine-film.com/developers</loc>');
+  });
+
   it('年度制の最高賞には観た映画チェックのURLも列挙する', async () => {
     mockSearchResponse({
       awards: [

@@ -217,8 +217,24 @@ describe('withMarkdownAlternate', () => {
   it('HTML の応答の Link にそのページの Markdown 版を足す', () => {
     const response = withMarkdownAlternate(htmlRequest, html());
 
-    expect(response.headers.get('Link')).toBe(
+    expect(response.headers.get('Link')).toContain(
       `<${PAGE_URL}>; rel="alternate"; type="text/markdown"`,
+    );
+  });
+
+  it('HTML の応答の Link に開発者向けの案内ページを service-doc として足す', () => {
+    const response = withMarkdownAlternate(htmlRequest, html());
+
+    expect(response.headers.get('Link')).toContain(
+      '<https://shine-film.com/developers>; rel="service-doc"',
+    );
+  });
+
+  it('HTML の応答の Link に API Catalog を足す', () => {
+    const response = withMarkdownAlternate(htmlRequest, html());
+
+    expect(response.headers.get('Link')).toContain(
+      '<https://shine-film.com/.well-known/api-catalog>; rel="api-catalog"',
     );
   });
 
@@ -228,8 +244,8 @@ describe('withMarkdownAlternate', () => {
       html('', {headers: {Link: '</a.css>; rel="preload"'}}),
     );
 
-    expect(response.headers.get('Link')).toBe(
-      `</a.css>; rel="preload", <${PAGE_URL}>; rel="alternate"; type="text/markdown"`,
+    expect(response.headers.get('Link')).toMatch(
+      /^<\/a\.css>; rel="preload", <https:\/\/shine-film\.com\//,
     );
   });
 

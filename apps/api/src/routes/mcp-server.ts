@@ -19,6 +19,8 @@ import {readAwardList, readAwardYear} from './awards';
 type McpContext = Context<{Bindings: Environment}>;
 type Locale = 'ja' | 'en';
 
+export const MCP_SERVER_VERSION = '0.1.0';
+
 const SITE = 'https://shine-film.com';
 const ALLOWED_HOSTNAMES = ['shine-film.com', 'localhost', '127.0.0.1'];
 const SEARCH_LIMIT = 10;
@@ -188,7 +190,10 @@ async function getMovie(
 }
 
 function createServer(c: McpContext): McpServer {
-  const server = new McpServer({name: 'shine-film', version: '0.1.0'});
+  const server = new McpServer({
+    name: 'shine-film',
+    version: MCP_SERVER_VERSION,
+  });
 
   server.registerTool(
     'search_movies',

@@ -17,10 +17,20 @@ SHINE の価値は 3 つ。(1) 観たいときに観る映画が自動で決ま�
 - **動かす施策**: 検索の着地先（人物・賞・映画ページ）から次の1本へ進む導線、検索で当たっている賞ページを厚くする、二本立てのような回遊したくなる切り口。今月の1本の仕組み（ホームの帯・bot の月替わり枠・関連リンク欄）は残す
 - **北極星の外でもやる**: 価値 (1)(3) に効く機能（再発見の切り口・一覧・おすすめ）、見た目と体験の刷新、それ以外の作って面白いもの
 - **保守**: 賞シーズンの速報と誤紐付けの修正。新しい賞は足さない
-- **保留**: オープンデータ公開・技術記事、視聴可否の全件バックフィル（選出作は cron が再抽選済み）、`/watched` の称号・ベストテン全体、月ごとの専用ページ
+- **保留**: オープンデータ公開・技術記事（MCP の公開についての記事 1 本だけは書く。2026-11-19 に解除）、視聴可否の全件バックフィル（選出作は cron が再抽選済み）、`/watched` の称号・ベストテン全体、月ごとの専用ページ
 - **やらない**: インデックス促進・SEO の施策（2026-07〜08 に出し切った。2026-09-04 からの Google の落ち込みは量産した薄いページへのサイト単位の品質評価で、技術面の直しでは戻らない）、`/search` の robots の Disallow を外す、サービス名のリブランド（#420 で見送り）、邦題・ポスターの補完（天井）、TMDb への邦題・あらすじの一括投稿、TMDb キャストの上限（上位 10 名）を上げる、admin 認証の httpOnly Cookie 化、availability-check の定刻実行
 - **索引の線**: 映画は「日本語あらすじがある、またはノミネート 2 件以上」、人物は「個人賞のノミネートがある」だけを索引に入れ、それ以外は `noindex, follow` で sitemap から外す。線は API（`movies-service.ts`・`people-ranking.ts`）と front（`movie-detail-meta.ts`・`people.$id.tsx`）の 2 か所ずつにあるので、変えるときは両方
 - **入口を数えるとき**: RUM（Web Analytics）は国=Japan・bot 除外で、`refererHost`・`userAgentOS`・`date` で割る。`/admin` を開いている端末のセッションは本人なので除く。7 日より前の窓は 10 単位のサンプル推定に落ちる（値が全部 10 の倍数ならサンプル）ので、窓は取得時刻から 7 日以内にして `date` で割って足す
+
+## Agent Ready と MCP（2026-11-19 に本人と合意）
+
+- 北極星の外の「作って面白いもの」枠。目的は「AI で使いやすい映画データベース」として日本語圏の開発者の目に留まること。流入の目標は置かず、見るのは Agent Readiness のスコア（isitagentready.com）と MCP の呼び出し数だけ
+- 実体のあるものだけを宣言する。やらない: OAuth 系（`openid-configuration`・`oauth-authorization-server`・`oauth-protected-resource`・`auth.md`）、Web Bot Auth、A2A の Agent Card、commerce（x402 など）、DNS のチェック（`dnsAid`・DNSSEC）、WebMCP、`llms.txt`、`poppy.json`
+- MCP は `https://shine-film.com/mcp`（入口 `apps/api/src/routes/mcp.ts`、ツール `mcp-server.ts`、MCP SDK v2 の Streamable HTTP で状態なし）。front は `/mcp` だけを service binding `API` へ転送する。読み取り専用のベストエフォートで、ツールの名前・引数・返す形は予告なく変える（版管理・廃止の予告はしない。Server Card・ツールの説明・`/developers` にそう書いてある）
+- 止め方: `apps/api/wrangler.toml` の `MCP_DISABLED` を `"true"` にして `pnpm run api:deploy:prod`（dashboard で変えても次のデプロイで戻る）。rate limit は IP ごとに毎分 60 回だが isolate ごとのメモリなので、実測では 1 つの IP から 4 秒で約 290 回通る
+- Markdown 応答は `apps/front/app/lib/markdown-response.ts`（`Accept: text/markdown` の GET を Workers AI の `toMarkdown()` で変換、AI binding は production だけ。`ai` を消せば止まる）。HTML の応答の `Link` に Markdown 版・`/developers`（`service-doc`）・API Catalog を同じファイルで足す
+- 発見用の公開物（Server Card は `/mcp/server-card` と `/.well-known/mcp/server-card.json`、`/.well-known/agent-skills/`・`api-catalog`・`ai-catalog.json`）は front の `routes/agent-discovery.ts` が返す。Skill の digest は応答時に `lib/shine-film-mcp-skill.md` から計算する。Server Card の版は `McpServerVersion`（API の `MCP_SERVER_VERSION` の型）で縛ってあり、MCP の版を上げると tsc が落ちる。内部の REST API（`shine-api`）は載せない（公開の契約にしない）
+- スキャンの再実行: `POST https://isitagentready.com/api/scan` に `{"url":"https://shine-film.com"}`（コンテンツサイト向けは `"profile":"content"`）。`Link` と Markdown のチェックはトップページだけを見る
 
 ## 見た目と設計判断
 
