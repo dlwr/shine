@@ -290,16 +290,17 @@ export default function PersonPage({loaderData}: Route.ComponentProps) {
             </p>
             {nominated > 0 && (
               <p className="mt-1 font-label text-xs text-ink-muted">
+                <span className="whitespace-nowrap">参加作の</span>
                 {won > 0 && (
                   <>
                     <span className="whitespace-nowrap">
-                      <span className="font-bold text-brand">{won}</span>作受賞
+                      受賞 <span className="font-bold text-brand">{won}</span>本
                     </span>{' '}
                     /{' '}
                   </>
                 )}
                 <span className="whitespace-nowrap">
-                  {nominated}作ノミネート
+                  ノミネート {nominated}本
                 </span>
               </p>
             )}

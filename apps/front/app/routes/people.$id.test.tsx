@@ -233,7 +233,8 @@ describe('PersonPage', () => {
 
     expect(
       screen.getByText(
-        (_, element) => element?.textContent === '1作受賞 / 2作ノミネート',
+        (_, element) =>
+          element?.textContent === '参加作の受賞 1本 / ノミネート 2本',
       ),
     ).toBeInTheDocument();
   });
@@ -253,7 +254,7 @@ describe('PersonPage', () => {
       ],
     });
 
-    expect(screen.queryByText(/作受賞/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/参加作の/)).not.toBeInTheDocument();
   });
 
   it('受賞が無ければノミネートの数だけを出す', () => {
@@ -279,9 +280,9 @@ describe('PersonPage', () => {
       ],
     });
 
-    expect(screen.getByText('1作ノミネート')).toBeInTheDocument();
+    expect(screen.getByText('ノミネート 1本')).toBeInTheDocument();
     expect(screen.getByText('1ノミネート')).toBeInTheDocument();
-    expect(screen.queryByText(/\d作?受賞/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\d作?受賞|受賞 \d/)).not.toBeInTheDocument();
   });
 
   it('参加作の行に個人賞を団体の略称と部門で出す', () => {
@@ -359,7 +360,7 @@ describe('PersonPage', () => {
   it('年度制の賞のノミネート数は語の途中で折り返さない', () => {
     renderPage();
 
-    expect(screen.getByText('2作ノミネート')).toHaveClass('whitespace-nowrap');
+    expect(screen.getByText('ノミネート 2本')).toHaveClass('whitespace-nowrap');
   });
 
   it('個人賞の通算成績から賞ページへリンクする', () => {
