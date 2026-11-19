@@ -10,6 +10,7 @@ import {awardsRoutes} from './routes/awards';
 import {peopleRoutes} from './routes/people';
 import {searchRoutes} from './routes/search';
 import {moviesRoutes} from './routes/movies';
+import {mcpRoutes} from './routes/mcp';
 import {onThisDayRoutes} from './routes/on-this-day';
 import {tonightRoutes} from './routes/tonight';
 import {doubleFeatureRoutes} from './routes/double-feature';
@@ -67,6 +68,7 @@ app.route('/connect', connectRoutes);
 app.route('/shiritori', shiritoriRoutes);
 app.route('/watched', watchedRoutes);
 app.route('/quiz', quizRoutes);
+app.route('/mcp', mcpRoutes);
 app.route('/admin', adminRoutes);
 app.route('/', utilitiesRoutes); // Utility endpoints like fetch-url-title
 

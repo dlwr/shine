@@ -41,6 +41,7 @@ name = "shine-api"
 
 [env.production.vars]
 INDEXNOW_KEY = "b0391d9101c7ffce5d5f62eb7ea6e754"
+MCP_DISABLED = "false"
 
 [[env.production.d1_databases]]
 binding = "DB"

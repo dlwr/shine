@@ -3,6 +3,7 @@ import {fileURLToPath} from 'node:url';
 import type {Environment} from '@shine/database';
 import {createD1TestDatabase} from '@shine/database/testing';
 import {afterAll, beforeAll, beforeEach, describe, expect, it} from 'vitest';
+import {mcpRoutes} from '../routes/mcp';
 import {moviesRoutes} from '../routes/movies';
 import {AwardsService} from '../services/awards-service';
 import {ConnectService} from '../services/connect-service';
@@ -144,6 +145,33 @@ type Exercise = {
   indexOnly?: boolean;
 };
 
+async function callMcpTool(
+  environment: Environment,
+  name: string,
+  arguments_: Record<string, unknown>,
+): Promise<string> {
+  const response = await mcpRoutes.request(
+    '/',
+    {
+      method: 'POST',
+      headers: {
+        host: 'shine-film.com',
+        accept: 'application/json, text/event-stream',
+        'content-type': 'application/json',
+        'mcp-protocol-version': '2025-06-18',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
+        params: {name, arguments: arguments_},
+      }),
+    },
+    environment,
+  );
+  return response.text();
+}
+
 const exercises: Exercise[] = [
   {
     name: '映画詳細',
@@ -187,6 +215,25 @@ const exercises: Exercise[] = [
         page: 1,
         limit: 20,
         hasAwards: true,
+      }),
+  },
+  {
+    name: 'MCP の映画検索',
+    run: environment =>
+      callMcpTool(environment, 'search_movies', {query: 'Beauty'}),
+  },
+  {
+    name: 'MCP の映画詳細',
+    run: environment =>
+      callMcpTool(environment, 'get_movie', {uid: 'movie-beauty'}),
+    indexOnly: true,
+  },
+  {
+    name: 'MCP の賞の年別ページ',
+    run: environment =>
+      callMcpTool(environment, 'get_award_year', {
+        slug: 'academy-best-picture',
+        year: 2000,
       }),
   },
   {
@@ -404,7 +451,7 @@ describe('公開エンドポイントの実行計画', {timeout: 30_000}, () => 
     }
   });
 
-  it.each(['検索語つきの映画検索', '映画の候補'])(
+  it.each(['検索語つきの映画検索', '映画の候補', 'MCP の映画検索'])(
     '%s は検索語の一致を索引で引く',
     async name => {
       const exercise = exercises.find(current => current.name === name);
