@@ -18,6 +18,10 @@ const requestHandler = createRequestHandler(
 export default {
   async fetch(request, environment, executionContext) {
     const {pathname} = new URL(request.url);
+    if (pathname === '/mcp' && environment.API) {
+      return environment.API.fetch(request);
+    }
+
     const og = environment.OG;
     if (og && isOgPath(pathname)) {
       return serveOgWithCache(
