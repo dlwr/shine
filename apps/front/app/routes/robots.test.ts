@@ -36,6 +36,15 @@ describe('robots.txt', () => {
     expect(await robotsBody()).toContain('Disallow: /__manifest');
   });
 
+  it('すべてのクローラーに学習・検索・AI の入力への利用を許す Content-Signal を宣言する', async () => {
+    const body = await robotsBody();
+    const [, group] = body.split('User-agent: *', 2);
+
+    expect(group.split('\n\n', 1)[0]).toContain(
+      'Content-Signal: ai-train=yes, search=yes, ai-input=yes',
+    );
+  });
+
   it('プレーンテキストとして返す', () => {
     expect(loader().headers.get('content-type')).toContain('text/plain');
   });
