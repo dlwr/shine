@@ -2,6 +2,12 @@ import {createRequestHandler} from 'react-router';
 import {createEnvironmentContext} from '@/lib/api';
 import {isOgPath} from '@/og/paths';
 import {serveOgWithCache} from '@/lib/og-cache';
+import {
+  htmlToMarkdownWith,
+  serveMarkdown,
+  prefersMarkdown,
+  withMarkdownAlternate,
+} from '@/lib/markdown-response';
 import {servePoster} from './posters';
 
 const requestHandler = createRequestHandler(
@@ -28,9 +34,23 @@ export default {
       return servePoster(pathname);
     }
 
-    return requestHandler(
-      request,
-      createEnvironmentContext(environment, request),
-    );
+    const render = async (pageRequest: Request) =>
+      requestHandler(
+        pageRequest,
+        createEnvironmentContext(environment, pageRequest),
+      );
+    const ai = environment.AI;
+    if (ai && prefersMarkdown(request)) {
+      return serveMarkdown(request, {
+        render,
+        convert: htmlToMarkdownWith(ai),
+        cache: await caches.open('markdown'),
+        waitUntil(promise) {
+          executionContext.waitUntil(promise);
+        },
+      });
+    }
+
+    return withMarkdownAlternate(request, await render(request));
   },
 } satisfies ExportedHandler<Env>;

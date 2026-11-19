@@ -1,6 +1,7 @@
 import {SITE_URL} from '@/lib/meta';
 
 const ROBOTS_TXT = `User-agent: *
+Content-Signal: ai-train=yes, search=yes, ai-input=yes
 Allow: /
 Disallow: /admin
 Disallow: /search

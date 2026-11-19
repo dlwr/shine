@@ -23,6 +23,9 @@
         "PUBLIC_WEB_ANALYTICS_TOKEN": "c0dd704af80b4024bf03df608f5e6123",
         "PUBLIC_IMAGE_TRANSFORMATIONS": "true",
       },
+      "ai": {
+        "binding": "AI",
+      },
       "services": [
         {
           "binding": "API",
