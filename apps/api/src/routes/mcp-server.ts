@@ -37,8 +37,18 @@ const localeSchema = z
 const availabilityDescription =
   'japanAvailability is one of watchable (streaming or rental in Japan confirmed), rental_only (only DISCAS mail rental matched, needs manual confirmation), unwatchable, unchecked.';
 
-function pageUrl(path: string, locale: Locale): string {
-  return locale === 'en' ? `${SITE}${path}?locale=en` : `${SITE}${path}`;
+function pageUrl(
+  path: string,
+  locale: Locale,
+  query: Record<string, string> = {},
+): string {
+  const parameters = new URLSearchParams(query);
+  if (locale === 'en') {
+    parameters.set('locale', 'en');
+  }
+
+  const search = parameters.toString();
+  return search ? `${SITE}${path}?${search}` : `${SITE}${path}`;
 }
 
 function json(data: unknown): CallToolResult {
@@ -204,10 +214,7 @@ function createServer(c: McpContext): McpServer {
       const result = await searchMovies(c, normalized);
       return json({
         totalCount: result.totalCount,
-        searchUrl: pageUrl(
-          `/search?q=${encodeURIComponent(normalized)}`,
-          locale,
-        ),
+        searchUrl: pageUrl('/search', locale, {q: normalized}),
         movies: result.movies.map(movie => ({
           ...movie,
           url: pageUrl(`/movies/${movie.uid}`, locale),

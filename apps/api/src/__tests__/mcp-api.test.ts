@@ -129,6 +129,15 @@ describe('POST /mcp', () => {
     expect(rpc.result?.serverInfo?.name).toBe('shine-film');
   });
 
+  it('notifications/initialized を受け付ける', async () => {
+    const response = await post(environment, {
+      jsonrpc: '2.0',
+      method: 'notifications/initialized',
+    });
+
+    expect(response.status).toBe(202);
+  });
+
   it('tools/list は 4 本の読み取り専用のツールを返す', async () => {
     const response = await post(environment, {
       jsonrpc: '2.0',
