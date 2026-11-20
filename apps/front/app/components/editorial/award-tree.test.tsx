@@ -62,6 +62,29 @@ describe('AwardTree', () => {
     expect(screen.getByText('ノミネート')).toBeInTheDocument();
   });
 
+  it('リスト型の賞（年別ページの無い賞ページ）は選出と出す', () => {
+    render(
+      <AwardTree
+        nominations={[
+          {
+            uid: 'n9',
+            isWinner: false,
+            category: {name: 'Selected Films'},
+            ceremony: {uid: 'c9', year: 2025},
+            organization: {
+              uid: 'o9',
+              name: 'POPEYE',
+              slug: 'popeye-21st-century',
+              hasYearPages: false,
+            },
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText('選出')).toBeInTheDocument();
+    expect(screen.queryByText('ノミネート')).not.toBeInTheDocument();
+  });
+
   it('nominations 空なら何も描画しない', () => {
     const {container} = render(<AwardTree nominations={[]} />);
     expect(container.firstChild).toBeNull();

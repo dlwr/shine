@@ -3,6 +3,7 @@ import {
   AvailabilityBadges,
   buildBadges,
 } from '@/components/editorial/availability-badges';
+import {isListSelection} from '@/components/editorial/award-tree';
 import {BigYear} from '@/components/editorial/big-year';
 import {MetaLine} from '@/components/editorial/meta-line';
 import {PosterFrame} from '@/components/editorial/poster-frame';
@@ -33,11 +34,14 @@ function awardSummary(nominations: MovieDetailData['nominations']) {
     ),
   ];
   const wins = nominations.filter(nomination => nomination.isWinner).length;
+  const selections = nominations.filter(
+    nomination => !nomination.isWinner && isListSelection(nomination),
+  ).length;
+  const nominated = nominations.length - wins - selections;
   const counts = [
     wins > 0 ? `受賞 ${wins}` : undefined,
-    nominations.length > wins
-      ? `ノミネート ${nominations.length - wins}`
-      : undefined,
+    nominated > 0 ? `ノミネート ${nominated}` : undefined,
+    selections > 0 ? `選出 ${selections}` : undefined,
   ].filter(Boolean);
 
   return `${organizations.join('・')}\u{3000}${counts.join('・')}`;
