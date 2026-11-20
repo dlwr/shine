@@ -15,6 +15,15 @@ export type AwardNomination = {
   };
 };
 
+export function isListSelection(nomination: {
+  organization: {slug?: string; hasYearPages?: boolean};
+}): boolean {
+  return (
+    Boolean(nomination.organization.slug) &&
+    !nomination.organization.hasYearPages
+  );
+}
+
 type Grouped = {
   organization: AwardNomination['organization'];
   ceremonies: Record<
@@ -109,7 +118,7 @@ export function AwardTree({nominations}: {nominations: AwardNomination[]}) {
                   </span>
                 ) : (
                   <span className="shrink-0 whitespace-nowrap border border-ink-muted px-1.5 py-0.5 font-display text-xs leading-none text-ink-muted">
-                    ノミネート
+                    {isListSelection(nomination) ? '選出' : 'ノミネート'}
                   </span>
                 )}
               </div>

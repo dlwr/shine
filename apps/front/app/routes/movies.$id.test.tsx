@@ -828,6 +828,47 @@ describe('MovieDetail Component', () => {
       ).toHaveAttribute('href', '#awards');
     });
 
+    it('リスト型の賞への選出はノミネートと分けて数える', () => {
+      const loaderData = createLoaderData({
+        movieDetail: {
+          ...mockMovieDetail,
+          nominations: [
+            ...mockMovieDetail.nominations,
+            {
+              uid: 'nom-3',
+              isWinner: false,
+              category: {uid: 'cat-3', name: 'Selected Films'},
+              ceremony: {uid: 'cer-3', number: undefined, year: 2025},
+              organization: {
+                uid: 'org-3',
+                name: 'POPEYE',
+                shortName: undefined,
+                slug: 'popeye-21st-century',
+                hasYearPages: false,
+              },
+            },
+          ],
+        },
+        relatedMovies: Promise.resolve([]),
+      });
+      const parameters = createParameters('movie-123');
+
+      render(
+        <MovieDetail
+          loaderData={loaderData}
+          actionData={createActionData()}
+          params={parameters}
+          matches={createMatches(loaderData, parameters)}
+        />,
+      );
+
+      expect(
+        screen.getByRole('link', {
+          name: 'カンヌ国際映画祭・アカデミー賞・POPEYE\u{3000}受賞 1・ノミネート 1・選出 1',
+        }),
+      ).toHaveAttribute('href', '#awards');
+    });
+
     it('配信が見つからなければ情報なしと書く', async () => {
       vi.mocked(fetch).mockResolvedValueOnce({
         ok: true,
