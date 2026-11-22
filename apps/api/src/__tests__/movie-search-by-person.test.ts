@@ -115,9 +115,13 @@ function createKvMock(): Environment['CACHE_KV'] {
   } as unknown as Environment['CACHE_KV'];
 }
 
-async function search(environment: Environment, query: string) {
+async function search(
+  environment: Environment,
+  query: string,
+  extraParameters = '',
+) {
   const response = await moviesRoutes.request(
-    `/search?q=${encodeURIComponent(query)}`,
+    `/search?q=${encodeURIComponent(query)}${extraParameters}`,
     {},
     environment,
   );
@@ -176,6 +180,28 @@ describe('GET /movies/search 人名検索', () => {
 
     expect(first.movies.map(movie => movie.uid)).toEqual(['movie-ran']);
     expect(second.movies.map(movie => movie.uid)).toEqual(['movie-ran']);
+  });
+
+  it('match=title なら人名では引かない', async () => {
+    const body = await search(environment, '黒澤', '&match=title');
+
+    expect(body.movies.map(movie => movie.uid)).toEqual(['movie-other']);
+    expect(body.pagination.totalCount).toBe(1);
+  });
+
+  it('match=title は人名も引く検索とキャッシュを分ける', async () => {
+    const cached = {...environment, CACHE_KV: createKvMock()};
+    const all = await search(cached, '黒澤');
+    const titleOnly = await search(cached, '黒澤', '&match=title');
+
+    expect(all.movies).toHaveLength(2);
+    expect(titleOnly.movies.map(movie => movie.uid)).toEqual(['movie-other']);
+  });
+
+  it('match=title でも1文字の題名で引ける', async () => {
+    const body = await search(environment, '乱', '&match=title');
+
+    expect(body.movies.map(movie => movie.uid)).toEqual(['movie-ran']);
   });
 });
 

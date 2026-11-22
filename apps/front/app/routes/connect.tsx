@@ -34,7 +34,7 @@ async function searchMovies(
 
   const result = await tryApiJson<MovieSearchData>(
     context,
-    `/movies/search?q=${encodeURIComponent(query)}&page=1&limit=5`,
+    `/movies/search?q=${encodeURIComponent(query)}&page=1&limit=5&match=title`,
     {signal},
   );
   return (result?.movies ?? []).map(({uid, title, year}) => ({
