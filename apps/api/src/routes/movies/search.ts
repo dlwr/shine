@@ -22,6 +22,7 @@ movieSearchRoutes.get('/search', async c => {
     const yearFilter = c.req.query('year');
     const languageFilter = c.req.query('language');
     const hasAwardsFilter = c.req.query('hasAwards');
+    const isTitleOnly = c.req.query('match') === 'title';
 
     const query = rawQuery ? sanitizeText(rawQuery) : undefined;
 
@@ -42,7 +43,12 @@ movieSearchRoutes.get('/search', async c => {
     };
 
     const cache = new EdgeCache(c.env.CACHE_KV);
-    const cacheKey = getCacheKeyForSearch(query ?? '', page, limit, filters);
+    const cacheKey = getCacheKeyForSearch(
+      query ?? '',
+      page,
+      limit,
+      isTitleOnly ? {...filters, match: 'title'} : filters,
+    );
     const cached = await cache.get(cacheKey);
 
     if (cached?.data) {
@@ -58,6 +64,7 @@ movieSearchRoutes.get('/search', async c => {
       year: filters.year,
       language: languageFilter,
       hasAwards,
+      matchPeople: !isTitleOnly,
     });
 
     const body: MovieSearchResponse = {
