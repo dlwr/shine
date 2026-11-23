@@ -1,6 +1,7 @@
 import {tryApiJson, type LoadContext} from '@/lib/api';
 import type {Locale} from '@/lib/locale';
 import type {SelectionPreviewData} from '@/lib/api-types';
+import {selectBestPoster} from '@/lib/poster';
 
 export type SelectionHistoryItem = {
   uid: string;
@@ -26,11 +27,12 @@ export async function loadNextSelection(
   }
 
   const {date, movie} = preview;
+  const posterUrl = selectBestPoster(movie.posterUrls, locale);
   return {
     uid: movie.uid,
     title: movie.title,
     year: movie.year,
     selectionDate: date,
-    posterUrl: movie.posterUrl,
+    ...(posterUrl && {posterUrl}),
   };
 }

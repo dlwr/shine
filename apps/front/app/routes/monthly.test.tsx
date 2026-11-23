@@ -40,7 +40,18 @@ const mockNext = {
     uid: 'movie-next',
     title: 'ぬいぐるみとしゃべる人はやさしい',
     year: 2023,
-    posterUrl: 'https://image.tmdb.org/t/p/original/nuigurumi.jpg',
+    posterUrls: [
+      {
+        url: 'https://image.tmdb.org/t/p/original/nuigurumi-en.jpg',
+        languageCode: 'en',
+        isPrimary: 0,
+      },
+      {
+        url: 'https://image.tmdb.org/t/p/original/nuigurumi.jpg',
+        languageCode: 'ja',
+        isPrimary: 1,
+      },
+    ],
   },
 };
 
