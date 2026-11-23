@@ -143,7 +143,7 @@ export default function YearPage({loaderData}: Route.ComponentProps) {
 
         <nav className="font-label text-[10px] text-ink-muted mb-4">
           <a href="/years" className="text-ink-muted">
-            YEARS
+            年代
           </a>
         </nav>
 

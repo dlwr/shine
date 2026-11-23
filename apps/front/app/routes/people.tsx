@@ -114,7 +114,7 @@ export default function PeoplePage({loaderData}: Route.ComponentProps) {
         <Masthead locale={locale} />
 
         <h1 className="mb-2 font-display text-2xl font-bold md:text-3xl">
-          PEOPLE
+          映画人
         </h1>
         <p className="mb-8 font-label text-xs text-ink-muted">
           最も多く勝った映画人

@@ -61,7 +61,7 @@ export default function YearsIndex({loaderData}: Route.ComponentProps) {
         <Masthead locale={locale} />
 
         <h1 className="font-display font-bold text-2xl md:text-3xl mb-2">
-          YEARS
+          年代
         </h1>
         <p className="font-label text-xs text-ink-muted mb-8">
           製作年から映画賞・映画リストに選ばれた作品を探す
@@ -70,7 +70,7 @@ export default function YearsIndex({loaderData}: Route.ComponentProps) {
         {groupByDecade(years).map(decade => (
           <section key={decade.start} className="border-t-2 border-ink py-4">
             <h2 className="font-display font-extrabold text-lg leading-tight mb-3">
-              {decade.start}s
+              {decade.start}年代
             </h2>
             <div className="flex flex-wrap gap-2">
               {decade.years.map(entry => (
