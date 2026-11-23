@@ -179,7 +179,7 @@ export function SearchBox({
         <button
           type="submit"
           className="bg-ink px-4 font-display font-bold text-paper">
-          GO
+          探す
         </button>
       </div>
       {expanded && (

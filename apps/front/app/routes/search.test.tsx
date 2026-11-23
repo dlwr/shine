@@ -326,11 +326,11 @@ describe('Search Component', () => {
         />,
       );
 
-      expect(screen.getByRole('heading', {name: 'SEARCH'})).toBeInTheDocument();
+      expect(screen.getByRole('heading', {name: '検索'})).toBeInTheDocument();
       expect(
         screen.getByPlaceholderText('映画タイトル・人物名を入力...'),
       ).toBeInTheDocument();
-      expect(screen.getByRole('button', {name: 'GO'})).toBeInTheDocument();
+      expect(screen.getByRole('button', {name: '探す'})).toBeInTheDocument();
     });
 
     it('検索結果が正常に表示される', () => {

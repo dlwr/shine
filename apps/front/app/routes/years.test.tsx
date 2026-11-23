@@ -111,8 +111,8 @@ describe('Years index page', () => {
       const headings = screen
         .getAllByRole('heading', {level: 2})
         .map(heading => heading.textContent)
-        .filter(text => /^\d{4}s$/.test(text ?? ''));
-      expect(headings).toEqual(['2000s', '1990s', '1950s']);
+        .filter(text => /^\d{4}年代$/.test(text ?? ''));
+      expect(headings).toEqual(['2000年代', '1990年代', '1950年代']);
     });
 
     it('各年を年別ページへのリンクにする', () => {

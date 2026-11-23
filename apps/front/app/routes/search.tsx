@@ -150,7 +150,7 @@ export default function Search({loaderData}: Route.ComponentProps) {
         <Masthead locale={locale} />
 
         <h2 className="font-display font-bold text-2xl md:text-3xl mb-6">
-          SEARCH
+          検索
         </h2>
 
         <div className="mb-8">
