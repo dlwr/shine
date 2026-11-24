@@ -51,6 +51,14 @@ const listAward: AwardDetailData = {
   pagination: {page: 2, perPage: 50, totalCount: 103, totalPages: 3},
 };
 
+const winnerOnly = (award: PersonAwardDetailData): PersonAwardDetailData => ({
+  ...award,
+  years: award.years.map(group => ({
+    ...group,
+    nominees: group.nominees.filter(nominee => nominee.isWinner),
+  })),
+});
+
 const personAward: PersonAwardDetailData = {
   slug: 'japan-academy-director',
   name: '最優秀監督賞',
@@ -122,6 +130,12 @@ describe('awardSummaryLine', () => {
   it('個人賞は受賞者数とノミネート数を出す', () => {
     expect(awardSummaryLine(personAward)).toBe(
       '1990–1991 受賞 2 人・ノミネート 3 人',
+    );
+  });
+
+  it('候補の無い個人賞は受賞者数だけを出す', () => {
+    expect(awardSummaryLine(winnerOnly(personAward))).toBe(
+      '1990–1991 受賞 2 人',
     );
   });
 
@@ -217,6 +231,12 @@ describe('awardLeadText', () => {
   it('個人賞は受賞者とノミネートの人数を出す', () => {
     expect(awardLeadText(personAward)).toContain(
       '1990年から1991年までの受賞者2人とノミネート3人を収録。',
+    );
+  });
+
+  it('候補の無い個人賞は受賞者の人数だけを出す', () => {
+    expect(awardLeadText(winnerOnly(personAward))).toContain(
+      '1990年から1991年までの受賞者2人を収録。',
     );
   });
 

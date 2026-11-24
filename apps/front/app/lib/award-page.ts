@@ -27,6 +27,12 @@ function countNominees(award: PersonAwardDetailData): number {
   ).size;
 }
 
+function hasLosingNominee(award: PersonAwardDetailData): boolean {
+  return award.years.some(group =>
+    group.nominees.some(nominee => !nominee.isWinner),
+  );
+}
+
 function countPersonWinners(award: PersonAwardDetailData): number {
   return new Set(
     award.years.flatMap(group =>
@@ -119,7 +125,10 @@ export function awardSummaryLine(award: AwardPageData): string {
   const {first, last} = yearRange(award);
 
   if (award.grouping === 'person') {
-    return `${first}–${last} 受賞 ${countPersonWinners(award)} 人・ノミネート ${countNominees(award)} 人`;
+    const winners = `${first}–${last} 受賞 ${countPersonWinners(award)} 人`;
+    return hasLosingNominee(award)
+      ? `${winners}・ノミネート ${countNominees(award)} 人`
+      : winners;
   }
 
   if (award.grouping === 'year') {
@@ -147,7 +156,10 @@ export function awardLeadText(award: AwardPageData): string | undefined {
       latest && winner
         ? `最新の受賞者は${ceremonyLabel(latest)}の${winner.name}。`
         : '';
-    return `${latestText}${first}年から${last}年までの受賞者${countPersonWinners(award)}人とノミネート${countNominees(award)}人を収録。`;
+    const nomineesText = hasLosingNominee(award)
+      ? `とノミネート${countNominees(award)}人`
+      : '';
+    return `${latestText}${first}年から${last}年までの受賞者${countPersonWinners(award)}人${nomineesText}を収録。`;
   }
 
   if (award.grouping !== 'year') {

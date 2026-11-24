@@ -114,14 +114,14 @@ function PersonalRecordLine({record}: {record: PersonalAwardRecord}) {
         `${record.organization} ${record.category}`
       )}{' '}
       {record.won > 0 && (
-        <>
-          <span className="whitespace-nowrap">
-            <span className="font-bold text-brand">{record.won}</span>受賞
-          </span>{' '}
-          /{' '}
-        </>
+        <span className="whitespace-nowrap">
+          <span className="font-bold text-brand">{record.won}</span>受賞
+        </span>
       )}
-      <span className="whitespace-nowrap">{record.nominated}ノミネート</span>
+      {record.won > 0 && record.won < record.nominated && ' / '}
+      {record.won < record.nominated && (
+        <span className="whitespace-nowrap">{record.nominated}ノミネート</span>
+      )}
     </p>
   );
 }
