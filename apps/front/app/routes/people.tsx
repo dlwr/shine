@@ -61,7 +61,9 @@ function PersonRow({person, rank}: {person: ProminentPerson; rank: number}) {
         )}
         <p className="mt-0.5 font-label text-[10px] text-ink-muted">
           <span className="font-bold text-brand">{person.wonCount}</span>
-          回受賞 / {person.nominatedCount}回ノミネート
+          回受賞
+          {person.wonCount < person.nominatedCount &&
+            ` / ${person.nominatedCount}回ノミネート`}
         </p>
         <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5">
           {person.topMovies.map(movie => (

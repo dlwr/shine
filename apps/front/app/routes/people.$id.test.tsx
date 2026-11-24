@@ -340,6 +340,38 @@ describe('PersonPage', () => {
     ).toHaveTextContent('ほか1部門');
   });
 
+  it('受賞とノミネートが同じ数の部門は受賞の数だけを出す', () => {
+    renderPage({
+      credits: [
+        {
+          movieUid: 'movie-ran',
+          title: '乱',
+          year: 1985,
+          jobs: ['Director'],
+          awards: [],
+          personAwards: [
+            {
+              slug: undefined,
+              organization: '毎日映画コンクール',
+              category: '監督賞',
+              year: 1985,
+              isWinner: true,
+            },
+          ],
+          availabilityStatus: 'unchecked',
+        },
+      ],
+    });
+
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === 'P' &&
+          element.textContent === '毎日映画コンクール 監督賞 1受賞',
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('個人賞の受賞数は語の途中で折り返さない', () => {
     renderPage();
 

@@ -55,6 +55,18 @@ describe('PeopleStrip', () => {
     ).toContain('19回受賞/35回ノミネート');
   });
 
+  it('受賞回数とノミネート回数が同じなら受賞回数だけを出す', () => {
+    render(
+      <PeopleStrip people={[{...PEOPLE[0], wonCount: 3, nominatedCount: 3}]} />,
+    );
+
+    const text = screen
+      .getByLabelText('役所広司')
+      .textContent?.replaceAll(/\s+/g, '');
+    expect(text).toContain('3回受賞');
+    expect(text).not.toContain('ノミネート');
+  });
+
   it('受賞歴の無い人物には回数を出さない', () => {
     render(<PeopleStrip people={PEOPLE} />);
 
