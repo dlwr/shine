@@ -57,4 +57,16 @@ describe('PersonAwardYearSection', () => {
 
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
   });
+
+  it('候補の無い賞では受賞の札を出さない', () => {
+    render(
+      <PersonAwardYearSection
+        group={{...group, nominees: [group.nominees[1]]}}
+        showsWinnerMark={false}
+      />,
+    );
+
+    expect(screen.getByRole('link', {name: '草彅剛'})).toBeInTheDocument();
+    expect(screen.queryByText('受賞')).not.toBeInTheDocument();
+  });
 });

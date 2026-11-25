@@ -21,7 +21,13 @@ function MovieLinks({movies}: {movies: PersonAwardMovieData[]}) {
   );
 }
 
-function WinnerRow({nominee}: {nominee: PersonAwardNomineeData}) {
+function WinnerRow({
+  nominee,
+  showsWinnerMark,
+}: {
+  nominee: PersonAwardNomineeData;
+  showsWinnerMark: boolean;
+}) {
   return (
     <div className="flex items-center gap-4 py-3">
       <PersonPortrait
@@ -42,9 +48,11 @@ function WinnerRow({nominee}: {nominee: PersonAwardNomineeData}) {
         )}
         <MovieLinks movies={nominee.movies} />
       </span>
-      <span className="shrink-0 border border-brand px-1.5 py-0.5 font-display text-xs leading-none text-brand">
-        受賞
-      </span>
+      {showsWinnerMark && (
+        <span className="shrink-0 border border-brand px-1.5 py-0.5 font-display text-xs leading-none text-brand">
+          受賞
+        </span>
+      )}
     </div>
   );
 }
@@ -69,15 +77,21 @@ function NomineeItem({nominee}: {nominee: PersonAwardNomineeData}) {
 
 export function PersonAwardYearSection({
   group,
+  showsWinnerMark = true,
 }: {
   group: PersonAwardYearGroupData;
+  showsWinnerMark?: boolean;
 }) {
   const winners = group.nominees.filter(nominee => nominee.isWinner);
   const nominees = group.nominees.filter(nominee => !nominee.isWinner);
   return (
     <AwardYearFrame year={group.year} ceremonyNumber={group.ceremonyNumber}>
       {winners.map(nominee => (
-        <WinnerRow key={nominee.uid} nominee={nominee} />
+        <WinnerRow
+          key={nominee.uid}
+          nominee={nominee}
+          showsWinnerMark={showsWinnerMark}
+        />
       ))}
       {nominees.length > 0 && (
         <ul className="flex flex-wrap gap-x-4 gap-y-1.5 pt-1 pb-2">

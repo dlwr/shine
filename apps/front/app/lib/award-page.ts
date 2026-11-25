@@ -27,7 +27,7 @@ function countNominees(award: PersonAwardDetailData): number {
   ).size;
 }
 
-function hasLosingNominee(award: PersonAwardDetailData): boolean {
+export function hasLosingNominee(award: PersonAwardDetailData): boolean {
   return award.years.some(group =>
     group.nominees.some(nominee => !nominee.isWinner),
   );
