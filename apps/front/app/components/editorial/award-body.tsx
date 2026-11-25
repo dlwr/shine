@@ -3,12 +3,13 @@ import {AwardMovieRow, RankLabel} from '@/components/editorial/award-movie-row';
 import {AwardYearFrame} from '@/components/editorial/award-year-frame';
 import {PersonAwardYearSection} from '@/components/editorial/person-award-years';
 import {PosterFrame} from '@/components/editorial/poster-frame';
-import type {
-  AwardDetailData,
-  AwardMovieEntryData,
-  AwardPageData,
-  AwardPaginationData,
-  AwardYearGroupData,
+import {
+  hasLosingNominee,
+  type AwardDetailData,
+  type AwardMovieEntryData,
+  type AwardPageData,
+  type AwardPaginationData,
+  type AwardYearGroupData,
 } from '@/lib/award-page';
 
 function ListRow({movie}: {movie: AwardMovieEntryData}) {
@@ -117,10 +118,15 @@ function Pagination({
 
 export function AwardBody({award}: {award: AwardPageData}) {
   if (award.grouping === 'person') {
+    const showsWinnerMark = hasLosingNominee(award);
     return (
       <div className="space-y-3">
         {award.years.map(group => (
-          <PersonAwardYearSection key={group.year} group={group} />
+          <PersonAwardYearSection
+            key={group.year}
+            group={group}
+            showsWinnerMark={showsWinnerMark}
+          />
         ))}
       </div>
     );

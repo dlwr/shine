@@ -712,6 +712,28 @@ describe('Person award page', () => {
     expect(screen.getAllByText('受賞')).toHaveLength(2);
   });
 
+  it('候補の無い賞では受賞者に受賞の札を付けない', () => {
+    render(
+      <AwardDetailPage
+        {...createComponentProperties(
+          cast<LoaderData>({
+            award: {
+              ...mockPersonAward,
+              years: mockPersonAward.years.map(group => ({
+                ...group,
+                nominees: group.nominees.filter(nominee => nominee.isWinner),
+              })),
+            },
+            locale: 'ja',
+          }),
+        )}
+      />,
+    );
+
+    expect(screen.getByRole('link', {name: /若手/})).toBeInTheDocument();
+    expect(screen.queryByText('受賞')).not.toBeInTheDocument();
+  });
+
   it('ノミネート作を映画ページへリンクする', () => {
     renderPersonAward();
 
