@@ -4,7 +4,6 @@ import {posterUrlForDisplay, type PosterDisplaySize} from '@/lib/poster-size';
 type PosterFrameProperties = {
   posterUrl?: string;
   alt: string;
-  placeholderLabel?: string;
   className?: string;
   priority?: boolean;
   displaySize?: PosterDisplaySize;
@@ -14,7 +13,6 @@ type PosterFrameProperties = {
 export function PosterFrame({
   posterUrl,
   alt,
-  placeholderLabel = 'No Poster',
   className = '',
   priority = false,
   displaySize = 'w500',
@@ -45,8 +43,11 @@ export function PosterFrame({
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full items-center justify-center font-label text-xs text-ink-muted">
-            {placeholderLabel}
+          <div className="@container flex h-full items-center justify-center">
+            <span className="hidden text-center font-label text-xs leading-snug text-ink-muted @[3rem]:block">
+              <span className="inline-block">ポスター</span>
+              <span className="inline-block">なし</span>
+            </span>
           </div>
         )}
       </div>
