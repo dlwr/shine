@@ -11,8 +11,9 @@ describe('PosterFrame', () => {
   });
 
   it('posterUrl が無ければプレースホルダを描画する', () => {
-    render(<PosterFrame alt="No poster" placeholderLabel="ポスターなし" />);
-    expect(screen.getByText('ポスターなし')).toBeInTheDocument();
+    const {container} = render(<PosterFrame alt="Parasite poster" />);
+    expect(container.querySelector('img')).toBeNull();
+    expect(container).toHaveTextContent('ポスターなし');
   });
 
   it('既定では遅延読み込みする', () => {
