@@ -132,7 +132,7 @@ export function awardSummaryLine(award: AwardPageData): string {
   }
 
   if (award.grouping === 'year') {
-    return `${first}–${last} 受賞 ${countWinners(award)} 本・全 ${countMovies(award)} 本`;
+    return `${first}–${last} 受賞 ${countWinners(award)} 本・全 ${award.availabilitySummary.total} 本`;
   }
 
   return `全 ${countMovies(award)} 本`;

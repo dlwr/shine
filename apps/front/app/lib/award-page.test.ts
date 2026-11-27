@@ -30,7 +30,7 @@ const yearAward: AwardDetailData = {
   organization: 'カンヌ国際映画祭',
   description: '',
   grouping: 'year',
-  availabilitySummary,
+  availabilitySummary: {...availabilitySummary, total: 62},
   years: [
     {year: 2023, filmCount: 21, movies: [movie('m-2023')]},
     {year: 2022, filmCount: 18, movies: [movie('m-2022')]},
@@ -119,8 +119,8 @@ describe('awardPageTitle', () => {
 });
 
 describe('awardSummaryLine', () => {
-  it('年度制は受賞作数と出品作数を出す', () => {
-    expect(awardSummaryLine(yearAward)).toBe('2021–2023 受賞 2 本・全 63 本');
+  it('年度制は受賞作数と、2 つの回に出た映画を 1 本と数えた出品作数を出す', () => {
+    expect(awardSummaryLine(yearAward)).toBe('2021–2023 受賞 2 本・全 62 本');
   });
 
   it('リスト型は作品数だけを出す', () => {
