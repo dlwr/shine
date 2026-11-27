@@ -574,5 +574,41 @@
     "correctImdbId": "tt6543652",
     "correctTitle": "Cold War",
     "correctYear": 2018
+  },
+  {
+    "organization": "Academy Awards",
+    "category": "Academy Award for Best Picture",
+    "ceremonyYear": 2013,
+    "wrongImdbId": "tt0026725",
+    "correctImdbId": "tt1707386",
+    "correctTitle": "Les Misérables",
+    "correctYear": 2012
+  },
+  {
+    "organization": "Academy Awards",
+    "category": "Academy Award for Best Picture",
+    "ceremonyYear": 1964,
+    "wrongImdbId": "tt0024991",
+    "correctImdbId": "tt0056937",
+    "correctTitle": "Cleopatra",
+    "correctYear": 1963
+  },
+  {
+    "organization": "Academy Awards",
+    "category": "Academy Award for Best Picture",
+    "ceremonyYear": 1979,
+    "wrongImdbId": "tt0035979",
+    "correctImdbId": "tt0077663",
+    "correctTitle": "Heaven Can Wait",
+    "correctYear": 1978
+  },
+  {
+    "organization": "Academy Awards",
+    "category": "Academy Award for Best Picture",
+    "ceremonyYear": 2022,
+    "wrongImdbId": "tt0055614",
+    "correctImdbId": "tt3581652",
+    "correctTitle": "West Side Story",
+    "correctYear": 2021
   }
 ]
